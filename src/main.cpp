@@ -4,60 +4,137 @@
 *       ****          M A I N . C P P  ____  F I L E            ****
 *       ************************************************************
 *
-*    STUDENT / AUTHOR:      Collin A. Bond.
+*              AUTHOR:      Collin A. Bond.
 *           PROFESSOR:      Dr. Erik J. Sánchez.
 *              COURSE:      N/A-XXX.
 *               DATED:      April 15, 2025.
 *
+*       ************************************************************
+*
+*       Dear ImGui: standalone example application for GLFW + OpenGL 3, using programmable pipeline
+*       (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
+*
+*       Learn about Dear ImGui:
+*           - FAQ                  https://dearimgui.com/faq
+*           - Getting Started      https://dearimgui.com/getting-started
+*           - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
+*           - Introduction, links and more at the top of imgui.cpp
+*
+*
 ******************************************************************************
 ******************************************************************************/
 
-
-
-// Dear ImGui: standalone example application for GLFW + OpenGL 3, using programmable pipeline
-// (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
-
-// Learn about Dear ImGui:
-// - FAQ                  https://dearimgui.com/faq
-// - Getting Started      https://dearimgui.com/getting-started
-// - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
-// - Introduction, links and more at the top of imgui.cpp
-
+//  0.1     "DEAR IMGUI" HEADERS...
+#include "main.h"           //  <======| MY HEADERS...
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
-#define GL_SILENCE_DEPRECATION
 #if defined(IMGUI_IMPL_OPENGL_ES2)
-#include <GLES2/gl2.h>
-#endif
-#include <GLFW/glfw3.h> // Will drag system OpenGL headers
+# include <GLES2/gl2.h>
+#endif      //  IMGUI_IMPL_OPENGL_ES2  //
 
-// [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
-// To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
-// Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
+
+#include <GLFW/glfw3.h>     //  <======| Will drag system OpenGL headers
+
+
+//  [Win32]     Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
+//                  To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
+//                  Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
-#pragma comment(lib, "legacy_stdio_definitions")
+# pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-// This example can also compile and run with Emscripten! See 'Makefile.emscripten' for details.
+
+//              This example can also compile and run with Emscripten! See 'Makefile.emscripten' for details.
 #ifdef __EMSCRIPTEN__
-#include "../libs/emscripten/emscripten_mainloop_stub.h"
+# include "../libs/emscripten/emscripten_mainloop_stub.h"
 #endif
 
-static void glfw_error_callback(int error, const char* description)
+
+#ifdef CBAPP_DEBUG                //  <======| Fix for issue wherein multiple instances of application
+# include <thread>                //           are launched when DEBUG build is run inside Xcode IDE...
+# include <chrono>
+#endif     //  CBAPP_DEBUG  //
+
+
+
+
+//***************************************************************************//
+//
+//
+//
+//***************************************************************************//
+//***************************************************************************//
+#ifdef CBAPP_STAND_ALONE
+
+
+//  "main"
+//
+int main(int argc, char ** argv)
 {
-    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+    constexpr const char *  xcp_header              = "MAIN | ";
+    constexpr const char *  xcp_type_runtime        = "Caught std::runtime_error exception";
+    constexpr const char *  xcp_type_unknown        = "Caught std::runtime_error exception";
+    constexpr const char *  xcp_at_start            = "while initializing the application.\n";
+    constexpr const char *  xcp_at_runtime          = "during program runtime.\n";
+    int                     status                  = EXIT_SUCCESS;
+    
+    
+#ifdef CBAPP_DEBUG    //  WORK-AROUND / PATCH FOR XCODE ISSUE...
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+#endif
+
+    try {   //  1.     CREATE APPLICATION INSTANCE...
+        cb::App my_app;
+        
+            try {   //  2.     ENTER APPLICATION MAIN-LOOP...
+                my_app.run();
+            }
+            catch (const std::runtime_error & e) {      //  2.1     CATCH RUNTIME ERROR (PROGRAM WAS INITIALIZED CORRECTLY)...
+        std::cerr << xcp_header << xcp_type_runtime << xcp_at_runtime << "Traceback: " << e.what() << "\n";
+                status = EXIT_FAILURE;
+            }
+            catch (...) {                               //  2.2     CATCH OTHER EXCEPTIONS AND EXIT...
+        std::cerr << xcp_header << xcp_type_unknown << xcp_at_runtime;
+                status = EXIT_FAILURE;
+            }
+    }
+    catch (const std::runtime_error & e) {      //  1.1     CATCH INITIALIZATION-TIME ERROR (DURING "DEAR IMGUI" INITIALIZATION)...
+        std::cerr << xcp_header << xcp_type_runtime << xcp_at_start << "Traceback: " << e.what() << "\n";
+        status = EXIT_FAILURE;
+    }
+    catch (...) {                               //  1.2.    CATCH OTHER EXCEPTIONS AND EXIT...
+        std::cerr << xcp_header << xcp_type_unknown << xcp_at_start;
+        status = EXIT_FAILURE;
+    }
+    
+    return status;
 }
+//***************************************************************************//
+//
+//
+//
+//***************************************************************************//
+//***************************************************************************//
+# else
 
-// Main code
-int main(int, char**)
+
+//  "main"
+//
+int main(int argc, char ** argv)
 {
-    glfwSetErrorCallback(glfw_error_callback);
-    if (!glfwInit())
-        return 1;
+#ifdef CBAPP_DEBUG    //  XCODE WORK-AROUND...
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+#endif
 
-    // Decide GL+GLSL versions
+
+
+    glfwSetErrorCallback(cb::utl::glfw_error_callback);
+    if (!glfwInit())
+        return EXIT_FAILURE;
+
+    //  Decide GL+GLSL versions
 #if defined(IMGUI_IMPL_OPENGL_ES2)
     // GL ES 2.0 + GLSL 100 (WebGL 1.0)
     const char* glsl_version = "#version 100";
@@ -72,7 +149,7 @@ int main(int, char**)
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
 #elif defined(__APPLE__)
     // GL 3.2 + GLSL 150
-    const char* glsl_version = "#version 150";
+    const char * glsl_version = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
@@ -89,24 +166,26 @@ int main(int, char**)
 
 
     //  1.  CREATE A WINDOW WITH GRAPHICS CONTEXT...
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", nullptr, nullptr);
+    GLFWwindow *    window  = glfwCreateWindow( cb::utl::DEF_ROOT_WIN_WIDTH, cb::utl::DEF_ROOT_WIN_HEIGHT, cb::utl::DEF_ROOT_WIN_TITLE, nullptr, nullptr);
     if (window == nullptr)
-        return 1;
+        return EXIT_FAILURE;
+        
         
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
 
 
+
     //      1.1     Setup "Dear ImGui" CONTEXT.
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO &       io      = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-    //io.ConfigViewportsNoAutoMerge = true;
-    //io.ConfigViewportsNoTaskBarIcon = true;
+    //io.ConfigViewportsNoAutoMerge     = true;
+    //io.ConfigViewportsNoTaskBarIcon   = true;
 
 
     //      1.2     Setup "Dear ImGui" STYLE
@@ -117,8 +196,8 @@ int main(int, char**)
     ImGuiStyle& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        style.WindowRounding                = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w   = 1.0f;
     }
 
 
@@ -146,18 +225,19 @@ int main(int, char**)
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != nullptr);
-
+    
+    
     // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    bool        show_demo_window        = false;
+    bool        show_cb_demo_window     = true;
+    bool        show_another_window     = false;
+    ImVec4      clear_color             = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImFont *    main_font               = io.Fonts->AddFontFromFileTTF(cb::utl::DEF_FONT_PATH,  cb::utl::DEF_FONT_SIZE);
+    IM_ASSERT(main_font != nullptr);
 
 
 
-
-
-
-    //  2.  MAIN PROGRAM LOOP...
+    //  1.  MAIN PROGRAM LOOP...
 #ifdef __EMSCRIPTEN__
     // For an Emscripten build we are disabling file-system access, so let's not attempt to do a fopen() of the imgui.ini file.
     // You may manually call LoadIniSettingsFromMemory() to load settings from your own storage.
@@ -167,11 +247,11 @@ int main(int, char**)
     while (!glfwWindowShouldClose(window))
 #endif
     {
-        //  Poll and handle events (inputs, window resize, etc.)
-        //  You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        //      - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-        //      - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-        //  Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+        //  1.1     Poll and handle events (inputs, window resize, etc.)
+        //          You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+        //              - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
+        //              - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
+        //          Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfwPollEvents();
         if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) != 0)
         {
@@ -180,21 +260,28 @@ int main(int, char**)
         }
 
 
-        // Start the Dear ImGui frame
+        //  1.2     Start the Dear ImGui frame.
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        //  1.3A    Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
+        
+        //  1.3B    Showing **MY OWN** Demo Application / Window.
+        if (show_cb_demo_window)
+            cb::ShowCBDemoWindow(&show_cb_demo_window, io);
 
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+
+
+
+        //  1.4     Show a simple window that we create ourselves.  We use a Begin/End pair to create a named window.
         {
-            static float f = 0.0f;
-            static int counter = 0;
+            static float    f           = 0.0f;
+            static int      counter     = 0;
 
             ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
@@ -215,7 +302,7 @@ int main(int, char**)
         }
         
 
-        // 3. Show another simple window.
+        //  1.5     SHOWING ANOTHER SIMPLE WINDOW...
         if (show_another_window)
         {
             ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
@@ -227,7 +314,10 @@ int main(int, char**)
 
 
 
-        // Rendering
+
+
+
+        //  1.6     RENDERING...
         ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
@@ -236,9 +326,11 @@ int main(int, char**)
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        // Update and Render additional Platform Windows
-        // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
-        //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
+
+
+        //  1.7     UPDATE & RENDER ADDITIONAL PLATFORM WINDOWS...
+        //          (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
+        //          For this specific demo app we could also call  glfwMakeContextCurrent(window)  directly).
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
             GLFWwindow* backup_current_context = glfwGetCurrentContext();
@@ -246,14 +338,18 @@ int main(int, char**)
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(backup_current_context);
         }
-
         glfwSwapBuffers(window);
-    }
+        
+        
+    }   //  END OF MAIN-LOOP...
+    
+    
+    
 #ifdef __EMSCRIPTEN__
     EMSCRIPTEN_MAINLOOP_END;
 #endif
 
-    // Cleanup
+    //  2.      CLEANING UP...
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -261,5 +357,19 @@ int main(int, char**)
     glfwDestroyWindow(window);
     glfwTerminate();
 
-    return 0;
+
+
+    return EXIT_SUCCESS;
 }
+//***************************************************************************//
+//***************************************************************************//
+//
+//
+#endif      //  CBAPP_STAND_ALONE  //
+
+
+
+//***************************************************************************//
+//***************************************************************************//
+//
+//  END.
