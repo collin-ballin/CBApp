@@ -13,7 +13,7 @@ cmake_minimum_required(VERSION 3.10)
 project(CBApp)
 
 #   Add at the top or below the 'project(CBApp)' line
-# option(BUILD_CB_LIB_TESTS "Build test executables for cb_lib" ON)
+# option(BUILD_CB_LIB_TESTS "Build test executables for cblib" ON)
 
 
 
@@ -44,7 +44,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/imgui_extensions    #   optional imgui wrappers
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui                       #   ImGui core
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends              #   ImGui backends
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/cb_lib/include         #   cb_lib template library
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/cblib/include          #   cblib template library
 )
 
 
@@ -143,22 +143,22 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/imgui PREFIX "imgui" FILES ${IMGUI
 ########################################################################
 
 if (BUILD_CB_LIB_TESTS)
-    #   Gather all .cpp test drivers under libs/cb_lib/tests/
-    file(GLOB_RECURSE LIB_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/libs/cb_lib/tests/*.cpp)
+    #   Gather all .cpp test drivers under libs/cblib/tests/
+    file(GLOB_RECURSE LIB_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/libs/cblib/tests/*.cpp)
         
     #   Define the test target
-    add_executable(cb_lib_tests ${LIB_TEST_SRCS})
+    add_executable(cblib_tests ${LIB_TEST_SRCS})
 
-    #   Provide include access to cb_lib headers
-    target_include_directories(cb_lib_tests PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/libs/cb_lib/include
+    #   Provide include access to cblib headers
+    target_include_directories(cblib_tests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/cblib/include
     )
 
     #   Optional strict compiler flags for testing
-    target_compile_options(cb_lib_tests PRIVATE -Wall -Wextra -pedantic)
+    target_compile_options(cblib_tests PRIVATE -Wall -Wextra -pedantic)
 
     #   Group test sources in Xcode project navigator
-    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/libs/cb_lib/tests PREFIX "cb_lib/tests" FILES ${LIB_TEST_SRCS})
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/libs/cblib/tests PREFIX "cblib/tests" FILES ${LIB_TEST_SRCS})
 endif()
 
 

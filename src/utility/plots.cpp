@@ -1,0 +1,149 @@
+//
+//  plots.cpp
+//  CBApp
+//
+//  Created by Collin Bond on 4/20/25.
+//
+// *************************************************************************** //
+// *************************************************************************** //
+
+#include "utility/utility.h"
+#include "utility/constants.h"
+#include "utility/templates.h"
+
+
+
+namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+//  2.1     PLOTTING STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "Sparkline"
+//
+void Sparkline(const char* id, const float* values, int count, float min_v, float max_v, int offset, const ImVec4 & color, const ImVec2& size) {
+    ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
+    if (ImPlot::BeginPlot(id,size,ImPlotFlags_CanvasOnly))
+    {
+        ImPlot::SetupAxes(nullptr,nullptr,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations);
+        ImPlot::SetupAxesLimits(0, count - 1, min_v, max_v, ImGuiCond_Always);
+        ImPlot::SetNextLineStyle(color);
+        ImPlot::SetNextFillStyle(color, 0.25);
+        ImPlot::PlotLine(id, values, count, 1, 0, ImPlotLineFlags_Shaded, offset);
+        ImPlot::EndPlot();
+    }
+    ImPlot::PopStyleVar();
+}
+
+
+
+//  "ScrollingSparkline"
+//
+//      center:   0 = left.  1 = right.   0.5 = center.
+void ScrollingSparkline(const float time,       const float window,     ScrollingBuffer & data,
+                        const float ymin,       const float ymax,       const ImPlotAxisFlags flags,
+                        const ImVec4 & color,   const ImVec2 & size,    const float center)
+{
+    ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
+    if ( ImPlot::BeginPlot("##Scrolling", size, ImPlotFlags_CanvasOnly) )
+    {
+        //  1.  Create Axis...
+        ImPlot::SetupAxes(nullptr, nullptr, flags, flags);
+    
+        float   xmin    = time - center * window;
+        float   xmax    = xmin + window;
+        
+        ImPlot::SetupAxisLimits(ImAxis_X1, xmin, xmax, ImGuiCond_Always);       //  2.  X-Limits...
+        ImPlot::SetupAxisLimits(ImAxis_Y1, ymin, ymax);                         //  3.  Y-Limits...
+        
+        ImPlot::SetNextLineStyle(color);                                        //  4.  Plotting the Line...
+        ImPlot::SetNextFillStyle(color, 0.25);
+        ImPlot::PlotLine("Mouse X", &data.Data[0].x, &data.Data[0].y, data.Data.size(), ImPlotLineFlags_Shaded, data.Offset, 2 * sizeof(float));
+        ImPlot::EndPlot();
+    }
+    ImPlot::PopStyleVar();
+    return;
+}
+
+
+void ScrollingSparkline(const float time,               const float window,     ScrollingBuffer & data,
+                        const ImPlotAxisFlags flags,    const ImVec4 & color,   const ImVec2 & size,
+                        const float center)
+{
+    ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
+    if ( ImPlot::BeginPlot("##Scrolling", size, ImPlotFlags_CanvasOnly) )
+    {
+        //  1.  Create Axis...
+        ImPlot::SetupAxes(nullptr, nullptr, flags|ImPlotAxisFlags_AutoFit, flags|ImPlotAxisFlags_AutoFit);
+    
+        float   xmin    = time - center * window;
+        float   xmax    = xmin + window;
+        
+        ImPlot::SetupAxisLimits(ImAxis_X1, xmin, xmax, ImGuiCond_Always);       //  2.  X-Limits...
+        
+        ImPlot::SetNextLineStyle(color);                                        //  4.  Plotting the Line...
+        ImPlot::SetNextFillStyle(color, 0.25);
+        ImPlot::PlotLine("Mouse X", &data.Data[0].x, &data.Data[0].y, data.Data.size(), ImPlotLineFlags_Shaded, data.Offset, 2 * sizeof(float));
+        ImPlot::EndPlot();
+    }
+    ImPlot::PopStyleVar();
+    return;
+}
+
+       
+
+
+//  2.2     UTILITY FUNCTIONS FOR IMPLOT STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "GetColormapSamples"
+//
+[[nodiscard]] std::vector<ImVec4> GetColormapSamples(int M, ImPlotColormap map)
+{
+    std::vector<ImVec4> cols;
+    cols.reserve(M);
+
+    // Activate the colormap so SampleColormap() uses it:
+    ImPlot::PushColormap(map);
+
+    for (int r = 0; r < M; r++) {
+        float t = (M > 1)
+                ? float(r) / float(M - 1)   // 0→1
+                : 0.0f;                     // single entry
+        cols.push_back(ImPlot::SampleColormap(t));
+    }
+
+    ImPlot::PopColormap();
+    return cols;
+}
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+} }//   END OF "cb" NAMESPACE.
+
+
+
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+//
+//  END.
+
