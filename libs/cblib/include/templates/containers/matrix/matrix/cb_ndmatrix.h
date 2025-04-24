@@ -36,7 +36,7 @@
 // 	BEGIN NAMESPACE     "cblib".
 // *************************************************************************** //
 // *************************************************************************** //
-namespace cblib    { /* _GLIBCXX_VISIBILITY(default)  //
+namespace cblib    { // _GLIBCXX_VISIBILITY(default)  //
 
 
 // *************************************************************************** //
@@ -283,45 +283,43 @@ protected:
 	// 	"display"
     //
 	inline std::ostream & display(std::ostream & output) const noexcept
-	{
-   		char 				space   = 0x0;
+    {
+        char                space   = 0x0;
         int                 width   = 10,       precision   = 2;
         size_type           r       = 0,        c           = 0;
         auto format = [&output, width, precision](const T value) {
-            output << std::scientific   << std::setprecision(precision)
-                   << std::setw(width)  << std::internal    << value;
-            /*output << std::setw(width)  << std::left << std::setprecision(precision)
-                   << std::fixed << value;*/
+            output << std::scientific << std::setprecision(precision)
+                   << std::setw(width) << std::internal << value;
         };
 
-		// 	CASE 0 : This Matrix is EMPTY.
-		if (this->m_data.empty()) {
-			output << "[ ]";
-			return output;
-		}
+        //     CASE 0 : This Matrix is EMPTY.
+        if (this->m_data.empty()) {
+            output << "[ ]";
+            return output;
+        }
+        output << "[\t";
+        //     Looping through each row in the ndmatrix.
+        for(r=0ULL; r < this->m_R; ++r)
+        {
+            space = char(0x09 * (r != 0ULL));
+            output << char(0x0a * (r != 0ULL))
+                   << space << "[";
 
-   		output << "[\t";
-   		// 	Looping through each row in the ndmatrix.
-		for(r=0ULL; r < this->m_R; ++r)
-		{
-			space = char(0x09 * (r != 0ULL));
-			output << char(0x0a * (r != 0ULL))
-		       	   << space << "[";
-
-   			// 	Looping through each column in the ndmatrix.
-			for(c=0ULL; c < this->m_C; ++c)
-			{
+            //     Looping through each column in the ndmatrix.
+            for(c=0ULL; c < this->m_C; ++c)
+            {
                 format(this->m_data[r][c]);
-				output << char(0x2c * (c != (this->m_C-1ULL)))
+                output << char(0x2c * (c != (this->m_C-1ULL)))
                        << char(0x20 * (c != (this->m_C-1ULL)))
                        << char(0x20 * (c != (this->m_C-1ULL)));
-			}
-			output << "]" << char(0x2c * (r != (this->m_R-1ULL)));
-		}
-   		output << "\t]";
+            }
+            output << "]" << char(0x2c * (r != (this->m_R-1ULL)));
+        }
+        output << "\t]";
 
-   		return output;
-	}
+        return output;
+    }
+    
 
 
 // *************************************************************************** //
@@ -543,12 +541,6 @@ public:
     }
 
 
-	// 	Overloaded Inequality-Comparison Operator (!=, Matrix).
-	//
-	//inline friend bool operator != (const ndmatrix & lhs,
-	//								const ndmatrix & lhs) noexcept
-
-
 	//	Overloaded Addition Operator (ndmatrix and ndmatrix).
 	//	throw(std::invalid_argument)
 	//
@@ -750,37 +742,6 @@ public:
         }
         return ndmatrix(minorMat);
     }
-/*
-    {
-        std::vector< std::vector<T> >       minor;
-        std::vector<T>                      row;
-        size_type                           N       = this->m_data.size() - 1;
-        size_type                           r       = ( (i == 0) || (i == this->m_R-1) ) ? ( (i+1) % this->m_R ) : i - 1;
-        size_type                           c       = ( (j+1) % this->m_C );
-        size_type                           idx = 0,    jdx = 0,    shift = 0;
-        
-        auto kronecker_delta = [](auto i, auto j)   { return (i == j) ? 1 : 0; };
-        
-        if (this->m_R != this-> m_C)//  CASE 0  :   NON-SQUARE MATRIX.
-            throw std::invalid_argument("Cannot compute minor of a non-square matrix.");
-        
-        minor.resize(N);
-        for (idx=0; idx < N; ++idx) {
-            minor[idx].resize(N);
-            
-            for (jdx=0; jdx < N; ++jdx) {
-                shift                   = -1 * (j < c);
-                minor[idx][c+shift]     = this->m_data[r][c];
-                c                       = ( c + 1 + kronecker_delta((c+1)%this->m_R, j) ) % this->m_R;
-            }
-            
-            r   = ( r + 1 + kronecker_delta((r+1)%this->m_C, i) ) % this->m_C;
-            c   = ( (j+1) % this->m_C );
-        }
-        
-        return ndmatrix(minor);
-    }
-*/
 
     
     //  "cof"

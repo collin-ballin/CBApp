@@ -9,10 +9,35 @@
 #ifndef _CBAPP_APP_H
 #define _CBAPP_APP_H  1
 
-//  0.1.        ** M Y **  HEADERS...
-#include "utility/constants.h"
+
+
+//  0.  PRE-PROCESSOR DEFINED MACROS...
+// *************************************************************************** //
+// *************************************************************************** //
+#define     CBAPP_DEBUG                     1
+#define     CBAPP_USE_VIEWPORT              1
+#define     CBAPP_USE_DOCKSPACE             1
+
+//#define     CBAPP_DISABLE_INI               1
+#define     CBAPP_LOAD_STYLE_FILE           1
+
+#define     GL_SILENCE_DEPRECATION          1
+
+
+
+// *************************************************************************** //
+//
+//
+//  1.  INCLUDES    | Headers, Modules, etc...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  0.1.        ** MY **  HEADERS...
+#include "_config.h"
+#include "cblib.h"
 #include "utility/utility.h"
-#include "app/my_demo.h"
+#include "app/_init.h"
+#include "app/_my_demo.h"
 
 
 
@@ -72,7 +97,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-
 //  0.      UTILITY FUNCTIONS [NON-MEMBER FUNCTIONS]...
 int                 run_application             (int argc, char ** argv);
 
@@ -91,6 +115,11 @@ class App
 // *************************************************************************** //
 // *************************************************************************** //
 public:
+    using               Font                            = app::Font_t;
+    using               ImFonts                         = app::EnumArray< Font, ImFont *, static_cast<std::size_t>(Font::Count) >;
+    
+    //  1               PUBLIC MEMBER FUNCTIONS...
+    // *************************************************************************** //
     //  1.1             Default Constructor, Destructor, etc...
                         App                     (void);                                     //  Def. Constructor.
                         ~App                    (void);                                     //  Def. Destructor.
@@ -108,10 +137,11 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //
 protected:
-    //  2.1             Protected Data-Members...
-    //
+    //  2.A             PROTECTED DATA-MEMBERS...
+    // *************************************************************************** //
     bool                m_show_sidebar_menu             = true;     //  Boolean State Vars.
     bool                m_show_main_window              = true;
+    bool                m_show_style_editor             = false;
     bool                m_show_imgui_demo               = false;
     bool                m_show_implot_demo              = false;
     
@@ -120,15 +150,29 @@ protected:
     ImVec4              m_clear_color                   = cb::utl::DEF_ROOT_WIN_BG;//  GLFW Window Vars.
     uint32_t            m_sys_width                     = 0U;
     uint32_t            m_sys_height                    = 0U;
-    
-    ImFont *            m_main_font                     = nullptr;
+    ImFonts             m_fonts                         = { nullptr };
+
+
+#ifdef CBAPP_USE_VIEWPORT
+    const char *        m_dock_name                     = "RootDockspace";
+    ImGuiWindowFlags    m_host_win_flags                = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+                                                          ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
+                                                          ImGuiWindowFlags_NoBackground; // ImGuiWindowFlags_NoSavedSettings
+    //ImGuiID             m_dock_ID                       = 0U;
+#endif  //  CBAPP_USE_VIEWPORT  //
 
     ImGuiWindowFlags    m_win_flags                     = ImGuiWindowFlags_None;
     ImGuiViewport *     m_main_viewport                 = nullptr;
     GLFWwindow *        m_window                        = nullptr;
     
-    //  2.2             Protected Member Functions...
-    //                  ...
+    
+    //  2.B             PROTECTED MEMBER FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  2B.1            Class Initializations.       [app.cpp]...
+    void                init                        (void);
+    void                load                        (void);
+    void                destroy                     (void);
     
     
     
@@ -136,10 +180,7 @@ protected:
 // *************************************************************************** //
 private:
     //  3.              PRIVATE MEMBER FUNCTIONS...
-    //
-    //  3.1             Class Initializations.       [app.cpp]...
-    void                init                        (void);
-    void                destroy                     (void);
+    // *************************************************************************** //
     
     //  3.2             Main GUI Functions.         [app.cpp]...
     void                run_IMPL                    (void);
@@ -153,6 +194,7 @@ private:
     void                Display_edit_menubar        (void);
     void                Display_view_menubar        (void);
     void                Display_window_menubar      (void);
+    void                Display_tools_menubar       (void);
     void                Display_help_menubar        (void);
     
     

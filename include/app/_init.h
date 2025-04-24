@@ -1,0 +1,211 @@
+//
+//  app/init.h
+//  CBApp
+//
+//  Created by Collin Bond on 4/15/25.
+//
+// *************************************************************************** //
+// *************************************************************************** //
+#ifndef _CBAPP_APP_INIT_H
+#define _CBAPP_APP_INIT_H                  1
+
+#include <filesystem>
+#include <array>
+#include <cstddef> // for std::size_t
+#include <string_view>
+
+//#include "imgui.h"
+//#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+
+
+//  1.  PRE-PROCESSOR DEFINED MACROS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+// #define     CBAPP_DEBUG                     1
+// #define     CBAPP_USE_VIEWPORT              1
+// #define     CBAPP_USE_DOCKSPACE             1
+//
+//
+// //#define     CBAPP_DISABLE_INI               1
+// #define     CBAPP_LOAD_STYLE_FILE           1
+//
+//
+// #define     GL_SILENCE_DEPRECATION          1
+
+
+// *************************************************************************** //
+//
+//
+//  2.  GLOBAL-CONSTANTS AND NAMESPACE-DEFINED VARIABLES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  0.  INLINE UTILITY FUNCTIONS...
+//
+//
+//  "get_my_file_path"
+//
+inline const char * path_to_char(const std::filesystem::path & dir, const char * file) {
+    static const std::string    path   = (dir / file).string();
+    return path.c_str();
+}
+
+
+
+//  1.  APP CONSTANTS               | TITLES, GEOMETRIES, WINDOW DIMENSIONS, ETC...
+//
+inline constexpr const char *       DEF_ROOT_WIN_TITLE      = "Dear ImGui App (V0)";
+inline constexpr int                DEF_ROOT_WIN_WIDTH      = 1280;
+inline constexpr int                DEF_ROOT_WIN_HEIGHT     = 720;
+inline constexpr float              DEF_ROOT_WINDOW_SCALE   = 0.80f;
+inline constexpr ImVec4             DEF_ROOT_WIN_BG         = ImVec4(0.00f,     0.00f,      0.00f,      0.00f); //ImVec4(0.45f,     0.55f,      0.60f,      1.0f);
+
+inline constexpr ImVec4             DEF_APPLE_BLUE          = ImVec4(0.244f,    0.467f,     0.847f,     1.000f);
+inline constexpr ImVec4             DEF_APPLE_RED           = ImVec4(1.000f,    0.271f,     0.227f,     1.000f);
+
+  
+//  2.  FILE-NAMES, DIRECTORY-NAMES, ETC    [COMPILE-TIME]...
+//
+//      2A.     DIRECTORY-NAMES...
+inline constexpr const char *       assets_dirname          = "assets";
+//
+//      2A.1    Sub-Directory Names...
+inline constexpr const char *       config_dirname          = "config";
+inline constexpr const char *       fonts_dirname           = "fonts";
+//
+//
+//      2B.     FILENAMES...
+inline constexpr const char *       ini_filename            = "cb_app.ini";
+inline constexpr const char *       style_filename          = "imgui_style.json";
+
+
+
+//  3.  FILE-PATHS, DIRECTORIES      | (FONT FAMILIES, SIZES, ETC)...
+//
+//      3A.     MAIN PROJECT DIRECTORIES    [RUN-TIME]...
+//inline const std::filesystem::path  CURRENT_PATH            = std::filesystem::current_path();    //  EXE_DIR = std::filesystem::absolute(CURRENT_PATH);
+inline constexpr const char *       EXE_DIR                 = "/";
+inline constexpr const char *       BUILD_DIR               = "../";
+inline constexpr const char *       ROOT_DIR                = "../../";
+//
+//      3A.2    Sub-Directories...
+inline constexpr const char *       ASSETS_DIR              = "../../assets/";
+inline constexpr const char *       CONFIG_DIR              = "../../assets/config/";
+inline constexpr const char *       FONTS_DIR               = "../../assets/fonts/";
+//
+//
+//      3B.     FILE-PATHS                  [RUN-TIME]...
+inline constexpr const char *       INI_FILEPATH            = "../../assets/fonts/cb_app.ini";
+inline constexpr const char *       INI_BACKUP_FILEPATH     = "../../assets/fonts/.backup.ini";     //  "../../assets/fonts/swap_cb_app.ini";
+
+inline constexpr const char *       STYLE_FILEPATH          = "../../assets/fonts/imgui_style.json";
+
+
+
+//      3.3     Fonts.
+//
+inline constexpr const char * get_font_path(void) {
+    #if defined(__APPLE__)
+        return "/System/Library/Fonts/SFNS.ttf";
+    # else
+        return "../../assets/fonts/Roboto/static/Roboto-Regular.ttf";
+    #endif      //  __APPLE__   //
+}
+
+inline constexpr const char *       DEF_FONT_PATH           = get_font_path();
+inline constexpr float              DEF_FONT_SIZE           = 20.0f;
+inline constexpr float              DEF_SMALL_FONT_SIZE     = 14.0f;
+    
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  FUNCTIONAL MACRO TO DEFINE APPLICATION FONTS...
+//
+#if defined(__APPLE__)
+    //  Fonts for MacOS Builds.
+    #define CBAPP_FONT_LIST(X)      \
+        X(Main,             "/System/Library/Fonts/SFNS.ttf",                               20.0f)      \
+        X(Small,            "/System/Library/Fonts/SFNS.ttf",                               14.0f)
+# else
+    //  Fonts for Windows, Linux, or other Builds.
+    #define CBAPP_FONT_LIST(X)      \
+        X(Main,             "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          20.0f)       \
+        X(Small,            "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          14.0f)
+#endif  //  __APPLE__  //
+
+
+
+// *************************************************************************** //
+
+//  "Font_t"
+//      - Enum to provide names for the index of each font...
+enum class Font_t : int {
+#define X(name, path, size) name,
+    CBAPP_FONT_LIST(X)
+#undef X
+    Count
+};
+
+
+//  "FontInfo"
+//      - Simple struct to define the various properties of each font...
+struct FontInfo {
+    std::string_view    path;
+    float               size;
+};
+
+
+//  APPLICATION_FONTS
+//
+static constexpr std::array<FontInfo, int( Font_t::Count )>     APPLICATION_FONT_STYLES = {{
+#define X(name, path, size) { path, size },
+    CBAPP_FONT_LIST(X)
+#undef X
+}};
+
+
+//  "EnumArray"
+//      Simple Struct/Class to use Indices based off Enum Class-Members Specifically.
+template<typename E, typename T, std::size_t N>
+struct EnumArray {
+    std::array<T, N> data;
+    T & operator[](E e) noexcept                { return data[static_cast<std::size_t>(e)]; }
+    const T & operator [](E e) const noexcept   { return data[static_cast<std::size_t>(e)]; }
+};
+
+    
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+} }//   END OF "cb" :: "app" NAMESPACE.
+
+
+
+
+
+
+#endif      //  _CBAPP_APP_INIT_H  //
+// *************************************************************************** //
+// *************************************************************************** //
+//
+//  END.

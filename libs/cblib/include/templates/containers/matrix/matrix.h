@@ -14,12 +14,12 @@
 # ifndef _CBLIB_MATRIX_H
 # define _CBLIB_MATRIX_H	1
 
-#include "matrix/init_matrix.h"
-#include "matrix/cb_matrix.h"
-#include "matrix/cb_ndmatrix.h"
-#include "matrix/matrix_driver.h"
+#include "templates/containers/matrix/matrix/init_matrix.h"
+#include "templates/containers/matrix/matrix/cb_matrix.h"
+#include "templates/containers/matrix/matrix/cb_ndmatrix.h"
+#include "templates/containers/matrix/matrix/matrix_driver.h"
 
 
 // *************************************************************************** //
 // *************************************************************************** //
-# endif	/* _CBLIB_MATRIX_H  //
+# endif // _CBLIB_MATRIX_H  //

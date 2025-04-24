@@ -347,10 +347,11 @@ void App::ImPlot_Testing3(void)
     static float                    window              = 10.0f;
     static float                    row_height          = 120.0f;
     static ImPlotAxisFlags          flags               = ImPlotAxisFlags_NoHighlight|ImPlotAxisFlags_NoMenus;//ImPlotAxisFlags_NoTickLabels;
-    static utl::ScrollingBuffer          data;
+    static utl::ScrollingBuffer     data;
     
     //data[row].AddPoint(time, utl::RandomRange(RMIN, RMAX));
     data.AddPoint(time, mouse.y * 0.0005);
+    //data.Offset = (int)window;
             
             
     ImGui::BulletText("Move your mouse to change the data!");

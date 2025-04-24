@@ -13,7 +13,14 @@ cmake_minimum_required(VERSION 3.10)
 project(CBApp)
 
 #   Add at the top or below the 'project(CBApp)' line
-# option(BUILD_CB_LIB_TESTS "Build test executables for cblib" ON)
+# option(BUILD_CB_LIBCBAPP_USE_VIEWPORTS "Build test executables for cblib" ON)
+
+
+#   Third party included libraries...
+set(THIRD_PARTY_INCLUDE_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/cblib/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/nlohmann/include
+)
 
 
 
@@ -44,7 +51,6 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/imgui_extensions    #   optional imgui wrappers
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui                       #   ImGui core
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends              #   ImGui backends
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/cblib/include          #   cblib template library
 )
 
 
@@ -113,6 +119,10 @@ add_executable(${PROJECT_NAME}
 
 #       4.3     Link necessary libraries: OpenGL and GLFW.
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_gl_LIBRARY} glfw)
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        ${THIRD_PARTY_INCLUDE_DIR}
+)
 
 #               Configure Xcode-specific behavior
 set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -142,23 +152,23 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/imgui PREFIX "imgui" FILES ${IMGUI
 ########################################################################
 ########################################################################
 
-if (BUILD_CB_LIB_TESTS)
+if (BUILD_CB_LIBCBAPP_USE_VIEWPORTS)
     #   Gather all .cpp test drivers under libs/cblib/tests/
-    file(GLOB_RECURSE LIB_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/libs/cblib/tests/*.cpp)
+    file(GLOB_RECURSE LIBCBAPP_USE_VIEWPORT_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/libs/cblib/tests/*.cpp)
         
     #   Define the test target
-    add_executable(cblib_tests ${LIB_TEST_SRCS})
+    add_executable(cblib_tests ${LIBCBAPP_USE_VIEWPORT_SRCS})
 
     #   Provide include access to cblib headers
     target_include_directories(cblib_tests PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/libs/cblib/include
+        ${THIRD_PARTY_INCLUDE_DIR}
     )
 
     #   Optional strict compiler flags for testing
     target_compile_options(cblib_tests PRIVATE -Wall -Wextra -pedantic)
 
     #   Group test sources in Xcode project navigator
-    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/libs/cblib/tests PREFIX "cblib/tests" FILES ${LIB_TEST_SRCS})
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/libs/cblib/tests PREFIX "cblib/tests" FILES ${LIBCBAPP_USE_VIEWPORT_SRCS})
 endif()
 
 

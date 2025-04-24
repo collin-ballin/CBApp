@@ -6,10 +6,10 @@
 //
 // *************************************************************************** //
 // *************************************************************************** //
-
+#include "_config.h"
 #include "utility/utility.h"
-#include "utility/constants.h"
-#include "utility/templates.h"
+#include "utility/_constants.h"
+#include "utility/_templates.h"
 
 
 
@@ -69,6 +69,8 @@ void ScrollingSparkline(const float time,       const float window,     Scrollin
 }
 
 
+//  "ScrollingSparkline"
+//
 void ScrollingSparkline(const float time,               const float window,     ScrollingBuffer & data,
                         const ImPlotAxisFlags flags,    const ImVec4 & color,   const ImVec2 & size,
                         const float center)

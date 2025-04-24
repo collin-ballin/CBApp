@@ -23,9 +23,8 @@
 *
 ******************************************************************************
 ******************************************************************************/
-
-//  0.1     "DEAR IMGUI" HEADERS...
 #include "main.h"           //  <======| MY HEADERS...
+#include "_config.h"
 
 
 
@@ -33,8 +32,7 @@
 //
 int main(int argc, char ** argv)
 {
-    int     status      = 0;
-    status              = cb::run_application(argc, argv);
+    int     status      = cb::run_application(argc, argv);
     
     return status;
 }

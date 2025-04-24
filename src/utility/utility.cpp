@@ -6,9 +6,9 @@
 //
 // *************************************************************************** //
 // *************************************************************************** //
-
 #include "utility/utility.h"
-#include "utility/constants.h"
+#include "utility/_constants.h"
+#include "_config.h"
 
 
 
@@ -174,6 +174,266 @@ GLFWwindow * create_glfw_window(const float scale, const char * title) {
 
 
 
+// *************************************************************************** //
+//
+//
+//  1.3     MISC I/O FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  1.3A-1      SAVING/WRITING FUNCTIONS...
+// *************************************************************************** //
+
+//  "SaveStyleToDisk_IMPL"
+//
+bool SaveStyleToDisk_IMPL(const ImGuiStyle& style, const std::string& file_path) {
+    using       json    = nlohmann::json;
+    static_assert(std::is_copy_constructible_v<ImGuiStyle> || std::is_trivially_copyable_v<ImGuiStyle>);
+    json        j;
+    
+    // scalar members
+    j["Alpha"]                                      = style.Alpha;
+    j["DisabledAlpha"]                              = style.DisabledAlpha;
+    j["WindowRounding"]                             = style.WindowRounding;
+    j["WindowBorderSize"]                           = style.WindowBorderSize;
+    j["WindowBorderHoverPadding"]                   = style.WindowBorderHoverPadding;
+    j["ChildRounding"]                              = style.ChildRounding;
+    j["ChildBorderSize"]                            = style.ChildBorderSize;
+    j["PopupRounding"]                              = style.PopupRounding;
+    j["PopupBorderSize"]                            = style.PopupBorderSize;
+    j["FrameRounding"]                              = style.FrameRounding;
+    j["FrameBorderSize"]                            = style.FrameBorderSize;
+    j["ItemSpacingX"]                               = style.ItemSpacing.x;
+    j["ItemSpacingY"]                               = style.ItemSpacing.y;
+    j["ItemInnerSpacingX"]                          = style.ItemInnerSpacing.x;
+    j["ItemInnerSpacingY"]                          = style.ItemInnerSpacing.y;
+    j["IndentSpacing"]                              = style.IndentSpacing;
+    j["ColumnsMinSpacing"]                          = style.ColumnsMinSpacing;
+    j["ScrollbarSize"]                              = style.ScrollbarSize;
+    j["ScrollbarRounding"]                          = style.ScrollbarRounding;
+    j["GrabMinSize"]                                = style.GrabMinSize;
+    j["GrabRounding"]                               = style.GrabRounding;
+    j["TabRounding"]                                = style.TabRounding;
+    j["TabBorderSize"]                              = style.TabBorderSize;
+    j["TabCloseButtonMinWidthSelected"]             = style.TabCloseButtonMinWidthSelected;
+    j["TabCloseButtonMinWidthUnselected"]           = style.TabCloseButtonMinWidthUnselected;
+    j["TabBarBorderSize"]                           = style.TabBarBorderSize;
+    j["TabBarOverlineSize"]                         = style.TabBarOverlineSize;
+    j["DockingSeparatorSize"]                       = style.DockingSeparatorSize;
+    j["MouseCursorScale"]                           = style.MouseCursorScale;
+    j["CurveTessellationTol"]                       = style.CurveTessellationTol;
+    j["CircleTessellationMaxError"]                 = style.CircleTessellationMaxError;
+    j["TreeLinesSize"]                              = style.TreeLinesSize;
+    
+    // vector members
+    j["WindowPadding"]                              = { style.WindowPadding.x, style.WindowPadding.y };
+    j["WindowMinSize"]                              = { style.WindowMinSize.x, style.WindowMinSize.y };
+    j["WindowTitleAlign"]                           = { style.WindowTitleAlign.x, style.WindowTitleAlign.y };
+    j["FramePadding"]                               = { style.FramePadding.x, style.FramePadding.y };
+    j["CellPadding"]                                = { style.CellPadding.x, style.CellPadding.y };
+    j["TouchExtraPadding"]                          = { style.TouchExtraPadding.x, style.TouchExtraPadding.y };
+    j["DisplayWindowPadding"]                       = { style.DisplayWindowPadding.x, style.DisplayWindowPadding.y };
+    j["DisplaySafeAreaPadding"]                     = { style.DisplaySafeAreaPadding.x, style.DisplaySafeAreaPadding.y };
+    
+    //  colors
+    for (int i = 0; i < ImGuiCol_COUNT; ++i) {
+        const ImVec4& c = style.Colors[i];
+        j["Colors"][i] = { c.x, c.y, c.z, c.w };
+    }
+    
+    //  behaviors
+    j["AntiAliasedLines"]                           = style.AntiAliasedLines;
+    j["AntiAliasedLinesUseTex"]                     = style.AntiAliasedLinesUseTex;
+    j["AntiAliasedFill"]                            = style.AntiAliasedFill;
+
+    // write file
+    std::ofstream ofs(file_path);
+    if (!ofs) return false;
+    ofs << j.dump(4);
+    
+    return true;
+}
+
+//  "SaveStyleToDisk"
+bool SaveStyleToDisk(const ImGuiStyle & style, const char * file_path)
+    { return SaveStyleToDisk_IMPL(style, file_path); }
+
+//  "SaveStyleToDisk"
+bool SaveStyleToDisk(const ImGuiStyle & style, const std::string & file_path)
+    { return SaveStyleToDisk_IMPL(style, file_path.c_str()); }
+
+//  "SaveStyleToDisk"
+bool SaveStyleToDisk(const ImGuiStyle & style, const std::string_view & file_path)
+    { return SaveStyleToDisk_IMPL(style, std::string( file_path ).c_str()); }
+
+
+
+//  1.3A-2      ASYNCHRONUC SAVING/WRITING FUNCTIONS...
+// *************************************************************************** //
+
+//  "SaveStyleToDiskAsync"
+bool SaveStyleToDiskAsync(const ImGuiStyle & style, const char * file_path) {
+    //  ** CRITICAL **  Create a local, deep-copy of "style" object to prevent race condition if the main thread alters
+    bool                status  =   false;      //  the "style" data while the worker thread is writing it's data to the file.
+    const ImGuiStyle    copy(style);            //      Note:   We could also accomplish this by **PASSING THE ARG BY VALUE**.
+    std::thread([&status, &copy, &file_path]() {
+        status = SaveStyleToDisk_IMPL(copy, file_path);
+    }).detach();
+    
+    return status;
+}
+
+//  "SaveStyleToDiskAsync"
+bool SaveStyleToDiskAsync(ImGuiStyle style, const char * file_path) {
+    bool  status = false;
+    std::thread([&status, &style, &file_path]()     { status = SaveStyleToDisk_IMPL(style, file_path); }).detach();
+    return status;
+}
+
+
+
+//  1.3B-1      LOADING FUNCTIONS...
+// *************************************************************************** //
+
+//  "LoadStyleFromDisk_IMPL"
+//
+bool LoadStyleFromDisk_IMPL(ImGuiStyle & style, const char * file_path)
+{
+    using               json    = nlohmann::json;
+    std::ifstream       ifs(file_path);
+    
+    if (!ifs)
+        return false;
+        
+    json                j;
+    ifs >> j;
+
+
+    //  helpers to pull with default
+    auto getf = [&](auto& dst, const char* key) {
+        using T = std::remove_reference_t<decltype(dst)>;
+        if (j.contains(key))
+            dst = j[key].get<T>();
+    };
+    auto get2 = [&](ImVec2& v, const char* key){
+        if (j.contains(key) && j[key].is_array() && j[key].size()==2) {
+            v.x = j[key][0].get<float>();
+            v.y = j[key][1].get<float>();
+        }
+    };
+    auto getcol = [&](int i){
+        if (j.contains("Colors") && j["Colors"].is_array() && j["Colors"].size()>i) {
+            auto& arr = j["Colors"][i];
+            style.Colors[i] = ImVec4(arr[0].get<float>(),
+                                     arr[1].get<float>(),
+                                     arr[2].get<float>(),
+                                     arr[3].get<float>());
+        }
+    };
+
+    getf(style.Alpha,                       "Alpha");
+    getf(style.DisabledAlpha,               "DisabledAlpha");
+    getf(style.WindowRounding,              "WindowRounding");
+    getf(style.WindowBorderSize,            "WindowBorderSize");
+    getf(style.ChildRounding,               "ChildRounding");
+    getf(style.ChildBorderSize,             "ChildBorderSize");
+    getf(style.PopupRounding,               "PopupRounding");
+    getf(style.PopupBorderSize,             "PopupBorderSize");
+    getf(style.FrameRounding,               "FrameRounding");
+    getf(style.FrameBorderSize,             "FrameBorderSize");
+    getf(style.ItemSpacing.x,               "ItemSpacingX");
+    getf(style.ItemSpacing.y,               "ItemSpacingY");
+    getf(style.ItemInnerSpacing.x,          "ItemInnerSpacingX");
+    getf(style.ItemInnerSpacing.y,          "ItemInnerSpacingY");
+    getf(style.IndentSpacing,               "IndentSpacing");
+    getf(style.ColumnsMinSpacing,           "ColumnsMinSpacing");
+    getf(style.ScrollbarSize,               "ScrollbarSize");
+    getf(style.ScrollbarRounding,           "ScrollbarRounding");
+    getf(style.GrabMinSize,                 "GrabMinSize");
+    getf(style.GrabRounding,                "GrabRounding");
+    getf(style.TabRounding,                 "TabRounding");
+    getf(style.TabBorderSize,               "TabBorderSize");
+    getf(style.TabBarBorderSize,            "TabBarBorderSize");
+    getf(style.TabBarOverlineSize,          "TabBarOverlineSize");
+    getf(style.DockingSeparatorSize,        "DockingSeparatorSize");
+    getf(style.MouseCursorScale,            "MouseCursorScale");
+    getf(style.CurveTessellationTol,        "CurveTessellationTol");
+    getf(style.CircleTessellationMaxError,  "CircleTessellationMaxError");
+    getf(style.TreeLinesSize,               "TreeLinesSize");
+    
+    //  vectors
+    get2(style.WindowPadding,               "WindowPadding");
+    get2(style.WindowMinSize,               "WindowMinSize");
+    get2(style.WindowTitleAlign,            "WindowTitleAlign");
+    get2(style.FramePadding,                "FramePadding");
+    get2(style.CellPadding,                 "CellPadding");
+    get2(style.TouchExtraPadding,           "TouchExtraPadding");
+    get2(style.DisplayWindowPadding,        "DisplayWindowPadding");
+    get2(style.DisplaySafeAreaPadding,      "DisplaySafeAreaPadding");
+    
+    //  colors
+    for (int i = 0; i < ImGuiCol_COUNT; ++i)
+        getcol(i);
+        
+    //  behaviors
+    getf(style.AntiAliasedLines,            "AntiAliasedLines");
+    getf(style.AntiAliasedLinesUseTex,      "AntiAliasedLinesUseTex");
+    getf(style.AntiAliasedFill,             "AntiAliasedFill");
+
+    return true;
+}
+
+
+//  "LoadStyleFromDisk"
+bool LoadStyleFromDisk(ImGuiStyle & style, const char * file_path)
+    { return LoadStyleFromDisk_IMPL(style, file_path); }
+    
+//  "LoadStyleFromDisk"
+bool LoadStyleFromDisk(ImGuiStyle & style, const std::string & file_path)
+    { return LoadStyleFromDisk_IMPL(style, file_path.c_str() ); }
+
+//  "LoadStyleFromDisk"
+bool LoadStyleFromDisk(ImGuiStyle & style, const std::string_view & file_path)
+    { return LoadStyleFromDisk_IMPL(style, std::string( file_path ).c_str() ); }
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+} }//   END OF "cb" NAMESPACE.
+
+
+
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+//
+//  END.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -189,7 +449,7 @@ const char * get_glsl_version(void)
     const GLFWvidmode *     mode        = glfwGetVideoMode( monitor );
     
     
-    this->m_window = glfwCreateWindow(cb::utl::ROOT_WIN_DEF_WIDTH, cb::utl::ROOT_WIN_DEF_HEIGHT, cb::utl::ROOT_WIN_DEF_TITLE, nullptr, nullptr);
+    this->m_window = glfwCreateWindow(cb::app::ROOT_WIN_DEF_WIDTH, cb::app::ROOT_WIN_DEF_HEIGHT, cb::app::ROOT_WIN_DEF_TITLE, nullptr, nullptr);
     if (!this->m_window)
         throw std::runtime_error("Call to glfwInit() returned NULL");
     
@@ -204,11 +464,11 @@ const char * get_glsl_version(void)
     ImGui::CreateContext();
     ImGuiIO &       io          = ImGui::GetIO(); (void)io;
 #ifdef CBAPP_USE_SWAP_INI
-    io.IniFilename            = cb::utl::SWAP_INI_FILEPATH;
-    ImGui::LoadIniSettingsFromDisk(cb::utl::SWAP_INI_FILEPATH);
+    io.IniFilename            = cb::app::SWAP_INI_FILEPATH;
+    ImGui::LoadIniSettingsFromDisk(cb::app::SWAP_INI_FILEPATH);
 # else
-    io.IniFilename            = cb::utl::INI_FILEPATH;
-    ImGui::LoadIniSettingsFromDisk(cb::utl::INI_FILEPATH);
+    io.IniFilename            = cb::app::INI_FILEPATH;
+    ImGui::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH);
 #endif      //  CBAPP_USE_SWAP_INI  //
                                                        //  2.1 Load ".ini" File..
     io.ConfigFlags             |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad |      //  2.2 Configure I/O Settings.
@@ -236,7 +496,7 @@ const char * get_glsl_version(void)
     //
     //
     //      3.3     Load Fonts.
-    this->m_main_font                       = io.Fonts->AddFontFromFileTTF(cb::utl::DEF_FONT_PATH, cb::utl::DEF_FONT_SIZE);
+    this->m_main_font                       = io.Fonts->AddFontFromFileTTF(cb::app::DEF_FONT_PATH, cb::app::DEF_FONT_SIZE);
     IM_ASSERT(this->m_main_font != nullptr);
     
     
@@ -247,23 +507,15 @@ const char * get_glsl_version(void)
 
 
 
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-} }//   END OF "cb" NAMESPACE.
 
 
 
 
 
 
-// *************************************************************************** //
-// *************************************************************************** //
-//
-//  END.
+
+
+
 
 
 
@@ -316,7 +568,7 @@ void App::init(void)
     const GLFWvidmode *     mode        = glfwGetVideoMode( monitor );
     
     
-    this->m_window = glfwCreateWindow(cb::utl::ROOT_WIN_DEF_WIDTH, cb::utl::ROOT_WIN_DEF_HEIGHT, cb::utl::ROOT_WIN_DEF_TITLE, nullptr, nullptr);
+    this->m_window = glfwCreateWindow(cb::app::ROOT_WIN_DEF_WIDTH, cb::app::ROOT_WIN_DEF_HEIGHT, cb::app::ROOT_WIN_DEF_TITLE, nullptr, nullptr);
     if (!this->m_window)
         throw std::runtime_error("Call to glfwInit() returned NULL");
     
@@ -331,11 +583,11 @@ void App::init(void)
     ImGui::CreateContext();
     ImGuiIO &       io          = ImGui::GetIO(); (void)io;
     #ifdef CBAPP_USE_SWAP_INI
-      io.IniFilename            = cb::utl::SWAP_INI_FILEPATH;
-      ImGui::LoadIniSettingsFromDisk(cb::utl::SWAP_INI_FILEPATH);
+      io.IniFilename            = cb::app::SWAP_INI_FILEPATH;
+      ImGui::LoadIniSettingsFromDisk(cb::app::SWAP_INI_FILEPATH);
     # else
-      io.IniFilename            = cb::utl::INI_FILEPATH;
-      ImGui::LoadIniSettingsFromDisk(cb::utl::INI_FILEPATH);
+      io.IniFilename            = cb::app::INI_FILEPATH;
+      ImGui::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH);
     #endif      //  CBAPP_USE_SWAP_INI  //
                                                        //  3.1 Load ".ini" File..
     io.ConfigFlags             |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad |      //  3.2 Configure I/O Settings.
@@ -363,7 +615,7 @@ void App::init(void)
     //
     //
     //      3.3     Load Fonts.
-    this->m_main_font                       = io.Fonts->AddFontFromFileTTF(cb::utl::DEF_FONT_PATH, cb::utl::DEF_FONT_SIZE);
+    this->m_main_font                       = io.Fonts->AddFontFromFileTTF(cb::app::DEF_FONT_PATH, cb::app::DEF_FONT_SIZE);
     IM_ASSERT(this->m_main_font != nullptr);
     
     

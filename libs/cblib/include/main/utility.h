@@ -13,7 +13,7 @@
 // 	Pre-Processor 'Function-Esque' Macros / for Utility Usage.
 // *************************************************************************** //
 
-/*
+
 #if _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY
 # define _GLIBCXX_VISIBILITY(V) __attribute__ ((__visibility__ (#V)))
 #else		
