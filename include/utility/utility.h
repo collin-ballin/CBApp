@@ -40,47 +40,80 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 
 
+
+
 //  1.  DEFINED IN "utility.cpp"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+// *************************************************************************** //
+//
+//
+//  0.  INLINE DEFINITIONS (HEADER ONLY)...
+// *************************************************************************** //
+// *************************************************************************** //
 
+//  "WindowLocation"
+enum class WindowLocation {
+    Center,         // default
+    LeftHalf,       // left half of the monitor
+    RightHalf       // right half of the monitor
+};
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  1.  DEFINED IN "utility.cpp"...
+// *************************************************************************** //
+// *************************************************************************** //
 
 //      1.1     MISC / UTILITY FUNCTIONS...
 // *************************************************************************** //
 void                            glfw_error_callback         (int error, const char * description);
+
+
+//      1.2     WINDOW SIZE / GEOMETRY FUNCTIONS...
+// *************************************************************************** //
 [[nodiscard]]
 GLFWmonitor *                   get_current_monitor         (GLFWwindow * window);
 void                            set_window_scale            (GLFWwindow * window, const float scale);
-
 void                            set_next_window_geometry    (GLFWwindow * glfw_window, float pos_x_frac, float pos_y_frac,
-                                                                                           float width_frac, float height_frac);
+                                                                                       float width_frac, float height_frac);
+
+void                            SetGLFWWindowLocation       (GLFWwindow *   win, const      WindowLocation          loc,
+                                                            const float     scale=0.5f,     const GLFWmonitor *     monitor=nullptr);
 
 
-//      1.2     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
+//      1.3     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
 // *************************************************************************** //
 const char *                    get_glsl_version            (void);
 
 
 
-//      1.3     MISC I/O FUNCTIONS...
+//      1.4     MISC I/O FUNCTIONS...
 // *************************************************************************** //
-                                //  1.3A-1      SAVING/WRITING FUNCTIONS...
+                                //  1.4A-1      SAVING/WRITING FUNCTIONS...
 bool                            SaveStyleToDisk             (const ImGuiStyle &     style,  const std::string &         file_path);
 bool                            SaveStyleToDisk             (const ImGuiStyle &     style,  const char *                file_path);
 bool                            SaveStyleToDisk             (const ImGuiStyle &     style,  std::string_view            file_path);
 
-                                //  1.3A-2      ASYNCHRONUS SAVING/WRITING FUNCTIONS...
+                                //  1.4A-2      ASYNCHRONUS SAVING/WRITING FUNCTIONS...
 bool                            SaveStyleToDiskAsync        (const ImGuiStyle &     style,  const char *                file_path);
 bool                            SaveStyleToDiskAsync        (ImGuiStyle             style,  const char *                file_path);
 
 
-                                //  1.3B-1      LOADING FUNCTIONS...
+                                //  1.4B-1      LOADING FUNCTIONS...
 bool                            LoadStyleFromDisk           (ImGuiStyle &           style,  const char *                file_path);
 bool                            LoadStyleFromDisk           (ImGuiStyle &           style,  const std::string &         file_path);
 bool                            LoadStyleFromDisk           (ImGuiStyle &           style,  const std::string_view &    file_path);
 
-                                //  1.3B-2      ASYNCHRONUS LOADING FUNCTIONS...
+                                //  1.4B-2      ASYNCHRONUS LOADING FUNCTIONS...
 
 
 //

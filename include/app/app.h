@@ -14,7 +14,7 @@
 //  0.  PRE-PROCESSOR DEFINED MACROS...
 // *************************************************************************** //
 // *************************************************************************** //
-#define     CBAPP_DEBUG                     1
+#define     __CBAPP_DEBUG__                     1
 #define     CBAPP_USE_VIEWPORT              1
 #define     CBAPP_USE_DOCKSPACE             1
 
@@ -100,7 +100,9 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  0.      UTILITY FUNCTIONS [NON-MEMBER FUNCTIONS]...
 int                 run_application             (int argc, char ** argv);
 
-
+//  DEAR IMGUI DEMO APPLICATIONS...
+void                ShowExampleAppLog           (bool * p_open);
+void                ShowExampleAppConsole       (bool* p_open);
 
 
 // *************************************************************************** //
@@ -139,31 +141,49 @@ public:
 protected:
     //  2.A             PROTECTED DATA-MEMBERS...
     // *************************************************************************** //
-    bool                m_show_sidebar_menu             = true;     //  Boolean State Vars.
+    
+    //                  1.  BOOLEANS...
+    bool                m_show_sidebar_window           = true;
     bool                m_show_main_window              = true;
     bool                m_show_style_editor             = false;
+    bool                m_show_log_window               = false;
+    bool                m_show_console_window           = false;
+    bool                m_show_metrics_window           = false;
     bool                m_show_imgui_demo               = false;
     bool                m_show_implot_demo              = false;
     
     
-    const char *        m_glsl_version;
-    ImVec4              m_clear_color                   = cb::utl::DEF_ROOT_WIN_BG;//  GLFW Window Vars.
+    //                  2.  APPEARANCE...
+    //                          Dimensions.
     uint32_t            m_sys_width                     = 0U;
     uint32_t            m_sys_height                    = 0U;
+    //
+    //                          Colors.
+    ImVec4              m_dock_bg                       = cb::app::DEF_INVISIBLE_COLOR;
+    ImVec4              m_glfw_bg                       = cb::app::DEF_ROOT_WIN_BG;
+    ImVec4              m_sidebar_bg                    = cb::app::DEF_SIDEBAR_WIN_BG;
+    ImVec4              m_main_bg                       = cb::app::DEF_MAIN_WIN_BG;
+    //
+    //                          Fonts.
     ImFonts             m_fonts                         = { nullptr };
-
-
-#ifdef CBAPP_USE_VIEWPORT
+    
+    
+    //                  3.  WINDOW ITEMS...             //  ImGuiWindowFlags_NoSavedSettings
+    ImGuiWindowFlags    m_host_win_flags                = ImGuiWindowFlags_None | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+                                                          ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+    ImGuiWindowFlags    m_sidebar_win_flags             = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
+                                                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+    ImGuiWindowFlags    m_main_win_flags                = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+    
+    
+    //                  4.  MISC INFORMATION...
     const char *        m_dock_name                     = "RootDockspace";
-    ImGuiWindowFlags    m_host_win_flags                = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
-                                                          ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
-                                                          ImGuiWindowFlags_NoBackground; // ImGuiWindowFlags_NoSavedSettings
-    //ImGuiID             m_dock_ID                       = 0U;
-#endif  //  CBAPP_USE_VIEWPORT  //
-
-    ImGuiWindowFlags    m_win_flags                     = ImGuiWindowFlags_None;
+    const char *        m_glsl_version                  = nullptr;
+    
+    //                  9.  IMPORTANT VARIABLES...
     ImGuiViewport *     m_main_viewport                 = nullptr;
     GLFWwindow *        m_window                        = nullptr;
+    
     
     
     //  2.B             PROTECTED MEMBER FUNCTIONS...
@@ -187,24 +207,33 @@ private:
     void                Display_Main_Window         (bool * );
     
     
-    //  3.3             Menu Functions.             [interface.cpp]...
+    //  3.3             Primary Menu Functions.     [interface.cpp]...
     void                Display_Sidebar_Menu        (bool * );
     void                Display_Main_Menu_Bar       (void);
-    void                Display_file_menubar        (void);
-    void                Display_edit_menubar        (void);
-    void                Display_view_menubar        (void);
-    void                Display_window_menubar      (void);
-    void                Display_tools_menubar       (void);
-    void                Display_help_menubar        (void);
+    void                Display_Preferences_Menu    (void);
     
     
-    //  3.4             Primary GUI Functions.      [windows.cpp]...
+    //  3.4             Secondary Menu Functions.   [interface.cpp]...
+    void                disp_appearance_mode        (void);     //  Other...
+    void                disp_font_selector          (void);
+    void                disp_color_palette          (void);
+    void                disp_performance_metrics    (void);
+    //
+    void                disp_file_menubar           (void);     //  Menubar...
+    void                disp_edit_menubar           (void);
+    void                disp_view_menubar           (void);
+    void                disp_window_menubar         (void);
+    void                disp_tools_menubar          (void);
+    void                disp_help_menubar           (void);
+    
+    
+    //  3.5             Primary GUI Functions.      [windows.cpp]...
     void                ImPlot_Testing1             (void);
     void                ImPlot_Testing2             (void);
     void                ImPlot_Testing3             (void);
     
     
-    //  3.5             Misc. GUI Functions.        [temp.cpp]...
+    //  3.6             Misc. GUI Functions.        [temp.cpp]...
     void                Test_Basic_Widgets          (void);
     void                ImGui_Demo_Code             (void);
     
@@ -1324,7 +1353,7 @@ static void DemoWindowLayout()
             ImGui::SmallButton("SmallButton()");
 
             // Tree
-            // (here the node appears after a button and has odd intent, so we use ImGuiTreeNodeFlags_DrawLinesNone to disable hierarchy outline)
+            // (here the node appears after a button and has odd intent, so we use ImGuiTreeNodeFlags_DrawLinesNone to disable hierarchy oappine)
             const float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
             ImGui::Button("Button##1");
             ImGui::SameLine(0.0f, spacing);

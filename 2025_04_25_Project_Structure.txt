@@ -1,0 +1,226 @@
+.
+├── .DS_Store
+├── .gitattributes
+├── .gitignore
+├── CMakeLists.txt
+├── LICENSE.txt
+├── README.txt
+├── assets
+│   ├── .DS_Store
+│   ├── configs
+│   │   └── .DS_Store
+│   └── fonts
+│       ├── .DS_Store
+│       ├── .backup.ini
+│       ├── Roboto
+│       │   ├── .DS_Store
+│       │   ├── OFL.txt
+│       │   ├── README.txt
+│       │   └── static
+│       ├── cb_app.ini
+│       ├── imgui_style.json
+│       └── swap_cb_app.ini
+├── deep_research.txt
+├── docs
+│   ├── BACKENDS.md
+│   ├── CHANGELOG.txt
+│   ├── CONTRIBUTING.md
+│   ├── EXAMPLES.md
+│   ├── FAQ.md
+│   ├── FONTS.md
+│   ├── README.md
+│   └── TODO.txt
+├── example_glfw_opengl3
+│   ├── .DS_Store
+│   ├── Makefile
+│   ├── README.txt
+│   ├── build_win32.bat
+│   └── main.cpp
+├── imgui
+│   ├── .DS_Store
+│   ├── backends
+│   │   ├── .DS_Store
+│   │   ├── imgui_impl_allegro5.cpp
+│   │   ├── imgui_impl_allegro5.h
+│   │   ├── imgui_impl_android.cpp
+│   │   ├── imgui_impl_android.h
+│   │   ├── imgui_impl_dx10.cpp
+│   │   ├── imgui_impl_dx10.h
+│   │   ├── imgui_impl_dx11.cpp
+│   │   ├── imgui_impl_dx11.h
+│   │   ├── imgui_impl_dx12.cpp
+│   │   ├── imgui_impl_dx12.h
+│   │   ├── imgui_impl_dx9.cpp
+│   │   ├── imgui_impl_dx9.h
+│   │   ├── imgui_impl_glfw.cpp
+│   │   ├── imgui_impl_glfw.h
+│   │   ├── imgui_impl_glut.cpp
+│   │   ├── imgui_impl_glut.h
+│   │   ├── imgui_impl_metal.h
+│   │   ├── imgui_impl_metal.mm
+│   │   ├── imgui_impl_opengl2.cpp
+│   │   ├── imgui_impl_opengl2.h
+│   │   ├── imgui_impl_opengl3.cpp
+│   │   ├── imgui_impl_opengl3.h
+│   │   ├── imgui_impl_opengl3_loader.h
+│   │   ├── imgui_impl_osx.h
+│   │   ├── imgui_impl_osx.mm
+│   │   ├── imgui_impl_sdl2.cpp
+│   │   ├── imgui_impl_sdl2.h
+│   │   ├── imgui_impl_sdl3.cpp
+│   │   ├── imgui_impl_sdl3.h
+│   │   ├── imgui_impl_sdlgpu3.cpp
+│   │   ├── imgui_impl_sdlgpu3.h
+│   │   ├── imgui_impl_sdlgpu3_shaders.h
+│   │   ├── imgui_impl_sdlrenderer2.cpp
+│   │   ├── imgui_impl_sdlrenderer2.h
+│   │   ├── imgui_impl_sdlrenderer3.cpp
+│   │   ├── imgui_impl_sdlrenderer3.h
+│   │   ├── imgui_impl_vulkan.cpp
+│   │   ├── imgui_impl_vulkan.h
+│   │   ├── imgui_impl_wgpu.cpp
+│   │   ├── imgui_impl_wgpu.h
+│   │   ├── imgui_impl_win32.cpp
+│   │   ├── imgui_impl_win32.h
+│   │   ├── sdlgpu3
+│   │   │   ├── build_instructions.txt
+│   │   │   ├── shader.frag
+│   │   │   └── shader.vert
+│   │   └── vulkan
+│   │       ├── build_instructions.txt
+│   │       ├── generate_spv.sh
+│   │       ├── glsl_shader.frag
+│   │       └── glsl_shader.vert
+│   ├── imconfig.h
+│   ├── imgui.cpp
+│   ├── imgui.h
+│   ├── imgui_demo.cpp
+│   ├── imgui_draw.cpp
+│   ├── imgui_internal.h
+│   ├── imgui_tables.cpp
+│   ├── imgui_widgets.cpp
+│   ├── implot.cpp
+│   ├── implot.h
+│   ├── implot_demo.cpp
+│   ├── implot_internal.h
+│   ├── implot_items.cpp
+│   ├── imstb_rectpack.h
+│   ├── imstb_textedit.h
+│   └── imstb_truetype.h
+├── include
+│   ├── .DS_Store
+│   ├── _config.h
+│   ├── app
+│   │   ├── .DS_Store
+│   │   ├── _init.h
+│   │   ├── _my_demo.h
+│   │   └── app.h
+│   ├── imgui
+│   │   └── .DS_Store
+│   ├── main.h
+│   └── utility
+│       ├── .DS_Store
+│       ├── _constants.h
+│       ├── _templates.h
+│       └── utility.h
+├── libs
+│   ├── .DS_Store
+│   ├── CBLib.xcworkspace
+│   │   ├── contents.xcworkspacedata
+│   │   ├── xcshareddata
+│   │   │   └── swiftpm
+│   │   │       └── configuration
+│   │   └── xcuserdata
+│   │       └── collinbond.xcuserdatad
+│   │           ├── IDEFindNavigatorScopes.plist
+│   │           └── UserInterfaceState.xcuserstate
+│   ├── cblib
+│   │   ├── .DS_Store
+│   │   ├── include
+│   │   │   ├── .DS_Store
+│   │   │   ├── PCH
+│   │   │   │   └── PCH.h
+│   │   │   ├── cblib.h
+│   │   │   ├── main
+│   │   │   │   ├── .DS_Store
+│   │   │   │   ├── driver.h
+│   │   │   │   └── utility.h
+│   │   │   └── templates
+│   │   │       ├── .DS_Store
+│   │   │       ├── containers
+│   │   │       │   ├── .DS_Store
+│   │   │       │   ├── array
+│   │   │       │   │   ├── .DS_Store
+│   │   │       │   │   ├── array
+│   │   │       │   │   │   └── cb_array.h
+│   │   │       │   │   └── array.h
+│   │   │       │   └── matrix
+│   │   │       │       ├── .DS_Store
+│   │   │       │       ├── matrix
+│   │   │       │       │   ├── cb_matrix.h
+│   │   │       │       │   ├── cb_ndmatrix.h
+│   │   │       │       │   ├── init_matrix.h
+│   │   │       │       │   └── matrix_driver.h
+│   │   │       │       └── matrix.h
+│   │   │       └── utility
+│   │   │           ├── helper.h
+│   │   │           └── type_traits.h
+│   │   └── tests
+│   │       ├── .DS_Store
+│   │       ├── driver.cpp
+│   │       ├── matrix_driver.cpp
+│   │       └── utility.cpp
+│   ├── emscripten
+│   │   ├── emscripten_mainloop_stub.h
+│   │   └── shell_minimal.html
+│   ├── glfw
+│   │   ├── COPYING.txt
+│   │   └── include
+│   │       └── GLFW
+│   │           ├── glfw3.h
+│   │           └── glfw3native.h
+│   ├── nlohmann
+│   │   ├── .DS_Store
+│   │   └── include
+│   │       ├── json.hpp
+│   │       └── json_fwd.hpp
+│   └── usynergy
+│       ├── README.txt
+│       ├── uSynergy.c
+│       └── uSynergy.h
+├── misc
+│   ├── README.txt
+│   ├── cpp
+│   │   ├── README.txt
+│   │   ├── imgui_stdlib.cpp
+│   │   └── imgui_stdlib.h
+│   ├── debuggers
+│   │   ├── README.txt
+│   │   ├── imgui.gdb
+│   │   ├── imgui.natstepfilter
+│   │   └── imgui.natvis
+│   ├── fonts
+│   │   └── binary_to_compressed_c.cpp
+│   ├── freetype
+│   │   ├── README.md
+│   │   ├── imgui_freetype.cpp
+│   │   └── imgui_freetype.h
+│   └── single_file
+│       └── imgui_single_file.h
+├── project_structure.txt
+└── src
+    ├── .DS_Store
+    ├── app
+    │   ├── app.cpp
+    │   ├── interface.cpp
+    │   ├── temp.cpp
+    │   └── windows.cpp
+    ├── imgui
+    │   └── .DS_Store
+    ├── main.cpp
+    └── utility
+        ├── .DS_Store
+        ├── plots.cpp
+        └── utility.cpp
+
+52 directories, 172 files

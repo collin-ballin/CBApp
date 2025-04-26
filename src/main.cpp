@@ -101,10 +101,10 @@ int main(int argc, char ** argv)
 #endif
 
 
-#ifdef CBAPP_DEBUG                //  <======| Fix for issue wherein multiple instances of application
+#ifdef __CBAPP_DEBUG__                //  <======| Fix for issue wherein multiple instances of application
 # include <thread>                //           are launched when DEBUG build is run inside Xcode IDE...
 # include <chrono>
-#endif     //  CBAPP_DEBUG  //
+#endif     //  __CBAPP_DEBUG__  //
 
 
 // *************************************************************************** //
@@ -126,7 +126,7 @@ int main(int argc, char ** argv)
     int                     status                  = EXIT_SUCCESS;
     
     
-#ifdef CBAPP_DEBUG    //  WORK-AROUND / PATCH FOR XCODE ISSUE...
+#ifdef __CBAPP_DEBUG__    //  WORK-AROUND / PATCH FOR XCODE ISSUE...
     std::this_thread::sleep_for(std::chrono::seconds(1));
 #endif
 

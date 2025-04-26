@@ -10,17 +10,53 @@
 
 
 
-//  0.  PRE-PROCESSOR DEFINED MACROS...
+//  0.  MACROS DEFINED BY "DEAR IMGUI" OR OTHER LIBRARIES]...
+// *************************************************************************** //
+//      ****           D O   N O T   T O U C H           ****
+// *************************************************************************** //
+#define     GL_SILENCE_DEPRECATION                      1               //  MACRO DEFINED BY "DEAR IMGUI" EXAMPLE PROGRAM.
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  1.  MY-OWN GLOBALLY DEFINED PRE-PROCESSOR MACROS...
 // *************************************************************************** //
 // *************************************************************************** //
-#define     CBAPP_DEBUG                     1
-#define     CBAPP_USE_VIEWPORT              1
-#define     CBAPP_USE_DOCKSPACE             1
 
-//#define     CBAPP_DISABLE_INI               1
-#define     CBAPP_LOAD_STYLE_FILE           1
 
-#define     GL_SILENCE_DEPRECATION          1
+//      1.1     CRITICAL BUILD SETTINGS...
+// *************************************************************************** //
+#define     __CBAPP_DEBUG__                             1               //  Enable delay before starting int main (bug-fix for X-Code IDE issue).
+
+
+
+//      1.2     W-I-P APPLICATION OPTIONS...
+// *************************************************************************** //
+#define     __CBAPP_THROTTLE_PERF_METRICS__             30ULL           //  Compute performance metrics (FPS, memory-use, etc) every "N"-frames
+                                                                        //  (instead of every single frame).  This macro serves as BOTH the ENABLE
+                                                                        //  CLAUSE for the feature *AND* the number, N, for the throttle.
+
+
+
+//      1.3     DEBUGGING UTILITIES...
+// *************************************************************************** //
+#define     CBAPP_USE_VIEWPORT                          1               //  Debug util.  | Should be removed soon (as of 25th/04/2025).
+#define     CBAPP_USE_DOCKSPACE                         1               //  Debug util.  | Should be removed soon (as of 25th/04/2025).
+
+
+
+//      1.4     COMPILE-TIME APPLICATION OPTIONS...
+// *************************************************************************** //
+//#define     CBAPP_DISABLE_INI                         1               //  Prevent use of ".ini" file to save/recall data.
+#define     CBAPP_LOAD_STYLE_FILE                       1               //  Prevent use of ".json" file to save/recall "ImGui" style data.
+
+
+
 
 
 

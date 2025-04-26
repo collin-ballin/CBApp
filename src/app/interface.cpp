@@ -8,6 +8,7 @@
 // *************************************************************************** //
 #include "app/app.h"
 #include "_config.h"
+# include "imgui_internal.h"
 //#include "utility/utility.h"
 #include <random>
 #include <algorithm>
@@ -31,118 +32,23 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void App::Display_Sidebar_Menu(bool * p_open)
 {
-    static constexpr const char *   win_title       = "Menu";       //  General Constants for the window.
-    static int                      counter         = 0;
-    static float                    scale           = 0.75f;
     ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
-    static ImGuiWindowFlags         sidebar_flags   = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
-                                                      ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus; // ImGuiWindowFlags_NoSavedSettings
-    
-    
+    ImGuiStyle &                    style           = ImGui::GetStyle();
     
     
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
-    ImGui::Begin(win_title, p_open, sidebar_flags);
-    {
-        static bool                 init            = true;
-        ImGuiStyle &                style           = ImGui::GetStyle();
-        ImGuiStyle *                ref             = nullptr;
-        static ImGuiStyle           ref_saved_style;
-        
-        
-        
-        //      2.2     Application Settings
-        ImGui::SeparatorText("Application Settings");
-        {
-            //  1.  GLFW Window Background...
-            ImGui::ColorEdit4("Bg",     (float*)&this->m_clear_color, ImGuiColorEditFlags_DisplayHSV );
-            
-            //  2.  Window Scaling...
-            ImGui::SliderFloat("Window Scale", &scale, 0.01f, 0.99f, "%.2f");
-            scale = std::clamp(scale, 0.01f, 0.99f);    // Enforce bounds explicitly in case user types in a value
-            if (ImGui::Button("Apply Scale"))
-                utl::set_window_scale(this->m_window, scale);
-                
-                
-                
-            //  "SETTINGS" GROUP...
-            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-            if (ImGui::TreeNode("Settings"))
-            {
-                //  3.  Style Mode Slider...
-                if (ImGui::ShowStyleSelector("Appearance##Selector"))
-                    ref_saved_style = style;
-                ImGui::ShowFontSelector("Global Font##Selector");
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_sidebar_bg);   // Push before ImGui::Begin()
+    ImGui::Begin(app::DEF_SIDEBAR_WIN_TITLE, p_open, this->m_sidebar_win_flags);
+    ImGui::PopStyleColor();
+    
+    
 
-                //  Default to using internal storage as reference
-                if (init && ref == NULL)
-                    ref_saved_style = style;
-                init = false;
-                if (ref == NULL)
-                    ref = &ref_saved_style;
-                    
-                    
-                    
-                ImGui::TreePop();
-            }// END "SETTINGS"...
-                
-                
-        }
-    }
 
+
+    
+    this->Display_Preferences_Menu();
         
         
-        //  2.3     BOTTOM OF WINDOW | INI-Button, Frame-Rate, etc...
-        {
-            static constexpr float    MAX_SPF           = 12.0f;
-            static constexpr float    window            = 10.0f;
-            static constexpr ImVec4   color(0.244f, 0.467f, 0.847f, 1.0f);
-            static ImPlotAxisFlags          flags       = ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoSideSwitch |
-                                                          ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_LockMin;
-            static ImVec2                   size(-1, 150);
-            static utl::ScrollingBuffer     data;
-            ImVec2                          mouse       = ImGui::GetMousePos();
-            static float                    time        = 0;
-            time                                       += ImGui::GetIO().DeltaTime;
-            data.AddPoint(time, 1000.0f / io.Framerate);
-            
-            
-                    
-                    
-                    
-            //  1.  SPACING...
-            const float OCCUPIED = size[1] + 2.5 * ImGui::GetTextLineHeight();
-            ImGui::Dummy( ImVec2(0.0f, ImGui::GetContentRegionAvail().y - OCCUPIED) );
-            
-            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-            if (ImGui::TreeNode("Frame-Rate"))
-            {
-                //  2.  FPS-TEXT...
-                ImGui::Text("Average: %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-
-                //  3.  FPS PLOTTING...
-                //ImGui::PushFont(this->m_small_font);
-                ImGui::PushFont( m_fonts[ Font::Small ] );
-                if (ImPlot::BeginPlot("##Scrolling", size))
-                {
-                    ImPlot::SetupAxes(nullptr, nullptr, flags, flags);
-                    
-                    ImPlot::SetupAxisLimits(ImAxis_X1, time - window, time, ImGuiCond_Always);
-                    ImPlot::SetupAxisLimits(ImAxis_Y1, 0, MAX_SPF);
-                    
-                    
-                    //ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
-                    //ImPlot::PlotShaded("msec per frame", &data.Data[0].x, &data.Data[0].y, data.Data.size(), -INFINITY, 0, data.Offset, 2 * sizeof(float));
-                    
-                    ImPlot::SetNextLineStyle(color);                                        //  4.  Plotting the Line...
-                    ImPlot::SetNextFillStyle(color, 0.5);
-                    ImPlot::PlotLine("ms/frame", &data.Data[0].x, &data.Data[0].y, data.Data.size(), ImPlotLineFlags_Shaded, data.Offset, 2 * sizeof(float));
-                    ImPlot::EndPlot();
-                }
-                ImGui::PopFont();
-                ImGui::TreePop();
-            }
-        }
     
  
     ImGui::End();
@@ -152,16 +58,326 @@ void App::Display_Sidebar_Menu(bool * p_open)
 
 
 
+// *************************************************************************** //
+//
+//
+//  2.      GENERAL MENU FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "Display_Preferences_Menu"
+//
+void App::Display_Preferences_Menu(void)
+{
+    ImGuiIO &                   io              = ImGui::GetIO(); (void)io;
+    ImGuiStyle &                style           = ImGui::GetStyle();
+    static bool                 show_perf       = false;
+    
+
+    ImGui::SeparatorText("System Preferences");
+
+    //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Appearance Mode")) {
+        this->disp_appearance_mode();
+        ImGui::TreePop();
+    }
+    
+    if (ImGui::TreeNode("Font Selection")) {
+        this->disp_font_selector();
+        ImGui::TreePop();
+    }
+    
+    if (ImGui::TreeNode("Color Palette")) {
+        this->disp_color_palette();
+        ImGui::TreePop();
+    }
+
+    
+    
+    this->disp_performance_metrics();
+    
+/*#ifndef __CBAPP_THROTTLE_PERF_METRICS__
+    this->disp_performance_metrics();
+# else
+    if (ImGui::GetFrameCount() % __CBAPP_THROTTLE_PERF_METRICS__ == 0)
+        this->disp_performance_metrics();
+#endif  //  __CBAPP_THROTTLE_PERF_METRICS__  // */
+        
+
+    return;
+}
+
+
+
+
+
+
+
+//  "disp_appearance_mode"
+//
+void App::disp_appearance_mode(void)
+{
+    ImGuiIO &                   io              = ImGui::GetIO(); (void)io;
+    ImGuiStyle &                style           = ImGui::GetStyle();
+
+    static bool                 init            = true;
+    ImGuiStyle *                ref             = nullptr;
+    static ImGuiStyle           ref_saved_style;
+    
+    
+    //  Style Mode Slider...
+    if (ImGui::ShowStyleSelector("Appearance##Selector"))
+        ref_saved_style = style;
+
+    //  Default to using internal storage as reference
+    if (init && ref == NULL)
+        ref_saved_style = style;
+    init = false;
+    if (ref == NULL)
+        ref = &ref_saved_style;
+
+
+    return;
+}
+
+
+
+
+//  "disp_font_selector"
+//
+void App::disp_font_selector(void)
+{
+    ImGui::ShowFontSelector("Global Font##Selector");
+    return;
+}
+
+
+
+
+//  "disp_color_palette"
+//
+void App::disp_color_palette(void)
+{
+    ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
+    ImGuiStyle &                    style           = ImGui::GetStyle();
+    static ImVec4                   color           = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+    static ImGuiColorEditFlags      base_flags      = ImGuiColorEditFlags_None;
+
+
+    //  1.  COLOR EDITORS...
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Colors"))
+    {
+        static ImVec4 &     def_win_bg            = style.Colors[ImGuiCol_WindowBg];
+        
+        ImGui::ColorEdit4("GLFW Window Bg##2f",         (float*)&this->m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Dockspace Bg##2f",           (float*)&this->m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Sidebar Menu Bg##2f",        (float*)&this->m_sidebar_bg,    ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Main Window Bg##2f",         (float*)&this->m_main_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Default Window Bg##2f",      (float*)&def_win_bg,            ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        
+        ImGui::TreePop();
+    }
+    
+    
+    
+    //  2.  COLOR PALLETE...
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Color Tool"))
+    {
+        ImGui::ColorEdit3("MyColor##1", (float*)&color, base_flags);
+        ImGui::ColorEdit4("MyColor##2", (float*)&color, ImGuiColorEditFlags_DisplayHSV | base_flags);
+
+        ImGui::ColorEdit4("MyColor##2f", (float*)&color, ImGuiColorEditFlags_Float | base_flags);
+        ImGui::ColorEdit4("MyColor##3", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | base_flags);
+        
+
+        // Generate a default palette. The palette will persist and can be edited.
+        static bool saved_palette_init = true;
+        static ImVec4 saved_palette[32] = {};
+        if (saved_palette_init)
+        {
+            for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+            {
+                ImGui::ColorConvertHSVtoRGB(n / 31.0f, 0.8f, 0.8f,
+                    saved_palette[n].x, saved_palette[n].y, saved_palette[n].z);
+                saved_palette[n].w = 1.0f; // Alpha
+            }
+            saved_palette_init = false;
+        }
+        
+    
+        ImGui::TreePop();
+    }
+
+
+    return;
+}
+
+
+
+//  "disp_performance_metrics"
+//
+void App::disp_performance_metrics(void) {
+    using float_t                                       = double;
+    using int_t                                         = int;
+    
+    ImGuiIO &                       io                  = ImGui::GetIO(); (void)io;
+    ImGuiStyle &                    style               = ImGui::GetStyle();
+    ImGuiContext &                  g                   = *GImGui;
+    ImGuiMetricsConfig *            cfg                 = &g.DebugMetricsConfig;
+    
+    static float_t                  spf_ct, fps_ct, triangle_ct;                                            //  DATA VARIABLES.
+    static int_t                    vertex_ct, index_ct, window_ct,  allocation_ct;
+    static utl::ScrollingBuffer     spf_plot, index_plot, vertex_plot, data23;
+    static float_t                  TIME                = 0;
+    
+    static constexpr float_t        PLOT_PADDING        = 1.10f;                                            //  PLOT APPEARANCE.
+    static constexpr float_t        WINDOW              = 15.0f; // Plot record length (sec)
+    static ImVec2                   PLOT_SIZE(-1, 150);
+    
+    static constexpr ImVec4         spf_c(0.244f,       0.467f,     0.847f,     1.0f);
+    static constexpr ImVec4         index_c(1.000f,     0.624f,     0.039f,     1.0f);
+    static constexpr ImVec4         vertex_c(0.039f,    0.518f,     1.000f,     1.0f);   // #0A84FF
+    static ImPlotAxisFlags          flags               = ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoSideSwitch |
+                                                          ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_LockMin;
+                                                          
+    constexpr const char * fps_fmt                      = "Average Framerate: %.3f ms/frame (%.1f FPS)";    //  FORMAT STRINGS.
+    constexpr const char * window_fmt                   = "%d Visible Windows";
+    constexpr const char * vertex_fmt                   = "%d Vertices, %d Indices (%.1f triangles)";
+    constexpr const char * memory_fmt                   = "%d Current Memory Allocations";
+    
+    
+    if (cfg->ShowDebugLog)
+        ImGui::ShowDebugLogWindow(&cfg->ShowDebugLog);
+    if (cfg->ShowIDStackTool)
+        ImGui::ShowIDStackToolWindow(&cfg->ShowIDStackTool);
+    ImGui::DebugBreakClearData();
+
+
+    //  1.  GET PERFORMANCE DATA...
+    float_t     MAX_FPS         = 0.0f;
+    float_t     MAX_MEMORY      = 0.0f;
+    spf_ct                      = static_cast<float_t>(1000.0f / io.Framerate);
+    fps_ct                      = static_cast<int_t>(io.Framerate);
+    vertex_ct                   = static_cast<int_t>(io.MetricsRenderVertices);
+    index_ct                    = static_cast<float_t>(io.MetricsRenderIndices);
+    triangle_ct                 = static_cast<float_t>(io.MetricsRenderIndices / 3);
+    window_ct                   = io.MetricsRenderWindows;
+    allocation_ct               = g.DebugAllocInfo.TotalAllocCount - g.DebugAllocInfo.TotalFreeCount;
+
+    //  2.  COMPUTE PERFORMANCE DATA...
+    TIME += ImGui::GetIO().DeltaTime;
+    spf_plot.AddPoint(TIME,         spf_ct);
+    index_plot.AddPoint(TIME,       index_ct);
+    vertex_plot.AddPoint(TIME,      vertex_ct);
+    
+    for (const auto & pt : spf_plot.Data)
+        MAX_FPS     = ImMax(static_cast<float>(MAX_FPS),    pt.y);
+    for (const auto & pt : index_plot.Data)
+        MAX_MEMORY = ImMax(static_cast<float>(MAX_MEMORY),  pt.y);
+    for (const auto & pt : vertex_plot.Data)
+        MAX_MEMORY = ImMax(static_cast<float>(MAX_MEMORY),  pt.y);
+    MAX_FPS                    *= PLOT_PADDING;
+    MAX_MEMORY                 *= PLOT_PADDING;
+    
+    
+    
+    //  3.  SPACING...
+    //const float OCCUPIED = PLOT_SIZE[1] + 3.0 * ImGui::GetTextLineHeightWithSpacing();
+    const float OCCUPIED = 2*PLOT_SIZE[1] + 10.0 * ImGui::GetTextLineHeightWithSpacing();
+    ImGui::Dummy( ImVec2(0.0f, ImGui::GetContentRegionAvail().y - OCCUPIED) );
+    
+    
+    
+    //  "PERFORMANCE METRICS"...
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Performance Metrics"))
+    {
+        //  1.  TEXT ENTRIES:
+        ImGui::BulletText(fps_fmt,              spf_ct,         fps_ct);
+        ImGui::BulletText(vertex_fmt,           vertex_ct,      index_ct,       triangle_ct);
+        ImGui::BulletText(window_fmt,           window_ct);
+        ImGui::BulletText(memory_fmt,           allocation_ct);
+        ImGui::NewLine();
+    
+    
+        //  2.  PLOTS:
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode("Plots"))
+        {
+            //      2A.     FRAMERATE...
+            ImGui::SeparatorText("Framerate");
+            
+            //      1.2     FPS PLOTTING...
+            ImGui::PushFont( m_fonts[ Font::Small ] );// place legend in the upper-right corner, vertical orientation
+            ImGui::PushID("##Scrolling");
+            if (ImPlot::BeginPlot("##Scrolling", PLOT_SIZE))
+            {
+                ImPlot::SetupLegend(ImPlotLocation_SouthWest, ImPlotLegendFlags_None);            //    Legend Position.
+                ImPlot::SetupAxes(nullptr, nullptr, flags, flags);
+                ImPlot::SetupAxisLimits(ImAxis_X1, TIME - WINDOW, TIME, ImGuiCond_Always);
+                ImPlot::SetupAxisLimits(ImAxis_Y1, 0, MAX_FPS);
+                
+                ImPlot::SetNextLineStyle(spf_c);                                        //  2A.1     "SEC-PER-FRAME"
+                ImPlot::SetNextFillStyle(spf_c, 0.2);
+                ImPlot::PlotLine("ms/frame", &spf_plot.Data[0].x, &spf_plot.Data[0].y, spf_plot.Data.size(), ImPlotLineFlags_Shaded, spf_plot.Offset, 2 * sizeof(float));
+                ImPlot::EndPlot();
+            }
+            ImGui::PopID();
+            ImGui::PopFont();
+            
+
+
+            //      2B.     MEMORY ALLOCATIONS PLOTTING...
+            ImGui::SeparatorText("GPU");
+            ImGui::PushFont( m_fonts[ Font::Small ] );
+            if (ImPlot::BeginPlot("##Scrolling", PLOT_SIZE))
+            {
+                ImPlot::SetupLegend(ImPlotLocation_SouthWest, ImPlotLegendFlags_None);            //    Legend Position.
+                ImPlot::SetupAxes(nullptr, nullptr, flags, flags);
+                ImPlot::SetupAxisLimits(ImAxis_X1, TIME - WINDOW, TIME, ImGuiCond_Always);
+                ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0f, MAX_MEMORY, ImGuiCond_Always);
+
+
+                ImPlot::SetNextLineStyle(index_c);                                          //  2B.1     "Indices"
+                ImPlot::SetNextFillStyle(index_c, 0.2);
+                ImPlot::PlotLine("Indices", &index_plot.Data[0].x, &index_plot.Data[0].y,
+                                 index_plot.Data.size(), ImPlotLineFlags_Shaded,
+                                 index_plot.Offset, 2 * sizeof(float));
+
+                ImPlot::SetNextLineStyle(vertex_c);                                         //  2B.2     "Vertices"
+                ImPlot::SetNextFillStyle(vertex_c, 0.2);
+                ImPlot::PlotLine("Vertices",  &vertex_plot.Data[0].x, &vertex_plot.Data[0].y,
+                                 vertex_plot.Data.size(), ImPlotLineFlags_Shaded,
+                                 vertex_plot.Offset, 2 * sizeof(float));
+                                 
+                ImPlot::EndPlot();
+            }
+            ImGui::PopFont();
+            ImGui::TreePop();   //     END OF "PLOTS"...
+        }
+            
+        ImGui::TreePop();   //  END OF "PERFORMANCE METRICS"...
+    }
+    
+    
+    return;
+}
+
+
+
+
+
 
 
 
 // *************************************************************************** //
 //
 //
-//  2.      MENU FUNCTIONS...
+//  3.      MENU-BAR FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-
 
 //  "Display_Main_Menu_Bar"
 //
@@ -170,32 +386,32 @@ void App::Display_Main_Menu_Bar(void)
     if (ImGui::BeginMainMenuBar())
     {
         if (ImGui::BeginMenu("File")) {         //  1.  "File" MENU...
-            this->Display_file_menubar();
+            this->disp_file_menubar();
             ImGui::EndMenu();
         }
         
         if (ImGui::BeginMenu("Edit")) {         //  2.  "Edit" MENU...
-            this->Display_edit_menubar();
+            this->disp_edit_menubar();
             ImGui::EndMenu();
         }
         
         if (ImGui::BeginMenu("View")) {         //  3.  "View" MENU...
-            this->Display_view_menubar();
+            this->disp_view_menubar();
             ImGui::EndMenu();
         }
         
         if (ImGui::BeginMenu("Window")) {       //  4.  "Window" MENU...
-            this->Display_window_menubar();
+            this->disp_window_menubar();
             ImGui::EndMenu();
         }
         
         if (ImGui::BeginMenu("Tools")) {        //  5.  "Tools" MENU...
-            this->Display_tools_menubar();
+            this->disp_tools_menubar();
             ImGui::EndMenu();
         }
         
         if (ImGui::BeginMenu("Help")) {         //  9.  "Help" MENU...
-            this->Display_help_menubar();
+            this->disp_help_menubar();
             ImGui::EndMenu();
         }
         
@@ -212,9 +428,9 @@ void App::Display_Main_Menu_Bar(void)
 }
 
 
-//  "Display_file_menubar"
+//  "disp_file_menubar"
 //
-void App::Display_file_menubar(void)
+void App::disp_file_menubar(void)
 {
     cblib::ndmatrix<float>  test(4,4);
 
@@ -269,9 +485,9 @@ void App::Display_file_menubar(void)
 }
 
 
-//  "Display_edit_menubar"
+//  "disp_edit_menubar"
 //
-void App::Display_edit_menubar(void)
+void App::disp_edit_menubar(void)
 {
     //  1.  "Paste" SUB-MENU...
     if (ImGui::MenuItem("Undo",             "CTRL+Z"))          { }
@@ -298,9 +514,9 @@ void App::Display_edit_menubar(void)
 }
 
 
-//  "Display_view_menubar"
+//  "disp_view_menubar"
 //
-void App::Display_view_menubar(void)
+void App::disp_view_menubar(void)
 {
     ImGui::MenuItem("Item 1",         nullptr);
     ImGui::MenuItem("Item 2",         nullptr);
@@ -308,57 +524,87 @@ void App::Display_view_menubar(void)
 }
 
 
-//  "Display_window_menubar"
+//  "disp_window_menubar"
 //
-void App::Display_window_menubar(void)
+void App::disp_window_menubar(void)
 {
+    using WinLoc    = utl::WindowLocation;
+
     ImGui::MenuItem("Minimize",         nullptr);
     ImGui::MenuItem("Zoom",             nullptr);
     ImGui::MenuItem("Fill",             nullptr);
     ImGui::MenuItem("Center",           nullptr);
 
 
-    //  1.  "SHOW" SUB-MENU...
+    //  1.  "MOVE & RESIZE" SUB-MENU...
     ImGui::Separator();
-    if (ImGui::BeginMenu("Show"))
+    if (ImGui::BeginMenu("Move & Resize"))
     {
-        //  1.1     SHOW SOME WINDOWS HERE...
-        ImGui::TextDisabled("Add some windows here");
+        //  1.1     Set GLFW Window to LEFT-HALF...
+        if (ImGui::MenuItem("Left",       nullptr))
+            { utl::SetGLFWWindowLocation(this->m_window, WinLoc::LeftHalf); }
+        
+        //  1.2     Set GLFW Window to RIGHT-HALF...
+        if (ImGui::MenuItem("Right",       nullptr))
+            { utl::SetGLFWWindowLocation(this->m_window, WinLoc::RightHalf); }
+    
+    
+        //  1.9     Re-set GLFW window to default state...
+        ImGui::Separator();
+        if (ImGui::MenuItem("Return to Default Size",       nullptr))
+            { utl::SetGLFWWindowLocation(this->m_window, WinLoc::Center, cb::app::DEF_ROOT_WINDOW_SCALE); }
+        
     
         ImGui::EndMenu();
     }
+
+
+    //  2.  "SHOW" SUB-MENU...
+    ImGui::Separator();
+    if (ImGui::BeginMenu("Show"))
+    {
+        ImGui::TextDisabled("Add some windows here");   //  2.1     SHOW SOME WINDOWS HERE...
+        ImGui::EndMenu();
+    }
         
-    
     return;
 }
 
 
-//  "Display_tools_menubar"
+//  "disp_tools_menubar"
 //
-void App::Display_tools_menubar(void)
+void App::disp_tools_menubar(void)
 {
     ImGui::MenuItem("Tool 1",     nullptr);
     ImGui::MenuItem("Tool 2",     nullptr);
 
     //  1.  DEBUG UTILITY MENU ITEMS...
     ImGui::Separator();
-    ImGui::TextDisabled("(make sure to '#ifdef' these out for RELEASE builds...)");
+#ifndef __CBAPP_DEBUG__
     if (ImGui::BeginMenu("Debug Utilities")) {
+# else
+    ImGui::TextDisabled("Debug Utilities");
+#endif  //  __CBAPP_DEBUG__  //
         ImGui::MenuItem("Style Editor",     nullptr,    &this->m_show_style_editor);        //  SHOW "STYLE EDITOR" APP...
+        ImGui::MenuItem("Log",              nullptr,    &this->m_show_log_window);          //  SHOW "LOGGER" APP...
+        ImGui::MenuItem("Console",          nullptr,    &this->m_show_console_window);      //  SHOW "CONSOLE" APP...
+        ImGui::MenuItem("Metrics",          nullptr,    &this->m_show_metrics_window);      //  SHOW "METRICS" APP...
+        
+        ImGui::Separator();
         ImGui::MenuItem("ImGui Demo",       nullptr,    &this->m_show_imgui_demo);          //  SHOW "DEAR IMGUI" DEMO APP...
         ImGui::MenuItem("ImPlot Demo",      nullptr,    &this->m_show_implot_demo);         //  SHOW "DEAR IMPLOT" DEMO APP...
-    
+#ifndef __CBAPP_DEBUG__
         ImGui::EndMenu();
-    }
-    
+    }// END "Debug Utilities" GROUP...
+#endif  //  __CBAPP_DEBUG__  //
     
     return;
 }
 
 
-//  "Display_help_menubar"
+//  "disp_help_menubar"
 //
-void App::Display_help_menubar(void)
+void App::disp_help_menubar(void)
 {
     if (ImGui::MenuItem("User Guide"))      { }
     ImGui::Separator();

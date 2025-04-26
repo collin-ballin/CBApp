@@ -28,6 +28,17 @@ void glfw_error_callback(int error, const char * description)
 { fprintf(stderr, "GLFW Error %d: %s\n", error, description); }
 
 
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  1.2     WINDOW SIZE / GEOMETRY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
 //  "get_current_monitor"
 //
 [[nodiscard]] GLFWmonitor * get_current_monitor(GLFWwindow * window)
@@ -105,11 +116,64 @@ void set_next_window_geometry(GLFWwindow* glfw_window, float pos_x_frac, float p
 }
 
 
+//  "SetGLFWWindowLocation"
+//
+void SetGLFWWindowLocation(GLFWwindow * win, const WindowLocation loc, const float scale, const GLFWmonitor * monitor)
+{
+    // 1) Figure out which monitor to use
+    GLFWmonitor* m = const_cast<GLFWmonitor*>(
+        monitor ? monitor : get_current_monitor(win)
+    );
+
+    // 2) Query monitor position & size
+    int mx, my;
+    glfwGetMonitorPos(m, &mx, &my);
+    const GLFWvidmode* mode = glfwGetVideoMode(m);
+    int sys_w = mode->width;
+    int sys_h = mode->height;
+
+    // 3) Compute new window size & pos
+    int w, h, x, y;
+    switch (loc)
+    {
+        case WindowLocation::Center:
+            // uniform scale in both dimensions
+            w = static_cast<int>(sys_w * scale);
+            h = static_cast<int>(sys_h * scale);
+            x = mx + (sys_w - w) / 2;
+            y = my + (sys_h - h) / 2;
+            break;
+
+        case WindowLocation::LeftHalf:
+            // width scaled, full height
+            w = static_cast<int>(sys_w * scale);
+            h = sys_h;
+            x = mx;      // align left edge
+            y = my;      // align top edge
+            break;
+
+        case WindowLocation::RightHalf:
+            // width scaled, full height
+            w = static_cast<int>(sys_w * scale);
+            h = sys_h;
+            x = mx + (sys_w - w);  // align right edge
+            y = my;                // align top edge
+            break;
+    }
+
+    // 4) Apply it
+    glfwSetWindowSize(win, w, h);
+    glfwSetWindowPos (win, x, y);
+}
+
+
+
+
 
 // *************************************************************************** //
 //
 //
-//  1.2     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
+//  1.3     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -177,11 +241,11 @@ GLFWwindow * create_glfw_window(const float scale, const char * title) {
 // *************************************************************************** //
 //
 //
-//  1.3     MISC I/O FUNCTIONS...
+//  1.4     MISC I/O FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  1.3A-1      SAVING/WRITING FUNCTIONS...
+//  1.4A-1      SAVING/WRITING FUNCTIONS...
 // *************************************************************************** //
 
 //  "SaveStyleToDisk_IMPL"
@@ -268,7 +332,7 @@ bool SaveStyleToDisk(const ImGuiStyle & style, const std::string_view & file_pat
 
 
 
-//  1.3A-2      ASYNCHRONUC SAVING/WRITING FUNCTIONS...
+//  1.4A-2      ASYNCHRONUC SAVING/WRITING FUNCTIONS...
 // *************************************************************************** //
 
 //  "SaveStyleToDiskAsync"
@@ -292,7 +356,7 @@ bool SaveStyleToDiskAsync(ImGuiStyle style, const char * file_path) {
 
 
 
-//  1.3B-1      LOADING FUNCTIONS...
+//  1.4B-1      LOADING FUNCTIONS...
 // *************************************************************************** //
 
 //  "LoadStyleFromDisk_IMPL"
@@ -449,7 +513,7 @@ const char * get_glsl_version(void)
     const GLFWvidmode *     mode        = glfwGetVideoMode( monitor );
     
     
-    this->m_window = glfwCreateWindow(cb::app::ROOT_WIN_DEF_WIDTH, cb::app::ROOT_WIN_DEF_HEIGHT, cb::app::ROOT_WIN_DEF_TITLE, nullptr, nullptr);
+    this->m_window = glfwCreateWindow(cb::utl::ROOT_WIN_DEF_WIDTH, cb::utl::ROOT_WIN_DEF_HEIGHT, cb::utl::ROOT_WIN_DEF_TITLE, nullptr, nullptr);
     if (!this->m_window)
         throw std::runtime_error("Call to glfwInit() returned NULL");
     
@@ -464,11 +528,11 @@ const char * get_glsl_version(void)
     ImGui::CreateContext();
     ImGuiIO &       io          = ImGui::GetIO(); (void)io;
 #ifdef CBAPP_USE_SWAP_INI
-    io.IniFilename            = cb::app::SWAP_INI_FILEPATH;
-    ImGui::LoadIniSettingsFromDisk(cb::app::SWAP_INI_FILEPATH);
+    io.IniFilename            = cb::utl::SWAP_INI_FILEPATH;
+    ImGui::LoadIniSettingsFromDisk(cb::utl::SWAP_INI_FILEPATH);
 # else
-    io.IniFilename            = cb::app::INI_FILEPATH;
-    ImGui::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH);
+    io.IniFilename            = cb::utl::INI_FILEPATH;
+    ImGui::LoadIniSettingsFromDisk(cb::utl::INI_FILEPATH);
 #endif      //  CBAPP_USE_SWAP_INI  //
                                                        //  2.1 Load ".ini" File..
     io.ConfigFlags             |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad |      //  2.2 Configure I/O Settings.
@@ -496,7 +560,7 @@ const char * get_glsl_version(void)
     //
     //
     //      3.3     Load Fonts.
-    this->m_main_font                       = io.Fonts->AddFontFromFileTTF(cb::app::DEF_FONT_PATH, cb::app::DEF_FONT_SIZE);
+    this->m_main_font                       = io.Fonts->AddFontFromFileTTF(cb::utl::DEF_FONT_PATH, cb::utl::DEF_FONT_SIZE);
     IM_ASSERT(this->m_main_font != nullptr);
     
     
@@ -529,9 +593,9 @@ const char * get_glsl_version(void)
 
 /*
 
-//  "WORKING VERSION OF "APP::INIT" BEFORE USING UTL MODULE "get_glsl_version()"...
+//  "WORKING VERSION OF "utl::INIT" BEFORE USING UTL MODULE "get_glsl_version()"...
 //
-void App::init(void)
+void utl::init(void)
 {
     glfwSetErrorCallback(utl::glfw_error_callback);
     if (!glfwInit())
@@ -568,7 +632,7 @@ void App::init(void)
     const GLFWvidmode *     mode        = glfwGetVideoMode( monitor );
     
     
-    this->m_window = glfwCreateWindow(cb::app::ROOT_WIN_DEF_WIDTH, cb::app::ROOT_WIN_DEF_HEIGHT, cb::app::ROOT_WIN_DEF_TITLE, nullptr, nullptr);
+    this->m_window = glfwCreateWindow(cb::utl::ROOT_WIN_DEF_WIDTH, cb::utl::ROOT_WIN_DEF_HEIGHT, cb::utl::ROOT_WIN_DEF_TITLE, nullptr, nullptr);
     if (!this->m_window)
         throw std::runtime_error("Call to glfwInit() returned NULL");
     
@@ -583,11 +647,11 @@ void App::init(void)
     ImGui::CreateContext();
     ImGuiIO &       io          = ImGui::GetIO(); (void)io;
     #ifdef CBAPP_USE_SWAP_INI
-      io.IniFilename            = cb::app::SWAP_INI_FILEPATH;
-      ImGui::LoadIniSettingsFromDisk(cb::app::SWAP_INI_FILEPATH);
+      io.IniFilename            = cb::utl::SWAP_INI_FILEPATH;
+      ImGui::LoadIniSettingsFromDisk(cb::utl::SWAP_INI_FILEPATH);
     # else
-      io.IniFilename            = cb::app::INI_FILEPATH;
-      ImGui::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH);
+      io.IniFilename            = cb::utl::INI_FILEPATH;
+      ImGui::LoadIniSettingsFromDisk(cb::utl::INI_FILEPATH);
     #endif      //  CBAPP_USE_SWAP_INI  //
                                                        //  3.1 Load ".ini" File..
     io.ConfigFlags             |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad |      //  3.2 Configure I/O Settings.
@@ -615,7 +679,7 @@ void App::init(void)
     //
     //
     //      3.3     Load Fonts.
-    this->m_main_font                       = io.Fonts->AddFontFromFileTTF(cb::app::DEF_FONT_PATH, cb::app::DEF_FONT_SIZE);
+    this->m_main_font                       = io.Fonts->AddFontFromFileTTF(cb::utl::DEF_FONT_PATH, cb::utl::DEF_FONT_SIZE);
     IM_ASSERT(this->m_main_font != nullptr);
     
     

@@ -61,14 +61,24 @@ inline const char * path_to_char(const std::filesystem::path & dir, const char *
 
 //  1.  APP CONSTANTS               | TITLES, GEOMETRIES, WINDOW DIMENSIONS, ETC...
 //
+//      1.1                         INFORMATION...
 inline constexpr const char *       DEF_ROOT_WIN_TITLE      = "Dear ImGui App (V0)";
+inline constexpr const char *       DEF_SIDEBAR_WIN_TITLE   = "Menu";
+inline constexpr const char *       DEF_MAIN_WIN_TITLE      = "My Application";
+//
+//      1.2                         DIMENSIONS & GEOMETRY...
 inline constexpr int                DEF_ROOT_WIN_WIDTH      = 1280;
 inline constexpr int                DEF_ROOT_WIN_HEIGHT     = 720;
 inline constexpr float              DEF_ROOT_WINDOW_SCALE   = 0.80f;
-inline constexpr ImVec4             DEF_ROOT_WIN_BG         = ImVec4(0.00f,     0.00f,      0.00f,      0.00f); //ImVec4(0.45f,     0.55f,      0.60f,      1.0f);
-
+//
+//      1.3                         COLORS...
 inline constexpr ImVec4             DEF_APPLE_BLUE          = ImVec4(0.244f,    0.467f,     0.847f,     1.000f);
 inline constexpr ImVec4             DEF_APPLE_RED           = ImVec4(1.000f,    0.271f,     0.227f,     1.000f);
+inline constexpr ImVec4             DEF_INVISIBLE_COLOR     = ImVec4(0.000f,    0.000f,     0.000f,     0.000f);
+
+inline constexpr ImVec4             DEF_ROOT_WIN_BG         = ImVec4(0.000f,    0.000f,     0.000f,     0.000f); //ImVec4(0.45f,     0.55f,      0.60f,      1.0f);
+inline constexpr ImVec4             DEF_SIDEBAR_WIN_BG      = ImVec4(0.192f,    0.192f,     0.192f,     1.000f);
+inline constexpr ImVec4             DEF_MAIN_WIN_BG         = ImVec4(0.125f,    0.133f,     0.141f,     1.000f);
 
   
 //  2.  FILE-NAMES, DIRECTORY-NAMES, ETC    [COMPILE-TIME]...
@@ -96,9 +106,20 @@ inline constexpr const char *       BUILD_DIR               = "../";
 inline constexpr const char *       ROOT_DIR                = "../../";
 //
 //      3A.2    Sub-Directories...
+//                      1.  "Scripts"...
+inline constexpr const char *       SCRIPTS_DIR             = "../../scripts/";
+inline constexpr const char *       PYTHON_DIR              = "../../scripts/python/";
+//
+//
+//                      2.  "Assets"...
 inline constexpr const char *       ASSETS_DIR              = "../../assets/";
+//
 inline constexpr const char *       CONFIG_DIR              = "../../assets/config/";
 inline constexpr const char *       FONTS_DIR               = "../../assets/fonts/";
+//
+inline constexpr const char *       DATA_DIR                = "../../assets/data/";
+//
+//
 //
 //
 //      3B.     FILE-PATHS                  [RUN-TIME]...
@@ -138,7 +159,10 @@ inline constexpr float              DEF_SMALL_FONT_SIZE     = 14.0f;
     //  Fonts for MacOS Builds.
     #define CBAPP_FONT_LIST(X)      \
         X(Main,             "/System/Library/Fonts/SFNS.ttf",                               20.0f)      \
-        X(Small,            "/System/Library/Fonts/SFNS.ttf",                               14.0f)
+        X(Small,            "/System/Library/Fonts/SFNS.ttf",                               14.0f)      \
+        X(Mono,             "/System/Library/Fonts/SFNSMono.ttf",                           20.0f)      \
+        X(SanSerif,         "/System/Library/Fonts/NewYork.ttf",                            20.0f)      \
+        X(SanSerifSmall,    "/System/Library/Fonts/NewYork.ttf",                            14.0f)
 # else
     //  Fonts for Windows, Linux, or other Builds.
     #define CBAPP_FONT_LIST(X)      \
