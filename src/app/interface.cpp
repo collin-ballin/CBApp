@@ -219,7 +219,7 @@ void App::disp_color_palette(void)
 //  "disp_performance_metrics"
 //
 void App::disp_performance_metrics(void) {
-    using float_t                                       = double;
+    using float_t                                       = float;
     using int_t                                         = int;
     
     ImGuiIO &                       io                  = ImGui::GetIO(); (void)io;
@@ -229,23 +229,53 @@ void App::disp_performance_metrics(void) {
     
     static float_t                  spf_ct, fps_ct, triangle_ct;                                            //  DATA VARIABLES.
     static int_t                    vertex_ct, index_ct, window_ct,  allocation_ct;
-    static utl::ScrollingBuffer     spf_plot, index_plot, vertex_plot, data23;
+    static utl::ScrollingBuffer     spf_plot, index_plot, vertex_plot;
     static float_t                  TIME                = 0;
     
     static constexpr float_t        PLOT_PADDING        = 1.10f;                                            //  PLOT APPEARANCE.
-    static constexpr float_t        WINDOW              = 15.0f; // Plot record length (sec)
+    static constexpr float_t        WINDOW              = app::PERF_PLOTS_HISTORY_LENGTH;   // Plot record length (sec)
     static ImVec2                   PLOT_SIZE(-1, 150);
     
-    static constexpr ImVec4         spf_c(0.244f,       0.467f,     0.847f,     1.0f);
-    static constexpr ImVec4         index_c(1.000f,     0.624f,     0.039f,     1.0f);
-    static constexpr ImVec4         vertex_c(0.039f,    0.518f,     1.000f,     1.0f);   // #0A84FF
+    static constexpr ImVec4         spf_c(app::DEF_APPLE_BLUE);
+    static constexpr ImVec4         index_c(app::DEF_APPLE_BLUE);
+    static constexpr ImVec4         vertex_c(app::DEF_APPLE_RED);
     static ImPlotAxisFlags          flags               = ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoSideSwitch |
                                                           ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_LockMin;
                                                           
-    constexpr const char * fps_fmt                      = "Average Framerate: %.3f ms/frame (%.1f FPS)";    //  FORMAT STRINGS.
-    constexpr const char * window_fmt                   = "%d Visible Windows";
-    constexpr const char * vertex_fmt                   = "%d Vertices, %d Indices (%.1f triangles)";
-    constexpr const char * memory_fmt                   = "%d Current Memory Allocations";
+    constexpr const char *          fps_fmt             = "Average Framerate: %.3f ms/frame (%.1f FPS)";    //  FORMAT STRINGS.
+    constexpr const char *          window_fmt          = "%d Visible Windows";
+    constexpr const char *          vertex_fmt          = "%d Vertices, %d Indices (%.1f triangles)";
+    constexpr const char *          memory_fmt          = "%d Current Memory Allocations";
+    
+    
+    
+    
+    //  0.  COMPUTE SPACING...
+    static float                    SPACING             = 0.0f;
+    static float                    DEF_SPACING         = 1.5 * ImGui::GetTextLineHeightWithSpacing();
+    static float                    TEXT_SPACING        = 8.0 * ImGui::GetTextLineHeightWithSpacing();
+    static float                    PLOT_SPACING        = 2.5 * PLOT_SIZE[1];
+    
+    
+    SPACING                     =   (this->m_show_perf_metrics) ? TEXT_SPACING : DEF_SPACING;
+    SPACING                    +=   (this->m_show_perf_plots)   ? PLOT_SPACING : 0;
+    
+    
+    
+    ImGui::Dummy( ImVec2(0.0f, ImGui::GetContentRegionAvail().y - SPACING) );
+    
+    
+    //  "PERFORMANCE METRICS"...
+    ImGui::SetNextItemOpen(app::DEF_PERF_METRICS_STATE, ImGuiCond_Once);
+    if (!ImGui::CollapsingHeader("Performance Metrics")) {
+        this->m_show_perf_metrics = false;
+        return;
+    }
+    else {
+        this->m_show_perf_metrics = true;
+    }
+    
+    
     
     
     if (cfg->ShowDebugLog)
@@ -257,12 +287,11 @@ void App::disp_performance_metrics(void) {
 
     //  1.  GET PERFORMANCE DATA...
     float_t     MAX_FPS         = 0.0f;
-    float_t     MAX_MEMORY      = 0.0f;
+    float_t     MAX_GPU      = 0.0f;
     spf_ct                      = static_cast<float_t>(1000.0f / io.Framerate);
     fps_ct                      = static_cast<int_t>(io.Framerate);
     vertex_ct                   = static_cast<int_t>(io.MetricsRenderVertices);
     index_ct                    = static_cast<float_t>(io.MetricsRenderIndices);
-    triangle_ct                 = static_cast<float_t>(io.MetricsRenderIndices / 3);
     window_ct                   = io.MetricsRenderWindows;
     allocation_ct               = g.DebugAllocInfo.TotalAllocCount - g.DebugAllocInfo.TotalFreeCount;
 
@@ -275,25 +304,22 @@ void App::disp_performance_metrics(void) {
     for (const auto & pt : spf_plot.Data)
         MAX_FPS     = ImMax(static_cast<float>(MAX_FPS),    pt.y);
     for (const auto & pt : index_plot.Data)
-        MAX_MEMORY = ImMax(static_cast<float>(MAX_MEMORY),  pt.y);
+        MAX_GPU     = ImMax(static_cast<float>(MAX_GPU),  pt.y);
     for (const auto & pt : vertex_plot.Data)
-        MAX_MEMORY = ImMax(static_cast<float>(MAX_MEMORY),  pt.y);
-    MAX_FPS                    *= PLOT_PADDING;
-    MAX_MEMORY                 *= PLOT_PADDING;
+        MAX_GPU     = ImMax(static_cast<float>(MAX_GPU),  pt.y);
+    MAX_FPS                 *= PLOT_PADDING;
+    MAX_GPU                 *= PLOT_PADDING;
+    
+    
     
     
     
     //  3.  SPACING...
-    //const float OCCUPIED = PLOT_SIZE[1] + 3.0 * ImGui::GetTextLineHeightWithSpacing();
-    const float OCCUPIED = 2*PLOT_SIZE[1] + 10.0 * ImGui::GetTextLineHeightWithSpacing();
-    ImGui::Dummy( ImVec2(0.0f, ImGui::GetContentRegionAvail().y - OCCUPIED) );
+    //const float SPACING = PLOT_SIZE[1] + 3.0 * ImGui::GetTextLineHeightWithSpacing();
+    // const float SPACING = 2*PLOT_SIZE[1] + 10.0 * ImGui::GetTextLineHeightWithSpacing();
+    // ImGui::Dummy( ImVec2(0.0f, ImGui::GetContentRegionAvail().y - SPACING) );
     
     
-    
-    //  "PERFORMANCE METRICS"...
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Performance Metrics"))
-    {
         //  1.  TEXT ENTRIES:
         ImGui::BulletText(fps_fmt,              spf_ct,         fps_ct);
         ImGui::BulletText(vertex_fmt,           vertex_ct,      index_ct,       triangle_ct);
@@ -302,10 +328,15 @@ void App::disp_performance_metrics(void) {
         ImGui::NewLine();
     
     
+    
         //  2.  PLOTS:
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNode("Plots"))
-        {
+        ImGui::SetNextItemOpen(app::DEF_PERF_PLOTS_STATE, ImGuiCond_Once);
+        if (!ImGui::TreeNode("Plots")) {
+            this->m_show_perf_plots = false;
+        }
+        else {
+            this->m_show_perf_plots = true;
+            
             //      2A.     FRAMERATE...
             ImGui::SeparatorText("Framerate");
             
@@ -337,14 +368,13 @@ void App::disp_performance_metrics(void) {
                 ImPlot::SetupLegend(ImPlotLocation_SouthWest, ImPlotLegendFlags_None);            //    Legend Position.
                 ImPlot::SetupAxes(nullptr, nullptr, flags, flags);
                 ImPlot::SetupAxisLimits(ImAxis_X1, TIME - WINDOW, TIME, ImGuiCond_Always);
-                ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0f, MAX_MEMORY, ImGuiCond_Always);
-
+                ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0f, MAX_GPU, ImGuiCond_Always);
 
                 ImPlot::SetNextLineStyle(index_c);                                          //  2B.1     "Indices"
                 ImPlot::SetNextFillStyle(index_c, 0.2);
                 ImPlot::PlotLine("Indices", &index_plot.Data[0].x, &index_plot.Data[0].y,
-                                 index_plot.Data.size(), ImPlotLineFlags_Shaded,
-                                 index_plot.Offset, 2 * sizeof(float));
+                                index_plot.Data.size(), ImPlotLineFlags_Shaded,
+                                index_plot.Offset, 2 * sizeof(float));
 
                 ImPlot::SetNextLineStyle(vertex_c);                                         //  2B.2     "Vertices"
                 ImPlot::SetNextFillStyle(vertex_c, 0.2);
@@ -358,8 +388,8 @@ void App::disp_performance_metrics(void) {
             ImGui::TreePop();   //     END OF "PLOTS"...
         }
             
-        ImGui::TreePop();   //  END OF "PERFORMANCE METRICS"...
-    }
+        //ImGui::TreePop();   //  END OF "PERFORMANCE METRICS"...
+    //}//  END OF "PERFORMANCE METRICS"...
     
     
     return;
@@ -593,6 +623,10 @@ void App::disp_tools_menubar(void)
         ImGui::Separator();
         ImGui::MenuItem("ImGui Demo",       nullptr,    &this->m_show_imgui_demo);          //  SHOW "DEAR IMGUI" DEMO APP...
         ImGui::MenuItem("ImPlot Demo",      nullptr,    &this->m_show_implot_demo);         //  SHOW "DEAR IMPLOT" DEMO APP...
+#ifdef CBAPP_ENABLE_CB_DEMO
+        ImGui::MenuItem("CB Demo",          nullptr,    &this->m_show_cb_demo);             //  SHOW "CB" DEMO APP...
+#endif  //  CBAPP_ENABLE_CB_DEMO  //
+    
 #ifndef __CBAPP_DEBUG__
         ImGui::EndMenu();
     }// END "Debug Utilities" GROUP...

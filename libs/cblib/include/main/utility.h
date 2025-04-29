@@ -14,10 +14,10 @@
 // *************************************************************************** //
 
 
-#if _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY
+#if defined(_GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY) && !defined(_GLIBCXX_VISIBILITY)
 # define _GLIBCXX_VISIBILITY(V) __attribute__ ((__visibility__ (#V)))
-#else		
-# define _GLIBCXX_VISIBILITY(V)
+//#else
+//# define _GLIBCXX_VISIBILITY(V)
 #endif  //  _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY  //
 
 

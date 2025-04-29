@@ -52,6 +52,10 @@
 
 //      1.4     COMPILE-TIME APPLICATION OPTIONS...
 // *************************************************************************** //
+#ifdef __CBAPP_DEBUG__
+    #define     CBAPP_ENABLE_CB_DEMO                    1               //  Enable the "CBDemo" window with the application.
+#endif  //  __CBAPP_DEBUG__  //
+
 //#define     CBAPP_DISABLE_INI                         1               //  Prevent use of ".ini" file to save/recall data.
 #define     CBAPP_LOAD_STYLE_FILE                       1               //  Prevent use of ".json" file to save/recall "ImGui" style data.
 

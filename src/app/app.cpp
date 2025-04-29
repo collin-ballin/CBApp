@@ -170,12 +170,14 @@ void App::load(void)
     ImGuiStyle &    style       = ImGui::GetStyle();
     ImGui::StyleColorsDark();
     
+    
 #if defined(CBAPP_DISABLE_INI)
     io.IniFilename              = nullptr;
 # else
     io.IniFilename              = cb::app::INI_FILEPATH;
     ImGui::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH);
 #endif  //  CBAPP_DISABLE_INI  //
+    
     
     io.ConfigFlags             |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad |      //  2.2 Configure I/O Settings.
                                   ImGuiConfigFlags_DockingEnable     | ImGuiConfigFlags_ViewportsEnable;
@@ -249,9 +251,8 @@ void App::run(void)
 #ifdef __EMSCRIPTEN__
     io.IniFilename = nullptr;   //  For an Emscripten build, we are disabling file-system access.  So let's not attempt an
     EMSCRIPTEN_MAINLOOP_BEGIN   //  "fopen()" of the "imgui.ini" file.  You may manually call LoadIniSettingsFromMemory() to load settings from your own storage.
-    EMSCRIPTEN_MAINLOOP_BEGIN
 #else
-    while (!glfwWindowShouldClose(this->m_window))
+    while ( !glfwWindowShouldClose(this->m_window) && this->m_running )
 #endif  //  __EMSCRIPTEN__  //
     {
         //  1.1     SET A POLL AND HANDLE EVENTS (inputs, window resize, etc.)...
@@ -275,9 +276,8 @@ void App::run(void)
 
         //  4.  RENDERING...
         ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(this->m_window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
+        glfwGetFramebufferSize(this->m_window,  &this->m_window_w,  &this->m_window_h); // int display_w, display_h;     // glfwGetFramebufferSize(this->m_window, &display_w, &display_h);
+        glViewport(0, 0, this->m_window_w, this->m_window_w);
         glClearColor(this->m_glfw_bg.x * this->m_glfw_bg.w, this->m_glfw_bg.y * this->m_glfw_bg.w, this->m_glfw_bg.z * this->m_glfw_bg.w, this->m_glfw_bg.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -354,6 +354,9 @@ void App::run_IMPL(void)
     //  1.2     DISPLAY THE MAIN APPLICATION WINDOW...
     this->Display_Main_Window(nullptr);
     
+    //  1.3     DISPLAY THE GRAPHING APPLICATION...
+    this->Display_Graphing_App(&this->m_show_graphing_app);
+    
     
     
     //  2.1     DISPLAY THE STYLE-EDITOR WINDOW...
@@ -382,9 +385,16 @@ void App::run_IMPL(void)
     if (this->m_show_imgui_demo)
         ImGui::ShowDemoWindow(&this->m_show_imgui_demo);
         
-    //  2.6     DISPLAY THE ImPlot WINDOW...
+    //  2.6     DISPLAY THE "Dear ImPlot" WINDOW...
     if (this->m_show_implot_demo)
         ImPlot::ShowDemoWindow(&this->m_show_implot_demo);
+        
+        
+#ifdef CBAPP_ENABLE_CB_DEMO
+    //  2.7     DISPLAY THE "Dear ImPlot" WINDOW...
+    if (this->m_show_implot_demo)
+        this->m_cb_demo.Begin();
+#endif  //  CBAPP_ENABLE_CB_DEMO  //
     
     
     return;

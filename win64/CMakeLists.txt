@@ -64,6 +64,16 @@ add_executable(${PROJECT_NAME}
     ${APP_HEADERS}
 )
 
+# Add Windows resource file for version information
+if (WIN32)
+    target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/version.rc)
+endif()
+
+# Force static linking of standard libraries (libgcc, libstdc++, pthread)
+target_compile_options(${PROJECT_NAME} PRIVATE -static -static-libgcc -static-libstdc++)
+target_link_options(${PROJECT_NAME} PRIVATE -static -static-libgcc -static-libstdc++)
+
+
 # Link libraries
 # On Windows: opengl32.lib and glfw3.lib
 # (glfw3 should already be built for Windows via MinGW)
@@ -72,7 +82,6 @@ target_link_libraries(${PROJECT_NAME}
         ${OPENGL_gl_LIBRARY}
         /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/imgui_V0/other/glfw-win64-install/lib/libglfw3.a
 )
-
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${THIRD_PARTY_INCLUDE_DIR}

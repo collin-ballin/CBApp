@@ -65,6 +65,7 @@
 
 //#include "utility/_constants.h"
 #include "utility/utility.h"
+#include "widgets/widgets.h"
 #include "app/app.h"
 
 //#include "app/MyWindow.h"

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <vector>
 #include <math.h>
+#include <cmath>
 
 
 
@@ -96,6 +97,64 @@ struct RollingBuffer {
     }
 };
 
+
+
+//  "sinusoid_wave_IMPL"
+//
+template<typename T, size_t NX, size_t NY>
+void sinusoid_wave_IMPL(T (&data)[NX][NY], const T time, const T amp, const T freq)
+{
+    constexpr T     pi      = T(3.14159265358979323846);
+    T               omega   = T(2) * pi * freq;             //  ω = 2πf
+    constexpr T     k       = T(2) * pi / T(NY);            //  spatial wavenumber: one cycle over NY rows
+
+
+    auto wave = [&](size_t row, size_t) -> T {
+        T phase = k * (T(NY - 1 - row)) - omega * time;
+        return amp * std::sin(phase);
+    };
+
+    for (size_t row = 0; row < NX; ++row) {
+        for (size_t col = 0; col < NY; ++col) {
+            data[row][col] = wave(row, col);
+        }
+    }
+    
+    return;
+}
+
+
+
+
+
+
+//  "sinusoid_wave"
+//
+template<typename T, typename size_type=std::size_t>
+inline void sinusoid_wave( T * data,        const size_type X,  const size_type Y,
+                           const T time,    const T amp,        const T freq )
+{
+    if (!data || X==0 || Y==0)  return;
+    
+    constexpr T             pi          = T(3.14159265358979323846);
+    const T                 omega       = T(2) * pi * freq;       // temporal frequency ω = 2πf
+    const T                 k           = T(2) * pi / T(Y);       // spatial wavenumber k = 2π / λ, with λ = Y rows
+    T                       phase       = T(0);
+
+
+    for (size_type i = 0; i < X; ++i)
+    {
+        T       phase       = k * T(Y - 1 - i) - omega * time;
+        T *     row_ptr     = data + i * Y;      // pointer to start of row i
+        
+        for (size_type j = 0; j < Y; ++j)
+        {
+            row_ptr[j] = amp * std::sin(phase);
+        }
+    }
+    
+    return;
+}
 
 
 
