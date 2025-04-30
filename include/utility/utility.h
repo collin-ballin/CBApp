@@ -65,7 +65,6 @@ enum class WindowLocation {
 
 
 
-
 // *************************************************************************** //
 //
 //
@@ -76,6 +75,7 @@ enum class WindowLocation {
 //      1.1     MISC / UTILITY FUNCTIONS...
 // *************************************************************************** //
 void                            glfw_error_callback         (int error, const char * description);
+void                            HelpMarker                  (const char* desc);
 
 
 //      1.2     WINDOW SIZE / GEOMETRY FUNCTIONS...

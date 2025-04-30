@@ -1,13 +1,13 @@
 //
-//  _widgets.h
+//  _graphing_app.h
 //  CBApp
 //
 //  Created by Collin Bond on 4/16/25.
 //
 // *************************************************************************** //
 // *************************************************************************** //
-#ifndef _CBAPP_WIDGETS_H
-#define _CBAPP_WIDGETS_H  1
+#ifndef _CBAPP_GRAPHING_APP_H
+#define _CBAPP_GRAPHING_APP_H  1
 
 
 
@@ -20,7 +20,7 @@
 #include "cblib.h"
 //#include "app/app.h"
 #include "app/_init.h"
-#include "widgets/_cb_demo.h"
+#include "widgets/widgets.h"
 #include "utility/utility.h"
 
 //  0.2     STANDARD LIBRARY HEADERS...
@@ -54,12 +54,12 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 // *************************************************************************** //
 // *************************************************************************** //
-//                         HeatMap:
-// 		        HeatMap Widget for Dear ImGui.
+//                         GraphingApp:
+// 		        GraphingApp Widget for Dear ImGui.
 // *************************************************************************** //
 // *************************************************************************** //
 
-class HeatMap
+class GraphingApp
 {
 // *************************************************************************** //
 // *************************************************************************** //
@@ -69,19 +69,18 @@ public:
     using   value_type              = float;
     using   size_type               = std::size_t;
     using   dim_type                = float;
+    using   tab_t                   = std::tuple<std::string, bool, ImGuiTabBarFlags>;
     
     //  1.               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     //  1.1             Default Constructor, Destructor, etc...
-                        HeatMap                 (void)                              = default;      //  Def. Constructor.
-                        HeatMap                 (const size_type,   const size_type);               //  Parametric Constructors.
-                        HeatMap                 (const char *,      const size_type,    const size_type);
-                        ~HeatMap                (void);                                             //  Def. Destructor.
+                        GraphingApp                 (void)                              = default;      //  Def. Constructor.
+                        GraphingApp                 (const size_type,   const size_type);               //  Parametric Constructors.
+                        GraphingApp                 (const char *,      const size_type,    const size_type);
+                        ~GraphingApp                (void);                                             //  Def. Destructor.
                         
     //  1.2             Public Member Functions...
     void                Begin                   (bool * p_open = nullptr);
-    void                draw_controls           (void);
-    void                draw_plots              (void);
     //                      Data & Interaction.
 
 
@@ -102,45 +101,71 @@ protected:
     //  Constants.
     ImVec2                              COLORBAR_SIZE           = ImVec2(0, 0);
     ImVec2                              SCALE_SIZE              = ImVec2(0, 0);
+    float                               CONTROL_WIDTH           = 0.0f;
     
     //  Main Window Stuff...
-    const char *                        m_window_title          = "HeatMap";
-    ImPlotHeatmapFlags                  m_window_flags          = ImGuiWindowFlags_None; //| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+    const char *                        m_window_title          = app::DEF_GRAPHING_APP_TITLE;
+#ifdef CBAPP_ENABLE_MOVE_AND_RESIZE
+    ImPlotHeatmapFlags                  m_window_flags          = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse;
+# else
+    ImPlotHeatmapFlags                  m_window_flags          = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+#endif  //  CBAPP_ENABLE_MOVE_AND_RESIZE  //
+    
+    
+    //  All Children Constants.
+    ImGuiTabBarFlags                    m_def_tab_flags         = ImGuiTabItemFlags_None;   //  Assigned to all "new tabs" by default...
+    
+    
+    //  Plot Panel.
+    ImGuiChildFlags                     mc_plot_child_flags     = ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY;
+    ImGuiTabBarFlags                    mc_plot_tabbar_flags    = ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton;
+    const float                         mc_plot_corner_radius   = 5.0f;
+    const char *                        mc_plot_child_id        = "PlotChild";
+    const char *                        mc_plot_tab_bar_id      = "PlotTabBar";
+    std::pair<int,int>                  MC_PLOT_HEIGHT_LIMIT    = {25, 25};  //  {y1, y2}    : "y1"  --- min height of child (no matter how many widgets are on it).     "y2"  --- max height the window will extend to WITHOUT adding scrollbar.
+    std::vector<tab_t>                  MC_PLOT_TABS            = {
+        {"Main Plot",               true,       ImGuiTabItemFlags_None | ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoReorder},
+        {"Empty",                   true,       ImGuiTabItemFlags_None}
+    };
+    
+    
+    //  Control Panel.
+    ImGuiChildFlags                     mc_ctrl_child_flags     = ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY;
+    ImGuiTabBarFlags                    mc_ctrl_tabbar_flags    = ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton;
+    const float                         mc_ctrl_corner_radius   = 5.0f;
+    const char *                        mc_ctrl_child_id        = "CtrlChild";
+    const char *                        mc_ctrl_tab_bar_id      = "CtrlTabBar";
+    std::pair<int,int>                  MC_CTRL_HEIGHT_LIMIT    = {9, 15};
+    std::vector<tab_t>                  MC_CTRL_TABS            = {
+        {"Main Controls",           true,       ImGuiTabItemFlags_None | ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoReorder},
+        {"Secondary Controls",      true,       ImGuiTabItemFlags_None | ImGuiTabItemFlags_NoReorder}
+    };
+    
+    
+    
     
     //  Appearance.
-    ImPlotHeatmapFlags                  m_hm_flags              = 0;
-    ImPlotAxisFlags                     m_axes_flags            = ImPlotAxisFlags_None | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoDecorations;
-    ImPlotFlags                         m_plot_flags            = ImPlotFlags_None | ImPlotFlags_NoLegend;
-    ImPlotColormap                      m_cmap                  = ImPlotColormap_Viridis;
-    const char *                        m_id                    = nullptr;
-    
-    
-    //  Data.
-    float                               m_time                  = 0.0f;
-    value_type                          m_vmin                  = value_type(0);
-    value_type                          m_vmax                  = value_type(1);
-    std::vector<value_type>             m_data;
         
         
     //  Interactive Variables.
-    ImVec2                              m_plot_dims             = ImVec2(750.0f, 750.0f);
-    size_type                           m_rows                  = size_type(0);
-    size_type                           m_cols                  = size_type(0);
-    value_type                          m_amp                   = 1.0f;
-    value_type                          m_freq                  = 1.0f;
+    
+    
+    //  IMPORTANT VARIABLES.
+    cb::HeatMap                         m_heatmap;
+        
     
     
     
     //  2.B             PROTECTED MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //  2B.1            Class Initializations.      [HeatMap.cpp]...
-    void                init                    (void);
-    void                destroy                 (void);
+    //  2B.1            Class Initializations.      [GraphingApp.cpp]...
+    void                init                        (void);
+    void                destroy                     (void);
     
     //  2B.2            Internal Functions.
-    // void                test_plots              (void);
-    // void                test_controls           (void);
+    void                display_plot_panel          (void);
+    void                display_control_panel       (void);
 
 
 
@@ -157,7 +182,7 @@ private:
 
 // *************************************************************************** //
 // *************************************************************************** //
-};//	END "HeatMap" CLASS PROTOTYPE.
+};//	END "GraphingApp" CLASS PROTOTYPE.
 
 
 
@@ -178,7 +203,7 @@ private:
 
 
 
-#endif      //  _CBAPP_WIDGETS_H  //
+#endif      //  _CBAPP_GRAPHING_APP_H  //
 // *************************************************************************** //
 // *************************************************************************** //
 //

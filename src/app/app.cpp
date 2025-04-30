@@ -12,9 +12,9 @@
 #include <random>
 #include <algorithm>
 
-#ifdef CBAPP_USE_VIEWPORT
+// #ifdef CBAPP_USE_VIEWPORT
 # include "imgui_internal.h"
-#endif  //  CBAPP_USE_VIEWPORT  //
+// #endif  //  CBAPP_USE_VIEWPORT  //
 
 #ifdef __CBAPP_DEBUG__                //  <======| Fix for issue wherein multiple instances of application
 # include <thread>                //           are launched when DEBUG build is run inside Xcode IDE...
@@ -30,7 +30,7 @@
 //  "run_application"
 //  Client-code interface to creating and running the application...
 //
-int cb::run_application(int argc, char ** argv)
+int cb::run_application([[maybe_unused]] int argc, [[maybe_unused]] char ** argv)
 {
     constexpr const char *  xcp_header              = "MAIN | ";
     constexpr const char *  xcp_type_runtime        = "Caught std::runtime_error exception";
@@ -134,10 +134,10 @@ void App::init(void)
     this->load();
 
 
-#ifdef CBAPP_USE_VIEWPORT
+// #ifdef CBAPP_USE_VIEWPORT
     style.Colors[ImGuiCol_WindowBg].w           = 0.0f;     // host window background
     style.Colors[ImGuiCol_DockingEmptyBg].w     = 0.0f;     // the “empty” parts of your dockspace
-#endif  //  CBAPP_USE_VIEWPORT  //
+// #endif  //  CBAPP_USE_VIEWPORT  //
     
     
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)      //  When viewports are enabled we tweak WindowRounding/WindowBg
@@ -179,8 +179,7 @@ void App::load(void)
 #endif  //  CBAPP_DISABLE_INI  //
     
     
-    io.ConfigFlags             |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad |      //  2.2 Configure I/O Settings.
-                                  ImGuiConfigFlags_DockingEnable     | ImGuiConfigFlags_ViewportsEnable;
+    io.ConfigFlags             |= this->m_io_flags;     //  2.2 Configure I/O Settings.
     //io.ConfigViewportsNoAutoMerge     = true;
     //io.ConfigViewportsNoTaskBarIcon   = true;
     
@@ -196,6 +195,7 @@ void App::load(void)
         m_fonts[static_cast<Font>(i)]   = io.Fonts->AddFontFromFileTTF(info.path.data(), info.size);
         IM_ASSERT(m_fonts[static_cast<Font>(i)]);
     }
+
 
 
 #endif  //  __EMSCRIPTEN__  //
@@ -332,16 +332,15 @@ void App::run(void)
 //
 void App::run_IMPL(void)
 {
-    ImGuiIO &       io              = ImGui::GetIO(); (void)io;
-    ImVec4          sidebar_bg      = ImVec4(0.2f, 0.3f, 0.6f, 1.0f); // RGBA       | SIDEBAR_COLOR = #323232
-    
+    ImGuiIO &                   io              = ImGui::GetIO(); (void)io;
+    ImVec4                      sidebar_bg      = ImVec4(0.2f, 0.3f, 0.6f, 1.0f); // RGBA       | SIDEBAR_COLOR = #323232
+    static cb::GraphingApp      graphing_app    = cb::GraphingApp(10, 10);
     
     //  0.1     RENDER THE DOCKSPACE...
-#ifdef CBAPP_USE_DOCKSPACE
     ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_dock_bg);
     ImGui::DockSpaceOverViewport(0, this->m_main_viewport);
     ImGui::PopStyleColor();
-#endif  //  CBAPP_USE_DOCKSPACE  //
+    
     
     //  0.2     DRAW GENERAL UI ITEMS (MAIN-MENU, ETC)...
     this->Display_Main_Menu_Bar();
@@ -355,9 +354,9 @@ void App::run_IMPL(void)
     this->Display_Main_Window(nullptr);
     
     //  1.3     DISPLAY THE GRAPHING APPLICATION...
-    this->Display_Graphing_App(&this->m_show_graphing_app);
-    
-    
+    graphing_app.Begin(&this->m_show_graphing_app);
+
+
     
     //  2.1     DISPLAY THE STYLE-EDITOR WINDOW...
     if (this->m_show_style_editor) {
@@ -392,8 +391,8 @@ void App::run_IMPL(void)
         
 #ifdef CBAPP_ENABLE_CB_DEMO
     //  2.7     DISPLAY THE "Dear ImPlot" WINDOW...
-    if (this->m_show_implot_demo)
-        this->m_cb_demo.Begin();
+    if (this->m_show_cb_demo)
+        this->m_cb_demo.Begin(&m_show_cb_demo);
 #endif  //  CBAPP_ENABLE_CB_DEMO  //
     
     
@@ -499,6 +498,7 @@ void App::Display_Main_Window(bool * p_open)
 //  3.3     ADDITIONAL APP FUNCTIONS...    | PRIVATE.
 // *************************************************************************** //
 // *************************************************************************** //
+
 
 
 

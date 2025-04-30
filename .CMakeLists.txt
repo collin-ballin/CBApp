@@ -1,72 +1,22 @@
 ########################################################################
 #
-#   ||===================================================||
-#   ||  CMAKE FILE FOR "Dear ImGui" APPLICATION --- V1.  ||
+#   ||---------------------------------------------------||
+#   ||  CMAKE FILE FOR "Dear ImGui" APPLICATION --- V0.  ||
 #   ||===================================================||
 #
-#     INFO:
-#
+#       INFO:
 #                     BUILD FILE FOR:       "macOS"
 #             Project Root Directory:       imgui/imgui_V0/
 #
 #
-#     INVOCATIONS:
-#                                           cmake --build . --config Debug
-#                                           cmake --build . --config Release
-#
-#
-#     HOW-TO:
-#
+#       HOW-TO:
 #           "cd" change-directory to:       imgui/imgui_V0/build
 #              then, run the command:       cmake -G "Xcode" ..
-#                                 OR:       cmake -G "Xcode" -DCBLIB_DEBUG=ON ..
 #
 ########################################################################
 ########################################################################
 cmake_minimum_required(VERSION 3.10)
 project(CBApp)
-
-
-
-#   1.  COMPILER FLAGS, PRE-PROCESSOR MACROS, ETC...
-########################################################################
-########################################################################
-
-
-# 1.1     PREPROCESSOR MACRO DEFINITIONS PER CONFIGURATION...
-########################################################################
-add_library(cb_defines INTERFACE)
-target_compile_definitions(cb_defines INTERFACE
-    #
-    #   0.    MACROS FOR  "ALL"  BUILD TYPES...
-    _CBLIB_LOG
-    # CBAPP_USE_VIEWPORT
-    # CBAPP_USE_DOCKSPACE
-        #   ...Add additional GENERIC macros here...
-
-
-    #   1.    MACROS FOR  "DEBUG"  BUILD TYPES...
-    $<$<CONFIG:Debug>:__CBAPP_DEBUG__>
-    $<$<CONFIG:Debug>:_CBAPP_LOG>
-        #   ...Add additional Debug-only macros here...
-
-
-    #   2.    MACROS FOR  "RELEASE"  BUILD TYPES...
-    $<$<CONFIG:Release>:NDEBUG>
-    $<$<CONFIG:Release>:__CBAPP_RELEASE__>
-        #   ...Add additional Release-only macros here...
-
-
-    #   3.    MACROS FOR  "RelWithDebInfo"  BUILD TYPES...
-    $<$<CONFIG:RelWithDebInfo>:_CBLIB_RELWITHDEBINFO>
-        #   ...Add additional RelWithDebInfo-only macros here...
-
-
-    #   4.    MACROS FOR  "MinSizeRel"  BUILD TYPES...
-    $<$<CONFIG:MinSizeRel>:_CBLIB_MINSIZEREL>
-        #   ...Add additional MinSizeRel-only macros here...
-)
-
 
 #   Add at the top or below the 'project(CBApp)' line
 # option(BUILD_CB_LIBCBAPP_USE_VIEWPORTS "Build test executables for cblib" ON)
@@ -80,10 +30,6 @@ set(THIRD_PARTY_INCLUDE_DIR
 
 
 
-########################################################################
-#
-#
-#
 #   1.  GLOBAL SETTINGS, VERSION REQUIREMENTS, ETC...
 ########################################################################
 ########################################################################
@@ -91,19 +37,9 @@ set(THIRD_PARTY_INCLUDE_DIR
 #       1.1     Set the C++ standard (adjust if needed)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 #
 #       1.2     Set the Minimum MacOSX Version...
 set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS deployment version")
-
-#       1.3     Warnings policy---apply only to our main executable
-add_library(cb_warnings INTERFACE)
-target_compile_options(cb_warnings INTERFACE
-    -Wall -Wextra -Wpedantic -Wshadow
-    -Wno-unused-variable
-    -Wno-sign-compare
-    #-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion
-)
 
 
 ########################################################################
@@ -115,13 +51,13 @@ target_compile_options(cb_warnings INTERFACE
 ########################################################################
 
 #       2.1     Include directories for your own headers, ImGui, and its backends
-# include_directories(
-#     ${CMAKE_CURRENT_SOURCE_DIR}/include                     #   main.h and public headers
-#     ${CMAKE_CURRENT_SOURCE_DIR}/include/app                 #   user-defined headers
-#     ${CMAKE_CURRENT_SOURCE_DIR}/include/imgui_extensions    #   optional imgui wrappers
-#     ${CMAKE_CURRENT_SOURCE_DIR}/imgui                       #   ImGui core
-#     ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends              #   ImGui backends
-# )
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include                     #   main.h and public headers
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/app                 #   user-defined headers
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/imgui_extensions    #   optional imgui wrappers
+    ${CMAKE_CURRENT_SOURCE_DIR}/imgui                       #   ImGui core
+    ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends              #   ImGui backends
+)
 
 
 
@@ -160,10 +96,7 @@ set(IMGUI_BACKEND_SRCS
 set(IMGUI_SRCS ${IMGUI_CORE_SRCS} ${IMGUI_BACKEND_SRCS})
 #
 #       3.5     Recursively gather your application source files.
-file(GLOB_RECURSE APP_SRCS
-    CONFIGURE_DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-)
+file(GLOB_RECURSE APP_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 #
 #       Optional:   add header globbing and grouping (for future use):
 file(GLOB_RECURSE APP_HEADERS
@@ -190,21 +123,10 @@ add_executable(${PROJECT_NAME}
     ${APP_HEADERS}
 )
 
-#       4.3     Link necessary libraries: OpenGL, GLFW, and warnings interface.
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-        ${OPENGL_gl_LIBRARY}
-        glfw
-        cb_warnings
-        cb_defines
-)
+#       4.3     Link necessary libraries: OpenGL and GLFW.
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_gl_LIBRARY} glfw)
 target_include_directories(${PROJECT_NAME}
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/app
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/imgui_extensions
-        ${CMAKE_CURRENT_SOURCE_DIR}/imgui
-        ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends
         ${THIRD_PARTY_INCLUDE_DIR}
 )
 

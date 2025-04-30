@@ -257,8 +257,8 @@ void App::disp_performance_metrics(void) {
     static float                    PLOT_SPACING        = 2.5 * PLOT_SIZE[1];
     
     
-    SPACING                     =   (this->m_show_perf_metrics) ? TEXT_SPACING : DEF_SPACING;
-    SPACING                    +=   (this->m_show_perf_plots)   ? PLOT_SPACING : 0;
+    SPACING                     =   (this->m_show_perf_metrics)                             ? TEXT_SPACING : DEF_SPACING;
+    SPACING                    +=   (this->m_show_perf_plots && this->m_show_perf_metrics)  ? PLOT_SPACING : 0;
     
     
     
@@ -362,7 +362,7 @@ void App::disp_performance_metrics(void) {
 
             //      2B.     MEMORY ALLOCATIONS PLOTTING...
             ImGui::SeparatorText("GPU");
-            ImGui::PushFont( m_fonts[ Font::Small ] );
+            ImGui::PushFont( m_fonts[ Font::Small ] );// place legend in the upper-right corner, vertical orientation
             if (ImPlot::BeginPlot("##Scrolling", PLOT_SIZE))
             {
                 ImPlot::SetupLegend(ImPlotLocation_SouthWest, ImPlotLegendFlags_None);            //    Legend Position.
@@ -394,9 +394,6 @@ void App::disp_performance_metrics(void) {
     
     return;
 }
-
-
-
 
 
 
@@ -462,7 +459,9 @@ void App::Display_Main_Menu_Bar(void)
 //
 void App::disp_file_menubar(void)
 {
-    cblib::ndmatrix<float>  test(4,4);
+    ImGuiIO &       io          = ImGui::GetIO(); (void)io;
+    ImGuiStyle &    style       = ImGui::GetStyle();
+    static cblib::ndmatrix<float>  test(4,4);
 
 
     //  1.  "New" SUB-MENU...
@@ -489,15 +488,9 @@ void App::disp_file_menubar(void)
     if (ImGui::MenuItem("Save As...",               nullptr))       { }
     
     
-    //  4.  "ImGui" SAVING FILES...
+    //  4.  "ImGui" FILES SUB-MENU...
     if (ImGui::BeginMenu("Save ImGui Files")) {
-        
-        if (ImGui::MenuItem("Save ImGui \".ini\" File",       nullptr)) {
-            ImGui::SaveIniSettingsToDisk(cb::app::INI_FILEPATH);
-        }
-        if (ImGui::MenuItem("Save ImGui \"Style\" File",       nullptr)) {
-            utl::SaveStyleToDisk( ImGui::GetStyle(), cb::app::STYLE_FILEPATH);
-        }
+        this->disp_imgui_submenu();
         ImGui::EndMenu();
     }
     
@@ -644,6 +637,122 @@ void App::disp_help_menubar(void)
     ImGui::Separator();
     if (ImGui::MenuItem("About"))           { }
     //  ImGui::Checkbox("\"Dear ImGui\" Demo", &this->m_show_imgui_demo);   //  <--- Using a check-button
+    return;
+}
+
+
+
+// *************************************************************************** //
+//
+//
+//      3.1     SUB-MENU MENU-BAR FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+//  "disp_imgui_submenu"
+//
+void App::disp_imgui_submenu(void)
+{
+#ifdef CBAPP_DISABLE_INI
+    ImGui::TextDisabled("Disabled at compile-time (#ifdef CBAPP_DISABLE_INI)");
+# else
+    ImGuiIO &                       io                  = ImGui::GetIO(); (void)io;
+    ImGuiStyle &                    style               = ImGui::GetStyle();
+    static ImGuiInputTextFlags      read_file_flags     = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_EnterReturnsTrue;
+    static ImGuiInputTextFlags      write_file_flags    = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue;
+    static constexpr std::size_t    BUFF_SIZE           = 256ULL;
+    static constexpr float          COOLDOWN            = 3.0f;
+    
+    static char                     buffer1[BUFF_SIZE];
+    static char                     custom_ini_file     [BUFF_SIZE];
+    static char                     current_ini_file    [BUFF_SIZE];
+    static char                     default_ini_file    [BUFF_SIZE];
+    static float                    TIME_CACHE          = 0.0f,     TIME = 0;
+    static bool                     ONCE                = true;
+    static bool                     TRIGGER             = false;
+    
+    if (ONCE) {
+        std::strncpy(current_ini_file,  io.IniFilename,     BUFF_SIZE);
+        std::strncpy(default_ini_file,  app::INI_FILEPATH,  BUFF_SIZE);
+        
+        ONCE = false;
+    }
+    
+    
+    //  4.1     ".ini" FILE SUB-SUB-MENU.
+    if (ImGui::BeginMenu("Save ImGui \".ini\" File"))
+    {
+        //      4.1A    Save Custom ".ini" file.
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Custom File:");
+        ImGui::SameLine();
+        //
+        if ( ImGui::InputText("##CustomIniFilepath", buffer1, BUFF_SIZE, write_file_flags) )
+        {
+            TRIGGER     = true;
+            TIME_CACHE  = ImGui::GetIO().DeltaTime;
+            TIME        = 0.0f;
+            
+            std::snprintf(custom_ini_file, BUFF_SIZE, "%s/%s%s", app::USER_DATA_DIR, buffer1, ".ini");
+            ImGui::SaveIniSettingsToDisk(custom_ini_file);
+        }
+        ImGui::SameLine();
+        utl::HelpMarker("Tooltip are typically created by using a IsItemHovered() + SetTooltip() sequence.\n\n"
+                        "We provide a helper SetItemTooltip() function to perform the two with standards flags.");
+        //
+        //      4.1A-2  RESET COOLDOWN TIMER...
+        if (TRIGGER) {
+            TIME       += ImGui::GetIO().DeltaTime;
+            TRIGGER     = static_cast<bool>( !(COOLDOWN <= std::abs(TIME - TIME_CACHE)) );
+            ImGui::TextDisabled("Data was saved to \"%s\" at %.3f sec.", custom_ini_file, TIME_CACHE);
+        }
+        
+        
+        //      4.1B    Save *CURRENT* ".ini" file.
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Current File:");
+        ImGui::SameLine();
+        //
+        if ( ImGui::InputText("##CurrentIniFilepath", current_ini_file, BUFF_SIZE, read_file_flags) ) {
+            ImGui::SaveIniSettingsToDisk(custom_ini_file);
+        }
+        
+        
+        
+        
+        
+        //      4.1X-1      Display default ".ini" file.
+        ImGui::Separator();
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Default File:");
+        ImGui::SameLine();
+        ImGui::TextDisabled(app::INI_FILEPATH);
+            
+        //      4.1X-2      Overwrite/Save default ".ini" file.
+        if (ImGui::MenuItem("Save Current Settings As Default",       nullptr)) {
+            ImGui::SaveIniSettingsToDisk(cb::app::INI_FILEPATH);
+        }
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort | ImGuiHoveredFlags_NoSharedDelay))
+            ImGui::SetTooltip("Overwrite the default settings with the current ones (stored at \"%s\").", app::INI_FILEPATH);
+
+        ImGui::EndMenu();
+    }
+    //
+    //
+    //  4.2     ".JSON" STYLE SUB-SUB-MENU.
+    if (ImGui::BeginMenu("Save ImGui \"Style\" File"))
+    {
+
+        if (ImGui::MenuItem("Save ImGui \"Style\" File",       nullptr)) {
+            utl::SaveStyleToDisk( ImGui::GetStyle(), cb::app::STYLE_FILEPATH);
+        }
+
+
+        ImGui::EndMenu();
+    }
+#endif  //  CBAPP_DISABLE_INI  //
+
     return;
 }
 

@@ -83,8 +83,20 @@ struct CBDemo
     // *************************************************************************** //
     void                begin_IMPL              (void);
     void                placeholder_1           (void);
+    void                child_tab_bar           (void);
+    void                child_windows           (void);
+    void                tab_widgets             (void);
+    
     void                placeholder_2           (void);
+    void                placeholder_21          (void);
+    
     void                placeholder_3           (void);
+    void                placeholder_31          (void);
+    
+    
+    //  3.             PRIVATE / UTILITY FUNCTIONS...
+    // *************************************************************************** //
+    void                _draw_menu_1            (void);
 
 
 

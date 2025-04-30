@@ -63,7 +63,7 @@ inline const char * path_to_char(const std::filesystem::path & dir, const char *
 inline constexpr const char *       DEF_ROOT_WIN_TITLE          = "Dear ImGui App (V0)";
 inline constexpr const char *       DEF_SIDEBAR_WIN_TITLE       = "Menu";
 inline constexpr const char *       DEF_MAIN_WIN_TITLE          = "My Application";
-inline constexpr const char *       DEF_GRAPHING_WIN_TITLE      = "Graphing Application";
+inline constexpr const char *       DEF_GRAPHING_APP_TITLE      = "Graphing Application";
 //
 //
 //      1.2                         SETTINGS...
@@ -130,17 +130,21 @@ inline constexpr const char *       ASSETS_DIR                  = "../../assets/
 //
 inline constexpr const char *       CONFIG_DIR                  = "../../assets/config/";
 inline constexpr const char *       FONTS_DIR                   = "../../assets/fonts/";
+inline constexpr const char *       BIN_DIR                     = "../../assets/bin/";
 //
-inline constexpr const char *       DATA_DIR                    = "../../assets/data/";
+//                      3.  "Data"...
+inline constexpr const char *       DATA_DIR                    = "../../data/";
+//
+inline constexpr const char *       USER_DATA_DIR               = "../../data/user_data/";
 //
 //
 //
 //
 //      3B.     FILE-PATHS                  [RUN-TIME]...
-inline constexpr const char *       INI_FILEPATH                = "../../assets/fonts/cb_app.ini";
-inline constexpr const char *       INI_BACKUP_FILEPATH         = "../../assets/fonts/.backup.ini";     //  "../../assets/fonts/swap_cb_app.ini";
+inline constexpr const char *       INI_FILEPATH                = "../../assets/config/cb_app.ini";
+inline constexpr const char *       INI_BACKUP_FILEPATH         = "../../assets/config/.backup.ini";     //  "../../assets/fonts/swap_cb_app.ini";
 
-inline constexpr const char *       STYLE_FILEPATH              = "../../assets/fonts/imgui_style.json";
+inline constexpr const char *       STYLE_FILEPATH              = "../../assets/config/imgui_style.json";
 
 
 

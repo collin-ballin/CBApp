@@ -21,6 +21,7 @@
 #include "utility/utility.h"
 #include "widgets/widgets.h"
 #include "app/_init.h"
+#include "app/_graphing_app.h"
 
 
 
@@ -81,11 +82,11 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 
 //  0.      UTILITY FUNCTIONS [NON-MEMBER FUNCTIONS]...
-int                 run_application             (int argc, char ** argv);
+int                 run_application             ([[maybe_unused]] int argc, [[maybe_unused]] char ** argv);
 
 //  DEAR IMGUI DEMO APPLICATIONS...
 void                ShowExampleAppLog           (bool * p_open);
-void                ShowExampleAppConsole       (bool* p_open);
+void                ShowExampleAppConsole       (bool * p_open);
 
 
 // *************************************************************************** //
@@ -164,22 +165,30 @@ protected:
     ImFonts             m_fonts                         = { nullptr };
     
     
-    //                  3.  WINDOW ITEMS...             //  ImGuiWindowFlags_NoSavedSettings
+    //                  3.  WINDOW / GUI ITEMS...           //  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
+    ImGuiConfigFlags    m_io_flags                      = ImGuiConfigFlags_None | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+#ifdef CBAPP_ENABLE_MOVE_AND_RESIZE
+    ImGuiWindowFlags    m_host_win_flags                = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                                                          ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+    ImGuiWindowFlags    m_sidebar_win_flags             = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+    ImGuiWindowFlags    m_main_win_flags                = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse;
+# else
     ImGuiWindowFlags    m_host_win_flags                = ImGuiWindowFlags_None | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
                                                           ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
-    ImGuiWindowFlags    m_sidebar_win_flags             = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
-                                                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+    ImGuiWindowFlags    m_sidebar_win_flags             = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+                                                          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
     ImGuiWindowFlags    m_main_win_flags                = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+#endif  //  CBAPP_ENABLE_MOVE_AND_RESIZE  //
     
     
     //                  4.  MISC INFORMATION...
     const char *        m_dock_name                     = "RootDockspace";
     const char *        m_glsl_version                  = nullptr;
     
+    
     //                  9.  IMPORTANT VARIABLES...
     ImGuiViewport *     m_main_viewport                 = nullptr;
     GLFWwindow *        m_window                        = nullptr;
-
 #ifdef CBAPP_ENABLE_CB_DEMO
     CBDemo              m_cb_demo                       = CBDemo();
 #endif  //  CBAPP_ENABLE_CB_DEMO  //
@@ -188,10 +197,14 @@ protected:
     //  2.B             PROTECTED MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //  2B.1            Class Initializations.       [app.cpp]...
+    //  2B.1            Class Initializations.      [app.cpp]...
     void                init                        (void);
     void                load                        (void);
     void                destroy                     (void);
+    
+    //  2B.2            Class Utility Methods.      [app.cpp]...
+    void                PushFont                    (void);
+    void                PopFont                     (void);
     
     
     
@@ -220,12 +233,14 @@ private:
     void                disp_color_palette          (void);
     void                disp_performance_metrics    (void);
     //
-    void                disp_file_menubar           (void);     //  Menubar...
+    void                disp_file_menubar           (void);     //  MenuBar...
     void                disp_edit_menubar           (void);
     void                disp_view_menubar           (void);
     void                disp_window_menubar         (void);
     void                disp_tools_menubar          (void);
     void                disp_help_menubar           (void);
+    
+    void                disp_imgui_submenu          (void);     //  Sub-MenuBar...
     
     
     //  3.5             Primary GUI Functions.      [windows.cpp]...
