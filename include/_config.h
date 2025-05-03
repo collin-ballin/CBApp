@@ -59,7 +59,7 @@
 
 //#define     CBAPP_DISABLE_INI                         1               //  Prevent use of ".ini" file to save/recall data.
 #define     CBAPP_LOAD_STYLE_FILE                       1               //  Prevent use of ".json" file to save/recall "ImGui" style data.
-#define     CBAPP_DISABLE_CUSTOM_FONTS                  1
+//#define     CBAPP_DISABLE_CUSTOM_FONTS                  1
 
 
 
