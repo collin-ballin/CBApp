@@ -115,10 +115,11 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 /*  1.  PRIMARY GUI STRUCTURE...                                                                                                        */  \
     X(Host,             "Dear ImGui App (V0)",      true,               _CBAPP_HOST_WINDOW_FLAGS                                )           \
     X(Sidebar,          "Sidebar",                  true,               _CBAPP_SIDEBAR_WINDOW_FLAGS                             )           \
+    X(Menubar,          "MenuBar",                  true,               _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(MainApp,          "My Application",           true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
 /*                                                                                                                                      */  \
 /*  2.  MAIN APPLICATION WINDOWS...                                                                                                     */  \
-    X(Graphing,         "Graphing App",             true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
+    X(GraphingApp,      "Graphing App",             true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
 /*                                                                                                                                      */  \
 /*  3.  TOOLS, DEMOS, MISC WINDOWS, ETC...                                                                                              */  \
     X(StyleEditor,      "Style Editor",             false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
@@ -153,15 +154,13 @@ enum class Window_t : int {
 };
 
 
-
 //  "WinInfo"
 //      Plain‑old‑data (POD) to hold each window’s compile‑time defaults.
 struct WinInfo {
-    std::string_view            uuid;           //  Window title / unique ID.
-    ImGuiWindowFlags            flags;          //  ImGui window flags.
-    bool                        open;           //  Current visibility state.
-    //
-    std::function<void()>       render_fn;      //  To be bound later...
+    std::string_view                                                uuid;           //  Window title / unique ID.
+    ImGuiWindowFlags                                                flags;          //  ImGui window flags.
+    bool                                                            open;           //  Current visibility state.
+    std::function<void(const char*, bool*, ImGuiWindowFlags)>       render_fn;      //  To be bound later...
 };
 
 
@@ -232,16 +231,20 @@ struct AppState
     //  2.               CLASS DATA MEMBERS...
     // *************************************************************************** //
     
-    //  1.  STATIC CONSTEXPR VARIABLES (Group these in here instead of in the "app/_init.h" header)...
-    // static constexpr std::array<Window_t, size_t(Window_t::Count)>  m_window_ids = {{
-    //     #define X(name,title,open,flags,closable) Window_t::name,
-    //         CBAPP_WINDOW_LIST(X)
-    //     #undef X
-    // }};
-    //
-    //
-    ImWindows               m_windows;              //  2.  APPLICATION WINDOW STATE...
-    ImFonts                 m_fonts;                //  3.  APPLICATION FONTS...
+    ImWindows               m_windows;              //  1.  APPLICATION WINDOW STATE...
+    ImFonts                 m_fonts;                //  2.  APPLICATION FONTS...
+    
+    
+    //  3.      I/O CONFIG FLAGS...
+    ImGuiConfigFlags        m_io_flags              = ImGuiConfigFlags_None | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+    
+    //  4.      COLORS...
+    ImVec4                  m_dock_bg               = cb::app::DEF_INVISIBLE_COLOR;
+    ImVec4                  m_glfw_bg               = cb::app::DEF_ROOT_WIN_BG;
+    ImVec4                  m_sidebar_bg            = cb::app::DEF_SIDEBAR_WIN_BG;
+    ImVec4                  m_main_bg               = cb::app::DEF_MAIN_WIN_BG;
+    
+    //  5.      SIDEBAR STUFF...
 
 
 

@@ -162,7 +162,7 @@ inline constexpr const char * get_font_path(void) {
 }
 
 inline constexpr const char *       DEF_FONT_PATH               = get_font_path();
-inline constexpr float              DEF_FONT_SIZE               = 20.0f;
+inline constexpr float              DEF_FONT_SIZE               = 18.0f;
 inline constexpr float              DEF_SMALL_FONT_SIZE         = 14.0f;
     
 
@@ -179,16 +179,16 @@ inline constexpr float              DEF_SMALL_FONT_SIZE         = 14.0f;
 #if defined(__APPLE__)
     //  Fonts for MacOS Builds.
     #define _CBAPP_FONT_LIST(X)         \
-        X(Main,             "/System/Library/Fonts/SFNS.ttf",                               20.0f)      \
-        X(Small,            "/System/Library/Fonts/SFNS.ttf",                               14.0f)      \
-        X(Mono,             "/System/Library/Fonts/SFNSMono.ttf",                           20.0f)      \
-        X(SanSerif,         "/System/Library/Fonts/NewYork.ttf",                            20.0f)      \
-        X(SanSerifSmall,    "/System/Library/Fonts/NewYork.ttf",                            14.0f)
+        X(Main,             "/System/Library/Fonts/SFNS.ttf",                               DEF_FONT_SIZE)          \
+        X(Small,            "/System/Library/Fonts/SFNS.ttf",                               DEF_SMALL_FONT_SIZE)    \
+        X(Mono,             "/System/Library/Fonts/SFNSMono.ttf",                           DEF_FONT_SIZE)          \
+        X(SanSerif,         "/System/Library/Fonts/NewYork.ttf",                            DEF_FONT_SIZE)          \
+        X(SanSerifSmall,    "/System/Library/Fonts/NewYork.ttf",                            DEF_SMALL_FONT_SIZE)
 # else
     //  Fonts for Windows, Linux, or other Builds.
     #define _CBAPP_FONT_LIST(X)         \
-        X(Main,             "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          20.0f)       \
-        X(Small,            "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          14.0f)
+        X(Main,             "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          DEF_FONT_SIZE)          \
+        X(Small,            "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          DEF_SMALL_FONT_SIZE)
 #endif  //  __APPLE__  //
 
 
@@ -221,21 +221,6 @@ static constexpr std::array<FontInfo, int( Font_t::Count )>     APPLICATION_FONT
 #undef X
 }};
 
-    
-
-
-
-// *************************************************************************** //
-//
-//
-//  3.  GLOBAL-CONSTANTS AND NAMESPACE-DEFINED VARIABLES...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-
-
 
 
 
@@ -248,6 +233,75 @@ static constexpr std::array<FontInfo, int( Font_t::Count )>     APPLICATION_FONT
 // *************************************************************************** //
 // *************************************************************************** //
 } }//   END OF "cb" :: "app" NAMESPACE.
+
+
+
+
+
+
+
+    
+
+
+
+namespace cb { namespace error { //     BEGINNING NAMESPACE "cb" :: "error"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+// *************************************************************************** //
+//
+//
+//  9.  ERROR MESSAGING...
+// *************************************************************************** //
+// *************************************************************************** //
+
+inline constexpr const char *       GLFW_INIT_ERROR                 =
+    "A fatal error has occured during program initialization:\n\t"
+    "Call to \"glfwInit()\" returned NULL.\n"
+    "This may occur if your machine does not have the necessary graphics drivers for OpenGL installed.\n"
+    "Ensure that your system is using the designated GPU / Graphics Card and NOT the on-board "
+    "graphics that are build into the motherboard.";
+    
+    
+inline constexpr const char *       GLFW_WINDOW_INIT_ERROR          =
+    "A fatal error has occured during program initialization:\n\t"
+    "Call to \"glfwCreateWindow()\" returned NULL.\n";
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+} }//   END OF "cb" :: "error" NAMESPACE.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

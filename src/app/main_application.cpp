@@ -1,5 +1,5 @@
 //
-//  windows.cpp
+//  main_application.cpp
 //  CBApp
 //
 //  Created by Collin Bond on 4/16/25.
@@ -18,6 +18,239 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
+//  3.2     MAIN APPLICATION GUI FUNCTIONS...    | PRIVATE.
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "Display_Main_Window"
+//
+void App::Display_Main_Window(const char * uuid, bool * p_open, ImGuiWindowFlags flags)
+{
+    // ImVec2                       win_pos(this->m_main_viewport->WorkPos.x + 750,   this->m_main_viewport->WorkPos.x + 20);
+    ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
+    
+    
+    //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_main_bg);
+    ImGui::Begin(uuid, p_open, flags);
+    {
+        ImGui::PopStyleColor();
+        
+        
+        //  3.  TESTING PLOTTING / GRAPHING 1...
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if( ImGui::CollapsingHeader("Coincidence Counter") )
+        {
+            this->CoincidenceCounter();
+            //ImGui::TreePop();
+        }
+    }
+    
+    
+    
+//      DO NOT INCLUDE THESE EXAMPLES IF
+//      BUILDING FOR:    __CBAPP_COINCIDENCE_COUNTER_BUILD__
+#ifndef __CBAPP_COINCIDENCE_COUNTER_BUILD__
+    
+    //  4.  TESTING PLOTTING / GRAPHING 2...
+    {
+        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+        if (ImGui::TreeNode("Graphing 2"))
+        {
+            this->ImPlot_Testing2();
+            ImGui::TreePop();
+        }
+    }
+    
+    
+    
+    //  5.  TESTING PLOTTING / GRAPHING 2...
+    {
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode("Graphing 3"))
+        {
+            this->ImPlot_Testing3();
+            ImGui::TreePop();
+        }
+    }
+    
+    
+    
+    
+    
+    
+    //  10. TESTING RADIOBUTTONS...
+    {
+        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+        if (ImGui::TreeNode("Basic Widgets"))
+        {
+            this->Test_Basic_Widgets();
+            ImGui::TreePop();
+        }
+    }
+    
+    
+    
+    //  11. TESTING RADIOBUTTONS...
+    {
+        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+        if (ImGui::TreeNode("ImGui Demo Code"))
+        {
+            this->ImGui_Demo_Code();
+            ImGui::TreePop();
+        }
+    }
+    
+//
+#endif  //  __CBAPP_COINCIDENCE_COUNTER_BUILD__  //
+    
+    ImGui::End();
+    return;
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  3.3     OTHER FUNCTIONS...   | PRIVATE.
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "CoincidenceCounter"
+//
+void App::CoincidenceCounter(void)
+{
+    constexpr int NUM_CHANNELS              = 15;
+    static std::array<utl::ScrollingBuffer, NUM_CHANNELS> buffers;
+    static float max_counts[NUM_CHANNELS]   = {};
+    static float t                          = 0.0f;
+    struct ChannelSpec { int mask; const char* name; int min; int max; };
+    static constexpr ChannelSpec channels[NUM_CHANNELS] = {
+        {8,  "A",    76220, 82824}, {4,  "B",    45668, 52491}, {2,  "C",      535,   641},
+        {1,  "D",      365,   441}, {12, "AB",     205,   295}, {10, "AC",       0,     5},
+        {9,  "AD",       0,     5}, {6,  "BC",       0,     4}, {5,  "BD",       0,     3},
+        {3,  "CD",       0,     0}, {14, "ABC",      0,    11}, {13, "ABD",      0,     4},
+        {11, "ACD",      0,     4}, {7,  "BCD",      0,     4}, {15, "ABCD",    60,    99}
+    };
+
+    // Control widgets
+    static float    history             = 30.0f;
+    static float    clock_interval      = 0.1f;
+    static float    clock_accumulator   = 0.0f;
+    static float    row_height          = 60.0f;
+    static float    uncertainty_pct     = 5.0f;
+    static bool     animate             = false;
+    static ImPlotAxisFlags plot_flags   = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
+
+    ImGui::SliderFloat("Row Height (px)",           &row_height,        30.0f,      120.0f,     "%.0f px");
+    ImGui::SliderFloat("History (s)",               &history,           5.0f,       60.0f,      "%.1f sec");
+    ImGui::SliderFloat("Integration Window (s)",    &clock_interval,    0.001f,     3.0f,       "%.3e sec");
+    ImGui::SliderFloat("Uncertainty (%)",           &uncertainty_pct,   1.0f,       15.0f,      "%.1f%%");
+
+    if (animate) {
+        if (ImGui::Button("Pause")) animate = false;
+    } else {
+        if (ImGui::Button("Record")) animate = true;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Clear Data")) {
+        t = 0.0f;
+        clock_accumulator = 0.0f;
+        for (auto &buf : buffers) buf.Data.clear();
+        for (int i = 0; i < NUM_CHANNELS; ++i) max_counts[i] = 0.0f;
+    }
+
+    if (animate) {
+        clock_accumulator += ImGui::GetIO().DeltaTime;
+        if (clock_accumulator >= clock_interval) {
+            clock_accumulator -= clock_interval;
+            t += clock_interval;
+            static bool init = false;
+            static float last_counts[NUM_CHANNELS];
+            if (!init) {
+                for (int i = 0; i < NUM_CHANNELS; ++i) {
+                    auto [minv, maxv] = std::pair<int,int>{channels[i].min, channels[i].max};
+                    last_counts[i] = 0.5f * (minv + maxv);
+                }
+                init = true;
+            }
+            static std::mt19937_64 rng{std::random_device{}()};
+            for (int i = 0; i < NUM_CHANNELS; ++i) {
+                auto [minv, maxv] = std::pair<int,int>{channels[i].min, channels[i].max};
+                std::poisson_distribution<int> pd(static_cast<int>(last_counts[i]));
+                float count = std::clamp(float(pd(rng)), float(minv), float(maxv));
+                float noise_range = float(maxv) * (uncertainty_pct * 0.01f);
+                std::uniform_real_distribution<float> ud(-noise_range, noise_range);
+                count = std::clamp(count + ud(rng), 0.0f, float(maxv));
+                last_counts[i] = count;
+                max_counts[i] = std::max(max_counts[i], count);
+                buffers[i].AddPoint(t, count);
+            }
+        }
+    }
+
+    ImPlot::PushColormap(ImPlotColormap_Deep);
+    if (ImGui::BeginTable("##CoincTable", 5, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg)) {
+        ImGui::TableSetupColumn("Counter(s)", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+        ImGui::TableSetupColumn("Max", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+        ImGui::TableSetupColumn("Avg.", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+        ImGui::TableSetupColumn("Count", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+        ImGui::TableSetupColumn("Plot");
+        ImGui::TableHeadersRow();
+
+        for (int display_row = 0; display_row < NUM_CHANNELS; ++display_row) {
+            int buffer_idx = channels[display_row].mask - 1;
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0); ImGui::Text("%s", channels[display_row].name);
+            ImGui::TableSetColumnIndex(1); ImGui::Text("%.0f", max_counts[display_row]);
+            ImGui::TableSetColumnIndex(2);
+            float avg = 0.0f;
+            auto &data = buffers[buffer_idx].Data;
+            if (!data.empty()) {
+                float sum = 0.0f;
+                for (auto &pt : data) sum += pt.y;
+                avg = sum / data.size();
+            }
+            ImGui::Text("%.1f", avg);
+            ImGui::TableSetColumnIndex(3);
+            float curr = data.empty() ? 0.0f : data.back().y;
+            ImGui::Text("%.0f", curr);
+            ImGui::TableSetColumnIndex(4);
+            ImGui::PushID(display_row);
+            if (!buffers[buffer_idx].Data.empty()) {
+                ScrollingSparkline(
+                    t,
+                    history,
+                    buffers[buffer_idx],
+                    plot_flags,
+                    ImPlot::GetColormapColor(display_row),
+                    ImVec2(-1, row_height),
+                    0.5f
+                );
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+    ImPlot::PopColormap();
+}
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 // *************************************************************************** //
 //
 //

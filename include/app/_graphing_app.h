@@ -80,7 +80,8 @@ public:
                         ~GraphingApp                (void);                                             //  Def. Destructor.
                         
     //  1.2             Public Member Functions...
-    void                Begin                   (bool * p_open = nullptr);
+    void                initialize                  (void);
+    void                Begin                       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     //                      Data & Interaction.
 
 
@@ -104,6 +105,7 @@ protected:
     float                               CONTROL_WIDTH           = 0.0f;
     
     //  Main Window Stuff...
+    bool                                m_initialized           = false;
     const char *                        m_window_title          = app::DEF_GRAPHING_APP_TITLE;
 #ifdef CBAPP_ENABLE_MOVE_AND_RESIZE
     ImPlotHeatmapFlags                  m_window_flags          = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse;

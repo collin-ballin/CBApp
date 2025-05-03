@@ -44,9 +44,10 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 //  "WindowLocation"
 //
 enum class WindowLocation {
-    Center,         // default
-    LeftHalf,       // left half of the monitor
-    RightHalf       // right half of the monitor
+    Center,             // default.
+    LeftHalf,           // left half of the monitor.
+    RightHalf,          // right half of the monitor.
+    Fill                // Expand window to fill the entire screen.
 };
 
 

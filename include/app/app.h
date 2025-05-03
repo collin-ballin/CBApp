@@ -77,8 +77,6 @@
 
 
 
-
-
 namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -87,8 +85,15 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 int                 run_application             ([[maybe_unused]] int argc, [[maybe_unused]] char ** argv);
 
 //  DEAR IMGUI DEMO APPLICATIONS...
-void                ShowExampleAppLog           (bool * p_open);
-void                ShowExampleAppConsole       (bool * p_open);
+void                ShowStyleEditor             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                ShowExampleAppLog           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                ShowExampleAppConsole       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                ShowMetricsWindow           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+
+void                ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+
+
 
 
 // *************************************************************************** //
@@ -140,17 +145,8 @@ protected:
     bool                m_show_perf_plots               = app::DEF_PERF_PLOTS_STATE;
     //
     //                          Main Applications.
-    bool                m_show_main_window              = true;
-    bool                m_show_graphing_app             = true;
     //
     //                          Dear ImGui Applications.
-    bool                m_show_style_editor             = false;
-    bool                m_show_log_window               = false;
-    bool                m_show_console_window           = false;
-    bool                m_show_metrics_window           = false;
-    bool                m_show_imgui_demo               = false;
-    bool                m_show_implot_demo              = false;
-    bool                m_show_cb_demo                  = true;
     
     
     //                  2.  APPEARANCE...
@@ -163,8 +159,7 @@ protected:
     float               m_sidebar_ratio                 = app::DEF_SB_OPEN_WIDTH;
     bool                m_rebuild_dockspace             = true;
     ImGuiID             m_dockspace_id                  = 0;
-    std::vector<std::string> m_primary_windows          = { app::DEF_MAIN_WIN_TITLE,
-                                                            app::DEF_GRAPHING_APP_TITLE };
+    std::vector<std::string> m_primary_windows          = { };
     
     //
     //                          Colors.
@@ -172,9 +167,6 @@ protected:
     ImVec4              m_glfw_bg                       = cb::app::DEF_ROOT_WIN_BG;
     ImVec4              m_sidebar_bg                    = cb::app::DEF_SIDEBAR_WIN_BG;
     ImVec4              m_main_bg                       = cb::app::DEF_MAIN_WIN_BG;
-    //
-    //                          Fonts.
-    ImFonts             m_fonts                         = { nullptr };
     
     
     //                  3.  WINDOW / GUI ITEMS...           //  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
@@ -182,14 +174,9 @@ protected:
 #ifdef CBAPP_ENABLE_MOVE_AND_RESIZE
     ImGuiWindowFlags    m_host_win_flags                = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
                                                           ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
-    ImGuiWindowFlags    m_sidebar_win_flags             = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
-    ImGuiWindowFlags    m_main_win_flags                = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse;
 # else
     ImGuiWindowFlags    m_host_win_flags                = ImGuiWindowFlags_None | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
                                                           ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
-    ImGuiWindowFlags    m_sidebar_win_flags             = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
-                                                          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
-    ImGuiWindowFlags    m_main_win_flags                = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 #endif  //  CBAPP_ENABLE_MOVE_AND_RESIZE  //
     
     
@@ -201,7 +188,11 @@ protected:
     //                  5.  IMPORTANT VARIABLES...
     ImGuiViewport *     m_main_viewport                 = nullptr;
     GLFWwindow *        m_window                        = nullptr;
+    
+    //                  6.  DELAGATOR CLASSES...
     app::AppState       m_state                         = app::AppState();
+    MenuBar             m_menubar;
+    GraphingApp         m_graphing_app;
     
     
     //                  9.  APPLICATION SUB-CLASSES...
@@ -216,6 +207,7 @@ protected:
     //  2B.1            Class Initializations.      [app.cpp]...
     void                init                        (void);
     void                load                        (void);
+    void                dispatch_window_function    (const Window & uuid);
     void                destroy                     (void);
     
     
@@ -227,13 +219,19 @@ private:
     // *************************************************************************** //
     
     //  3.2             Main GUI Functions.         [app.cpp]...
-    void                run_IMPL                    (void);                     //  [app.cpp].
-    void                Display_Main_Window         (bool * );                  //  [app.cpp].
+    void                run_IMPL                    (void);                                                         //  [app.cpp].
+    void                Display_Main_Window         (const char *,      bool *,     ImGuiWindowFlags);              //  [app.cpp].
+    void                CoincidenceCounter          (void);                                                         //  [main_application.cpp].
+    void                Display_Sidebar_Menu        (const char *,      bool *,     ImGuiWindowFlags);              //  [main_application.cpp].
+    
+    
+    
+    //  3.2             Tools / Debugging Apps.     [app.cpp]...
+    
     
     
     
     //                  SIDEBAR MENU...             [sidebar.cpp].
-    void                Display_Sidebar_Menu        (bool * p_open=nullptr);
     void                Display_Preferences_Menu    (void);
     //
     void                disp_appearance_mode        (void);     //  Other...
@@ -244,20 +242,6 @@ private:
     
     
     
-    //                  MENUBAR MENU...             [menubar.cpp].
-    void                Display_Main_Menu_Bar       (void);
-    //
-    void                disp_file_menubar           (void);     //  MenuBar...
-    void                disp_edit_menubar           (void);
-    void                disp_view_menubar           (void);
-    void                disp_window_menubar         (void);
-    void                disp_tools_menubar          (void);
-    void                disp_help_menubar           (void);
-    
-    void                disp_imgui_submenu          (void);     //  Sub-MenuBar...
-    
-    
-    
     
     
     //  3.3             Primary Menu Functions.     [interface.cpp]...
@@ -265,11 +249,10 @@ private:
     
     
     
-    
     //  3.4             Secondary Menu Functions.   [interface.cpp]...
     
     
-    //  3.5             Primary GUI Functions.      [windows.cpp]...
+    //  3.5             Primary GUI Functions.      [main_application.cpp]...
     void                ImPlot_Testing1             (void);
     void                ImPlot_Testing2             (void);
     void                ImPlot_Testing3             (void);

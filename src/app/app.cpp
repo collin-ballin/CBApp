@@ -92,10 +92,10 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 App::App(void)
+    : m_menubar(m_state), m_graphing_app(10, 10)
 {
     glfwSetErrorCallback(utl::glfw_error_callback);     //  1.  SET GLFW CALLBACK & CHECK IF PROPERLY INITIALIZED...
-    if (!glfwInit())    throw std::runtime_error("Call to glfwInit() returned NULL");
-
+    if (!glfwInit())    throw std::runtime_error(cb::error::GLFW_INIT_ERROR);
     this->m_glsl_version = utl::get_glsl_version();     //  2.  DECIDE WHICH GL + GLSL VERSION...
     this->init();                                       //  3.  INVOKE "HELPER" FUNCTION TO COMPLETE INITIALIZATION...
     
@@ -112,8 +112,9 @@ void App::init(void)
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER,    GLFW_TRUE);
     //glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER,   GLFW_TRUE);
     this->m_window = glfwCreateWindow(cb::app::DEF_ROOT_WIN_WIDTH, cb::app::DEF_ROOT_WIN_HEIGHT, cb::app::DEF_ROOT_WIN_TITLE, nullptr, nullptr);
-    if (!this->m_window)
-        throw std::runtime_error("Call to glfwInit() returned NULL");
+    if (!this->m_window) {
+        throw std::runtime_error(cb::error::GLFW_WINDOW_INIT_ERROR);
+    }
         
     //utl::SetGLFWWindowLocation(this->m_window, utl::WindowLocation::Center, cb::app::DEF_ROOT_WINDOW_SCALE);
     utl::set_window_scale(this->m_window, cb::app::DEF_ROOT_WINDOW_SCALE);
@@ -155,8 +156,22 @@ void App::init(void)
     ImGui_ImplGlfw_InstallEmscriptenCallbacks(window, "#canvas");
 #endif      //  __EMSCRIPTEN__  //
     ImGui_ImplOpenGL3_Init(this->m_glsl_version);
-       
+
     this->m_main_viewport   = ImGui::GetMainViewport();
+    
+    
+    
+    //  4.      INITIALIZE DELEGATOR CLASSES
+    //          (SOME OF THESE HAVE TO BE DONE **AFTER** WE CREATE IMGUI CONTEXT)...
+    this->m_graphing_app.initialize();
+       
+       
+       
+    auto & windows          = this->m_state.m_windows;
+    m_primary_windows       = { std::string( windows[Window::MainApp].uuid ),
+                                std::string( windows[Window::GraphingApp].uuid ) };
+                                                            
+       
     IM_ASSERT( std::find(this->m_primary_windows.begin(), this->m_primary_windows.end(),
                          app::DEF_SIDEBAR_WIN_TITLE) == this->m_primary_windows.end() &&
                          "Sidebar window should not be in right_docked_windows!");
@@ -170,20 +185,22 @@ void App::init(void)
 void App::load(void)
 {
 #ifndef __EMSCRIPTEN__
-    ImGuiIO &       io          = ImGui::GetIO(); (void)io;
-    ImGuiStyle &    style       = ImGui::GetStyle();
+    auto &          m_windows       = this->m_state.m_windows;
+    auto &          m_fonts         = this->m_state.m_fonts;
+    ImGuiIO &       io              = ImGui::GetIO(); (void)io;
+    ImGuiStyle &    style           = ImGui::GetStyle();
     ImGui::StyleColorsDark();
     
     
 #if defined(CBAPP_DISABLE_INI)
-    io.IniFilename              = nullptr;
+    io.IniFilename                  = nullptr;
 # else
-    io.IniFilename              = cb::app::INI_FILEPATH;
+    io.IniFilename                  = cb::app::INI_FILEPATH;
     ImGui::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH);
 #endif  //  CBAPP_DISABLE_INI  //
     
     
-    io.ConfigFlags             |= this->m_io_flags;     //  2.2 Configure I/O Settings.
+    io.ConfigFlags                 |= this->m_io_flags;     //  2.2 Configure I/O Settings.
     //io.ConfigViewportsNoAutoMerge     = true;
     //io.ConfigViewportsNoTaskBarIcon   = true;
     
@@ -194,12 +211,34 @@ void App::load(void)
 
 
 
+    //      3.3     Initialize Window Parameters.
+    for (std::size_t i = 0; i < static_cast<int>(Window::Count); ++i)
+    {
+        Window      uuid                    = static_cast<Window>(i);
+        m_windows[uuid].render_fn           = [this, uuid]([[maybe_unused]] const char * id,
+                                                           [[maybe_unused]] bool * p_open,
+                                                           [[maybe_unused]] ImGuiWindowFlags flags) {
+            this->dispatch_window_function(uuid); // uuid is now correctly captured per-lambda
+        };
+    }
+
+
 #ifndef CBAPP_DISABLE_CUSTOM_FONTS
-    //      3.3     Loading Fonts.
-    for (int i = 0; i < static_cast<int>(Font::Count); ++i) {
-        const auto &    info                                = cb::app::APPLICATION_FONT_STYLES[i];
-        this->m_state.m_fonts[static_cast<Font>(i)]         = io.Fonts->AddFontFromFileTTF(info.path.data(), info.size);
-        IM_ASSERT( this->m_state.m_fonts[static_cast<Font>(i)] );
+    //      3.4     Loading Fonts.
+    for (int i = 0; i < static_cast<int>(Font::Count); ++i)
+    {
+        const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
+        m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontFromFileTTF(info.path.data(), info.size);
+        IM_ASSERT( m_fonts[static_cast<Font>(i)] );
+    }
+# else
+    for (int i = 0; i < static_cast<int>(Font::Count); ++i)
+    {
+        const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
+        ImFontConfig    config;
+        config.SizePixels                   = info.size;
+        m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontDefault(&config);
+        IM_ASSERT( m_fonts[static_cast<Font>(i)] );
     }
 #endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
 
@@ -210,6 +249,72 @@ void App::load(void)
 }
 
 
+//  "dispatch_window_function"
+//
+void App::dispatch_window_function(const Window & uuid)
+{
+    auto &          w       = m_state.m_windows[uuid];
+    
+    
+    //  DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
+    switch (uuid)
+    {
+        case Window::Sidebar:       {
+            this->Display_Sidebar_Menu(     w.uuid.data(),      nullptr,        w.flags);
+            break;
+        }
+        case Window::Menubar:       {
+            this->m_menubar.Begin(          w.uuid.data(),      nullptr,        w.flags);
+            break;
+        }
+        case Window::MainApp:       {
+            this->Display_Main_Window(      w.uuid.data(),      nullptr,        w.flags);
+            break;
+        }
+        case Window::GraphingApp:   {
+            this->m_graphing_app.Begin(     w.uuid.data(),      nullptr,        w.flags);
+            break;
+        }
+        //
+        //
+        //
+        case Window::StyleEditor:   {
+            cb::ShowStyleEditor(            w.uuid.data(),      &w.open,        w.flags);
+            break;
+        }
+        case Window::Logs:          {
+            cb::ShowExampleAppLog(          w.uuid.data(),      &w.open,        w.flags);
+            break;
+        }
+        case Window::Console:       {
+            cb::ShowExampleAppConsole(      w.uuid.data(),      &w.open,        w.flags);
+            break;
+        }
+        case Window::Metrics:       {
+            cb::ShowMetricsWindow(          w.uuid.data(),      &w.open,        w.flags);
+            break;
+        }
+        //
+        //
+        //
+        case Window::ImGuiDemo:     {
+            cb::ShowImGuiDemoWindow(        w.uuid.data(),      &w.open,        w.flags);
+            break;
+        }
+        case Window::ImPlotDemo:     {
+            cb::ShowImPlotDemoWindow(       w.uuid.data(),      &w.open,        w.flags);
+            break;
+        }
+        //
+        //  ...
+        //
+        default: {
+            break;
+        }
+    }
+    
+    return;
+}
 
 
 //  Destructor.
@@ -251,7 +356,7 @@ void App::destroy(void)
 //
 void App::run(void)
 {
-    ImGuiIO &       io          = ImGui::GetIO(); (void)io;
+    static const ImGuiIO &      io          = ImGui::GetIO(); (void)io;
 
 
     //  1.  MAIN PROGRAM LOOP...
@@ -339,9 +444,19 @@ void App::run(void)
 //
 void App::run_IMPL(void)
 {
-    ImGuiIO &                   io              = ImGui::GetIO(); (void)io;
-    ImVec4                      sidebar_bg      = ImVec4(0.2f, 0.3f, 0.6f, 1.0f); // RGBA       | SIDEBAR_COLOR = #323232
-    static cb::GraphingApp      graphing_app    = cb::GraphingApp(10, 10);
+    static ImGuiIO &                io                  = ImGui::GetIO(); (void)io;
+    static ImGuiStyle &             style               = ImGui::GetStyle();
+    static size_t                   idx                 = static_cast<size_t>(0);
+    static const size_t             N_WINDOWS           = static_cast<size_t>(Window::Count);
+    
+    static ImVec4                   sidebar_bg          = ImVec4(0.2f, 0.3f, 0.6f, 1.0f); // RGBA       | SIDEBAR_COLOR = #323232
+    
+
+    static Window                   uuid                = static_cast<Window>(idx);
+    static app::WinInfo &           winfo               = m_state.m_windows[uuid];
+    static bool *                   p_open              = nullptr;      // &window.open;
+    
+    
     
     //  0.1     RENDER THE DOCKSPACE...
 #ifndef CBAPP_NEW_DOCKSPACE
@@ -385,11 +500,12 @@ void App::run_IMPL(void)
     //  Host window flags (invisible, non-interactive)
     ImGuiWindowFlags host_window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
 
-    ImGui::Begin("##DockHostWindow", nullptr, host_window_flags);
+    ImGui::Begin( "##DockHostWindow", nullptr, host_window_flags); //this->m_state.m_windows[Window::Host].flags );
         ImGui::PopStyleVar(3);  //  DockSpace() creates docking area within this host window
         ImGui::DockSpace(this->m_dockspace_id );
     ImGui::End();
 #endif  //  CBAPP_NEW_DOCKSPACE  //
+    
     
     
     if (this->m_rebuild_dockspace)
@@ -402,55 +518,18 @@ void App::run_IMPL(void)
     //  0.2     DRAW GENERAL UI ITEMS (MAIN-MENU, ETC)...
     // this->Display_Main_Menu_Bar();
 
-    
-    
-    //  1.1     DRAWING THE "SIDE-BAR MENU" WINDOW...
-    this->Display_Sidebar_Menu(nullptr);
-    
-    //  1.2     DISPLAY THE MAIN APPLICATION WINDOW...
-    this->Display_Main_Window(nullptr);
-    
-    //  1.3     DISPLAY THE GRAPHING APPLICATION...
-    graphing_app.Begin(&this->m_show_graphing_app);
 
-
-    
-    //  2.1     DISPLAY THE STYLE-EDITOR WINDOW...
-    if (this->m_show_style_editor) {
-        ImGui::Begin("Style Editor (ImGui)", &m_show_style_editor);
-        ImGui::ShowStyleEditor();
-        ImGui::End();
-    }
-    
-    //  2.2     DISPLAY THE "LOGGING" WINDOW...
-    if (this->m_show_log_window) {
-        cb::ShowExampleAppLog(&this->m_show_log_window);
-    }
-    
-    //  2.3     DISPLAY THE "CONSOLE" WINDOW...
-    if (this->m_show_console_window) {
-        cb::ShowExampleAppConsole(&this->m_show_console_window);
-    }
-    
-    //  2.4     DISPLAY THE "METRICS / DEBUGGER" WINDOW...
-    if (this->m_show_metrics_window) {
-        ImGui::ShowMetricsWindow(&this->m_show_metrics_window);
-    }
-    
-    //  2.5     DISPLAY THE "Dear ImGui" DEMO WINDOW...
-    if (this->m_show_imgui_demo)
-        ImGui::ShowDemoWindow(&this->m_show_imgui_demo);
+    //  1.1     DRAW APPLICATION WINDOWS...
+    for (idx = 0; idx < N_WINDOWS; ++idx)
+    {
+        uuid            = static_cast<Window>(idx);
+        winfo           = m_state.m_windows[uuid];
         
-    //  2.6     DISPLAY THE "Dear ImPlot" WINDOW...
-    if (this->m_show_implot_demo)
-        ImPlot::ShowDemoWindow(&this->m_show_implot_demo);
-        
-        
-#ifdef CBAPP_ENABLE_CB_DEMO
-    //  2.7     DISPLAY THE "Dear ImPlot" WINDOW...
-    if (this->m_show_cb_demo)
-        this->m_cb_demo.Begin(&m_show_cb_demo);
-#endif  //  CBAPP_ENABLE_CB_DEMO  //
+        if (winfo.render_fn && winfo.open) {
+            winfo.render_fn( winfo.uuid.data(), &winfo.open, winfo.flags );
+        }
+    }
+    
     
     
     return;
@@ -458,101 +537,13 @@ void App::run_IMPL(void)
 
 
 
-// *************************************************************************** //
-//
-//
-//  3.2     MAIN APPLICATION GUI FUNCTIONS...    | PRIVATE.
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "Display_Main_Window"
-//
-void App::Display_Main_Window(bool * p_open)
-{
-    // ImVec2                       win_pos(this->m_main_viewport->WorkPos.x + 750,   this->m_main_viewport->WorkPos.x + 20);
-    ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
-    
-    
-    //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_main_bg);
-    ImGui::Begin(app::DEF_MAIN_WIN_TITLE, p_open, this->m_main_win_flags);
-    {
-        ImGui::PopStyleColor();
-        
-        
-        //  3.  TESTING PLOTTING / GRAPHING 1...
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("Graphing 1"))
-        {
-            this->ImPlot_Testing1();
-            ImGui::TreePop();
-        }
-    }
-    
-    
-    
-    //  4.  TESTING PLOTTING / GRAPHING 2...
-    {
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("Graphing 2"))
-        {
-            this->ImPlot_Testing2();
-            ImGui::TreePop();
-        }
-    }
-    
-    
-    
-    //  5.  TESTING PLOTTING / GRAPHING 2...
-    {
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNode("Graphing 3"))
-        {
-            this->ImPlot_Testing3();
-            ImGui::TreePop();
-        }
-    }
-    
-    
-    
-    
-    
-    
-    //  10. TESTING RADIOBUTTONS...
-    {
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("Basic Widgets"))
-        {
-            this->Test_Basic_Widgets();
-            ImGui::TreePop();
-        }
-    }
-    
-    
-    
-    //  11. TESTING RADIOBUTTONS...
-    {
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("ImGui Demo Code"))
-        {
-            this->ImGui_Demo_Code();
-            ImGui::TreePop();
-        }
-    }
-    
-    
-    
-    ImGui::End();
-    return;
-}
 
 
 
 // *************************************************************************** //
 //
 //
-//  3.3     ADDITIONAL APP FUNCTIONS...    | PRIVATE.
+//  3.4     ADDITIONAL APP FUNCTIONS...    | PRIVATE.
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -586,9 +577,9 @@ void App::RebuildDockLayout(void)
 //  "PushFont"
 //
 void App::PushFont( [[maybe_unused]] const Font & which) {
-#ifndef CBAPP_DISABLE_CUSTOM_FONTS
+//#ifndef CBAPP_DISABLE_CUSTOM_FONTS
     ImGui::PushFont( this->m_state.m_fonts[which] );
-#endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
+//#endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
     return;
 }
 
@@ -596,9 +587,9 @@ void App::PushFont( [[maybe_unused]] const Font & which) {
 //  "PopFont"
 //
 void App::PopFont(void) {
-#ifndef CBAPP_DISABLE_CUSTOM_FONTS
+//#ifndef CBAPP_DISABLE_CUSTOM_FONTS
     ImGui::PopFont();
-#endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
+//#endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
     return;
 }
 

@@ -29,6 +29,7 @@
 #include "utility/utility.h"
 #include "widgets/widgets.h"
 #include "app/_init.h"
+#include "app/state/_state.h"
 #include "app/_graphing_app.h"
 
 
@@ -80,15 +81,21 @@ class MenuBar
 // *************************************************************************** //
 // *************************************************************************** //
 public:
+    using               AppState                        = app::AppState;
+    using               Window                          = AppState::Window;
+    using               ImWindows                       = AppState::ImWindows;
+    using               Font                            = AppState::Font;
+    using               ImFonts                         = AppState::ImFonts;
     
     //  1               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     //  1.1             Default Constructor, Destructor, etc.       [app/menubar/menubar.cpp]...
-                        MenuBar                         (void);                                         //  Def. Constructor.
+    explicit            MenuBar                         (app::AppState & );                             //  Def. Constructor.
                         ~MenuBar                        (void);                                         //  Def. Destructor.
     
     //  1.2             Primary Class Interface.                    [app/menubar/menubar.cpp]...
-    void                Begin                           (bool * p_open = nullptr);
+    void                Begin                           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+                                                         
     void                Display_Main_Menu_Bar           (void);
 
     //  1.3             Deleted Operators, Functions, etc.
@@ -114,14 +121,6 @@ protected:
     
     
     //                  2.  APPEARANCE...
-    //                          Dimensions:
-    //                                  ...
-    //
-    //                          Colors:
-    //                                  ...
-    //
-    //                          Fonts:
-    //                                  ...
     
     
     //                  3.  WINDOW / GUI ITEMS...           //  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
@@ -132,8 +131,7 @@ protected:
     
     
     //                  5.  IMPORTANT VARIABLES...
-    // ImGuiViewport *     m_main_viewport                 = nullptr;
-    // GLFWwindow *        m_window                        = nullptr;
+    app::AppState &     m_state;
     
     
     //  2.B             PROTECTED MEMBER FUNCTIONS...

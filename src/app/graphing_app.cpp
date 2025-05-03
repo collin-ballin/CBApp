@@ -48,7 +48,19 @@ GraphingApp::GraphingApp(const size_type rows_, const size_type cols_)
     : m_heatmap(rows_, cols_)
 {
     //this->m_heatmap     = cb::HeatMap(rows_, cols_);
+    //this->init();
+}
+
+
+//  "initialize"
+//
+void GraphingApp::initialize(void)
+{
+    if (this->m_initialized)
+        return;
+        
     this->init();
+    return;
 }
 
 
@@ -56,8 +68,9 @@ GraphingApp::GraphingApp(const size_type rows_, const size_type cols_)
 //
 void GraphingApp::init(void)
 {
-    float   CONTROL_WIDTH           = ImGui::GetFontSize() * 8;
+    CONTROL_WIDTH               = ImGui::GetFontSize() * 8;
     
+    this->m_initialized         = true;
     return;
 }
 
@@ -88,14 +101,15 @@ void GraphingApp::destroy(void)
 
 //  "Begin"
 //
-void GraphingApp::Begin(bool * p_open)
+void GraphingApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
     ImGuiIO &                       io                      = ImGui::GetIO(); (void)io;
     ImGuiStyle &                    style                   = ImGui::GetStyle();
     
     
+    
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
-    ImGui::Begin(this->m_window_title, p_open, this->m_window_flags);
+    ImGui::Begin(uuid, p_open, flags);
     
     
     

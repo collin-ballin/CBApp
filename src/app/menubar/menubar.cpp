@@ -17,18 +17,55 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 
 
+// *************************************************************************** //
+//
+//
+//  1.      INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  Default Constructor.
+//
+MenuBar::MenuBar(app::AppState & src)
+    : m_state(src)                  { }
+
+
+//  "init"          | private
+//
+void MenuBar::init(void)            { }
+
+
+//  "load"
+//
+void MenuBar::load(void)            { }
+
+
+//  Destructor.
+//
+MenuBar::~MenuBar(void)             { this->destroy(); }
+
+
+//  "destroy"       | protected
+//
+void MenuBar::destroy(void)         { }
+
+
+
 
 // *************************************************************************** //
 //
 //
-//  1.  MAIN FUNCTIONS...
+//  1B.     PUBLIC MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "Display_Main_Menu_Bar"
+//  "Begin"
 //
-void MenuBar::Display_Main_Menu_Bar(void)
+void MenuBar::Begin([[maybe_unused]] const char *       uuid,
+                    [[maybe_unused]] bool *             p_open,
+                    [[maybe_unused]] ImGuiWindowFlags   flags)
 {
+
     if (ImGui::BeginMainMenuBar())
     {
         if (ImGui::BeginMenu("File")) {         //  1.  "File" MENU...
@@ -187,12 +224,13 @@ void MenuBar::disp_view_menubar(void)
 //
 void MenuBar::disp_window_menubar(void)
 {
-/*
-    using WinLoc    = utl::WindowLocation;
+    using WinLoc                    = utl::WindowLocation;
+    GLFWwindow * main_window        = glfwGetCurrentContext();
 
     ImGui::MenuItem("Minimize",         nullptr);
     ImGui::MenuItem("Zoom",             nullptr);
-    ImGui::MenuItem("Fill",             nullptr);
+    if (ImGui::MenuItem("Fill",       nullptr))
+        { utl::SetGLFWWindowLocation(main_window, WinLoc::Fill); }
     ImGui::MenuItem("Center",           nullptr);
 
 
@@ -200,19 +238,23 @@ void MenuBar::disp_window_menubar(void)
     ImGui::Separator();
     if (ImGui::BeginMenu("Move & Resize"))
     {
-        //  1.1     Set GLFW Window to LEFT-HALF...
+        //  1.1     Set GLFW Window to FILL ENTIRE SCREEN...
+        if (ImGui::MenuItem("Fill",       nullptr))
+            { utl::SetGLFWWindowLocation(main_window, WinLoc::Fill); }
+            
+        //  1.2     Set GLFW Window to LEFT-HALF...
         if (ImGui::MenuItem("Left",       nullptr))
-            { utl::SetGLFWWindowLocation(this->m_window, WinLoc::LeftHalf); }
+            { utl::SetGLFWWindowLocation(main_window, WinLoc::LeftHalf); }
         
-        //  1.2     Set GLFW Window to RIGHT-HALF...
+        //  1.3     Set GLFW Window to RIGHT-HALF...
         if (ImGui::MenuItem("Right",       nullptr))
-            { utl::SetGLFWWindowLocation(this->m_window, WinLoc::RightHalf); }
+            { utl::SetGLFWWindowLocation(main_window, WinLoc::RightHalf); }
     
     
         //  1.9     Re-set GLFW window to default state...
         ImGui::Separator();
         if (ImGui::MenuItem("Return to Default Size",       nullptr))
-            { utl::SetGLFWWindowLocation(this->m_window, WinLoc::Center, cb::app::DEF_ROOT_WINDOW_SCALE); }
+            { utl::SetGLFWWindowLocation(main_window, WinLoc::Center, cb::app::DEF_ROOT_WINDOW_SCALE); }
         
     
         ImGui::EndMenu();
@@ -227,7 +269,7 @@ void MenuBar::disp_window_menubar(void)
         ImGui::EndMenu();
     }
        
-*/
+
     return;
 }
 
@@ -236,7 +278,6 @@ void MenuBar::disp_window_menubar(void)
 //
 void MenuBar::disp_tools_menubar(void)
 {
-/*
     ImGui::MenuItem("Tool 1",     nullptr);
     ImGui::MenuItem("Tool 2",     nullptr);
 
@@ -247,16 +288,19 @@ void MenuBar::disp_tools_menubar(void)
 # else
     ImGui::TextDisabled("Debug Utilities");
 #endif  //  __CBAPP_DEBUG__  //
-        ImGui::MenuItem("Style Editor",     nullptr,    &this->m_show_style_editor);        //  SHOW "STYLE EDITOR" APP...
-        ImGui::MenuItem("Log",              nullptr,    &this->m_show_log_window);          //  SHOW "LOGGER" APP...
-        ImGui::MenuItem("Console",          nullptr,    &this->m_show_console_window);      //  SHOW "CONSOLE" APP...
-        ImGui::MenuItem("Metrics",          nullptr,    &this->m_show_metrics_window);      //  SHOW "METRICS" APP...
-        
+
+        ImGui::MenuItem("Style Editor",     nullptr,    &this->m_state.m_windows[Window::StyleEditor].open);        //  SHOW "STYLE EDITOR" APP...
+        ImGui::MenuItem("Log",              nullptr,    &this->m_state.m_windows[Window::Logs].open);               //  SHOW "LOGGER" APP...
+        ImGui::MenuItem("Console",          nullptr,    &this->m_state.m_windows[Window::Console].open);            //  SHOW "CONSOLE" APP...
+        ImGui::MenuItem("Metrics",          nullptr,    &this->m_state.m_windows[Window::Metrics].open);            //  SHOW "METRICS" APP...
+    
         ImGui::Separator();
-        ImGui::MenuItem("ImGui Demo",       nullptr,    &this->m_show_imgui_demo);          //  SHOW "DEAR IMGUI" DEMO APP...
-        ImGui::MenuItem("ImPlot Demo",      nullptr,    &this->m_show_implot_demo);         //  SHOW "DEAR IMPLOT" DEMO APP...
+        ImGui::MenuItem("ImGui Demo",       nullptr,    &this->m_state.m_windows[Window::ImGuiDemo].open);          //  SHOW "DEAR IMGUI" DEMO APP...
+        ImGui::MenuItem("ImPlot Demo",      nullptr,    &this->m_state.m_windows[Window::ImPlotDemo].open);         //  SHOW "DEAR IMPLOT" DEMO APP...
+
+
 #ifdef CBAPP_ENABLE_CB_DEMO
-        ImGui::MenuItem("CB Demo",          nullptr,    &this->m_show_cb_demo);             //  SHOW "CB" DEMO APP...
+        ImGui::MenuItem("CB Demo",          nullptr,    &this->m_state.m_windows[Window::CBDemo].open);             //  SHOW "CB" DEMO APP...
 #endif  //  CBAPP_ENABLE_CB_DEMO  //
     
 #ifndef __CBAPP_DEBUG__
@@ -264,7 +308,6 @@ void MenuBar::disp_tools_menubar(void)
     }// END "Debug Utilities" GROUP...
 #endif  //  __CBAPP_DEBUG__  //
  
- */
     return;
 }
 

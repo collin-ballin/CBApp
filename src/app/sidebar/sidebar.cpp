@@ -30,7 +30,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 //  "Display_Sidebar_Menu"
 //
-void App::Display_Sidebar_Menu(bool * p_open)
+void App::Display_Sidebar_Menu(const char * uuid, bool * p_open, ImGuiWindowFlags flags)
 {
     //static bool             m_sidebar_collapsed     = false;
     ImGuiIO &               io                      = ImGui::GetIO(); (void)io;
@@ -42,7 +42,7 @@ void App::Display_Sidebar_Menu(bool * p_open)
     ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_sidebar_bg);   // Push before ImGui::Begin()
     
     
-    ImGui::Begin(app::DEF_SIDEBAR_WIN_TITLE, p_open, this->m_sidebar_win_flags);
+    ImGui::Begin(uuid, p_open, flags);
     ImGui::PopStyleColor();
     
     //if (ImGui::IsItemActive() || ImGui::SliderFloat("Sidebar Width", &this->m_sidebar_ratio, 0.1f, 0.5f, "%.2f")) {

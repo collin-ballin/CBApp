@@ -131,7 +131,7 @@ bool                            LoadStyleFromDisk           (ImGuiStyle &       
 // *************************************************************************** //
 // *************************************************************************** //
 
-//      2.1     PLOTTING STUFF...
+//      2.1     OLD PLOTTING STUFF...
 // *************************************************************************** //
 void                                Sparkline                   (const char * id, const float * values, int count, float min_v, float max_v, int offset, const ImVec4 & color, const ImVec2 & size);
 void                                ScrollingSparkline          (const float time, ScrollingBuffer & data, const float window, const ImPlotAxisFlags flags, const float center = 0.75f);

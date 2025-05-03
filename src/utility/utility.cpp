@@ -174,6 +174,14 @@ void SetGLFWWindowLocation(GLFWwindow * win, const WindowLocation loc, const flo
             x = mx + (sys_w - w);  // align right edge
             y = my;                // align top edge
             break;
+
+        case WindowLocation::Fill:
+            // occupy the full monitor area, ignore scale
+            w = sys_w;
+            h = sys_h;
+            x = mx;
+            y = my;
+            break;
     }
 
     // 4) Apply it

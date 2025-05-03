@@ -524,7 +524,7 @@ struct ExampleAppLog
 };
 
 // Demonstrate creating a simple log window with basic filtering.
-void ShowExampleAppLog(bool* p_open)
+void ShowExampleAppLog(const char * uuid, bool * p_open, ImGuiWindowFlags flags)
 {
     static ExampleAppLog log;
 
@@ -532,7 +532,7 @@ void ShowExampleAppLog(bool* p_open)
     // We take advantage of a rarely used feature: multiple calls to Begin()/End() are appending to the _same_ window.
     // Most of the contents of the window will be added by the log.Draw() call.
     ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Example: Log", p_open);
+    ImGui::Begin(uuid, p_open, flags);
     
     if (ImGui::SmallButton("[Debug] Add 5 entries"))
     {
@@ -915,13 +915,76 @@ struct ExampleAppConsole
     }
 };
 
-void ShowExampleAppConsole(bool* p_open)
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "ShowStyleEditor"
+//
+void ShowStyleEditor([[maybe_unused]]    const char *        uuid,
+                     [[maybe_unused]]     bool *              p_open,
+                     [[maybe_unused]]     ImGuiWindowFlags    flags)
 {
-    static ExampleAppConsole console;
-    console.Draw("Example: Console", p_open);
+    ImGui::Begin(uuid, p_open, flags);
+        ImGui::ShowStyleEditor();
+    ImGui::End();
+    
+    return;
 }
 
 
+//  "ShowExampleAppConsole"
+//
+void ShowExampleAppConsole([[maybe_unused]]     const char *        uuid,
+                           [[maybe_unused]]      bool *              p_open,
+                           [[maybe_unused]]     ImGuiWindowFlags    flags)
+{
+    static ExampleAppConsole console;
+    console.Draw(uuid, p_open);
+    //console.Draw(uuid, p_open, flags);
+    return;
+}
+
+
+//  "ShowMetricsWindow"
+//
+void ShowMetricsWindow([[maybe_unused]]     const char *        uuid,
+                       [[maybe_unused]]     bool *              p_open,
+                       [[maybe_unused]]     ImGuiWindowFlags    flags)
+{
+    ImGui::ShowMetricsWindow(p_open);
+    return;
+}
+
+
+//  "ShowImGuiDemoWindow"
+//
+void ShowImGuiDemoWindow([[maybe_unused]]     const char *        uuid,
+                         [[maybe_unused]]     bool *              p_open,
+                         [[maybe_unused]]     ImGuiWindowFlags    flags)
+{
+    ImGui::ShowDemoWindow(p_open);
+    return;
+}
+
+
+//  "ShowImPlotDemoWindow"
+//
+void ShowImPlotDemoWindow([[maybe_unused]]    const char *        uuid,
+                         [[maybe_unused]]     bool *              p_open,
+                         [[maybe_unused]]     ImGuiWindowFlags    flags)
+{
+    ImPlot::ShowDemoWindow(p_open);
+    return;
+}
 
 
 
@@ -940,139 +1003,13 @@ void ShowExampleAppConsole(bool* p_open)
 
 
 
+
+
+
+
+
+
 // *************************************************************************** //
 // *************************************************************************** //
 //
 //  END.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-void Demo_RealtimePlots() {
-    ImGui::BulletText("Move your mouse to change the data!");
-    ImGui::BulletText("This example assumes 60 FPS. Higher FPS requires larger buffer size.");
-    static ScrollingBuffer sdata1, sdata2;
-    static RollingBuffer   rdata1, rdata2;
-    ImVec2 mouse = ImGui::GetMousePos();
-    static float t = 0;
-    t += ImGui::GetIO().DeltaTime;
-    sdata1.AddPoint(t, mouse.x * 0.0005f);
-    rdata1.AddPoint(t, mouse.x * 0.0005f);
-    sdata2.AddPoint(t, mouse.y * 0.0005f);
-    rdata2.AddPoint(t, mouse.y * 0.0005f);
-
-    static float history = 10.0f;
-    ImGui::SliderFloat("History",&history,1,30,"%.1f s");
-    rdata1.Span = history;
-    rdata2.Span = history;
-
-    static ImPlotAxisFlags flags = ImPlotAxisFlags_NoTickLabels;
-
-    if (ImPlot::BeginPlot("##Scrolling", ImVec2(-1,150))) {
-        ImPlot::SetupAxes(nullptr, nullptr, flags, flags);
-        ImPlot::SetupAxisLimits(ImAxis_X1,t - history, t, ImGuiCond_Always);
-        ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
-        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
-        ImPlot::PlotShaded("Mouse X", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, 0, sdata1.Offset, 2 * sizeof(float));
-        ImPlot::PlotLine("Mouse Y", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), 0, sdata2.Offset, 2*sizeof(float));
-        ImPlot::EndPlot();
-    }
-    if (ImPlot::BeginPlot("##Rolling", ImVec2(-1,150))) {
-        ImPlot::SetupAxes(nullptr, nullptr, flags, flags);
-        ImPlot::SetupAxisLimits(ImAxis_X1,0,history, ImGuiCond_Always);
-        ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
-        ImPlot::PlotLine("Mouse X", &rdata1.Data[0].x, &rdata1.Data[0].y, rdata1.Data.size(), 0, 0, 2 * sizeof(float));
-        ImPlot::PlotLine("Mouse Y", &rdata2.Data[0].x, &rdata2.Data[0].y, rdata2.Data.size(), 0, 0, 2 * sizeof(float));
-        ImPlot::EndPlot();
-    }
-}
-*/
-
-
-
-
-/*
-void Demo_Heatmaps() {
-    static float values1[7][7]  = {{0.8f, 2.4f, 2.5f, 3.9f, 0.0f, 4.0f, 0.0f},
-                                    {2.4f, 0.0f, 4.0f, 1.0f, 2.7f, 0.0f, 0.0f},
-                                    {1.1f, 2.4f, 0.8f, 4.3f, 1.9f, 4.4f, 0.0f},
-                                    {0.6f, 0.0f, 0.3f, 0.0f, 3.1f, 0.0f, 0.0f},
-                                    {0.7f, 1.7f, 0.6f, 2.6f, 2.2f, 6.2f, 0.0f},
-                                    {1.3f, 1.2f, 0.0f, 0.0f, 0.0f, 3.2f, 5.1f},
-                                    {0.1f, 2.0f, 0.0f, 1.4f, 0.0f, 1.9f, 6.3f}};
-    static float scale_min       = 0;
-    static float scale_max       = 6.3f;
-    static const char* xlabels[] = {"C1","C2","C3","C4","C5","C6","C7"};
-    static const char* ylabels[] = {"R1","R2","R3","R4","R5","R6","R7"};
-
-    static ImPlotColormap map = ImPlotColormap_Viridis;
-    if (ImPlot::ColormapButton(ImPlot::GetColormapName(map),ImVec2(225,0),map)) {
-        map = (map + 1) % ImPlot::GetColormapCount();
-        // We bust the color cache of our plots so that item colors will
-        // resample the new colormap in the event that they have already
-        // been created. See documentation in implot.h.
-        BustColorCache("##Heatmap1");
-        BustColorCache("##Heatmap2");
-    }
-
-    ImGui::SameLine();
-    ImGui::LabelText("##Colormap Index", "%s", "Change Colormap");
-    ImGui::SetNextItemWidth(225);
-    ImGui::DragFloatRange2("Min / Max",&scale_min, &scale_max, 0.01f, -20, 20);
-
-    static ImPlotHeatmapFlags hm_flags = 0;
-
-    ImGui::CheckboxFlags("Column Major", (unsigned int*)&hm_flags, ImPlotHeatmapFlags_ColMajor);
-
-    static ImPlotAxisFlags axes_flags = ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks;
-
-    ImPlot::PushColormap(map);
-
-    if (ImPlot::BeginPlot("##Heatmap1",ImVec2(225,225),ImPlotFlags_NoLegend|ImPlotFlags_NoMouseText)) {
-        ImPlot::SetupAxes(nullptr, nullptr, axes_flags, axes_flags);
-        ImPlot::SetupAxisTicks(ImAxis_X1,0 + 1.0/14.0, 1 - 1.0/14.0, 7, xlabels);
-        ImPlot::SetupAxisTicks(ImAxis_Y1,1 - 1.0/14.0, 0 + 1.0/14.0, 7, ylabels);
-        ImPlot::PlotHeatmap("heat",values1[0],7,7,scale_min,scale_max,"%g",ImPlotPoint(0,0),ImPlotPoint(1,1),hm_flags);
-        ImPlot::EndPlot();
-    }
-    ImGui::SameLine();
-    ImPlot::ColormapScale("##HeatScale",scale_min, scale_max, ImVec2(60,225));
-
-    ImGui::SameLine();
-
-    const int size = 80;
-    static double values2[size*size];
-    srand((unsigned int)(ImGui::GetTime()*1000000));
-    for (int i = 0; i < size*size; ++i)
-        values2[i] = RandomRange(0.0,1.0);
-
-    if (ImPlot::BeginPlot("##Heatmap2",ImVec2(225,225))) {
-        ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations);
-        ImPlot::SetupAxesLimits(-1,1,-1,1);
-        ImPlot::PlotHeatmap("heat1",values2,size,size,0,1,nullptr);
-        ImPlot::PlotHeatmap("heat2",values2,size,size,0,1,nullptr, ImPlotPoint(-1,-1), ImPlotPoint(0,0));
-        ImPlot::EndPlot();
-    }
-    ImPlot::PopColormap();
-
-}
-*/
-
-
-
