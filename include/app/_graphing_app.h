@@ -122,7 +122,7 @@ protected:
     const float                         mc_plot_corner_radius   = 5.0f;
     const char *                        mc_plot_child_id        = "PlotChild";
     const char *                        mc_plot_tab_bar_id      = "PlotTabBar";
-    std::pair<int,int>                  MC_PLOT_HEIGHT_LIMIT    = {25, 25};  //  {y1, y2}    : "y1"  --- min height of child (no matter how many widgets are on it).     "y2"  --- max height the window will extend to WITHOUT adding scrollbar.
+    std::pair<int,int>                  MC_PLOT_HEIGHT_LIMIT    = {35, 35};  //  {y1, y2}    : "y1"  --- min height of child (no matter how many widgets are on it).     "y2"  --- max height the window will extend to WITHOUT adding scrollbar.
     std::vector<tab_t>                  MC_PLOT_TABS            = {
         {"Main Plot",               true,       ImGuiTabItemFlags_None | ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoReorder},
         {"Empty",                   true,       ImGuiTabItemFlags_None}
@@ -135,7 +135,7 @@ protected:
     const float                         mc_ctrl_corner_radius   = 5.0f;
     const char *                        mc_ctrl_child_id        = "CtrlChild";
     const char *                        mc_ctrl_tab_bar_id      = "CtrlTabBar";
-    std::pair<int,int>                  MC_CTRL_HEIGHT_LIMIT    = {9, 15};
+    std::pair<int,int>                  MC_CTRL_HEIGHT_LIMIT    = {25, 25};
     std::vector<tab_t>                  MC_CTRL_TABS            = {
         {"Main Controls",           true,       ImGuiTabItemFlags_None | ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoReorder},
         {"Secondary Controls",      true,       ImGuiTabItemFlags_None | ImGuiTabItemFlags_NoReorder}

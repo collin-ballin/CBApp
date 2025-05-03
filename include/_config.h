@@ -47,7 +47,7 @@
 // *************************************************************************** //
 //#define     CBAPP_USE_VIEWPORT                          1               //  Debug util.  | Should be removed soon (as of 25th/04/2025).
 //#define     CBAPP_USE_DOCKSPACE                         1               //  Debug util.  | Should be removed soon (as of 25th/04/2025).
-
+#define         CBAPP_NEW_DOCKSPACE                     1
 
 
 //      1.4     COMPILE-TIME APPLICATION OPTIONS...
@@ -59,7 +59,7 @@
 
 //#define     CBAPP_DISABLE_INI                         1               //  Prevent use of ".ini" file to save/recall data.
 #define     CBAPP_LOAD_STYLE_FILE                       1               //  Prevent use of ".json" file to save/recall "ImGui" style data.
-
+#define     CBAPP_DISABLE_CUSTOM_FONTS                  1
 
 
 

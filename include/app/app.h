@@ -21,7 +21,9 @@
 #include "utility/utility.h"
 #include "widgets/widgets.h"
 #include "app/_init.h"
+#include "app/state/_state.h"
 #include "app/_graphing_app.h"
+#include "app/menubar/_menubar.h"
 
 
 
@@ -101,8 +103,11 @@ class App
 // *************************************************************************** //
 // *************************************************************************** //
 public:
-    using               Font                            = app::Font_t;
-    using               ImFonts                         = app::EnumArray< Font, ImFont *, static_cast<std::size_t>(Font::Count) >;
+    using               AppState                        = app::AppState;
+    using               Window                          = AppState::Window;
+    using               ImWindows                       = AppState::ImWindows;
+    using               Font                            = AppState::Font;
+    using               ImFonts                         = AppState::ImFonts;  
     
     //  1               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
@@ -154,6 +159,13 @@ protected:
     uint32_t            m_sys_height                    = 0U;
     int                 m_window_w                      = -1;       //  Main Window Dims.
     int                 m_window_h                      = -1;
+    ImVec2              m_sidebar_width                 = ImVec2(40.0f, 400.0f);
+    float               m_sidebar_ratio                 = app::DEF_SB_OPEN_WIDTH;
+    bool                m_rebuild_dockspace             = true;
+    ImGuiID             m_dockspace_id                  = 0;
+    std::vector<std::string> m_primary_windows          = { app::DEF_MAIN_WIN_TITLE,
+                                                            app::DEF_GRAPHING_APP_TITLE };
+    
     //
     //                          Colors.
     ImVec4              m_dock_bg                       = cb::app::DEF_INVISIBLE_COLOR;
@@ -186,9 +198,13 @@ protected:
     const char *        m_glsl_version                  = nullptr;
     
     
-    //                  9.  IMPORTANT VARIABLES...
+    //                  5.  IMPORTANT VARIABLES...
     ImGuiViewport *     m_main_viewport                 = nullptr;
     GLFWwindow *        m_window                        = nullptr;
+    app::AppState       m_state                         = app::AppState();
+    
+    
+    //                  9.  APPLICATION SUB-CLASSES...
 #ifdef CBAPP_ENABLE_CB_DEMO
     CBDemo              m_cb_demo                       = CBDemo();
 #endif  //  CBAPP_ENABLE_CB_DEMO  //
@@ -202,10 +218,6 @@ protected:
     void                load                        (void);
     void                destroy                     (void);
     
-    //  2B.2            Class Utility Methods.      [app.cpp]...
-    void                PushFont                    (void);
-    void                PopFont                     (void);
-    
     
     
 // *************************************************************************** //
@@ -215,23 +227,25 @@ private:
     // *************************************************************************** //
     
     //  3.2             Main GUI Functions.         [app.cpp]...
-    void                run_IMPL                    (void);
-    void                Display_Main_Window         (bool * );
+    void                run_IMPL                    (void);                     //  [app.cpp].
+    void                Display_Main_Window         (bool * );                  //  [app.cpp].
     
     
-    //  3.3             Primary Menu Functions.     [interface.cpp]...
+    
+    //                  SIDEBAR MENU...             [sidebar.cpp].
     void                Display_Sidebar_Menu        (bool * p_open=nullptr);
-    void                Display_Graphing_App        (bool * p_open=nullptr);
-    void                disp_graphing_app           (void);
-    void                Display_Main_Menu_Bar       (void);
     void                Display_Preferences_Menu    (void);
-    
-    
-    //  3.4             Secondary Menu Functions.   [interface.cpp]...
+    //
     void                disp_appearance_mode        (void);     //  Other...
     void                disp_font_selector          (void);
     void                disp_color_palette          (void);
     void                disp_performance_metrics    (void);
+    
+    
+    
+    
+    //                  MENUBAR MENU...             [menubar.cpp].
+    void                Display_Main_Menu_Bar       (void);
     //
     void                disp_file_menubar           (void);     //  MenuBar...
     void                disp_edit_menubar           (void);
@@ -243,6 +257,18 @@ private:
     void                disp_imgui_submenu          (void);     //  Sub-MenuBar...
     
     
+    
+    
+    
+    //  3.3             Primary Menu Functions.     [interface.cpp]...
+    void                disp_graphing_app           (void);
+    
+    
+    
+    
+    //  3.4             Secondary Menu Functions.   [interface.cpp]...
+    
+    
     //  3.5             Primary GUI Functions.      [windows.cpp]...
     void                ImPlot_Testing1             (void);
     void                ImPlot_Testing2             (void);
@@ -250,10 +276,11 @@ private:
     
     
     //  3.6             Misc. GUI Functions.        [temp.cpp]...
+    void                RebuildDockLayout           (void);
+    void                PushFont                    ( [[maybe_unused]] const Font & );
+    void                PopFont                     (void);
     void                Test_Basic_Widgets          (void);
     void                ImGui_Demo_Code             (void);
-    
-
 
 
 

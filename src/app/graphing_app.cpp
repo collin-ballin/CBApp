@@ -102,18 +102,18 @@ void GraphingApp::Begin(bool * p_open)
     static float                    SPACING             = 0.0f;
     static float                    DEF_SPACING         = 1.5 * ImGui::GetTextLineHeightWithSpacing();
     static float                    TEXT_SPACING        = 8.0 * ImGui::GetTextLineHeightWithSpacing();
-    static float                    PLOT_SPACING        = 2.5 * PLOT_SIZE[1];
+    //static float                    PLOT_SPACING        = 2.5 * PLOT_SIZE[1];
     
     
-    SPACING                     =   (this->m_show_perf_metrics)                             ? TEXT_SPACING : DEF_SPACING;
-    SPACING                    +=   (this->m_show_perf_plots && this->m_show_perf_metrics)  ? PLOT_SPACING : 0;
+    //SPACING                     =   (this->m_show_perf_metrics)                             ? TEXT_SPACING : DEF_SPACING;
+    //SPACING                    +=   (this->m_show_perf_plots && this->m_show_perf_metrics)  ? PLOT_SPACING : 0;
     
     
     
         this->display_plot_panel();
     
     
-        ImGui::Dummy( ImVec2(0.0f, ImGui::GetContentRegionAvail().y - SPACING) );
+        //ImGui::Dummy( ImVec2(0.0f, ImGui::GetContentRegionAvail().y - SPACING) );
         
         
         this->display_control_panel();

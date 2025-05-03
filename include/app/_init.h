@@ -61,7 +61,7 @@ inline const char * path_to_char(const std::filesystem::path & dir, const char *
 //
 //      1.1                         INFORMATION...
 inline constexpr const char *       DEF_ROOT_WIN_TITLE          = "Dear ImGui App (V0)";
-inline constexpr const char *       DEF_SIDEBAR_WIN_TITLE       = "Menu";
+inline constexpr const char *       DEF_SIDEBAR_WIN_TITLE       = "Sidebar";
 inline constexpr const char *       DEF_MAIN_WIN_TITLE          = "My Application";
 inline constexpr const char *       DEF_GRAPHING_APP_TITLE      = "Graphing Application";
 //
@@ -73,9 +73,12 @@ inline constexpr float              PERF_PLOTS_HISTORY_LENGTH   = 10.0f;    //  
 //
 //
 //      1.3                         DIMENSIONS & GEOMETRY...
-inline constexpr int                DEF_ROOT_WIN_WIDTH          = 1280;
+inline constexpr int                DEF_ROOT_WIN_WIDTH          = 1280;     //  GLFW / HOST WINDOW...
 inline constexpr int                DEF_ROOT_WIN_HEIGHT         = 720;
 inline constexpr float              DEF_ROOT_WINDOW_SCALE       = 0.80f;
+//
+inline constexpr float              DEF_SB_CLOSED_WIDTH         = 0.030f;    //  SIDEBAR WINDOW...
+inline constexpr float              DEF_SB_OPEN_WIDTH           = 0.25;
 //
 //
 //      1.4                         COLORS...
@@ -175,7 +178,7 @@ inline constexpr float              DEF_SMALL_FONT_SIZE         = 14.0f;
 //
 #if defined(__APPLE__)
     //  Fonts for MacOS Builds.
-    #define CBAPP_FONT_LIST(X)      \
+    #define _CBAPP_FONT_LIST(X)         \
         X(Main,             "/System/Library/Fonts/SFNS.ttf",                               20.0f)      \
         X(Small,            "/System/Library/Fonts/SFNS.ttf",                               14.0f)      \
         X(Mono,             "/System/Library/Fonts/SFNSMono.ttf",                           20.0f)      \
@@ -183,7 +186,7 @@ inline constexpr float              DEF_SMALL_FONT_SIZE         = 14.0f;
         X(SanSerifSmall,    "/System/Library/Fonts/NewYork.ttf",                            14.0f)
 # else
     //  Fonts for Windows, Linux, or other Builds.
-    #define CBAPP_FONT_LIST(X)      \
+    #define _CBAPP_FONT_LIST(X)         \
         X(Main,             "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          20.0f)       \
         X(Small,            "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          14.0f)
 #endif  //  __APPLE__  //
@@ -196,7 +199,7 @@ inline constexpr float              DEF_SMALL_FONT_SIZE         = 14.0f;
 //      - Enum to provide names for the index of each font...
 enum class Font_t : int {
 #define X(name, path, size) name,
-    CBAPP_FONT_LIST(X)
+    _CBAPP_FONT_LIST(X)
 #undef X
     Count
 };
@@ -210,25 +213,30 @@ struct FontInfo {
 };
 
 
-//  APPLICATION_FONTS
+//  COMPILE-TIME ARRAY CONTAINING ALL APPLICATION_FONTS
 //
 static constexpr std::array<FontInfo, int( Font_t::Count )>     APPLICATION_FONT_STYLES = {{
 #define X(name, path, size) { path, size },
-    CBAPP_FONT_LIST(X)
+    _CBAPP_FONT_LIST(X)
 #undef X
 }};
 
-
-//  "EnumArray"
-//      Simple Struct/Class to use Indices based off Enum Class-Members Specifically.
-template<typename E, typename T, std::size_t N>
-struct EnumArray {
-    std::array<T, N> data;
-    T & operator[](E e) noexcept                { return data[static_cast<std::size_t>(e)]; }
-    const T & operator [](E e) const noexcept   { return data[static_cast<std::size_t>(e)]; }
-};
-
     
+
+
+
+// *************************************************************************** //
+//
+//
+//  3.  GLOBAL-CONSTANTS AND NAMESPACE-DEFINED VARIABLES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+
+
+
 
 
 

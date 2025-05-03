@@ -109,7 +109,8 @@ App::App(void)
 void App::init(void)
 {
     //  1.  CREATE A WINDOW WITH GRAPHICS CONTEXT...
-    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER,    GLFW_TRUE);
+    //glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER,   GLFW_TRUE);
     this->m_window = glfwCreateWindow(cb::app::DEF_ROOT_WIN_WIDTH, cb::app::DEF_ROOT_WIN_HEIGHT, cb::app::DEF_ROOT_WIN_TITLE, nullptr, nullptr);
     if (!this->m_window)
         throw std::runtime_error("Call to glfwInit() returned NULL");
@@ -156,6 +157,9 @@ void App::init(void)
     ImGui_ImplOpenGL3_Init(this->m_glsl_version);
        
     this->m_main_viewport   = ImGui::GetMainViewport();
+    IM_ASSERT( std::find(this->m_primary_windows.begin(), this->m_primary_windows.end(),
+                         app::DEF_SIDEBAR_WIN_TITLE) == this->m_primary_windows.end() &&
+                         "Sidebar window should not be in right_docked_windows!");
 
     return;
 }
@@ -189,12 +193,15 @@ void App::load(void)
 #endif  //  CBAPP_LOAD_STYLE_FILE  //
 
 
+
+#ifndef CBAPP_DISABLE_CUSTOM_FONTS
     //      3.3     Loading Fonts.
-    for (int i = 0; i < int(Font::Count); ++i) {
-        const auto &    info            = cb::app::APPLICATION_FONT_STYLES[i];
-        m_fonts[static_cast<Font>(i)]   = io.Fonts->AddFontFromFileTTF(info.path.data(), info.size);
-        IM_ASSERT(m_fonts[static_cast<Font>(i)]);
+    for (int i = 0; i < static_cast<int>(Font::Count); ++i) {
+        const auto &    info                                = cb::app::APPLICATION_FONT_STYLES[i];
+        this->m_state.m_fonts[static_cast<Font>(i)]         = io.Fonts->AddFontFromFileTTF(info.path.data(), info.size);
+        IM_ASSERT( this->m_state.m_fonts[static_cast<Font>(i)] );
     }
+#endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
 
 
 
@@ -337,13 +344,63 @@ void App::run_IMPL(void)
     static cb::GraphingApp      graphing_app    = cb::GraphingApp(10, 10);
     
     //  0.1     RENDER THE DOCKSPACE...
+#ifndef CBAPP_NEW_DOCKSPACE
     ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_dock_bg);
-    ImGui::DockSpaceOverViewport(0, this->m_main_viewport);
+    //ImGui::DockSpaceOverViewport(0, this->m_main_viewport);
+    ImGui::DockSpaceOverViewport(this->m_main_viewport, ImGuiDockNodeFlags_NoTabBar);
     ImGui::PopStyleColor();
+#else
+    const ImGuiViewport * viewport  = ImGui::GetMainViewport();
+    this->m_dockspace_id            = ImGui::GetID(this->m_dock_name);
+
+    static bool first_time = true;
+    if (first_time) {
+        first_time = false;
+
+        ImGui::DockBuilderRemoveNode(this->m_dockspace_id ); // clear any existing layout
+        ImGui::DockBuilderAddNode(this->m_dockspace_id , ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_NoTabBar);
+    
+    
+        ImGui::DockBuilderSetNodeSize(this->m_dockspace_id , viewport->WorkSize);
+
+        ImGuiID dock_id_left, dock_id_main;
+        ImGui::DockBuilderSplitNode(this->m_dockspace_id , ImGuiDir_Left, 0.2f, &dock_id_left, &dock_id_main);
+
+        // Make sure names match actual windows
+        ImGui::DockBuilderDockWindow(app::DEF_SIDEBAR_WIN_TITLE, dock_id_left);
+        ImGui::DockBuilderDockWindow(app::DEF_MAIN_WIN_TITLE, dock_id_main);
+
+        ImGui::DockBuilderFinish(this->m_dockspace_id );
+    }
+
+
+    ImGui::SetNextWindowPos(viewport->WorkPos);                 //  Set up invisible host window covering the entire viewport
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);    //  Make host window invisible with no padding, rounding, borders, etc.
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+    //  Host window flags (invisible, non-interactive)
+    ImGuiWindowFlags host_window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+
+    ImGui::Begin("##DockHostWindow", nullptr, host_window_flags);
+        ImGui::PopStyleVar(3);  //  DockSpace() creates docking area within this host window
+        ImGui::DockSpace(this->m_dockspace_id );
+    ImGui::End();
+#endif  //  CBAPP_NEW_DOCKSPACE  //
+    
+    
+    if (this->m_rebuild_dockspace)
+    {
+        this->RebuildDockLayout();
+        this->m_rebuild_dockspace = false;
+    }
     
     
     //  0.2     DRAW GENERAL UI ITEMS (MAIN-MENU, ETC)...
-    this->Display_Main_Menu_Bar();
+    // this->Display_Main_Menu_Bar();
 
     
     
@@ -499,6 +556,51 @@ void App::Display_Main_Window(bool * p_open)
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "RebuildDockLayout"
+//
+void App::RebuildDockLayout(void)
+{
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    ImGui::DockBuilderRemoveNode(this->m_dockspace_id);
+    ImGui::DockBuilderAddNode(this->m_dockspace_id, ImGuiDockNodeFlags_DockSpace);
+    ImGui::DockBuilderSetNodeSize(this->m_dockspace_id, viewport->WorkSize);
+
+    ImGuiID dock_id_left, dock_id_main;
+    ImGui::DockBuilderSplitNode(this->m_dockspace_id, ImGuiDir_Left, this->m_sidebar_ratio, &dock_id_left, &dock_id_main);
+
+    // Only dock sidebar window once to the left
+    ImGui::DockBuilderDockWindow(app::DEF_SIDEBAR_WIN_TITLE, dock_id_left);
+
+    // Dock all *other* persistent windows to the main area (skip sidebar)
+    for (const std::string& win_name : this->m_primary_windows) {
+        if (win_name != app::DEF_SIDEBAR_WIN_TITLE) {
+            ImGui::DockBuilderDockWindow(win_name.c_str(), dock_id_main);
+        }
+    }
+
+    ImGui::DockBuilderFinish(this->m_dockspace_id);
+}
+
+
+//  "PushFont"
+//
+void App::PushFont( [[maybe_unused]] const Font & which) {
+#ifndef CBAPP_DISABLE_CUSTOM_FONTS
+    ImGui::PushFont( this->m_state.m_fonts[which] );
+#endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
+    return;
+}
+
+
+//  "PopFont"
+//
+void App::PopFont(void) {
+#ifndef CBAPP_DISABLE_CUSTOM_FONTS
+    ImGui::PopFont();
+#endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
+    return;
+}
 
 
 

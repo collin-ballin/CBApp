@@ -123,7 +123,7 @@ protected:
         
         
     //  Interactive Variables.
-    ImVec2                              m_plot_dims             = ImVec2(750.0f, 750.0f);
+    ImVec2                              m_plot_dims             = ImVec2(650.0f, 650.0f);
     size_type                           m_rows                  = size_type(0);
     size_type                           m_cols                  = size_type(0);
     value_type                          m_amp                   = 1.0f;

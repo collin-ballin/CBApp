@@ -37,7 +37,51 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 //
 //
-//  3.  INLINE TEMPLATES FOR IMGUI STUFF...
+//  3.  INLINE TEMPLATES FOR GENERAL STUFF... 
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "WindowLocation"
+//
+enum class WindowLocation {
+    Center,         // default
+    LeftHalf,       // left half of the monitor
+    RightHalf       // right half of the monitor
+};
+
+
+//  "EnumArray"
+//      Simple Struct/Class to use Indices based off Enum Class-Members Specifically.
+template<typename E, typename T, std::size_t N = static_cast<std::size_t>(E::Count)>
+struct EnumArray {
+    std::array<T, N> data;
+
+    T& operator[](E e) noexcept               { return data[static_cast<std::size_t>(e)]; }
+    const T& operator[](E e) const noexcept  { return data[static_cast<std::size_t>(e)]; }
+};
+//
+//  OLD IMPLEMENTATION BELOW...
+//      template<typename E, typename T, std::size_t N>
+//      struct EnumArray {
+//          std::array<T, N> data;
+//          T & operator[](E e) noexcept                { return data[static_cast<std::size_t>(e)]; }
+//          const T & operator [](E e) const noexcept   { return data[static_cast<std::size_t>(e)]; }
+//      };
+
+
+//  "enum_index_t"
+//
+template <typename E>
+using enum_index_t = std::underlying_type_t<E>;
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  4.  INLINE TEMPLATES FOR IMGUI STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -139,7 +183,6 @@ inline void sinusoid_wave( T * data,        const size_type X,  const size_type 
     constexpr T             pi          = T(3.14159265358979323846);
     const T                 omega       = T(2) * pi * freq;       // temporal frequency ω = 2πf
     const T                 k           = T(2) * pi / T(Y);       // spatial wavenumber k = 2π / λ, with λ = Y rows
-    T                       phase       = T(0);
 
 
     for (size_type i = 0; i < X; ++i)
@@ -147,8 +190,7 @@ inline void sinusoid_wave( T * data,        const size_type X,  const size_type 
         T       phase       = k * T(Y - 1 - i) - omega * time;
         T *     row_ptr     = data + i * Y;      // pointer to start of row i
         
-        for (size_type j = 0; j < Y; ++j)
-        {
+        for (size_type j = 0; j < Y; ++j) {
             row_ptr[j] = amp * std::sin(phase);
         }
     }
