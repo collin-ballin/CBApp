@@ -1,14 +1,14 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****    M y C l a s s . h  ____  F I L E    ****
+*       ****    m a i n _ a p p l i c a t i o n . h  ____  F I L E    ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond
-*               DATED:      May 01, 2025.
+*               DATED:      May 03, 2025.
 *
 *       ********************************************************************
-*                FILE:      [./MyClass.h]
+*                FILE:      [./main_application.h]
 *
 *
 *
@@ -25,23 +25,23 @@ namespace cb { // BEGINNING NAMESPACE "cb"...
 // *************************************************************** //
 // *************************************************************** //
 
-class MyClass
+class main_application
 {
 
 // *************************************************************** //
 public:
     // 1.1  Default Constructor, Destructor, etc.    [src/…]
-    MyClass(void);
-    ~MyClass(void);
+    main_application(void);
+    ~main_application(void);
 
     // 1.2  Primary Class Interface.                [src/…]
     void Begin(bool* p_open = nullptr);
 
     // 1.3  Deleted Operators, Functions, etc.
-    MyClass(const MyClass&)     = delete;
-    MyClass(MyClass&&) noexcept = delete;
-    MyClass& operator=(const MyClass&)     = delete;
-    MyClass& operator=(MyClass&&) noexcept = delete;
+    main_application(const main_application&)     = delete;
+    main_application(main_application&&) noexcept = delete;
+    main_application& operator=(const main_application&)     = delete;
+    main_application& operator=(main_application&&) noexcept = delete;
 
 // *************************************************************** //
 protected:
@@ -59,7 +59,7 @@ private:
     // 3.  PRIVATE MEMBER FUNCTIONS…
     // … add private helpers here
 
-}; // END "MyClass" INLINE CLASS DEFINITION.
+}; // END "main_application" INLINE CLASS DEFINITION.
 
 // *************************************************************************** //
 // *************************************************************************** //
@@ -68,7 +68,7 @@ private:
 
 
 
-#endif      //  _CBAPP_MYCLASS_H  //
+#endif      //  _CBAPP_MAIN_APPLICATION_H  //
 // *************************************************************************** //
 // *************************************************************************** //
 //

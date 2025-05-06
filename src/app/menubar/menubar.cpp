@@ -89,7 +89,7 @@ void MenuBar::Begin([[maybe_unused]] const char *       uuid,
         }
         
         if (ImGui::BeginMenu("Tools")) {        //  5.  "Tools" MENU...
-            this->disp_tools_menubar();
+            ImGui::TextDisabled("Add some tools here...");      //  5.1     SHOW VISIBILITY TOGGLE MENU HERE...
             ImGui::EndMenu();
         }
         
@@ -265,7 +265,7 @@ void MenuBar::disp_window_menubar(void)
     ImGui::Separator();
     if (ImGui::BeginMenu("Show"))
     {
-        ImGui::TextDisabled("Add some windows here");   //  2.1     SHOW SOME WINDOWS HERE...
+        this->disp_show_windows_menubar();              //  2.1     SHOW VISIBILITY TOGGLE MENU HERE...
         ImGui::EndMenu();
     }
        
@@ -274,14 +274,52 @@ void MenuBar::disp_window_menubar(void)
 }
 
 
-//  "disp_tools_menubar"
+//  "disp_show_windows_menubar"
 //
-void MenuBar::disp_tools_menubar(void)
+void MenuBar::disp_show_windows_menubar(void)
 {
-    ImGui::MenuItem("Tool 1",     nullptr);
-    ImGui::MenuItem("Tool 2",     nullptr);
+    static size_t                   idx                 = static_cast<size_t>(0);
+    static app::WinInfo &           winfo               = m_state.m_windows[static_cast<Window>(idx)];
+    
+    
+    
+    //  1.  DRAW EACH VISIBILITY STATE IN "Core Windows" WINDOWS...         | SUB-MENU.
+    ImGui::Separator();
+    ImGui::TextDisabled("Applications");
+        for (idx = m_state.ms_APP_WINDOWS_BEGIN; idx < m_state.ms_APP_WINDOWS_END; ++idx) {
+            ImGui::MenuItem(this->m_state.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                            nullptr,
+                            &this->m_state.m_windows[ static_cast<Window>(idx) ].open);
+        }
+    //  END "Applications" SUB-MENU.
+    
+    
+    
+    //  2.  DRAW EACH VISIBILITY STATE IN "Tools" WINDOWS...                | SUB-MENU.
+    ImGui::Separator();
+    ImGui::TextDisabled("Tools");
+        for (idx = m_state.ms_TOOL_WINDOWS_BEGIN; idx < m_state.ms_TOOL_WINDOWS_END; ++idx) {
+            ImGui::MenuItem(this->m_state.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                            nullptr,
+                            &this->m_state.m_windows[ static_cast<Window>(idx) ].open);
+        }
+    //  END "Tools" SUB-MENU.
+    
+    
+    
+    //  3.  DRAW EACH VISIBILITY STATE IN "Demos" WINDOWS...                | SUB-MENU.
+    ImGui::Separator();
+    ImGui::TextDisabled("Demos");
+        for (idx = m_state.ms_DEMO_WINDOWS_BEGIN; idx < m_state.ms_DEMO_WINDOWS_END; ++idx) {
+            ImGui::MenuItem(this->m_state.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                            nullptr,
+                            &this->m_state.m_windows[ static_cast<Window>(idx) ].open);
+        }
+    //  END "Demos" SUB-MENU.
+    
 
-    //  1.  DEBUG UTILITY MENU ITEMS...
+/*
+    //  2.  DEBUG UTILITY MENU ITEMS...
     ImGui::Separator();
 #ifndef __CBAPP_DEBUG__
     if (ImGui::BeginMenu("Debug Utilities")) {
@@ -307,7 +345,8 @@ void MenuBar::disp_tools_menubar(void)
         ImGui::EndMenu();
     }// END "Debug Utilities" GROUP...
 #endif  //  __CBAPP_DEBUG__  //
- 
+*/
+
     return;
 }
 

@@ -9,6 +9,16 @@
 #ifndef _CBAPP_UTILITY_H
 #define _CBAPP_UTILITY_H  1
 
+
+
+//  0.1.        ** MY **  HEADERS...
+#include "_config.h"
+#include "cblib.h"
+#include "utility/_constants.h"
+#include "utility/_templates.h"
+
+
+//  0.2     STANDARD LIBRARY HEADERS...
 #include <stdio.h>
 #include <vector>
 #include <thread>
@@ -19,6 +29,7 @@
 #include <math.h>
 
 
+//  0.3     "DEAR IMGUI" HEADERS...
 #include "imgui.h"                      //  0.3     "DEAR IMGUI" HEADERS...
 #include "implot.h"
 #include "imgui_impl_glfw.h"
@@ -28,10 +39,6 @@
 # include <GLES2/gl2.h>
 #endif      //  IMGUI_IMPL_OPENGL_ES2  //
 #include <GLFW/glfw3.h>     //  <======| Will drag system OpenGL headers
-
-
-#include "utility/_constants.h"
-#include "utility/_templates.h"
 
 
 
@@ -77,6 +84,10 @@ void                            HelpMarker                  (const char* desc);
 
 //      1.2     WINDOW SIZE / GEOMETRY FUNCTIONS...
 // *************************************************************************** //
+[[nodiscard]]
+std::pair<int, int>             GetMonitorDimensions        (GLFWwindow * window);
+[[nodiscard]] float             GetDPIScaling               (GLFWwindow * window);
+
 [[nodiscard]]
 GLFWmonitor *                   get_current_monitor         (GLFWwindow * window);
 void                            set_window_scale            (GLFWwindow * window, const float scale);

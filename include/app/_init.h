@@ -162,7 +162,7 @@ inline constexpr const char * get_font_path(void) {
 }
 
 inline constexpr const char *       DEF_FONT_PATH               = get_font_path();
-inline constexpr float              DEF_FONT_SIZE               = 18.0f;
+inline constexpr float              DEF_FONT_SIZE               = 20.0f;
 inline constexpr float              DEF_SMALL_FONT_SIZE         = 14.0f;
     
 
@@ -208,14 +208,15 @@ enum class Font_t : int {
 //  "FontInfo"
 //      - Simple struct to define the various properties of each font...
 struct FontInfo {
-    std::string_view    path;
+    std::string         path;
     float               size;
 };
 
 
+
 //  COMPILE-TIME ARRAY CONTAINING ALL APPLICATION_FONTS
 //
-static constexpr std::array<FontInfo, int( Font_t::Count )>     APPLICATION_FONT_STYLES = {{
+inline static const std::array<FontInfo, int( Font_t::Count )>     APPLICATION_FONT_STYLES = {{
 #define X(name, path, size) { path, size },
     _CBAPP_FONT_LIST(X)
 #undef X
@@ -255,7 +256,8 @@ namespace cb { namespace error { //     BEGINNING NAMESPACE "cb" :: "error"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-inline constexpr const char *       GLFW_INIT_ERROR                 =
+//  1.      GLFW ERRORS...
+inline constexpr const char *       GLFW_INIT_ERROR                             =
     "A fatal error has occured during program initialization:\n\t"
     "Call to \"glfwInit()\" returned NULL.\n"
     "This may occur if your machine does not have the necessary graphics drivers for OpenGL installed.\n"
@@ -263,10 +265,24 @@ inline constexpr const char *       GLFW_INIT_ERROR                 =
     "graphics that are build into the motherboard.";
     
     
-inline constexpr const char *       GLFW_WINDOW_INIT_ERROR          =
+inline constexpr const char *       GLFW_WINDOW_INIT_ERROR                      =
     "A fatal error has occured during program initialization:\n\t"
     "Call to \"glfwCreateWindow()\" returned NULL.\n";
-
+//
+//
+//
+//  2.      ASSERT STATEMENT ERRORS...
+inline constexpr const char *       ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS      =
+    "Assert statement failure during initialization:\n\t"
+    "One or more window render functions is NULL (app::WinInfo.render_fn).\n"
+    "CHECK:\n"
+    "\t(1.) \t \"dispatch_window_function()\" in \"src/app/init.cpp\".\n"
+    "\t(2.) \t \"#define _CBAPP_WINDOW_LIST(X)\" in \"include/app/state/_state.h\".\n";
+    
+    
+inline constexpr const char *       ASSERT_INVALID_PRIMARY_WINDOWS              =
+    "Assert statement failure during initialization:\n\t"
+    "\"Sidebar\" window cannot be an item inside \"this->m_primary_windows!\" variable.";
 
 
 

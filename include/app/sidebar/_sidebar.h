@@ -1,21 +1,21 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****              M E N U B A R . h  ____  F I L E              ****
+*       ****             _ S I D E B A R . H  ____  F I L E             ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond
-*               DATED:      May 01, 2025.
+*               DATED:      May 06, 2025.
 *
 *       ********************************************************************
-*                FILE:      [include/app/menubar/_menubar.h]
+*                FILE:      [./SideBar.h]
 *
 *
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CBAPP_APP_MENUBAR_H
-#define _CBAPP_APP_MENUBAR_H  1
+#ifndef _CBAPP_APP_SIDEBAR_H
+#define _CBAPP_APP_SIDEBAR_H  1
 
 
 
@@ -52,31 +52,27 @@
 //  1.3     "DEAR IMGUI" HEADERS...
 #include "imgui.h"
 #include "implot.h"
-
-
-
-
-
-namespace cb { //     BEGINNING NAMESPACE "cb"...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  2.      UTILITY FUNCTIONS [NON-MEMBER FUNCTIONS]...
-//                  ...
+# include "imgui_internal.h"
 
 
 
 
 
 
-// *************************************************************************** //
-// *************************************************************************** //
-//          3.    PRIMARY CLASS INTERFACE.
-//  Class to define the Top Menu-Bar for the main application.
-// *************************************************************************** //
-// *************************************************************************** //
+namespace cb { // BEGINNING NAMESPACE "cb"...
+// *************************************************************** //
+// *************************************************************** //
 
-class MenuBar
+
+
+// *************************************************************** //
+// *************************************************************** //
+// 3.  PRIMARY CLASS INTERFACE
+// @brief NO DESCRIPTION PROVIDED
+// *************************************************************** //
+// *************************************************************** //
+
+class SideBar
 {
 // *************************************************************************** //
 // *************************************************************************** //
@@ -89,20 +85,20 @@ public:
     
     //  1               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
-    //  1.1             Default Constructor, Destructor, etc.       [app/menubar/menubar.cpp]...
-    explicit            MenuBar                         (app::AppState & );                             //  Def. Constructor.
-                        ~MenuBar                        (void);                                         //  Def. Destructor.
+    //  1.1             Default Constructor, Destructor, etc.       [app/sidebar/sidebar.cpp]...
+    explicit            SideBar                         (app::AppState & );                             //  Def. Constructor.
+                        ~SideBar                        (void);                                         //  Def. Destructor.
     
-    //  1.2             Primary Class Interface.                    [app/menubar/menubar.cpp]...
+    //  1.2             Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
     void                Begin                           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
                                                          
     void                Display_Main_Menu_Bar           (void);
 
     //  1.3             Deleted Operators, Functions, etc.
-                        MenuBar                         (const MenuBar & src)               = delete;   //  Copy. Constructor.
-                        MenuBar                         (MenuBar && src)                    = delete;   //  Move Constructor.
-    MenuBar &           operator =                      (const MenuBar & src)               = delete;   //  Assgn. Operator.
-    MenuBar &           operator =                      (MenuBar && src)                    = delete;   //  Move-Assgn. Operator.
+                        SideBar                         (const SideBar & src)               = delete;   //  Copy. Constructor.
+                        SideBar                         (SideBar && src)                    = delete;   //  Move Constructor.
+    SideBar &           operator =                      (const SideBar & src)               = delete;   //  Assgn. Operator.
+    SideBar &           operator =                      (SideBar && src)                    = delete;   //  Move-Assgn. Operator.
     
     
     
@@ -116,20 +112,22 @@ protected:
     // *************************************************************************** //
     
     //                  1.  BOOLEANS...
-    //  bool                m_running                       = true;
+    bool                m_rebuild_dockspace             = true;
+    bool                m_show_sidebar_window           = true;
+    bool                m_show_perf_metrics             = app::DEF_PERF_METRICS_STATE;
+    bool                m_show_perf_plots               = app::DEF_PERF_PLOTS_STATE;
     //
-    
-    
     //                  2.  APPEARANCE...
-    
-    
+    ImVec4              m_sidebar_bg                    = cb::app::DEF_SIDEBAR_WIN_BG;
+    ImVec2              m_sidebar_width                 = ImVec2(40.0f, 400.0f);
+    float               m_sidebar_ratio                 = app::DEF_SB_OPEN_WIDTH;
+    //
     //                  3.  WINDOW / GUI ITEMS...           //  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
     //                                  ...
-    
-    
+    //
     //                  4.  MISC INFORMATION...
-    
-    
+    //                                  ...
+    //
     //                  5.  IMPORTANT VARIABLES...
     app::AppState &     m_state;
     
@@ -137,20 +135,19 @@ protected:
     //  2.B             PROTECTED MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //  2B.1            Class Initializations.          [app/menubar/menubar.cpp]...
+    //  2B.1            Class Initializations.          [app/sidebar/sidebar.cpp]...
     void                init                            (void);
     void                load                            (void);
     void                destroy                         (void);
-    //
-    //  2B.2            Secondary Class Methods.        [app/menubar/menubar.cpp]...
-    void                disp_file_menubar               (void);     //  MenuBar...
-    void                disp_edit_menubar               (void);
-    void                disp_view_menubar               (void);
-    void                disp_window_menubar             (void);
-    void                disp_show_windows_menubar       (void);
-    void                disp_help_menubar               (void);
     
-    void                disp_imgui_submenu              (void);     //  Sub-MenuBar...
+    
+    //  2B.2            Secondary Class Methods.        [app/sidebar/sidebar.cpp]...
+    void                Display_Preferences_Menu        (void);
+    //
+    void                disp_appearance_mode            (void);     //  Other...
+    void                disp_font_selector              (void);
+    void                disp_color_palette              (void);
+    void                disp_performance_metrics        (void);
     
     
     
@@ -177,10 +174,6 @@ private:
 
 
 // *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
 // *************************************************************************** //
 }//   END OF "cb" NAMESPACE.
 
@@ -189,9 +182,14 @@ private:
 
 
 
-#endif      //  _CBAPP_APP_MENUBAR_H  //
+
+
+
+
+
+
+#endif      //  _CBAPP_SIDEBAR_H  //
 // *************************************************************************** //
 // *************************************************************************** //
 //
 //  END.
-

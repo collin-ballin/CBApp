@@ -11,6 +11,10 @@
 #include <random>
 #include <algorithm>
 
+#include <imgui.h>
+#include <GLFW/glfw3.h>
+#include <cmath>
+
 
 
 namespace cb { //     BEGINNING NAMESPACE "cb"...
@@ -19,10 +23,87 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
+//  1.  TEMP / MISC FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "KeepProgramAwake"
+//
+void KeepProgramAwake(GLFWwindow* window)
+{
+    // Motion constants (local to function)
+    constexpr float R               = 100.0f;           // Radius of circular motion (pixels)
+    constexpr float OMEGA           = 500.0f;           // Tangential speed (pixels per second)
+    constexpr float PHASE_DURATION  = 2.5f;             // Duration of moving and idle phases (seconds)
+
+    // Encapsulated persistent state
+    struct Context {
+        bool enable = false;
+        bool prev_enable = false;
+        bool in_move_phase = false;
+        float phase_timer = 0.0f;
+        double x0 = 0.0, y0 = 0.0;
+    };
+    static Context ctx;
+
+    // Checkbox to toggle motion
+    ImGui::Checkbox("STAY AWAKE!!!", &ctx.enable);
+
+    // Reference IO for timing and cursor queries
+    ImGuiIO& io = ImGui::GetIO();
+
+    // On the rising edge of enable, capture current cursor pos as center
+    if (ctx.enable && !ctx.prev_enable) {
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        ctx.x0 = xpos;
+        ctx.y0 = ypos;
+        ctx.phase_timer = 0.0f;
+        ctx.in_move_phase = true;
+    }
+    ctx.prev_enable = ctx.enable;
+
+    // If not enabled or no valid window, exit
+    if (!ctx.enable || !window)
+        return;
+
+    // Advance phase timer and toggle phase at phase duration
+    ctx.phase_timer += io.DeltaTime;
+    if (ctx.phase_timer >= PHASE_DURATION) {
+        ctx.phase_timer -= PHASE_DURATION;
+        ctx.in_move_phase = !ctx.in_move_phase;
+    }
+
+    // During moving phase, set cursor along circular path; else allow user control
+    if (ctx.in_move_phase) {
+        float angle = (OMEGA * ctx.phase_timer) / R; // angular displacement
+        double cx = ctx.x0 + R * std::cos(angle);
+        double cy = ctx.y0 + R * std::sin(angle);
+        glfwSetCursorPos(window, cx, cy);
+    }
+
+    // Debug: draw circle and show status
+    ImVec2 mpos = io.MousePos;
+    ImGui::GetForegroundDrawList()
+        ->AddCircleFilled(mpos, 5.0f, IM_COL32(255, 100, 100, 255));
+    ImGui::Text("Cursor: (%.1f, %.1f) [%s]",
+                mpos.x, mpos.y,
+                ctx.in_move_phase ? "MOVING" : "IDLE");
+}
+
+
+
+
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
-//  1.  WINDOW FUNCTIONS...
+//  2.  WINDOW FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -985,6 +1066,211 @@ void ShowImPlotDemoWindow([[maybe_unused]]    const char *        uuid,
     ImPlot::ShowDemoWindow(p_open);
     return;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+//  "ShowAboutWindow"
+//
+void ShowAboutWindow([[maybe_unused]]   const char *        uuid,
+                     [[maybe_unused]]   bool *              p_open,
+                     [[maybe_unused]]   ImGuiWindowFlags    flags)
+{
+
+    if (!ImGui::Begin("About Dear ImGui", p_open, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::End();
+        return;
+    }
+    ImGui::Text("Dear ImGui %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
+
+    ImGui::TextLinkOpenURL("Homepage", "https://github.com/ocornut/imgui");
+    ImGui::SameLine();
+    ImGui::TextLinkOpenURL("FAQ", "https://github.com/ocornut/imgui/blob/master/docs/FAQ.md");
+    ImGui::SameLine();
+    ImGui::TextLinkOpenURL("Wiki", "https://github.com/ocornut/imgui/wiki");
+    ImGui::SameLine();
+    ImGui::TextLinkOpenURL("Releases", "https://github.com/ocornut/imgui/releases");
+    ImGui::SameLine();
+    ImGui::TextLinkOpenURL("Funding", "https://github.com/ocornut/imgui/wiki/Funding");
+
+    ImGui::Separator();
+    ImGui::Text("(c) 2014-2025 Omar Cornut");
+    ImGui::Text("Developed by Omar Cornut and all Dear ImGui contributors.");
+    ImGui::Text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.");
+    ImGui::Text("If your company uses this, please consider funding the project.");
+
+    static bool show_config_info = false;
+    ImGui::Checkbox("Config/Build Information", &show_config_info);
+    if (show_config_info)
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        ImGuiStyle& style = ImGui::GetStyle();
+
+        bool copy_to_clipboard = ImGui::Button("Copy to clipboard");
+        ImVec2 child_size = ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * 18);
+        ImGui::BeginChild(ImGui::GetID("cfg_infos"), child_size, ImGuiChildFlags_FrameStyle);
+        if (copy_to_clipboard)
+        {
+            ImGui::LogToClipboard();
+            ImGui::LogText("```\n"); // Back quotes will make text appears without formatting when pasting on GitHub
+        }
+
+        ImGui::Text("Dear ImGui %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
+        ImGui::Separator();
+        ImGui::Text("sizeof(size_t): %d, sizeof(ImDrawIdx): %d, sizeof(ImDrawVert): %d", (int)sizeof(size_t), (int)sizeof(ImDrawIdx), (int)sizeof(ImDrawVert));
+        ImGui::Text("define: __cplusplus=%d", (int)__cplusplus);
+#ifdef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_OBSOLETE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_WIN32_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_FILE_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_FILE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_ALLOCATORS
+        ImGui::Text("define: IMGUI_DISABLE_DEFAULT_ALLOCATORS");
+#endif
+#ifdef IMGUI_USE_BGRA_PACKED_COLOR
+        ImGui::Text("define: IMGUI_USE_BGRA_PACKED_COLOR");
+#endif
+#ifdef _WIN32
+        ImGui::Text("define: _WIN32");
+#endif
+#ifdef _WIN64
+        ImGui::Text("define: _WIN64");
+#endif
+#ifdef __linux__
+        ImGui::Text("define: __linux__");
+#endif
+#ifdef __APPLE__
+        ImGui::Text("define: __APPLE__");
+#endif
+#ifdef _MSC_VER
+        ImGui::Text("define: _MSC_VER=%d", _MSC_VER);
+#endif
+#ifdef _MSVC_LANG
+        ImGui::Text("define: _MSVC_LANG=%d", (int)_MSVC_LANG);
+#endif
+#ifdef __MINGW32__
+        ImGui::Text("define: __MINGW32__");
+#endif
+#ifdef __MINGW64__
+        ImGui::Text("define: __MINGW64__");
+#endif
+#ifdef __GNUC__
+        ImGui::Text("define: __GNUC__=%d", (int)__GNUC__);
+#endif
+#ifdef __clang_version__
+        ImGui::Text("define: __clang_version__=%s", __clang_version__);
+#endif
+#ifdef __EMSCRIPTEN__
+        ImGui::Text("define: __EMSCRIPTEN__");
+        ImGui::Text("Emscripten: %d.%d.%d", __EMSCRIPTEN_major__, __EMSCRIPTEN_minor__, __EMSCRIPTEN_tiny__);
+#endif
+#ifdef IMGUI_HAS_VIEWPORT
+        ImGui::Text("define: IMGUI_HAS_VIEWPORT");
+#endif
+#ifdef IMGUI_HAS_DOCK
+        ImGui::Text("define: IMGUI_HAS_DOCK");
+#endif
+        ImGui::Separator();
+        ImGui::Text("io.BackendPlatformName: %s", io.BackendPlatformName ? io.BackendPlatformName : "NULL");
+        ImGui::Text("io.BackendRendererName: %s", io.BackendRendererName ? io.BackendRendererName : "NULL");
+        ImGui::Text("io.ConfigFlags: 0x%08X", io.ConfigFlags);
+        if (io.ConfigFlags & ImGuiConfigFlags_NavEnableKeyboard)        ImGui::Text(" NavEnableKeyboard");
+        if (io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad)         ImGui::Text(" NavEnableGamepad");
+        if (io.ConfigFlags & ImGuiConfigFlags_NoMouse)                  ImGui::Text(" NoMouse");
+        if (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)      ImGui::Text(" NoMouseCursorChange");
+        if (io.ConfigFlags & ImGuiConfigFlags_NoKeyboard)               ImGui::Text(" NoKeyboard");
+        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)            ImGui::Text(" DockingEnable");
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)          ImGui::Text(" ViewportsEnable");
+        if (io.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)  ImGui::Text(" DpiEnableScaleViewports");
+        if (io.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleFonts)      ImGui::Text(" DpiEnableScaleFonts");
+        if (io.MouseDrawCursor)                                         ImGui::Text("io.MouseDrawCursor");
+        if (io.ConfigViewportsNoAutoMerge)                              ImGui::Text("io.ConfigViewportsNoAutoMerge");
+        if (io.ConfigViewportsNoTaskBarIcon)                            ImGui::Text("io.ConfigViewportsNoTaskBarIcon");
+        if (io.ConfigViewportsNoDecoration)                             ImGui::Text("io.ConfigViewportsNoDecoration");
+        if (io.ConfigViewportsNoDefaultParent)                          ImGui::Text("io.ConfigViewportsNoDefaultParent");
+        if (io.ConfigDockingNoSplit)                                    ImGui::Text("io.ConfigDockingNoSplit");
+        if (io.ConfigDockingWithShift)                                  ImGui::Text("io.ConfigDockingWithShift");
+        if (io.ConfigDockingAlwaysTabBar)                               ImGui::Text("io.ConfigDockingAlwaysTabBar");
+        if (io.ConfigDockingTransparentPayload)                         ImGui::Text("io.ConfigDockingTransparentPayload");
+        if (io.ConfigMacOSXBehaviors)                                   ImGui::Text("io.ConfigMacOSXBehaviors");
+        if (io.ConfigNavMoveSetMousePos)                                ImGui::Text("io.ConfigNavMoveSetMousePos");
+        if (io.ConfigNavCaptureKeyboard)                                ImGui::Text("io.ConfigNavCaptureKeyboard");
+        if (io.ConfigInputTextCursorBlink)                              ImGui::Text("io.ConfigInputTextCursorBlink");
+        if (io.ConfigWindowsResizeFromEdges)                            ImGui::Text("io.ConfigWindowsResizeFromEdges");
+        if (io.ConfigWindowsMoveFromTitleBarOnly)                       ImGui::Text("io.ConfigWindowsMoveFromTitleBarOnly");
+        if (io.ConfigMemoryCompactTimer >= 0.0f)                        ImGui::Text("io.ConfigMemoryCompactTimer = %.1f", io.ConfigMemoryCompactTimer);
+        ImGui::Text("io.BackendFlags: 0x%08X", io.BackendFlags);
+        if (io.BackendFlags & ImGuiBackendFlags_HasGamepad)             ImGui::Text(" HasGamepad");
+        if (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors)        ImGui::Text(" HasMouseCursors");
+        if (io.BackendFlags & ImGuiBackendFlags_HasSetMousePos)         ImGui::Text(" HasSetMousePos");
+        if (io.BackendFlags & ImGuiBackendFlags_PlatformHasViewports)   ImGui::Text(" PlatformHasViewports");
+        if (io.BackendFlags & ImGuiBackendFlags_HasMouseHoveredViewport)ImGui::Text(" HasMouseHoveredViewport");
+        if (io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset)   ImGui::Text(" RendererHasVtxOffset");
+        if (io.BackendFlags & ImGuiBackendFlags_RendererHasViewports)   ImGui::Text(" RendererHasViewports");
+        ImGui::Separator();
+        ImGui::Text("io.Fonts: %d fonts, Flags: 0x%08X, TexSize: %d,%d", io.Fonts->Fonts.Size, io.Fonts->Flags, io.Fonts->TexWidth, io.Fonts->TexHeight);
+        ImGui::Text("io.DisplaySize: %.2f,%.2f", io.DisplaySize.x, io.DisplaySize.y);
+        ImGui::Text("io.DisplayFramebufferScale: %.2f,%.2f", io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+        ImGui::Separator();
+        ImGui::Text("style.WindowPadding: %.2f,%.2f", style.WindowPadding.x, style.WindowPadding.y);
+        ImGui::Text("style.WindowBorderSize: %.2f", style.WindowBorderSize);
+        ImGui::Text("style.FramePadding: %.2f,%.2f", style.FramePadding.x, style.FramePadding.y);
+        ImGui::Text("style.FrameRounding: %.2f", style.FrameRounding);
+        ImGui::Text("style.FrameBorderSize: %.2f", style.FrameBorderSize);
+        ImGui::Text("style.ItemSpacing: %.2f,%.2f", style.ItemSpacing.x, style.ItemSpacing.y);
+        ImGui::Text("style.ItemInnerSpacing: %.2f,%.2f", style.ItemInnerSpacing.x, style.ItemInnerSpacing.y);
+
+        if (copy_to_clipboard)
+        {
+            ImGui::LogText("\n```\n");
+            ImGui::LogFinish();
+        }
+        ImGui::EndChild();
+    }
+    ImGui::End();
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

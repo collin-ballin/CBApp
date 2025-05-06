@@ -1,11 +1,14 @@
-//
-//  main_application.cpp
-//  CBApp
-//
-//  Created by Collin Bond on 4/16/25.
-//
-// *************************************************************************** //
-// *************************************************************************** //
+/***********************************************************************************
+*
+*       *********************************************************************
+*       ****    M A I N _ A P P L I C A T I O N . C P P  ____  F I L E   ****
+*       *********************************************************************
+*
+*              AUTHOR:      Collin A. Bond
+*               DATED:      May 03, 2025.
+*
+**************************************************************************************
+**************************************************************************************/
 #include "app/app.h"
 #include <random>
 #include <algorithm>
@@ -29,7 +32,6 @@ void App::Display_Main_Window(const char * uuid, bool * p_open, ImGuiWindowFlags
     // ImVec2                       win_pos(this->m_main_viewport->WorkPos.x + 750,   this->m_main_viewport->WorkPos.x + 20);
     ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
     
-    
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_main_bg);
@@ -47,7 +49,7 @@ void App::Display_Main_Window(const char * uuid, bool * p_open, ImGuiWindowFlags
         }
     }
     
-    
+    KeepProgramAwake( this->m_glfw_window );
     
 //      DO NOT INCLUDE THESE EXAMPLES IF
 //      BUILDING FOR:    __CBAPP_COINCIDENCE_COUNTER_BUILD__
@@ -108,9 +110,6 @@ void App::Display_Main_Window(const char * uuid, bool * p_open, ImGuiWindowFlags
     ImGui::End();
     return;
 }
-
-
-
 
 
 
@@ -238,6 +237,11 @@ void App::CoincidenceCounter(void)
         ImGui::EndTable();
     }
     ImPlot::PopColormap();
+    
+    
+    
+    
+    
 }
 
     

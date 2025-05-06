@@ -9,8 +9,7 @@
 **************************************************************************************
 **************************************************************************************/
 #include "app/app.h"
-#include "app/sidebar/_sidebar.h"
-//# include "imgui_internal.h"
+# include "imgui_internal.h"
 //#include "utility/utility.h"
 #include <random>
 #include <algorithm>
@@ -26,63 +25,13 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//  1.      INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
+//  1.  WINDOW FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  Default Constructor.
+//  "Display_Sidebar_Menu"
 //
-SideBar::SideBar(app::AppState & src)
-    : m_state(src)                  { }
-
-
-//  "init"          | private
-//
-void SideBar::init(void)            { }
-
-
-//  "load"
-//
-void SideBar::load(void)            { }
-
-
-//  Destructor.
-//
-SideBar::~SideBar(void)             { this->destroy(); }
-
-
-//  "destroy"       | protected
-//
-void SideBar::destroy(void)         { }
-
-
-
-
-// *************************************************************************** //
-//
-//
-//  1B.     PUBLIC MEMBER FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "Begin"
-//
-void SideBar::Begin([[maybe_unused]] const char *       uuid,
-                    [[maybe_unused]] bool *             p_open,
-                    [[maybe_unused]] ImGuiWindowFlags   flags)
+void App::Display_Sidebar_Menu(const char * uuid, bool * p_open, ImGuiWindowFlags flags)
 {
     //static bool             m_sidebar_collapsed     = false;
     ImGuiIO &               io                      = ImGui::GetIO(); (void)io;
@@ -91,14 +40,14 @@ void SideBar::Begin([[maybe_unused]] const char *       uuid,
     
     
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_state.m_sidebar_bg);   // Push before ImGui::Begin()
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_sidebar_bg);   // Push before ImGui::Begin()
     
     
     ImGui::Begin(uuid, p_open, flags);
     ImGui::PopStyleColor();
     
-    //if (ImGui::IsItemActive() || ImGui::SliderFloat("Sidebar Width", &this->m_state.m_sidebar_ratio, 0.1f, 0.5f, "%.2f")) {
-    //    this->m_state.m_rebuild_dockspace = true;
+    //if (ImGui::IsItemActive() || ImGui::SliderFloat("Sidebar Width", &this->m_sidebar_ratio, 0.1f, 0.5f, "%.2f")) {
+    //    this->m_rebuild_dockspace = true;
     //}
 
     //  2.  SIDE-BAR COLLAPSE BUTTON...
@@ -135,9 +84,17 @@ void SideBar::Begin([[maybe_unused]] const char *       uuid,
 }
 
 
+
+// *************************************************************************** //
+//
+//
+//  2.      GENERAL MENU FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
 //  "Display_Preferences_Menu"
 //
-void SideBar::Display_Preferences_Menu(void)
+void App::Display_Preferences_Menu(void)
 {
     ImGuiIO &                   io              = ImGui::GetIO(); (void)io;
     ImGuiStyle &                style           = ImGui::GetStyle();
@@ -166,21 +123,26 @@ void SideBar::Display_Preferences_Menu(void)
     
     this->disp_performance_metrics();
     
+/*#ifndef __CBAPP_THROTTLE_PERF_METRICS__
+    this->disp_performance_metrics();
+# else
+    if (ImGui::GetFrameCount() % __CBAPP_THROTTLE_PERF_METRICS__ == 0)
+        this->disp_performance_metrics();
+#endif  //  __CBAPP_THROTTLE_PERF_METRICS__  // */
+        
+
     return;
 }
 
 
 
-// *************************************************************************** //
-//
-//
-//  2.      PROTECTED MEMBER FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
+
+
+
 
 //  "disp_appearance_mode"
 //
-void SideBar::disp_appearance_mode(void)
+void App::disp_appearance_mode(void)
 {
     ImGuiIO &                   io              = ImGui::GetIO(); (void)io;
     ImGuiStyle &                style           = ImGui::GetStyle();
@@ -210,7 +172,7 @@ void SideBar::disp_appearance_mode(void)
 
 //  "disp_font_selector"
 //
-void SideBar::disp_font_selector(void)
+void App::disp_font_selector(void)
 {
     ImGui::ShowFontSelector("Global Font##Selector");
     return;
@@ -221,7 +183,7 @@ void SideBar::disp_font_selector(void)
 
 //  "disp_color_palette"
 //
-void SideBar::disp_color_palette(void)
+void App::disp_color_palette(void)
 {
     ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
     ImGuiStyle &                    style           = ImGui::GetStyle();
@@ -235,11 +197,11 @@ void SideBar::disp_color_palette(void)
     {
         static ImVec4 &     def_win_bg            = style.Colors[ImGuiCol_WindowBg];
         
-        ImGui::ColorEdit4("GLFW Window Bg##2f",         (float*)&this->m_state.m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Dockspace Bg##2f",           (float*)&this->m_state.m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Sidebar Menu Bg##2f",        (float*)&this->m_state.m_sidebar_bg,    ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Main Window Bg##2f",         (float*)&this->m_state.m_main_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Default Window Bg##2f",      (float*)&def_win_bg,                    ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("GLFW Window Bg##2f",         (float*)&this->m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Dockspace Bg##2f",           (float*)&this->m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Sidebar Menu Bg##2f",        (float*)&this->m_sidebar_bg,    ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Main Window Bg##2f",         (float*)&this->m_main_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Default Window Bg##2f",      (float*)&def_win_bg,            ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
         
         ImGui::TreePop();
     }
@@ -283,7 +245,7 @@ void SideBar::disp_color_palette(void)
 
 //  "disp_performance_metrics"
 //
-void SideBar::disp_performance_metrics(void) {
+void App::disp_performance_metrics(void) {
     using float_t                                       = float;
     using int_t                                         = int;
     
@@ -406,7 +368,7 @@ void SideBar::disp_performance_metrics(void) {
             ImGui::SeparatorText("Framerate");
             
             //      1.2     FPS PLOTTING...
-            m_state.PushFont( Font::Small );
+            this->PushFont( Font::Small );
             ImGui::PushID("##Scrolling");
             if (ImPlot::BeginPlot("##Scrolling", PLOT_SIZE))
             {
@@ -421,14 +383,14 @@ void SideBar::disp_performance_metrics(void) {
                 ImPlot::EndPlot();
             }
             ImGui::PopID();
-            m_state.PopFont();
+            this->PopFont();
             
 
 
             //      2B.     MEMORY ALLOCATIONS PLOTTING...
             ImGui::SeparatorText("GPU");
             
-            m_state.PushFont( Font::Small );
+            this->PushFont( Font::Small );
             if (ImPlot::BeginPlot("##Scrolling", PLOT_SIZE))
             {
                 ImPlot::SetupLegend(ImPlotLocation_SouthWest, ImPlotLegendFlags_None);            //    Legend Position.
@@ -450,7 +412,7 @@ void SideBar::disp_performance_metrics(void) {
                                  
                 ImPlot::EndPlot();
             }
-            m_state.PopFont();
+            this->PopFont();
             ImGui::TreePop();   //     END OF "PLOTS"...
         }
             
@@ -460,13 +422,6 @@ void SideBar::disp_performance_metrics(void) {
     
     return;
 }
-
-
-
-
-
-
-
 
 
 

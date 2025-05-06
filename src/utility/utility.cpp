@@ -54,6 +54,24 @@ void HelpMarker(const char* desc)    //  Helper to display a little (?) mark whi
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "GetMonitorDimensions"
+//
+[[nodiscard]] std::pair<int, int> GetMonitorDimensions(GLFWwindow * window) {
+    GLFWmonitor *           monitor     = cb::utl::get_current_monitor(window);
+    const GLFWvidmode *     mode        = glfwGetVideoMode(monitor);
+    return { mode->width, mode->height };
+}
+
+
+//  "GetDPIScaling"
+//
+[[nodiscard]] float GetDPIScaling(GLFWwindow * window) {
+    float   xscale  = 0.0f,     yscale  = 0.0f;
+    glfwGetWindowContentScale(window, &xscale, &yscale);
+    return 0.5f * (xscale + yscale);
+}
+
+
 //  "get_current_monitor"
 //
 [[nodiscard]] GLFWmonitor * get_current_monitor(GLFWwindow * window)

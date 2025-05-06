@@ -83,6 +83,9 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 //  0.      UTILITY FUNCTIONS [NON-MEMBER FUNCTIONS]...
 int                 run_application             ([[maybe_unused]] int argc, [[maybe_unused]] char ** argv);
+[[maybe_unused]]
+void                KeepProgramAwake            (GLFWwindow * );
+
 
 //  DEAR IMGUI DEMO APPLICATIONS...
 void                ShowStyleEditor             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
@@ -92,6 +95,7 @@ void                ShowMetricsWindow           ([[maybe_unused]] const char *, 
 
 void                ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 void                ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 
 
 
@@ -108,26 +112,22 @@ class App
 // *************************************************************************** //
 // *************************************************************************** //
 public:
-    using               AppState                        = app::AppState;
-    using               Window                          = AppState::Window;
-    using               ImWindows                       = AppState::ImWindows;
-    using               Font                            = AppState::Font;
-    using               ImFonts                         = AppState::ImFonts;  
+    CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
     
     //  1               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     //  1.1             Default Constructor, Destructor, etc...
-                        App                     (void);                                     //  Def. Constructor.
-                        ~App                    (void);                                     //  Def. Destructor.
+                        App                         (void);                                     //  Def. Constructor.
+                        ~App                        (void);                                     //  Def. Destructor.
     
     //  1.2             Public Member Functions...
-    void                run                     (void);
+    void                run                         (void);
 
     //  1.3             Deleted Operators, Functions, etc...
-                        App                     (const App & src)               = delete;   //  Copy. Constructor.
-                        App                     (App && src)                    = delete;   //  Move Constructor.
-    App &               operator =              (const App & src)               = delete;   //  Assgn. Operator.
-    App &               operator =              (App && src)                    = delete;   //  Move-Assgn. Operator.
+                        App                         (const App & src)               = delete;   //  Copy. Constructor.
+                        App                         (App && src)                    = delete;   //  Move Constructor.
+    App &               operator =                  (const App & src)               = delete;   //  Assgn. Operator.
+    App &               operator =                  (App && src)                    = delete;   //  Move-Assgn. Operator.
     
     
 // *************************************************************************** //
@@ -151,8 +151,8 @@ protected:
     
     //                  2.  APPEARANCE...
     //                          Dimensions.
-    uint32_t            m_sys_width                     = 0U;       //  Sys. Display Dims.
-    uint32_t            m_sys_height                    = 0U;
+    int                 m_system_w                      = -1;       //  Sys. Display Dims.
+    int                 m_system_h                      = -1;
     int                 m_window_w                      = -1;       //  Main Window Dims.
     int                 m_window_h                      = -1;
     ImVec2              m_sidebar_width                 = ImVec2(40.0f, 400.0f);
@@ -187,7 +187,8 @@ protected:
     
     //                  5.  IMPORTANT VARIABLES...
     ImGuiViewport *     m_main_viewport                 = nullptr;
-    GLFWwindow *        m_window                        = nullptr;
+    GLFWwindow *        m_glfw_window                   = nullptr;
+    
     
     //                  6.  DELAGATOR CLASSES...
     app::AppState       m_state                         = app::AppState();
@@ -204,11 +205,20 @@ protected:
     //  2.B             PROTECTED MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //  2B.1            Class Initializations.      [app.cpp]...
-    void                init                        (void);
-    void                load                        (void);
-    void                dispatch_window_function    (const Window & uuid);
-    void                destroy                     (void);
+    //  2B.1            Class Initializations.      [init.cpp]...
+    //
+    //          1A.
+    void                init                        (void);                     //  [init.cpp].
+    void                CreateContext               (void);                     //  [init.cpp].
+    void                destroy                     (void);                     //  [init.cpp].
+    //
+    //          1B.
+    void                init_appstate               (void);                     //  [init.cpp].
+    void                dispatch_window_function    (const Window & uuid);      //  [init.cpp].
+    //
+    //          1C.
+    void                load                        (void);                     //  [init.cpp].
+    void                init_asserts                (void);                     //  [init.cpp].
     
     
     
