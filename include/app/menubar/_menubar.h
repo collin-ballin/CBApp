@@ -52,6 +52,7 @@
 //  1.3     "DEAR IMGUI" HEADERS...
 #include "imgui.h"
 #include "implot.h"
+#include "imgui_internal.h"
 
 
 
@@ -78,15 +79,11 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 class MenuBar
 {
+    CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+    friend class        App;
 // *************************************************************************** //
 // *************************************************************************** //
 public:
-    using               AppState                        = app::AppState;
-    using               Window                          = AppState::Window;
-    using               ImWindows                       = AppState::ImWindows;
-    using               Font                            = AppState::Font;
-    using               ImFonts                         = AppState::ImFonts;
-    
     //  1               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     //  1.1             Default Constructor, Destructor, etc.       [app/menubar/menubar.cpp]...
@@ -99,10 +96,10 @@ public:
     void                Display_Main_Menu_Bar           (void);
 
     //  1.3             Deleted Operators, Functions, etc.
-                        MenuBar                         (const MenuBar & src)               = delete;   //  Copy. Constructor.
-                        MenuBar                         (MenuBar && src)                    = delete;   //  Move Constructor.
-    MenuBar &           operator =                      (const MenuBar & src)               = delete;   //  Assgn. Operator.
-    MenuBar &           operator =                      (MenuBar && src)                    = delete;   //  Move-Assgn. Operator.
+                        MenuBar                         (const MenuBar &    src)            = delete;   //  Copy. Constructor.
+                        MenuBar                         (MenuBar &&         src)            = delete;   //  Move Constructor.
+    MenuBar &           operator =                      (const MenuBar &    src)            = delete;   //  Assgn. Operator.
+    MenuBar &           operator =                      (MenuBar &&         src)            = delete;   //  Move-Assgn. Operator.
     
     
     
@@ -131,7 +128,7 @@ protected:
     
     
     //                  5.  IMPORTANT VARIABLES...
-    app::AppState &     m_state;
+    AppState &          CBAPP_STATE_NAME;
     
     
     //  2.B             PROTECTED MEMBER FUNCTIONS...

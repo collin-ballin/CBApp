@@ -52,6 +52,7 @@
 //  1.3     "DEAR IMGUI" HEADERS...
 #include "imgui.h"
 #include "implot.h"
+#include "imgui_internal.h"
 
 
 
@@ -73,9 +74,11 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 #ifdef CBAPP_ENABLE_MOVE_AND_RESIZE
     # define _CBAPP_NO_MOVE_RESIZE_FLAGS        0
 #else
-    # define _CBAPP_NO_MOVE_RESIZE_FLAGS        (ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)
+    # define _CBAPP_NO_MOVE_RESIZE_FLAGS        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
 #endif  //  CBAPP_ENABLE_MOVE_AND_RESIZE  //
 
+#define _CBAPP_NO_SAVE_WINDOW_SIZE              0
+//ImGuiWindowFlags_NoSavedSettings
 
 
 
@@ -83,12 +86,16 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 
 //  1.2     "HOST", "SIDEBAR",  AND "CORE" WINDOW FLAGS...
 //
-#define     _CBAPP_HOST_WINDOW_FLAGS            ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground
-#define     _CBAPP_SIDEBAR_WINDOW_FLAGS         ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus
-#define     _CBAPP_CORE_WINDOW_FLAGS            ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | ImGuiWindowFlags_NoCollapse
-#define     _CBAPP_DEFAULT_WINDOW_FLAGS         ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse
+inline constexpr ImGuiWindowFlags      _CBAPP_HOST_WINDOW_FLAGS             = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+inline constexpr ImGuiWindowFlags      _CBAPP_DOCKSPACE_WINDOW_FLAGS        = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+//inline constexpr ImGuiWindowFlags      _CBAPP_SIDEBAR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+inline constexpr ImGuiWindowFlags      _CBAPP_SIDEBAR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+inline constexpr ImGuiWindowFlags      _CBAPP_TITLEBAR_WINDOW_FLAGS         = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoFocusOnAppearing;
+inline constexpr ImGuiWindowFlags      _CBAPP_CORE_WINDOW_FLAGS             = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
 
 
+inline constexpr ImGuiWindowFlags      _CBAPP_ABOUT_WINDOW_FLAGS            = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
+inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse;
 
 
 
@@ -100,9 +107,9 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 // *************************************************************************** //
 
 #ifdef CBAPP_ENABLE_CB_DEMO                         // IF [ CBAPP_ENABLE_CB_DEMO IS #DEFINED ]      --- this expands to one extra X(...).
-    #define _CBAPP_OPTIONAL_WINDOWS(X)                                                                                                       \
+    #define _CBAPP_OPTIONAL_WINDOWS(X)                                                                                                      \
 /*| NAME.               TITLE.                      DEFAULT OPEN.       FLAGS.                                                          */  \
-/*|========================================================================================================================|            */  \                                                                                                    \
+/*|========================================================================================================================|            */  \
     X(CBDemo,           "CBDemo",                   true,               _CBAPP_CORE_WINDOW_FLAGS                                )
 # else                                              // OTHERWISE                                    --- it expands to nothing...
     #define _CBAPP_OPTIONAL_WINDOWS(X)
@@ -122,18 +129,23 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 /*|========================================================================================================================|            */  \
 /*  1.  PRIMARY GUI STRUCTURE / "CORE WINDOWS"...                                                                                       */  \
     X(Host,             "CBApp (V0)",               true,               _CBAPP_HOST_WINDOW_FLAGS                                )           \
-    X(Sidebar,          "Sidebar",                  true,               _CBAPP_SIDEBAR_WINDOW_FLAGS                             )           \
-    X(Menubar,          "Menubar",                  true,               _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
-    X(MainApp,          "My Application",           true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
+    X(Dockspace,        "##RootDockspace",          true,               _CBAPP_DOCKSPACE_WINDOW_FLAGS                           )           \
+    X(SideBar,          "##Sidebar",                true,               _CBAPP_SIDEBAR_WINDOW_FLAGS                             )           \
+    X(TitleBar,         "##Titlebar",               true,               _CBAPP_TITLEBAR_WINDOW_FLAGS                            )           \
+    X(MenuBar,          "##Menubar",                true,               _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
+    X(About,            "About",                    false,              _CBAPP_ABOUT_WINDOW_FLAGS                               )           \
+    X(MainApp,          "My Application",           true,               _CBAPP_CORE_WINDOW_FLAGS | ImGuiWindowFlags_NoScrollbar )           \
 /*                                                                                                                                      */  \
 /*  2.  MAIN APPLICATION WINDOWS...                                                                                                     */  \
-    X(GraphingApp,      "Graphing App",             true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
+    X(CCounterApp,      "Coincidence Counter",      true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
+    X(GraphingApp,      "Graphing App",             false,              _CBAPP_CORE_WINDOW_FLAGS                                )           \
 /*                                                                                                                                      */  \
 /*  3.  TOOLS, DEMOS, MISC WINDOWS, ETC...                                                                                              */  \
     X(StyleEditor,      "Style Editor (ImGui)",     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(Logs,             "Logs",                     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(Console,          "Console",                  false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(Metrics,          "Metrics",                  false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
+    X(Docking,          "Docking",                  false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
 /*                                                                                                                                      */  \
 /*  4.  DEMO WINDOWS...                                                                                                                 */  \
     X(ImGuiDemo,        "ImGui Demo",               false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
@@ -169,6 +181,7 @@ enum class Window_t : int {
 //  "WinInfo"
 //      Plain‑old‑data (POD) to hold each window’s compile‑time defaults.
 struct WinInfo {
+    inline const char * get_uuid(void) const { return this->uuid.c_str(); }
     std::string                                                     uuid;           //  Window title / unique ID.
     ImGuiWindowFlags                                                flags;          //  ImGui window flags.
     bool                                                            open;           //  Current visibility state.
@@ -202,10 +215,16 @@ inline static const std::array<WinInfo, size_t(Window_t::Count)>    APPLICATION_
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  MEMBER VARIABLE NAME FOR "AppState" OBJECT IN EACH CLASS...
+//      - Using this to consosolidate the lengthy member-accessor statements "this->m_state.my_object.my_data_member", etc ...
+#define                 CBAPP_STATE_NAME                S
+
+
 //  INTERNAL "API" USED **EXCLUSIVELY** INSIDE "AppState" CLASS.
 //      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
 //
 #define                 _CBAPP_APPSTATE_ALIAS_API                                               \
+public:                                                                                         \
     using               Window                          = app::Window_t;                        \
     using               Font                            = app::Font_t;                          \
                                                                                                 \
@@ -232,52 +251,25 @@ inline static const std::array<WinInfo, size_t(Window_t::Count)>    APPLICATION_
 //
 struct AppState
 {
-// *************************************************************************** //
-// *************************************************************************** //
     _CBAPP_APPSTATE_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //  1.1     STRUCT INITIALIZATION FUNCTIONS...
+    // *************************************************************************** //
+                                        AppState                    (void);         //  Default Constructor.
+                                        ~AppState                   (void);         //  Default Destructor.
     
     
     // *************************************************************************** //
-    //  1.               CLASS MEMBER FUNCTIONS...
+    //  1.2     STRUCT UTILITY FUNCTIONS...
     // *************************************************************************** //
+    void                                SetDarkMode                 (void);
+    void                                SetLightMode                (void);
     
-    //  Default Constructor.
-    //
-    AppState(void)
-    {
-        size_t      i       = size_t(0);
-    
-        // 1.   INITIALIZE WINDOW INFOS...
-        for (i = 0; i < static_cast<size_t>(Window_t::Count); ++i) {
-            m_windows.data[i] = APPLICATION_WINDOW_INFOS[i];
-        }
-
-        // 2.   INITIALIZE APPLICATION FONTS...
-        for (i = 0; i < static_cast<size_t>(Font::Count); ++i) {
-            m_fonts.data[i] = nullptr;  // load later in your init()
-        }
-    }
-    
-
-    //  Default Destructor.
-    //
-    ~AppState(void) = default;
-    
-    
-    //  "PushFont"
-    //
-    inline void PushFont( [[maybe_unused]] const Font & which) {
-        ImGui::PushFont( this->m_fonts[which] );
-        return;
-    }
-
-
-    //  "PopFont"
-    //
-    inline void PopFont(void) {
-        ImGui::PopFont();
-        return;
-    }
+    void                                PushFont                    ([[maybe_unused]] const Font & );
+    void                                PopFont                     (void);
 
 
 
@@ -285,57 +277,72 @@ struct AppState
     //  2.               CLASS DATA MEMBERS...
     // *************************************************************************** //
     
-    //  0.      STATIC AND CONSTEXPR VARIABLES...
-    //              0.1     ALL Windows.
-    static constexpr const size_t       ms_WINDOWS_BEGIN            = static_cast<size_t>(Window::Sidebar);
-    static constexpr const size_t       ms_WINDOWS_END              = static_cast<size_t>(Window::Count);
-    //
-    //              0.2     Main Application Windows.
-    static constexpr const size_t       ms_APP_WINDOWS_BEGIN        = static_cast<size_t>(Window::GraphingApp);
-    static constexpr const size_t       ms_APP_WINDOWS_END          = static_cast<size_t>(Window::StyleEditor);
-    //
-    //              0.3     Tool Windows.
-    static constexpr const size_t       ms_TOOL_WINDOWS_BEGIN       = static_cast<size_t>(Window::StyleEditor);
-    static constexpr const size_t       ms_TOOL_WINDOWS_END         = static_cast<size_t>(Window::ImGuiDemo);
-    //
-    //              0.4     Demo Windows.
-    static constexpr const size_t       ms_DEMO_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiDemo);
-    static constexpr const size_t       ms_DEMO_WINDOWS_END         = static_cast<size_t>(Window::Count);
-    
-    
-    
-    //  1.      GROUPS / SUB-CLASSES OF "APPSTATE"...
+    //  0.      GROUPS / SUB-CLASSES OF "APPSTATE"...
     ImWindows                           m_windows;              //  1.  APPLICATION WINDOW STATE...
     ImFonts                             m_fonts;                //  2.  APPLICATION FONTS...
     
     
+    
+    //  1.      STATIC AND CONSTEXPR VARIABLES...
+    //
+    //          1.  Window Variables:
+    //              1.1     ALL Windows.
+    static constexpr size_t             ms_WINDOWS_BEGIN            = static_cast<size_t>(Window::Dockspace);
+    static constexpr size_t             ms_WINDOWS_END              = static_cast<size_t>(Window::Count);
+    //
+    //              1.2     Main Application Windows.
+    static constexpr size_t             ms_APP_WINDOWS_BEGIN        = static_cast<size_t>(Window::CCounterApp);
+    static constexpr size_t             ms_APP_WINDOWS_END          = static_cast<size_t>(Window::StyleEditor);
+    //
+    //              1.3     Tool Windows.
+    static constexpr size_t             ms_TOOL_WINDOWS_BEGIN       = static_cast<size_t>(Window::StyleEditor);
+    static constexpr size_t             ms_TOOL_WINDOWS_END         = static_cast<size_t>(Window::ImGuiDemo);
+    //
+    //              1.4     Demo Windows.
+    static constexpr size_t             ms_DEMO_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiDemo);
+    static constexpr size_t             ms_DEMO_WINDOWS_END         = static_cast<size_t>(Window::Count);
+    //
+    //          2.  Misc. Constant Values:
+    //  const char *                        DEF_TITLEBAR_WIN_TITLE      = "TitleBar";
+    //  static constexpr float              ms_TITLEBAR_RATIO           = 0.10f;
+    //  ImGuiID                             m_top_dock_id               = 0;        //  |===>   These are for initial separation.
+    //  ImGuiID                             m_center_dock_id            = 0;        //
+    
+    
+    
     //  2.      MISC. INFORMATION...
+    bool                                m_enable_vsync              = true;
     const char *                        m_glsl_version              = nullptr;
     
     
+    
     //  3.      DOCKSPACE...
-    bool                                m_rebuild_dockspace         = true;
-    const char *                        m_dock_name                 = "RootDockspace";
+    std::vector<std::string>            m_primary_windows           = { };
+    bool                                m_rebuild_dockspace         = false;
+    const char *                        m_dock_name                 = "##RootDockspace";
     ImGuiID                             m_dockspace_id              = 0;
-    ImGuiID                             m_sidebar_dock_id           = 0;
+    //
     ImGuiID                             m_main_dock_id              = 0;
+    ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_CentralNode; //ImGuiDockNodeFlags_NoDocking;
+    ImGuiDockNode *                     m_main_node                 = nullptr;
+    
+    ImGuiID                             m_sidebar_dock_id           = 0;
+    ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_AutoHideTabBar;
+    ImGuiDockNode *                     m_sidebar_node              = nullptr;
+    
     
     
     //  4.      GLFW AND HOST WINDOW STUFF...
     ImGuiConfigFlags                    m_io_flags                  = ImGuiConfigFlags_None | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
-#ifdef CBAPP_ENABLE_MOVE_AND_RESIZE
-    ImGuiWindowFlags                    m_host_win_flags            = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
-# else
-    ImGuiWindowFlags                    m_host_win_flags            = ImGuiWindowFlags_None | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
-#endif  //  CBAPP_ENABLE_MOVE_AND_RE    SIZE  //
     ImGuiViewport *                     m_main_viewport             = nullptr;
     GLFWwindow *                        m_glfw_window               = nullptr;
     
     
     //  5.      COLORS...
-    ImVec4                              m_dock_bg                   = cb::app::DEF_INVISIBLE_COLOR;
     ImVec4                              m_glfw_bg                   = cb::app::DEF_ROOT_WIN_BG;
+    ImVec4                              m_dock_bg                   = cb::app::DEF_INVISIBLE_COLOR;
     ImVec4                              m_sidebar_bg                = cb::app::DEF_SIDEBAR_WIN_BG;
+    ImVec4                              m_titlebar_bg               = cb::app::DEF_TITLEBAR_WIN_BG;
     ImVec4                              m_main_bg                   = cb::app::DEF_MAIN_WIN_BG;
     
     
@@ -345,14 +352,22 @@ struct AppState
     int                                 m_system_w                  = -1;       //  Sys. Display Dims.
     int                                 m_system_h                  = -1;
     float                               m_dpi_scale                 = 1.0f;
+    //float                               m_font_dpi_scale            = 1.0f;
     //
     //              6.2     Main UI.
-    int                                 m_window_w                  = -1;       //  Main Window Dims.
-    int                                 m_window_h                  = -1;
+    //                              Main Window Dims.
+    int                                 m_window_w                  = 1280;
+    int                                 m_window_h                  = 720;
     //
     //              6.3     Sidebar.
     ImVec2                              m_sidebar_width             = ImVec2(40.0f, 400.0f);
     float                               m_sidebar_ratio             = app::DEF_SB_OPEN_WIDTH;
+    
+    
+    //  7.      BOOLEANS...
+    //
+    bool                                m_running                   = true;
+    bool                                m_show_sidebar_window       = true;
     
     
     
@@ -360,8 +375,10 @@ struct AppState
 
 
     //  99.     ADD MORE SHARED STATE DATA MEMBERS HERE...
-    bool                            m_enable_vsync              = true;
-    float                           m_ui_scale                  = 1.0f;
+    //
+    //              1.1     SubCategory.
+    //                          ...
+    //
 
 
 

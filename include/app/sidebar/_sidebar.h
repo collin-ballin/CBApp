@@ -74,34 +74,26 @@ namespace cb { // BEGINNING NAMESPACE "cb"...
 
 class SideBar
 {
+    CBAPP_APPSTATE_ALIAS_API                //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+    friend class                App;
 // *************************************************************************** //
 // *************************************************************************** //
 public:
-    using               AppState                        = app::AppState;
-    using               Window                          = AppState::Window;
-    using               ImWindows                       = AppState::ImWindows;
-    using               Font                            = AppState::Font;
-    using               ImFonts                         = AppState::ImFonts;
     
     //  1               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
-    //  1.1             Default Constructor, Destructor, etc.       [app/sidebar/sidebar.cpp]...
-    explicit            SideBar                         (app::AppState & );                             //  Def. Constructor.
-                        ~SideBar                        (void);                                         //  Def. Destructor.
+    //  1.1                     Default Constructor, Destructor, etc.       [app/sidebar/sidebar.cpp]...
+    explicit                    SideBar                             (app::AppState & );                             //  Def. Constructor.
+                                ~SideBar                            (void);                                         //  Def. Destructor.
     
-    //  1.2             Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
-    void                Begin                           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-                                                         
-    void                Display_Main_Menu_Bar           (void);
+    //  1.2                     Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
+    void                        Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 
-    //  1.3             Deleted Operators, Functions, etc.
-                        SideBar                         (const SideBar & src)               = delete;   //  Copy. Constructor.
-                        SideBar                         (SideBar && src)                    = delete;   //  Move Constructor.
-    SideBar &           operator =                      (const SideBar & src)               = delete;   //  Assgn. Operator.
-    SideBar &           operator =                      (SideBar && src)                    = delete;   //  Move-Assgn. Operator.
-    
-    
-    
+    //  1.3                     Deleted Operators, Functions, etc.
+                                SideBar                             (const SideBar &    src)            = delete;   //  Copy. Constructor.
+                                SideBar                             (SideBar &&         src)            = delete;   //  Move Constructor.
+    SideBar &                   operator =                          (const SideBar &    src)            = delete;   //  Assgn. Operator.
+    SideBar &                   operator =                          (SideBar &&         src)            = delete;   //  Move-Assgn. Operator.
 
     
     
@@ -111,43 +103,41 @@ protected:
     //  2.A             PROTECTED DATA-MEMBERS...
     // *************************************************************************** //
     
-    //                  1.  BOOLEANS...
-    bool                m_rebuild_dockspace             = true;
-    bool                m_show_sidebar_window           = true;
-    bool                m_show_perf_metrics             = app::DEF_PERF_METRICS_STATE;
-    bool                m_show_perf_plots               = app::DEF_PERF_PLOTS_STATE;
+    //                          1.  BOOLEANS...
+    bool                        m_show_perf_metrics                 = app::DEF_PERF_METRICS_STATE;
+    bool                        m_show_perf_plots                   = app::DEF_PERF_PLOTS_STATE;
     //
-    //                  2.  APPEARANCE...
-    ImVec4              m_sidebar_bg                    = cb::app::DEF_SIDEBAR_WIN_BG;
-    ImVec2              m_sidebar_width                 = ImVec2(40.0f, 400.0f);
-    float               m_sidebar_ratio                 = app::DEF_SB_OPEN_WIDTH;
+    //                          2.  APPEARANCE...
+    //                                      ...
     //
-    //                  3.  WINDOW / GUI ITEMS...           //  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
-    //                                  ...
+    //                          3.  WINDOW / GUI ITEMS...
+    ImGuiWindowClass            m_window_class;
     //
-    //                  4.  MISC INFORMATION...
-    //                                  ...
+    //                          4.  MISC INFORMATION...
+    //                                      ...
     //
-    //                  5.  IMPORTANT VARIABLES...
-    app::AppState &     m_state;
+    //                          5.  IMPORTANT VARIABLES...
+    AppState &                  CBAPP_STATE_NAME;
     
     
     //  2.B             PROTECTED MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //  2B.1            Class Initializations.          [app/sidebar/sidebar.cpp]...
-    void                init                            (void);
-    void                load                            (void);
-    void                destroy                         (void);
+    //  2B.1                    Class Initializations.              [app/sidebar/sidebar.cpp]...
+    void                        init                                (void);
+    void                        load                                (void);
+    void                        destroy                             (void);
     
     
-    //  2B.2            Secondary Class Methods.        [app/sidebar/sidebar.cpp]...
-    void                Display_Preferences_Menu        (void);
+    //  2B.2                    Secondary Class Methods.            [app/sidebar/sidebar.cpp]...
+    void                        Display_Preferences_Menu            (void);
     //
-    void                disp_appearance_mode            (void);     //  Other...
-    void                disp_font_selector              (void);
-    void                disp_color_palette              (void);
-    void                disp_performance_metrics        (void);
+    void                        draw_sidebar_button                 (void);
+    void                        disp_appearance_mode                (void);     //  Other...
+    void                        disp_font_selector                  (void);
+    void                        disp_color_palette                  (void);
+    void                        color_tool                          (void);
+    void                        disp_performance_metrics            (void);
     
     
     

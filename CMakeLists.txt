@@ -58,12 +58,12 @@ target_compile_definitions(cb_defines INTERFACE
 
 
     #   3.    MACROS FOR  "RelWithDebInfo"  BUILD TYPES...
-    $<$<CONFIG:RelWithDebInfo>:_CBLIB_RELWITHDEBINFO>
+    $<$<CONFIG:RelWithDebInfo>:__CBLIB_RELEASE_WITH_DEBUG_INFO__>
         #   ...Add additional RelWithDebInfo-only macros here...
 
 
     #   4.    MACROS FOR  "MinSizeRel"  BUILD TYPES...
-    $<$<CONFIG:MinSizeRel>:_CBLIB_MINSIZEREL>
+    $<$<CONFIG:MinSizeRel>:__CBLIB_MIN_SIZE_RELEASE__>
         #   ...Add additional MinSizeRel-only macros here...
 )
 

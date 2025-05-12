@@ -41,16 +41,6 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "WindowLocation"
-//
-enum class WindowLocation {
-    Center,             // default.
-    LeftHalf,           // left half of the monitor.
-    RightHalf,          // right half of the monitor.
-    Fill                // Expand window to fill the entire screen.
-};
-
-
 //  "EnumArray"
 //      Simple Struct/Class to use Indices based off Enum Class-Members Specifically.
 template<typename E, typename T, std::size_t N = static_cast<std::size_t>(E::Count)>

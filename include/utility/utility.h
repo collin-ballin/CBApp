@@ -1,11 +1,19 @@
-//
-//  utility.h
-//  CBApp
-//
-//  Created by Collin Bond on 4/16/25.
-//
-// *************************************************************************** //
-// *************************************************************************** //
+/***********************************************************************************
+*
+*       ********************************************************************
+*       ****           _ U T I L I T Y . C P P  ____  F I L E           ****
+*       ********************************************************************
+*
+*              AUTHOR:      Collin A. Bond
+*               DATED:      April 16, 2025.
+*
+*       ********************************************************************
+*                FILE:      [./PyStream.h]
+*
+*
+*
+**************************************************************************************
+**************************************************************************************/
 #ifndef _CBAPP_UTILITY_H
 #define _CBAPP_UTILITY_H  1
 
@@ -16,6 +24,8 @@
 #include "cblib.h"
 #include "utility/_constants.h"
 #include "utility/_templates.h"
+//#include "utility/pystream/pystream.h"
+#include "json.hpp"
 
 
 //  0.2     STANDARD LIBRARY HEADERS...
@@ -31,10 +41,10 @@
 
 //  0.3     "DEAR IMGUI" HEADERS...
 #include "imgui.h"                      //  0.3     "DEAR IMGUI" HEADERS...
-#include "implot.h"
+#include "imgui_internal.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include "json.hpp"
+#include "implot.h"
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 # include <GLES2/gl2.h>
 #endif      //  IMGUI_IMPL_OPENGL_ES2  //
@@ -49,23 +59,117 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 
 
 
-//  1.  DEFINED IN "utility.cpp"...
+//  0.1     INLINE DEFINITIONS (HEADER ONLY)        |   WIDGETS & WINDOWS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "WindowLocation"
+//
+enum class WindowLocation {
+    Center,             //  default.
+    LeftHalf,           //  left half of the monitor.
+    RightHalf,          //  right half of the monitor.
+    Fill,               //  Expand window to fill the entire screen.
+    COUNT
+};
+
+
+//  "Anchor"
+//
+enum class Anchor {
+    Center,             //  default.
+    East,
+    NorthEast,
+    North,
+    NorthWest,
+    West,
+    SouthWest,
+    South,
+    SouthEast,
+//
+    COUNT
+};
+
+
 
 // *************************************************************************** //
 //
 //
-//  0.  INLINE DEFINITIONS (HEADER ONLY)...
+//
+//  0.2     INLINE                                  | MISC. STRUCTS...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "WidgetRow"
+//      Declarative per-row widget logic
+struct WidgetRow {
+    const char *            label;
+    std::function<void()>   render;
+};
+
+
+//  "ChannelIdx"
 //
-//  ...
-//
+enum ChannelIdx : std::size_t {
+    UNUSED = 0,
+    D,  C,  CD,
+    B,  BD, BC, BCD,
+    A,  AD, AC, ACD,
+    AB, ABD, ABC, ABCD,
+    CHANNEL_COUNT   // = 16
+};
 
 
+//  "CoincidencePacket"
+//      Holds a single FPGA “packet”
+struct CoincidencePacket
+{
+    std::array<int, CHANNEL_COUNT> counts{};
+    int cycles{};
 
+    //  Convenience accessors
+    int d           (void) const    { return counts[D];  }
+    int c           (void) const    { return counts[C];  }
+    int cd          (void) const    { return counts[CD]; }
+    int b           (void) const    { return counts[B];  }
+    int bd          (void) const    { return counts[BD]; }
+    int bc          (void) const    { return counts[BC]; }
+    int bcd         (void) const    { return counts[BCD];}
+    int a           (void) const    { return counts[A];  }
+    int ad          (void) const    { return counts[AD]; }
+    int ac          (void) const    { return counts[AC]; }
+    int acd         (void) const    { return counts[ACD];}
+    int ab          (void) const    { return counts[AB]; }
+    int abd         (void) const    { return counts[ABD];}
+    int abc         (void) const    { return counts[ABC];}
+    int abcd        (void) const    { return counts[ABCD];}
+};
+
+
+//  "parse_packet"
+//      Parse one JSON‑line; returns nullopt on format errors
+inline std::optional<CoincidencePacket>
+parse_packet(std::string_view line)
+{
+    using json = nlohmann::json;
+    CoincidencePacket pkt;
+
+    try {
+        json j = json::parse(line);
+        const auto& arr = j.at("counts");
+        if (arr.size() != CHANNEL_COUNT)         // sanity check
+            return std::nullopt;
+
+        for (std::size_t i = 0; i < CHANNEL_COUNT; ++i)
+            pkt.counts[i] = arr[i].get<int>();
+
+        pkt.cycles = j.at("cycles").get<int>();
+        return pkt;
+
+    } catch (const json::exception&) {
+        return std::nullopt;                     // malformed JSON / keys
+    }
+}
 
 
 
@@ -78,11 +182,20 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 
 //      1.1     MISC / UTILITY FUNCTIONS...
 // *************************************************************************** //
+void                            HelpMarker                  (const char * desc);
+const char *                    get_opengl_version          (void);
+const char *                    get_glfw_version            (void);
+
+
+
+//      1.2     WINDOW / GLFW FUNCTIONS...
+// *************************************************************************** //
 void                            glfw_error_callback         (int error, const char * description);
-void                            HelpMarker                  (const char* desc);
+[[nodiscard]] GLFWwindow *      CreateGLFWWindow            (int width, int height, const char * title, GLFWmonitor * monitor, GLFWwindow * share);
 
 
-//      1.2     WINDOW SIZE / GEOMETRY FUNCTIONS...
+
+//      1.3     WINDOW SIZE / GEOMETRY FUNCTIONS...
 // *************************************************************************** //
 [[nodiscard]]
 std::pair<int, int>             GetMonitorDimensions        (GLFWwindow * window);
@@ -96,32 +209,43 @@ void                            set_next_window_geometry    (GLFWwindow * glfw_w
 
 void                            SetGLFWWindowLocation       (GLFWwindow *   win, const      WindowLocation          loc,
                                                             const float     scale=0.5f,     const GLFWmonitor *     monitor=nullptr);
+ImVec2                          GetImGuiWindowCoords        (const char * , const Anchor & );
 
 
-//      1.3     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
+//      1.4     WIDGET FUNCTIONS...
+// *************************************************************************** //
+void                            LeftLabel                   (const char * ,
+                                                             const float label_width = 150.0f,
+                                                             const float widget_width = 250.0f);
+void                            LeftLabel                   (const char * ,   const ImVec2 & ,  const float );
+void                            LeftLabel                   (const char * ,   const ImVec2 & ,  const ImVec2 & );
+
+
+
+//      1.5     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
 // *************************************************************************** //
 const char *                    get_glsl_version            (void);
 
 
 
-//      1.4     MISC I/O FUNCTIONS...
+//      1.6     MISC I/O FUNCTIONS...
 // *************************************************************************** //
-                                //  1.4A-1      SAVING/WRITING FUNCTIONS...
+                                //  1.6A-1      SAVING/WRITING FUNCTIONS...
 bool                            SaveStyleToDisk             (const ImGuiStyle &     style,  const std::string &         file_path);
 bool                            SaveStyleToDisk             (const ImGuiStyle &     style,  const char *                file_path);
 bool                            SaveStyleToDisk             (const ImGuiStyle &     style,  std::string_view            file_path);
 
-                                //  1.4A-2      ASYNCHRONUS SAVING/WRITING FUNCTIONS...
+                                //  1.6A-2      ASYNCHRONUS SAVING/WRITING FUNCTIONS...
 bool                            SaveStyleToDiskAsync        (const ImGuiStyle &     style,  const char *                file_path);
 bool                            SaveStyleToDiskAsync        (ImGuiStyle             style,  const char *                file_path);
 
 
-                                //  1.4B-1      LOADING FUNCTIONS...
+                                //  1.6B-1      LOADING FUNCTIONS...
 bool                            LoadStyleFromDisk           (ImGuiStyle &           style,  const char *                file_path);
 bool                            LoadStyleFromDisk           (ImGuiStyle &           style,  const std::string &         file_path);
 bool                            LoadStyleFromDisk           (ImGuiStyle &           style,  const std::string_view &    file_path);
 
-                                //  1.4B-2      ASYNCHRONUS LOADING FUNCTIONS...
+                                //  1.6B-2      ASYNCHRONUS LOADING FUNCTIONS...
 
 
 //
@@ -155,6 +279,109 @@ void                                ScrollingSparkline          (const float tim
 //      2.2     UTILITY FUNCTIONS FOR IMPLOT STUFF...
 // *************************************************************************** //
 [[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (int M, ImPlotColormap map);
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  3.  LOGGER CLASS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "LogLevel"
+enum class LogLevel : int {
+    None,
+    Debug           = 10,
+    Info            = 20,
+    Warning         = 30,
+    Exception       = 35,
+    Error           = 40,
+    Critical        = 50,
+    Count
+};
+
+
+//  "LogCounter"
+//      - Simple struct to maintain a count of each log invocation.
+struct LogCounter {
+    size_t      none            = 0ULL;
+    size_t      debug           = 0ULL;
+    size_t      info            = 0ULL;
+    size_t      warning         = 0ULL;
+    size_t      exception       = 0ULL;
+    size_t      error           = 0ULL;
+    size_t      critical        = 0ULL;
+    size_t      unknown         = 0ULL;
+};
+
+
+
+class Logger
+{
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+    //  0.               PUBLIC CLASS-NESTED ALIASES...
+    // *************************************************************************** //
+    using               Level                       = LogLevel;
+
+    
+    //  1.               PUBLIC MEMBER FUNCTIONS...
+    // *************************************************************************** //
+    //  1.1             Default Constructor, Destructor, etc...
+                        Logger                      (void)      = default;      //  Def. Constructor.
+                        ~Logger                     (void);                     //  Def. Destructor.
+                        
+    //  1.2             Public Member Functions...
+    void                log                         (const char *, const Level &);
+                        
+    //  1.3             Public Utility Functions...
+    void                set_level                   (const Level &);
+    Level               get_level                   (void)  const;
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+    //  2.A             PROTECTED DATA-MEMBERS...
+    // *************************************************************************** //
+    
+    //  CONSTANTS...
+    const char *                            m_header                    = "CBLOG";
+    
+    //  DATA...
+    Level                                   m_filter                    = Level::None;
+    LogCounter                              m_counter                   = LogCounter();
+    
+    
+    //  2.B             PROTECTED MEMBER FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  2B.1            Class Initializations.      [Logger.cpp]...
+    void                init                        (void);
+    void                destroy                     (void);
+    
+    void                log_IMPL                    (const char *, const Level &);
+    const char *        make_header                 (const Level &);
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "Logger" CLASS PROTOTYPE.
+
+
+
 
 
 

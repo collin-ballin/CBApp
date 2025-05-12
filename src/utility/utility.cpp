@@ -1,14 +1,17 @@
-//
-//  utility.cpp
-//  CBApp
-//
-//  Created by Collin Bond on 4/16/25.
-//
-// *************************************************************************** //
-// *************************************************************************** //
+/***********************************************************************************
+*
+*       ********************************************************************
+*       ****            U T I L I T Y . C P P  ____  F I L E            ****
+*       ********************************************************************
+*              AUTHOR:      Collin A. Bond
+*               DATED:      April 16, 2025.
+*
+**************************************************************************************
+**************************************************************************************/
 #include "utility/utility.h"
 #include "utility/_constants.h"
 #include "_config.h"
+#include "imgui.h"
 
 
 
@@ -22,10 +25,33 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "glfw_error_callback"
+//  "get_opengl_version"
 //
-void glfw_error_callback(int error, const char * description)
-{ fprintf(stderr, "GLFW Error %d: %s\n", error, description); }
+const char * get_opengl_version(void)
+{
+    const char *    glVersionStr    = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+    
+
+    std::cout << "OpenGL version string: " << glVersionStr << "\n";
+    
+    return glVersionStr;
+}
+
+
+
+//  "get_glfw_version"
+//
+const char * get_glfw_version(void)
+{
+    int gflwMaj=0, gflwMin=0, gflwRev=0;
+    
+    glfwGetVersion(&gflwMaj, &gflwMin, &gflwRev);
+    std::cout << "GLFW version: "
+              << gflwMaj << "." << gflwMin << "." << gflwRev << "\n";
+              
+    return nullptr;
+}
+
 
 
 //  "HelpMarker"
@@ -50,7 +76,29 @@ void HelpMarker(const char* desc)    //  Helper to display a little (?) mark whi
 // *************************************************************************** //
 //
 //
-//  1.2     WINDOW SIZE / GEOMETRY FUNCTIONS...
+//  1.2     WINDOW / GLFW FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "glfw_error_callback"
+//
+void glfw_error_callback(int error, const char * description)
+{ fprintf(stderr, "GLFW Error %d: %s\n", error, description); }
+
+
+//  "CreateGLFWWindow"
+//
+[[nodiscard]] GLFWwindow * CreateGLFWWindow(int width, int height, const char * title, GLFWmonitor * monitor, GLFWwindow * share)
+{
+    return glfwCreateWindow(width, height, title, monitor, share);
+}
+
+
+
+// *************************************************************************** //
+//
+//
+//  1.3     WINDOW SIZE / GEOMETRY FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -66,9 +114,10 @@ void HelpMarker(const char* desc)    //  Helper to display a little (?) mark whi
 //  "GetDPIScaling"
 //
 [[nodiscard]] float GetDPIScaling(GLFWwindow * window) {
-    float   xscale  = 0.0f,     yscale  = 0.0f;
+    auto    ease    = [](float x) -> float { return 2.0f / (1.0f + std::exp(-1.0f * (x - 1.0f))); };
+    float   xscale  = 1.0f,     yscale  = 1.0f;
     glfwGetWindowContentScale(window, &xscale, &yscale);
-    return 0.5f * (xscale + yscale);
+    return ease( std::max(xscale, yscale) );
 }
 
 
@@ -200,12 +249,131 @@ void SetGLFWWindowLocation(GLFWwindow * win, const WindowLocation loc, const flo
             x = mx;
             y = my;
             break;
+        
+        //  DEFAULT...
+        default: {
+            return;
+        }
     }
 
     // 4) Apply it
     glfwSetWindowSize(win, w, h);
     glfwSetWindowPos (win, x, y);
+    return;
 }
+
+
+
+//  "GetImGuiWindowCoords"
+//
+ImVec2 GetImGuiWindowCoords(const char * uuid, const Anchor & anchor)
+{
+    auto *       window      = ImGui::FindWindowByName(uuid);
+    if (!window)    return ImVec2(0, 0);
+
+    const ImVec2        pos         = window->Pos;
+    const ImVec2        size        = window->Size;
+    ImVec2              coord       = ImVec2(0, 0);
+    switch (anchor)
+    {
+        case Anchor::Center:    {
+            coord = ImVec2(pos.x + size.x * 0.5f, pos.y + size.y * 0.5f);
+            break;
+        }
+        case Anchor::East: {
+            coord = ImVec2(pos.x + size.x, pos.y + size.y * 0.5f);
+            break;
+        }
+        case Anchor::NorthEast: {
+            coord = ImVec2(pos.x + size.x, pos.y);
+            break;
+        }
+        case Anchor::North: {
+            coord = ImVec2(pos.x + size.x * 0.5f, pos.y);
+            break;
+        }
+        case Anchor::NorthWest: {
+            coord = ImVec2(pos.x, pos.y);
+            break;
+        }
+        case Anchor::West: {
+            coord = ImVec2(pos.x, pos.y + size.y * 0.5f);
+            break;
+        }
+        case Anchor::SouthWest: {
+            coord = ImVec2(pos.x, pos.y + size.y);
+            break;
+        }
+        case Anchor::South: {
+            coord = ImVec2(pos.x + size.x * 0.5f, pos.y + size.y);
+            break;
+        }
+        case Anchor::SouthEast: {
+            coord = ImVec2(pos.x + size.x, pos.y + size.y);
+            break;
+        }
+        
+        //  DEFAULT...
+        default: {
+            coord = ImVec2(0, 0);
+            break;
+        }
+    }
+
+    return coord;
+}
+
+
+
+// *************************************************************************** //
+//
+//
+//  1.4     WIDGET FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "LeftLabel"
+//
+void LeftLabel(const char * text, const float l_width, const float w_width)
+{
+    const ImVec2        padding             = ImVec2( l_width - ImGui::CalcTextSize(text).x,  0.0f );
+    ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_width);
+    ImGui::TextUnformatted(text);           ImGui::SameLine();
+    ImGui::Dummy(padding);
+    ImGui::SetNextItemWidth(w_width);       ImGui::SameLine();
+    return;
+}
+
+
+//  Overload 1.
+//
+void LeftLabel(const char * text, const ImVec2 & l_dims, const float w_width)
+{
+    const ImVec2        dims                = ImGui::CalcTextSize(text);
+    const ImVec2        padding             = ImVec2( l_dims.x - dims.x, l_dims.y + dims.y );
+    
+    ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_dims.x);
+    ImGui::TextUnformatted(text);           ImGui::SameLine();
+    ImGui::Dummy(padding);
+    ImGui::SetNextItemWidth(w_width);       ImGui::SameLine();
+    return;
+}
+
+//  Overload 2.
+//
+void LeftLabel(const char * text, const ImVec2 & l_dims, const ImVec2 & w_dims)
+{
+    const ImVec2        dims                = ImGui::CalcTextSize(text);
+    const ImVec2        padding             = ImVec2( l_dims.x - dims.x, l_dims.y + dims.y );
+    
+    ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_dims.x);
+    ImGui::TextUnformatted(text);           ImGui::SameLine();
+    ImGui::Dummy(padding);
+    ImGui::SetNextItemWidth(w_dims.x);      ImGui::SameLine();
+    return;
+}
+
+
 
 
 
@@ -214,7 +382,7 @@ void SetGLFWWindowLocation(GLFWwindow * win, const WindowLocation loc, const flo
 // *************************************************************************** //
 //
 //
-//  1.3     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
+//  1.5     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -282,11 +450,11 @@ GLFWwindow * create_glfw_window(const float scale, const char * title) {
 // *************************************************************************** //
 //
 //
-//  1.4     MISC I/O FUNCTIONS...
+//  1.6     MISC I/O FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  1.4A-1      SAVING/WRITING FUNCTIONS...
+//  1.6A-1      SAVING/WRITING FUNCTIONS...
 // *************************************************************************** //
 
 //  "SaveStyleToDisk_IMPL"
@@ -373,7 +541,7 @@ bool SaveStyleToDisk(const ImGuiStyle & style, const std::string_view & file_pat
 
 
 
-//  1.4A-2      ASYNCHRONUC SAVING/WRITING FUNCTIONS...
+//  1.6A-2      ASYNCHRONUC SAVING/WRITING FUNCTIONS...
 // *************************************************************************** //
 
 //  "SaveStyleToDiskAsync"
@@ -397,7 +565,7 @@ bool SaveStyleToDiskAsync(ImGuiStyle style, const char * file_path) {
 
 
 
-//  1.4B-1      LOADING FUNCTIONS...
+//  1.6B-1      LOADING FUNCTIONS...
 // *************************************************************************** //
 
 //  "LoadStyleFromDisk_IMPL"
@@ -512,7 +680,7 @@ bool LoadStyleFromDisk(ImGuiStyle & style, const std::string_view & file_path)
 //
 // *************************************************************************** //
 // *************************************************************************** //
-} }//   END OF "cb" NAMESPACE.
+} }//   END OF "cb" :: "utl" NAMESPACE.
 
 
 

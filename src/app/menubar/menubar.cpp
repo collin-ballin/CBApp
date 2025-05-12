@@ -27,7 +27,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 MenuBar::MenuBar(app::AppState & src)
-    : m_state(src)                  { }
+    : S(src)                  { }
 
 
 //  "init"          | private
@@ -255,7 +255,17 @@ void MenuBar::disp_window_menubar(void)
         ImGui::Separator();
         if (ImGui::MenuItem("Return to Default Size",       nullptr))
             { utl::SetGLFWWindowLocation(main_window, WinLoc::Center, cb::app::DEF_ROOT_WINDOW_SCALE); }
-        
+    
+    
+        //  1.9     Rebuild Dockspace...
+        ImGui::Separator();
+        if (ImGui::MenuItem("Rebuild Dockspace", nullptr))    {
+            S.m_rebuild_dockspace           = true;
+            //this->S.m_sidebar_ratio         = app::DEF_SB_OPEN_WIDTH;
+            //if (!this->S.m_show_sidebar_window)
+            //    this->S.m_show_sidebar_window = false;
+        }
+    
     
         ImGui::EndMenu();
     }
@@ -279,73 +289,76 @@ void MenuBar::disp_window_menubar(void)
 void MenuBar::disp_show_windows_menubar(void)
 {
     static size_t                   idx                 = static_cast<size_t>(0);
-    static app::WinInfo &           winfo               = m_state.m_windows[static_cast<Window>(idx)];
+    static app::WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
+    
+    
+    //  1.  DRAW EACH VISIBILITY STATE IN "Core Windows" WINDOWS...                 | SUB-MENU.
+#ifdef __CBAPP_DEBUG__
+    if (ImGui::BeginMenu("Core Windows (Debug Only)"))
+    {
+        for (idx = S.ms_WINDOWS_BEGIN; idx < S.ms_APP_WINDOWS_BEGIN; ++idx) {
+            std::string       name          = this->S.m_windows[ static_cast<Window>(idx) ].uuid;
+            
+            
+            if (name[0] == '#' && name[1] == '#')           { name = name.erase(0, 2);       }
+            else if (name[0] == '#')                        { name = name.erase(0, 1);       }
+            if ( ImGui::MenuItem(name.c_str(), nullptr, &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+            {
+                //S.m_rebuild_dockspace = true;
+            }
+        }
+        
+        ImGui::EndMenu();
+    }//  END "Applications" SUB-MENU.
+#endif  //  __CBAPP_DEBUG__  //
     
     
     
-    //  1.  DRAW EACH VISIBILITY STATE IN "Core Windows" WINDOWS...         | SUB-MENU.
+    //  2.  DRAW EACH VISIBILITY STATE IN "Application Windows" WINDOWS...          | SUB-MENU.
     ImGui::Separator();
     ImGui::TextDisabled("Applications");
-        for (idx = m_state.ms_APP_WINDOWS_BEGIN; idx < m_state.ms_APP_WINDOWS_END; ++idx) {
-            ImGui::MenuItem(this->m_state.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
-                            nullptr,
-                            &this->m_state.m_windows[ static_cast<Window>(idx) ].open);
+        for (idx = S.ms_APP_WINDOWS_BEGIN; idx < S.ms_APP_WINDOWS_END; ++idx)
+        {
+            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                                 nullptr,
+                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+            {
+                S.m_rebuild_dockspace = true;
+            }
         }
     //  END "Applications" SUB-MENU.
     
     
     
-    //  2.  DRAW EACH VISIBILITY STATE IN "Tools" WINDOWS...                | SUB-MENU.
+    //  3.  DRAW EACH VISIBILITY STATE IN "Tools" WINDOWS...                | SUB-MENU.
     ImGui::Separator();
     ImGui::TextDisabled("Tools");
-        for (idx = m_state.ms_TOOL_WINDOWS_BEGIN; idx < m_state.ms_TOOL_WINDOWS_END; ++idx) {
-            ImGui::MenuItem(this->m_state.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
-                            nullptr,
-                            &this->m_state.m_windows[ static_cast<Window>(idx) ].open);
+        for (idx = S.ms_TOOL_WINDOWS_BEGIN; idx < S.ms_TOOL_WINDOWS_END; ++idx)
+        {
+            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                                 nullptr,
+                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+            {
+                S.m_rebuild_dockspace = true;
+            }
         }
     //  END "Tools" SUB-MENU.
     
     
     
-    //  3.  DRAW EACH VISIBILITY STATE IN "Demos" WINDOWS...                | SUB-MENU.
+    //  4.  DRAW EACH VISIBILITY STATE IN "Demos" WINDOWS...                | SUB-MENU.
     ImGui::Separator();
     ImGui::TextDisabled("Demos");
-        for (idx = m_state.ms_DEMO_WINDOWS_BEGIN; idx < m_state.ms_DEMO_WINDOWS_END; ++idx) {
-            ImGui::MenuItem(this->m_state.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
-                            nullptr,
-                            &this->m_state.m_windows[ static_cast<Window>(idx) ].open);
+        for (idx = S.ms_DEMO_WINDOWS_BEGIN; idx < S.ms_DEMO_WINDOWS_END; ++idx)
+        {
+            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                                 nullptr,
+                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+            {
+                S.m_rebuild_dockspace = true;
+            }
         }
     //  END "Demos" SUB-MENU.
-    
-
-/*
-    //  2.  DEBUG UTILITY MENU ITEMS...
-    ImGui::Separator();
-#ifndef __CBAPP_DEBUG__
-    if (ImGui::BeginMenu("Debug Utilities")) {
-# else
-    ImGui::TextDisabled("Debug Utilities");
-#endif  //  __CBAPP_DEBUG__  //
-
-        ImGui::MenuItem("Style Editor",     nullptr,    &this->m_state.m_windows[Window::StyleEditor].open);        //  SHOW "STYLE EDITOR" APP...
-        ImGui::MenuItem("Log",              nullptr,    &this->m_state.m_windows[Window::Logs].open);               //  SHOW "LOGGER" APP...
-        ImGui::MenuItem("Console",          nullptr,    &this->m_state.m_windows[Window::Console].open);            //  SHOW "CONSOLE" APP...
-        ImGui::MenuItem("Metrics",          nullptr,    &this->m_state.m_windows[Window::Metrics].open);            //  SHOW "METRICS" APP...
-    
-        ImGui::Separator();
-        ImGui::MenuItem("ImGui Demo",       nullptr,    &this->m_state.m_windows[Window::ImGuiDemo].open);          //  SHOW "DEAR IMGUI" DEMO APP...
-        ImGui::MenuItem("ImPlot Demo",      nullptr,    &this->m_state.m_windows[Window::ImPlotDemo].open);         //  SHOW "DEAR IMPLOT" DEMO APP...
-
-
-#ifdef CBAPP_ENABLE_CB_DEMO
-        ImGui::MenuItem("CB Demo",          nullptr,    &this->m_state.m_windows[Window::CBDemo].open);             //  SHOW "CB" DEMO APP...
-#endif  //  CBAPP_ENABLE_CB_DEMO  //
-    
-#ifndef __CBAPP_DEBUG__
-        ImGui::EndMenu();
-    }// END "Debug Utilities" GROUP...
-#endif  //  __CBAPP_DEBUG__  //
-*/
 
     return;
 }
@@ -356,6 +369,7 @@ void MenuBar::disp_show_windows_menubar(void)
 void MenuBar::disp_help_menubar(void)
 {
     if (ImGui::MenuItem("User Guide"))      { }
+    
     ImGui::Separator();
     if (ImGui::MenuItem("About"))           { }
     //  ImGui::Checkbox("\"Dear ImGui\" Demo", &this->m_show_imgui_demo);   //  <--- Using a check-button

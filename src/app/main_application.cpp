@@ -21,244 +21,213 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-//  3.2     MAIN APPLICATION GUI FUNCTIONS...    | PRIVATE.
+// *************************************************************************** //
+//
+//
+//  3.3     HELPER FUNCTIONS...     | PRIVATE.
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "Display_Main_Window"
+//  "ShowAboutWindow"
 //
-void App::Display_Main_Window(const char * uuid, bool * p_open, ImGuiWindowFlags flags)
+void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
+                          [[maybe_unused]]   bool *              p_open,
+                          [[maybe_unused]]   ImGuiWindowFlags    flags)
 {
-    // ImVec2                       win_pos(this->m_main_viewport->WorkPos.x + 750,   this->m_main_viewport->WorkPos.x + 20);
-    ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
-    
-    //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_main_bg);
-    ImGui::Begin(uuid, p_open, flags);
+
+    if (!ImGui::Begin(uuid, p_open, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        ImGui::PopStyleColor();
-        
-        
-        //  3.  TESTING PLOTTING / GRAPHING 1...
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if( ImGui::CollapsingHeader("Coincidence Counter") )
-        {
-            this->CoincidenceCounter();
-            //ImGui::TreePop();
-        }
+        ImGui::End();
+        return;ImGuiWindowFlags_AlwaysAutoResize;
     }
-    
-    KeepProgramAwake( this->m_glfw_window );
-    
-//      DO NOT INCLUDE THESE EXAMPLES IF
-//      BUILDING FOR:    __CBAPP_COINCIDENCE_COUNTER_BUILD__
-#ifndef __CBAPP_COINCIDENCE_COUNTER_BUILD__
-    
-    //  4.  TESTING PLOTTING / GRAPHING 2...
-    {
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("Graphing 2"))
-        {
-            this->ImPlot_Testing2();
-            ImGui::TreePop();
-        }
-    }
-    
-    
-    
-    //  5.  TESTING PLOTTING / GRAPHING 2...
-    {
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNode("Graphing 3"))
-        {
-            this->ImPlot_Testing3();
-            ImGui::TreePop();
-        }
-    }
-    
-    
-    
-    
-    
-    
-    //  10. TESTING RADIOBUTTONS...
-    {
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("Basic Widgets"))
-        {
-            this->Test_Basic_Widgets();
-            ImGui::TreePop();
-        }
-    }
-    
-    
-    
-    //  11. TESTING RADIOBUTTONS...
-    {
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("ImGui Demo Code"))
-        {
-            this->ImGui_Demo_Code();
-            ImGui::TreePop();
-        }
-    }
-    
-//
-#endif  //  __CBAPP_COINCIDENCE_COUNTER_BUILD__  //
-    
-    ImGui::End();
-    return;
-}
+    ImGui::Text("Dear ImGui %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
 
-
-
-// *************************************************************************** //
-//
-//
-//  3.3     OTHER FUNCTIONS...   | PRIVATE.
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "CoincidenceCounter"
-//
-void App::CoincidenceCounter(void)
-{
-    constexpr int NUM_CHANNELS              = 15;
-    static std::array<utl::ScrollingBuffer, NUM_CHANNELS> buffers;
-    static float max_counts[NUM_CHANNELS]   = {};
-    static float t                          = 0.0f;
-    struct ChannelSpec { int mask; const char* name; int min; int max; };
-    static constexpr ChannelSpec channels[NUM_CHANNELS] = {
-        {8,  "A",    76220, 82824}, {4,  "B",    45668, 52491}, {2,  "C",      535,   641},
-        {1,  "D",      365,   441}, {12, "AB",     205,   295}, {10, "AC",       0,     5},
-        {9,  "AD",       0,     5}, {6,  "BC",       0,     4}, {5,  "BD",       0,     3},
-        {3,  "CD",       0,     0}, {14, "ABC",      0,    11}, {13, "ABD",      0,     4},
-        {11, "ACD",      0,     4}, {7,  "BCD",      0,     4}, {15, "ABCD",    60,    99}
-    };
-
-    // Control widgets
-    static float    history             = 30.0f;
-    static float    clock_interval      = 0.1f;
-    static float    clock_accumulator   = 0.0f;
-    static float    row_height          = 60.0f;
-    static float    uncertainty_pct     = 5.0f;
-    static bool     animate             = false;
-    static ImPlotAxisFlags plot_flags   = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
-
-    ImGui::SliderFloat("Row Height (px)",           &row_height,        30.0f,      120.0f,     "%.0f px");
-    ImGui::SliderFloat("History (s)",               &history,           5.0f,       60.0f,      "%.1f sec");
-    ImGui::SliderFloat("Integration Window (s)",    &clock_interval,    0.001f,     3.0f,       "%.3e sec");
-    ImGui::SliderFloat("Uncertainty (%)",           &uncertainty_pct,   1.0f,       15.0f,      "%.1f%%");
-
-    if (animate) {
-        if (ImGui::Button("Pause")) animate = false;
-    } else {
-        if (ImGui::Button("Record")) animate = true;
-    }
+    ImGui::TextLinkOpenURL("Homepage", "https://github.com/ocornut/imgui");
     ImGui::SameLine();
-    if (ImGui::Button("Clear Data")) {
-        t = 0.0f;
-        clock_accumulator = 0.0f;
-        for (auto &buf : buffers) buf.Data.clear();
-        for (int i = 0; i < NUM_CHANNELS; ++i) max_counts[i] = 0.0f;
-    }
+    ImGui::TextLinkOpenURL("FAQ", "https://github.com/ocornut/imgui/blob/master/docs/FAQ.md");
+    ImGui::SameLine();
+    ImGui::TextLinkOpenURL("Wiki", "https://github.com/ocornut/imgui/wiki");
+    ImGui::SameLine();
+    ImGui::TextLinkOpenURL("Releases", "https://github.com/ocornut/imgui/releases");
+    ImGui::SameLine();
+    ImGui::TextLinkOpenURL("Funding", "https://github.com/ocornut/imgui/wiki/Funding");
 
-    if (animate) {
-        clock_accumulator += ImGui::GetIO().DeltaTime;
-        if (clock_accumulator >= clock_interval) {
-            clock_accumulator -= clock_interval;
-            t += clock_interval;
-            static bool init = false;
-            static float last_counts[NUM_CHANNELS];
-            if (!init) {
-                for (int i = 0; i < NUM_CHANNELS; ++i) {
-                    auto [minv, maxv] = std::pair<int,int>{channels[i].min, channels[i].max};
-                    last_counts[i] = 0.5f * (minv + maxv);
-                }
-                init = true;
-            }
-            static std::mt19937_64 rng{std::random_device{}()};
-            for (int i = 0; i < NUM_CHANNELS; ++i) {
-                auto [minv, maxv] = std::pair<int,int>{channels[i].min, channels[i].max};
-                std::poisson_distribution<int> pd(static_cast<int>(last_counts[i]));
-                float count = std::clamp(float(pd(rng)), float(minv), float(maxv));
-                float noise_range = float(maxv) * (uncertainty_pct * 0.01f);
-                std::uniform_real_distribution<float> ud(-noise_range, noise_range);
-                count = std::clamp(count + ud(rng), 0.0f, float(maxv));
-                last_counts[i] = count;
-                max_counts[i] = std::max(max_counts[i], count);
-                buffers[i].AddPoint(t, count);
-            }
+    ImGui::Separator();
+    ImGui::Text("(c) 2014-2025 Omar Cornut");
+    ImGui::Text("Developed by Omar Cornut and all Dear ImGui contributors.");
+    ImGui::Text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.");
+    ImGui::Text("If your company uses this, please consider funding the project.");
+
+
+
+
+
+
+
+    static bool show_config_info = false;
+    ImGui::Checkbox("Config/Build Information", &show_config_info);
+    if (show_config_info)
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        ImGuiStyle& style = ImGui::GetStyle();
+
+        bool copy_to_clipboard = ImGui::Button("Copy to clipboard");
+        ImVec2 child_size = ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * 18);
+        ImGui::BeginChild(ImGui::GetID("cfg_infos"), child_size, ImGuiChildFlags_FrameStyle);
+        if (copy_to_clipboard)
+        {
+            ImGui::LogToClipboard();
+            ImGui::LogText("```\n"); // Back quotes will make text appears without formatting when pasting on GitHub
         }
-    }
 
-    ImPlot::PushColormap(ImPlotColormap_Deep);
-    if (ImGui::BeginTable("##CoincTable", 5, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg)) {
-        ImGui::TableSetupColumn("Counter(s)", ImGuiTableColumnFlags_WidthFixed, 80.0f);
-        ImGui::TableSetupColumn("Max", ImGuiTableColumnFlags_WidthFixed, 80.0f);
-        ImGui::TableSetupColumn("Avg.", ImGuiTableColumnFlags_WidthFixed, 80.0f);
-        ImGui::TableSetupColumn("Count", ImGuiTableColumnFlags_WidthFixed, 80.0f);
-        ImGui::TableSetupColumn("Plot");
-        ImGui::TableHeadersRow();
+        ImGui::Text("Dear ImGui %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
+        ImGui::Separator();
+        ImGui::Text("sizeof(size_t): %d, sizeof(ImDrawIdx): %d, sizeof(ImDrawVert): %d", (int)sizeof(size_t), (int)sizeof(ImDrawIdx), (int)sizeof(ImDrawVert));
+        ImGui::Text("define: __cplusplus=%d", (int)__cplusplus);
+#ifdef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_OBSOLETE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_WIN32_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_FILE_FUNCTIONS
+        ImGui::Text("define: IMGUI_DISABLE_FILE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_ALLOCATORS
+        ImGui::Text("define: IMGUI_DISABLE_DEFAULT_ALLOCATORS");
+#endif
+#ifdef IMGUI_USE_BGRA_PACKED_COLOR
+        ImGui::Text("define: IMGUI_USE_BGRA_PACKED_COLOR");
+#endif
+#ifdef _WIN32
+        ImGui::Text("define: _WIN32");
+#endif
+#ifdef _WIN64
+        ImGui::Text("define: _WIN64");
+#endif
+#ifdef __linux__
+        ImGui::Text("define: __linux__");
+#endif
+#ifdef __APPLE__
+        ImGui::Text("define: __APPLE__");
+#endif
+#ifdef _MSC_VER
+        ImGui::Text("define: _MSC_VER=%d", _MSC_VER);
+#endif
+#ifdef _MSVC_LANG
+        ImGui::Text("define: _MSVC_LANG=%d", (int)_MSVC_LANG);
+#endif
+#ifdef __MINGW32__
+        ImGui::Text("define: __MINGW32__");
+#endif
+#ifdef __MINGW64__
+        ImGui::Text("define: __MINGW64__");
+#endif
+#ifdef __GNUC__
+        ImGui::Text("define: __GNUC__=%d", (int)__GNUC__);
+#endif
+#ifdef __clang_version__
+        ImGui::Text("define: __clang_version__=%s", __clang_version__);
+#endif
+#ifdef __EMSCRIPTEN__
+        ImGui::Text("define: __EMSCRIPTEN__");
+        ImGui::Text("Emscripten: %d.%d.%d", __EMSCRIPTEN_major__, __EMSCRIPTEN_minor__, __EMSCRIPTEN_tiny__);
+#endif
+#ifdef IMGUI_HAS_VIEWPORT
+        ImGui::Text("define: IMGUI_HAS_VIEWPORT");
+#endif
+#ifdef IMGUI_HAS_DOCK
+        ImGui::Text("define: IMGUI_HAS_DOCK");
+#endif
+        ImGui::Separator();
+        ImGui::Text("io.BackendPlatformName: %s", io.BackendPlatformName ? io.BackendPlatformName : "NULL");
+        ImGui::Text("io.BackendRendererName: %s", io.BackendRendererName ? io.BackendRendererName : "NULL");
+        ImGui::Text("io.ConfigFlags: 0x%08X", io.ConfigFlags);
+        if (io.ConfigFlags & ImGuiConfigFlags_NavEnableKeyboard)        ImGui::Text(" NavEnableKeyboard");
+        if (io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad)         ImGui::Text(" NavEnableGamepad");
+        if (io.ConfigFlags & ImGuiConfigFlags_NoMouse)                  ImGui::Text(" NoMouse");
+        if (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)      ImGui::Text(" NoMouseCursorChange");
+        if (io.ConfigFlags & ImGuiConfigFlags_NoKeyboard)               ImGui::Text(" NoKeyboard");
+        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)            ImGui::Text(" DockingEnable");
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)          ImGui::Text(" ViewportsEnable");
+        if (io.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)  ImGui::Text(" DpiEnableScaleViewports");
+        if (io.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleFonts)      ImGui::Text(" DpiEnableScaleFonts");
+        if (io.MouseDrawCursor)                                         ImGui::Text("io.MouseDrawCursor");
+        if (io.ConfigViewportsNoAutoMerge)                              ImGui::Text("io.ConfigViewportsNoAutoMerge");
+        if (io.ConfigViewportsNoTaskBarIcon)                            ImGui::Text("io.ConfigViewportsNoTaskBarIcon");
+        if (io.ConfigViewportsNoDecoration)                             ImGui::Text("io.ConfigViewportsNoDecoration");
+        if (io.ConfigViewportsNoDefaultParent)                          ImGui::Text("io.ConfigViewportsNoDefaultParent");
+        if (io.ConfigDockingNoSplit)                                    ImGui::Text("io.ConfigDockingNoSplit");
+        if (io.ConfigDockingWithShift)                                  ImGui::Text("io.ConfigDockingWithShift");
+        if (io.ConfigDockingAlwaysTabBar)                               ImGui::Text("io.ConfigDockingAlwaysTabBar");
+        if (io.ConfigDockingTransparentPayload)                         ImGui::Text("io.ConfigDockingTransparentPayload");
+        if (io.ConfigMacOSXBehaviors)                                   ImGui::Text("io.ConfigMacOSXBehaviors");
+        if (io.ConfigNavMoveSetMousePos)                                ImGui::Text("io.ConfigNavMoveSetMousePos");
+        if (io.ConfigNavCaptureKeyboard)                                ImGui::Text("io.ConfigNavCaptureKeyboard");
+        if (io.ConfigInputTextCursorBlink)                              ImGui::Text("io.ConfigInputTextCursorBlink");
+        if (io.ConfigWindowsResizeFromEdges)                            ImGui::Text("io.ConfigWindowsResizeFromEdges");
+        if (io.ConfigWindowsMoveFromTitleBarOnly)                       ImGui::Text("io.ConfigWindowsMoveFromTitleBarOnly");
+        if (io.ConfigMemoryCompactTimer >= 0.0f)                        ImGui::Text("io.ConfigMemoryCompactTimer = %.1f", io.ConfigMemoryCompactTimer);
+        ImGui::Text("io.BackendFlags: 0x%08X", io.BackendFlags);
+        if (io.BackendFlags & ImGuiBackendFlags_HasGamepad)             ImGui::Text(" HasGamepad");
+        if (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors)        ImGui::Text(" HasMouseCursors");
+        if (io.BackendFlags & ImGuiBackendFlags_HasSetMousePos)         ImGui::Text(" HasSetMousePos");
+        if (io.BackendFlags & ImGuiBackendFlags_PlatformHasViewports)   ImGui::Text(" PlatformHasViewports");
+        if (io.BackendFlags & ImGuiBackendFlags_HasMouseHoveredViewport)ImGui::Text(" HasMouseHoveredViewport");
+        if (io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset)   ImGui::Text(" RendererHasVtxOffset");
+        if (io.BackendFlags & ImGuiBackendFlags_RendererHasViewports)   ImGui::Text(" RendererHasViewports");
+        ImGui::Separator();
+        ImGui::Text("io.Fonts: %d fonts, Flags: 0x%08X, TexSize: %d,%d", io.Fonts->Fonts.Size, io.Fonts->Flags, io.Fonts->TexWidth, io.Fonts->TexHeight);
+        ImGui::Text("io.DisplaySize: %.2f,%.2f", io.DisplaySize.x, io.DisplaySize.y);
+        ImGui::Text("io.DisplayFramebufferScale: %.2f,%.2f", io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+        ImGui::Separator();
+        ImGui::Text("style.WindowPadding: %.2f,%.2f", style.WindowPadding.x, style.WindowPadding.y);
+        ImGui::Text("style.WindowBorderSize: %.2f", style.WindowBorderSize);
+        ImGui::Text("style.FramePadding: %.2f,%.2f", style.FramePadding.x, style.FramePadding.y);
+        ImGui::Text("style.FrameRounding: %.2f", style.FrameRounding);
+        ImGui::Text("style.FrameBorderSize: %.2f", style.FrameBorderSize);
+        ImGui::Text("style.ItemSpacing: %.2f,%.2f", style.ItemSpacing.x, style.ItemSpacing.y);
+        ImGui::Text("style.ItemInnerSpacing: %.2f,%.2f", style.ItemInnerSpacing.x, style.ItemInnerSpacing.y);
 
-        for (int display_row = 0; display_row < NUM_CHANNELS; ++display_row) {
-            int buffer_idx = channels[display_row].mask - 1;
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0); ImGui::Text("%s", channels[display_row].name);
-            ImGui::TableSetColumnIndex(1); ImGui::Text("%.0f", max_counts[display_row]);
-            ImGui::TableSetColumnIndex(2);
-            float avg = 0.0f;
-            auto &data = buffers[buffer_idx].Data;
-            if (!data.empty()) {
-                float sum = 0.0f;
-                for (auto &pt : data) sum += pt.y;
-                avg = sum / data.size();
-            }
-            ImGui::Text("%.1f", avg);
-            ImGui::TableSetColumnIndex(3);
-            float curr = data.empty() ? 0.0f : data.back().y;
-            ImGui::Text("%.0f", curr);
-            ImGui::TableSetColumnIndex(4);
-            ImGui::PushID(display_row);
-            if (!buffers[buffer_idx].Data.empty()) {
-                ScrollingSparkline(
-                    t,
-                    history,
-                    buffers[buffer_idx],
-                    plot_flags,
-                    ImPlot::GetColormapColor(display_row),
-                    ImVec2(-1, row_height),
-                    0.5f
-                );
-            }
-            ImGui::PopID();
+        if (copy_to_clipboard)
+        {
+            ImGui::LogText("\n```\n");
+            ImGui::LogFinish();
         }
-        ImGui::EndTable();
+        ImGui::EndChild();
     }
-    ImPlot::PopColormap();
-    
-    
-    
-    
-    
+    ImGui::End();
 }
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
-//  1.      INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
+//  3.4     OTHER FUNCTIONS...      | PRIVATE.
 // *************************************************************************** //
 // *************************************************************************** //
 

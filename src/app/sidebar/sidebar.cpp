@@ -10,8 +10,6 @@
 **************************************************************************************/
 #include "app/app.h"
 #include "app/sidebar/_sidebar.h"
-//# include "imgui_internal.h"
-//#include "utility/utility.h"
 #include <random>
 #include <algorithm>
 
@@ -23,22 +21,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
 //  1.      INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -46,17 +28,16 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 SideBar::SideBar(app::AppState & src)
-    : m_state(src)                  { }
+    : S(src)
+{
+    this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_NoTabBar;
+    this->init();
+}
 
 
-//  "init"          | private
+//  "init"          | protected
 //
 void SideBar::init(void)            { }
-
-
-//  "load"
-//
-void SideBar::load(void)            { }
 
 
 //  Destructor.
@@ -84,47 +65,27 @@ void SideBar::Begin([[maybe_unused]] const char *       uuid,
                     [[maybe_unused]] bool *             p_open,
                     [[maybe_unused]] ImGuiWindowFlags   flags)
 {
-    //static bool             m_sidebar_collapsed     = false;
     ImGuiIO &               io                      = ImGui::GetIO(); (void)io;
     ImGuiStyle &            style                   = ImGui::GetStyle();
     
     
-    
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_state.m_sidebar_bg);   // Push before ImGui::Begin()
-    
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, S.m_sidebar_bg);   // Push before ImGui::Begin()
+    ImGui::SetNextWindowClass(&this->m_window_class);
     
     ImGui::Begin(uuid, p_open, flags);
-    ImGui::PopStyleColor();
-    
-    //if (ImGui::IsItemActive() || ImGui::SliderFloat("Sidebar Width", &this->m_state.m_sidebar_ratio, 0.1f, 0.5f, "%.2f")) {
-    //    this->m_state.m_rebuild_dockspace = true;
-    //}
+        ImGui::PopStyleColor();
+        
 
-    //  2.  SIDE-BAR COLLAPSE BUTTON...
-    if (ImGui::Button(m_show_sidebar_window ? "<==|" : "|==>"))
-    {
-        //this->m_show_sidebar_window = !this->m_show_sidebar_window;
-
-        if ( (this->m_show_sidebar_window = !this->m_show_sidebar_window) )
-            this->m_sidebar_ratio = app::DEF_SB_OPEN_WIDTH;
+        //  3.  DETERMINE WINDOW COLLAPSE...
+        if (this->S.m_show_sidebar_window)
+        {
+            this->Display_Preferences_Menu();
+        }
         else
-            this->m_sidebar_ratio = app::DEF_SB_CLOSED_WIDTH;
-
-        this->m_rebuild_dockspace = true;
-    }
-
-
-
-    //  3.  DETERMINE WINDOW COLLAPSE...
-    if (this->m_show_sidebar_window)
-    {
-        this->Display_Preferences_Menu();
-    }
-    else
-    {
-        //  ...
-    }
+        {
+            //  ...
+        }
         
         
     
@@ -141,9 +102,10 @@ void SideBar::Display_Preferences_Menu(void)
 {
     ImGuiIO &                   io              = ImGui::GetIO(); (void)io;
     ImGuiStyle &                style           = ImGui::GetStyle();
-    static bool                 show_perf       = false;
+    static const ImVec2         TABBAR_SPACE    = ImVec2(0, 2 * style.WindowPadding.y);
     
-
+    
+    ImGui::Dummy( TABBAR_SPACE );  //  Make space for the CLOSE-SIDEBAR button...
     ImGui::SeparatorText("System Preferences");
 
     //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
@@ -235,11 +197,11 @@ void SideBar::disp_color_palette(void)
     {
         static ImVec4 &     def_win_bg            = style.Colors[ImGuiCol_WindowBg];
         
-        ImGui::ColorEdit4("GLFW Window Bg##2f",         (float*)&this->m_state.m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Dockspace Bg##2f",           (float*)&this->m_state.m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Sidebar Menu Bg##2f",        (float*)&this->m_state.m_sidebar_bg,    ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Main Window Bg##2f",         (float*)&this->m_state.m_main_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Default Window Bg##2f",      (float*)&def_win_bg,                    ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("GLFW Window Bg##2f",         (float*)&S.m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Dockspace Bg##2f",           (float*)&S.m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Sidebar Menu Bg##2f",        (float*)&S.m_sidebar_bg,    ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Main Window Bg##2f",         (float*)&S.m_main_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Default Window Bg##2f",      (float*)&def_win_bg,        ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
         
         ImGui::TreePop();
     }
@@ -271,14 +233,12 @@ void SideBar::disp_color_palette(void)
             saved_palette_init = false;
         }
         
-    
         ImGui::TreePop();
     }
 
 
     return;
 }
-
 
 
 //  "disp_performance_metrics"
@@ -352,7 +312,7 @@ void SideBar::disp_performance_metrics(void) {
 
     //  1.  GET PERFORMANCE DATA...
     float_t     MAX_FPS         = 0.0f;
-    float_t     MAX_GPU      = 0.0f;
+    float_t     MAX_GPU         = 0.0f;
     spf_ct                      = static_cast<float_t>(1000.0f / io.Framerate);
     fps_ct                      = static_cast<int_t>(io.Framerate);
     vertex_ct                   = static_cast<int_t>(io.MetricsRenderVertices);
@@ -406,7 +366,7 @@ void SideBar::disp_performance_metrics(void) {
             ImGui::SeparatorText("Framerate");
             
             //      1.2     FPS PLOTTING...
-            m_state.PushFont( Font::Small );
+            S.PushFont( Font::Small );
             ImGui::PushID("##Scrolling");
             if (ImPlot::BeginPlot("##Scrolling", PLOT_SIZE))
             {
@@ -421,14 +381,14 @@ void SideBar::disp_performance_metrics(void) {
                 ImPlot::EndPlot();
             }
             ImGui::PopID();
-            m_state.PopFont();
+            S.PopFont();
             
 
 
             //      2B.     MEMORY ALLOCATIONS PLOTTING...
             ImGui::SeparatorText("GPU");
             
-            m_state.PushFont( Font::Small );
+            S.PushFont( Font::Small );
             if (ImPlot::BeginPlot("##Scrolling", PLOT_SIZE))
             {
                 ImPlot::SetupLegend(ImPlotLocation_SouthWest, ImPlotLegendFlags_None);            //    Legend Position.
@@ -450,7 +410,7 @@ void SideBar::disp_performance_metrics(void) {
                                  
                 ImPlot::EndPlot();
             }
-            m_state.PopFont();
+            S.PopFont();
             ImGui::TreePop();   //     END OF "PLOTS"...
         }
             

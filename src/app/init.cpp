@@ -19,8 +19,8 @@
 # include "imgui_internal.h"
 // #endif  //  CBAPP_USE_VIEWPORT  //
 
-#ifdef __CBAPP_DEBUG__                //  <======| Fix for issue wherein multiple instances of application
-# include <thread>                //           are launched when DEBUG build is run inside Xcode IDE...
+#ifdef __CBAPP_DEBUG__              //  <======|  Fix for issue wherein multiple instances of application
+# include <thread>                  //            are launched when DEBUG build is run inside Xcode IDE...
 # include <chrono>
 #endif     //  __CBAPP_DEBUG__  //
 
@@ -92,15 +92,16 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 App::App(void)
-    : m_menubar(m_state), m_graphing_app(10, 10)
+    : m_sidebar(S),  m_titlebar(S),  m_menubar(S),
+      m_graphing_app(100, 200)
 {
-    glfwSetErrorCallback(utl::glfw_error_callback);     //  1.  SET GLFW CALLBACK & CHECK IF PROPERLY INITIALIZED...
+    glfwSetErrorCallback(utl::glfw_error_callback);         //  1.  SET GLFW CALLBACK & CHECK IF PROPERLY INITIALIZED...
     if (!glfwInit())
         throw std::runtime_error(cb::error::GLFW_INIT_ERROR);
     
     
-    this->m_glsl_version = utl::get_glsl_version();     //  2.  DECIDE WHICH GL + GLSL VERSION...
-    this->init();                                       //  3.  INVOKE "HELPER" FUNCTION TO COMPLETE INITIALIZATION...
+    this->S.m_glsl_version = utl::get_glsl_version();       //  2.  DECIDE WHICH GL + GLSL VERSION...
+    this->init();                                           //  3.  INVOKE "HELPER" FUNCTION TO COMPLETE INITIALIZATION...
 }
 
 
@@ -113,7 +114,7 @@ void App::init(void)
 
 
     //  2.      SECOND PART OF INITIALIZATION...            | INTERNAL STUFF...
-    this->m_main_viewport   = ImGui::GetMainViewport();
+    this->S.m_main_viewport   = ImGui::GetMainViewport();
     this->init_appstate();
     this->load();
     
@@ -121,6 +122,7 @@ void App::init(void)
     //  3.      THIRD PART OF INITIALIZATION...             | INITIALIZE DELEGATOR CLASSES
     //          (SOME OF THESE HAVE TO BE DONE **AFTER** WE CREATE IMGUI CONTEXT)...
     this->m_graphing_app.initialize();
+    this->m_counter_app.initialize();
        
        
     //  4.      PERFORM ALL RUNTIME ASSERTION STATEMENTS AND
@@ -146,15 +148,24 @@ void App::CreateContext(void)
     //  1.  CREATE A WINDOW WITH GRAPHICS CONTEXT...
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER,    GLFW_TRUE);
     //glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER,   GLFW_TRUE);
-    this->m_glfw_window = glfwCreateWindow(cb::app::DEF_ROOT_WIN_WIDTH, cb::app::DEF_ROOT_WIN_HEIGHT, cb::app::DEF_ROOT_WIN_TITLE, nullptr, nullptr);
-    if (!this->m_glfw_window) {
+    
+    //  this->S.m_glfw_window = glfwCreateWindow(cb::app::DEF_ROOT_WIN_WIDTH, cb::app::DEF_ROOT_WIN_HEIGHT, cb::app::DEF_ROOT_WIN_TITLE, nullptr, nullptr);
+    this->S.m_glfw_window = utl::CreateGLFWWindow(this->S.m_window_w, this->S.m_window_h, this->S.m_windows[Window::Host].uuid.c_str(), nullptr, nullptr);
+    
+    
+    
+    
+    
+    
+    
+    if (!this->S.m_glfw_window) {
         throw std::runtime_error(cb::error::GLFW_WINDOW_INIT_ERROR);
     }
         
-    //utl::SetGLFWWindowLocation(this->m_glfw_window, utl::WindowLocation::Center, cb::app::DEF_ROOT_WINDOW_SCALE);
-    utl::set_window_scale(this->m_glfw_window, cb::app::DEF_ROOT_WINDOW_SCALE);
+    //utl::SetGLFWWindowLocation(this->S.m_glfw_window, utl::WindowLocation::Center, cb::app::DEF_ROOT_WINDOW_SCALE);
+    utl::set_window_scale(this->S.m_glfw_window, cb::app::DEF_ROOT_WINDOW_SCALE);
     
-    glfwMakeContextCurrent(this->m_glfw_window);
+    glfwMakeContextCurrent(this->S.m_glfw_window);
     glfwSwapInterval(1);        // Enable vsync
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -181,11 +192,11 @@ void App::CreateContext(void)
     
     
     //      3.2     Setup Platform/Renderer backends.
-    ImGui_ImplGlfw_InitForOpenGL(this->m_glfw_window, true);
+    ImGui_ImplGlfw_InitForOpenGL(this->S.m_glfw_window, true);
 #ifdef __EMSCRIPTEN__
     ImGui_ImplGlfw_InstallEmscriptenCallbacks(window, "#canvas");
 #endif      //  __EMSCRIPTEN__  //
-    ImGui_ImplOpenGL3_Init(this->m_glsl_version);
+    ImGui_ImplOpenGL3_Init(this->S.m_glsl_version);
 
 
     return;
@@ -205,15 +216,29 @@ void App::CreateContext(void)
 //
 void App::init_appstate(void)
 {
-    auto &          m_windows           = this->m_state.m_windows;
-    auto &          m_fonts             = this->m_state.m_fonts;
     ImGuiIO &       io                  = ImGui::GetIO(); (void)io;
     ImGuiStyle &    style               = ImGui::GetStyle();
-    auto [m_sys_width, m_sys_height]    = utl::GetMonitorDimensions(this->m_glfw_window);
+    auto &          m_windows           = this->S.m_windows;
+    auto &          m_fonts             = this->S.m_fonts;
+    auto [m_sys_width, m_sys_height]    = utl::GetMonitorDimensions(this->S.m_glfw_window);
+    bool            good_fonts          = true;
+    
+    
+    S.m_dpi_scale                       = utl::GetDPIScaling(this->S.m_glfw_window);
+    std::cout << "DPI-SCALE: \t \"" << S.m_dpi_scale << "\"." << std::endl;
+    
 
 
 
-    //  1.  LOAD APPLICATION WINDOW INFORMATION...
+
+    //  1.  LOAD MISC. APPLICATION SETTINGS...
+    //
+    // io.MouseWheel                      *= app::DEF_MOUSEWHEEL_SCROLL_SPEED;
+    // io.MouseWheelH                     *= app::DEF_MOUSEWHEEL_SCROLL_SPEED;
+
+
+    //  2.  LOAD APPLICATION WINDOW INFORMATION...
+    //
     for (std::size_t i = 0; i < static_cast<int>(Window::Count); ++i)
     {
         Window      uuid                    = static_cast<Window>(i);
@@ -222,27 +247,46 @@ void App::init_appstate(void)
     }
 
        
-    //  2.  LOAD "m_primary_windows" VARIABLES...
-    auto & windows          = this->m_state.m_windows;
-    m_primary_windows       = { std::string( windows[Window::MainApp].uuid      ),
-                                std::string( windows[Window::GraphingApp].uuid  )
-                            };
+    //  3.  ADD EACH WINDOW THAT HAS ".open==true" BY DEFAULT INTO THE "m_primary_windows" VARIABLE...
+    //
+    this->S.m_primary_windows.push_back( std::string(this->S.m_windows[Window::MainApp].uuid) );    //  Add the "Main" window first (always opened).
+    for (size_t i = S.ms_APP_WINDOWS_BEGIN; i < S.ms_WINDOWS_END; ++i)
+    {
+        WinInfo &       winfo       = S.m_windows[ static_cast<Window>(i) ];
+        if (winfo.open) {
+            this->S.m_primary_windows.push_back( std::string(winfo.uuid) );
+        }
+    }
 
 
-    //  3.  LOAD APPLICATION FONTS...
-    for (int i = 0; i < static_cast<int>(Font::Count); ++i)
+
+
+    //  4.  LOAD APPLICATION FONTS...
+    for (int i = 0; i < static_cast<int>(Font::Count) && good_fonts; ++i)
     {
         const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
         
     #ifndef CBAPP_DISABLE_CUSTOM_FONTS
-        m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontFromFileTTF(info.path.c_str(), info.size);
+        m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontFromFileTTF(info.path.c_str(), S.m_dpi_scale * info.size);
     # else
         ImFontConfig    config;
-        config.SizePixels                   = info.size;
+        config.SizePixels                   = S.m_dpi_scale * info.size;
         m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontDefault(&config);
     #endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
+        good_fonts                          = ( m_fonts[static_cast<Font>(i)] != nullptr );
     }
-
+    
+    
+    //      4.1     FALLING BACK TO DEFAULT FONTS...
+    if (!good_fonts) {
+        std::cout << "CBLOG WARNING \t | Failure to load custom application fonts.  Falling back to default DEAR IMGUI Fonts." << std::endl;
+        for (int i = 0; i < static_cast<int>(Font::Count); ++i) {
+            const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
+            ImFontConfig    config;
+            config.SizePixels                   = S.m_dpi_scale * info.size;
+            m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontDefault(&config);
+        }
+    }
 
 
     return;
@@ -253,7 +297,7 @@ void App::init_appstate(void)
 //
 void App::dispatch_window_function(const Window & uuid)
 {
-    auto &          w       = m_state.m_windows[uuid];
+    auto &          w       = S.m_windows[uuid];
     
     
     //  DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
@@ -261,16 +305,32 @@ void App::dispatch_window_function(const Window & uuid)
     {
         //
         //      1.  PRIMARY GUI STRUCTURE...
-        case Window::Sidebar:           {
-            this->Display_Sidebar_Menu(     w.uuid.c_str(),     nullptr,        w.flags);
+        case Window::Dockspace:         {
+            this->ShowDockspace(         w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
-        case Window::Menubar:           {
+        case Window::SideBar:           {
+            this->m_sidebar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
+            break;
+        }
+        case Window::TitleBar:           {
+            this->m_titlebar.Begin(         w.uuid.c_str(),     nullptr,        w.flags);
+            break;
+        }
+        case Window::MenuBar:           {
             this->m_menubar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::MainApp:           {
-            this->Display_Main_Window(      w.uuid.c_str(),     nullptr,        w.flags);
+            this->ShowMainWindow(           w.uuid.c_str(),     nullptr,        w.flags);
+            break;
+        }
+        //
+        //
+        //
+        //      2.  MAIN APPLICATION WINDOWS...
+        case Window::CCounterApp:       {
+            this->m_counter_app.Begin(      w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::GraphingApp:       {
@@ -280,7 +340,7 @@ void App::dispatch_window_function(const Window & uuid)
         //
         //
         //
-        //      2.  MAIN APPLICATION WINDOWS...
+        //      3.  SUBSIDIARY APPLICATION WINDOWS...
         case Window::StyleEditor:       {
             cb::ShowStyleEditor(            w.uuid.c_str(),     &w.open,        w.flags);
             break;
@@ -295,6 +355,10 @@ void App::dispatch_window_function(const Window & uuid)
         }
         case Window::Metrics:           {
             cb::ShowMetricsWindow(          w.uuid.c_str(),     &w.open,        w.flags);
+            break;
+        }
+        case Window::Docking:           {
+            cb::ShowExampleAppDockSpace(    w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //
@@ -338,8 +402,8 @@ void App::dispatch_window_function(const Window & uuid)
 void App::load(void)
 {
 #ifndef __EMSCRIPTEN__
-    auto &          m_windows           = this->m_state.m_windows;
-    auto &          m_fonts             = this->m_state.m_fonts;
+    auto &          m_windows           = this->S.m_windows;
+    auto &          m_fonts             = this->S.m_fonts;
     ImGuiIO &       io                  = ImGui::GetIO(); (void)io;
     ImGuiStyle &    style               = ImGui::GetStyle();
     
@@ -349,14 +413,14 @@ void App::load(void)
     
     
 #if defined(CBAPP_DISABLE_INI)
-    io.IniFilename                  = nullptr;
+    io.IniFilename                      = nullptr;
 # else
-    io.IniFilename                  = cb::app::INI_FILEPATH;
+    io.IniFilename                      = cb::app::INI_FILEPATH;
     ImGui::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH);
 #endif  //  CBAPP_DISABLE_INI  //
     
     
-    io.ConfigFlags                 |= this->m_io_flags;     //  2.2 Configure I/O Settings.
+    io.ConfigFlags                     |= this->S.m_io_flags;     //  2.2 Configure I/O Settings.
     //io.ConfigViewportsNoAutoMerge     = true;
     //io.ConfigViewportsNoTaskBarIcon   = true;
     
@@ -378,8 +442,8 @@ void App::init_asserts(void)
 {
     ImGuiIO &               io                  = ImGui::GetIO(); (void)io;
     ImGuiStyle &            style               = ImGui::GetStyle();
-    const auto &            m_windows           = this->m_state.m_windows;
-    const auto &            m_fonts             = this->m_state.m_fonts;
+    const auto &            m_windows           = this->S.m_windows;
+    const auto &            m_fonts             = this->S.m_fonts;
     const size_t            N_WINDOWS           = static_cast<size_t>(Window::Count);
     
 
@@ -390,13 +454,13 @@ void App::init_asserts(void)
 
     //  2.  ASSERT THAT ALL WINDOW CALLBACK FUNCTIONS ARE VALID...
     for (size_t idx = 0; idx < N_WINDOWS; ++idx) {
-        const app::WinInfo & winfo      = m_state.m_windows[ static_cast<Window>(idx) ];
+        const app::WinInfo & winfo      = S.m_windows[ static_cast<Window>(idx) ];
         IM_ASSERT( winfo.render_fn != nullptr && error::ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS );
     }
 
     //  3.  ASSERT THAT ALL "m_primary_windows" ARE VALID...
-    IM_ASSERT( std::find(this->m_primary_windows.begin(), this->m_primary_windows.end(), app::DEF_SIDEBAR_WIN_TITLE)
-               == this->m_primary_windows.end()
+    IM_ASSERT( std::find(this->S.m_primary_windows.begin(), this->S.m_primary_windows.end(), S.m_windows[ Window::SideBar ].uuid.c_str() )
+               == this->S.m_primary_windows.end()
                && error::ASSERT_INVALID_PRIMARY_WINDOWS );
 
     return;
@@ -433,9 +497,9 @@ void App::destroy(void) {
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
-    if (this->m_glfw_window) {
-        glfwDestroyWindow(this->m_glfw_window);
-        this->m_glfw_window = nullptr;
+    if (this->S.m_glfw_window) {
+        glfwDestroyWindow(this->S.m_glfw_window);
+        this->S.m_glfw_window = nullptr;
     }
     glfwTerminate();
     return;

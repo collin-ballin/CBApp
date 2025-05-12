@@ -42,6 +42,7 @@
 
 //  0.3     "DEAR IMGUI" HEADERS...
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "implot.h"
 
 
@@ -82,6 +83,7 @@ public:
     //  1.2             Public Member Functions...
     void                initialize                  (void);
     void                Begin                       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                RebuildDockspace            (void);
     //                      Data & Interaction.
 
 
@@ -106,12 +108,6 @@ protected:
     
     //  Main Window Stuff...
     bool                                m_initialized           = false;
-    const char *                        m_window_title          = app::DEF_GRAPHING_APP_TITLE;
-#ifdef CBAPP_ENABLE_MOVE_AND_RESIZE
-    ImPlotHeatmapFlags                  m_window_flags          = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse;
-# else
-    ImPlotHeatmapFlags                  m_window_flags          = ImGuiWindowFlags_None | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-#endif  //  CBAPP_ENABLE_MOVE_AND_RESIZE  //
     
     
     //  All Children Constants.
@@ -124,11 +120,21 @@ protected:
     const float                         mc_plot_corner_radius   = 5.0f;
     const char *                        mc_plot_child_id        = "PlotChild";
     const char *                        mc_plot_tab_bar_id      = "PlotTabBar";
-    std::pair<int,int>                  MC_PLOT_HEIGHT_LIMIT    = {35, 35};  //  {y1, y2}    : "y1"  --- min height of child (no matter how many widgets are on it).     "y2"  --- max height the window will extend to WITHOUT adding scrollbar.
+    std::pair<int,int>                  MC_PLOT_HEIGHT_LIMIT    = {30, 30};  //  {y1, y2}    : "y1"  --- min height of child (no matter how many widgets are on it).     "y2"  --- max height the window will extend to WITHOUT adding scrollbar.
+    
+#ifdef CBAPP_ETCH_A_SKETCH
+    std::vector<tab_t>                  MC_PLOT_TABS            = {
+        {"Etch-A-Sketch",           true,       ImGuiTabItemFlags_None},
+        {"Table",                   true,       ImGuiTabItemFlags_None}
+    };
+# else
     std::vector<tab_t>                  MC_PLOT_TABS            = {
         {"Main Plot",               true,       ImGuiTabItemFlags_None | ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoReorder},
+        {"Etch-A-Sketch",           true,       ImGuiTabItemFlags_None},
+        {"Table",                   true,       ImGuiTabItemFlags_None},
         {"Empty",                   true,       ImGuiTabItemFlags_None}
     };
+#endif  //  CBAPP_ETCH_A_SKETCH  //
     
     
     //  Control Panel.
@@ -137,13 +143,36 @@ protected:
     const float                         mc_ctrl_corner_radius   = 5.0f;
     const char *                        mc_ctrl_child_id        = "CtrlChild";
     const char *                        mc_ctrl_tab_bar_id      = "CtrlTabBar";
-    std::pair<int,int>                  MC_CTRL_HEIGHT_LIMIT    = {25, 25};
+    std::pair<int,int>                  MC_CTRL_HEIGHT_LIMIT    = {30, 30};
+#ifdef CBAPP_ETCH_A_SKETCH
+    std::vector<tab_t>                  MC_CTRL_TABS            = {
+        {"Main Controls",           true,       ImGuiTabItemFlags_None | ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoReorder},
+        {"Etch-A-Sketch Controls",  true,       ImGuiTabItemFlags_None | ImGuiTabItemFlags_NoReorder}
+    };
+# else
     std::vector<tab_t>                  MC_CTRL_TABS            = {
         {"Main Controls",           true,       ImGuiTabItemFlags_None | ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoReorder},
         {"Secondary Controls",      true,       ImGuiTabItemFlags_None | ImGuiTabItemFlags_NoReorder}
     };
+#endif  //  CBAPP_ETCH_A_SKETCH  //
     
-    
+    //  Docking Space.
+    float                           m_dockspace_ratio           = 0.6f;
+    static constexpr const char *   m_dockspace_name            = "GAppDockHostSpace";
+    ImGuiDockNodeFlags              m_dockspace_flags           = ImGuiDockNodeFlags_None;
+    ImGuiID                         m_dockspace_id              = 0;
+    //
+    //      Docked Window Stuff:
+    ImGuiWindowClass                m_window_class;
+    ImGuiWindowFlags                m_docked_win_flags          = ImGuiWindowFlags_None | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground; // ImGuiWindowFlags_NoScrollbar
+    //
+    //      "Plot" Dockspace:
+    static constexpr const char *   m_plot_win_uuid             = "Visuals";
+    ImGuiID                         m_plot_dock_id              = 0;
+    //
+    //      "Control" Dockspace:
+    static constexpr const char *   m_ctrl_win_uuid             = "Controls";
+    ImGuiID                         m_ctrl_dock_id              = 0;
     
     
     //  Appearance.
@@ -168,6 +197,11 @@ protected:
     //  2B.2            Internal Functions.
     void                display_plot_panel          (void);
     void                display_control_panel       (void);
+    
+    void                etch_a_sketch               (void);
+    void                sketch_controls             (void);
+    
+    void                test_table                  (void);
 
 
 
