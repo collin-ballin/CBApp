@@ -14,15 +14,12 @@
 
 ![Windows](https://img.shields.io/badge/Windows-supported-green)
 ![macOS](https://img.shields.io/badge/macOS-supported-green)
-\
 ![ImGui Docking](https://img.shields.io/badge/imgui-docking-green)
 ![GLFW](https://img.shields.io/badge/GLFW-3.3-success)
 ![OpenGL](https://img.shields.io/badge/OpenGL-3.3+-success)
-\
 ![C++20](https://img.shields.io/badge/C%2B%2B-20%2B-blue)
 ![CMake](https://img.shields.io/badge/cmake-%3E%3D3.10-blue)
 ![Clang](https://img.shields.io/badge/clang-%3E%3D12.0-blue)
-\
 [![Last commit](https://img.shields.io/github/last-commit/collin-ballin/CBApp.svg)](https://github.com/collin-ballin/CBApp/commits/main)
 
 
