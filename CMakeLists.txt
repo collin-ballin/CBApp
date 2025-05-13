@@ -5,7 +5,6 @@
 #   ||===================================================||
 #
 #     INFO:
-#
 #                     BUILD FILE FOR:       "macOS"
 #             Project Root Directory:       imgui/imgui_V0/
 #
@@ -14,10 +13,8 @@
 #                                           cmake --build . --config Debug
 #                                           cmake --build . --config Release
 #
-#
 #     HOW-TO:
-#
-#           "cd" change-directory to:       imgui/imgui_V0/build
+#           "cd" change-directory to:       imgui/CBApp/build
 #              then, run the command:       cmake -G "Xcode" ..
 #                                 OR:       cmake -G "Xcode" -DCBLIB_DEBUG=ON ..
 #

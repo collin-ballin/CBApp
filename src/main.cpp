@@ -33,7 +33,6 @@
 int main(int argc, char ** argv)
 {
     int     status      = cb::run_application(argc, argv);
-    
     return status;
 }
 
