@@ -82,7 +82,12 @@ static float                    max_counts[cc::NUM]         = {};
 
 //  Python process wrapper
 static utl::PyStream            proc(app::PYTHON_DUMMY_FPGA_FILEPATH);
+static constexpr size_t         BUFFER_SIZE                 = 256;
+static ImGuiInputTextFlags      write_file_flags            = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue;
+static char                     filepath[BUFFER_SIZE];
+
 static bool                     started                     = false;
+static bool                     enter                       = false;
 static float                    history_s                   = 30.0f;                // seconds visible in sparklines
 static float                    row_height_px               = 60.0f;
 static float                    master_row_height_px        = 400.f;                // independent of per‑row height
@@ -119,6 +124,8 @@ void CCounterApp::init(void)
 
     COUNTER_COL_WIDTH           = 80.0f; //ImGui::CalcTextSize("999999").x;
     CONTROL_WIDTH               = ImGui::GetFontSize() * 8;
+    std::snprintf(filepath, BUFFER_SIZE, "%s", app::PYTHON_DUMMY_FPGA_FILEPATH);
+    
     cc::HEADER_SEP_TOP          = ImVec2( 0.0f, 0.5 * ImGui::GetTextLineHeightWithSpacing() );
     cc::HEADER_SEP_BOTTOM       = ImVec2( 0.0f, 0.0 * ImGui::GetTextLineHeightWithSpacing() );
     
@@ -636,6 +643,16 @@ void CCounterApp::display_controls(void)
     static ImGuiTableFlags              flags                   = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible; //| ImGuiTableFlags_ScrollX;
         
         
+    
+    // {
+    //     static char buf1[128] = "/path/to/some/folder/with/long/filename.cpp";
+    //     static ImGuiInputTextFlags flags = ImGuiInputTextFlags_ElideLeft;
+    //     ImGui::CheckboxFlags("ImGuiInputTextFlags_ElideLeft", &flags, ImGuiInputTextFlags_ElideLeft);
+    //     ImGui::InputText("Path", buf1, IM_ARRAYSIZE(buf1), flags);
+    //     ImGui::TreePop();
+    // }
+        
+    
         
     //  DEFINE EACH WIDGET IN CONTROL PANEL...
     //
@@ -646,14 +663,31 @@ void CCounterApp::display_controls(void)
     //  1.  CONTROL PARAMETERS...
         {"Record",                                  []
             {// BEGIN.
+            //
+            //  1.  PYTHON-SCRIPT FILEPATH FIELD...
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
-                ImGui::InputText("##file", line_buf, IM_ARRAYSIZE(line_buf),  ImGuiInputTextFlags_EnterReturnsTrue);
+                enter   = ImGui::InputText("##PyFilepath", filepath, BUFFER_SIZE, write_file_flags);
                 ImGui::SameLine(0.0f, pad);
                 //
+                if (enter)
+                {
+                    if ( utl::file_exists(filepath) ) {
+                        std::snprintf(filepath, BUFFER_SIZE, "%s", "INVALID FILEPATH");
+                        enter = false;
+                    }
+                    else {
+                        proc.set_filepath(filepath);
+                    }
+                }
+                //
+                //
+                //
+                //  2.  START/STOP PYTHON SCRIPT BUTTON...
                     if (!started)
                     {
-                        if (ImGui::Button("Start Process", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
-                            started = proc.start();
+                        if (ImGui::Button("Start Process", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) )
+                        {
+                            started         = proc.start();
                             if (!started)   ImGui::OpenPopup("launch_error");
                             else            max_counts[0] = 0.f; // reset stats
                         }
@@ -669,21 +703,22 @@ void CCounterApp::display_controls(void)
                     }
                 //
                 ImGui::Dummy( ImVec2(pad, 0.0f) );
-
-
-
+                //
+                //
+                //
+                //  2B.     HANDLING ANY ERRORS WITH PROCESS...
                 if (ImGui::BeginPopupModal("launch_error", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
                     ImGui::Text("Failed to launch Python process!");
                     if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
                     ImGui::EndPopup();
                 }
-                
+                //
                 if (started)    {
                     char cmd[48];
                     std::snprintf(cmd, sizeof(cmd), "delay %.3f\n", delay_s);
                     proc.send(cmd);
                 }
-                
+            //
             //
             //
             //
@@ -813,6 +848,21 @@ void CCounterApp::display_controls(void)
         ImGui::EndTable();
     }
     
+    
+    
+    //  2.  LOGGER...
+    /*
+    ImGui::BeginChild("log", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
+    
+        for (auto const & s : log)
+            ImGui::TextUnformatted(s.c_str());
+            
+        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+            ImGui::SetScrollHereY(1.0f);       // auto‑scroll
+            
+            
+    ImGui::EndChild();
+    */
     
     return;
 }

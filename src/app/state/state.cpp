@@ -26,6 +26,7 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 AppState::AppState(void)
+    : m_logger{Logger::instance()}
 {
     size_t      i       = size_t(0);
 

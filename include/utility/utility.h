@@ -24,6 +24,10 @@
 #include "cblib.h"
 #include "utility/_constants.h"
 #include "utility/_templates.h"
+#include "utility/_logger.h"
+#ifdef _WIN32
+    # include "utility/resource_loader.h"
+#endif  //  _WIN32  //
 //#include "utility/pystream/pystream.h"
 #include "json.hpp"
 
@@ -33,6 +37,7 @@
 #include <vector>
 #include <thread>
 #include <fstream>
+#include <filesystem>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -62,6 +67,16 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 //  0.1     INLINE DEFINITIONS (HEADER ONLY)        |   WIDGETS & WINDOWS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "file_exists"
+//
+inline bool file_exists(const char* path)
+{
+    namespace fs = std::filesystem;
+    fs::path p{path};
+    return fs::exists(p) && fs::is_regular_file(p);
+}
+
 
 //  "WindowLocation"
 //
@@ -285,109 +300,6 @@ void                                ScrollingSparkline          (const float tim
 
 
 
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//  3.  LOGGER CLASS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "LogLevel"
-enum class LogLevel : int {
-    None,
-    Debug           = 10,
-    Info            = 20,
-    Warning         = 30,
-    Exception       = 35,
-    Error           = 40,
-    Critical        = 50,
-    Count
-};
-
-
-//  "LogCounter"
-//      - Simple struct to maintain a count of each log invocation.
-struct LogCounter {
-    size_t      none            = 0ULL;
-    size_t      debug           = 0ULL;
-    size_t      info            = 0ULL;
-    size_t      warning         = 0ULL;
-    size_t      exception       = 0ULL;
-    size_t      error           = 0ULL;
-    size_t      critical        = 0ULL;
-    size_t      unknown         = 0ULL;
-};
-
-
-
-class Logger
-{
-// *************************************************************************** //
-// *************************************************************************** //
-public:
-    //  0.               PUBLIC CLASS-NESTED ALIASES...
-    // *************************************************************************** //
-    using               Level                       = LogLevel;
-
-    
-    //  1.               PUBLIC MEMBER FUNCTIONS...
-    // *************************************************************************** //
-    //  1.1             Default Constructor, Destructor, etc...
-                        Logger                      (void)      = default;      //  Def. Constructor.
-                        ~Logger                     (void);                     //  Def. Destructor.
-                        
-    //  1.2             Public Member Functions...
-    void                log                         (const char *, const Level &);
-                        
-    //  1.3             Public Utility Functions...
-    void                set_level                   (const Level &);
-    Level               get_level                   (void)  const;
-
-
-// *************************************************************************** //
-// *************************************************************************** //
-protected:
-    //  2.A             PROTECTED DATA-MEMBERS...
-    // *************************************************************************** //
-    
-    //  CONSTANTS...
-    const char *                            m_header                    = "CBLOG";
-    
-    //  DATA...
-    Level                                   m_filter                    = Level::None;
-    LogCounter                              m_counter                   = LogCounter();
-    
-    
-    //  2.B             PROTECTED MEMBER FUNCTIONS...
-    // *************************************************************************** //
-    
-    //  2B.1            Class Initializations.      [Logger.cpp]...
-    void                init                        (void);
-    void                destroy                     (void);
-    
-    void                log_IMPL                    (const char *, const Level &);
-    const char *        make_header                 (const Level &);
-
-
-
-// *************************************************************************** //
-// *************************************************************************** //
-};//	END "Logger" CLASS PROTOTYPE.
-
-
-
-
-
-
-
-
-
 // *************************************************************************** //
 //
 //
@@ -395,6 +307,12 @@ protected:
 // *************************************************************************** //
 // *************************************************************************** //
 } }//   END OF "cb" NAMESPACE.
+
+
+
+
+
+
 
 
 

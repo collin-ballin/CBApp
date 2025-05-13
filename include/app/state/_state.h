@@ -229,7 +229,10 @@ public:                                                                         
     using               Font                            = app::Font_t;                          \
                                                                                                 \
     using               ImFonts                         = utl::EnumArray<Font, ImFont *>;       \
-    using               ImWindows                       = utl::EnumArray<Window, WinInfo>;
+    using               ImWindows                       = utl::EnumArray<Window, WinInfo>;      \
+                                                                                                \
+    using               Logger                          = utl::Logger;                          \
+    using               LogLevel                        = Logger::Level;
 
 
 //  EXPORTED "API" USED BY "CBApp" DELEGATOR CLASSES THAT USE AN "AppState" OBJECT.
@@ -278,8 +281,9 @@ struct AppState
     // *************************************************************************** //
     
     //  0.      GROUPS / SUB-CLASSES OF "APPSTATE"...
-    ImWindows                           m_windows;              //  1.  APPLICATION WINDOW STATE...
-    ImFonts                             m_fonts;                //  2.  APPLICATION FONTS...
+    utl::Logger &                       m_logger;               //  1.  LOGGER...
+    ImWindows                           m_windows;              //  2.  APPLICATION WINDOW STATE...
+    ImFonts                             m_fonts;                //  3.  APPLICATION FONTS...
     
     
     

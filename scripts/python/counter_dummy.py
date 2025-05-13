@@ -13,19 +13,22 @@ Commands via stdin
     window   <clks>     # coincidence‑window register
     quit                # clean exit
 """
-
 import sys, time, json, threading, queue, signal, datetime, argparse, random
 from typing import List, Tuple
 
-# ----------------------------------------------------------------------
-#  Configuration (edit paths if necessary)
-# ----------------------------------------------------------------------
-BITFILE   = r"C:\Users\alephnul\Documents\LabVIEW Data\SPADMK2\FPGA Bitfiles\spadccumk2_FPGATarget_DSPTesting_coCfkuMbrXo.lvbitx"
-RESOURCE  = r"rio://172.22.11.2/RIO0"
+################################################################################
+#
+#
+#    1.  GLOBAL CONSTANTS...
+################################################################################
+################################################################################
+BITFILE         = r"c:\Users\larsenal\Downloads\SPADCCUMK2\LabVIEW Data\SPADMK2\FPGA Bitfiles\spadccumk2_FPGATarget_DSPTesting_zbVGNUvhPcI.lvbitx"
+RESOURCE        = r"rio://172.22.11.2/RIO0"
+USE_HARDWARE    = False
 
-# ----------------------------------------------------------------------
-#  Sample packets for mock mode (counts[], cycles)
-# ----------------------------------------------------------------------
+
+#  SAMPLE FPGA DATA (For running is Dummy Mode)...
+#
 SAMPLE_PACKETS: List[Tuple[List[int], int]] = [
     ([0, 418, 567, 0, 46168, 1, 1, 1, 76437, 1, 0, 0, 223, 0, 6, 78], 280571200),
     ([0, 438, 554, 0, 46727, 1, 2, 0, 76220, 0, 3, 0, 228, 1, 6, 62], 280366940),
@@ -79,28 +82,32 @@ SAMPLE_PACKETS: List[Tuple[List[int], int]] = [
     ([0, 402, 542, 0, 47453, 1, 2, 0, 80813, 3, 1, 0, 258, 0, 4, 60], 280400820)
 ]
 
-
-
-
-
-# ----------------------------------------------------------------------
 #  Import NI‑FPGA only if available
-# ----------------------------------------------------------------------
 try:
     from nifpga import Session
     _nifpga_available = True
 except ImportError:
     _nifpga_available = False
 
-# ----------------------------------------------------------------------
-#  Helper functions (same as before)
-# ----------------------------------------------------------------------
+
+
+################################################################################
+#
+#
+#    2.  HELPER FUNCTIONS (SAME AS IN THE ORIGINAL SCRIPT)...
+################################################################################
+################################################################################
+
+#  "measure_raw"
+#
 def measure_raw(session):
     counts = [int(x) for x in session.registers["Counts"].read()]
     cycles = int(session.registers["CYCLES"].read())
     return counts, cycles
 
 
+#  "start_measure"
+#
 def start_measure(session, window=1):
     enable = session.registers["ENABLE"]
     clear  = session.registers["CLEAR"]
@@ -118,6 +125,8 @@ def start_measure(session, window=1):
     enable.write(True)
 
 
+#  "finish_measure"
+#
 def finish_measure(session):
     enable = session.registers["ENABLE"]
     enable.write(False)
@@ -125,11 +134,18 @@ def finish_measure(session):
     return measure_raw(session)
 
 
-# ----------------------------------------------------------------------
-#  Command thread: reads stdin, pushes updates -> queue
-# ----------------------------------------------------------------------
+
+
+################################################################################
+#
+#
+#    3. COMMAND THREAD: Reads stdin, pushes updates -> queue
+################################################################################
+################################################################################
 cmd_q: "queue.Queue[Tuple[str, float|int|None]]" = queue.Queue()
 
+#  "stdin_reader"
+#
 def stdin_reader():
     for line in sys.stdin:
         toks = line.strip().split()
@@ -137,7 +153,7 @@ def stdin_reader():
             continue
         cmd = toks[0].lower()
 
-        # add "delay" to the accepted synonyms
+        #  Add "delay" to the accepted synonyms
         if cmd in ("duration", "time", "delay") and len(toks) == 2:
             try:
                 cmd_q.put(("duration", max(0.05, float(toks[1]))))
@@ -173,6 +189,13 @@ def mock_packets():
                     for mu in counts]
         yield jittered, cycles
         i = (i + 1) % len(SAMPLE_PACKETS)
+        
+    return
+
+
+
+
+
 
 # ----------------------------------------------------------------------
 #  Main
@@ -187,11 +210,15 @@ def main():
     mock_mode = args.mock or not _nifpga_available
     if not mock_mode:
         try:
-            session = Session(bitfile=BITFILE, resource=RESOURCE)
-            session.open()
+            with Session(bitfile=BITFILE, resource=RESOURCE) as session:
+                USE_HARDWARE = True
+
+            
         except Exception as e:
             sys.stderr.write(f"Hardware open failed: {e}.  Falling back to mock.\n")
             mock_mode = True
+
+
 
     duration  = 1.0        # seconds per acquisition
     win_value = 50_000     # default coincidence window
@@ -223,8 +250,9 @@ def main():
             print(json.dumps(record), flush=True)
             time.sleep(duration)
 
+
     else:  # -------- REAL FPGA path --------
-        with session:
+        with Session(bitfile=BITFILE, resource=RESOURCE) as session:
             session.reset()
             session.run()
 
@@ -253,5 +281,21 @@ def main():
                 }
                 print(json.dumps(record), flush=True)
 
+
+
+
+################################################################################
+#
+#
+#    APPLICATION ENTRY POINT...
+################################################################################
+################################################################################
+
 if __name__ == "__main__":
     main()
+
+
+
+################################################################################
+################################################################################
+#  END.

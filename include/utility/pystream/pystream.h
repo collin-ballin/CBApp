@@ -105,6 +105,10 @@ public:
     void                        stop                                (void);                                 //  Terminate child & join thread.
     
     //  1.3                     Secondary Class Interface.
+    void                        set_filepath                        (const char * );
+    void                        set_filepath                        (const std::string & );
+    std::string                 get_filepath                        (void);
+    
     bool                        send                                (const std::string & msg);              //  write msg + \n
     bool                        try_receive                         (std::string & out);                    //  pop next complete line
     bool                        is_running                          (void)  const;

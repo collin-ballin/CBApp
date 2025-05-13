@@ -226,10 +226,17 @@ enum class Font_t : int {
 
 //  "FontInfo"
 //      - Simple struct to define the various properties of each font...
+#ifdef __APPLE__
 struct FontInfo {
     std::string         path;
     float               size;
 };
+# else
+struct FontInfo {
+    int                 rid;
+    float               size;
+};
+#endif  //  __APPLE__  //
 
 
 
@@ -264,14 +271,22 @@ inline static const std::array<FontInfo, int( Font_t::Count )>     APPLICATION_F
 
 
 
-namespace cb { namespace error { //     BEGINNING NAMESPACE "cb" :: "error"...
+// *************************************************************************** //
+//
+//
+//  9.  COMPILE-TIME DEFINED MESSAGES AND PROGRAM INFORMATION...
+// *************************************************************************** //
+// *************************************************************************** //
+//
+namespace cb {  //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-// *************************************************************************** //
+
+
+//  1.  ERROR MESSAGING             | ASSERTION STATEMENTS, EXCEPTION MESSAGES, ETC...
 //
-//
-//  9.  ERROR MESSAGING...
+namespace error { //     BEGINNING NAMESPACE "error"...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -282,7 +297,6 @@ inline constexpr const char *       GLFW_INIT_ERROR                             
     "This may occur if your machine does not have the necessary graphics drivers for OpenGL installed.\n"
     "Ensure that your system is using the designated GPU / Graphics Card and NOT the on-board "
     "graphics that are build into the motherboard.";
-    
     
 inline constexpr const char *       GLFW_WINDOW_INIT_ERROR                      =
     "A fatal error has occured during program initialization:\n\t"
@@ -298,13 +312,150 @@ inline constexpr const char *       ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS      
     "\t(1.) \t \"dispatch_window_function()\" in \"src/app/init.cpp\".\n"
     "\t(2.) \t \"#define _CBAPP_WINDOW_LIST(X)\" in \"include/app/state/_state.h\".\n";
     
-    
 inline constexpr const char *       ASSERT_INVALID_PRIMARY_WINDOWS              =
     "Assert statement failure during initialization:\n\t"
     "\"Sidebar\" window cannot be an item inside \"this->m_primary_windows!\" variable.";
 
 
 
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}//   END OF "error" NAMESPACE.
+
+
+
+
+
+
+//  2.  GENERAL INFORMATION         | TOOL-TIPS, PROMPTS, PROGRAM INFORMATION, ETC...
+//
+namespace info { //     BEGINNING NAMESPACE "info"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//
+//  ...
+//
+
+
+
+
+
+
+
+
+
+
+//  "ANSI" ESCAPE KEYS...
+//
+/*
+struct ANSI
+{
+    //      Basic colors.
+    static constexpr std::string_view BLACK           = "\x1B[30m";
+    static constexpr std::string_view BLACK_BG        = "\x1B[40m";
+    static constexpr std::string_view BLACK_BOLD      = "\x1B[1m\x1B[30m";
+
+    static constexpr std::string_view RED             = "\x1B[31m";
+    static constexpr std::string_view RED_BG          = "\x1B[41m";
+    static constexpr std::string_view RED_BOLD        = "\x1B[1m\x1B[31m";
+
+    static constexpr std::string_view GREEN           = "\x1B[32m";
+    static constexpr std::string_view BLUE_BG         = "\x1B[44m";
+    static constexpr std::string_view BLUE_BOLD       = "\x1B[1m\x1B[32m";
+
+    static constexpr std::string_view YELLOW          = "\x1B[33m";
+    static constexpr std::string_view GREEN_BG        = "\x1B[42m";
+    static constexpr std::string_view GREEN_BOLD      = "\x1B[1m\x1B[34m";
+
+    static constexpr std::string_view BLUE            = "\x1B[34m";
+    static constexpr std::string_view YELLOW_BG       = "\x1B[43m";
+    static constexpr std::string_view YELLOW_BOLD     = "\x1B[1m\x1B[35m";
+
+    static constexpr std::string_view MAGENTA         = "\x1B[35m";
+    static constexpr std::string_view MAGENTA_BG      = "\x1B[45m";
+    static constexpr std::string_view MAGENTA_BOLD    = "\x1B[1m\x1B[33m";
+
+    static constexpr std::string_view CYAN            = "\x1B[36m";
+    static constexpr std::string_view CYAN_BG         = "\x1B[46m";
+    static constexpr std::string_view CYAN_BOLD       = "\x1B[1m\x1B[36m";
+
+    static constexpr std::string_view WHITE           = "\x1B[37m";
+    static constexpr std::string_view WHITE_BG        = "\x1B[47m";
+    static constexpr std::string_view WHITE_BOLD      = "\x1B[1m\x1B[37m";
+    //
+    //
+    //      Bright colors.
+    static constexpr std::string_view BLACK_BRIGHT    = "\x1B[90m";
+    static constexpr std::string_view BLACK_BB        = "\x1B[1m\x1B[90m";
+
+    static constexpr std::string_view RED_BRIGHT      = "\x1B[91m";
+    static constexpr std::string_view RED_BB          = "\x1B[1m\x1B[91m";
+
+    static constexpr std::string_view GREEN_BRIGHT    = "\x1B[92m";
+    static constexpr std::string_view GREEN_BB        = "\x1B[1m\x1B[92m";
+
+    static constexpr std::string_view YELLOW_BRIGHT   = "\x1B[93m";
+    static constexpr std::string_view YELLOW_BB       = "\x1B[1m\x1B[93m";
+
+    static constexpr std::string_view BLUE_BRIGHT     = "\x1B[94m";
+    static constexpr std::string_view BLUE_BB         = "\x1B[1m\x1B[94m";
+
+    static constexpr std::string_view MAGENTA_BRIGHT  = "\x1B[95m";
+    static constexpr std::string_view MAGENTA_BB      = "\x1B[1m\x1B[95m";
+
+    static constexpr std::string_view CYAN_BRIGHT     = "\x1B[96m";
+    static constexpr std::string_view CYAN_BB         = "\x1B[1m\x1B[96m";
+
+    static constexpr std::string_view WHITE_BRIGHT    = "\x1B[97m";
+    static constexpr std::string_view WHITE_BB        = "\x1B[1m\x1B[97m";
+    //
+    //
+    //      Text styles.
+    static constexpr std::string_view BOLD            = "\x1B[1m";
+    static constexpr std::string_view RESET_BOLD      = "\x1B[22m";
+
+    static constexpr std::string_view DIM             = "\x1B[2m";
+    static constexpr std::string_view RESET_DIM       = "\x1B[22m";
+
+    static constexpr std::string_view UNDERLINE       = "\x1B[4m";
+    static constexpr std::string_view RESET_UNDERLINE = "\x1B[24m";
+
+    static constexpr std::string_view BLINK           = "\x1B[5m";
+    static constexpr std::string_view RESET_BLINK     = "\x1B[25m";
+
+    static constexpr std::string_view INVERSE         = "\x1B[7m";
+    static constexpr std::string_view RESET_INVERSE   = "\x1B[27m";
+    //
+    //
+    //      Reset defaults.
+    static constexpr std::string_view RESET_BG        = "\x1B[49";
+    static constexpr std::string_view RESET_FG        = "\x1B[39";
+    static constexpr std::string_view RESET           = "\x1B[0m";
+    //
+    //
+    //      Convenience messages.
+    static constexpr std::string_view PASS            = "\x1B[1m\x1B[92mPASSED.\x1B[0m\n";
+    static constexpr std::string_view FAIL            = "\x1B[1m\x1B[91mFAILED.\x1B[0m\n";
+};
+
+*/
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}//   END OF "info" NAMESPACE.
+
+
+
+
 
 
 // *************************************************************************** //
@@ -313,8 +464,7 @@ inline constexpr const char *       ASSERT_INVALID_PRIMARY_WINDOWS              
 //
 // *************************************************************************** //
 // *************************************************************************** //
-} }//   END OF "cb" :: "error" NAMESPACE.
-
+}//   END OF "cb" NAMESPACE.
 
 
 

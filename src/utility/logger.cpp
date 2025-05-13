@@ -8,8 +8,7 @@
 *
 **************************************************************************************
 **************************************************************************************/
-#include "utility/utility.h"
-#include "utility/_constants.h"
+#include "utility/_logger.h"
 #include "_config.h"
 
 
@@ -19,75 +18,233 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 
 
-/*
-//  "CBLog"
+//  1A.     INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+//  Default Constructor.            | PRIVATE BECAUSE SINGLETON...
 //
-void CBLog(const char * log, const LogLevel & level)
+Logger::Logger(void) {
+#if CBAPP_LOG_ENABLED
+    enable_vt_win();
+    start_worker();
+#endif
+}
+
+
+//  Default Destructor.             | PRIVATE BECAUSE SINGLETON...
+//
+Logger::~Logger(void) {
+#if CBAPP_LOG_ENABLED
+        stop_worker();
+#endif
+}
+
+
+//  "instance"
+//
+Logger & Logger::instance(void) {
+    static Logger inst;
+    return inst;
+}
+
+
+
+// *************************************************************************** //
+//
+//
+//  2A.     PUBLIC MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "log"
+//
+void Logger::log(const char * msg, Level lvl)   { enqueue(msg, lvl);                }
+
+
+//  "debug"
+//
+void Logger::debug(const char * msg)            { enqueue(msg, Level::Debug);       }
+
+
+//  "info"
+//
+void Logger::info(const char * msg)             { enqueue(msg, Level::Info);        }
+
+
+//  "warning"
+//
+void Logger::warning(const char * msg)          { enqueue(msg, Level::Warning);     }
+
+
+//  "exception"
+//
+void Logger::exception(const char * msg)        { enqueue(msg, Level::Exception);   }
+
+
+//  "error"
+//
+void Logger::error(const char * msg)            { enqueue(msg, Level::Error);       }
+
+
+//  "critical"
+//
+void Logger::critical(const char * msg)         { enqueue(msg, Level::Critical);    }
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  2B.     PUBLIC UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "set_level"
+//
+void  Logger::set_level(const Level & level)    { this->m_threshold = level; }
+
+
+//  "get_level"
+//
+Logger::Level Logger::get_level(void) const             { return m_threshold; }
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  3.      PROTECTED MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+#if CBAPP_LOG_ENABLED
+// *************************************************************************** //
+
+//  "enqueue"
+//
+void Logger::enqueue(const char * msg, Level lvl)
 {
+    //  1.  APPLY FILTER...
+    if ( static_cast<int>(lvl) < static_cast<int>(m_threshold) )
+        return;
+    
+    std::unique_lock<std::mutex>    lock(m_mtx);
+    
+    m_cv.wait(lock, [this]{ return m_queue.size() < QUEUE_CAPACITY; });
+    
+    m_queue.push(LogEvent{lvl, msg, next_count(lvl)});
+    
+    
+    lock.unlock();
+    m_cv.notify_one();   // wake worker
     return;
 }
 
 
-//  "CBLog_IMPL"
+//  "start_worker"
 //
-void CBLog_IMPL(const char * log, const LogLevel & level)
+void Logger::start_worker(void)
 {
-    using                       Level           = LogLevel;
+    m_running   = true;
+    m_worker    = std::thread( [this]{
+        std::unique_lock<std::mutex>    lock(m_mtx);
+        
+        while ( m_running || !m_queue.empty() )     //  while #1.
+        {
+            m_cv.wait(lock, [this]{ return !m_queue.empty() || !m_running; });
+            while ( !m_queue.empty() )                  //  while #2.
+            {
+                LogEvent    ev = std::move(m_queue.front());
+                m_queue.pop();
+                lock.unlock();
+                write_event(ev);
+                lock.lock();
+                m_cv.notify_all();   // signal space to any waiting producers
+                
+            }//     END "while #1".
+            
+        }// END "while #1".
+        
+    } );
     
-    
-    constexpr const char *      HEADER          = "CBLOG";
-    static LogCounter           counts          = LogCounter();
-    
-    
-    
-    
-    //  SWITCH FOR EACH LOG LEVEL CASE...
-    switch (level)
+    return;
+}
+
+
+//  "stop_worker"
+//
+void Logger::stop_worker(void) {
     {
-        case Level::None:       {   //  0.  NONE...
-            ++counts.none;
-            break;
-        }
-        case Level::Debug:      {   //  1.  DEBUG...
-            ++counts.debug;
-            break;
-        }
-        case Level::Info:       {   //  2.  INFO...
-            ++counts.info;
-            break;
-        }
-        case Level::Warning:    {   //  3.  WARNING...
-            ++counts.warning;
-            break;
-        }
-        case Level::Exception:  {   //  4.  EXCEPTION...
-            ++counts.exception;
-            break;
-        }
-        case Level::Error:      {   //  5.  ERROR...
-            ++counts.error;
-            break;
-        }
-        case Level::Critical:   {   //  6.  ERROR...
-            ++counts.critical;
-            break;
-        }
-        
-        
-        //  99. DEFAULT CASE...
-        default:                {
-            ++counts.unknown;
-            break;
-        }
+        std::lock_guard<std::mutex> lg(m_mtx);
+        m_running = false;
     }
-    
-    
-    
-
-    return;
+    m_cv.notify_all();
+    if (m_worker.joinable()) m_worker.join();
 }
 
-*/
+
+//  "write_event"
+//
+void Logger::write_event(const LogEvent & ev)
+{
+    std::ostringstream os;
+    
+    os << '[' << HEADER << ' ';
+    os << std::left  << std::setw(MAX_LEVEL_LEN) << level_str(ev.level) << ' ';
+    os << std::right << std::setfill('0') << std::setw(COUNTER_WIDTH) << ev.count << std::setfill(' ') << ']';
+    os << "    : \"" << ev.text << "\"";
+    std::cout << os.str() << std::endl;
+    
+    return;
+}
+//
+//
+// *************************************************************************** //
+# else
+// *************************************************************************** //
+//
+//
+    void Logger::enqueue(const char *, Level )      { }
+//
+//
+//
+// *************************************************************************** //
+#endif
+    
+    
+    
+    
+//  "enable_vt_win"
+//
+#if CBAPP_LOG_ENABLED
+// *************************************************************************** //
+//
+# ifdef _WIN32
+    void Logger::enable_vt_win(void)
+    {
+        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (h == INVALID_HANDLE_VALUE) { m_colour_enabled = false; return; }
+        DWORD mode = 0;
+        if (!GetConsoleMode(h, &mode)) { m_colour_enabled = false; return; }
+        if (!(mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+            SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+    }
+# else
+    void Logger::enable_vt_win(void)    { }
+#endif  //  _WIN32
+//
+// *************************************************************************** //
+#endif
+
 
 
 
@@ -110,3 +267,76 @@ void CBLog_IMPL(const char * log, const LogLevel & level)
 // *************************************************************************** //
 //
 //  END.
+
+
+
+
+
+
+
+
+
+/*
+//  "make_header"
+//
+const char * Logger::make_header(const Level &)
+{
+    return;
+}
+
+
+//  "log_IMPL"
+//
+void Logger::log_IMPL(const char * log, const LogLevel & level)
+{
+    constexpr const char *      HEADER          = "CBLOG";
+    static LogCounter           counts          = LogCounter();
+    
+    //  SWITCH FOR EACH LOG LEVEL CASE...
+    switch (level)
+    {
+        case Level::None :          {   //  0.  NONE...
+            ++counts.none;
+            break;
+        }
+        case Level::Debug :         {   //  1.  DEBUG...
+            ++counts.debug;
+            break;
+        }
+        case Level::Info :          {   //  2.  INFO...
+            ++counts.info;
+            break;
+        }
+        case Level::Warning :       {   //  3.  WARNING...
+            ++counts.warning;
+            break;
+        }
+        case Level::Exception :     {   //  4.  EXCEPTION...
+            ++counts.exception;
+            break;
+        }
+        case Level::Error :         {   //  5.  ERROR...
+            ++counts.error;
+            break;
+        }
+        case Level::Critical :      {   //  6.  ERROR...
+            ++counts.critical;
+            break;
+        }
+        
+        
+        //  99. DEFAULT CASE...
+        default :               {
+            ++counts.unknown;
+            break;
+        }
+    }
+
+    return;
+}
+
+
+
+
+
+*/
