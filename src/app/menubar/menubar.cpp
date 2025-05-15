@@ -132,9 +132,9 @@ void MenuBar::Begin([[maybe_unused]] const char *       uuid,
 //
 void MenuBar::disp_file_menubar(void)
 {
-    ImGuiIO &       io          = ImGui::GetIO(); (void)io;
-    ImGuiStyle &    style       = ImGui::GetStyle();
-    static cblib::ndmatrix<float>  test(4,4);
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+    static cblib::ndmatrix<float>   test(4,4);
 
 
     //  1.  "New" SUB-MENU...
@@ -304,7 +304,7 @@ void MenuBar::disp_show_windows_menubar(void)
             else if (name[0] == '#')                        { name = name.erase(0, 1);       }
             if ( ImGui::MenuItem(name.c_str(), nullptr, &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
-                //S.m_rebuild_dockspace = true;
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
             }
         }
         
@@ -323,7 +323,7 @@ void MenuBar::disp_show_windows_menubar(void)
                                  nullptr,
                                  &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
-                S.m_rebuild_dockspace = true;
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
             }
         }
     //  END "Applications" SUB-MENU.
@@ -339,7 +339,7 @@ void MenuBar::disp_show_windows_menubar(void)
                                  nullptr,
                                  &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
-                S.m_rebuild_dockspace = true;
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
             }
         }
     //  END "Tools" SUB-MENU.
@@ -355,7 +355,7 @@ void MenuBar::disp_show_windows_menubar(void)
                                  nullptr,
                                  &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
-                S.m_rebuild_dockspace = true;
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
             }
         }
     //  END "Demos" SUB-MENU.

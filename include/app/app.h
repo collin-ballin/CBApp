@@ -42,16 +42,17 @@
 
 #include <string>           //  <======| std::string, ...
 #include <string_view>
+#include <format>
 #include <vector>           //  <======| std::vector, ...
 #include <stdexcept>        //  <======| ...
 #include <limits.h>
 #include <math.h>
 
 
-#ifdef DEBUG                //  <======| Fix for issue wherein multiple instances of application
+#ifdef __CBAPP_DEBUG__      //  <======| Fix for issue wherein multiple instances of application
 # include <thread>          //           are launched when DEBUG build is run inside Xcode IDE...
 # include <chrono>
-#endif     //  DEBUG  //
+#endif     //  __CBAPP_DEBUG__  //
 
 
 
@@ -68,8 +69,8 @@
 #include <GLFW/glfw3.h>     //  <======| Will drag system OpenGL headers
 
 //  [Win32]     Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
-//                  To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
-//                  Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
+//                  - To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
+//                  - Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 # pragma comment(lib, "legacy_stdio_definitions")
 #endif

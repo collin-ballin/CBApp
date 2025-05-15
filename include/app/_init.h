@@ -181,8 +181,8 @@ inline constexpr const char * get_font_path(void) {
 }
 
 inline constexpr const char *       DEF_FONT_PATH                       = get_font_path();
-inline constexpr float              DEF_FONT_SIZE                       = 14.0f;
-inline constexpr float              DEF_SMALL_FONT_SIZE                 = 9.5f;
+inline constexpr float              DEF_FONT_SIZE                       = 13.0f;
+inline constexpr float              DEF_SMALL_FONT_SIZE                 = 8.0f;
     
 
 
@@ -226,17 +226,17 @@ enum class Font_t : int {
 
 //  "FontInfo"
 //      - Simple struct to define the various properties of each font...
-#ifdef __APPLE__
+//#ifdef __APPLE__
 struct FontInfo {
     std::string         path;
     float               size;
 };
-# else
-struct FontInfo {
-    int                 rid;
-    float               size;
-};
-#endif  //  __APPLE__  //
+//  # else
+//  struct FontInfo {
+//      int                 rid;
+//      float               size;
+//  };
+//#endif  //  __APPLE__  //
 
 
 

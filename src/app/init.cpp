@@ -153,11 +153,6 @@ void App::CreateContext(void)
     this->S.m_glfw_window = utl::CreateGLFWWindow(this->S.m_window_w, this->S.m_window_h, this->S.m_windows[Window::Host].uuid.c_str(), nullptr, nullptr);
     
     
-    
-    
-    
-    
-    
     if (!this->S.m_glfw_window) {
         throw std::runtime_error(cb::error::GLFW_WINDOW_INIT_ERROR);
     }
@@ -175,8 +170,8 @@ void App::CreateContext(void)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImPlot::CreateContext();
-    ImGuiIO &       io                          = ImGui::GetIO(); (void)io;
-    ImGuiStyle &    style                       = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &      io          = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style       = ImGui::GetStyle();
 
 
     style.Colors[ImGuiCol_WindowBg].w           = 0.0f;     // host window background
@@ -225,6 +220,7 @@ void App::init_appstate(void)
     
     
     S.m_dpi_scale                       = utl::GetDPIScaling(this->S.m_glfw_window);
+    //S.m_logger.info();
     std::cout << "DPI-SCALE: \t \"" << S.m_dpi_scale << "\"." << std::endl;
     
 
@@ -357,10 +353,6 @@ void App::dispatch_window_function(const Window & uuid)
             cb::ShowMetricsWindow(          w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
-        case Window::Docking:           {
-            cb::ShowExampleAppDockSpace(    w.uuid.c_str(),     &w.open,        w.flags);
-            break;
-        }
         //
         //
         //      3.  TOOLS, DEMOS, MISC WINDOWS, ETC...
@@ -402,10 +394,10 @@ void App::dispatch_window_function(const Window & uuid)
 void App::load(void)
 {
 #ifndef __EMSCRIPTEN__
-    auto &          m_windows           = this->S.m_windows;
-    auto &          m_fonts             = this->S.m_fonts;
-    ImGuiIO &       io                  = ImGui::GetIO(); (void)io;
-    ImGuiStyle &    style               = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+    auto &                          m_windows       = this->S.m_windows;
+    auto &                          m_fonts         = this->S.m_fonts;
     
     
     
@@ -440,11 +432,11 @@ void App::load(void)
 //
 void App::init_asserts(void)
 {
-    ImGuiIO &               io                  = ImGui::GetIO(); (void)io;
-    ImGuiStyle &            style               = ImGui::GetStyle();
-    const auto &            m_windows           = this->S.m_windows;
-    const auto &            m_fonts             = this->S.m_fonts;
-    const size_t            N_WINDOWS           = static_cast<size_t>(Window::Count);
+    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
+    const auto &                    m_windows           = this->S.m_windows;
+    const auto &                    m_fonts             = this->S.m_fonts;
+    const size_t                    N_WINDOWS           = static_cast<size_t>(Window::Count);
     
 
     //  1.  ASSERT THAT ALL FONTS ARE VALID...

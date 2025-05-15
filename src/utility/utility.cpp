@@ -28,28 +28,21 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 //  "get_opengl_version"
 //
 const char * get_opengl_version(void)
-{
-    const char *    glVersionStr    = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-    
-
-    std::cout << "OpenGL version string: " << glVersionStr << "\n";
-    
-    return glVersionStr;
-}
+{  return reinterpret_cast<const char*>( glGetString(GL_VERSION) );  }
 
 
 
 //  "get_glfw_version"
 //
-const char * get_glfw_version(void)
+int get_glfw_version(char * buffer)
 {
-    int gflwMaj=0, gflwMin=0, gflwRev=0;
+    constexpr size_t    BUFFER_SIZE     = 32;
+    int                 maj             = 0,    min = 0,    rev = 0;
+    if (!buffer)    return -1;
+
     
-    glfwGetVersion(&gflwMaj, &gflwMin, &gflwRev);
-    std::cout << "GLFW version: "
-              << gflwMaj << "." << gflwMin << "." << gflwRev << "\n";
-              
-    return nullptr;
+    glfwGetVersion(&maj, &min, &rev);
+    return std::snprintf(buffer, BUFFER_SIZE, "%d.%d.%d", maj, min, rev);;
 }
 
 
@@ -114,10 +107,11 @@ void glfw_error_callback(int error, const char * description)
 //  "GetDPIScaling"
 //
 [[nodiscard]] float GetDPIScaling(GLFWwindow * window) {
-    auto    ease    = [](float x) -> float { return 2.0f / (1.0f + std::exp(-1.0f * (x - 1.0f))); };
+    //auto    ease    = [](float x) -> float { return 2.0f / (1.0f + std::exp(-1.0f * (x - 1.0f))); };
+    // return ease( std::max(xscale, yscale) );
     float   xscale  = 1.0f,     yscale  = 1.0f;
     glfwGetWindowContentScale(window, &xscale, &yscale);
-    return ease( std::max(xscale, yscale) );
+    return std::max(xscale, yscale);
 }
 
 
@@ -129,7 +123,6 @@ void glfw_error_callback(int error, const char * description)
     int                 nmonitors;
     glfwGetWindowPos(window, &wx, &wy);
     GLFWmonitor **      monitors = glfwGetMonitors(&nmonitors);
-
 
     for (int i = 0; i < nmonitors; ++i) {
         int mx, my;
@@ -331,6 +324,81 @@ ImVec2 GetImGuiWindowCoords(const char * uuid, const Anchor & anchor)
 //  1.4     WIDGET FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "DirectionalButton"
+bool DirectionalButton(
+    const char * id,
+    Anchor      direction,
+    ImVec2      size,
+    ImVec4      bg_col,
+    ImVec4      tint_col)
+{
+    // Acquire the font texture and its dimensions
+    ImGuiIO&    io     = ImGui::GetIO();  (void)io;
+    ImTextureID tex_id = io.Fonts->TexID;
+    float       texW   = static_cast<float>(io.Fonts->TexWidth);
+    float       texH   = static_cast<float>(io.Fonts->TexHeight);
+
+    // UV coordinates for a 32×32px region in the font atlas
+    const ImVec2 uv0(0.0f, 0.0f);
+    const ImVec2 uv1(32.0f / texW, 32.0f / texH);
+
+    // Fetch rotation angle from compile-time table
+    int idx = static_cast<int>(direction);
+    float angle = AnchorAngles[idx];
+
+    // Fetch frame padding from style
+    ImGuiStyle& style    = ImGui::GetStyle();
+    ImVec2      pad      = style.FramePadding;
+
+    // Compute center of button quad
+    ImVec2 pos      = ImGui::GetCursorScreenPos();
+    ImVec2 center(
+        pos.x + pad.x + size.x * 0.5f,
+        pos.y + pad.y + size.y * 0.5f
+    );
+    float cosA = cosf(angle);
+    float sinA = sinf(angle);
+    ImVec2 half = ImVec2(size.x * 0.5f, size.y * 0.5f);
+
+    // Define quad corners relative to center
+    ImVec2 rel[4] = {
+        ImVec2(-half.x, -half.y),
+        ImVec2( half.x, -half.y),
+        ImVec2( half.x,  half.y),
+        ImVec2(-half.x,  half.y)
+    };
+
+    // Rotate corners
+    ImVec2 p[4];
+    for (int i = 0; i < 4; ++i) {
+        p[i].x = center.x + rel[i].x * cosA - rel[i].y * sinA;
+        p[i].y = center.y + rel[i].x * sinA + rel[i].y * cosA;
+    }
+
+    // UVs for each corner
+    ImVec2 uvs[4] = {
+        { uv0.x, uv0.y }, { uv1.x, uv0.y },
+        { uv1.x, uv1.y }, { uv0.x, uv1.y }
+    };
+
+    // Draw the rotated quad and handle background via tint
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    dl->AddImageQuad(
+        tex_id,
+        p[0], p[1], p[2], p[3],
+        uvs[0], uvs[1], uvs[2], uvs[3],
+        ImGui::GetColorU32(tint_col)
+    );
+
+    // Advance layout (include padding) and capture click
+    ImGui::Dummy(ImVec2(
+        size.x + pad.x * 2,
+        size.y + pad.y * 2
+    ));
+    return ImGui::IsItemClicked();
+}
+
 
 //  "LeftLabel"
 //

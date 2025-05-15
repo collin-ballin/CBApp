@@ -533,7 +533,7 @@ public:
             const_pointer   ptr1    = lhs.m_data[r].data();
             const_pointer   ptr2    = rhs.m_data[r].data();
             
-            for (c=0; (c < C) && (match && good_dims); match=utl::is_close(*ptr1++, *ptr2++), ++c);
+            for (c=0; (c < C) && (match && good_dims); match=is_close(*ptr1++, *ptr2++), ++c);
             ++r;
         }
         

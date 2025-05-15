@@ -26,7 +26,7 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 //
 Logger::Logger(void) {
 #if CBAPP_LOG_ENABLED
-    enable_vt_win();
+    //enable_vt_win();
     start_worker();
 #endif
 }
@@ -229,17 +229,17 @@ void Logger::write_event(const LogEvent & ev)
 // *************************************************************************** //
 //
 # ifdef _WIN32
-    void Logger::enable_vt_win(void)
-    {
-        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        if (h == INVALID_HANDLE_VALUE) { m_colour_enabled = false; return; }
-        DWORD mode = 0;
-        if (!GetConsoleMode(h, &mode)) { m_colour_enabled = false; return; }
-        if (!(mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
-            SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    }
+    // void Logger::enable_vt_win(void)
+    // {
+    //     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    //     if (h == INVALID_HANDLE_VALUE) { m_colour_enabled = false; return; }
+    //     DWORD mode = 0;
+    //     if (!GetConsoleMode(h, &mode)) { m_colour_enabled = false; return; }
+    //     if (!(mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+    //         SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+    // }
 # else
-    void Logger::enable_vt_win(void)    { }
+    //void Logger::enable_vt_win(void)    { }
 #endif  //  _WIN32
 //
 // *************************************************************************** //
@@ -269,74 +269,3 @@ void Logger::write_event(const LogEvent & ev)
 //  END.
 
 
-
-
-
-
-
-
-
-/*
-//  "make_header"
-//
-const char * Logger::make_header(const Level &)
-{
-    return;
-}
-
-
-//  "log_IMPL"
-//
-void Logger::log_IMPL(const char * log, const LogLevel & level)
-{
-    constexpr const char *      HEADER          = "CBLOG";
-    static LogCounter           counts          = LogCounter();
-    
-    //  SWITCH FOR EACH LOG LEVEL CASE...
-    switch (level)
-    {
-        case Level::None :          {   //  0.  NONE...
-            ++counts.none;
-            break;
-        }
-        case Level::Debug :         {   //  1.  DEBUG...
-            ++counts.debug;
-            break;
-        }
-        case Level::Info :          {   //  2.  INFO...
-            ++counts.info;
-            break;
-        }
-        case Level::Warning :       {   //  3.  WARNING...
-            ++counts.warning;
-            break;
-        }
-        case Level::Exception :     {   //  4.  EXCEPTION...
-            ++counts.exception;
-            break;
-        }
-        case Level::Error :         {   //  5.  ERROR...
-            ++counts.error;
-            break;
-        }
-        case Level::Critical :      {   //  6.  ERROR...
-            ++counts.critical;
-            break;
-        }
-        
-        
-        //  99. DEFAULT CASE...
-        default :               {
-            ++counts.unknown;
-            break;
-        }
-    }
-
-    return;
-}
-
-
-
-
-
-*/

@@ -14,11 +14,13 @@
 
 ![Windows](https://img.shields.io/badge/Windows-supported-green)
 ![macOS](https://img.shields.io/badge/macOS-supported-green)
+![C++20](https://img.shields.io/badge/C%2B%2B-20%2B-blue)
 ![ImGui Docking](https://img.shields.io/badge/imgui-docking-green)
 ![GLFW](https://img.shields.io/badge/GLFW-3.3-success)
 ![OpenGL](https://img.shields.io/badge/OpenGL-3.3+-success)
-![C++20](https://img.shields.io/badge/C%2B%2B-20%2B-blue)
+![MinGW-w64 x86_64 Toolchain](https://img.shields.io/badge/toolchain-x86__64--w64--mingw32-blue)
 ![CMake](https://img.shields.io/badge/cmake-%3E%3D3.10-blue)
+![Apple Clang](https://img.shields.io/badge/Compiler-Apple%20Clang%20%3E%3D14.0-blue)
 ![Clang](https://img.shields.io/badge/clang-%3E%3D12.0-blue)
 [![Last commit](https://img.shields.io/github/last-commit/collin-ballin/CBApp.svg)](https://github.com/collin-ballin/CBApp/commits/main)
 
@@ -30,10 +32,10 @@
 
 
 
-- [1. Synopsis](#synopsis)
+- [1. Synopsis](#SYNOPSIS)
   - [Theoretical Aims](#theoretical-aims)
   - [Implementation Aims](#implementation-aims)
-- [2. Overview](#overview)
+- [2. Purpose, Goals, and Objectives](#purpose-goals-objectives)
   - [...](#theoretical-aims)
 - [3. Project Development Status](#project-development-status)
 - [4. The Technicalities...](#the-technicalities)
@@ -62,7 +64,7 @@
 
 *In this pursuit, the following items are of particular importance for this design:*
 >
-> ### *THEORETICAL AIMS*
+> ### ***THEORETICAL AIMS***
 > > - Implementation of the Finite-Difference Time-Domain (FDTD) method to model and simulate electrodynamic phenomena.
 > >
 > > - Model inhomogenaities 
@@ -70,12 +72,12 @@
 >
 >
 >
-> ### *IMPLEMENTATION AIMS*
+> ### ***IMPLEMENTATION AIMS***
 > > - Developing a robust and versitile tool to accompany those working in areas related to electrodyanmics.
 > >
 > > - Modular framework that can be easily reorganized to facilitate different simulation tasks.
 > >
-> > - Careful consideration into numerical error and particularly that of finite-precision floating point truncation error.
+> > - Careful consideration of numerical error and particularly that attributed due to finite-precision floating point truncation error.
 > >
 > > - Maintaining a high standard of runtime performance by optimizing algorithm design and implementing > efficient numerical methods and tecnhiques. 
 > >
@@ -90,10 +92,46 @@
 ---
 ---
 
-## 2. PROJECT DEVELOPMENT STATUS
+## 2. GOALS AND OBJECTIVES FOR THIS PROJECT
+
+>
+> ### ***USER-INTERFACE DESIGN***
+> > - Implementation of the Finite-Difference Time-Domain (FDTD) method to model and simulate electrodynamic phenomena.
+> >
+>
+
+
+
+> ### ***FDTD FEATURES***
+>
+> > #### [**Media and Materials:**]()
+> > - BEGIN BY Simulating $\vec{\bm{ E }}$ and $\vec{\bm{ B }}$ waves inside a homogenous, source-free region of free space ($\epsilon_{0}$)
+> > - text
+>
+>
+> > - Careful consideration of numerical stability and convergence---specifically the Courant-Fredrichs-Lewy ([CFL](https://en.wikipedia.org/wiki/Courant%E2%80%93Friedrichs%E2%80%93Lewy_condition)) required for solutions to converge under the [FDTD](https://www.ansys.com/blog/what-is-fdtd#:~:text=The%20finite%2Ddifference%20time%2Ddomain,devices%2C%20processes%2C%20and%20materials.) method.
+>
+>
+>
+>
+> ### *IMPLEMENTATION AIMS*
+> > - Developing a robust and versitile tool to accompany those working in areas related to electrodyanmics.
+> >
+> >
+> 
+
+
+
+
+
+
+---
+---
+
+## 3. PROJECT DEVELOPMENT STATUS
 
 <p align="center">
-  <img src="docs/My_Docs/heatmap_1.png"
+  <img src="docs/My_Docs/gifs/slideshow_1.gif"
        alt="heatmap-1"
        width="97.5%" />
   <br>

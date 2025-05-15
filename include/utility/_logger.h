@@ -37,20 +37,25 @@
 #include <string_view>
 
 // ---------- compile‑time enable switch ----------
-#ifdef __CBAPP_LOG__
+//#ifdef __CBAPP_LOG__
     #define CBAPP_LOG_ENABLED 1
-#else
-    #define CBAPP_LOG_ENABLED 0
-#endif
+// #else
+//     #define CBAPP_LOG_ENABLED 0
+// #endif
 
-#if CBAPP_LOG_ENABLED
+#ifdef _WIN32
+    #include<windows.h>
+#endif  //  _WIN32  //
+
+
+//#if CBAPP_LOG_ENABLED
     #include <queue>
     #include <thread>
     #include <mutex>
     #include <condition_variable>
     #include <atomic>
     #include <array>
-#endif
+//#endif
 
 
 //  0.3     "DEAR IMGUI" HEADERS...
@@ -137,7 +142,29 @@ public:
     void                    exception                   (const char * );
     void                    error                       (const char * );
     void                    critical                    (const char * );
+    
+    template<class... Args>
+    inline void             debugf                      (std::format_string<Args...> f, Args&&... a)    { logf(Level::Debug,        f, std::forward<Args>(a)...);   }
+    template<class... Args>
+    inline void             infof                       (std::format_string<Args...> f, Args&&... a)    { logf(Level::Info,         f, std::forward<Args>(a)...);   }
+    template<class... Args>
+    inline void             warningf                    (std::format_string<Args...> f, Args&&... a)    { logf(Level::Warning,      f, std::forward<Args>(a)...);   }
+    template<class... Args>
+    inline void             exceptionf                  (std::format_string<Args...> f, Args&&... a)    { logf(Level::Exception,    f, std::forward<Args>(a)...);  }
+    template<class... Args>
+    inline void             errorf                      (std::format_string<Args...> f, Args&&... a)    { logf(Level::Error,        f, std::forward<Args>(a)...);   }
+    template<class... Args>
+    inline void             criticalf                   (std::format_string<Args...> f, Args&&... a)    { logf(Level::Critical,     f, std::forward<Args>(a)...);   }
 
+    template<class... Args>
+    inline void             logf                        (Level lvl, std::format_string<Args...> fmt, Args&&... args) {
+    #if CBAPP_LOG_ENABLED
+        std::string msg = std::format(fmt, std::forward<Args>(args)...);
+        log(msg.c_str(), lvl);
+    #else
+            (void)fmt; (void)sizeof...(args);
+    #endif
+    }
 
                         
     //  1.3                 Public Utility Functions...
@@ -206,7 +233,7 @@ protected:
     void                    start_worker                    (void);
     void                    stop_worker                     (void);
     static void             write_event                     (const LogEvent & ev);
-    void                    enable_vt_win                   (void);
+    //void                    enable_vt_win                   (void);
     
     
 

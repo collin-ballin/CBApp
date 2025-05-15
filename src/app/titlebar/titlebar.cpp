@@ -61,8 +61,8 @@ void TitleBar::Begin([[maybe_unused]] const char *       uuid,
                      [[maybe_unused]] bool *             p_open,
                      [[maybe_unused]] ImGuiWindowFlags   flags)
 {
-    ImGuiIO &               io                      = ImGui::GetIO(); (void)io;
-    ImGuiStyle &            style                   = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
     
     
     //  DRAW THE FLOATING, TITLEBAR MENU...
@@ -99,7 +99,7 @@ void TitleBar::Begin([[maybe_unused]] const char *       uuid,
 //
 void TitleBar::ValidateCache(void)
 {
-    ImGuiStyle &            style               = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiStyle &   style       = ImGui::GetStyle();
     this->m_invalid_cache                       = false;
     
     ImVec2                  window_padding      = style.WindowPadding;    // padding between window border and contents
@@ -133,12 +133,39 @@ void TitleBar::ValidateCache(void)
 //
 void TitleBar::ShoWTitleBarWindow(void)
 {
-    //  Draw the SIDEBAR COLLAPSE Button...
-    if ( ImGui::Button(this->S.m_show_sidebar_window ? ms_CLOSE_TEXT : ms_OPEN_TEXT) ) {
-        S.m_windows[ Window::SideBar ].open = !S.m_windows[ Window::SideBar ].open;
-        this->S.m_show_sidebar_window       = !this->S.m_show_sidebar_window;
-        this->S.m_sidebar_ratio             = this->S.m_show_sidebar_window ? app::DEF_SB_OPEN_WIDTH : 0.0f;
+
+    [[maybe_unused]] ImGuiIO &      io          = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style       = ImGui::GetStyle();
+    ImTextureID                     my_tex_id   = io.Fonts->TexID;
+    float                           my_tex_w    = (float)io.Fonts->TexWidth;
+    float                           my_tex_h    = (float)io.Fonts->TexHeight;
+    int                             i           = 0;
+
+
+
+    
+    // 2)   East-facing arrow with 2px padding and a red tint
+    //
+    //  Example usage:
+    //  Inside your ImGui frame:
+    const char *        uuid        = "##CollapseTab";
+    ImVec2              size        = ImVec2(20.0f, 20.0f);
+    
+    
+    if ( utl::DirectionalButton(uuid, this->S.m_show_sidebar_window ? Anchor::East : Anchor::West, size) ) {
+        S.m_windows[ Window::SideBar ].open     = !S.m_windows[ Window::SideBar ].open;
+        this->S.m_show_sidebar_window           = !this->S.m_show_sidebar_window;
+        this->S.m_sidebar_ratio                 = this->S.m_show_sidebar_window ? app::DEF_SB_OPEN_WIDTH : 0.0f;
     }
+    
+
+
+    //  Draw the SIDEBAR COLLAPSE Button...
+    //  if ( ImGui::Button(this->S.m_show_sidebar_window ? ms_CLOSE_TEXT : ms_OPEN_TEXT) ) {
+    //      S.m_windows[ Window::SideBar ].open = !S.m_windows[ Window::SideBar ].open;
+    //      this->S.m_show_sidebar_window       = !this->S.m_show_sidebar_window;
+    //      this->S.m_sidebar_ratio             = this->S.m_show_sidebar_window ? app::DEF_SB_OPEN_WIDTH : 0.0f;
+    //  }
 
     return;
 }

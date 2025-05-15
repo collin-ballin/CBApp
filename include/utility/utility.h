@@ -1,3 +1,9 @@
+/**
+ * @file    utility.h
+ * @brief   General utilities for CBApp application.
+ * @author  Collin A. Bond
+ * @date    2025-04-16
+ */
 /***********************************************************************************
 *
 *       ********************************************************************
@@ -105,6 +111,20 @@ enum class Anchor {
     COUNT
 };
 
+//  "AnchorAngles"
+//
+inline constexpr std::array<float, 9>   AnchorAngles = {
+    0.0f,                // Center (same as North)
+    IM_PI * 0.5f,        // East
+    IM_PI * 0.25f,       // NorthEast
+    0.0f,                // North
+    -IM_PI * 0.25f,      // NorthWest
+    -IM_PI * 0.5f,       // West
+    -IM_PI * 0.75f,      // SouthWest
+    IM_PI,               // South
+    IM_PI * 0.75f        // SouthEast
+};
+
 
 
 // *************************************************************************** //
@@ -199,7 +219,7 @@ parse_packet(std::string_view line)
 // *************************************************************************** //
 void                            HelpMarker                  (const char * desc);
 const char *                    get_opengl_version          (void);
-const char *                    get_glfw_version            (void);
+int                             get_glfw_version            (char * );
 
 
 
@@ -229,6 +249,11 @@ ImVec2                          GetImGuiWindowCoords        (const char * , cons
 
 //      1.4     WIDGET FUNCTIONS...
 // *************************************************************************** //
+bool                            DirectionalButton           (const char * id,   Anchor ,  ImVec2 size,
+                                                             ImVec4 bg_col      = ImVec4(0.0f,  0.0f,   0.0f,   1.0f),
+                                                             ImVec4 tint_col    = ImVec4(1.0f,  1.0f,   1.0f,   1.0f) );
+                                                             
+
 void                            LeftLabel                   (const char * ,
                                                              const float label_width = 150.0f,
                                                              const float widget_width = 250.0f);

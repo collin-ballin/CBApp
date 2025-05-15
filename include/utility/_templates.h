@@ -85,7 +85,11 @@ inline T RandomRange(T min, T max) {
 }
 
 
-//  "ScrollingBuffer"
+
+
+
+
+//  **OLD IMPLEMENTATION**      "ScrollingBuffer"
 //      Utility structure for realtime plot.
 //
 struct ScrollingBuffer {

@@ -65,8 +65,8 @@ void SideBar::Begin([[maybe_unused]] const char *       uuid,
                     [[maybe_unused]] bool *             p_open,
                     [[maybe_unused]] ImGuiWindowFlags   flags)
 {
-    ImGuiIO &               io                      = ImGui::GetIO(); (void)io;
-    ImGuiStyle &            style                   = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
     
     
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
@@ -105,7 +105,7 @@ void SideBar::Display_Preferences_Menu(void)
     static const ImVec2         TABBAR_SPACE    = ImVec2(0, 2 * style.WindowPadding.y);
     
     
-    ImGui::Dummy( TABBAR_SPACE );  //  Make space for the CLOSE-SIDEBAR button...
+    //ImGui::Dummy( TABBAR_SPACE );  //  Make space for the CLOSE-SIDEBAR button...
     ImGui::SeparatorText("System Preferences");
 
     //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
@@ -144,12 +144,12 @@ void SideBar::Display_Preferences_Menu(void)
 //
 void SideBar::disp_appearance_mode(void)
 {
-    ImGuiIO &                   io              = ImGui::GetIO(); (void)io;
-    ImGuiStyle &                style           = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
 
-    static bool                 init            = true;
-    ImGuiStyle *                ref             = nullptr;
-    static ImGuiStyle           ref_saved_style;
+    static bool                     init            = true;
+    ImGuiStyle *                    ref             = nullptr;
+    static ImGuiStyle               ref_saved_style;
     
     
     //  Style Mode Slider...
@@ -247,8 +247,8 @@ void SideBar::disp_performance_metrics(void) {
     using float_t                                       = float;
     using int_t                                         = int;
     
-    ImGuiIO &                       io                  = ImGui::GetIO(); (void)io;
-    ImGuiStyle &                    style               = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
     ImGuiContext &                  g                   = *GImGui;
     ImGuiMetricsConfig *            cfg                 = &g.DebugMetricsConfig;
     
@@ -267,10 +267,10 @@ void SideBar::disp_performance_metrics(void) {
     static ImPlotAxisFlags          flags               = ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoSideSwitch |
                                                           ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_LockMin;
                                                           
-    constexpr const char *          fps_fmt             = "Average Framerate: %.3f ms/frame (%.1f FPS)";    //  FORMAT STRINGS.
+    constexpr const char *          fps_fmt             = "Avg. Framerate: %.3f ms/frame (%.1f FPS)";    //  FORMAT STRINGS.
     constexpr const char *          window_fmt          = "%d Visible Windows";
-    constexpr const char *          vertex_fmt          = "%d Vertices, %d Indices (%.1f triangles)";
-    constexpr const char *          memory_fmt          = "%d Current Memory Allocations";
+    constexpr const char *          vertex_fmt          = "%d Vertices.  %d Indices.  %.1f Triangles.";
+    constexpr const char *          memory_fmt          = "%d Memory Allocations";
     
     
     
@@ -317,6 +317,7 @@ void SideBar::disp_performance_metrics(void) {
     fps_ct                      = static_cast<int_t>(io.Framerate);
     vertex_ct                   = static_cast<int_t>(io.MetricsRenderVertices);
     index_ct                    = static_cast<float_t>(io.MetricsRenderIndices);
+    triangle_ct                 = static_cast<float_t>(vertex_ct / 3.0f);
     window_ct                   = io.MetricsRenderWindows;
     allocation_ct               = g.DebugAllocInfo.TotalAllocCount - g.DebugAllocInfo.TotalFreeCount;
 
@@ -359,7 +360,8 @@ void SideBar::disp_performance_metrics(void) {
         if (!ImGui::TreeNode("Plots")) {
             this->m_show_perf_plots = false;
         }
-        else {
+        else
+        {
             this->m_show_perf_plots = true;
             
             //      2A.     FRAMERATE...

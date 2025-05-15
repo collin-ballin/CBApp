@@ -125,8 +125,8 @@ void App::run(void)
 //
 void App::run_IMPL(void)
 {
-    static ImGuiIO &                io                  = ImGui::GetIO(); (void)io;
-    static ImGuiStyle &             style               = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
     static size_t                   idx                 = static_cast<size_t>(0);
     static const size_t &           WINDOWS_BEGIN       = this->S.ms_WINDOWS_BEGIN;   // static_cast<size_t>(Window::Sidebar);
     static const size_t &           WINDOWS_END         = this->S.ms_WINDOWS_END;     // static_cast<size_t>(Window::Count);
@@ -188,7 +188,7 @@ void App::run_IMPL(void)
 
 
     //          1.2     Certain Calls need to RE-BUILD the DOCKING SPACE.
-    if (S.m_rebuild_dockspace) {
+    if (S.m_rebuild_dockspace) [[unlikely]] {
         this->RebuildDockLayout();
         S.m_rebuild_dockspace = false;
     }
@@ -355,32 +355,63 @@ void App::ShowDockspace([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 //
 void App::RebuildDockLayout(void)
 {
+    app::WinInfo &           winfo               = S.m_windows[static_cast<Window>(0)];
+    
     //  1.  CLEAR EXISTING DOCK LAYOUT...
-    ImGui::DockBuilderRemoveNode    (this->S.m_dockspace_id);
-    ImGui::DockBuilderAddNode       (this->S.m_dockspace_id,        ImGuiDockNodeFlags_DockSpace);
-    ImGui::DockBuilderSetNodeSize   (this->S.m_dockspace_id,        S.m_main_viewport->WorkSize);
+    //  ImGui::DockBuilderRemoveNode    (this->S.m_dockspace_id);
+    //  ImGui::DockBuilderAddNode       (this->S.m_dockspace_id,        ImGuiDockNodeFlags_DockSpace);
+    //  ImGui::DockBuilderSetNodeSize   (this->S.m_dockspace_id,        S.m_main_viewport->WorkSize);
 
-    //  2.  CREATE SPLIT-DOCK NODES...
-    ImGui::DockBuilderSplitNode     (this->S.m_dockspace_id,        ImGuiDir_Left,          this->S.m_sidebar_ratio,
-                                     &S.m_sidebar_dock_id,          &S.m_main_dock_id);
+    //  //  2.  CREATE SPLIT-DOCK NODES...
+    //  ImGui::DockBuilderSplitNode     (this->S.m_dockspace_id,        ImGuiDir_Left,          this->S.m_sidebar_ratio,
+    //                                   &S.m_sidebar_dock_id,          &S.m_main_dock_id);
 
 
     //  3.  INSERT THE "CORE" WINDOWS INTO DOCK...
-    ImGui::DockBuilderDockWindow    (S.m_windows[Window::SideBar].uuid.c_str(),
-                                     S.m_sidebar_dock_id);
+    ImGui::DockBuilderDockWindow    (S.m_windows[Window::SideBar].uuid.c_str(),     S.m_sidebar_dock_id);
+    ImGui::DockBuilderDockWindow    (S.m_windows[Window::MainApp].uuid.c_str(),     S.m_main_dock_id);
+
 
     //  4.  INSERT ALL REMAINING WINDOWS INTO RIGHT-SIDE DOCK...
-    for (const std::string & win_name : this->S.m_primary_windows)
-    {
-        ImGui::DockBuilderDockWindow(win_name.c_str(), S.m_main_dock_id);
+    for (size_t idx = S.ms_APP_WINDOWS_BEGIN; idx < S.ms_WINDOWS_END; ++idx) {
+        winfo           = S.m_windows[ static_cast<Window>(idx) ];
+        if (winfo.open) {
+            ImGui::DockBuilderDockWindow( winfo.uuid.c_str(), S.m_main_dock_id );
+        }
     }
 
-    ImGui::DockBuilderFinish(this->S.m_dockspace_id);
     return;
 }
 
 
 
+//  void App::RebuildDockLayoutOLD(void)
+//  {
+//
+//      //  1.  CLEAR EXISTING DOCK LAYOUT...
+//      ImGui::DockBuilderRemoveNode    (this->S.m_dockspace_id);
+//      ImGui::DockBuilderAddNode       (this->S.m_dockspace_id,        ImGuiDockNodeFlags_DockSpace);
+//      ImGui::DockBuilderSetNodeSize   (this->S.m_dockspace_id,        S.m_main_viewport->WorkSize);
+//
+//      //  2.  CREATE SPLIT-DOCK NODES...
+//      ImGui::DockBuilderSplitNode     (this->S.m_dockspace_id,        ImGuiDir_Left,          this->S.m_sidebar_ratio,
+//                                       &S.m_sidebar_dock_id,          &S.m_main_dock_id);
+//
+//
+//      //  3.  INSERT THE "CORE" WINDOWS INTO DOCK...
+//      ImGui::DockBuilderDockWindow    (S.m_windows[Window::SideBar].uuid.c_str(),     S.m_sidebar_dock_id);
+//
+//
+//      //  4.  INSERT ALL REMAINING WINDOWS INTO RIGHT-SIDE DOCK...
+//      for (const std::string & win_name : this->S.m_primary_windows)
+//      {
+//          ImGui::DockBuilderDockWindow(win_name.c_str(), S.m_main_dock_id);
+//      }
+//
+//      ImGui::DockBuilderFinish(this->S.m_dockspace_id);
+//
+//      return;
+//  }
 
 
 
@@ -522,8 +553,8 @@ void App::stream_test()
 //
 void App::color_tool()
 {
-    ImGuiIO &                       io                      = ImGui::GetIO(); (void)io;
-    ImGuiStyle &                    style                   = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &      io                      = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style                   = ImGui::GetStyle();
 
     static ImVec4                   base_color              = ImVec4(114.0f/255.0f, 144.0f/255.0f, 154.0f/255.0f, 1.0f);    //  Base color in RGB (normalized to [0,1]).
     static char                     hex_input[8+1]          = "#728C9A";    //  Hex input for base color.
