@@ -117,7 +117,7 @@ void  Logger::set_level(const Level & level)    { this->m_threshold = level; }
 
 //  "get_level"
 //
-Logger::Level Logger::get_level(void) const             { return m_threshold; }
+Logger::Level Logger::get_level(void) const     { return m_threshold; }
 
 
 

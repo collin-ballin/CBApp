@@ -214,12 +214,16 @@ protected:
     //  DATA...
     std::array< std::size_t, static_cast<int>(Level::Count) >
                                             m_counts                    = { };
-    Level                                   m_threshold                 = Level::None;
     std::queue<LogEvent>                    m_queue;
     std::mutex                              m_mtx;
     std::condition_variable                 m_cv;
     std::thread                             m_worker;
     std::atomic<bool>                       m_running{false};
+#if defined(__CBAPP_DEBUG__) || defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__)
+    Level                                   m_threshold                 = Level::Debug;
+# else
+    Level                                   m_threshold                 = Level::Warning;
+#endif  //  __CBAPP_DEBUG__ || __CBLIB_RELEASE_WITH_DEBUG_INFO__  //
     
     
     //  2.B                 PROTECTED MEMBER FUNCTIONS...

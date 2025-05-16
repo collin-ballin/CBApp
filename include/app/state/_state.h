@@ -317,6 +317,7 @@ struct AppState
     //  2.      MISC. INFORMATION...
     bool                                m_enable_vsync              = true;
     const char *                        m_glsl_version              = nullptr;
+    LogLevel                            m_LogLevel                  = LogLevel::Debug;
     
     
     

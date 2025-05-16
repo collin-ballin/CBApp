@@ -179,7 +179,7 @@ void GraphingApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
     //  3.  CREATE BOTTOM WINDOW FOR CONTROLS...
     //ImGui::SetNextWindowClass(&this->m_window_class);
     ImGui::Begin(m_plot_win_uuid, p_open, m_docked_win_flags);
-        //this->etch_a_sketch();
+        this->etch_a_sketch();
         this->test_table();
         //this->display_plot_panel();
     ImGui::End();

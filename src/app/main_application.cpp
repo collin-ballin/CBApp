@@ -41,7 +41,7 @@ void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
     
     
     //  DIMENSIONS...
-    static ImVec2                   base_img_size           = ImVec2(60 * S.m_dpi_scale,    60 * S.m_dpi_scale);
+    static ImVec2                   base_img_size           = ImVec2(180 * S.m_dpi_scale,   180 * S.m_dpi_scale);
     static ImVec2                   palette_img_size        = ImVec2(30 * S.m_dpi_scale,    30 * S.m_dpi_scale);
     static float                    LABEL_COLUMN_WIDTH      = 150.0f * S.m_dpi_scale;
     static float                    WIDGET_COLUMN_WIDTH     = 300.0f * S.m_dpi_scale;
@@ -63,8 +63,8 @@ void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 
     //              COLOR-INPUT FLAGS...
     static ImGuiColorEditFlags      COLOR_INPUT_FLAGS       = ImGuiColorEditFlags_None | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSmallPreview; //ImGuiColorEditFlags_NoAlpha
-    //              COLOR-IMAGE FLAGS...
-    static ImGuiColorEditFlags      BASE_IMG_FLAGS          = ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs; //ImGuiColorEditFlags_NoAlpha
+    //              COLOR-IMAGE FLAGS...    ImGuiColorEditFlags_AlphaPreviewHalf
+    static ImGuiColorEditFlags      BASE_IMG_FLAGS          = ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs;    // ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs; //ImGuiColorEditFlags_NoAlpha
     static ImGuiColorEditFlags      PALETTE_IMG_FLAGS       = ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoOptions; //ImGuiColorEditFlags_NoAlpha
     
 
@@ -72,7 +72,9 @@ void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 
     
     //  1.  PREVIEW OF BASE COLOR...
-    ImGui::ColorButton("##BaseColorImage",  base_color,     BASE_IMG_FLAGS,    base_img_size);
+    //ImGui::ColorButton("##BaseColorImage",  base_color,     BASE_IMG_FLAGS,    base_img_size);
+    ImGui::SetNextItemWidth(base_img_size.x);
+    ImGui::ColorPicker4("##BaseColorImage",  (float*)&base_color,     BASE_IMG_FLAGS); //,    base_img_size);
 
 
     //  1.  TABLE OF WIDGETS...
@@ -84,28 +86,6 @@ void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
         ImGui::TableSetupColumn("Label",  col0_flags, LABEL_COLUMN_WIDTH);
         ImGui::TableSetupColumn("Widget", col1_flags, stretch_column_1 ? 1.0f : WIDGET_COLUMN_WIDTH);
         // ImGui::TableHeadersRow();
-
-
-        //  1A.     BASE-COLOR [HEX INPUT]...
-        //  ImGui::TableNextRow();      ImGui::TableSetColumnIndex(0);      ImGui::AlignTextToFramePadding();
-        //  ImGui::TextUnformatted("Base Color (Hex)");
-        //  ImGui::TableSetColumnIndex(1);
-        //  //ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-        //  ImGui::InputText("##hex_input", hex_input, IM_ARRAYSIZE(hex_input));
-        //  ImGui::SameLine();
-        //  if (ImGui::Button("Apply Hex")) {
-        //      std::string hex = hex_input;
-        //      if (!hex.empty() && hex.front() == '#') hex.erase(0, 1);
-        //      unsigned int rgb = 0;
-        //      std::stringstream ss;
-        //      ss << std::hex << hex;
-        //      ss >> rgb;
-        //      base_color.x = ((rgb >> 16) & 0xFF) / 255.0f;
-        //      base_color.y = ((rgb >>  8) & 0xFF) / 255.0f;
-        //      base_color.z = ( rgb        & 0xFF) / 255.0f;
-        //  }
-
-
         
 
         //  1A.     BASE-COLOR [Hex INPUT]...
@@ -152,7 +132,7 @@ void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
         //  3.      NUMBER-OF-STEPS...
         ImGui::TableNextRow();  ImGui::TableSetColumnIndex(0);  ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted("Steps");
-        ImGui::TableSetColumnIndex(1);
+        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
         ImGui::SliderInt("##steps", &steps, 2, 10);
 
 
@@ -160,20 +140,22 @@ void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
         ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Lightness Amount");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::SliderFloat("##delta_l", &delta_l, 0.01f, 0.5f, "%.2f");
+        ImGui::TextUnformatted("Shading Amount");
+        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
+        ImGui::SliderFloat("##delta_l", &delta_l, 0.01f, 0.5f, "%.2f%%");
 
         ImGui::EndTable();
     }
 
 
+    ImGui::NewLine();
+    ImGui::SeparatorText("Color Palette");
+
     //  GENERATE THE COLOR PALETTE...
-    //  3.  Generate palette table for shades and tints
     //  3.  Helper: color button with tooltip & copy-on-click
-    auto color_button_with_tooltip = [&](std::string id, const ImVec4 &col)
+    auto color_button_with_tooltip = [&](const char * id, const ImVec4 & col)
     {
-        ImGui::ColorButton(id.c_str(), col, PALETTE_IMG_FLAGS, palette_img_size);
+        ImGui::ColorButton(id, col, PALETTE_IMG_FLAGS, palette_img_size);
         if (ImGui::IsItemHovered())
         {
             char hex_buf[8];
@@ -190,47 +172,112 @@ void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
         }
     };
 
-    //  4.  Generate palette table with header, shades, and tints
-    float h, s, l;
+    //  4.  Generate palette table with fixed first column and stretch others
+    float           h, s, l;
+    float           cr, cg, cb;
     ImGui::ColorConvertRGBtoHSV(base_color.x, base_color.y, base_color.z, h, s, l);
-
-    if (ImGui::BeginTable("ColorPalette", steps, table_flags))
+    float           h_comp          = fmodf(h + 0.5f, 1.0f);
+    ImGui::ColorConvertHSVtoRGB(h_comp, s, l, cr, cg, cb);
+    ImVec4          comp_color      = ImVec4(cr, cg, cb, base_color.w);
+    int             cols            = steps + 1; // extra for row labels
+    static float    C_WIDTH         = -1.0f;
+        
+    ImGui::ColorConvertRGBtoHSV(base_color.x, base_color.y, base_color.z, h, s, l);
+    if (ImGui::BeginTable("ColorPalette", cols, table_flags))
     {
-        // Header row: amount of lightness change
+        // Setup columns: fixed label col, then stretch columns for swatches
+        //  ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, LABEL_COLUMN_WIDTH);
+        ImGui::TableSetupColumn("Type",     col0_flags,     LABEL_COLUMN_WIDTH);
+        
+        C_WIDTH    = (1/steps) * ImGui::GetContentRegionAvail().x;
+        
+        
+        for (int i = 0; i < steps; ++i)
+            ImGui::TableSetupColumn( ("##col" + std::to_string(i)).c_str(), ImGuiTableColumnFlags_None, C_WIDTH);     //ImGuiTableColumnFlags_WidthStretch ImGuiTableColumnFlags_WidthFixed
+
+
+        // Header row: lightness change
         ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextUnformatted("");
         for (int i = 0; i < steps; ++i)
         {
-            ImGui::TableSetColumnIndex(i);
-            char label[16];
-            if (i == 0)
-                strcpy(label, "0%");
-            else
-                snprintf(label, sizeof(label), "%.0f%%", i * delta_l * 100.0f);
-            ImGui::TextUnformatted(label);
+            ImGui::TableSetColumnIndex(i + 1);
+            char hdr[16];
+            if (i == 0) strcpy(hdr, "0%"); else snprintf(hdr, sizeof(hdr), "%.0f%%", i * delta_l * 100.0f);
+            ImGui::TextUnformatted(hdr);
         }
-        // Shades row (first column = base color)
+
+        // Shades row
         ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextUnformatted("Shades");
         for (int i = 0; i < steps; ++i)
         {
-            ImGui::TableSetColumnIndex(i);
+            ImGui::TableSetColumnIndex(i + 1);
             float new_l = ImClamp(l - i * delta_l, 0.0f, 1.0f);
             float r, g, b;
             ImGui::ColorConvertHSVtoRGB(h, s, new_l, r, g, b);
-            color_button_with_tooltip("##shade" + std::to_string(i), ImVec4(r, g, b, base_color.w));
+            color_button_with_tooltip(("##shade" + std::to_string(i)).c_str(), ImVec4(r, g, b, base_color.w));
+            ImGui::SameLine();
+            char hex[8]; snprintf(hex, sizeof(hex), "#%02X%02X%02X", int(r*255), int(g*255), int(b*255));
+            ImGui::TextUnformatted(hex);
         }
-        // Tints row (first column = base color)
+
+        // Tints row
         ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextUnformatted("Tints");
         for (int i = 0; i < steps; ++i)
         {
-            ImGui::TableSetColumnIndex(i);
+            ImGui::TableSetColumnIndex(i + 1);
             float new_l = ImClamp(l + i * delta_l, 0.0f, 1.0f);
             float r, g, b;
             ImGui::ColorConvertHSVtoRGB(h, s, new_l, r, g, b);
-            color_button_with_tooltip("##tint" + std::to_string(i), ImVec4(r, g, b, base_color.w));
+            color_button_with_tooltip(("##tint" + std::to_string(i)).c_str(), ImVec4(r, g, b, base_color.w));
+            ImGui::SameLine();
+            char hex[8]; snprintf(hex, sizeof(hex), "#%02X%02X%02X", int(r*255), int(g*255), int(b*255));
+            ImGui::TextUnformatted(hex);
         }
+
+        // Complementary Shades row
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextUnformatted("Comp Shades");
+        for (int i = 0; i < steps; ++i)
+        {
+            ImGui::TableSetColumnIndex(i + 1);
+            float new_l = ImClamp(l - i * delta_l, 0.0f, 1.0f);
+            float r, g, b;
+            ImGui::ColorConvertHSVtoRGB(h_comp, s, new_l, r, g, b);
+            color_button_with_tooltip(("##cshade" + std::to_string(i)).c_str(), ImVec4(cr * (1 - float(i) / steps) + r * (float(i) / steps),
+                                                                                   cg * (1 - float(i) / steps) + g * (float(i) / steps),
+                                                                                   cb * (1 - float(i) / steps) + b * (float(i) / steps), base_color.w));
+            ImGui::SameLine();
+            char hex[8]; snprintf(hex, sizeof(hex), "#%02X%02X%02X", int(r*255), int(g*255), int(b*255));
+            ImGui::TextUnformatted(hex);
+        }
+
+        // Complementary Tints row
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextUnformatted("Comp Tints");
+        for (int i = 0; i < steps; ++i)
+        {
+            ImGui::TableSetColumnIndex(i + 1);
+            float new_l = ImClamp(l + i * delta_l, 0.0f, 1.0f);
+            float r, g, b;
+            ImGui::ColorConvertHSVtoRGB(h_comp, s, new_l, r, g, b);
+            color_button_with_tooltip(("##ctint" + std::to_string(i)).c_str(), ImVec4(cr * (1 - float(i) / steps) + r * (float(i) / steps),
+                                                                                   cg * (1 - float(i) / steps) + g * (float(i) / steps),
+                                                                                   cb * (1 - float(i) / steps) + b * (float(i) / steps), base_color.w));
+            ImGui::SameLine();
+            char hex[8]; snprintf(hex, sizeof(hex), "#%02X%02X%02X", int(r*255), int(g*255), int(b*255));
+            ImGui::TextUnformatted(hex);
+        }
+
         ImGui::EndTable();
     }
-    
     
     ImGui::End();
     

@@ -219,15 +219,15 @@ void App::init_appstate(void)
     auto [m_sys_width, m_sys_height]    = utl::GetMonitorDimensions(this->S.m_glfw_window);
     bool            good_fonts          = true;
     
-    
     S.m_dpi_scale                       = utl::GetDPIScaling(this->S.m_glfw_window);
     S.m_dpi_fontscale                   = S.m_dpi_scale;
 #ifdef CBAPP_USE_FONTSCALE_DPI
     S.m_dpi_fontscale                   = cblib::round_to<3>( utl::GetDPIFontScaling(this->S.m_glfw_window) );
 #endif  //  CBAPP_USE_FONTSCALE_DPI  //
 
-    S.m_logger.info( std::format("DPI Scale={}", S.m_dpi_scale) );
-    //std::cout << "DPI-SCALE: \t \"" << S.m_dpi_scale << "\"." << std::endl;
+
+    S.m_logger.info( std::format("DPI Scale={}",        S.m_dpi_scale) );
+    S.m_logger.info( std::format("DPI Fontcale={}",     S.m_dpi_fontscale) );
     
 
 

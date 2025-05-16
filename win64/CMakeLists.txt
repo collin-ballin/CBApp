@@ -34,7 +34,13 @@ add_library(cb_defines INTERFACE)
 target_compile_definitions(cb_defines INTERFACE _CBLIB_LOG $<$<CONFIG:Debug>:__CBAPP_DEBUG__>)
 
 add_library(cb_warnings INTERFACE)
-target_compile_options(cb_warnings INTERFACE -Wall -Wextra -Wpedantic -Wshadow)
+target_compile_options(cb_warnings INTERFACE
+    -Wall -Wextra -Wpedantic -Wshadow
+    -Wno-unused-variable
+    -Wno-sign-compare
+    -Wno-template-body
+    #-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion
+)
 
 
 

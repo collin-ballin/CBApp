@@ -101,7 +101,7 @@ inline constexpr ImVec4             DEF_INVISIBLE_COLOR                 = ImVec4
 //                              B.  WINDOW COLORS.
 inline constexpr ImVec4             DEF_ROOT_WIN_BG                     = ImVec4(0.000f,    0.000f,     0.000f,     0.000f);
 inline constexpr ImVec4             DEF_SIDEBAR_WIN_BG                  = ImVec4(0.192f,    0.192f,     0.192f,     1.000f);
-inline constexpr ImVec4             DEF_TITLEBAR_WIN_BG                 = ImVec4(0.999f,    0.999f,     0.999f,     0.500f);
+inline constexpr ImVec4             DEF_TITLEBAR_WIN_BG                 = ImVec4(0.000f,    0.000f,     0.000f,     0.500f);
 inline constexpr ImVec4             DEF_MAIN_WIN_BG                     = ImVec4(0.125f,    0.133f,     0.141f,     1.000f);
 
   
@@ -191,7 +191,7 @@ inline constexpr const char *       DEF_FONT_PATH                       = get_fo
 // *************************************************************************** //
 // *************************************************************************** //
 inline constexpr float              DEF_FONT_SIZE                       = 13.0f;
-inline constexpr float              DEF_SMALL_FONT_SIZE                 = 10.0f;
+inline constexpr float              DEF_SMALL_FONT_SIZE                 = 11.0f;
 inline constexpr float              DEF_FOOTNOTE_FONT_SIZE              = 8.0f;
 
 

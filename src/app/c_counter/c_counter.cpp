@@ -433,14 +433,13 @@ void CCounterApp::display_controls(void)
                     //  CASE 2 :    SCRIPT  **IS**  RUNNING...
                     else
                     {
-                        ImGui::PushStyleColor(ImGuiCol_Button, app::DEF_APPLE_RED );
+                        ImGui::PushStyleColor(ImGuiCol_Button,          ImVec4(0.800f, 0.216f, 0.180f, 1.00f) );
+                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   app::DEF_APPLE_RED );
                         if (ImGui::Button("Stop Process", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
                             proc.stop();
                             started = false;
                         }
-                        ImGui::SameLine();
-                        ImGui::TextDisabled("(running)");
-                        ImGui::PopStyleColor();
+                        ImGui::PopStyleColor(2);
                     }
                 //
                 ImGui::Dummy( ImVec2(pad, 0.0f) );
