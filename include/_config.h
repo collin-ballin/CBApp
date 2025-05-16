@@ -55,11 +55,13 @@
 // *************************************************************************** //
 //#define     CBAPP_USE_VIEWPORT                          1               //  Debug util.  | Should be removed soon (as of 25th/04/2025).
 //#define     CBAPP_USE_DOCKSPACE                         1               //  Debug util.  | Should be removed soon (as of 25th/04/2025).
-#define         CBAPP_NEW_DOCKSPACE                     1
-//#define         CBAPP_ENABLE_MOVE_AND_RESIZE            1               //  Allow user to moving / resizing core windows.
+#define         CBAPP_NEW_DOCKSPACE                         1
+#define         CBAPP_ENABLE_MOVE_AND_RESIZE                1               //  Allow user to moving / resizing core windows.
+#define         CBAPP_USE_FONTSCALE_DPI                     1               //  Use "S.m_dpi_fontscale" SEPERATE FROM "S.m_dpi_scale".
+
 
 //#define     CBAPP_DISABLE_INI                         1               //  Prevent use of ".ini" file to save/recall data.
-#define     CBAPP_LOAD_STYLE_FILE                       1               //  Prevent use of ".json" file to save/recall "ImGui" style data.
+#define     CBAPP_LOAD_STYLE_FILE                           1               //  Prevent use of ".json" file to save/recall "ImGui" style data.
 
 
 

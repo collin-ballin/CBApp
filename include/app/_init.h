@@ -181,17 +181,19 @@ inline constexpr const char * get_font_path(void) {
 }
 
 inline constexpr const char *       DEF_FONT_PATH                       = get_font_path();
-inline constexpr float              DEF_FONT_SIZE                       = 13.0f;
-inline constexpr float              DEF_SMALL_FONT_SIZE                 = 8.0f;
     
 
 
 // *************************************************************************** //
 //
 //
-//
+//  FONTS...
 // *************************************************************************** //
 // *************************************************************************** //
+inline constexpr float              DEF_FONT_SIZE                       = 13.0f;
+inline constexpr float              DEF_SMALL_FONT_SIZE                 = 10.0f;
+inline constexpr float              DEF_FOOTNOTE_FONT_SIZE              = 8.0f;
+
 
 //  FUNCTIONAL MACRO TO DEFINE APPLICATION FONTS...
 //
@@ -200,6 +202,7 @@ inline constexpr float              DEF_SMALL_FONT_SIZE                 = 8.0f;
     #define _CBAPP_FONT_LIST(X)         \
         X(Main,             "/System/Library/Fonts/SFNS.ttf",                               DEF_FONT_SIZE)          \
         X(Small,            "/System/Library/Fonts/SFNS.ttf",                               DEF_SMALL_FONT_SIZE)    \
+        X(FootNote,         "/System/Library/Fonts/SFNS.ttf",                               DEF_FOOTNOTE_FONT_SIZE) \
         X(Mono,             "/System/Library/Fonts/SFNSMono.ttf",                           DEF_FONT_SIZE)          \
         X(SanSerif,         "/System/Library/Fonts/NewYork.ttf",                            DEF_FONT_SIZE)          \
         X(SanSerifSmall,    "/System/Library/Fonts/NewYork.ttf",                            DEF_SMALL_FONT_SIZE)
@@ -207,7 +210,8 @@ inline constexpr float              DEF_SMALL_FONT_SIZE                 = 8.0f;
     //  Fonts for Windows, Linux, or other Builds.
     #define _CBAPP_FONT_LIST(X)         \
         X(Main,             "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          DEF_FONT_SIZE)          \
-        X(Small,            "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          DEF_SMALL_FONT_SIZE)
+        X(Small,            "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          DEF_SMALL_FONT_SIZE)    \
+        X(FootNote,         "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          DEF_FOOTNOTE_FONT_SIZE)
 #endif  //  __APPLE__  //
 
 

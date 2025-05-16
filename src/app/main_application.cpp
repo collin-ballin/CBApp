@@ -21,12 +21,226 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
+//  3.3     SECONDARY APPLICATIONS / TOOLS...
 // *************************************************************************** //
+// *************************************************************************** //
+
+//  "ShowColorTool"
 //
-//
-//  3.3     HELPER FUNCTIONS...     | PRIVATE.
-// *************************************************************************** //
-// *************************************************************************** //
+void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    constexpr size_t                BUFFER_SIZE             = 256;
+    [[maybe_unused]] ImGuiIO &      io                      = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style                   = ImGui::GetStyle();
+    
+    //  CREATE THE WINDOW...
+    if (!ImGui::Begin(uuid, p_open, flags)) {
+        ImGui::End();
+        return;
+    }
+    
+    
+    //  DIMENSIONS...
+    static ImVec2                   base_img_size           = ImVec2(60 * S.m_dpi_scale,    60 * S.m_dpi_scale);
+    static ImVec2                   palette_img_size        = ImVec2(30 * S.m_dpi_scale,    30 * S.m_dpi_scale);
+    static float                    LABEL_COLUMN_WIDTH      = 150.0f * S.m_dpi_scale;
+    static float                    WIDGET_COLUMN_WIDTH     = 300.0f * S.m_dpi_scale;
+
+    static ImVec4                   base_color              = ImVec4(114.0f/255.0f, 144.0f/255.0f, 154.0f/255.0f, 1.0f);    //  Base color in RGB (normalized to [0,1]).
+    static char                     hex_input[BUFFER_SIZE]  = "#728C9A";    //  Hex input for base color.
+    static int                      steps                   = 3;            //  Steps and lightness delta for variants.
+    static float                    delta_l                 = 0.1f;
+
+    //  Table layout constants
+    static bool                     freeze_header           = false;
+    static bool                     freeze_column           = false;
+    static bool                     stretch_column_1        = true;
+
+    static ImGuiTableColumnFlags    col0_flags              = ImGuiTableColumnFlags_WidthFixed;
+    static ImGuiTableColumnFlags    col1_flags              = stretch_column_1 ? ImGuiTableColumnFlags_WidthStretch : ImGuiTableColumnFlags_WidthFixed;
+    static ImGuiTableFlags          table_flags             = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible; //ImGuiTableFlags_ScrollX;
+    static ImGuiSliderFlags         SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
+
+    //              COLOR-INPUT FLAGS...
+    static ImGuiColorEditFlags      COLOR_INPUT_FLAGS       = ImGuiColorEditFlags_None | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSmallPreview; //ImGuiColorEditFlags_NoAlpha
+    //              COLOR-IMAGE FLAGS...
+    static ImGuiColorEditFlags      BASE_IMG_FLAGS          = ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs; //ImGuiColorEditFlags_NoAlpha
+    static ImGuiColorEditFlags      PALETTE_IMG_FLAGS       = ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoOptions; //ImGuiColorEditFlags_NoAlpha
+    
+
+
+
+    
+    //  1.  PREVIEW OF BASE COLOR...
+    ImGui::ColorButton("##BaseColorImage",  base_color,     BASE_IMG_FLAGS,    base_img_size);
+
+
+    //  1.  TABLE OF WIDGETS...
+    if (ImGui::BeginTable("ColorToolControls", 2, table_flags))
+    {
+        if (freeze_column || freeze_header)
+            ImGui::TableSetupScrollFreeze(freeze_column ? 1 : 0, freeze_header ? 1 : 0);
+
+        ImGui::TableSetupColumn("Label",  col0_flags, LABEL_COLUMN_WIDTH);
+        ImGui::TableSetupColumn("Widget", col1_flags, stretch_column_1 ? 1.0f : WIDGET_COLUMN_WIDTH);
+        // ImGui::TableHeadersRow();
+
+
+        //  1A.     BASE-COLOR [HEX INPUT]...
+        //  ImGui::TableNextRow();      ImGui::TableSetColumnIndex(0);      ImGui::AlignTextToFramePadding();
+        //  ImGui::TextUnformatted("Base Color (Hex)");
+        //  ImGui::TableSetColumnIndex(1);
+        //  //ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
+        //  ImGui::InputText("##hex_input", hex_input, IM_ARRAYSIZE(hex_input));
+        //  ImGui::SameLine();
+        //  if (ImGui::Button("Apply Hex")) {
+        //      std::string hex = hex_input;
+        //      if (!hex.empty() && hex.front() == '#') hex.erase(0, 1);
+        //      unsigned int rgb = 0;
+        //      std::stringstream ss;
+        //      ss << std::hex << hex;
+        //      ss >> rgb;
+        //      base_color.x = ((rgb >> 16) & 0xFF) / 255.0f;
+        //      base_color.y = ((rgb >>  8) & 0xFF) / 255.0f;
+        //      base_color.z = ( rgb        & 0xFF) / 255.0f;
+        //  }
+
+
+        
+
+        //  1A.     BASE-COLOR [Hex INPUT]...
+        ImGui::TableNextRow();      ImGui::TableSetColumnIndex(0);      ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Base Color");
+        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
+        ImGui::ColorEdit4("##HexInput",     (float*)&base_color,            COLOR_INPUT_FLAGS | ImGuiColorEditFlags_DisplayHex);
+
+
+        //  1B.     BASE-COLOR [RGB INPUT]...
+        ImGui::TableNextRow();      ImGui::TableSetColumnIndex(0);      ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("(RGB)");
+        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
+        ImGui::ColorEdit4("##BaseColorRGB",     (float*)&base_color,        COLOR_INPUT_FLAGS | ImGuiColorEditFlags_DisplayRGB);
+
+
+        //  1C.     BASE-COLOR [FLOAT INPUT]...
+        ImGui::TableNextRow();      ImGui::TableSetColumnIndex(0);      ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("(Float)");
+        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
+        ImGui::ColorEdit4("##BaseColorFloat",     (float*)&base_color,        COLOR_INPUT_FLAGS | ImGuiColorEditFlags_Float);
+
+
+        //  1D.     BASE-COLOR [HSV INPUT]...
+        ImGui::TableNextRow();      ImGui::TableSetColumnIndex(0);      ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("(HSV)");
+        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
+        ImGui::ColorEdit4("##BaseColorHSV",     (float*)&base_color,        COLOR_INPUT_FLAGS | ImGuiColorEditFlags_DisplayHSV);
+
+
+
+
+        //  ImGui::Text("Color widget HSV with Alpha:");
+        //  ImGui::ColorEdit4("MyColor##2", (float*)&color, ImGuiColorEditFlags_DisplayHSV | base_flags);
+
+        //  IMGUI_DEMO_MARKER("Widgets/Color/ColorEdit (float display)");
+        //  ImGui::Text("Color widget with Float Display:");
+        //  ImGui::ColorEdit4("MyColor##2f", (float*)&color, ImGuiColorEditFlags_Float | base_flags);
+        
+        
+
+
+
+        //  3.      NUMBER-OF-STEPS...
+        ImGui::TableNextRow();  ImGui::TableSetColumnIndex(0);  ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Steps");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::SliderInt("##steps", &steps, 2, 10);
+
+
+        //  4.      LIGHT-NESS / SHADE ITERATION...
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Lightness Amount");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::SliderFloat("##delta_l", &delta_l, 0.01f, 0.5f, "%.2f");
+
+        ImGui::EndTable();
+    }
+
+
+    //  GENERATE THE COLOR PALETTE...
+    //  3.  Generate palette table for shades and tints
+    //  3.  Helper: color button with tooltip & copy-on-click
+    auto color_button_with_tooltip = [&](std::string id, const ImVec4 &col)
+    {
+        ImGui::ColorButton(id.c_str(), col, PALETTE_IMG_FLAGS, palette_img_size);
+        if (ImGui::IsItemHovered())
+        {
+            char hex_buf[8];
+            snprintf(hex_buf, sizeof(hex_buf), "#%02X%02X%02X",
+                     int(col.x * 255), int(col.y * 255), int(col.z * 255));
+            ImGui::SetTooltip("%s\n(click to copy)", hex_buf);
+        }
+        if (ImGui::IsItemClicked())
+        {
+            char hex_buf[8];
+            snprintf(hex_buf, sizeof(hex_buf), "#%02X%02X%02X",
+                     int(col.x * 255), int(col.y * 255), int(col.z * 255));
+            ImGui::SetClipboardText(hex_buf);
+        }
+    };
+
+    //  4.  Generate palette table with header, shades, and tints
+    float h, s, l;
+    ImGui::ColorConvertRGBtoHSV(base_color.x, base_color.y, base_color.z, h, s, l);
+
+    if (ImGui::BeginTable("ColorPalette", steps, table_flags))
+    {
+        // Header row: amount of lightness change
+        ImGui::TableNextRow();
+        for (int i = 0; i < steps; ++i)
+        {
+            ImGui::TableSetColumnIndex(i);
+            char label[16];
+            if (i == 0)
+                strcpy(label, "0%");
+            else
+                snprintf(label, sizeof(label), "%.0f%%", i * delta_l * 100.0f);
+            ImGui::TextUnformatted(label);
+        }
+        // Shades row (first column = base color)
+        ImGui::TableNextRow();
+        for (int i = 0; i < steps; ++i)
+        {
+            ImGui::TableSetColumnIndex(i);
+            float new_l = ImClamp(l - i * delta_l, 0.0f, 1.0f);
+            float r, g, b;
+            ImGui::ColorConvertHSVtoRGB(h, s, new_l, r, g, b);
+            color_button_with_tooltip("##shade" + std::to_string(i), ImVec4(r, g, b, base_color.w));
+        }
+        // Tints row (first column = base color)
+        ImGui::TableNextRow();
+        for (int i = 0; i < steps; ++i)
+        {
+            ImGui::TableSetColumnIndex(i);
+            float new_l = ImClamp(l + i * delta_l, 0.0f, 1.0f);
+            float r, g, b;
+            ImGui::ColorConvertHSVtoRGB(h, s, new_l, r, g, b);
+            color_button_with_tooltip("##tint" + std::to_string(i), ImVec4(r, g, b, base_color.w));
+        }
+        ImGui::EndTable();
+    }
+    
+    
+    ImGui::End();
+    
+    return;
+}
+
+
+
+
+
 
 //  "ShowAboutWindow"
 //
@@ -34,12 +248,15 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
                           [[maybe_unused]]   bool *              p_open,
                           [[maybe_unused]]   ImGuiWindowFlags    flags)
 {
+    static bool         show_config_info        = false;
 
-    if (!ImGui::Begin(uuid, p_open, ImGuiWindowFlags_AlwaysAutoResize))
-    {
+
+    if (!ImGui::Begin(uuid, p_open, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::End();
-        return;ImGuiWindowFlags_AlwaysAutoResize;
+        return;
     }
+    
+    
     ImGui::Text("Dear ImGui %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
 
     ImGui::TextLinkOpenURL("Homepage", "https://github.com/ocornut/imgui");
@@ -62,9 +279,6 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
 
 
 
-
-
-    static bool show_config_info = false;
     ImGui::Checkbox("Config/Build Information", &show_config_info);
     if (show_config_info)
     {
@@ -214,10 +428,243 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
         }
         ImGui::EndChild();
     }
+    
+    
+    ImGui::End();
+    return;
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  3.4     TESTS, DEMOS, DEBUGGING, TEMPORARY APPLICATIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "stream_test"
+//
+void App::stream_test(void)
+{
+    ImGui::Begin("Python stream test");
+
+    // ---------------------------------------------------------------
+    // 1)  Persistent state
+    // ---------------------------------------------------------------
+    // static utl::PyStream proc(app::PYTHON_COUNTER_FILEPATH);
+    static utl::PyStream            proc(app::PYTHON_DUMMY_FPGA_FILEPATH);
+    static bool                     started   = false;
+    static char                     line_buf[256]{};
+    static std::vector<std::string> log;            // console lines
+    static float                    delay_s   = 1.0f; // seconds between packets
+
+    // ---------------------------------------------------------------
+    // 2)  Runtime‑adjustable delay
+    // ---------------------------------------------------------------
+    if (ImGui::SliderFloat("Delay (s)", &delay_s, 0.05f, 5.0f, "%.2f"))
+    {
+        // Send immediately while dragging *if* running
+        if (started)
+        {
+            char cmd[48];
+            std::snprintf(cmd, sizeof(cmd), "duration %.3f", delay_s);
+            proc.send(cmd);                          // e.g. "duration 0.25\n"
+        }
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Apply") && started)           // extra button for mouse‑up commit
+    {
+        char cmd[48];
+        std::snprintf(cmd, sizeof(cmd), "duration %.3f", delay_s);
+        proc.send(cmd);
+    }
+
+    // ---------------------------------------------------------------
+    // 3)  Start / Stop controls
+    // ---------------------------------------------------------------
+    if (!started)
+    {
+        if (ImGui::Button("Start process"))
+        {
+            started = proc.start();
+            if (!started) ImGui::OpenPopup("launch_error");
+        }
+    }
+    else
+    {
+        if (ImGui::Button("Stop process"))
+        {
+            proc.stop();
+            started = false;
+        }
+        ImGui::SameLine();
+        ImGui::TextDisabled("(running)");
+    }
+
+    if (ImGui::BeginPopupModal("launch_error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Failed to launch Python process!");
+        if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
+    ImGui::Separator();
+
+    // ---------------------------------------------------------------
+    // 4)  Manual line send (for debugging)
+    // ---------------------------------------------------------------
+    ImGui::InputText("send", line_buf, IM_ARRAYSIZE(line_buf),
+                     ImGuiInputTextFlags_EnterReturnsTrue);
+    ImGui::SameLine();
+    if (ImGui::Button("Send") || ImGui::IsItemDeactivatedAfterEdit())
+    {
+        if (started && line_buf[0])
+        {
+            proc.send(line_buf);          // raw passthrough
+            line_buf[0] = '\0';
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // 5)  Poll stdout → decode & log
+    // ---------------------------------------------------------------
+    std::string raw;
+    while (proc.try_receive(raw))
+    {
+        log.push_back("RAW: " + raw);
+
+        if (auto pkt = utl::parse_packet(raw))
+        {
+            const auto& p = *pkt;
+            char buf[256];
+            std::snprintf(buf, sizeof(buf),
+                          "DECODED  A=%d  B=%d  C=%d  D=%d  ABCD=%d  cycles=%d",
+                          p.a(), p.b(), p.c(), p.d(), p.abcd(), p.cycles);
+            log.emplace_back(buf);
+        }
+        else
+        {
+            log.emplace_back("!! parse error");
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // 6)  Display log
+    // ---------------------------------------------------------------
+    ImGui::BeginChild("log", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
+    for (auto const& s : log)
+        ImGui::TextUnformatted(s.c_str());
+    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+        ImGui::SetScrollHereY(1.0f);       // auto‑scroll
+    ImGui::EndChild();
+
     ImGui::End();
 }
 
 
+
+
+
+
+//  TESTING TAB BAR...
+// *************************************************************************** //
+// *************************************************************************** //
+
+struct Tab_t    {
+    using                   callback_t      = std::function<void(const char*, bool*, ImGuiWindowFlags)>;
+    const char *            uuid;
+    bool                    open;
+    bool                    no_close;
+    ImGuiTabItemFlags       flags;
+    callback_t              render_fn;
+};
+
+
+
+//  "DefaultTabRenderFunc"
+//
+static void DefaultTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+    if (!p_open)
+        return;
+        
+    ImGui::Text("Here is some text on a window with no render function.");
+    return;
+}
+
+
+//  "TestTabBar"
+//
+void App::TestTabBar(void)
+{
+    //  DEFINE MISC. VARIABLES...
+    static std::vector<Tab_t>       DEF_TABS                    = {
+        Tab_t(  "Tab 1",    true,   true,   ImGuiTabItemFlags_None,     nullptr),
+        Tab_t(  "Tab 2",    true,   true,   ImGuiTabItemFlags_None,     nullptr)
+    };
+    
+    
+
+    static size_t                   N                           = 0;
+    static bool                     SHOW_HELP_TABS              = true;
+    static bool                     ENABLE_ADDING_TABS          = true;
+    static ImGuiTabItemFlags        TABBAR_FLAGS                = ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton;
+
+
+    //  BEGIN THE TAB BAR...
+    if ( ImGui::BeginTabBar("MY_TAB_BAR", TABBAR_FLAGS) )
+    {
+        N   = DEF_TABS.size();
+
+
+        //      1.      DRAW HELP-MENU TAB-BUTTON ITEM ("?")...
+        if (SHOW_HELP_TABS) {
+            if (ImGui::TabItemButton("?", ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoTooltip))
+                ImGui::OpenPopup("MyHelpMenu");
+        }
+        if (ImGui::BeginPopup("MyHelpMenu")) {
+            ImGui::Selectable("Hello!");
+            ImGui::EndPopup();
+        }
+
+
+        //      2.      DRAW THE "ADD-TAB" BUTTON ("+")...
+        //  if (ENABLE_ADDING_TABS) {
+        //      if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip))
+        //          { AddNewTabFunc(); /* Add new tab */ }
+        //  }
+
+
+
+        //      2.3     DRAW EACH OF THE TAB ITEMS...
+        size_t i = 0;
+        for (auto & tab : DEF_TABS)
+        {
+            if ( ImGui::BeginTabItem( tab.uuid, (tab.no_close) ? nullptr : &tab.open, tab.flags ) )
+            {
+                if (tab.render_fn) {
+                    tab.render_fn( tab.uuid, &tab.open, tab.flags );
+                }
+                else {
+                    DefaultTabRenderFunc(tab.uuid, &tab.open, tab.flags);
+                    //ImGui::Text("This is tab #%zu.", i++);
+                }
+                
+            ImGui::EndTabItem();
+            }// END "BeginTabItem".
+        
+        } // END "for auto & tab".
+
+
+    ImGui::EndTabBar();
+        
+    } // END "BeginTabBar".
+
+    return;
+}
 
 
 

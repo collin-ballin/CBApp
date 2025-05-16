@@ -371,10 +371,7 @@ void CCounterApp::display_controls(void)
     static constexpr float              WIDGET_COLUMN_WIDTH     = 250.0f;
 
     //  INTERACTIVE VARIABLES...
-    static int                          param_a                 = 3;
-    static int                          param_b                 = 7;
-    static bool                         toggle                  = true;
-    static ImVec4                       color                   = {0.5f, 0.5f, 1.0f, 1.0f};
+    static ImGuiSliderFlags             SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
 
     //  TABLE GLOBAL FLAGS...
     static bool                         freeze_header           = false;
@@ -382,7 +379,7 @@ void CCounterApp::display_controls(void)
     static bool                         stretch_column_1        = true;
 
     //  COLUMN-SPECIFIC FLAGS...
-    static ImGuiTableColumnFlags        col0_flags              = ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize;
+    static ImGuiTableColumnFlags        col0_flags              = ImGuiTableColumnFlags_WidthFixed;
     static ImGuiTableColumnFlags        col1_flags              = stretch_column_1 ? ImGuiTableColumnFlags_WidthStretch : ImGuiTableColumnFlags_WidthFixed;
     static ImGuiTableFlags              flags                   = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible; //| ImGuiTableFlags_ScrollX;
         
@@ -390,9 +387,9 @@ void CCounterApp::display_controls(void)
 
     //  DEFINE EACH WIDGET IN CONTROL PANEL...
     //
-    constexpr float                 margin                  = 0.75f;
-    constexpr float                 pad                     = 10.0f;
-    static const utl::WidgetRow     rows[]                  = {
+    constexpr float                     margin                  = 0.75f;
+    constexpr float                     pad                     = 10.0f;
+    static const utl::WidgetRow         rows[]                  = {
     //
     //  1.  CONTROL PARAMETERS...
         {"Record",                                  [this]
@@ -417,23 +414,33 @@ void CCounterApp::display_controls(void)
                 //
                 //
                 //  2.  START/STOP PYTHON SCRIPT BUTTON...
+                //
+                //      CASE 1 :    SCRIPT IS  **NOT**  RUNNING...
                     if (!started)
                     {
                         if (ImGui::Button("Start Process", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) )
                         {
                             started         = proc.start();
-                            if (!started)   ImGui::OpenPopup("launch_error");
-                            else            m_max_counts[0] = 0.f; // reset stats
+                            if (!started) {
+                                ImGui::OpenPopup("launch_error");
+                            }
+                            else {
+                                m_max_counts[0] = 0.f; // reset stats
+                            }
                         }
                     }
+                    //
+                    //  CASE 2 :    SCRIPT  **IS**  RUNNING...
                     else
                     {
+                        ImGui::PushStyleColor(ImGuiCol_Button, app::DEF_APPLE_RED );
                         if (ImGui::Button("Stop Process", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
                             proc.stop();
                             started = false;
                         }
                         ImGui::SameLine();
                         ImGui::TextDisabled("(running)");
+                        ImGui::PopStyleColor();
                     }
                 //
                 ImGui::Dummy( ImVec2(pad, 0.0f) );
@@ -492,7 +499,7 @@ void CCounterApp::display_controls(void)
         {"Integration Window",                      []
             {// BEGIN.
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
-                if (ImGui::SliderFloat("##IntegrationWindow",       &delay_s,   0.001f,    2.50f,   "%.3f sec") )   {
+                if (ImGui::SliderFloat("##IntegrationWindow",       &delay_s,   0.001f,    2.50f,   "%.3f sec", SLIDER_FLAGS) )   {
                     if (started)    {
                         char cmd[48];
                         std::snprintf(cmd, sizeof(cmd), "delay %.3f\n", delay_s);
@@ -512,7 +519,7 @@ void CCounterApp::display_controls(void)
         {"History Length",                          [this]
             {// BEGIN.
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
-                ImGui::SliderFloat("##HistoryLength",       &history_s,                 5.f,       120.0f,      "%.1f sec");
+                ImGui::SliderFloat("##HistoryLength",       &history_s,         5.f,       120.0f,      "%.1f sec", SLIDER_FLAGS);
                 ImGui::SameLine(0.0f, pad);
                 if ( ImGui::Button("Clear Plot", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
                     for (auto & b : m_buffers) b.Data.clear();
@@ -533,14 +540,14 @@ void CCounterApp::display_controls(void)
         {"Master Plot Height",                      []
             {
                 ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-                ImGui::SliderFloat("##MasterPlotHeight",    &master_row_height_px,      180.f,       500.f,      "%.0f px");
+                ImGui::SliderFloat("##MasterPlotHeight",    &master_row_height_px,  180.f,  500.f,  "%.0f px",  SLIDER_FLAGS);
             }
         },
     //
         {"Single Plot Height",                      []
             {
                 ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-                ImGui::SliderFloat("##SinglePlotHeight",    &row_height_px,             30.f,       120.f,      "%.0f px");
+                ImGui::SliderFloat("##SinglePlotHeight",    &row_height_px,         30.f,   120.f,  "%.0f px",  SLIDER_FLAGS);
             }
         },
     //
@@ -560,7 +567,7 @@ void CCounterApp::display_controls(void)
 
     //  1.  PRIMARY TABLE ENTRY...
     //
-    if (ImGui::BeginTable("SketchControls", 2, flags))
+    if (ImGui::BeginTable("CBCCounterControls",     2,  flags))
     {
         if (freeze_column || freeze_header)
             ImGui::TableSetupScrollFreeze(freeze_column ? 1 : 0, freeze_header ? 1 : 0);

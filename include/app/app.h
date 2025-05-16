@@ -198,12 +198,13 @@ protected:
     void                run_IMPL                    (void);                                                         //  [app.cpp].
     void                ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                TestTabBar                  (void);
     void                ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     
     
     //  2D.1            Primary Menu Functions.     [interface.cpp]...
     void                stream_test                 (void);                                                         //  [main_application.cpp].
-    void                color_tool                  (void);
+    void                ShowColorTool               ([[maybe_unused]] const char * ,    [[maybe_unused]] bool * ,   [[maybe_unused]] ImGuiWindowFlags);
     
     
     //  2E.1            Set-Up GUI Functions.       [app.cpp]...

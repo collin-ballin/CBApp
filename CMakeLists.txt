@@ -91,7 +91,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 #
 #       1.2     Set the Minimum MacOSX Version...
-set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS deployment version")
+set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3" CACHE STRING "Minimum macOS deployment version")
 
 #       1.3     Warnings policy---apply only to our main executable
 add_library(cb_warnings INTERFACE)
@@ -207,7 +207,7 @@ target_include_directories(${PROJECT_NAME}
 
 #               Configure Xcode-specific behavior
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "13.0"
+    XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "13.3"
     XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.example.cbapp"
     XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-"
     XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME "NO"

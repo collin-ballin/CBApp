@@ -121,6 +121,7 @@ void App::init(void)
     
     //  3.      THIRD PART OF INITIALIZATION...             | INITIALIZE DELEGATOR CLASSES
     //          (SOME OF THESE HAVE TO BE DONE **AFTER** WE CREATE IMGUI CONTEXT)...
+    this->m_sidebar.initialize();
     this->m_graphing_app.initialize();
     this->m_counter_app.initialize();
        
@@ -220,8 +221,13 @@ void App::init_appstate(void)
     
     
     S.m_dpi_scale                       = utl::GetDPIScaling(this->S.m_glfw_window);
-    //S.m_logger.info();
-    std::cout << "DPI-SCALE: \t \"" << S.m_dpi_scale << "\"." << std::endl;
+    S.m_dpi_fontscale                   = S.m_dpi_scale;
+#ifdef CBAPP_USE_FONTSCALE_DPI
+    S.m_dpi_fontscale                   = cblib::round_to<3>( utl::GetDPIFontScaling(this->S.m_glfw_window) );
+#endif  //  CBAPP_USE_FONTSCALE_DPI  //
+
+    S.m_logger.info( std::format("DPI Scale={}", S.m_dpi_scale) );
+    //std::cout << "DPI-SCALE: \t \"" << S.m_dpi_scale << "\"." << std::endl;
     
 
 
@@ -263,10 +269,10 @@ void App::init_appstate(void)
         const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
         
     #ifndef CBAPP_DISABLE_CUSTOM_FONTS
-        m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontFromFileTTF(info.path.c_str(), S.m_dpi_scale * info.size);
+        m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontFromFileTTF(info.path.c_str(), S.m_dpi_fontscale * info.size);
     # else
         ImFontConfig    config;
-        config.SizePixels                   = S.m_dpi_scale * info.size;
+        config.SizePixels                   = S.m_dpi_fontscale * info.size;
         m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontDefault(&config);
     #endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
         good_fonts                          = ( m_fonts[static_cast<Font>(i)] != nullptr );
@@ -279,7 +285,7 @@ void App::init_appstate(void)
         for (int i = 0; i < static_cast<int>(Font::Count); ++i) {
             const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
             ImFontConfig    config;
-            config.SizePixels                   = S.m_dpi_scale * info.size;
+            config.SizePixels                   = S.m_dpi_fontscale * info.size;
             m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontDefault(&config);
         }
     }
@@ -336,7 +342,11 @@ void App::dispatch_window_function(const Window & uuid)
         //
         //
         //
-        //      3.  SUBSIDIARY APPLICATION WINDOWS...
+        //      3.  TOOLS, SUBSIDIARY APPLICATION WINDOWS...
+        case Window::ColorTool:       {
+            this->ShowColorTool(            w.uuid.c_str(),     &w.open,        w.flags);
+            break;
+        }
         case Window::StyleEditor:       {
             cb::ShowStyleEditor(            w.uuid.c_str(),     &w.open,        w.flags);
             break;
@@ -355,7 +365,7 @@ void App::dispatch_window_function(const Window & uuid)
         }
         //
         //
-        //      3.  TOOLS, DEMOS, MISC WINDOWS, ETC...
+        //      3.  DEMOS, ETC...
         case Window::ImGuiDemo:         {
             cb::ShowImGuiDemoWindow(        w.uuid.c_str(),     &w.open,        w.flags);
             break;
@@ -401,8 +411,8 @@ void App::load(void)
     
     
     
-    ImGui::StyleColorsDark();
-    
+    //ImGui::StyleColorsDark();
+    S.SetDarkMode();
     
 #if defined(CBAPP_DISABLE_INI)
     io.IniFilename                      = nullptr;

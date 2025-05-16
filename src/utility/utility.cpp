@@ -115,6 +115,18 @@ void glfw_error_callback(int error, const char * description)
 }
 
 
+//  "GetDPIFontScaling"
+//
+[[nodiscard]] float GetDPIFontScaling(GLFWwindow * window) {
+    auto        ease        = [](float x) -> float { return 2.0f / (1.0f + std::exp(-1.0f * (x - 1.0f))); };
+    float       xscale      = 1.0f,     yscale  = 1.0f,     fontscale = 1.0f;
+    
+    glfwGetWindowContentScale(window, &xscale, &yscale);
+    fontscale               = ease( std::max(xscale, yscale) );
+    return fontscale;
+}
+
+
 //  "get_current_monitor"
 //
 [[nodiscard]] GLFWmonitor * get_current_monitor(GLFWwindow * window)

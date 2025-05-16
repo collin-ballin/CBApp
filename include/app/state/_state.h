@@ -88,7 +88,6 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 //
 inline constexpr ImGuiWindowFlags      _CBAPP_HOST_WINDOW_FLAGS             = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
 inline constexpr ImGuiWindowFlags      _CBAPP_DOCKSPACE_WINDOW_FLAGS        = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
-//inline constexpr ImGuiWindowFlags      _CBAPP_SIDEBAR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
 inline constexpr ImGuiWindowFlags      _CBAPP_SIDEBAR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
 inline constexpr ImGuiWindowFlags      _CBAPP_TITLEBAR_WINDOW_FLAGS         = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoFocusOnAppearing;
 inline constexpr ImGuiWindowFlags      _CBAPP_CORE_WINDOW_FLAGS             = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
@@ -141,6 +140,7 @@ inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = Im
     X(GraphingApp,      "Graphing App",             false,              _CBAPP_CORE_WINDOW_FLAGS                                )           \
 /*                                                                                                                                      */  \
 /*  3.  TOOLS, DEMOS, MISC WINDOWS, ETC...                                                                                              */  \
+    X(ColorTool,        "Color Tool",               true,               _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(StyleEditor,      "Style Editor (ImGui)",     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(Logs,             "Logs",                     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(Console,          "Console",                  false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
@@ -327,11 +327,12 @@ struct AppState
     ImGuiID                             m_dockspace_id              = 0;
     //
     ImGuiID                             m_main_dock_id              = 0;
-    ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_CentralNode; //ImGuiDockNodeFlags_NoDocking;
+    ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_CentralNode; //ImGuiDockNodeFlags_NoDocking; ImGuiDockNodeFlags_NoDockingOverMe
     ImGuiDockNode *                     m_main_node                 = nullptr;
     
     ImGuiID                             m_sidebar_dock_id           = 0;
-    ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_AutoHideTabBar;
+    //ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_AutoHideTabBar;
+    ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_NoCloseButton;
     ImGuiDockNode *                     m_sidebar_node              = nullptr;
     
     
@@ -356,7 +357,7 @@ struct AppState
     int                                 m_system_w                  = -1;       //  Sys. Display Dims.
     int                                 m_system_h                  = -1;
     float                               m_dpi_scale                 = 1.0f;
-    //float                               m_font_dpi_scale            = 1.0f;
+    float                               m_dpi_fontscale             = 1.0f;
     //
     //              6.2     Main UI.
     //                              Main Window Dims.

@@ -88,6 +88,7 @@ public:
     
     //  1.2                     Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
     void                        Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        initialize                          (void);
 
     //  1.3                     Deleted Operators, Functions, etc.
                                 SideBar                             (const SideBar &    src)            = delete;   //  Copy. Constructor.
@@ -104,10 +105,13 @@ protected:
     // *************************************************************************** //
     
     //                          1.  BOOLEANS...
+    bool                        m_initialized                       = true;
+    bool                        m_first_frame                       = true;
     bool                        m_show_perf_metrics                 = app::DEF_PERF_METRICS_STATE;
     bool                        m_show_perf_plots                   = app::DEF_PERF_PLOTS_STATE;
     //
-    //                          2.  APPEARANCE...
+    //                          2.  DIMENSIONS...
+    ImVec2                      ms_PLOT_SIZE                        = ImVec2(-1, 120);
     //                                      ...
     //
     //                          3.  WINDOW / GUI ITEMS...
@@ -137,6 +141,7 @@ protected:
     void                        disp_font_selector                  (void);
     void                        disp_color_palette                  (void);
     void                        color_tool                          (void);
+    void                        disp_ui_scale                       (void);
     void                        disp_performance_metrics            (void);
     
     

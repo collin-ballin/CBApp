@@ -59,37 +59,44 @@ Logger & Logger::instance(void) {
 
 //  "log"
 //
-void Logger::log(const char * msg, Level lvl)   { enqueue(msg, lvl);                }
+void Logger::log(const char * msg,          Level lvl)          { enqueue(msg, lvl); }
+void Logger::log(const std::string & msg,   Level lvl)          { enqueue(msg.c_str(), lvl); }
 
 
 //  "debug"
 //
-void Logger::debug(const char * msg)            { enqueue(msg, Level::Debug);       }
+void Logger::debug(const char * msg)                            { enqueue(msg,          Level::Debug);      }
+void Logger::debug(const std::string & msg)                     { enqueue(msg.c_str(),  Level::Debug);      }
 
 
 //  "info"
 //
-void Logger::info(const char * msg)             { enqueue(msg, Level::Info);        }
+void Logger::info(const char * msg)                             { enqueue(msg,          Level::Info);       }
+void Logger::info(const std::string & msg)                      { enqueue(msg.c_str(),  Level::Info);       }
 
 
 //  "warning"
 //
-void Logger::warning(const char * msg)          { enqueue(msg, Level::Warning);     }
+void Logger::warning(const char * msg)                          { enqueue(msg,          Level::Warning);    }
+void Logger::warning(const std::string & msg)                   { enqueue(msg.c_str(),  Level::Warning);    }
 
 
 //  "exception"
 //
-void Logger::exception(const char * msg)        { enqueue(msg, Level::Exception);   }
+void Logger::exception(const char * msg)                        { enqueue(msg,          Level::Exception);  }
+void Logger::exception(const std::string & msg)                 { enqueue(msg.c_str(),  Level::Exception);  }
 
 
 //  "error"
 //
-void Logger::error(const char * msg)            { enqueue(msg, Level::Error);       }
+void Logger::error(const char * msg)                            { enqueue(msg,          Level::Error);      }
+void Logger::error(const std::string & msg)                     { enqueue(msg.c_str(),  Level::Error);      }
 
 
 //  "critical"
 //
-void Logger::critical(const char * msg)         { enqueue(msg, Level::Critical);    }
+void Logger::critical(const char * msg)                         { enqueue(msg,          Level::Critical);   }
+void Logger::critical(const std::string & msg)                  { enqueue(msg.c_str(),  Level::Critical);   }
 
 
 

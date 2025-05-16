@@ -28,16 +28,29 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 SideBar::SideBar(app::AppState & src)
-    : S(src)
+    : S(src)                        { }
+
+
+//  "initialize"
+//
+void SideBar::initialize(void)
 {
-    this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_NoTabBar;
+    if (this->m_initialized)
+        return;
+        
     this->init();
+    return;
 }
 
 
 //  "init"          | protected
 //
-void SideBar::init(void)            { }
+void SideBar::init(void) {
+    this->ms_PLOT_SIZE.x                           *= S.m_dpi_scale;
+    
+    this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_NoTabBar;
+    return;
+}
 
 
 //  Destructor.
@@ -241,6 +254,42 @@ void SideBar::disp_color_palette(void)
 }
 
 
+//  "disp_ui_scale"
+//
+void SideBar::disp_ui_scale(void) {
+
+    if (ImGui::BeginTabItem("Fonts"))
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        ImFontAtlas* atlas = io.Fonts;
+        utl::HelpMarker("Read FAQ and docs/FONTS.md for details on font loading.");
+        ImGui::ShowFontAtlas(atlas);
+
+        // Post-baking font scaling. Note that this is NOT the nice way of scaling fonts, read below.
+        // (we enforce hard clamping manually as by default DragFloat/SliderFloat allows CTRL+Click text to get out of bounds).
+        const float MIN_SCALE = 0.3f;
+        const float MAX_SCALE = 2.0f;
+        utl::HelpMarker(
+            "Those are old settings provided for convenience.\n"
+            "However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, "
+            "rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.\n"
+            "Using those settings here will give you poor quality results.");
+        static float window_scale = 1.0f;
+        ImGui::PushItemWidth(ImGui::GetFontSize() * 8);
+        if (ImGui::DragFloat("window scale", &window_scale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", ImGuiSliderFlags_AlwaysClamp)) // Scale only this window
+            ImGui::SetWindowFontScale(window_scale);
+        ImGui::DragFloat("global scale", &io.FontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", ImGuiSliderFlags_AlwaysClamp); // Scale everything
+        ImGui::PopItemWidth();
+
+        ImGui::EndTabItem();
+    }
+    
+    return;
+}
+
+
+
+
 //  "disp_performance_metrics"
 //
 void SideBar::disp_performance_metrics(void) {
@@ -278,7 +327,7 @@ void SideBar::disp_performance_metrics(void) {
     //  0.  COMPUTE SPACING...
     static float                    SPACING             = 0.0f;
     static float                    DEF_SPACING         = 1.5 * ImGui::GetTextLineHeightWithSpacing();
-    static float                    TEXT_SPACING        = 8.0 * ImGui::GetTextLineHeightWithSpacing();
+    static float                    TEXT_SPACING        = 6.5 * ImGui::GetTextLineHeightWithSpacing();
     static float                    PLOT_SPACING        = 2.5 * PLOT_SIZE[1];
     
     
@@ -347,11 +396,13 @@ void SideBar::disp_performance_metrics(void) {
     
     
         //  1.  TEXT ENTRIES:
+        S.PushFont( Font::Small );
         ImGui::BulletText(fps_fmt,              spf_ct,         fps_ct);
         ImGui::BulletText(vertex_fmt,           vertex_ct,      index_ct,       triangle_ct);
         ImGui::BulletText(window_fmt,           window_ct);
         ImGui::BulletText(memory_fmt,           allocation_ct);
         ImGui::NewLine();
+        S.PopFont();
     
     
     
@@ -368,7 +419,7 @@ void SideBar::disp_performance_metrics(void) {
             ImGui::SeparatorText("Framerate");
             
             //      1.2     FPS PLOTTING...
-            S.PushFont( Font::Small );
+            S.PushFont( Font::FootNote );
             ImGui::PushID("##Scrolling");
             if (ImPlot::BeginPlot("##Scrolling", PLOT_SIZE))
             {
@@ -390,7 +441,7 @@ void SideBar::disp_performance_metrics(void) {
             //      2B.     MEMORY ALLOCATIONS PLOTTING...
             ImGui::SeparatorText("GPU");
             
-            S.PushFont( Font::Small );
+            S.PushFont( Font::FootNote );
             if (ImPlot::BeginPlot("##Scrolling", PLOT_SIZE))
             {
                 ImPlot::SetupLegend(ImPlotLocation_SouthWest, ImPlotLegendFlags_None);            //    Legend Position.

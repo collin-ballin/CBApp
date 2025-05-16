@@ -136,12 +136,32 @@ public:
                         
     //  1.2                 Public Member Functions...
     void                    log                         (const char * , Level );
+    void                    log                         (const std::string & , Level );
+    
     void                    debug                       (const char * );
+    void                    debug                       (const std::string & );
+    
     void                    info                        (const char * );
+    void                    info                        (const std::string & );
+    
     void                    warning                     (const char * );
+    void                    warning                     (const std::string & );
+    
     void                    exception                   (const char * );
+    void                    exception                   (const std::string & );
+    
     void                    error                       (const char * );
+    void                    error                       (const std::string & );
+    
     void                    critical                    (const char * );
+    void                    critical                    (const std::string & );
+    
+    
+    template<typename... Args>
+    inline void logf(const std::string& fmt_str, Args&&... args) {
+        auto    s = std::format(fmt_str, std::forward<Args>(args)...);
+        write_to_sink(s);
+    }
     
     template<class... Args>
     inline void             debugf                      (std::format_string<Args...> f, Args&&... a)    { logf(Level::Debug,        f, std::forward<Args>(a)...);   }
