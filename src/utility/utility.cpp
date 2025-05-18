@@ -337,13 +337,63 @@ ImVec2 GetImGuiWindowCoords(const char * uuid, const Anchor & anchor)
 // *************************************************************************** //
 // *************************************************************************** //
 
+
+//          1.4A     POP-UP WINDOWS / FILE DIALOGUE WINDOWS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "Popup_AskOkCancel"
+//
+bool Popup_AskOkCancel(const char * uuid) {
+
+    if (ImGui::BeginPopupModal(uuid, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("All those beautiful files will be deleted.\nThis operation cannot be undone!");
+        ImGui::Separator();
+
+        //static int unused_i = 0;
+        //ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
+
+        static bool dont_ask_me_next_time = false;
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+        ImGui::Checkbox("Don't ask me next time", &dont_ask_me_next_time);
+        ImGui::PopStyleVar();
+
+        if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+        ImGui::SetItemDefaultFocus();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+        ImGui::EndPopup();
+    }
+    
+    return true;
+}
+
+
+//  "file_exists"
+//
+bool file_exists(const char * path) {
+    namespace fs = std::filesystem;
+    fs::path p{path};
+    return fs::exists(p) && fs::is_regular_file(p);
+}
+
+
+
+
+
+//          1.4B     MISC. WIDGET FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
 //  "DirectionalButton"
+//
 bool DirectionalButton(
-    const char * id,
-    Anchor      direction,
-    ImVec2      size,
-    ImVec4      bg_col,
-    ImVec4      tint_col)
+    [[maybe_unused]] const char *   id,
+    Anchor                          direction,
+    ImVec2                          size,
+    [[maybe_unused]] ImVec4         bg_col,
+    ImVec4                          tint_col)
 {
     // Acquire the font texture and its dimensions
     ImGuiIO&    io     = ImGui::GetIO();  (void)io;

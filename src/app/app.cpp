@@ -247,11 +247,25 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
         //  }
         
         
-        KeepProgramAwake( this->S.m_glfw_window );
+
+
+    //  3.  TESTING PLOTTING / GRAPHING 2...
+    {
+        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+        if (ImGui::TreeNode("Graphing 2"))
+        {
+            this->ImPlot_Testing2();
+            ImGui::TreePop();
+        }
+    }
         
         
-        ImGui::NewLine();
-        this->TestTabBar();
+        
+    ImGui::NewLine();
+    KeepProgramAwake( this->S.m_glfw_window );
+    ImGui::NewLine();
+    this->TestTabBar();
+    
         
         
 //
@@ -259,7 +273,17 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
 # else  //  CBAPP_ETCH_A_SKETCH  //
 //
 //
-    KeepProgramAwake( this->S.m_glfw_window );
+
+
+    //  3.  TESTING PLOTTING / GRAPHING 1...
+    {
+        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+        if (ImGui::TreeNode("Graphing 1"))
+        {
+            this->ImPlot_Testing1();
+            ImGui::TreePop();
+        }
+    }
 
 
     //  4.  TESTING PLOTTING / GRAPHING 2...
@@ -273,7 +297,6 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
     }
     
     
-    
     //  5.  TESTING PLOTTING / GRAPHING 2...
     {
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
@@ -283,6 +306,14 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
             ImGui::TreePop();
         }
     }
+    
+        
+        
+//      //
+//      //
+//      # else  //  CBAPP_ETCH_A_SKETCH  //
+//      //
+//      //
     
     
     

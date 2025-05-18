@@ -109,6 +109,45 @@ void ScrollingSparkline(const float time,               const float window,     
 
 //  "GetColormapSamples"
 //
+[[nodiscard]] std::vector<ImVec4> GetColormapSamples(const size_t M)
+{
+    std::vector<ImVec4>     colors(M);
+    //ImPlotColormap  map     = ImPlot::GetCurrentColormap();
+    
+
+    for (size_t i = 0; i < M; ++i) {
+        float t = (M > 1) ? float(i) / float(M - 1) : 0.0f;
+        colors[i] = ImPlot::SampleColormap(t);
+    }
+
+    return colors;
+}
+
+
+//  "GetColorMapSamples"
+//
+[[nodiscard]] std::vector<ImVec4> GetColormapSamples(int M, const char * cmap)
+{
+    std::vector<ImVec4> cols;
+    cols.reserve(M);
+
+    // Activate the colormap so SampleColormap() uses it:
+    ImPlot::PushColormap(cmap);
+
+    for (int r = 0; r < M; r++) {
+        float t = (M > 1)
+                ? float(r) / float(M - 1)   // 0→1
+                : 0.0f;                     // single entry
+        cols.push_back(ImPlot::SampleColormap(t));
+    }
+
+    ImPlot::PopColormap();
+    return cols;
+}
+
+
+//  "GetColormapSamples"
+//
 [[nodiscard]] std::vector<ImVec4> GetColormapSamples(int M, ImPlotColormap map)
 {
     std::vector<ImVec4> cols;

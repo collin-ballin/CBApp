@@ -27,20 +27,8 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  STATIC VARIABLES FOR COINCIDENCE COUNTER...
 namespace cc {
     //  SKETCH STUFF...
-    static ImPlotColormap               cmap                    = ImPlotColormap_Cool;
-
-
     //  COPIED...
-    constexpr int                   NUM                         = 15;                 // skip index 0 (UNUSED)
-    constexpr float                 CENTER                      = 0.75f;
-    //  static constexpr ChannelSpec    channels[NUM]               = {
-    //      { 8,  "A"   }, { 4,  "B"   }, { 2,  "C"   }, { 1,  "D"   },
-    //      {12,  "AB"  }, {10,  "AC"  }, { 9,  "AD"  }, { 6,  "BC"  },
-    //      { 5,  "BD"  }, { 3,  "CD"  }, {14,  "ABC" }, {13,  "ABD" },
-    //      {11,  "ACD" }, { 7,  "BCD" }, {15,  "ABCD"}
     //  };
-    
-
 
     static ImVec2                   HEADER_SEP_TOP              = ImVec2();
     static ImVec2                   HEADER_SEP_BOTTOM           = ImVec2();
@@ -76,6 +64,9 @@ static char                     line_buf[256]{};                                
 // *************************************************************************** //
 // *************************************************************************** //
 
+CCounterApp::CCounterApp(app::AppState & src)
+    : S(src)                        { }
+
 //  "initialize"
 //
 void CCounterApp::initialize(void)
@@ -92,19 +83,12 @@ void CCounterApp::initialize(void)
 //
 void CCounterApp::init(void)
 {
-    COUNTER_COL_WIDTH          *= S.m_dpi_scale;
-    CONTROL_WIDTH              *= ImGui::GetFontSize();
-    
+    ms_I_PLOT_COL_WIDTH       *= S.m_dpi_scale;
     std::snprintf(filepath, BUFFER_SIZE, "%s", app::PYTHON_DUMMY_FPGA_FILEPATH);
-    
-    cc::HEADER_SEP_TOP          = ImVec2( 0.0f, 0.5 * ImGui::GetTextLineHeightWithSpacing() );
-    cc::HEADER_SEP_BOTTOM       = ImVec2( 0.0f, 0.0 * ImGui::GetTextLineHeightWithSpacing() );
-    
-    
     
     
     //  Assign "Window Class" Properties...
-    m_window_class.DockNodeFlagsOverrideSet     = ImGuiDockNodeFlags_NoTabBar;
+    m_window_class.DockNodeFlagsOverrideSet     = 0; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     
     this->m_initialized                         = true;
     return;
@@ -167,14 +151,14 @@ void CCounterApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
     
     
     //  2.  CREATE TOP WINDOW FOR PLOTS...
-    //ImGui::SetNextWindowClass(&this->m_window_class);
+    ImGui::SetNextWindowClass(&this->m_window_class);
     ImGui::Begin(m_win_uuids[0], p_open, m_docked_win_flags[0]);
         this->display_plots();
     ImGui::End();
     
     
     //  3.  CREATE BOTTOM WINDOW FOR CONTROLS...
-    //ImGui::SetNextWindowClass(&this->m_window_class);
+    ImGui::SetNextWindowClass(&this->m_window_class);
     ImGui::Begin(m_win_uuids[1], p_open, m_docked_win_flags[1]);
         this->display_controls();
     ImGui::End();
@@ -217,13 +201,12 @@ void CCounterApp::display_plots(void)
         if (auto pkt = utl::parse_packet(raw))
         {
             const auto &    counts = pkt->counts; // std::array<int,16>
-            
             for (int i = 0; i < ms_NUM; ++i)
             {
-                int     channel_idx     = ms_channels[i].idx;
-                float   v               = static_cast<float>(counts[channel_idx]);
+                size_t      channel_idx     = ms_channels[i].idx;
+                float       v               = static_cast<float>(counts[channel_idx]);
                 m_buffers[i].AddPoint(now, v);
-                m_max_counts[i]           = std::max(m_max_counts[i], v);
+                m_max_counts[i]             = std::max(m_max_counts[i], v);
             }
         }
     }
@@ -236,8 +219,8 @@ void CCounterApp::display_plots(void)
     if ( ImGui::CollapsingHeader("Master Plot") )
     {
         //
-        ImGui::PushID("master");
-        if (ImPlot::BeginPlot("##master", ImVec2(-1, master_row_height_px), m_mst_plot_flags))
+        ImGui::PushID(ms_PLOT_UUIDs[0]);
+        if (ImPlot::BeginPlot(ms_PLOT_UUIDs[0], ImVec2(-1, master_row_height_px), m_mst_PLOT_flags))    //  m_mst_plot_flags
         {
             //  1.  SETUP THE PLOT...
             //          - Enable grid on both axes, keep no decorations.
@@ -246,7 +229,7 @@ void CCounterApp::display_plots(void)
             ImPlot::SetupLegend(m_mst_legend_loc,   m_mst_legend_flags);
             
             //      1.1.    X-Limits.
-            float   xmin    = now - cc::CENTER * history_s;
+            float   xmin    = now - ms_CENTER * history_s;
             float   xmax    = xmin + history_s;
             ImPlot::SetupAxisLimits(ImAxis_X1, xmin, xmax, ImGuiCond_Always);
 
@@ -257,24 +240,44 @@ void CCounterApp::display_plots(void)
             for (int k = 0; k < ms_NUM; ++k)
             {
                 const auto &    data        = m_buffers[k];
-                const auto &    color       = ImPlot::GetColormapColor(k);
-                
+                static float    frequency   = 0;
+                //const auto &    color       = ImPlot::GetColormapColor(k);
                 
                 //  3.  ADDING A PLOT...
                 ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
                 {
-                    ImPlot::SetNextLineStyle(   color,      3.0);
-                    ImPlot::SetNextFillStyle(   color,      0.0);
+                    ImPlot::SetNextLineStyle(   m_plot_colors[k],      3.0);
+                    ImPlot::SetNextFillStyle(   m_plot_colors[k],      0.0);
                     if (!data.Data.empty()) {
                         ImPlot::PlotLine( ms_channels[k].name,     &data.Data[0].x,     &data.Data[0].y,     data.Data.size(),        ImPlotLineFlags_Shaded, data.Offset, 2 * sizeof(float));
                     }
-                    
-                    
                 }// END "Adding A Plot".
                 ImPlot::PopStyleVar();
+            
+                
+                //  CUSTOM LEGEND ENTRY...
+                if (ImPlot::BeginLegendPopup(ms_channels[k].name))
+                {
+                    ImGui::SliderFloat("Frequency", &frequency, 0,  1,  "%0.2f");
+                    // ImGui::SliderFloat("Amplitude", &amplitude, 0,  1,  "%0.2f");
+                    // ImGui::Separator();
+                    // ImGui::ColorEdit3("Color",&color.x);
+                    // ImGui::SliderFloat("Transparency",&alpha,0,1,"%.2f");
+                    // ImGui::Checkbox("Line Plot", &line);
+                    //  if (line) {
+                    //      ImGui::SliderFloat("Thickness", &thickness, 0, 5);
+                    //      ImGui::Checkbox("Markers", &markers);
+                    //      ImGui::Checkbox("Shaded",&shaded);
+                    //  }
+                    ImPlot::EndLegendPopup();
+                }
+                if (m_toggle_mst_plots)
+                    this->ToggleAllPlots( ms_PLOT_UUIDs[0] );
                 
                 
             }   //  END "For-Loop" THRU EACH PLOT.
+            
+            
             ImPlot::EndPlot();
         }
         ImGui::PopID();
@@ -283,7 +286,6 @@ void CCounterApp::display_plots(void)
     //
     //ImGui::TreePop();
     }// END TREE NODE.
-                
         
 
     //  6.  DRAW THE TABLE OF EACH INDIVIDUAL COUNTER...
@@ -295,43 +297,58 @@ void CCounterApp::display_plots(void)
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::CollapsingHeader("Individual Counters") )
     {
-        if (ImGui::BeginTable("##coinc_table",      5,      ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg))
+        if (ImGui::BeginTable(ms_PLOT_UUIDs[1],    5,      ms_i_plot_table_flags)) //  ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg
         {
-            ImGui::TableSetupColumn("Counter(s)",       ImGuiTableColumnFlags_WidthFixed,   COUNTER_COL_WIDTH);
-            ImGui::TableSetupColumn("Max",              ImGuiTableColumnFlags_WidthFixed,   COUNTER_COL_WIDTH);
-            ImGui::TableSetupColumn("Avg.",             ImGuiTableColumnFlags_WidthFixed,   COUNTER_COL_WIDTH);
-            ImGui::TableSetupColumn("Current",          ImGuiTableColumnFlags_WidthFixed,   COUNTER_COL_WIDTH);
-            ImGui::TableSetupColumn("Plot");
+            ImGui::TableSetupColumn("Counter(s)",       ms_i_plot_column_flags,     ms_I_PLOT_COL_WIDTH);
+            ImGui::TableSetupColumn("Max",              ms_i_plot_column_flags,     ms_I_PLOT_COL_WIDTH);
+            ImGui::TableSetupColumn("Avg.",             ms_i_plot_column_flags,     ms_I_PLOT_COL_WIDTH);
+            ImGui::TableSetupColumn("Current",          ms_i_plot_column_flags,     ms_I_PLOT_COL_WIDTH);
+            ImGui::TableSetupColumn("Plot",             ms_i_plot_plot_flags,       ms_I_PLOT_PLOT_WIDTH);
             ImGui::TableHeadersRow();
 
 
             //  6.2     PLOT FOR EACH CHANNEL...
-            for (int row = 0; row < ms_NUM; ++row)
+            for (size_t row = 0; row < ms_NUM; ++row)
             {
-                const int           idx         = ms_channels[row].idx;
+                const size_t        idx         = ms_channels[row].idx;
                 auto &              buf         = m_buffers[row];
                 const auto &        vec         = buf.Data;
 
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted( ms_channels[row].name );
-                ImGui::TableSetColumnIndex(1); ImGui::Text("%.0f", m_max_counts[row]);
-                ImGui::TableSetColumnIndex(2);
+
+                ImGui::TableNextRow();              //  ROW 0 :     COUNTER(S)...
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextUnformatted( ms_channels[row].name );
+                
+                
+                ImGui::TableSetColumnIndex(1);      //  ROW 1 :     MAX...
+                //ImGui::BulletText("%.0f",           m_max_counts[row]);
+                //
+                ImGui::Text("%.0f", m_max_counts[row]);
+                
+                
+                ImGui::TableSetColumnIndex(2);      //  ROW 2 :     AVERAGE...
                 float avg = 0.f;
                 if (!vec.empty()) {
-                    for (const auto &pt : vec) avg += pt.y;
-                    avg /= static_cast<float>(vec.size());
+                    for (const auto & pt : vec) avg += pt.y;
+                        avg /= static_cast<float>(vec.size());
                 }
-                ImGui::Text("%.1f", avg);
-                ImGui::TableSetColumnIndex(3);
+                ImGui::Text("%.2f", avg);
+                // ImGui::NewLine();
+                // ImGui::Text("%.2f", avg);
+                
+                
+                ImGui::TableSetColumnIndex(3);      //  ROW 3 :     CURRENT...
                 float curr = vec.empty() ? 0.f : vec.back().y;
                 ImGui::Text("%.0f", curr);
-                ImGui::TableSetColumnIndex(4);
-
-                ImGui::PushID(row);
+                
+                
+                
+                ImGui::TableSetColumnIndex(4);      //  ROW 4 :     PLOT...
+                ImGui::PushID(static_cast<int>(row));
                 if (!vec.empty()) {
                     ScrollingSparkline(now, history_s, buf, m_plot_flags,
-                                       ImPlot::GetColormapColor(row),
-                                       ImVec2(-1, row_height_px), cc::CENTER);
+                                       m_plot_colors[row],
+                                       ImVec2(-1, row_height_px), ms_CENTER);
                 }
                 ImGui::PopID();
             }// END "plot for each channel".
@@ -351,7 +368,37 @@ void CCounterApp::display_plots(void)
 }
 
 
+//  "ToggleAllPlots"
+//
+void CCounterApp::ToggleAllPlots(const char * title) {
+    ImPlotContext &     gp          = *GImPlot;
+    ImPlotPlot *        plot        = nullptr;
+    
+    // First try current plot
+    if (gp.CurrentPlot && strcmp(gp.CurrentPlot->GetTitle(), title) == 0) {
+        plot = gp.CurrentPlot;
+    }
+    else {
+        // Fallback: lookup by ID in the active window
+        ImGuiWindow* Window = GImGui->CurrentWindow;
+        ImGuiID id = Window->GetID(title);
+        plot = gp.Plots.GetByKey(id);
+    }
+    if (!plot) return;
+    ImPlotItemGroup& items = plot->Items;
+    const int count = items.GetLegendCount();
+    for (int i = 0; i < count; ++i) {
+        ImPlotItem* item = items.GetLegendItem(i);
+        item->Show = !item->Show;
+    }
+    return;
+}
 
+
+
+/*
+ImPlotItem* ImPlot::GetItem(const char* plot_title, const char* item_label);
+*/
 
 
 
@@ -376,22 +423,45 @@ void CCounterApp::display_controls(void)
     //  TABLE GLOBAL FLAGS...
     static bool                         freeze_header           = false;
     static bool                         freeze_column           = false;
-    static bool                         stretch_column_1        = true;
+    //static bool                         stretch_column_1        = true;
 
     //  COLUMN-SPECIFIC FLAGS...
     static ImGuiTableColumnFlags        col0_flags              = ImGuiTableColumnFlags_WidthFixed;
-    static ImGuiTableColumnFlags        col1_flags              = stretch_column_1 ? ImGuiTableColumnFlags_WidthStretch : ImGuiTableColumnFlags_WidthFixed;
+    static ImGuiTableColumnFlags        col1_flags              = ImGuiTableColumnFlags_WidthStretch; //stretch_column_1 ? ImGuiTableColumnFlags_WidthStretch : ImGuiTableColumnFlags_WidthFixed;
     static ImGuiTableFlags              flags                   = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible; //| ImGuiTableFlags_ScrollX;
         
         
+        
 
-    //  DEFINE EACH WIDGET IN CONTROL PANEL...
+    //  1.  CONTROL PARAMETERS [FREE-STANDING / TEMPORARY]...
+    //      if (ImGui::Button("Toggle All Plots")) {
+    //          this->m_toggle_mst_plots = true; //this->ToggleAllPlots( this->ms_PLOT_UUIDs[0] );
+    //      }
     //
+    //
+    //
+    //  2.  DEFINE EACH WIDGET IN CONTROL PANEL...
     constexpr float                     margin                  = 0.75f;
     constexpr float                     pad                     = 10.0f;
     static const utl::WidgetRow         rows[]                  = {
     //
-    //  1.  CONTROL PARAMETERS...
+    //  1.  CONTROL PARAMETERS [TABLE]...
+        {"Test",                                    []
+            {// BEGIN.
+                const char *    popup_id    = "Delete?";
+                if (ImGui::Button("Delete"))
+                    ImGui::OpenPopup(popup_id);
+                    
+                ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+                ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+                utl::Popup_AskOkCancel(popup_id);
+            
+            }// END.
+        },
+    //
+    //
+    //
         {"Record",                                  [this]
             {// BEGIN.
             //
@@ -495,10 +565,23 @@ void CCounterApp::display_controls(void)
             }// END.
         },
     //
+        {"Coincidence Window",                      [this]
+            {// BEGIN.
+                ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
+                if (ImGui::SliderFloat("##CoincidenceWindow",       &m_coincidence_window,   8.0f,    22.0f,   "%.1f nano sec",    SLIDER_FLAGS) )   {
+                    if (started)    {
+                        //  char cmd[48];
+                        //  std::snprintf(cmd, sizeof(cmd), "delay %.3f\n", delay_s);
+                        //  proc.send(cmd);
+                    }
+                }
+            }// END.
+        },
+    //
         {"Integration Window",                      []
             {// BEGIN.
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
-                if (ImGui::SliderFloat("##IntegrationWindow",       &delay_s,   0.001f,    2.50f,   "%.3f sec", SLIDER_FLAGS) )   {
+                if (ImGui::SliderFloat("##IntegrationWindow",       &delay_s,   0.01f,    2.50f,   "%.3f sec", SLIDER_FLAGS) )   {
                     if (started)    {
                         char cmd[48];
                         std::snprintf(cmd, sizeof(cmd), "delay %.3f\n", delay_s);
@@ -550,17 +633,24 @@ void CCounterApp::display_controls(void)
             }
         },
     //
-        {"Colormap",            []
+        {"Colormap",                                [this]
             {
                 float w = ImGui::GetColumnWidth();
-                if (ImPlot::ColormapButton(ImPlot::GetColormapName(cc::cmap), ImVec2(w, 0), cc::cmap))
+                if (ImPlot::ColormapButton(ImPlot::GetColormapName(m_cmap), ImVec2(w, 0), m_cmap))
                 {
-                    cc::cmap = (cc::cmap + 1) % ImPlot::GetColormapCount();
+                    m_colormap_cache_invalid    = true;
+                    m_cmap                      = (m_cmap + 1) % ImPlot::GetColormapCount();
                     //ImPlot::BustColorCache(cc::heatmap_uuid);
                 }
-                ImPlot::PushColormap(cc::cmap);
+                //ImPlot::PushColormap(m_cmap);
             }}
     };
+    
+    //  RE-ASSIGN COLORMAP COLORS IF USER HAS CHANGED COLOR-MAP SELECTION...
+    if (this->m_colormap_cache_invalid) {
+        m_colormap_cache_invalid    = false;
+        m_plot_colors               = cb::utl::GetColormapSamples( ms_NUM, m_cmap );
+    }
 
 
 
@@ -573,7 +663,7 @@ void CCounterApp::display_controls(void)
 
 
         ImGui::TableSetupColumn("Label",    col0_flags,     LABEL_COLUMN_WIDTH);
-        ImGui::TableSetupColumn("Widget",   col1_flags,     stretch_column_1 ? 1.0f : WIDGET_COLUMN_WIDTH);
+        ImGui::TableSetupColumn("Widget",   col1_flags,     1.0f);//stretch_column_1 ? 1.0f : WIDGET_COLUMN_WIDTH);
         ImGui::TableHeadersRow();
 
         for (const auto & row : rows) {

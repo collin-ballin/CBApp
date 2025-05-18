@@ -88,6 +88,7 @@ public:
     
     //  1.2                     Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
     void                        Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        initialize                          (void);
 
     //  1.3                     Deleted Operators, Functions, etc.
                                 TitleBar                            (const TitleBar &    src)            = delete;   //  Copy. Constructor.
@@ -104,8 +105,9 @@ protected:
     // *************************************************************************** //
     
     //                                  1.  CONSTANTS...
-    static constexpr const char *       ms_CLOSE_TEXT                       = "-";
-    static constexpr const char *       ms_OPEN_TEXT                        = "+";
+    bool                                m_initialized                       = false;
+    ImVec2                              m_scb_size                          = app::DEF_SIDEBAR_COLLAPSE_BUTTON_SIZE;
+    const char *                        m_scb_uuid                          = "##SideBarCollapseButton";
     //
     //                                  2.  APPEARANCE...
     //                                          ...

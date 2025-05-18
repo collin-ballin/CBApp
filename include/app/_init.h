@@ -78,7 +78,9 @@ inline constexpr float              DEF_PLOT_LW                         = 0.50f;
 inline constexpr float              DEF_ROOT_WINDOW_SCALE               = 0.80f;
 //
 //                              B.  SIDEBAR.
-inline constexpr float              DEF_SB_CLOSED_WIDTH                 = 0.20;    //  SIDEBAR WINDOW...
+inline constexpr ImVec2             DEF_SIDEBAR_INSET_PADDING_SCALE     = ImVec2(1.0f,      1.0f);      //  Scale of "style.WindowPadding" used inside Titlebar Window...
+inline constexpr ImVec2             DEF_SIDEBAR_COLLAPSE_BUTTON_SIZE    = ImVec2(20.0f,     20.0f);     //  Size of the OPEN/CLOSE Button...
+inline constexpr float              DEF_SB_CLOSED_WIDTH                 = 0.20;                     //  SIDEBAR WINDOW...
 inline constexpr float              DEF_SB_OPEN_WIDTH                   = 0.20;
 //
 //                                  B1. Sidebae "Toggle" Button:
@@ -97,6 +99,13 @@ inline constexpr float              PERF_PLOTS_HISTORY_LENGTH           = 6.0f; 
 inline constexpr ImVec4             DEF_APPLE_BLUE                      = ImVec4(0.244f,    0.467f,     0.847f,     1.000f);
 inline constexpr ImVec4             DEF_APPLE_RED                       = ImVec4(1.000f,    0.271f,     0.227f,     1.000f);
 inline constexpr ImVec4             DEF_INVISIBLE_COLOR                 = ImVec4(0.000f,    0.000f,     0.000f,     0.000f);
+//
+
+inline constexpr ImVec4             DEF_LIVE_SELECTBLUE                 = ImVec4(0.255,     0.298f,     0.361f,     1.000f);
+inline constexpr ImVec4             DEF_LIVE_LIGHTBLUE                  = ImVec4(0.188,     0.224f,     0.271f,     1.000f);
+inline constexpr ImVec4             DEF_LIVE_MIDBLUE                    = ImVec4(0.137f,    0.161f,     0.196f,     1.000f);
+inline constexpr ImVec4             DEF_LIVE_DARKBLUE                   = ImVec4(0.090f,    0.098f,     0.118f,     1.000f);
+//
 //
 //                              B.  WINDOW COLORS.
 inline constexpr ImVec4             DEF_ROOT_WIN_BG                     = ImVec4(0.000f,    0.000f,     0.000f,     0.000f);

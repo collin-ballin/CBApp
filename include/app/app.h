@@ -24,8 +24,9 @@
 #include "app/_init.h"
 #include "app/state/_state.h"
 //
-#include "app/_graphing_app.h"              //  Seperate Application Classes.
-#include "app/c_counter/c_counter.h"            
+#include "app/c_counter/c_counter.h"        //  Seperate Application Classes.
+#include "app/_graphing_app.h"     
+#include "app/_graph_app.h"
 //
 #include "app/menubar/_menubar.h"           //  Delegator Classes.
 #include "app/sidebar/_sidebar.h"
@@ -90,21 +91,21 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 
 //  0.      UTILITY FUNCTIONS [NON-MEMBER FUNCTIONS]...
-int                 run_application             ([[maybe_unused]] int argc, [[maybe_unused]] char ** argv);
+int                     run_application             ([[maybe_unused]] int argc, [[maybe_unused]] char ** argv);
 [[maybe_unused]]
-void                KeepProgramAwake            (GLFWwindow * );
+void                    KeepProgramAwake            (GLFWwindow * );
 
 
 //  DEAR IMGUI DEMO APPLICATIONS...
-void                ShowStyleEditor             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-void                ShowExampleAppLog           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-void                ShowExampleAppConsole       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-void                ShowMetricsWindow           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-void                ShowExampleAppDockSpace     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                    ShowStyleEditor             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                    ShowExampleAppLog           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                    ShowExampleAppConsole       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                    ShowMetricsWindow           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                    ShowExampleAppDockSpace     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 
-void                ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-void                ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-void                ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                    ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                    ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                    ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 
 
 
@@ -171,8 +172,9 @@ protected:
     //utl::PyStream       m_pystream                      = utl::PyStream(app::PYTHON_FILEPATH, );
     
     //                  9.  APPLICATION SUB-CLASSES...
-    GraphingApp         m_graphing_app;
     CCounterApp         m_counter_app;
+    GraphingApp         m_graphing_app;
+    GraphApp            m_graph_app;
 #ifdef CBAPP_ENABLE_CB_DEMO
     CBDemo              m_cb_demo                       = CBDemo();
 #endif  //  CBAPP_ENABLE_CB_DEMO  //

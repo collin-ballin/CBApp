@@ -621,17 +621,6 @@ void App::stream_test(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
-struct Tab_t    {
-    using                   callback_t      = std::function<void(const char*, bool*, ImGuiWindowFlags)>;
-    const char *            uuid;
-    bool                    open;
-    bool                    no_close;
-    ImGuiTabItemFlags       flags;
-    callback_t              render_fn;
-};
-
-
-
 //  "DefaultTabRenderFunc"
 //
 static void DefaultTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {

@@ -41,6 +41,7 @@
 
 #include <string>           //  <======| std::string, ...
 #include <string_view>
+#include <string_view>
 #include <vector>           //  <======| std::vector, ...
 #include <stdexcept>        //  <======| ...
 #include <functional>
@@ -136,11 +137,12 @@ inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = Im
     X(MainApp,          "My Application",           true,               _CBAPP_CORE_WINDOW_FLAGS | ImGuiWindowFlags_NoScrollbar )           \
 /*                                                                                                                                      */  \
 /*  2.  MAIN APPLICATION WINDOWS...                                                                                                     */  \
-    X(CCounterApp,      "Coincidence Counter",      true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
+    X(CCounterApp,      "Coincidence Counter",      false,              _CBAPP_CORE_WINDOW_FLAGS                                )           \
     X(GraphingApp,      "Graphing App",             false,              _CBAPP_CORE_WINDOW_FLAGS                                )           \
+    X(GraphApp,         "Graph App",                true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
 /*                                                                                                                                      */  \
 /*  3.  TOOLS, DEMOS, MISC WINDOWS, ETC...                                                                                              */  \
-    X(ColorTool,        "Color Tool",               true,               _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
+    X(ColorTool,        "Color Tool",               false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(StyleEditor,      "Style Editor (ImGui)",     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(Logs,             "Logs",                     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(Console,          "Console",                  false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \

@@ -92,8 +92,8 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 App::App(void)
-    : m_sidebar(S),  m_titlebar(S),  m_menubar(S),
-      m_graphing_app(100, 200)
+    : m_sidebar(S),         m_titlebar(S),              m_menubar(S),
+      m_counter_app(S),     m_graphing_app(100, 200),   m_graph_app(S)
 {
     glfwSetErrorCallback(utl::glfw_error_callback);         //  1.  SET GLFW CALLBACK & CHECK IF PROPERLY INITIALIZED...
     if (!glfwInit())
@@ -122,8 +122,9 @@ void App::init(void)
     //  3.      THIRD PART OF INITIALIZATION...             | INITIALIZE DELEGATOR CLASSES
     //          (SOME OF THESE HAVE TO BE DONE **AFTER** WE CREATE IMGUI CONTEXT)...
     this->m_sidebar.initialize();
-    this->m_graphing_app.initialize();
     this->m_counter_app.initialize();
+    this->m_graphing_app.initialize();
+    this->m_graph_app.initialize();
        
        
     //  4.      PERFORM ALL RUNTIME ASSERTION STATEMENTS AND
@@ -337,6 +338,10 @@ void App::dispatch_window_function(const Window & uuid)
         }
         case Window::GraphingApp:       {
             this->m_graphing_app.Begin(     w.uuid.c_str(),     nullptr,        w.flags);
+            break;
+        }
+        case Window::GraphApp:          {
+            this->m_graph_app.Begin(        w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         //

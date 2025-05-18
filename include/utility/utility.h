@@ -74,14 +74,16 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "file_exists"
+//  "Tab_t"
 //
-inline bool file_exists(const char* path)
-{
-    namespace fs = std::filesystem;
-    fs::path p{path};
-    return fs::exists(p) && fs::is_regular_file(p);
-}
+struct Tab_t    {
+    using                   callback_t      = std::function<void(const char*, bool*, ImGuiWindowFlags)>;
+    const char *            uuid;
+    bool                    open;
+    bool                    no_close;
+    ImGuiTabItemFlags       flags;
+    callback_t              render_fn;
+};
 
 
 //  "WindowLocation"
@@ -250,10 +252,26 @@ ImVec2                          GetImGuiWindowCoords        (const char * , cons
 
 //      1.4     WIDGET FUNCTIONS...
 // *************************************************************************** //
-bool                            DirectionalButton           (const char * id,   Anchor ,  ImVec2 size,
-                                                             ImVec4 bg_col      = ImVec4(0.0f,  0.0f,   0.0f,   1.0f),
-                                                             ImVec4 tint_col    = ImVec4(1.0f,  1.0f,   1.0f,   1.0f) );
-                                                             
+// *************************************************************************** //
+
+//              1.4A    POP-UP WINDOWS, FILE-DIALOGUE WINDOWS, ETC...
+bool                            Popup_AskOkCancel           (const char * );
+//
+bool                            Popup_AskQuestion           (const char * );
+bool                            Popup_AskRetryCancel        (const char * );
+bool                            Popup_AskYesNo              (const char * );
+bool                            Popup_ShowError             (const char * );
+bool                            Popup_ShowInfo              (const char * );
+bool                            Popup_ShowWarning           (const char * );
+bool                            file_exists                 (const char * );
+
+
+
+//              1.4B    GENERAL WIDGET FUNCTIONS...
+bool                            DirectionalButton           ([[maybe_unused]] const char * ,
+                                                             Anchor ,   ImVec2 ,
+                                                             [[maybe_unused]] ImVec4    bg_col      = ImVec4(0.0f,  0.0f,   0.0f,   1.0f),
+                                                             ImVec4                     tint_col    = ImVec4(1.0f,  1.0f,   1.0f,   1.0f) );
 
 void                            LeftLabel                   (const char * ,
                                                              const float label_width = 150.0f,
@@ -309,6 +327,7 @@ bool                            LoadStyleFromDisk           (ImGuiStyle &       
 
 //      2.1     OLD PLOTTING STUFF...
 // *************************************************************************** //
+// *************************************************************************** //
 void                                Sparkline                   (const char * id, const float * values, int count, float min_v, float max_v, int offset, const ImVec4 & color, const ImVec2 & size);
 void                                ScrollingSparkline          (const float time, ScrollingBuffer & data, const float window, const ImPlotAxisFlags flags, const float center = 0.75f);
 void                                ScrollingSparkline          (const float time,          const float window,                     ScrollingBuffer & data,
@@ -317,8 +336,13 @@ void                                ScrollingSparkline          (const float tim
 void                                ScrollingSparkline          (const float time,              const float window,     ScrollingBuffer & data,
                                                                  const ImPlotAxisFlags flags,   const ImVec4 & color,   const ImVec2 & size=ImVec2(-1,150),
                                                                  const float center=0.75f);
+                                                                 
+                                                                 
 //      2.2     UTILITY FUNCTIONS FOR IMPLOT STUFF...
 // *************************************************************************** //
+// *************************************************************************** //
+[[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (const size_t M);
+[[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (int M, const char * cmap);
 [[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (int M, ImPlotColormap map);
 
 

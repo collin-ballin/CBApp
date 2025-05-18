@@ -28,12 +28,31 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 TitleBar::TitleBar(app::AppState & src)
-    : S(src)                        { this->init(); }
+    : S(src)                        { }
 
 
-//  "init"          | private
+//  "initialize"        | public
 //
-void TitleBar::init(void)           { }
+void TitleBar::initialize(void) {
+    if (this->m_initialized)
+        return;
+        
+    this->init();
+    return;
+}
+
+
+//  "init"              | private
+//
+void TitleBar::init(void)
+{
+    this->m_scb_size.x     *= S.m_dpi_scale;    //  Adjust "PIXEL DIMENSIONS" by the DPI Scale Factor...
+    this->m_scb_size.y     *= S.m_dpi_scale;
+
+
+    this->m_initialized     = true;
+    return;
+}
 
 
 //  Destructor.
@@ -111,11 +130,11 @@ void TitleBar::ValidateCache(void)
     //float                 grab_min_size       = style.GrabMinSize;
     
     
-    const float             padx                = window_padding.x;
-    const float             pady                = window_padding.y;
+    const float             padx                = app::DEF_SIDEBAR_INSET_PADDING_SCALE.x * window_padding.x;
+    const float             pady                = app::DEF_SIDEBAR_INSET_PADDING_SCALE.y * window_padding.y;
     this->m_win_size_cache                      = ImGui::GetItemRectSize();
     this->m_win_size_cache.x                   += 2.0 * padx;
-    //this->m_win_size_cache.y                   += 2.0 * pady;
+    this->m_win_size_cache.y                   += 2.0 * pady;
     
     
     return;
@@ -147,12 +166,8 @@ void TitleBar::ShoWTitleBarWindow(void)
     // 2)   East-facing arrow with 2px padding and a red tint
     //
     //  Example usage:
-    //  Inside your ImGui frame:
-    const char *        uuid        = "##CollapseTab";
-    ImVec2              size        = ImVec2(20.0f, 20.0f);
-    
-    
-    if ( utl::DirectionalButton(uuid, this->S.m_show_sidebar_window ? Anchor::East : Anchor::West, size) ) {
+    //  Inside your ImGui frame:DEF_SIDEBAR_COLLAPSE_BUTTON_SIZE
+    if ( utl::DirectionalButton(this->m_scb_uuid, this->S.m_show_sidebar_window ? Anchor::East : Anchor::West, this->m_scb_size) ) {
         S.m_windows[ Window::SideBar ].open     = !S.m_windows[ Window::SideBar ].open;
         this->S.m_show_sidebar_window           = !this->S.m_show_sidebar_window;
         this->S.m_sidebar_ratio                 = this->S.m_show_sidebar_window ? app::DEF_SB_OPEN_WIDTH : 0.0f;
