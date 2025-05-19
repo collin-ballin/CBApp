@@ -150,7 +150,7 @@ void App::run_IMPL(void)
 
 
     //  1.      FIRST-FRAME INITIALIZATIONS...
-    if (first_frame)
+    if (first_frame) [[unlikely]]
     {
         first_frame = false;
         //  1.  CLEAR EXISTING DOCK LAYOUT...
@@ -172,12 +172,16 @@ void App::run_IMPL(void)
         //  4.  INSERT THE "CORE" WINDOWS INTO DOCK...
         ImGui::DockBuilderDockWindow    (S.m_windows[Window::SideBar].uuid.c_str(),             S.m_sidebar_dock_id);
 
-        //  5.  INSERT ALL REMAINING WINDOWS INTO RIGHT-SIDE DOCK...
-        for (const std::string & win_name : this->S.m_primary_windows)
-        {
-            ImGui::DockBuilderDockWindow(win_name.c_str(), S.m_main_dock_id);
+
+        //  5.  DOCK ALL RIGHT-HAND WINDOWS INTO RIGHT-HAND DOCKSPACE BY DEFAULT...
+        for (idx = S.ms_RHS_WINDOWS_BEGIN; idx < WINDOWS_END; ++idx) {
+            winfo           = S.m_windows[ static_cast<Window>(idx) ];
+            if (winfo.open) {
+                ImGui::DockBuilderDockWindow( winfo.uuid.c_str(), S.m_main_dock_id );
+            }
         }
         ImGui::DockBuilderFinish(this->S.m_dockspace_id);
+        
 
         //  6.  SET FOCUS TO MAIN-WINDOW...
         ImGui::SetWindowFocus(this->S.m_windows[Window::MainApp].uuid.c_str());

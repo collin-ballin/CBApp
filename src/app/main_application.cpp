@@ -679,13 +679,13 @@ void App::TestTabBar(void)
         size_t i = 0;
         for (auto & tab : DEF_TABS)
         {
-            if ( ImGui::BeginTabItem( tab.uuid, (tab.no_close) ? nullptr : &tab.open, tab.flags ) )
+            if ( ImGui::BeginTabItem( tab.get_uuid(), (tab.no_close) ? nullptr : &tab.open, tab.flags ) )
             {
                 if (tab.render_fn) {
-                    tab.render_fn( tab.uuid, &tab.open, tab.flags );
+                    tab.render_fn( tab.get_uuid(), &tab.open, tab.flags );
                 }
                 else {
-                    DefaultTabRenderFunc(tab.uuid, &tab.open, tab.flags);
+                    DefaultTabRenderFunc(tab.get_uuid(), &tab.open, tab.flags);
                     //ImGui::Text("This is tab #%zu.", i++);
                 }
                 

@@ -294,6 +294,7 @@ struct AppState
     //          1.  Window Variables:
     //              1.1     ALL Windows.
     static constexpr size_t             ms_WINDOWS_BEGIN            = static_cast<size_t>(Window::Dockspace);
+    static constexpr size_t             ms_RHS_WINDOWS_BEGIN        = static_cast<size_t>(Window::About);
     static constexpr size_t             ms_WINDOWS_END              = static_cast<size_t>(Window::Count);
     //
     //              1.2     Main Application Windows.
@@ -324,7 +325,7 @@ struct AppState
     
     
     //  3.      DOCKSPACE...
-    std::vector<std::string>            m_primary_windows           = { };
+    //std::vector<std::string>            m_primary_windows           = { };
     bool                                m_rebuild_dockspace         = false;
     const char *                        m_dock_name                 = "##RootDockspace";
     ImGuiID                             m_dockspace_id              = 0;

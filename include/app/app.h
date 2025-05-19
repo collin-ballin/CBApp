@@ -26,7 +26,7 @@
 //
 #include "app/c_counter/c_counter.h"        //  Seperate Application Classes.
 #include "app/_graphing_app.h"     
-#include "app/_graph_app.h"
+#include "app/graph_app/graph_app.h"
 //
 #include "app/menubar/_menubar.h"           //  Delegator Classes.
 #include "app/sidebar/_sidebar.h"

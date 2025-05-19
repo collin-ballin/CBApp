@@ -65,7 +65,9 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 struct Tab_t    {
     using                   callback_t      = std::function<void(const char*, bool*, ImGuiWindowFlags)>;
-    const char *            uuid;
+    inline const char *     get_uuid        (void) const    { return this->uuid.c_str(); }
+//
+    std::string             uuid;
     bool                    open;
     bool                    no_close;
     ImGuiTabItemFlags       flags;
@@ -101,10 +103,12 @@ public:
     //  1.2             Public Member Functions...
     void                initialize              (void);
     void                Begin                   ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    
+    //                  Utility Functions...
     void                RebuildDockspace        (void);
     void                DefaultTabRenderFunc    ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     
-    //                      Data & Interaction.
+
 
 
     //  1.3             Deleted Operators, Functions, etc...
@@ -121,7 +125,7 @@ protected:
     //  2.A             PROTECTED DATA-MEMBERS...
     // *************************************************************************** //
     
-    //  CONSTANTS.
+    //  CONSTANTS...
     std::array<const char *, 2>                     ms_PLOT_UUIDs                   = { "##GAppMasterPlot",         "##GAppIndividualPlot"};
     std::array<const char *, 2>                     ms_TABLE_UUIDs                  = { "##IndividualPlotTable",    "##GAppControlTable"};
     
@@ -133,8 +137,8 @@ protected:
     float                                           ms_I_PLOT_PLOT_WIDTH            = -1.0f;
     
     //  MISC APPLICATION STUFF...
-    static constexpr const char *                   ms_TABBAR_OPEN_TEXT             = "_";
-    static constexpr const char *                   ms_TABBAR_CLOSED_TEXT           = "^";
+    static constexpr const char *                   ms_TABBAR_OPEN_TEXT             = "     ";
+    static constexpr const char *                   ms_TABBAR_CLOSED_TEXT           = "^^^^^";
     bool                                            m_initialized                   = false;
     bool                                            m_rebuild_dockspace             = false;
     
@@ -158,28 +162,28 @@ protected:
     //  *************************************************************************** //
     
     //                                          1.  APPEARANCE CONSTANTS...
-    const float                                     m_child_corner_radius       = 5.0f;
-    std::pair<int,int>                              m_HEIGHT_LIMITS[2]          = { { 30, 30 }, { 5, 5 } };
+    const float                                     m_child_corner_radius           = 5.0f;
+    std::pair<int,int>                              m_HEIGHT_LIMITS[2]              = { { 30, 30 }, { 5, 5 } };
     //
     //
     //                                          2.  CHILDREN PARAMETERS...
-    bool                                            m_child_open[2]             = {true, true};
-    std::array< const char *, 2 >                   m_child_ids                 = { "PlotChild",            "ControlChild" };
-    ImGuiChildFlags                                 m_child_flags[2]            = {
+    bool                                            m_child_open[2]                 = {true, true};
+    std::array< const char *, 2 >                   m_child_ids                     = { "PlotChild",            "ControlChild" };
+    ImGuiChildFlags                                 m_child_flags[2]                = {
                                                         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
                                                         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY
                                                     };
-    std::array< const char *, 2 >                   m_tabbar_uuids              = { "PlotTabBar##GApp",     "PlotTabBar##GApp" };
-    ImGuiTabBarFlags                                m_tabbar_flags[2]           = {
+    std::array< const char *, 2 >                   m_tabbar_uuids                  = { "PlotTabBar##GApp",     "PlotTabBar##GApp" };
+    ImGuiTabBarFlags                                m_tabbar_flags[2]               = {
                                                         ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton,
                                                         ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton
                                                     };
     
     
     //                                          3.  SUBSIDIARY WINDOWS...
-    ImVec2                                          m_ctrl_size                 = ImVec2(-1, -1);
-    std::array< const char *, 2 >                   m_win_uuids                 = { "Visuals",              "Controls" };
-    ImGuiWindowFlags                                m_docked_win_flags[2]       = {
+    ImVec2                                          m_ctrl_size                     = ImVec2(-1, -1);
+    std::array< const char *, 2 >                   m_win_uuids                     = { "Visuals",              "Controls" };
+    ImGuiWindowFlags                                m_docked_win_flags[2]           = {
                                                         ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus,    // ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground,
                                                         ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus     //  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground
                                                     };
@@ -188,29 +192,29 @@ protected:
     //                                          3.  DOCKING SPACE...
     //
     //                                              Main Dockspace:
-    float                                           m_dockspace_ratio           = 0.6f;
-    static constexpr const char *                   m_dockspace_name            = "DockHostSpace##GApp";
-    ImGuiDockNodeFlags                              m_dockspace_flags           = ImGuiDockNodeFlags_None;
-    ImGuiID                                         m_dockspace_id              = 0;
-    ImGuiWindowClass                                m_window_class[2]           = {};
+    float                                           m_dockspace_ratio               = 0.6f;
+    static constexpr const char *                   m_dockspace_name                = "DockHostSpace##GApp";
+    ImGuiDockNodeFlags                              m_dockspace_flags               = ImGuiDockNodeFlags_None;
+    ImGuiID                                         m_dockspace_id                  = 0;
+    ImGuiWindowClass                                m_window_class[2]               = {};
     //
     //      Nested Dockspaces:
-    ImGuiID                                         m_dock_ids[2]               = { 0, 0 };
+    ImGuiID                                         m_dock_ids[2]                   = { 0, 0 };
     
     
     //                                          4.  IMPORTANT DATA...
-    std::vector<Tab_t>                              ms_PLOT_TABS                = {};
-    std::vector<Tab_t>                              ms_CTRL_TABS                = {};
+    std::vector<Tab_t>                              ms_PLOT_TABS                    = {};
+    std::vector<Tab_t>                              ms_CTRL_TABS                    = {};
     
     
     //                                          5.  WIDGET VARIABLES...
-    float                                           m_coincidence_window        = 10.0f;
-    float                                           m_integration_window        = 60.0f;
+    float                                           m_coincidence_window            = 10.0f;
+    float                                           m_integration_window            = 60.0f;
     
     
     //                                          6.  PLOTTING STUFF...
-    bool                                            m_colormap_cache_invalid    = true;
-    ImPlotColormap                                  m_cmap                      = ImPlotColormap_Cool;
+    bool                                            m_colormap_cache_invalid        = true;
+    ImPlotColormap                                  m_cmap                          = ImPlotColormap_Cool;
     
     
     //                                          7.  DELAGATOR CLASSES...
@@ -226,13 +230,18 @@ protected:
     //  2B.1            Class Initializations.      [GraphApp.cpp]...
     void                init                        (void);
     void                destroy                     (void);
-    void                dispatch_plot_function      (const size_t );
+    void                dispatch_plot_function      (const std::string & );
     
     void                display_plots               (void);
     void                display_controls            (void);
     
+    
     //  2B.3            Application Functions...
     void                etch_a_sketch               (void);
+    
+    
+    //  2C.1            Utility Functions...
+    Tab_t *             get_ctrl_tab                (const std::string & , std::vector<Tab_t> & );
 
 
 

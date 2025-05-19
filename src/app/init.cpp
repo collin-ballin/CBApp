@@ -240,7 +240,7 @@ void App::init_appstate(void)
     // io.MouseWheelH                     *= app::DEF_MOUSEWHEEL_SCROLL_SPEED;
 
 
-    //  2.  LOAD APPLICATION WINDOW INFORMATION...
+    //  2.  LOAD APPLICATION WINDOW RENDER CALLBACK FUNCTIONS...
     //
     for (std::size_t i = 0; i < static_cast<int>(Window::Count); ++i)
     {
@@ -248,20 +248,6 @@ void App::init_appstate(void)
         m_windows[uuid].render_fn           = [this, uuid]([[maybe_unused]] const char * id, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
         { this->dispatch_window_function(uuid); }; // uuid is now correctly captured per-lambda
     }
-
-       
-    //  3.  ADD EACH WINDOW THAT HAS ".open==true" BY DEFAULT INTO THE "m_primary_windows" VARIABLE...
-    //
-    this->S.m_primary_windows.push_back( std::string(this->S.m_windows[Window::MainApp].uuid) );    //  Add the "Main" window first (always opened).
-    for (size_t i = S.ms_APP_WINDOWS_BEGIN; i < S.ms_WINDOWS_END; ++i)
-    {
-        WinInfo &       winfo       = S.m_windows[ static_cast<Window>(i) ];
-        if (winfo.open) {
-            this->S.m_primary_windows.push_back( std::string(winfo.uuid) );
-        }
-    }
-
-
 
 
     //  4.  LOAD APPLICATION FONTS...
@@ -464,11 +450,6 @@ void App::init_asserts(void)
         const app::WinInfo & winfo      = S.m_windows[ static_cast<Window>(idx) ];
         IM_ASSERT( winfo.render_fn != nullptr && error::ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS );
     }
-
-    //  3.  ASSERT THAT ALL "m_primary_windows" ARE VALID...
-    IM_ASSERT( std::find(this->S.m_primary_windows.begin(), this->S.m_primary_windows.end(), S.m_windows[ Window::SideBar ].uuid.c_str() )
-               == this->S.m_primary_windows.end()
-               && error::ASSERT_INVALID_PRIMARY_WINDOWS );
 
     return;
 }
