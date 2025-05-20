@@ -53,13 +53,8 @@
 //  0.3     "DEAR IMGUI" HEADERS...
 #include "imgui.h"                      //  0.3     "DEAR IMGUI" HEADERS...
 #include "imgui_internal.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 #include "implot.h"
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-# include <GLES2/gl2.h>
-#endif      //  IMGUI_IMPL_OPENGL_ES2  //
-#include <GLFW/glfw3.h>     //  <======| Will drag system OpenGL headers
+#include "implot_internal.h"
 
 
 
@@ -70,7 +65,7 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 
 
 
-//  0.1     INLINE DEFINITIONS (HEADER ONLY)        |   WIDGETS & WINDOWS...
+//  0.1     INLINE DEFINITIONS (HEADER ONLY)        |   WIDGETS & WINDOW STRUCTS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -83,6 +78,14 @@ struct Tab_t    {
     bool                    no_close;
     ImGuiTabItemFlags       flags;
     callback_t              render_fn;
+};
+
+
+//  "WidgetRow"
+//      Declarative per-row widget logic
+struct WidgetRow {
+    const char *            label;
+    std::function<void()>   render;
 };
 
 
@@ -132,18 +135,51 @@ inline constexpr std::array<float, 9>   AnchorAngles = {
 // *************************************************************************** //
 //
 //
-//
-//  0.2     INLINE                                  | MISC. STRUCTS...
+//  0.2     INLINE DEFINITIONS (HEADER ONLY)        |   PLOTS AND GRAPHS...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "WidgetRow"
-//      Declarative per-row widget logic
-struct WidgetRow {
-    const char *            label;
-    std::function<void()>   render;
+//  "AnimPlotCFG"
+//
+struct AnimPlotCFG {
+    bool        playing             = false;
+    double      last_time           = 0.0;
+    int         current_frame       = 0;
 };
 
+
+//  "PlotCFG"
+//
+struct PlotCFG {
+//
+//          1.                      MAIN PLOT PARAMETERS...
+    const char *                        plot_uuid                   = nullptr;
+    ImVec2                              plot_size                   = ImVec2(-1.0f, -1.0f);
+    ImPlotFlags                         plot_flags                  = ImPlotFlags_None | ImPlotFlags_NoTitle;
+//
+//          2.                      AXIS PARAMETERS...
+    std::array<const char *, 2>         axis_labels                 = {
+                                            "X-axis    [Arb.]",
+                                            "Y-axis    [Arb.]"
+                                        };
+    std::array<ImPlotAxisFlags, 2>      axis_flags                  = {
+                                            ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit,
+                                            ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit
+                                        };
+//
+//          3.                      LEGEND PARAMETERS...
+    ImPlotLocation                      legend_loc                  = ImPlotLocation_NorthWest;                                                 // legend position.
+    ImPlotLegendFlags                   legend_flags                = ImPlotLegendFlags_None;       //  ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
+};
+
+
+
+// *************************************************************************** //
+//
+//
+//  0.2     INLINE DEFINITIONS (HEADER ONLY)        |   MISC / SPECIFIC USE-CASES...
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "ChannelIdx"
 //
@@ -273,6 +309,9 @@ bool                            DirectionalButton           ([[maybe_unused]] co
                                                              [[maybe_unused]] ImVec4    bg_col      = ImVec4(0.0f,  0.0f,   0.0f,   1.0f),
                                                              ImVec4                     tint_col    = ImVec4(1.0f,  1.0f,   1.0f,   1.0f) );
 
+
+void                            LeftLabel2                  (const char * , const float );
+void                            LeftLabel2                  (const char * , const float, const float );
 void                            LeftLabel                   (const char * ,
                                                              const float label_width = 150.0f,
                                                              const float widget_width = 250.0f);
@@ -344,7 +383,7 @@ void                                ScrollingSparkline          (const float tim
 [[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (const size_t M);
 [[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (int M, const char * cmap);
 [[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (int M, ImPlotColormap map);
-
+[[nodiscard]] ImPlotColormap        CreateTransparentColormap   (ImPlotColormap , float , const char * );
 
 
 

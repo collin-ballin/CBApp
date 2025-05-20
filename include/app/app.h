@@ -207,6 +207,8 @@ protected:
     //  2D.1            Primary Menu Functions.     [interface.cpp]...
     void                stream_test                 (void);                                                         //  [main_application.cpp].
     void                ShowColorTool               ([[maybe_unused]] const char * ,    [[maybe_unused]] bool * ,   [[maybe_unused]] ImGuiWindowFlags);
+    void                ColorShaderTool             (void);
+    void                ColorMapCreatorTool         (void);
     
     
     //  2E.1            Set-Up GUI Functions.       [app.cpp]...
@@ -221,6 +223,7 @@ private:
     // *************************************************************************** //
     
     //  3.1             Primary GUI Functions.      [main_application.cpp]...
+    void                ImPlot_Testing0             (void);
     void                ImPlot_Testing1             (void);
     void                ImPlot_Testing2             (void);
     void                ImPlot_Testing3             (void);

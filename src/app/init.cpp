@@ -276,6 +276,10 @@ void App::init_appstate(void)
             m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontDefault(&config);
         }
     }
+    
+    
+    //      5.      LOADING CUSTOM COLORMAPS...
+    S.LoadCustomColorMaps();
 
 
     return;

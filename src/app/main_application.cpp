@@ -10,6 +10,8 @@
 **************************************************************************************
 **************************************************************************************/
 #include "app/app.h"
+#include "implot.h"
+#include "implot_internal.h"
 #include <random>
 #include <algorithm>
 
@@ -21,273 +23,8 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-//  3.3     SECONDARY APPLICATIONS / TOOLS...
 // *************************************************************************** //
 // *************************************************************************** //
-
-//  "ShowColorTool"
-//
-void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
-{
-    constexpr size_t                BUFFER_SIZE             = 256;
-    [[maybe_unused]] ImGuiIO &      io                      = ImGui::GetIO(); (void)io;
-    [[maybe_unused]] ImGuiStyle &   style                   = ImGui::GetStyle();
-    
-    //  CREATE THE WINDOW...
-    if (!ImGui::Begin(uuid, p_open, flags)) {
-        ImGui::End();
-        return;
-    }
-    
-    
-    //  DIMENSIONS...
-    static ImVec2                   base_img_size           = ImVec2(180 * S.m_dpi_scale,   180 * S.m_dpi_scale);
-    static ImVec2                   palette_img_size        = ImVec2(30 * S.m_dpi_scale,    30 * S.m_dpi_scale);
-    static float                    LABEL_COLUMN_WIDTH      = 150.0f * S.m_dpi_scale;
-    static float                    WIDGET_COLUMN_WIDTH     = 300.0f * S.m_dpi_scale;
-
-    static ImVec4                   base_color              = ImVec4(114.0f/255.0f, 144.0f/255.0f, 154.0f/255.0f, 1.0f);    //  Base color in RGB (normalized to [0,1]).
-    static char                     hex_input[BUFFER_SIZE]  = "#728C9A";    //  Hex input for base color.
-    static int                      steps                   = 3;            //  Steps and lightness delta for variants.
-    static float                    delta_l                 = 0.1f;
-
-    //  Table layout constants
-    static bool                     freeze_header           = false;
-    static bool                     freeze_column           = false;
-    static bool                     stretch_column_1        = true;
-
-    static ImGuiTableColumnFlags    col0_flags              = ImGuiTableColumnFlags_WidthFixed;
-    static ImGuiTableColumnFlags    col1_flags              = stretch_column_1 ? ImGuiTableColumnFlags_WidthStretch : ImGuiTableColumnFlags_WidthFixed;
-    static ImGuiTableFlags          table_flags             = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible; //ImGuiTableFlags_ScrollX;
-    static ImGuiSliderFlags         SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
-
-    //              COLOR-INPUT FLAGS...
-    static ImGuiColorEditFlags      COLOR_INPUT_FLAGS       = ImGuiColorEditFlags_None | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSmallPreview; //ImGuiColorEditFlags_NoAlpha
-    //              COLOR-IMAGE FLAGS...    ImGuiColorEditFlags_AlphaPreviewHalf
-    static ImGuiColorEditFlags      BASE_IMG_FLAGS          = ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs;    // ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs; //ImGuiColorEditFlags_NoAlpha
-    static ImGuiColorEditFlags      PALETTE_IMG_FLAGS       = ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoOptions; //ImGuiColorEditFlags_NoAlpha
-    
-
-
-
-    
-    //  1.  PREVIEW OF BASE COLOR...
-    //ImGui::ColorButton("##BaseColorImage",  base_color,     BASE_IMG_FLAGS,    base_img_size);
-    ImGui::SetNextItemWidth(base_img_size.x);
-    ImGui::ColorPicker4("##BaseColorImage",  (float*)&base_color,     BASE_IMG_FLAGS); //,    base_img_size);
-
-
-    //  1.  TABLE OF WIDGETS...
-    if (ImGui::BeginTable("ColorToolControls", 2, table_flags))
-    {
-        if (freeze_column || freeze_header)
-            ImGui::TableSetupScrollFreeze(freeze_column ? 1 : 0, freeze_header ? 1 : 0);
-
-        ImGui::TableSetupColumn("Label",  col0_flags, LABEL_COLUMN_WIDTH);
-        ImGui::TableSetupColumn("Widget", col1_flags, stretch_column_1 ? 1.0f : WIDGET_COLUMN_WIDTH);
-        // ImGui::TableHeadersRow();
-        
-
-        //  1A.     BASE-COLOR [Hex INPUT]...
-        ImGui::TableNextRow();      ImGui::TableSetColumnIndex(0);      ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Base Color");
-        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-        ImGui::ColorEdit4("##HexInput",     (float*)&base_color,            COLOR_INPUT_FLAGS | ImGuiColorEditFlags_DisplayHex);
-
-
-        //  1B.     BASE-COLOR [RGB INPUT]...
-        ImGui::TableNextRow();      ImGui::TableSetColumnIndex(0);      ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("(RGB)");
-        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-        ImGui::ColorEdit4("##BaseColorRGB",     (float*)&base_color,        COLOR_INPUT_FLAGS | ImGuiColorEditFlags_DisplayRGB);
-
-
-        //  1C.     BASE-COLOR [FLOAT INPUT]...
-        ImGui::TableNextRow();      ImGui::TableSetColumnIndex(0);      ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("(Float)");
-        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-        ImGui::ColorEdit4("##BaseColorFloat",     (float*)&base_color,        COLOR_INPUT_FLAGS | ImGuiColorEditFlags_Float);
-
-
-        //  1D.     BASE-COLOR [HSV INPUT]...
-        ImGui::TableNextRow();      ImGui::TableSetColumnIndex(0);      ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("(HSV)");
-        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-        ImGui::ColorEdit4("##BaseColorHSV",     (float*)&base_color,        COLOR_INPUT_FLAGS | ImGuiColorEditFlags_DisplayHSV);
-
-
-
-
-        //  ImGui::Text("Color widget HSV with Alpha:");
-        //  ImGui::ColorEdit4("MyColor##2", (float*)&color, ImGuiColorEditFlags_DisplayHSV | base_flags);
-
-        //  IMGUI_DEMO_MARKER("Widgets/Color/ColorEdit (float display)");
-        //  ImGui::Text("Color widget with Float Display:");
-        //  ImGui::ColorEdit4("MyColor##2f", (float*)&color, ImGuiColorEditFlags_Float | base_flags);
-        
-        
-
-
-
-        //  3.      NUMBER-OF-STEPS...
-        ImGui::TableNextRow();  ImGui::TableSetColumnIndex(0);  ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Steps");
-        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-        ImGui::SliderInt("##steps", &steps, 2, 10);
-
-
-        //  4.      LIGHT-NESS / SHADE ITERATION...
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Shading Amount");
-        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-        ImGui::SliderFloat("##delta_l", &delta_l, 0.01f, 0.5f, "%.2f%%");
-
-        ImGui::EndTable();
-    }
-
-
-    ImGui::NewLine();
-    ImGui::SeparatorText("Color Palette");
-
-    //  GENERATE THE COLOR PALETTE...
-    //  3.  Helper: color button with tooltip & copy-on-click
-    auto color_button_with_tooltip = [&](const char * id, const ImVec4 & col)
-    {
-        ImGui::ColorButton(id, col, PALETTE_IMG_FLAGS, palette_img_size);
-        if (ImGui::IsItemHovered())
-        {
-            char hex_buf[8];
-            snprintf(hex_buf, sizeof(hex_buf), "#%02X%02X%02X",
-                     int(col.x * 255), int(col.y * 255), int(col.z * 255));
-            ImGui::SetTooltip("%s\n(click to copy)", hex_buf);
-        }
-        if (ImGui::IsItemClicked())
-        {
-            char hex_buf[8];
-            snprintf(hex_buf, sizeof(hex_buf), "#%02X%02X%02X",
-                     int(col.x * 255), int(col.y * 255), int(col.z * 255));
-            ImGui::SetClipboardText(hex_buf);
-        }
-    };
-
-    //  4.  Generate palette table with fixed first column and stretch others
-    float           h, s, l;
-    float           cr, cg, cb;
-    ImGui::ColorConvertRGBtoHSV(base_color.x, base_color.y, base_color.z, h, s, l);
-    float           h_comp          = fmodf(h + 0.5f, 1.0f);
-    ImGui::ColorConvertHSVtoRGB(h_comp, s, l, cr, cg, cb);
-    ImVec4          comp_color      = ImVec4(cr, cg, cb, base_color.w);
-    int             cols            = steps + 1; // extra for row labels
-    static float    C_WIDTH         = -1.0f;
-        
-    ImGui::ColorConvertRGBtoHSV(base_color.x, base_color.y, base_color.z, h, s, l);
-    if (ImGui::BeginTable("ColorPalette", cols, table_flags))
-    {
-        // Setup columns: fixed label col, then stretch columns for swatches
-        //  ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, LABEL_COLUMN_WIDTH);
-        ImGui::TableSetupColumn("Type",     col0_flags,     LABEL_COLUMN_WIDTH);
-        
-        C_WIDTH    = (1/steps) * ImGui::GetContentRegionAvail().x;
-        
-        
-        for (int i = 0; i < steps; ++i)
-            ImGui::TableSetupColumn( ("##col" + std::to_string(i)).c_str(), ImGuiTableColumnFlags_None, C_WIDTH);     //ImGuiTableColumnFlags_WidthStretch ImGuiTableColumnFlags_WidthFixed
-
-
-        // Header row: lightness change
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted("");
-        for (int i = 0; i < steps; ++i)
-        {
-            ImGui::TableSetColumnIndex(i + 1);
-            char hdr[16];
-            if (i == 0) strcpy(hdr, "0%"); else snprintf(hdr, sizeof(hdr), "%.0f%%", i * delta_l * 100.0f);
-            ImGui::TextUnformatted(hdr);
-        }
-
-        // Shades row
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted("Shades");
-        for (int i = 0; i < steps; ++i)
-        {
-            ImGui::TableSetColumnIndex(i + 1);
-            float new_l = ImClamp(l - i * delta_l, 0.0f, 1.0f);
-            float r, g, b;
-            ImGui::ColorConvertHSVtoRGB(h, s, new_l, r, g, b);
-            color_button_with_tooltip(("##shade" + std::to_string(i)).c_str(), ImVec4(r, g, b, base_color.w));
-            ImGui::SameLine();
-            char hex[8]; snprintf(hex, sizeof(hex), "#%02X%02X%02X", int(r*255), int(g*255), int(b*255));
-            ImGui::TextUnformatted(hex);
-        }
-
-        // Tints row
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted("Tints");
-        for (int i = 0; i < steps; ++i)
-        {
-            ImGui::TableSetColumnIndex(i + 1);
-            float new_l = ImClamp(l + i * delta_l, 0.0f, 1.0f);
-            float r, g, b;
-            ImGui::ColorConvertHSVtoRGB(h, s, new_l, r, g, b);
-            color_button_with_tooltip(("##tint" + std::to_string(i)).c_str(), ImVec4(r, g, b, base_color.w));
-            ImGui::SameLine();
-            char hex[8]; snprintf(hex, sizeof(hex), "#%02X%02X%02X", int(r*255), int(g*255), int(b*255));
-            ImGui::TextUnformatted(hex);
-        }
-
-        // Complementary Shades row
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted("Comp Shades");
-        for (int i = 0; i < steps; ++i)
-        {
-            ImGui::TableSetColumnIndex(i + 1);
-            float new_l = ImClamp(l - i * delta_l, 0.0f, 1.0f);
-            float r, g, b;
-            ImGui::ColorConvertHSVtoRGB(h_comp, s, new_l, r, g, b);
-            color_button_with_tooltip(("##cshade" + std::to_string(i)).c_str(), ImVec4(cr * (1 - float(i) / steps) + r * (float(i) / steps),
-                                                                                   cg * (1 - float(i) / steps) + g * (float(i) / steps),
-                                                                                   cb * (1 - float(i) / steps) + b * (float(i) / steps), base_color.w));
-            ImGui::SameLine();
-            char hex[8]; snprintf(hex, sizeof(hex), "#%02X%02X%02X", int(r*255), int(g*255), int(b*255));
-            ImGui::TextUnformatted(hex);
-        }
-
-        // Complementary Tints row
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted("Comp Tints");
-        for (int i = 0; i < steps; ++i)
-        {
-            ImGui::TableSetColumnIndex(i + 1);
-            float new_l = ImClamp(l + i * delta_l, 0.0f, 1.0f);
-            float r, g, b;
-            ImGui::ColorConvertHSVtoRGB(h_comp, s, new_l, r, g, b);
-            color_button_with_tooltip(("##ctint" + std::to_string(i)).c_str(), ImVec4(cr * (1 - float(i) / steps) + r * (float(i) / steps),
-                                                                                   cg * (1 - float(i) / steps) + g * (float(i) / steps),
-                                                                                   cb * (1 - float(i) / steps) + b * (float(i) / steps), base_color.w));
-            ImGui::SameLine();
-            char hex[8]; snprintf(hex, sizeof(hex), "#%02X%02X%02X", int(r*255), int(g*255), int(b*255));
-            ImGui::TextUnformatted(hex);
-        }
-
-        ImGui::EndTable();
-    }
-    
-    ImGui::End();
-    
-    return;
-}
-
-
-
-
-
 
 //  "ShowAboutWindow"
 //
@@ -713,6 +450,161 @@ void App::TestTabBar(void)
 //  3.4     OTHER FUNCTIONS...      | PRIVATE.
 // *************************************************************************** //
 // *************************************************************************** //
+
+#ifndef CHECKBOX_FLAG
+#   define CHECKBOX_FLAG(flags, flag) ImGui::CheckboxFlags(#flag, (unsigned int*)&flags, flag)
+#endif
+
+//  "ImPlot_Testing0"
+//
+void App::ImPlot_Testing0(void)
+{
+    static utl::PlotCFG             cfg             = {"##TestingPlotCFG"};
+    
+    //  DATA INFORMATION...
+    static constexpr size_t         NX              = 200ULL;
+    static float                    data[NX]        = {0.0f};
+    static float                    amp             = 1.0f;
+    static float                    freq            = 1.0f;
+    static float                    time            = 0.0f;
+    
+    //  PLOT INFORMATION...
+    static std::string              PLOT_LABEL      = "Data";
+    static ImVec4                   PLOT_COLOR      = app::DEF_APPLE_RED;
+    static float                    PLOT_LW         = 3.0f;
+    static float                    YLIMS[2]        = {-1.5f, 1.5f};
+    
+    //  P2  DATA...
+    static ImPlotStairsFlags        p2_flags        = 0;
+    static int                      p2_count        = 21;
+    static float                    p2_scale[2]     = {0.005,   0};
+    
+    //  P3  DATA...
+    static ImPlotHeatmapFlags       p3_flags        = 0;
+    static float                    p3_vrange[2]    = {0.0,     1.0};
+    static ImPlotRect               plot_bounds;
+    
+    static ImPlotColormap           CustomCMap      = utl::CreateTransparentColormap(ImPlotColormap_Viridis, 0.4f, "MyCustomCMap");
+
+    
+    
+    //  0.  CONTROL WIDGETS...
+    ImGui::SeparatorText("Controls");
+    //
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if ( ImGui::TreeNode("Source") ) {
+        ImGui::SliderFloat("Amp",           &amp,           -2.0f,      2.0f,           "%.3f");
+        ImGui::SliderFloat("Freq",          &freq,          0.001,      5,              "%.3f");
+        ImGui::TreePop();
+    }
+    
+    
+    //  1.  PLOT P2...
+    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+    if ( ImGui::TreeNode("Stair Step") ) {
+        CHECKBOX_FLAG(p2_flags, ImPlotStairsFlags_Shaded);
+        ImGui::SliderInt("Count",           &p2_count,      1,          NX,                             "%1d");
+        ImGui::SliderFloat("XScale",        &p2_scale[0],   0.0f,       10.0f,                           "%.3f");
+        ImGui::SliderFloat("XStart",        &p2_scale[1],   0,          static_cast<float>(NX-1),       "%.3f");
+        
+        //p2_scale[0] = static_cast<float>(NX) / p2_count;
+        
+        //ImGui::SliderFloat2("Scale",        p2_scale,      0.0f,        1.0f,           "%.3f");
+        ImGui::TreePop();
+    }
+    
+    //  2.  PLOT P3...
+    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+    if ( ImGui::TreeNode("Heat Map") ) {
+    
+        ImGui::SliderFloat2("VRange",        p3_vrange,      -1.5f,        1.5f,           "%.3f");
+    
+        ImGui::TreePop();
+    }
+    
+    
+    
+    
+    
+    //  1.  GENERATE DATA...
+    time    = ImGui::GetTime();
+    utl::sinusoid_wave_IMPL_1D(data, time, amp, freq);
+    
+
+
+    //  2.  CREATE THE PLOT...
+    ImGui::NewLine();   ImGui::SeparatorText("Plots");
+    //
+    ImGui::PushID(cfg.plot_uuid);
+    if ( ImPlot::BeginPlot(cfg.plot_uuid, cfg.plot_size, cfg.plot_flags) )
+    {
+        //  3.  CONFIGURE THE PLOT APPEARANCE...
+        ImPlot::SetupAxes(cfg.axis_labels[0],       cfg.axis_labels[1],
+                          cfg.axis_flags[0],        cfg.axis_flags[1]);
+        ImPlot::SetupLegend(cfg.legend_loc,         cfg.legend_flags);
+        
+        
+        //  ImPlot::SetupAxisLimits(ImAxis_X1, 0, NX - 1,           ImGuiCond_Always);
+        //  ImPlot::SetupAxisLimits(ImAxis_Y1, YLIMS[0], YLIMS[1],  ImGuiCond_Always);
+        
+        
+        //  4.  P3      | HEATMAP PLOT...
+        {
+            ImPlot::PushColormap(CustomCMap);
+            plot_bounds     = ImPlot::GetPlotLimits();
+            ImPlot::PlotHeatmap("heat",
+                    data,
+                    1,
+                    NX,
+                    p3_vrange[0],
+                    p3_vrange[1],
+                    nullptr,
+                    plot_bounds.Min(),
+                    plot_bounds.Max(),
+                    p3_flags);
+            
+            ImPlot::PopColormap();
+        }
+            
+        //  5.  P2      | PLOT STAIR-STEP PLOT...
+        //  {
+        //      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+        //      //ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.25f);
+        //      ImPlot::PlotStairs("Post Step (default)", data, p2_count, p2_scale[0], p2_scale[1], p2_flags);
+        //  }
+
+
+        
+        //  0.  PLOT THE LINE...
+        //
+        ImPlot::SetNextLineStyle(PLOT_COLOR,      PLOT_LW);
+        ImPlot::PlotLine(
+            PLOT_LABEL.c_str(),
+            data,
+            NX,
+            1.0,
+            0.0,
+            ImPlotLineFlags_None);
+
+
+
+        //  END OF PLOT.
+        ImPlot::EndPlot();
+    }
+    
+
+    ImGui::PopID();
+    return;
+}
+
+
+
+
+
+
+
+
+
 
 //  "ImPlot_Testing1"
 //

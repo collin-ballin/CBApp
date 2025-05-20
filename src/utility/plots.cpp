@@ -168,6 +168,22 @@ void ScrollingSparkline(const float time,               const float window,     
 }
 
 
+//  "CreateTransparentColormap"
+//
+ImPlotColormap CreateTransparentColormap(ImPlotColormap base_index, float alpha, const char* name = nullptr)
+{
+    const int count = ImPlot::GetColormapSize(base_index);
+    std::vector<ImVec4> colors;
+
+    for (int i = 0; i < count; ++i) {
+        ImVec4 c = ImPlot::GetColormapColor(i, base_index);  // Use the public API
+        c.w = alpha; // Apply custom alpha
+        colors.push_back(c);
+    }
+
+    if (!name) name = "TransparentCustom";
+    return ImPlot::AddColormap( name, colors.data(), static_cast<int>(colors.size()) );
+}
 
 
 

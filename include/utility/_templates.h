@@ -163,10 +163,6 @@ void sinusoid_wave_IMPL(T (&data)[NX][NY], const T time, const T amp, const T fr
 }
 
 
-
-
-
-
 //  "sinusoid_wave"
 //
 template<typename T, typename size_type=std::size_t>
@@ -191,6 +187,24 @@ inline void sinusoid_wave( T * data,        const size_type X,  const size_type 
     }
     
     return;
+}
+
+
+template<typename T, size_t N>
+void sinusoid_wave_IMPL_1D(T (&data)[N], T time, T amp, T freq) noexcept
+{
+    //  π and angular frequency
+    constexpr T pi    = T(3.14159265358979323846);
+    T           omega = T(2) * pi * freq;      // ω = 2πf
+
+    // one spatial cycle over N points
+    constexpr T k     = T(2) * pi / T(N);
+
+    for (size_t i = 0; i < N; ++i) {
+        // invert index so “row 0” is one end of the wave
+        T phase      = k * (T(N - 1 - i)) - omega * time;
+        data[i]      = amp * std::sin(phase);
+    }
 }
 
 

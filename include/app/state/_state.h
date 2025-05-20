@@ -142,7 +142,7 @@ inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = Im
     X(GraphApp,         "Graph App",                true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
 /*                                                                                                                                      */  \
 /*  3.  TOOLS, DEMOS, MISC WINDOWS, ETC...                                                                                              */  \
-    X(ColorTool,        "Color Tool",               false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
+    X(ColorTool,        "Color Tool",               true,               _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(StyleEditor,      "Style Editor (ImGui)",     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(Logs,             "Logs",                     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(Console,          "Console",                  false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
@@ -272,6 +272,7 @@ struct AppState
     // *************************************************************************** //
     void                                SetDarkMode                 (void);
     void                                SetLightMode                (void);
+    void                                LoadCustomColorMaps         (void);
     
     void                                PushFont                    ([[maybe_unused]] const Font & );
     void                                PopFont                     (void);

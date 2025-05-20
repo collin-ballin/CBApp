@@ -30,10 +30,8 @@ void GraphApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool *
     static constexpr const char *   controls_uuid           = "Controls";
 
 
-
     //  1.  CREATING THE HOST WINDOW...
     ImGui::Begin(uuid, p_open, flags);
-        //
         //  Generate a persistent dockspace ID
         m_dockspace_id          = ImGui::GetID(m_dockspace_name);
         
@@ -44,7 +42,7 @@ void GraphApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool *
             ImGui::DockBuilderAddNode       (m_dockspace_id, ImGuiDockNodeFlags_DockSpace);
             ImGui::DockBuilderSetNodeSize   (m_dockspace_id, ImVec2(800, 600));
 
-            // Example split: left and right
+            //  Split the dock UP and DOWN...
             m_dock_ids[1]   = ImGui::DockBuilderSplitNode( m_dockspace_id, ImGuiDir_Down, m_dockspace_ratio,
                                                            nullptr, &m_dock_ids[0] );
 
@@ -52,22 +50,18 @@ void GraphApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool *
             ImGui::DockBuilderDockWindow(m_win_uuids[1],    m_dock_ids[1]);
             ImGui::DockBuilderFinish(m_dockspace_id);
         }
-        
         if (this->m_rebuild_dockspace) [[unlikely]] {
             this->m_rebuild_dockspace   = false;
             this->RebuildDockspace();
         }
-        
     ImGui::End();
     
     
     //  2.  CREATE TOP WINDOW FOR PLOTS...
     ImGui::SetNextWindowClass(&this->m_window_class[0]);
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, app::DEF_LIVE_LIGHTBLUE);
     ImGui::Begin(m_win_uuids[0], nullptr, m_docked_win_flags[0]);
         this->display_plots();
     ImGui::End();
-    ImGui::PopStyleColor();
     
     
     //  3.  CREATE BOTTOM WINDOW FOR CONTROLS...
@@ -89,8 +83,7 @@ void GraphApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool *
     
     if ( toolbar::begin("##sidebar_toolbar", ctrl_toolbar) )
     {
-        
-        if ( utl::DirectionalButton("##toggle", m_child_open[1] ? Anchor::South : Anchor::North, ImVec2{20,20}) )
+        if ( utl::DirectionalButton("##toggle", m_child_open[1] ? Anchor::South : Anchor::North, ms_COLLAPSE_BUTTON_SIZE) )
         {
             m_child_open[1]     = !m_child_open[1];
             //sidebar_ratio       = show_sidebar ? 0.60 : 0.05f;
@@ -126,22 +119,29 @@ void GraphApp::display_plots(void)
     //  BEGIN THE TAB BAR...
     if ( ImGui::BeginTabBar(m_tabbar_uuids[0], m_tabbar_flags[0]) )
     {
-        //      1.      DRAW HELP-MENU TAB-BUTTON ITEM ("?")...
+        //  1.      DRAW HELP-MENU TAB-BUTTON ITEM ("?")...
         if (SHOW_HELP_TABS) {
             if (ImGui::TabItemButton("?", ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoTooltip))
                 ImGui::OpenPopup("MyHelpMenu");
         }
         if (ImGui::BeginPopup("MyHelpMenu")) {
-            ImGui::Selectable("Hello!");
+            ImGui::Selectable("Here's a help message!  The PLOTS go here, on the top.");
             ImGui::EndPopup();
         }
 
 
-        //      2.      DRAW THE "ADD-TAB" BUTTON ("+")...
-        //  if (ENABLE_ADDING_TABS) {
-        //      if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip))
-        //          { AddNewTabFunc(); /* Add new tab */ }
-        //  }
+        if (ENABLE_ADDING_TABS)     //  2.      DRAW THE "ADD-TAB" BUTTON ("+")...
+        {
+            if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip))
+            {   ImGui::OpenPopup("add_plot_tab_popup");     }
+            //
+            if (ImGui::BeginPopup("add_plot_tab_popup")) {  //          - NEW PLOTTING TAB POP-UP...
+                //
+                AddNewPlotTab();
+                //
+                ImGui::EndPopup();
+            }// END "Popup".
+        }
 
 
 
@@ -154,7 +154,7 @@ void GraphApp::display_plots(void)
                     tab.render_fn( tab.get_uuid(), &tab.open, tab.flags );
                 }
                 else {
-                    this->DefaultTabRenderFunc(tab.get_uuid(), &tab.open, tab.flags);
+                    this->DefaultPlotTabRenderFunc(tab.get_uuid(), &tab.open, tab.flags);
                 }
                 
             ImGui::EndTabItem();
@@ -171,65 +171,192 @@ void GraphApp::display_plots(void)
 }
 
 
-
-
 //  "display_controls"
 //
 void GraphApp::display_controls(void)
 {
     //  DEFINE MISC. VARIABLES...
-    static bool                     ENABLE_ADDING_TABS          = true;
+    static  ImGuiTabItemFlags       SPACING_FLAGS   = ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoTooltip | ImGuiTabItemFlags_NoReorder;
     
-
+    
     //  BEGIN THE TAB BAR...
     if ( ImGui::BeginTabBar(m_tabbar_uuids[1], m_tabbar_flags[1]) )
     {
-        //      1.      DRAW THE CLOSE-CONTROL-BAR BUTTON...
-        if ( ImGui::TabItemButton( (this->m_child_open[1]) ? ms_TABBAR_OPEN_TEXT : ms_TABBAR_CLOSED_TEXT,
-             ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoTooltip) )
-        {
-            this->m_child_open[1]       = !this->m_child_open[1];
-            m_HEIGHT_LIMITS[1].first    = (this->m_child_open[1]) ? 0 : 30 * S.m_dpi_scale ;
-            
-            //m_docked_win_flags[1]  |= ImGuiWindowFlags_AlwaysAutoResize;
-            
-            
-            m_dockspace_ratio           = (this->m_child_open[1]) ?  0.60f : 0.05f;
-            this->m_rebuild_dockspace   = true;
-        }
-        
-        
-        //      2.      QUIT EARLY IF CONTROL TAB-BAR IS NOT OPEN...
-        if (!this->m_child_open[1])
-        {
-            ImGui::EndTabBar();
-            return;
-        }
-        
-
         //      2.3     DRAW EACH OF THE TAB ITEMS...
         for (auto & tab : this->ms_CTRL_TABS)
         {
+            //  PLACE TAB-BAR ITEM SPACING...
+            ImGui::PushID("##CtrlTabbarSpacing");
+            ImGui::TabItemSpacing("##CtrlTabbarSpacing", SPACING_FLAGS, ms_SPACING);
+            ImGui::PopID();
+        
+            //  PLACING EACH TAB...
             if ( ImGui::BeginTabItem( tab.get_uuid(), (tab.no_close) ? nullptr : &tab.open, tab.flags ) )
             {
                 if (tab.render_fn) {
                     tab.render_fn( tab.get_uuid(), &tab.open, tab.flags );
                 }
                 else {
-                    this->DefaultTabRenderFunc(tab.get_uuid(), &tab.open, tab.flags);
+                    this->DefaultCtrlTabRenderFunc(tab.get_uuid(), &tab.open, tab.flags);
                 }
                 
             ImGui::EndTabItem();
             }// END "BeginTabItem".
         
-        
         } // END "for auto & tab".
+
+
     ImGui::EndTabBar();
-        
-    
     } // END "BeginTabBar".
 
     return;
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  ?.      UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "RebuildDockspace"
+//
+void GraphApp::RebuildDockspace(void)
+{
+    //ImGui::DockBuilderRemoveNode    (this->S.m_dockspace_id);
+    //m_dockspace_id          = ImGui::GetID(m_dockspace_name);
+    
+    //  ImGui::DockSpace(m_dockspace_id,    ImVec2(0.0f, 0.0f),     m_dockspace_flags);
+    //  ImGui::DockBuilderRemoveNode    (m_dockspace_id); // clear any previous layout
+    //  ImGui::DockBuilderAddNode       (m_dockspace_id, ImGuiDockNodeFlags_DockSpace);
+    
+    ImGui::DockBuilderSetNodeSize   (m_dockspace_id, ImVec2(800, 600));
+
+        // Example split: left and right
+        m_dock_ids[1]   = ImGui::DockBuilderSplitNode( m_dockspace_id, ImGuiDir_Down, m_dockspace_ratio,
+                                                       nullptr, &m_dock_ids[0] );
+
+        ImGui::DockBuilderDockWindow(m_win_uuids[0],    m_dock_ids[0]);
+        ImGui::DockBuilderDockWindow(m_win_uuids[1],    m_dock_ids[1]);
+        ImGui::DockBuilderFinish(m_dockspace_id);
+
+    return;
+}
+
+
+//  "AddNewPlotTab"
+//
+void GraphApp::AddNewPlotTab(void)
+{
+    constexpr size_t            N           = 3;
+    const static std::string    OPTIONS[]   = {
+        "1D Plot", "Heatmap", "Other"
+    };
+    Tab_t               new_tab     = { "",     true,   false,      0U,     nullptr };
+    
+    bool                selected    = false;
+    short               plot_type   = -1;
+    const size_t        N_tabs      = this->ms_PLOT_TABS.size() + 1;
+    std::string         uuid        = "Tab #" + std::to_string(N);
+    
+    
+    ImGui::SeparatorText("Add New Plot...");
+    ImGui::Separator();
+    
+    
+    
+    //  2.  DEFINE PLOT TYPE SELECTIONS...
+    for (size_t i = 0; i < N; ++i)
+    {
+        if ( ImGui::Selectable( OPTIONS[i].c_str() ) ) {
+            selected        = true;
+            plot_type       = static_cast<short>(i);
+            new_tab.uuid    = OPTIONS[i] + " #" + std::to_string(N_tabs);
+        }
+    }
+         
+
+    //  3.  ADD THE NEW PLOT TYPE...
+    if (selected)
+    {
+        switch (plot_type) {
+            case 0 : {          //  CASE "0" :      ???
+                //
+                break;
+            }
+            case 1 : {          //  CASE "1" :      ???
+                //
+                break;
+            }
+            //
+            //
+            default : {         //  DEFAULT :       GENERIC TAB.
+                //
+                break;
+            }
+        }
+        this->ms_PLOT_TABS.push_back(new_tab);
+    }
+        
+        
+        
+    return;
+}
+
+
+//  "AddNewCtrlTab"
+//
+void GraphApp::AddNewCtrlTab(void)      { return; }
+
+
+//  "DefaultPlotTabRenderFunc"
+//
+void GraphApp::DefaultPlotTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+    if (!p_open)
+        return;
+        
+    ImGui::Text("Window Tab \"%s\".  Here is some default text dispatched by \"DefaultPlotTabRenderFunc()\".", uuid);
+    return;
+}
+
+
+
+//  "DefaultCtrlTabRenderFunc"
+//
+void GraphApp::DefaultCtrlTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+    if (!p_open)
+        return;
+        
+    ImGui::BulletText("Tab UUID: \"%s\".", uuid);
+        
+    ImGui::Text("Window Tab \"%s\".  Here is some default text dispatched by \"DefaultCtrlTabRenderFunc()\".", uuid);
+    return;
+}
+
+
+
+//  "get_tab"
+//
+Tab_t * GraphApp::get_ctrl_tab(const std::string & uuid, std::vector<Tab_t> & tabs) {
+    bool            match       = false;
+    const size_t    N           = tabs.size();
+    size_t          idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
+    
+    //  1.  FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
+    for (size_t i = 0; i < N && !match; ++i) {
+        match = ( uuid == tabs[i].uuid );
+        if (match) idx = i;
+    }
+    
+    if (!match)
+        return nullptr;
+    
+    return std::addressof( tabs[idx] );
 }
 
 

@@ -10,8 +10,13 @@
 **************************************************************************************/
 #include "utility/utility.h"
 #include "utility/_constants.h"
-#include "_config.h"
-#include "imgui.h"
+
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+# include <GLES2/gl2.h>
+#endif      //  IMGUI_IMPL_OPENGL_ES2  //
+#include <GLFW/glfw3.h>     //  <======| Will drag system OpenGL headers
 
 
 
@@ -460,6 +465,41 @@ bool DirectionalButton(
     ));
     return ImGui::IsItemClicked();
 }
+
+
+
+//  "LeftLabel2"
+//
+void LeftLabel2(const char * text, const float l_width)
+{
+    const float         filled              = l_width * ImGui::GetContentRegionAvail().x;
+    const float         diff                = filled - ImGui::CalcTextSize(text).x;
+    ImVec2              padding             = ImVec2( diff,  0.0f );
+    if (diff <= 0.0f)
+        padding.x   = 1.0f;
+        
+    ImGui::AlignTextToFramePadding();   ImGui::TextUnformatted(text);   ImGui::SameLine();
+    ImGui::Dummy(padding);              ImGui::SameLine();              ImGui::SetNextItemWidth( -1.0f );
+    return;
+}
+
+
+//  "LeftLabel2"
+//
+void LeftLabel2(const char * text, const float l_width, const float w_width) {
+    const float         filled              = l_width * ImGui::GetContentRegionAvail().x;
+    const float         diff                = filled - ImGui::CalcTextSize(text).x;
+    ImVec2              padding             = ImVec2( diff,  0.0f );
+    if (diff <= 0.0f)
+        padding.x   = 0.0f;
+        
+    ImGui::AlignTextToFramePadding();   ImGui::TextUnformatted(text);   ImGui::SameLine();
+    ImGui::Dummy(padding);              ImGui::SameLine();
+    ImGui::SetNextItemWidth( w_width * ImGui::GetContentRegionAvail().x );
+    return;
+}
+
+
 
 
 //  "LeftLabel"

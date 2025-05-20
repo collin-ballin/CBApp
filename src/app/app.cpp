@@ -216,6 +216,14 @@ void App::run_IMPL(void)
     return;
 }
 
+
+
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
@@ -239,19 +247,24 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
     ImGui::Begin(uuid, p_open, flags);
     
         ImGui::PopStyleColor();
-        
-        
-        
-        //  2.  COLOR TOOL...
-        //  ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        //  if( ImGui::CollapsingHeader("Color Tool") )
-        //  {
-        //      this->color_tool();
-        //      //ImGui::TreePop();
-        //  }
+
+
         
         
 
+    //  2.  TESTING PLOTTING / GRAPHING 0...
+    {
+        static bool             first       = true;
+        static const char *     plot_uuid   = "Graphing V0";
+        ImGui::Begin(plot_uuid, nullptr, app::_CBAPP_CORE_WINDOW_FLAGS);
+            this->ImPlot_Testing0();
+        ImGui::End();
+        if (first) {
+            first = false;
+            ImGui::DockBuilderDockWindow( plot_uuid, S.m_main_dock_id );
+        }
+    }
+    
 
     //  3.  TESTING PLOTTING / GRAPHING 2...
     {
@@ -263,12 +276,14 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
         }
     }
         
-        
-        
-    ImGui::NewLine();
-    KeepProgramAwake( this->S.m_glfw_window );
-    ImGui::NewLine();
-    this->TestTabBar();
+     
+    //  4.  TESTING TAB BAR...
+    {
+        ImGui::NewLine();
+        KeepProgramAwake( this->S.m_glfw_window );
+        ImGui::NewLine();
+        this->TestTabBar();
+    }
     
         
         

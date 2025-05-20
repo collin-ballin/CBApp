@@ -279,7 +279,24 @@ void AppState::SetLightMode(void) {
 }
 
 
+//  "LoadCustomColorMaps"
+//
+void AppState::LoadCustomColorMaps(void) {
 
+    for (auto & map : info::DEF_COLORMAPS) {
+        ImPlot::AddColormap( map.first, map.second.data(), static_cast<int>(map.second.size()), /*qual=*/false );
+    }
+
+    return;
+}
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "PushFont"
 //
