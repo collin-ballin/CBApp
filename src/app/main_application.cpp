@@ -459,7 +459,7 @@ void App::TestTabBar(void)
 //
 void App::ImPlot_Testing0(void)
 {
-    static utl::PlotCFG             cfg             = {"##TestingPlotCFG"};
+    static utl::PlotCFG             cfg             = { {"##TestingPlotCFG"} };
     
     //  DATA INFORMATION...
     static constexpr size_t         NX              = 200ULL;
@@ -535,7 +535,9 @@ void App::ImPlot_Testing0(void)
     //  2.  CREATE THE PLOT...
     ImGui::NewLine();   ImGui::SeparatorText("Plots");
     //
-    ImGui::PushID(cfg.plot_uuid);
+    if ( utl::MakePlotCFG(cfg) ) {
+    
+    /*ImGui::PushID(cfg.plot_uuid);
     if ( ImPlot::BeginPlot(cfg.plot_uuid, cfg.plot_size, cfg.plot_flags) )
     {
         //  3.  CONFIGURE THE PLOT APPEARANCE...
@@ -546,7 +548,7 @@ void App::ImPlot_Testing0(void)
         
         //  ImPlot::SetupAxisLimits(ImAxis_X1, 0, NX - 1,           ImGuiCond_Always);
         //  ImPlot::SetupAxisLimits(ImAxis_Y1, YLIMS[0], YLIMS[1],  ImGuiCond_Always);
-        
+    */
         
         //  4.  P3      | HEATMAP PLOT...
         {
@@ -593,7 +595,7 @@ void App::ImPlot_Testing0(void)
     }
     
 
-    ImGui::PopID();
+    //ImGui::PopID();
     return;
 }
 

@@ -287,6 +287,10 @@ void AppState::LoadCustomColorMaps(void) {
         ImPlot::AddColormap( map.first, map.second.data(), static_cast<int>(map.second.size()), /*qual=*/false );
     }
 
+    for (auto & map : info::DEF_COLORMAPS_SHORT) {
+        ImPlot::AddColormap( map.first, map.second.data(), static_cast<int>(map.second.size()), /*qual=*/false );
+    }
+
     return;
 }
 

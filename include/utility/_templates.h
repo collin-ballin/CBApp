@@ -14,9 +14,6 @@
 #include <math.h>
 #include <cmath>
 
-
-
-
 #include "imgui.h"                      //  0.3     "DEAR IMGUI" HEADERS...
 #include "implot.h"
 #include "imgui_impl_glfw.h"
@@ -31,6 +28,222 @@
 namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
+
+
+
+//  1.4A    INLINE TEMPLATES FOR HELPER WIDGET FUNCTIONS / ABSTRACTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "MakeCtrlTable"
+//
+/// @brief      DESC
+/// @tparam             T           [Template parameter, if any]
+/// @param      arg1        DESC
+/// @return                 DESC
+/// @see        MakeCtrlTable()
+///
+/// @todo       TODO
+template<typename T, auto NR, auto NC>
+inline void MakeCtrlTable(const T (&rows)[NR], TableCFG<NC> & cfg)
+{
+    //  1.  PRIMARY TABLE ENTRY...
+    ImGui::PushID(cfg.uuid);
+    if ( ImGui::BeginTable(cfg.uuid, NC, cfg.table_flags) )
+    {
+        //  if (freeze_column || freeze_header)
+        //      ImGui::TableSetupScrollFreeze(freeze_column ? 1 : 0, freeze_header ? 1 : 0);
+
+        
+        for (size_t i = 0; i < NC; ++i)
+        for (auto & col : cfg.columns)
+            ImGui::TableSetupColumn(col.uuid,    col.flags,     col.width);
+            
+            
+        //ImGui::TableSetupColumn("Widget",   col1_flags,     WIDGET_COLUMN_WIDTH);
+        if (cfg.header_row)
+            ImGui::TableHeadersRow();
+
+
+        for (const auto & row : rows) {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted(row.label);
+            ImGui::TableSetColumnIndex(1);
+            row.render();
+        }
+
+
+        ImGui::EndTable();
+    }// END "Table".
+    
+    ImGui::PopID();     //  Pop Table UUID.
+    return;
+}
+
+
+//  "MakeCtrlTable"
+//
+/// @brief Explicit template specialization of "MakeCtrlTable"
+/// @description Specialized for the case of 2-columns within a widget control table.
+/// @see        MakeCtrlTable()
+template<typename T, auto NR>
+inline void MakeCtrlTable(const T (&rows)[NR], TableCFG<2> & cfg)
+{
+    //  1.  PRIMARY TABLE ENTRY...
+    ImGui::PushID(cfg.uuid);                //  1.  PRIMARY TABLE ENTRY...
+    if ( ImGui::BeginTable(cfg.uuid, 2, cfg.table_flags) )
+    {
+        for (auto & col : cfg.columns)      //  2.  SETUP EACH COLUMN...
+            ImGui::TableSetupColumn(col.uuid,    col.flags,     col.width);
+            
+        if (cfg.header_row)                 //  3.  CONDITIONALLY DRAW THE HEADER ROW...
+            ImGui::TableHeadersRow();
+
+        for (const auto & row : rows) {     //  4.  SETUP EACH COLUMN...
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted(row.label);
+            ImGui::TableSetColumnIndex(1);
+            row.render();
+        }
+
+        ImGui::EndTable();
+    }// END "Table".
+    
+    ImGui::PopID();     //  Pop Table UUID.
+    return;
+}
+
+//      OVERLOADS FOR STD::VECTOR...
+//
+//
+//  "MakeCtrlTable"
+//
+/// @brief      DESC
+/// @tparam             T           [Template parameter, if any]
+/// @param      arg1        DESC
+/// @return                 DESC
+/// @see        MakeCtrlTable()
+///
+/// @todo       TODO
+template<typename T, auto NC>
+inline void MakeCtrlTable(const std::vector<T> & rows, TableCFG<NC> & cfg)
+{
+    //  1.  PRIMARY TABLE ENTRY...
+    ImGui::PushID(cfg.uuid);
+    if ( ImGui::BeginTable(cfg.uuid, NC, cfg.table_flags) )
+    {
+        //  if (freeze_column || freeze_header)
+        //      ImGui::TableSetupScrollFreeze(freeze_column ? 1 : 0, freeze_header ? 1 : 0);
+
+        
+        for (size_t i = 0; i < NC; ++i)
+        for (auto & col : cfg.columns)
+            ImGui::TableSetupColumn(col.uuid,    col.flags,     col.width);
+            
+            
+        //ImGui::TableSetupColumn("Widget",   col1_flags,     WIDGET_COLUMN_WIDTH);
+        if (cfg.header_row)
+            ImGui::TableHeadersRow();
+
+
+        for (const auto & row : rows) {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted(row.label);
+            ImGui::TableSetColumnIndex(1);
+            row.render();
+        }
+
+
+        ImGui::EndTable();
+    }// END "Table".
+    
+    ImGui::PopID();     //  Pop Table UUID.
+    return;
+}
+
+
+//  "MakeCtrlTable"
+//
+/// @brief Explicit template specialization of "MakeCtrlTable"
+/// @description Specialized for the case of 2-columns within a widget control table.
+/// @see        MakeCtrlTable()
+template<typename T>
+inline void MakeCtrlTable(const std::vector<T> & rows, TableCFG<2> & cfg)
+{
+    //  1.  PRIMARY TABLE ENTRY...
+    ImGui::PushID(cfg.uuid);                //  1.  PRIMARY TABLE ENTRY...
+    if ( ImGui::BeginTable(cfg.uuid, 2, cfg.table_flags) )
+    {
+        for (auto & col : cfg.columns)      //  2.  SETUP EACH COLUMN...
+            ImGui::TableSetupColumn(col.uuid,    col.flags,     col.width);
+            
+        if (cfg.header_row)                 //  3.  CONDITIONALLY DRAW THE HEADER ROW...
+            ImGui::TableHeadersRow();
+
+        for (const auto & row : rows) {     //  4.  SETUP EACH COLUMN...
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted(row.label);
+            ImGui::TableSetColumnIndex(1);
+            row.render();
+        }
+
+        ImGui::EndTable();
+    }// END "Table".
+    
+    ImGui::PopID();     //  Pop Table UUID.
+    return;
+}
+
+
+// *************************************************************************** //
+//
+//
+//  1.4B    INLINE TEMPLATES FOR PLOTS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "MakePlotCFG"
+//
+inline bool MakePlotCFG(PlotCFG & cfg)
+{
+    //  CASE 1 :    FAILED TO CREATE PLOT...
+    ImGui::PushID(cfg.graph.uuid);
+    //if ( !ImPlot::BeginPlot(cfg.graph.uuid, cfg.graph.size, cfg.graph.flags) )
+    if ( !ImPlot::BeginPlot(cfg.graph.uuid, cfg.graph.size, cfg.graph.flags) )
+    {
+        ImGui::PopID();
+        return false;
+    }
+    
+    //  CASE 2 :    SUCCESSFULLY CREATED PLOT...
+    ImPlot::SetupAxes(cfg.axes[0].uuid,         cfg.axes[1].uuid,       //  3.  CONFIGURE THE PLOT APPEARANCE...
+                      cfg.axes[0].flags,        cfg.axes[1].flags);
+    ImPlot::SetupLegend(cfg.legend.location,    cfg.legend.flags);
+    
+    //  ImPlot::SetupAxisLimits(ImAxis_X1, 0, NX - 1,           ImGuiCond_Always);
+    //  ImPlot::SetupAxisLimits(ImAxis_Y1, YLIMS[0], YLIMS[1],  ImGuiCond_Always);
+    
+
+    
+
+    ImGui::PopID();
+    return true;
+}
+
+
+
+
+
+
+
 
 
 
@@ -83,10 +296,6 @@ inline T RandomRange(T min, T max) {
     T scale = rand() / (T) RAND_MAX;
     return min + scale * ( max - min );
 }
-
-
-
-
 
 
 //  **OLD IMPLEMENTATION**      "ScrollingBuffer"
@@ -190,6 +399,8 @@ inline void sinusoid_wave( T * data,        const size_type X,  const size_type 
 }
 
 
+//  "sinusoid_wave_IMPL_1D"
+//
 template<typename T, size_t N>
 void sinusoid_wave_IMPL_1D(T (&data)[N], T time, T amp, T freq) noexcept
 {

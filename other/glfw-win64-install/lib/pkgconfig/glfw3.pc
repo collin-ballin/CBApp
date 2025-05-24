@@ -1,7 +1,7 @@
-prefix=/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/imgui_V0/other/glfw-win64-install
+prefix=/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/glfw-win64-install
 exec_prefix=${prefix}
-includedir=/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/imgui_V0/other/glfw-win64-install/include
-libdir=/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/imgui_V0/other/glfw-win64-install/lib
+includedir=/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/glfw-win64-install/include
+libdir=/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/glfw-win64-install/lib
 
 Name: GLFW
 Description: A multi-platform library for OpenGL, window and input

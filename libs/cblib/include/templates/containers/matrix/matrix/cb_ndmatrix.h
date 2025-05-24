@@ -249,7 +249,7 @@ protected:
         size_type                           r       = ( (i+1) % this->m_R );
         size_type                           c       = ( (j+1) % this->m_C );
         size_type                           idx = 0,    jdx = 0,    shift = 0;
-        auto kronecker_delta = [](auto i, auto j)   { return (i == j) ? 1 : 0; };
+        auto kronecker_delta = [](auto i_, auto j_)   { return (i_ == j_) ? 1 : 0; };
         
         if (this->m_R != this-> m_C)//  CASE 0  :   NON-SQUARE MATRIX.
             throw std::invalid_argument("Cannot compute minor of a non-square matrix.");

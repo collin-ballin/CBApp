@@ -1,14 +1,15 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****               I N I T . C P P  ____  F I L E               ****
+*       ****                  I N I T  ____  F I L E                   ****
 *       ********************************************************************
 *              AUTHOR:      Collin A. Bond
-*               DATED:      May 19, 2025.
+*               DATED:      May 24, 2025.
 *
 **************************************************************************************
 **************************************************************************************/
-#include "app/graph_app/graph_app.h"
+#include "app/c_counter/c_counter.h"
+
 
 
 
@@ -18,46 +19,23 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
+
+
+
+// *************************************************************************** //
+//
+//
 //  1.      INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  Parametric Constructor 1.
-//
-GraphApp::GraphApp(app::AppState & src)
-    : S(src)
-{
-    this->m_heatmap     = cb::HeatMap(256, 256);
-}
+CCounterApp::CCounterApp(app::AppState & src)
+    : S(src)                        { }
 
-
-//  Destructor.
-//
-GraphApp::~GraphApp(void)     { this->destroy(); }
-
-
-//  "destroy"
-//
-void GraphApp::destroy(void)
-{
-    return;
-}
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//  1B.     SECONDARY INITIALIZATION...
-// *************************************************************************** //
-// *************************************************************************** //
 
 //  "initialize"
 //
-void GraphApp::initialize(void)
+void CCounterApp::initialize(void)
 {
     if (this->m_initialized)
         return;
@@ -69,12 +47,13 @@ void GraphApp::initialize(void)
 
 //  "init"
 //
-void GraphApp::init(void)
+void CCounterApp::init(void)
 {
     ms_I_PLOT_COL_WIDTH                            *= S.m_dpi_scale;
     ms_SPACING                                     *= S.m_dpi_scale;
     ms_COLLAPSE_BUTTON_SIZE.x                      *= S.m_dpi_scale;
     ms_COLLAPSE_BUTTON_SIZE.y                      *= S.m_dpi_scale;
+    m_cmap                                          = ImPlot::GetColormapIndex("CCounter_Map");
     
     
     //  1.  ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
@@ -82,23 +61,21 @@ void GraphApp::init(void)
     m_window_class[1].DockNodeFlagsOverrideSet      = ImGuiDockNodeFlags_NoTabBar; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     
     
+    std::snprintf(m_filepath, ms_BUFFER_SIZE, "%s", app::PYTHON_DUMMY_FPGA_FILEPATH);
+    
+        
+    
     //  2.  TABS FOR PLOT WINDOW...
     ms_PLOT_TABS                                    = {
     //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
-        Tab_t(  "Editor",                   true,           true,               ImGuiTabItemFlags_None,         nullptr),
-        Tab_t(  "1D FDTD",                  true,           true,               ImGuiTabItemFlags_None,         nullptr),
-        //  Tab_t(  "Etch-A-Sketch",            true,           true,               ImGuiTabItemFlags_None,         nullptr),
-        //  Tab_t(  "Tab 2",                    true,           false,              ImGuiTabItemFlags_None,         nullptr)
+        Tab_t(  "C-Counter Plots",          true,           true,               ImGuiTabItemFlags_None,         nullptr)
     };
     
 
     //  3.  TABS FOR CONTROL WINDOW...
     ms_CTRL_TABS                                    = {
     //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
-        Tab_t(  "Model Parameters",         true,           true,               ImGuiTabItemFlags_None,         nullptr),
-        Tab_t(  "FDTD Controls",            true,           true,               ImGuiTabItemFlags_None,         nullptr),
-        //  Tab_t(  "Sketch Controls",          true,           true,               ImGuiTabItemFlags_None,         nullptr),
-        //  Tab_t(  "Tab 2",                    true,           false,              ImGuiTabItemFlags_None,         nullptr)
+        Tab_t(  "C-Counter Controls",       true,           true,               ImGuiTabItemFlags_None,         nullptr)
     };
     
     
@@ -116,22 +93,46 @@ void GraphApp::init(void)
     }
     
     
-    
     //  6.  DEFINE FDTD STUFF...
-    m_plot_colors                           = cb::utl::GetColormapSamples( m_NUM_COLORS, m_cmap );
+    //m_plot_colors                           = cb::utl::GetColormapSamples( m_NUM_COLORS, m_cmap );
     this->init_ctrl_rows();
     
     
     
     //  END INITIALIZATION...
-    this->m_initialized                     = true;
+    this->m_initialized                         = true;
     return;
 }
 
 
+
+//  Destructor.
+//
+CCounterApp::~CCounterApp(void)     { this->destroy(); }
+
+
+//  "destroy"
+//
+void CCounterApp::destroy(void)
+{
+    return;
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  2.  TAB FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
 //  "dispatch_plot_function"
 //
-void GraphApp::dispatch_plot_function(const std::string & uuid)
+void CCounterApp::dispatch_plot_function(const std::string & uuid)
 {
     bool            match       = false;
     const size_t    N           = ms_PLOT_TABS.size();
@@ -152,21 +153,9 @@ void GraphApp::dispatch_plot_function(const std::string & uuid)
     {
         //      0.  Model PARAMETERS...
         case 0:         {
-            this->ShowEditor();
+            this->ShowCCPlots();
             break;
         }
-        //      1.  1D FDTD...
-        case 1:         {
-            this->ShowFDTD();
-            break;
-        }
-        //
-        //      2.  ETCH-A-SKETCH...
-        //      case 2:         {
-        //          this->ShowSketch();
-        //          //this->ShowSketch();
-        //          break;
-        //      }
         //
         //
         //
@@ -180,7 +169,7 @@ void GraphApp::dispatch_plot_function(const std::string & uuid)
 
 //  "dispatch_ctrl_function"
 //
-void GraphApp::dispatch_ctrl_function(const std::string & uuid)
+void CCounterApp::dispatch_ctrl_function(const std::string & uuid)
 {
     bool            match       = false;
     const size_t    N           = ms_CTRL_TABS.size();
@@ -202,20 +191,9 @@ void GraphApp::dispatch_ctrl_function(const std::string & uuid)
     {
         //      0.  Model PARAMETERS...
         case 0:         {
-            this->ShowModelParameters();
+            this->ShowCCControls();
             break;
         }
-        //      1.  FDTD...
-        case 1:         {
-            this->ShowFDTDControls();
-            break;
-        }
-        //
-        //      2.  ETCH-A-SKETCH...
-        //      case 2:         {
-        //          this->ShowSketchControls();
-        //          break;
-        //      }
         //
         //
         //
@@ -225,6 +203,37 @@ void GraphApp::dispatch_ctrl_function(const std::string & uuid)
     }
     return;
 }
+
+
+//  "DefaultPlotTabRenderFunc"
+//
+void CCounterApp::DefaultPlotTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+    if (!p_open)
+        return;
+        
+    ImGui::Text("Window Tab \"%s\".  Here is some default text dispatched by \"DefaultPlotTabRenderFunc()\".", uuid);
+    return;
+}
+
+
+//  "DefaultCtrlTabRenderFunc"
+//
+void CCounterApp::DefaultCtrlTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+    if (!p_open)
+        return;
+        
+    ImGui::BulletText("Tab UUID: \"%s\".", uuid);
+        
+    ImGui::Text("Window Tab \"%s\".  Here is some default text dispatched by \"DefaultCtrlTabRenderFunc()\".", uuid);
+    return;
+}
+
+
+
+
+
+
+
 
 
 

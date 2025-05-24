@@ -152,7 +152,6 @@ void App::run_IMPL(void)
     //  1.      FIRST-FRAME INITIALIZATIONS...
     if (first_frame) [[unlikely]]
     {
-        first_frame = false;
         //  1.  CLEAR EXISTING DOCK LAYOUT...
         ImGui::DockBuilderRemoveNode    (this->S.m_dockspace_id);
         ImGui::DockBuilderAddNode       (this->S.m_dockspace_id,        ImGuiDockNodeFlags_DockSpace);
@@ -184,7 +183,13 @@ void App::run_IMPL(void)
         
 
         //  6.  SET FOCUS TO MAIN-WINDOW...
-        ImGui::SetWindowFocus(this->S.m_windows[Window::MainApp].uuid.c_str());
+    //  #ifdef __CBAPP_COINCIDENCE_COUNTER__
+    //      ImGui::SetWindowFocus(this->S.m_windows[Window::CCounterApp].uuid.c_str());
+    //  # else
+    //      ImGui::SetWindowFocus(this->S.m_windows[Window::MainApp].uuid.c_str());
+    //  #endif  //  __CBAPP_COINCIDENCE_COUNTER__  //
+
+        
         
     }// END OF "first_frame"...
 #endif  //  CBAPP_NEW_DOCKSPACE  //
@@ -211,6 +216,18 @@ void App::run_IMPL(void)
         if (winfo.open) {
             winfo.render_fn( winfo.uuid.c_str(), &winfo.open, winfo.flags );
         }
+    }
+    
+    
+    
+    //  1.      END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
+    if (first_frame) [[unlikely]] {
+        first_frame = false;
+    #ifdef  __CBAPP_COINCIDENCE_COUNTER__
+        ImGui::SetWindowFocus(this->S.m_windows[Window::CCounterApp].uuid.c_str());
+    # else
+        ImGui::SetWindowFocus(this->S.m_windows[Window::MainApp].uuid.c_str());
+    #endif  //  __CBAPP_COINCIDENCE_COUNTER__  //
     }
     
     return;
@@ -240,7 +257,6 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
     ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
     
     
-#ifdef CBAPP_ETCH_A_SKETCH
     
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
     ImGui::PushStyleColor(ImGuiCol_WindowBg, this->S.m_main_bg);
@@ -249,8 +265,12 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
         ImGui::PopStyleColor();
 
 
-        
-        
+
+
+
+
+
+#if defined(CBAPP_ENABLE_CB_DEMO) && !defined(__CBAPP_COINCIDENCE_COUNTER__)
 
     //  2.  TESTING PLOTTING / GRAPHING 0...
     {
@@ -284,14 +304,6 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
         ImGui::NewLine();
         this->TestTabBar();
     }
-    
-        
-        
-//
-//
-# else  //  CBAPP_ETCH_A_SKETCH  //
-//
-//
 
 
     //  3.  TESTING PLOTTING / GRAPHING 1...
@@ -326,17 +338,6 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
         }
     }
     
-        
-        
-//      //
-//      //
-//      # else  //  CBAPP_ETCH_A_SKETCH  //
-//      //
-//      //
-    
-    
-    
-    
     
     
     //  10. TESTING RADIOBUTTONS...
@@ -360,8 +361,8 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
             ImGui::TreePop();
         }
     }
-#endif  //  CBAPP_ETCH_A_SKETCH  //
-    
+#endif  //  CBAPP_ENABLE_CB_DEMO  AND  !__CBAPP_COINCIDENCE_COUNTER__  //
+
     
     ImGui::End();
     return;

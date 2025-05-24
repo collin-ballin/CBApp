@@ -97,13 +97,13 @@ public:
     //  1.               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     //  1.1             Default Constructor, Destructor, etc...
-    explicit            CCounterApp                 (app::AppState & );                                 //  Def. Constructor.
-                        ~CCounterApp                (void);                                             //  Def. Destructor.
+    explicit            CCounterApp                     (app::AppState & );                                 //  Def. Constructor.
+                        ~CCounterApp                    (void);                                             //  Def. Destructor.
                         
     //  1.2             Public Member Functions...
-    void                initialize                  (void);
-    void                Begin                       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                ToggleAllPlots              (const char * title_id);
+    void                initialize                      (void);
+    void                Begin                           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                ToggleAllPlots                  (const char * title_id);
     //                      Data & Interaction.
 
 
@@ -122,32 +122,32 @@ protected:
     // *************************************************************************** //
     
     //  CONSTANTS.
-    std::array<const char *, 2>                 ms_PLOT_UUIDs                   = { "##CCounterMasterPlot",     "##CCounterIndividualPlot"};
-    std::array<const char *, 2>                 ms_TABLE_UUIDs                  = { "##IndividualPlotTable",    "##CCounterControlTable"};
+    std::array<const char *, 2>                         ms_PLOT_UUIDs                   = { "##CCounterMasterPlot",     "##CCounterIndividualPlot"};
+    std::array<const char *, 2>                         ms_TABLE_UUIDs                  = { "##IndividualPlotTable",    "##CCounterControlTable"};
     
     //  INDIVIDUAL PLOT STUFF...
-    ImGuiTableColumnFlags                       ms_i_plot_table_flags           = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible;
-    ImGuiTableColumnFlags                       ms_i_plot_column_flags          = ImGuiTableColumnFlags_WidthFixed;   //    ImGuiTableColumnFlags_WidthFixed;   ImGuiTableColumnFlags_None
-    ImGuiTableColumnFlags                       ms_i_plot_plot_flags            = ImGuiTableColumnFlags_WidthStretch;
-    float                                       ms_I_PLOT_COL_WIDTH             = 80.0f;
-    float                                       ms_I_PLOT_PLOT_WIDTH            = -1.0f;
+    ImGuiTableColumnFlags                               ms_i_plot_table_flags           = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible;
+    ImGuiTableColumnFlags                               ms_i_plot_column_flags          = ImGuiTableColumnFlags_WidthFixed;   //    ImGuiTableColumnFlags_WidthFixed;   ImGuiTableColumnFlags_None
+    ImGuiTableColumnFlags                               ms_i_plot_plot_flags            = ImGuiTableColumnFlags_WidthStretch;
+    float                                               ms_I_PLOT_COL_WIDTH             = 80.0f;
+    float                                               ms_I_PLOT_PLOT_WIDTH            = -1.0f;
     
-    float                                       ms_CENTER                       = 0.95f;
+    float                                               ms_CENTER                       = 0.95f;
     
     //  MISC APPLICATION STUFF...
-    bool                                        m_toggle_mst_plots              = false;
-    bool                                        m_initialized                   = false;
+    bool                                                m_toggle_mst_plots              = false;
+    bool                                                m_initialized                   = false;
     
     //  VARIOUS FLAGS...
-    ImPlotLineFlags                             m_channel_flags                 = ImPlotLineFlags_None | ImPlotLineFlags_Shaded;
-    ImPlotAxisFlags                             m_plot_flags                    = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
-    ImPlotFlags                                 m_mst_PLOT_flags                = ImPlotFlags_None | ImPlotFlags_NoTitle;
-    ImPlotAxisFlags                             m_mst_plot_flags                = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoSideSwitch;
-    ImPlotAxisFlags                             m_mst_xaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
-    ImPlotAxisFlags                             m_mst_yaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
+    ImPlotLineFlags                                     m_channel_flags                 = ImPlotLineFlags_None | ImPlotLineFlags_Shaded;
+    ImPlotAxisFlags                                     m_plot_flags                    = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
+    ImPlotFlags                                         m_mst_PLOT_flags                = ImPlotFlags_None | ImPlotFlags_NoTitle;
+    ImPlotAxisFlags                                     m_mst_plot_flags                = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoSideSwitch;
+    ImPlotAxisFlags                                     m_mst_xaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
+    ImPlotAxisFlags                                     m_mst_yaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
     
-    ImPlotLocation                              m_mst_legend_loc                = ImPlotLocation_NorthWest;                                                 // legend position.
-    ImPlotLegendFlags                           m_mst_legend_flags              = ImPlotLegendFlags_None; //ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
+    ImPlotLocation                                      m_mst_legend_loc                = ImPlotLocation_NorthWest;                                                 // legend position.
+    ImPlotLegendFlags                                   m_mst_legend_flags              = ImPlotLegendFlags_None; //ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
 
 
     //  *************************************************************************** //
@@ -157,48 +157,55 @@ protected:
     //
     //  *************************************************************************** //
     
-    //                                          1.  APPEARANCE CONSTANTS...
-    const float                                     m_child_corner_radius       = 5.0f;
-    std::pair<int,int>                              m_HEIGHT_LIMITS[2]          = { { 30, 30 }, { 30, 30 } };
+    //                                              1.  APPEARANCE CONSTANTS...
+    float                                               m_dockspace_ratio           = 0.8f;
+    const float                                         m_child_corner_radius       = 5.0f;
+    float                                               ms_SPACING                  = 50.0f;
+    ImVec2                                              ms_COLLAPSE_BUTTON_SIZE     = ImVec2{15,    15};
+    std::pair<int,int>                                  m_HEIGHT_LIMITS[2]          = { { 30, 30 }, { 30, 30 } };
+    static constexpr size_t                             ms_BUFFER_SIZE              = 256;
     //
     //
-    //                                          2.  CHILDREN PARAMETERS...
-    std::array< const char *, 2 >                   m_child_ids                 = { "PlotChild", "ControlChild" };
-    ImGuiChildFlags                                 m_child_flags[2]            = {
-                                                        ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
-                                                        ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY
-                                                    };
-    ImGuiTabBarFlags                                m_tabbar_flags[2]           = {
-                                                        ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton,
-                                                        ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton
-                                                    };
+    //                                              2.  CHILDREN PARAMETERS...
+    bool                                                m_child_open[2]                 = {true, true};
+    std::array< const char *, 2 >                       m_child_ids                     = { "PlotChild",            "ControlChild" };
+    ImGuiChildFlags                                     m_child_flags[2]                = {
+                                                            ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
+                                                            ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY
+                                                        };
+    std::array< const char *, 2 >                       m_tabbar_uuids                  = { "PlotTabBar##GApp",     "PlotTabBar##GApp" };
+    ImGuiTabBarFlags                                    m_tabbar_flags[2]               = {
+                                                            ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton,
+                                                            ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton
+                                                        };
+    ImGuiWindowClass                                    m_window_class[2]               = {};
     
     
-    //                                          3.  SUBSIDIARY WINDOWS...
-    std::array< const char *, 2 >                   m_win_uuids                 = { "Visuals", "Controls" };
-    ImGuiWindowFlags                                m_docked_win_flags[2]       = {
-                                                        ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus,    // ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground,
-                                                        ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus     //  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground
-                                                    };
+    //                                              3.  SUBSIDIARY WINDOWS...
+    std::array< const char *, 2 >                       m_win_uuids                 = { "Visuals", "Controls" };
+    ImGuiWindowFlags                                    m_docked_win_flags[2]       = {
+                                                            ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus,    // ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground,
+                                                            ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus     //  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground
+                                                        };
     
     
-    //                                          3.  DOCKING SPACE...
+    //                                              3.  DOCKING SPACE...
     //
-    //                                              Main Dockspace:
-    float                                           m_dockspace_ratio           = 0.6f;
-    static constexpr const char *                   m_dockspace_name            = "DockHostSpace##CCApp";
-    ImGuiDockNodeFlags                              m_dockspace_flags           = ImGuiDockNodeFlags_None;
-    ImGuiID                                         m_dockspace_id              = 0;
-    ImGuiWindowClass                                m_window_class;
+    //                                                  Main Dockspace:
+    static constexpr const char *                       m_dockspace_name            = "DockHostSpace##CCApp";
+    ImGuiDockNodeFlags                                  m_dockspace_flags           = ImGuiDockNodeFlags_None;
+    ImGuiID                                             m_dockspace_id              = 0;
+    bool                                                m_rebuild_dockspace         = false;
     //
     //      Nested Dockspaces:
-    ImGuiID                                         m_dock_ids[2]               = { 0, 0 };
+    ImGuiID                                             m_dock_ids[2]               = { 0, 0 };
     
     
-    //                                          4.  IMPORTANT DATA...
-    static constexpr size_t                         ms_NUM                      = 15;
+    //                                              4.  IMPORTANT DATA...
+    static constexpr size_t                             ms_NUM                      = 15;
+    fdtd::Param<ImU64>                                  m_PLOT_LIMIT                = { 0,     {0, ms_NUM-1}        };
     //
-    ChannelSpec                                     ms_channels[ms_NUM]         = {
+    ChannelSpec                                         ms_channels[ms_NUM]         = {
         { 8,  "A",      {true, true, true}      },
         { 4,  "B",      {true, true, true}      },
         { 2,  "C",      {true, true, true}      },
@@ -218,24 +225,33 @@ protected:
     //
         {15,  "ABCD",   {true, true, true}      }
     };
-    std::array<utl::ScrollingBuffer, ms_NUM>        m_buffers                   = { };
-    float                                           m_max_counts[ms_NUM]        = { };
+    std::array<utl::ScrollingBuffer, ms_NUM>            m_buffers                   = { };
+    float                                               m_max_counts[ms_NUM]        = { };
     
     
-    //                                          5.  WIDGET VARIABLES...
-    float                                           m_coincidence_window        = 10.0f;
-    float                                           m_integration_window        = 60.0f;
+    //                                              4.  IMPORTANT DATA...
+    std::vector<Tab_t>                                  ms_PLOT_TABS                    = {};
+    std::vector<Tab_t>                                  ms_CTRL_TABS                    = {};
+    std::vector<utl::WidgetRow>                         ms_CTRL_ROWS                    = {};
+    std::vector<utl::WidgetRow>                         ms_APPEARANCE_ROWS              = {};
     
     
-    //                                          6.  PLOTTING STUFF...
-    bool                                            m_colormap_cache_invalid    = true;
-    ImPlotColormap                                  m_cmap                      = ImPlotColormap_Cool;
-    std::vector<ImVec4>                             m_plot_colors               = std::vector<ImVec4>(ms_NUM);
-    static constexpr std::array<const char *, 2>    ms_mst_axis_labels          = { "Time  [sec]",      "Counts  [Arb.]" };
+    //                                              5.  WIDGET VARIABLES...
+    fdtd::Param<ImU64>                                  m_coincidence_window        = { 10,     {1, 100}        };
+    fdtd::Param<double>                                 m_integration_window        = { 1.00f,  {0.001f, 2.50f} };
+    fdtd::Param<double>                                 m_history_length            = { 30.0f,  {5.0f,   90.0}  };
+    char                                                m_filepath[ms_BUFFER_SIZE]  = {};
     
     
-    //                                          7.  DELAGATOR CLASSES...
-    app::AppState                                   CBAPP_STATE_NAME;
+    //                                              6.  PLOTTING STUFF...
+    bool                                                m_colormap_cache_invalid    = true;
+    ImPlotColormap                                      m_cmap                      = ImPlotColormap_Cool;
+    std::vector<ImVec4>                                 m_plot_colors               = std::vector<ImVec4>(ms_NUM);
+    static constexpr std::array<const char *, 2>        ms_mst_axis_labels          = { "Time  [sec]",      "Counts  [Arb.]" };
+    
+    
+    //                                              7.  DELAGATOR CLASSES...
+    app::AppState                                       CBAPP_STATE_NAME;
     
         
     
@@ -243,12 +259,24 @@ protected:
     //  2.B             PROTECTED MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //  2B.1            Class Initializations.      [CCounterApp.cpp]...
-    void                init                        (void);
-    void                destroy                     (void);
+    //  2B.1            Class Initializations.          [CCounterApp.cpp]...
+    void                init                            (void);
+    void                destroy                         (void);
+    void                dispatch_plot_function          (const std::string & );
+    void                dispatch_ctrl_function          (const std::string & );
     
-    void                display_plots               (void);
-    void                display_controls            (void);
+    //  2C.1            Operation Funcs.
+    void                ShowCCPlots                     (void);
+    void                ShowCCControls                  (void);
+    
+    void                init_ctrl_rows                  (void);
+    void                display_plots                   (void);
+    void                display_controls                (void);
+    //
+    void                DefaultPlotTabRenderFunc        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                DefaultCtrlTabRenderFunc        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    Tab_t *             get_ctrl_tab                    (const std::string & , std::vector<Tab_t> & );
+    void                RebuildDockspace                (void);
 
 
 

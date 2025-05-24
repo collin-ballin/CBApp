@@ -304,6 +304,9 @@ protected:
 	const value_type					m_perm				= 8.0;      //      WORKS = 4.0f;
 
 
+    float                               m_eps_r_ptr[NX]     = {0.0f};
+	re_array						    m_eps_r_real;
+
 // *************************************************************************** //
 //
 //
@@ -625,9 +628,9 @@ protected:
 	}
 
 
-	//	"interface"
+	//	"init_interface"
 	//
-	inline void interface(void) noexcept 
+	inline void init_interface(void) noexcept 
 	{
 		size_type	m = 0ULL;
 
@@ -682,7 +685,7 @@ protected:
 	//
 	inline void init_grid(void) noexcept {
 		# ifdef CB_BAREBONES
-			this->interface();
+			this->init_interface();
 		# endif	/*	CB_BAREBONES	*/
 
 		this->thin_film();
@@ -842,6 +845,26 @@ public:
         return std::addressof( this->m_Ez_F );
     }
 
+    //  "get_perm_E_data"
+    //
+    //inline std::array<complex_t, NX> * get_perm_E_data()       noexcept
+    //{ return &base::m_eps_r; }
+    
+    inline re_array * get_perm_E_data(void)
+    { return std::addressof( this->m_eps_r_real ); }
+    
+    inline float * get_perm_E_ptr(void)
+    { return m_eps_r_ptr; }
+
+
+    //  // or, idiomatically, reference
+    //  inline std::array<complex_t, NX> &       get_perm_E_data()       noexcept
+    //  { return m_eps_r; }
+    //
+    //  inline const std::array<complex_t, NX> & get_perm_E_data() const noexcept
+    //  { return m_eps_r; }
+
+	//  im_array		m_eps_r,	m_mu_r;
 
 
 // *************************************************************************** //
@@ -895,6 +918,11 @@ public:
 		this->m_filename = "../Python/DATA/DESTRUCTIVE/DESTRUCTIVE.bin";
 		this->save();
     #endif  //  _CBAPP_DISABLE_FDTD_FILE_IO  //
+    
+        for (m = 0ULL; m < NX; ++m) {
+            this->m_eps_r_ptr[m]    = static_cast<float>( base::m_eps_r[m].real() );
+            this->m_eps_r_real[m]   = base::m_eps_r[m].real();
+        }
     
 		return;
 	}

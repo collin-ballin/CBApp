@@ -134,15 +134,15 @@ inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = Im
     X(TitleBar,         "##Titlebar",               true,               _CBAPP_TITLEBAR_WINDOW_FLAGS                            )           \
     X(MenuBar,          "##Menubar",                true,               _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(About,            "About",                    false,              _CBAPP_ABOUT_WINDOW_FLAGS                               )           \
-    X(MainApp,          "My Application",           true,               _CBAPP_CORE_WINDOW_FLAGS | ImGuiWindowFlags_NoScrollbar )           \
+    X(MainApp,          "Home",                     true,               _CBAPP_CORE_WINDOW_FLAGS | ImGuiWindowFlags_NoScrollbar )           \
 /*                                                                                                                                      */  \
 /*  2.  MAIN APPLICATION WINDOWS...                                                                                                     */  \
-    X(CCounterApp,      "Coincidence Counter",      false,              _CBAPP_CORE_WINDOW_FLAGS                                )           \
+    X(CCounterApp,      "Coincidence Counter",      true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
     X(GraphingApp,      "Graphing App",             false,              _CBAPP_CORE_WINDOW_FLAGS                                )           \
-    X(GraphApp,         "Graph App",                true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
+    X(GraphApp,         "Graph App",                false,              _CBAPP_CORE_WINDOW_FLAGS                                )           \
 /*                                                                                                                                      */  \
 /*  3.  TOOLS, DEMOS, MISC WINDOWS, ETC...                                                                                              */  \
-    X(ColorTool,        "Color Tool",               true,               _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
+    X(ColorTool,        "Color Tool",               false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(StyleEditor,      "Style Editor (ImGui)",     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(Logs,             "Logs",                     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
     X(Console,          "Console",                  false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
@@ -234,7 +234,8 @@ public:                                                                         
     using               Anchor                          = utl::Anchor;                          \
                                                                                                 \
     using               Logger                          = utl::Logger;                          \
-    using               LogLevel                        = Logger::Level;
+    using               LogLevel                        = Logger::Level;                        \
+    using               Tab_t                           = utl::Tab_t;                          
 
 
 //  EXPORTED "API" USED BY "CBApp" DELEGATOR CLASSES THAT USE AN "AppState" OBJECT.

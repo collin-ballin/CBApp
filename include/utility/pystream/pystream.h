@@ -142,7 +142,13 @@ protected:
 #ifdef _WIN32
     HANDLE                      m_child_stdin_w                     = nullptr;
     HANDLE                      m_child_stdout_r                    = nullptr;
-    PROCESS_INFORMATION         m_proc_info { 0 };
+//  PROCESS_INFORMATION         m_proc_info { 0 };
+    PROCESS_INFORMATION         m_proc_info {
+                                    nullptr,    // hProcess
+                                    nullptr,    // hThread
+                                    0u,         // dwProcessId
+                                    0u          // dwThreadId
+                                };
 # else
     int                         m_child_stdin_fd                    = -1;
     int                         m_child_stdout_fd                   = -1;

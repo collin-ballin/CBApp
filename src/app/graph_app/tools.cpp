@@ -188,7 +188,6 @@ void GraphApp::ShowSketchControls(void)
     static bool                         stretch_column_1        = true;
 
     //  COLUMN-SPECIFIC FLAGS...
-    
     static ImGuiTableColumnFlags        col0_flags              = ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize;
     static ImGuiTableColumnFlags        col1_flags              = stretch_column_1 ? ImGuiTableColumnFlags_WidthStretch : ImGuiTableColumnFlags_WidthFixed;
     static ImGuiTableFlags              flags                   = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible; //| ImGuiTableFlags_ScrollX;
@@ -197,9 +196,9 @@ void GraphApp::ShowSketchControls(void)
         {"Clear Sketch",        []{ if (ImGui::Button("Clear Canvas")) std::fill(sketch::data.begin(), sketch::data.end(), 0.0f); }                                                                                             },
         {"Sketch Resolution",   []{ float w = ImGui::GetColumnWidth(); ImGui::SetNextItemWidth(w); ImGui::SliderInt("##SketchResolution",&sketch::res,16, 256); }                                                               },
     //
-        {"Brush Size",          []{ float w = ImGui::GetColumnWidth(); ImGui::SetNextItemWidth(w); ImGui::SliderInt("##BrushSize", &sketch::brush_size, 1, 8);      }                                                           },
-        {"Brush Shape",         []{ float w = ImGui::GetColumnWidth(); ImGui::SetNextItemWidth(w); ImGui::Combo("##BrushShape",        &sketch::brush_shape, sketch::brush_shapes, IM_ARRAYSIZE(sketch::brush_shapes));  }      },
-        {"Paint Value",         []{ float w = ImGui::GetColumnWidth(); ImGui::SetNextItemWidth(w); ImGui::SliderFloat("##BrushValue",  &sketch::paint_value, sketch::vmin, sketch::vmax); }                                     },
+        {"Brush Size",          []{ float w = ImGui::GetColumnWidth(); ImGui::SetNextItemWidth(w); ImGui::SliderInt("##BrushSize",      &sketch::brush_size, 1, 8);      }                                                           },
+        {"Brush Shape",         []{ float w = ImGui::GetColumnWidth(); ImGui::SetNextItemWidth(w); ImGui::Combo("##BrushShape",         &sketch::brush_shape, sketch::brush_shapes, IM_ARRAYSIZE(sketch::brush_shapes));  }      },
+        {"Paint Value",         []{ float w = ImGui::GetColumnWidth(); ImGui::SetNextItemWidth(w); ImGui::SliderFloat("##BrushValue",   &sketch::paint_value, sketch::vmin, sketch::vmax); }                                     },
     //
         {"Colormap",            []{
             float w = ImGui::GetColumnWidth();
@@ -213,41 +212,76 @@ void GraphApp::ShowSketchControls(void)
     };
 
 
+    static utl::TableCFG<2>    sketch_table_CFG    = {
+        "SketchControls"
+    };
+
 
     //  1.  PRIMARY TABLE ENTRY...
-    //
-    if (ImGui::BeginTable("SketchControls", 2, flags))
-    {
-        if (freeze_column || freeze_header)
-            ImGui::TableSetupScrollFreeze(freeze_column ? 1 : 0, freeze_header ? 1 : 0);
-
-
-        ImGui::TableSetupColumn("Label",    col0_flags,     LABEL_COLUMN_WIDTH);
-        ImGui::TableSetupColumn("Widget",   col1_flags,     stretch_column_1 ? 1.0f : WIDGET_COLUMN_WIDTH);
-        ImGui::TableHeadersRow();
-
-        for (const auto & row : rows) {
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted(row.label);
-            ImGui::TableSetColumnIndex(1);
-            row.render();
-        }
-
-        ImGui::EndTable();
-    }
-    
+    utl::MakeCtrlTable(rows, sketch_table_CFG);
     
     return;
 }
 
 
+// *************************************************************************** //
+//
+//
+//  ?.      UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "ShowModelParameters"
+//
+void GraphApp::ShowModelParameters(void)
+{
+    //  OTHER CONSTANTS...
+    static const ImVec2                 SPACING                     = ImVec2( 0.0f, 0.25*ImGui::GetTextLineHeightWithSpacing() );
+    
+    //  CONSTANTS...
+    static utl::TableCFG<2>             m_stepsize_table_CFG        = {
+        /*  Table UUID  =   */      "StepsizesControls",
+        /*  Table Flags =   */      ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible | ImGuiTableFlags_SizingStretchProp,
+        /*  Column CFGs =   */      {
+                { "Label",          200.0f,         ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize },
+                { "Widget",         -1.0f,          ImGuiTableColumnFlags_WidthStretch }
+            },
+        /*  Header Row  =   */      false
+    };
+    
+    static utl::TableCFG<2>             m_sources_table_CFG         = {
+        /*  Table UUID  =   */      "SourcesControls",
+        /*  Table Flags =   */      ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible | ImGuiTableFlags_SizingStretchProp,
+        /*  Column CFGs =   */      {
+                { "Label",          200.0f,         ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize },
+                { "Widget",         -1.0f,          ImGuiTableColumnFlags_WidthStretch }
+            },
+        /*  Header Row  =   */      false
+    };
 
 
 
 
 
+    //  1.  STEPSIZE TABLE...
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if ( ImGui::CollapsingHeader("Parameters") ) {
+        utl::MakeCtrlTable(this->ms_STEPSIZE_ROWS,      m_stepsize_table_CFG);
+    }
+    
+    
+    //  2.  SOURCES TABLE...
+    ImGui::Dummy( SPACING );
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if ( ImGui::CollapsingHeader("Sources") ) {
+        utl::MakeCtrlTable(this->ms_SOURCES_ROWS,   m_sources_table_CFG);
+    }
+    
+    
+    
+
+    return;
+}
 
 
 

@@ -28,6 +28,7 @@
 //  0.1.        ** MY **  HEADERS...
 #include "_config.h"
 #include "cblib.h"
+#include "utility/_types.h"
 #include "utility/_constants.h"
 #include "utility/_templates.h"
 #include "utility/_logger.h"
@@ -69,6 +70,44 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//          0.1A        Widget-Table / Control-Table Stuff:
+// *************************************************************************** //
+
+/*
+//  "WidgetRow"
+//      Declarative per-row widget logic
+struct WidgetRow {
+    const char *            label;
+    std::function<void()>   render;
+};
+
+//  "TableCFG"
+//      - POD struct to define that STATE INFORMATION of a table in Dear ImGui.
+template<auto NC>
+struct TableCFG {
+    const char *            uuid                = nullptr;
+    ImGuiTableFlags         table_flags         = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible;
+    ImGuiTableColumnFlags   column_flags[NC]    = {};
+    bool                    header_row          = true;
+};
+
+
+template <>
+struct TableCFG<2> {
+    const char *            uuid                = nullptr;
+    ImGuiTableFlags         table_flags         = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible;
+    ImGuiTableColumnFlags   column_flags[2]     = {
+                                ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize,
+                                ImGuiTableColumnFlags_WidthStretch
+                            };
+    bool                    header_row          = true;
+};
+
+
+
+//          0.1B        Tab-Bar Stuff:
+// *************************************************************************** //
+
 //  "Tab_t"
 //
 struct Tab_t    {
@@ -81,13 +120,9 @@ struct Tab_t    {
 };
 
 
-//  "WidgetRow"
-//      Declarative per-row widget logic
-struct WidgetRow {
-    const char *            label;
-    std::function<void()>   render;
-};
 
+//          0.1C        Window Information / Position Information:
+// *************************************************************************** //
 
 //  "WindowLocation"
 //
@@ -243,7 +278,7 @@ parse_packet(std::string_view line)
         return std::nullopt;                     // malformed JSON / keys
     }
 }
-
+*/
 
 
 // *************************************************************************** //
@@ -258,6 +293,13 @@ parse_packet(std::string_view line)
 void                            HelpMarker                  (const char * desc);
 const char *                    get_opengl_version          (void);
 int                             get_glfw_version            (char * );
+inline bool                     GetIO_KeyCtrl               (void) {
+                                #ifdef __APPLE__
+                                    return ImGui::GetIO().KeyShift;
+                                # else
+                                    return ImGui::GetIO().KeyCtrl;
+                                #endif  //  __APPLE__  //
+                                }
 
 
 
@@ -290,7 +332,10 @@ ImVec2                          GetImGuiWindowCoords        (const char * , cons
 // *************************************************************************** //
 // *************************************************************************** //
 
-//              1.4A    POP-UP WINDOWS, FILE-DIALOGUE WINDOWS, ETC...
+//              1.4A    HELPER WIDGET FUNCTIONS / ABSTRACTIONS...
+
+
+//              1.4B    POP-UP WINDOWS, FILE-DIALOGUE WINDOWS, ETC...
 bool                            Popup_AskOkCancel           (const char * );
 //
 bool                            Popup_AskQuestion           (const char * );
@@ -303,7 +348,7 @@ bool                            file_exists                 (const char * );
 
 
 
-//              1.4B    GENERAL WIDGET FUNCTIONS...
+//              1.4C    GENERAL WIDGET FUNCTIONS...
 bool                            DirectionalButton           ([[maybe_unused]] const char * ,
                                                              Anchor ,   ImVec2 ,
                                                              [[maybe_unused]] ImVec4    bg_col      = ImVec4(0.0f,  0.0f,   0.0f,   1.0f),

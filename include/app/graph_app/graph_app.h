@@ -32,6 +32,7 @@
 #include "utility/utility.h"
 #include "utility/pystream/pystream.h"
 #include "app/graph_app/fdtd.h"
+#include "app/graph_app/_editor.h"
 
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
@@ -62,19 +63,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "Tab_t"
-//
-struct Tab_t    {
-    using                   callback_t      = std::function<void(const char*, bool*, ImGuiWindowFlags)>;
-    inline const char *     get_uuid        (void) const    { return this->uuid.c_str(); }
-//
-    std::string             uuid;
-    bool                    open;
-    bool                    no_close;
-    ImGuiTabItemFlags       flags;
-    callback_t              render_fn;
-};
-
 
 
 // *************************************************************************** //
@@ -83,9 +71,6 @@ struct Tab_t    {
 // 		        GraphApp Widget for Dear ImGui.
 // *************************************************************************** //
 // *************************************************************************** //
-
-
-
 
 //  "GraphApp"
 //
@@ -157,7 +142,7 @@ protected:
     ImPlotAxisFlags                                 m_mst_yaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
     
     ImPlotLocation                                  m_mst_legend_loc                = ImPlotLocation_NorthWest;                                                 // legend position.
-    ImPlotLegendFlags                               m_mst_legend_flags              = ImPlotLegendFlags_None; //ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
+    ImPlotLegendFlags                               m_mst_legend_flags              = ImPlotLegendFlags_None | ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
     //
     //
     //
@@ -189,9 +174,30 @@ public:
     int                                             current_frame                   = 0;
     //
     //                                  0.2     FDTD DATA-MEMBERS STUFF...
-    FDTD_t		                                    ms_model                        = cb::FDTD_1D<NX, NT, double>();
+    fdtd::StepSizes<double>                         m_stepsizes                     = {
+                                                        { 1.0f,     { 1e-9f,     10.0f}     },      //  dx
+                                                        { 1.0f,     { 1e-9f,     10.0f}     },      //  dy
+                                                        { 1.0f,     { 1e-9f,     10.0f}     },      //  dz
+                                                        { 1.0f,     { 1e-9f,     10.0f}     },      //  dt
+                                                        { 1.0f,     { 0.0f,       2.0f}     },      //  Sc
+                                                    };
+    //
+    fdtd::Steps<ImU64>                              m_steps                         = {
+                                                        { 200,      { 1,        1000}       },      //  NX
+                                                        { 1,        { 1,        1000}       },      //  NY
+                                                        { 1,        { 1,        1000}       },      //  NZ
+                                                        { 400,      { 1,        2000}       }       //  NT
+                                                    };
+    fdtd::Parameters<ImU64, double>                 m_params                        = {
+                                                        { 20,       { 1,         100}       },      //  Wavelength
+                                                        { 8,        { 1,         500}       },      //  Duration
+                                                    };
+    //
+    //FDTD_t		                                    ms_model                        = cb::FDTD_1D<NX, NT, double>();
     re_frame *                                      m_Ez_T                          = nullptr;
     std::vector<utl::WidgetRow>                     ms_FDTD_ROWS                    = {};
+    std::vector<utl::WidgetRow>                     ms_STEPSIZE_ROWS                = {};
+    std::vector<utl::WidgetRow>                     ms_SOURCES_ROWS                 = {};
 
 
 
@@ -261,6 +267,14 @@ public:
     
     //                                          7.  DELAGATOR CLASSES...
     cb::HeatMap                                     m_heatmap;
+    utl::PlotCFG                                    editor_cfg                      = {
+        {   "##FDTD_Editor",            ImVec2(-1, -1),     ImPlotFlags_None | ImPlotFlags_NoTitle  },
+        {
+            { "x-Node Index  [m dx]",   ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit },
+            { "Ez  [V / m]",            ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit }
+        }
+    };
+    SketchWidget                                    m_editor                        = SketchWidget(editor_cfg);
     app::AppState                                   CBAPP_STATE_NAME;
     
         
@@ -285,6 +299,11 @@ public:
     //  2D.         Application Functions.          [tools.cpp]...
     //
     //                  1.  FDTD Functions:
+    void                ShowEditor                      (void);
+    //
+    void                ShowEditorOLD                   (void);
+    void                EditorUtility                   (void);
+    void                ShowModelParameters             (void);
     void                ShowFDTD                        (void);
     void                ShowFDTDControls                (void);
     //
