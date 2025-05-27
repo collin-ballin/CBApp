@@ -10,7 +10,7 @@
 **************************************************************************************
 **************************************************************************************/
 #include "app/app.h"
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 
 #include <random>
 #include <algorithm>
@@ -181,16 +181,6 @@ void App::run_IMPL(void)
         }
         ImGui::DockBuilderFinish(this->S.m_dockspace_id);
         
-
-        //  6.  SET FOCUS TO MAIN-WINDOW...
-    //  #ifdef __CBAPP_COINCIDENCE_COUNTER__
-    //      ImGui::SetWindowFocus(this->S.m_windows[Window::CCounterApp].uuid.c_str());
-    //  # else
-    //      ImGui::SetWindowFocus(this->S.m_windows[Window::MainApp].uuid.c_str());
-    //  #endif  //  __CBAPP_COINCIDENCE_COUNTER__  //
-
-        
-        
     }// END OF "first_frame"...
 #endif  //  CBAPP_NEW_DOCKSPACE  //
     
@@ -223,11 +213,13 @@ void App::run_IMPL(void)
     //  1.      END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
     if (first_frame) [[unlikely]] {
         first_frame = false;
-    #ifdef  __CBAPP_COINCIDENCE_COUNTER__
+    #if defined(__CBAPP_BUILD_CCOUNTER_APP__)
         ImGui::SetWindowFocus(this->S.m_windows[Window::CCounterApp].uuid.c_str());
+    # elif defined(__CBAPP_BUILD_FDTD_APP__)
+        ImGui::SetWindowFocus(this->S.m_windows[Window::GraphApp].uuid.c_str());
     # else
         ImGui::SetWindowFocus(this->S.m_windows[Window::MainApp].uuid.c_str());
-    #endif  //  __CBAPP_COINCIDENCE_COUNTER__  //
+    #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
     }
     
     return;
@@ -263,14 +255,10 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
     ImGui::Begin(uuid, p_open, flags);
     
         ImGui::PopStyleColor();
+    
+    
+#if defined(CBAPP_ENABLE_CB_DEMO) && !defined(__CBAPP_BUILD_CCOUNTER_APP__) && !defined(__CBAPP_BUILD_FDTD_APP__)
 
-
-
-
-
-
-
-#if defined(CBAPP_ENABLE_CB_DEMO) && !defined(__CBAPP_COINCIDENCE_COUNTER__)
 
     //  2.  TESTING PLOTTING / GRAPHING 0...
     {
@@ -284,7 +272,6 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
             ImGui::DockBuilderDockWindow( plot_uuid, S.m_main_dock_id );
         }
     }
-    
 
     //  3.  TESTING PLOTTING / GRAPHING 2...
     {
@@ -361,7 +348,7 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
             ImGui::TreePop();
         }
     }
-#endif  //  CBAPP_ENABLE_CB_DEMO  AND  !__CBAPP_COINCIDENCE_COUNTER__  //
+#endif  //  CBAPP_ENABLE_CB_DEMO  AND  !__CBAPP_BUILD_CCOUNTER_APP__   AND  !__CBAPP_BUILD_FDTD_APP__  //
 
     
     ImGui::End();

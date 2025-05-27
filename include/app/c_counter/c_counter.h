@@ -24,7 +24,7 @@
 // *************************************************************************** //
 
 //  0.1.        ** MY **  HEADERS...
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 #include "cblib.h"
 //#include "app/app.h"
 #include "app/_init.h"
@@ -64,7 +64,9 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  "VisSpec"
 //      - Define the visibility of each COUNTER PLOT...
 struct VisSpec {
-    bool    master;     bool single;    bool average;
+    bool    master;         const char * master_ID;
+    bool    single;         const char * single_ID;
+    bool    average;        const char * average_ID;
 };
 
 
@@ -85,8 +87,15 @@ struct ChannelSpec {
 // *************************************************************************** //
 // *************************************************************************** //
 
+
+static constexpr size_t     BUFFER_SIZE                 = 2000;
+
+//  "CCounterApp"
+//
 class CCounterApp
 {
+    //using               buffer_type                     = utl::ScrollingBuffer;     // cblib::RingBuffer<int, 2000>
+    using               buffer_type                     = cblib::RingBuffer<ImVec2, BUFFER_SIZE>;
     CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 // *************************************************************************** //
 // *************************************************************************** //
@@ -158,96 +167,117 @@ protected:
     //  *************************************************************************** //
     
     //                                              1.  APPEARANCE CONSTANTS...
-    float                                               m_dockspace_ratio           = 0.8f;
-    const float                                         m_child_corner_radius       = 5.0f;
-    float                                               ms_SPACING                  = 50.0f;
-    ImVec2                                              ms_COLLAPSE_BUTTON_SIZE     = ImVec2{15,    15};
-    std::pair<int,int>                                  m_HEIGHT_LIMITS[2]          = { { 30, 30 }, { 30, 30 } };
-    static constexpr size_t                             ms_BUFFER_SIZE              = 256;
+    float                                               m_dockspace_ratio               = 0.8f;
+    const float                                         m_child_corner_radius           = 5.0f;
+    float                                               ms_SPACING                      = 50.0f;
+    ImVec2                                              ms_COLLAPSE_BUTTON_SIZE         = ImVec2{15,    15};
+    std::pair<int,int>                                  m_HEIGHT_LIMITS[2]              = { { 30, 30 }, { 30, 30 } };
+    static constexpr size_t                             ms_BUFFER_SIZE                  = 256;
     //
     //
     //                                              2.  CHILDREN PARAMETERS...
     bool                                                m_child_open[2]                 = {true, true};
     std::array< const char *, 2 >                       m_child_ids                     = { "PlotChild",            "ControlChild" };
     ImGuiChildFlags                                     m_child_flags[2]                = {
-                                                            ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
-                                                            ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY
-                                                        };
+        ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
+        ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY
+    };
     std::array< const char *, 2 >                       m_tabbar_uuids                  = { "PlotTabBar##GApp",     "PlotTabBar##GApp" };
     ImGuiTabBarFlags                                    m_tabbar_flags[2]               = {
-                                                            ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton,
-                                                            ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton
-                                                        };
+        ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton,
+        ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton
+    };
     ImGuiWindowClass                                    m_window_class[2]               = {};
     
     
     //                                              3.  SUBSIDIARY WINDOWS...
-    std::array< const char *, 2 >                       m_win_uuids                 = { "Visuals", "Controls" };
-    ImGuiWindowFlags                                    m_docked_win_flags[2]       = {
-                                                            ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus,    // ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground,
-                                                            ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus     //  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground
-                                                        };
+    std::array< const char *, 2 >                       m_win_uuids                     = { "Visuals", "Controls" };
+    ImGuiWindowFlags                                    m_docked_win_flags[2]           = {
+        ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus,    // ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground,
+        ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus     //  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground
+    };
     
     
     //                                              3.  DOCKING SPACE...
     //
     //                                                  Main Dockspace:
-    static constexpr const char *                       m_dockspace_name            = "DockHostSpace##CCApp";
-    ImGuiDockNodeFlags                                  m_dockspace_flags           = ImGuiDockNodeFlags_None;
-    ImGuiID                                             m_dockspace_id              = 0;
-    bool                                                m_rebuild_dockspace         = false;
+    static constexpr const char *                       m_dockspace_name                = "DockHostSpace##CCApp";
+    ImGuiDockNodeFlags                                  m_dockspace_flags               = ImGuiDockNodeFlags_None;
+    ImGuiID                                             m_dockspace_id                  = 0;
+    bool                                                m_rebuild_dockspace             = false;
     //
     //      Nested Dockspaces:
-    ImGuiID                                             m_dock_ids[2]               = { 0, 0 };
+    ImGuiID                                             m_dock_ids[2]                   = { 0, 0 };
     
     
     //                                              4.  IMPORTANT DATA...
-    static constexpr size_t                             ms_NUM                      = 15;
-    fdtd::Param<ImU64>                                  m_PLOT_LIMIT                = { 0,     {0, ms_NUM-1}        };
+    static constexpr size_t                             ms_NUM                          = 15;
+    utl::Param<ImU64>                                   m_PLOT_LIMIT                    = { 0,     {0, ms_NUM-1}        };
     //
-    ChannelSpec                                         ms_channels[ms_NUM]         = {
-        { 8,  "A",      {true, true, true}      },
-        { 4,  "B",      {true, true, true}      },
-        { 2,  "C",      {true, true, true}      },
-        { 1,  "D",      {true, true, true}      },
+    ChannelSpec                                         ms_channels[ms_NUM]             = {
+        { 8,  "A",      {true, "##MasterA",         true, "##SingleA",          true, "##AvgA"      }      },
+        { 4,  "B",      {true, "##MasterB",         true, "##SingleB",          true, "##AvgB"      }      },
+        { 2,  "C",      {true, "##MasterC",         true, "##SingleC",          true, "##AvgC"      }      },
+        { 1,  "D",      {true, "##MasterD",         true, "##SingleD",          true, "##AvgD"      }      },
     //
-        {12,  "AB",     {true, true, true}      },
-        {10,  "AC",     {true, true, true}      },
-        { 9,  "AD",     {true, true, true}      },
-        { 6,  "BC",     {true, true, true}      },
-        { 5,  "BD",     {true, true, true}      },
-        { 3,  "CD",     {true, true, true}      },
+        {12,  "AB",     {true, "##MasterAB",        true, "##SingleAB",         true, "##AvgAB"     }      },
+        {10,  "AC",     {true, "##MasterAC",        true, "##SingleAC",         true, "##AvgAC"     }      },
+        { 9,  "AD",     {true, "##MasterAD",        true, "##SingleAD",         true, "##AvgAD"     }      },
+        { 6,  "BC",     {true, "##MasterBC",        true, "##SingleBC",         true, "##AvgBC"     }      },
+        { 5,  "BD",     {true, "##MasterBD",        true, "##SingleBD",         true, "##AvgBD"     }      },
+        { 3,  "CD",     {true, "##MasterCD",        true, "##SingleCD",         true, "##AvgCD"     }      },
     //
-        {14,  "ABC",    {true, true, true}      },
-        {13,  "ABD",    {true, true, true}      },
-        {11,  "ACD",    {true, true, true}      },
-        { 7,  "BCD",    {true, true, true}      },
+        {14,  "ABC",    {true, "##MasterABC",       true, "##SingleABC",        true, "##AvgABC"    }      },
+        {13,  "ABD",    {true, "##MasterABD",       true, "##SingleABD",        true, "##AvgABD"    }      },
+        {11,  "ACD",    {true, "##MasterACD",       true, "##SingleACD",        true, "##AvgACD"    }      },
+        { 7,  "BCD",    {true, "##MasterBCD",       true, "##SingleBCD",        true, "##AvgBCD"    }      },
     //
-        {15,  "ABCD",   {true, true, true}      }
+        {15,  "ABCD",   {true, "##MasterABCD",      true, "##SingleABCD",       true, "##AvgABCD"   }      }
     };
-    std::array<utl::ScrollingBuffer, ms_NUM>            m_buffers                   = { };
-    float                                               m_max_counts[ms_NUM]        = { };
+    std::array<buffer_type, ms_NUM>                     m_buffers                       = { };
+    float                                               m_max_counts[ms_NUM]            = { 0.0f };
+    float                                               m_avg_counts[ms_NUM]            = { 0.0f };
     
     
     //                                              4.  IMPORTANT DATA...
-    std::vector<Tab_t>                                  ms_PLOT_TABS                    = {};
-    std::vector<Tab_t>                                  ms_CTRL_TABS                    = {};
-    std::vector<utl::WidgetRow>                         ms_CTRL_ROWS                    = {};
-    std::vector<utl::WidgetRow>                         ms_APPEARANCE_ROWS              = {};
+    std::vector<Tab_t>                                  ms_PLOT_TABS                    = { };
+    std::vector<Tab_t>                                  ms_CTRL_TABS                    = { };
+    std::vector<utl::WidgetRow>                         ms_CTRL_ROWS                    = { };
+    std::vector<utl::WidgetRow>                         ms_APPEARANCE_ROWS              = { };
     
     
     //                                              5.  WIDGET VARIABLES...
-    fdtd::Param<ImU64>                                  m_coincidence_window        = { 10,     {1, 100}        };
-    fdtd::Param<double>                                 m_integration_window        = { 1.00f,  {0.001f, 2.50f} };
-    fdtd::Param<double>                                 m_history_length            = { 30.0f,  {5.0f,   90.0}  };
-    char                                                m_filepath[ms_BUFFER_SIZE]  = {};
+    bool                                                m_counter_running               = true;  
+    bool                                                m_smooth_scroll                 = false;   // checkbox toggled in UI
+    float                                               m_last_packet_time              = 0.0f; // time of last data arrival
+    float                                               m_stream_timeout                = 0.25f;    // seconds of silence → freeze
+    bool                                                m_streaming_active              = false;    // derived each frame
+    //
+    bool                                                m_streaming_prev                = false;                            // true on previous frame if data arrived
+    bool                                                m_xaxis_paused                  = true;                             // start paused until first sample
+    float                                               m_freeze_xmin                   = 0.f;                              // cached limits when paused
+    float                                               m_freeze_xmax                   = 0.f;
+    float                                               m_freeze_now                    = 0.f;                              // reference time for sparklines when paused
+    //
+    //
+    enum class                                          AvgMode { Samples, Seconds };                                       //  Averaging mode selector
+    AvgMode                                             m_avg_mode = AvgMode::Samples;                                      //  Current mode (UI‑controlled)
+    utl::Param<ImU64>                                   m_avg_window_samp               = { 10,     {1, 100}        };      //  N samples (for AvgMode::Samples)
+    utl::Param<double>                                  m_avg_window_sec                = { 30.0f,  {5.0f,   90.0}  };      //  Window length in seconds (for AvgMode::Seconds)
+
+    
+    utl::Param<ImU64>                                   m_coincidence_window            = { 10,     {1, 100}        };
+    utl::Param<double>                                  m_integration_window            = { 1.00f,  {0.001f, 2.50f} };
+    utl::Param<double>                                  m_history_length                = { 30.0f,  {5.0f,   90.0}  };
+    char                                                m_filepath[ms_BUFFER_SIZE]      = { };
+    bool                                                m_use_mutex_count               = false;
     
     
     //                                              6.  PLOTTING STUFF...
-    bool                                                m_colormap_cache_invalid    = true;
-    ImPlotColormap                                      m_cmap                      = ImPlotColormap_Cool;
-    std::vector<ImVec4>                                 m_plot_colors               = std::vector<ImVec4>(ms_NUM);
-    static constexpr std::array<const char *, 2>        ms_mst_axis_labels          = { "Time  [sec]",      "Counts  [Arb.]" };
+    bool                                                m_colormap_cache_invalid        = true;
+    ImPlotColormap                                      m_cmap                          = ImPlotColormap_Cool;
+    std::vector<ImVec4>                                 m_plot_colors                   = std::vector<ImVec4>(ms_NUM);
+    static constexpr std::array<const char *, 2>        ms_mst_axis_labels              = { "Time  [sec]",      "Counts  [Arb.]" };
     
     
     //                                              7.  DELAGATOR CLASSES...
@@ -276,6 +306,7 @@ protected:
     void                DefaultPlotTabRenderFunc        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                DefaultCtrlTabRenderFunc        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     Tab_t *             get_ctrl_tab                    (const std::string & , std::vector<Tab_t> & );
+    float               ComputeAverage                  (const buffer_type &, AvgMode , ImU64 , double , float ) const;
     void                RebuildDockspace                (void);
 
 

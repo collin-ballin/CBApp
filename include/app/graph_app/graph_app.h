@@ -24,7 +24,7 @@
 // *************************************************************************** //
 
 //  0.1.        ** MY **  HEADERS...
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 #include "cblib.h"
 //#include "app/app.h"
 #include "app/_init.h"
@@ -76,6 +76,10 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 class GraphApp
 {
+    //  using               STATE_LABELS                = SketchWidget::STATE_LABELS;
+    //  using               BRUSH_SHAPE_LABELS          = SketchWidget::BRUSH_SHAPE_LABELS;
+    using               State                       = SketchWidget::State;
+    using               BrushShape                  = SketchWidget::BrushShape;
     CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 // *************************************************************************** //
 // *************************************************************************** //
@@ -195,9 +199,6 @@ public:
     //
     //FDTD_t		                                    ms_model                        = cb::FDTD_1D<NX, NT, double>();
     re_frame *                                      m_Ez_T                          = nullptr;
-    std::vector<utl::WidgetRow>                     ms_FDTD_ROWS                    = {};
-    std::vector<utl::WidgetRow>                     ms_STEPSIZE_ROWS                = {};
-    std::vector<utl::WidgetRow>                     ms_SOURCES_ROWS                 = {};
 
 
 
@@ -207,7 +208,7 @@ public:
     //      ARRAY INDEX [ 1 ]       =   CONTROL WINDOW...
     //
     //  *************************************************************************** //
-    //                                        1.  APPEARANCE CONSTANTS...
+    //                                          1.  APPEARANCE CONSTANTS...
     const float                                     m_child_corner_radius           = 5.0f;
     std::pair<int,int>                              m_HEIGHT_LIMITS[2]              = { { 30, 30 }, { 5, 5 } };
     //
@@ -238,7 +239,7 @@ public:
     //                                          3.  DOCKING SPACE...
     //
     //                                              Main Dockspace:
-    float                                           m_dockspace_ratio               = 0.6f;
+    float                                           m_dockspace_ratio               = 0.70f;
     static constexpr const char *                   m_dockspace_name                = "DockHostSpace##GApp";
     ImGuiDockNodeFlags                              m_dockspace_flags               = ImGuiDockNodeFlags_None;
     ImGuiID                                         m_dockspace_id                  = 0;
@@ -251,16 +252,24 @@ public:
     //                                          4.  IMPORTANT DATA...
     std::vector<Tab_t>                              ms_PLOT_TABS                    = {};
     std::vector<Tab_t>                              ms_CTRL_TABS                    = {};
+    //
+    //                                              Table CFGs:
+    utl::TableCFG<2>                                m_fdtd_table_CFG                = {};
+    utl::TableCFG<2>                                m_stepsize_table_CFG            = {};
+    utl::TableCFG<2>                                m_sources_table_CFG             = {};
+    utl::TableCFG<2>                                m_editor_table_CFG              = {};
+    //
+    //                                              Table Rows:
+    std::vector<utl::WidgetRow>                     ms_FDTD_ROWS                    = {};
+    std::vector<utl::WidgetRow>                     ms_STEPSIZE_ROWS                = {};
+    std::vector<utl::WidgetRow>                     ms_SOURCES_ROWS                 = {};
+    std::vector<utl::WidgetRow>                     ms_EDITOR_ROWS                  = {};
     
     
     //                                          5.  WIDGET VARIABLES...
-    float                                           m_coincidence_window            = 10.0f;
-    float                                           m_integration_window            = 60.0f;
-    
+    bool                                            m_running                       = false;
     
     //                                          6.  PLOTTING STUFF...
-    bool                                            m_colormap_cache_invalid        = true;
-    ImPlotColormap                                  m_cmap                          = ImPlotColormap_Cool;
     static constexpr size_t                         m_NUM_COLORS                    = 3;
     std::vector<ImVec4>                             m_plot_colors                   = std::vector<ImVec4>(m_NUM_COLORS);
     

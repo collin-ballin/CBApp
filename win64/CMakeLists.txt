@@ -26,12 +26,55 @@ project(CBApp_Win64 LANGUAGES CXX)
 
 
 
-#   1.      HELPER INTERFACE LIBRARIES...
+#   0.  PREPROCESSOR MACRO DEFINITIONS PER CONFIGURATION...
 ########################################################################
 ########################################################################
 add_library(cb_defines INTERFACE)
+target_compile_definitions(cb_defines INTERFACE
+    #
+    #   0.1     CONFIG FILES...
+    IMGUI_USER_CONFIG=\"config/my_imconfig.h\"     #   SET FILENAME OF THE CUSTOM IMGUI CONFIG FILE...
+    CBAPP_USER_CONFIG=\"config/cbapp_config.h\"         #   SPECIFY CBAPP CONFIG FILE...
+    #
+    #   0.2     MACROS FOR  "ALL"  BUILD TYPES...UILD TYPES...
+    _CBLIB_LOG
+    # CBAPP_USE_VIEWPORT
+    # CBAPP_USE_DOCKSPACE
+        #   ...Add additional GENERIC macros here...
+
+
+    #   1.    MACROS FOR  "DEBUG"  BUILD TYPES...
+    $<$<CONFIG:Debug>:__CBAPP_DEBUG__>
+    $<$<CONFIG:Debug>:_CBAPP_LOG>
+        #   ...Add additional Debug-only macros here...
+
+
+    #   2.    MACROS FOR  "RELEASE"  BUILD TYPES...
+    $<$<CONFIG:Release>:NDEBUG>
+    $<$<CONFIG:Release>:__CBAPP_RELEASE__>
+        #   ...Add additional Release-only macros here...
+
+
+    #   3.    MACROS FOR  "RelWithDebInfo"  BUILD TYPES...
+    $<$<CONFIG:RelWithDebInfo>:__CBLIB_RELEASE_WITH_DEBUG_INFO__>
+        #   ...Add additional RelWithDebInfo-only macros here...
+
+
+    #   4.    MACROS FOR  "MinSizeRel"  BUILD TYPES...
+    $<$<CONFIG:MinSizeRel>:__CBLIB_MIN_SIZE_RELEASE__>
+        #   ...Add additional MinSizeRel-only macros here...
+)
+
+
+
+#   1.      HELPER INTERFACE LIBRARIES...
+########################################################################
+########################################################################
+# add_library(cb_defines INTERFACE)
 # generic + debug macros
-target_compile_definitions(cb_defines INTERFACE _CBLIB_LOG $<$<CONFIG:Debug>:__CBAPP_DEBUG__>)
+# target_compile_definitions(cb_defines INTERFACE _CBLIB_LOG $<$<CONFIG:Debug>:__CBAPP_DEBUG__>)
+
+
 
 add_library(cb_warnings INTERFACE)
 target_compile_options(cb_warnings INTERFACE
@@ -39,7 +82,7 @@ target_compile_options(cb_warnings INTERFACE
     -Wno-unused-variable
     -Wno-sign-compare
     -Wno-template-body
-    #-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion
+    #-Wconversion -Wsign-conversion
 )
 
 
@@ -110,7 +153,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${PROJECT_ROOT}/include/imgui_extensions
     ${PROJECT_ROOT}/imgui
     ${PROJECT_ROOT}/imgui/backends
-    ${THIRD_PARTY_INCLUDE_DIR})
+    ${THIRD_PARTY_INCLUDE_DIR}
+)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw cb_defines cb_warnings opengl32)
 

@@ -6,7 +6,7 @@
 //
 // *************************************************************************** //
 // *************************************************************************** //
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 #include "utility/utility.h"
 #include "utility/_constants.h"
 #include "utility/_templates.h"
@@ -16,6 +16,123 @@
 namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
+
+
+
+//  2.1     PLOTTING UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "DisplayAllPlotIDs"
+//
+int DisplayAllPlotIDs(void)
+{
+    ImPlotContext &     ctx     = *ImPlot::GetCurrentContext();
+    int                 count   = ctx.Plots.GetBufSize();
+    
+    for (int i = 0; i < count; ++i)
+    {
+        ImPlotPlot * plot = ctx.Plots.GetByIndex(i);
+        if (plot) {
+            std::printf("Plot ID: %u\n", plot->ID);
+        }
+    }
+    return count;
+}
+
+
+//  "GetPlotID"
+//
+ImGuiID GetPlotID(const char * name) {
+    ImGuiID                 plot_ID     = 0;
+    ImPlotContext &         ctx         = *ImPlot::GetCurrentContext();
+    int                     count       = ctx.Plots.GetBufSize();
+    
+    for (int i = 0; i < count; ++i) {
+        ImPlotPlot * plot = ctx.Plots.GetByIndex(i);
+        
+        if ( plot && plot->HasTitle() ) {
+            if ( name == plot->GetTitle() ) {
+                plot_ID = plot->ID;
+                std::printf("Plot ID: %u\n", plot->ID);
+            }
+        }
+    }
+    
+    return plot_ID;
+}
+
+
+//  "GetPlot"
+//
+std::pair<ImPlotPlot*, ImGuiID> GetPlot(const char * name) {
+    ImGuiID                 plot_ID     = 0;
+    ImPlotContext &         ctx         = *ImPlot::GetCurrentContext();
+    ImPlotPlot *            plot        = nullptr;
+    int                     count       = ctx.Plots.GetBufSize();
+    bool                    match       = false;
+    
+    for (int i = 0; i < count && !match; ++i)
+    {
+        plot    = ctx.Plots.GetByIndex(i);
+        if ( plot && plot->HasTitle() ) {
+            match   = ( name == plot->GetTitle() );
+            if (match) {
+                plot_ID = plot->ID;
+            }
+        }
+    }
+    if (!match) return {nullptr, 0};
+    
+    
+    return { plot, plot_ID };
+}
+
+
+//  "GetPlotItems"
+//
+int GetPlotItems(ImPlotPlot * plot_ptr) {
+    ImPlotItemGroup &   items   = plot_ptr->Items;   // Retrieve the item group and count
+    int                 count   = items.GetItemCount();
+
+    //  Iterate and print each item's ID
+    for (int i = 0; i < count; ++i)
+    {
+        ImPlotItem * item = items.GetItemByIndex(i);
+        if (item) {
+            std::printf("Item ID: %u\n", item->ID);
+        }
+    }
+    
+    return count;
+}
+
+int GetPlotItems(ImGuiID plot_id) {
+    ImPlotContext&      ctx     = *ImPlot::GetCurrentContext();
+    ImPlotPlot *        plot    = ctx.Plots.GetByKey(plot_id);
+    
+    if (!plot)
+        return -1;
+
+
+    ImPlotItemGroup &   items   = plot->Items;   // Retrieve the item group and count
+    int                 count   = items.GetItemCount();
+
+    //  Iterate and print each item's ID
+    for (int i = 0; i < count; ++i)
+    {
+        ImPlotItem * item = items.GetItemByIndex(i);
+        if (item) {
+            std::printf("Item ID: %u\n", item->ID);
+        }
+    }
+    
+    return count;
+}
+
+
+
+
 
 
 
@@ -100,7 +217,9 @@ void ScrollingSparkline(const float time,               const float window,     
     return;
 }
 
-       
+
+
+
 
 
 //  2.2     UTILITY FUNCTIONS FOR IMPLOT STUFF...

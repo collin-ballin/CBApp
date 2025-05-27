@@ -10,7 +10,7 @@
 **************************************************************************************
 **************************************************************************************/
 #include "app/app.h"
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 
 #include <random>
 #include <algorithm>
@@ -304,7 +304,7 @@ void App::dispatch_window_function(const Window & uuid)
         //
         //      1.  PRIMARY GUI STRUCTURE...
         case Window::Dockspace:         {
-            this->ShowDockspace(         w.uuid.c_str(),     nullptr,        w.flags);
+            this->ShowDockspace(            w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::SideBar:           {

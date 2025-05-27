@@ -231,69 +231,6 @@ void GraphApp::ShowSketchControls(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "ShowModelParameters"
-//
-void GraphApp::ShowModelParameters(void)
-{
-    //  OTHER CONSTANTS...
-    static const ImVec2                 SPACING                     = ImVec2( 0.0f, 0.25*ImGui::GetTextLineHeightWithSpacing() );
-    
-    //  CONSTANTS...
-    static utl::TableCFG<2>             m_stepsize_table_CFG        = {
-        /*  Table UUID  =   */      "StepsizesControls",
-        /*  Table Flags =   */      ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible | ImGuiTableFlags_SizingStretchProp,
-        /*  Column CFGs =   */      {
-                { "Label",          200.0f,         ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize },
-                { "Widget",         -1.0f,          ImGuiTableColumnFlags_WidthStretch }
-            },
-        /*  Header Row  =   */      false
-    };
-    
-    static utl::TableCFG<2>             m_sources_table_CFG         = {
-        /*  Table UUID  =   */      "SourcesControls",
-        /*  Table Flags =   */      ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible | ImGuiTableFlags_SizingStretchProp,
-        /*  Column CFGs =   */      {
-                { "Label",          200.0f,         ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize },
-                { "Widget",         -1.0f,          ImGuiTableColumnFlags_WidthStretch }
-            },
-        /*  Header Row  =   */      false
-    };
-
-
-
-
-
-    //  1.  STEPSIZE TABLE...
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if ( ImGui::CollapsingHeader("Parameters") ) {
-        utl::MakeCtrlTable(this->ms_STEPSIZE_ROWS,      m_stepsize_table_CFG);
-    }
-    
-    
-    //  2.  SOURCES TABLE...
-    ImGui::Dummy( SPACING );
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if ( ImGui::CollapsingHeader("Sources") ) {
-        utl::MakeCtrlTable(this->ms_SOURCES_ROWS,   m_sources_table_CFG);
-    }
-    
-    
-    
-
-    return;
-}
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//  ?.      UTILITY FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
 //  "test_table"
 //
 void GraphApp::test_table(void)
@@ -430,9 +367,6 @@ void GraphApp::test_table(void)
         ImGui::EndTable();
     }
 }
-
-
-
 
 
 

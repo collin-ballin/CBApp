@@ -29,7 +29,7 @@
 
 
 //  0.1.        ** MY **  HEADERS...
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 #include "cblib.h"
 //  #include "utility/_constants.h"
 //  #include "utility/_templates.h"
@@ -61,6 +61,50 @@
 
 
 
+
+
+//  1.  MISC / MATH STRUCTS...
+//
+namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "Range"
+//      - 1.
+template<typename T>
+struct Range {
+    T min, max;
+};
+
+
+//  "Param"
+//      - 2.    A parameter that carries both a value and its valid range
+template<typename T>
+struct Param {
+    inline T Value      (void)      { return value;         }
+    inline T RangeMin   (void)      { return limits.min;    }
+    inline T RangeMax   (void)      { return limits.max;    }
+//
+    T           value;
+    Range<T>    limits;
+};
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+} }//   END OF "cb" :: "fdtd" NAMESPACE.
+
+
+
+
+
+
+
 namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -73,6 +117,8 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 //  1.      WIDGETS & WINDOW STRUCTS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+
 
 //          1A.     Widget-Table / Control-Table Stuff:
 // *************************************************************************** //
@@ -113,7 +159,7 @@ struct TableCFG<2> {
                                 { "Label",          200.0f,         ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize },
                                 { "Widget",         -1.0f,          ImGuiTableColumnFlags_WidthStretch }
                             };
-    bool                    header_row          = true;
+    bool                    header_row          = false;
 };
 
 
@@ -312,6 +358,58 @@ parse_packet(std::string_view line)
     }
 }
 
+inline std::optional<CoincidencePacket>
+parse_packet(std::string_view line,
+             bool mutual_exclusion)   // NEW ARG (default = previous behaviour)
+{
+    using json = nlohmann::json;
+    CoincidencePacket pkt;
+
+    constexpr std::size_t A_IDX = ChannelIdx::A;
+    constexpr std::size_t B_IDX = ChannelIdx::B;
+    constexpr std::size_t C_IDX = ChannelIdx::C;
+    constexpr std::size_t D_IDX = ChannelIdx::D;
+
+    try {
+        json j   = json::parse(line);
+        const auto & arr = j.at("counts");
+        if (arr.size() != CHANNEL_COUNT)
+            return std::nullopt;
+
+        for (std::size_t i = 0; i < CHANNEL_COUNT; ++i)
+            pkt.counts[i] = arr[i].get<int>();
+
+        pkt.cycles = j.at("cycles").get<int>();
+
+        // ------------------------------------------------------------------
+        //  Optional reconciliation of mutually exclusive counts
+        // ------------------------------------------------------------------
+        if (!mutual_exclusion) {
+            // The index value encodes which APD channels participated:
+            // bit3=A, bit2=B, bit1=C, bit0=D  (e.g. 0b1100 == AB)
+            for (std::size_t idx = 0; idx < CHANNEL_COUNT; ++idx) {
+                const int n = pkt.counts[idx];
+                if (n == 0) continue;
+                const std::uint8_t mask = static_cast<std::uint8_t>(idx);
+
+                // skip single channels or UNUSED (they already hold the count)
+                if (mask == 0 || mask == 1 || mask == 2 || mask == 4 || mask == 8)
+                    continue;
+
+                if (mask & 0x8) pkt.counts[A_IDX] += n;   // A
+                if (mask & 0x4) pkt.counts[B_IDX] += n;   // B
+                if (mask & 0x2) pkt.counts[C_IDX] += n;   // C
+                if (mask & 0x1) pkt.counts[D_IDX] += n;   // D
+            }
+        }
+
+        return pkt;
+
+    } catch (const json::exception&) {
+        return std::nullopt;
+    }
+}
+
 
 
 // *************************************************************************** //
@@ -346,36 +444,15 @@ namespace cb { namespace fdtd { //     BEGINNING NAMESPACE "cb" :: "fdtd"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "Range"
-//      - 1.
-template<typename T>
-struct Range {
-    T min, max;
-};
-
-
-//  "Param"
-//      - 2.    A parameter that carries both a value and its valid range
-template<typename T>
-struct Param {
-    inline T Value      (void)      { return value;         }
-    inline T RangeMin   (void)      { return limits.min;    }
-    inline T RangeMax   (void)      { return limits.max;    }
-//
-    T           value;
-    Range<T>    limits;
-};
-
-
 //  "StepSizes"
 //      FDTD Struct for SIMULATION STEPSIZES...
 template<typename T>
 struct StepSizes {
-    Param<T>    dx;
-    Param<T>    dy;
-    Param<T>    dz;
-    Param<T>    dt;
-    Param<T>    Sc;
+    utl::Param<T>    dx;
+    utl::Param<T>    dy;
+    utl::Param<T>    dz;
+    utl::Param<T>    dt;
+    utl::Param<T>    Sc;
 };
 
 
@@ -383,10 +460,10 @@ struct StepSizes {
 //      FDTD structure for NUMBER OF SIMULATION STEPS...
 template<typename T>
 struct Steps {
-    Param<T>    NX;
-    Param<T>    NY;
-    Param<T>    NZ;
-    Param<T>    NT;
+    utl::Param<T>    NX;
+    utl::Param<T>    NY;
+    utl::Param<T>    NZ;
+    utl::Param<T>    NT;
 };
 
 
@@ -394,8 +471,8 @@ struct Steps {
 //      FDTD structure for NUMBER OF SIMULATION STEPS...
 template<typename I, typename F>
 struct Parameters {
-    Param<I>    wavelength;
-    Param<I>    duration;
+    utl::Param<I>    wavelength;
+    utl::Param<I>    duration;
 };
 
 

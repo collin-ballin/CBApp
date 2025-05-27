@@ -24,7 +24,7 @@
 // *************************************************************************** //
 
 //  1.1.        ** MY **  HEADERS...
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 #include "cblib.h"
 #include "utility/utility.h"
 #include "widgets/widgets.h"
@@ -124,36 +124,72 @@ inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = Im
 // *************************************************************************** //
 // *************************************************************************** //
 
-#define _CBAPP_WINDOW_LIST(X)                                                                                                               \
-/*| NAME.               TITLE.                      DEFAULT OPEN.       FLAGS.                                                          */  \
-/*|========================================================================================================================|            */  \
-/*  1.  PRIMARY GUI STRUCTURE / "CORE WINDOWS"...                                                                                       */  \
-    X(Host,             "CBApp (V0)",               true,               _CBAPP_HOST_WINDOW_FLAGS                                )           \
-    X(Dockspace,        "##RootDockspace",          true,               _CBAPP_DOCKSPACE_WINDOW_FLAGS                           )           \
-    X(SideBar,          "##Sidebar",                true,               _CBAPP_SIDEBAR_WINDOW_FLAGS                             )           \
-    X(TitleBar,         "##Titlebar",               true,               _CBAPP_TITLEBAR_WINDOW_FLAGS                            )           \
-    X(MenuBar,          "##Menubar",                true,               _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
-    X(About,            "About",                    false,              _CBAPP_ABOUT_WINDOW_FLAGS                               )           \
-    X(MainApp,          "Home",                     true,               _CBAPP_CORE_WINDOW_FLAGS | ImGuiWindowFlags_NoScrollbar )           \
-/*                                                                                                                                      */  \
-/*  2.  MAIN APPLICATION WINDOWS...                                                                                                     */  \
-    X(CCounterApp,      "Coincidence Counter",      true,               _CBAPP_CORE_WINDOW_FLAGS                                )           \
-    X(GraphingApp,      "Graphing App",             false,              _CBAPP_CORE_WINDOW_FLAGS                                )           \
-    X(GraphApp,         "Graph App",                false,              _CBAPP_CORE_WINDOW_FLAGS                                )           \
-/*                                                                                                                                      */  \
-/*  3.  TOOLS, DEMOS, MISC WINDOWS, ETC...                                                                                              */  \
-    X(ColorTool,        "Color Tool",               false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
-    X(StyleEditor,      "Style Editor (ImGui)",     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
-    X(Logs,             "Logs",                     false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
-    X(Console,          "Console",                  false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
-    X(Metrics,          "Metrics",                  false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
-/*                                                                                                                                      */  \
-/*  4.  DEMO WINDOWS...                                                                                                                 */  \
-    X(ImGuiDemo,        "ImGui Demo",               false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
-    X(ImPlotDemo,       "ImPlot Demo",              false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           \
-    X(AboutDearImGui,   "About Dear ImGui",         false,              _CBAPP_DEFAULT_WINDOW_FLAGS                             )           // END
-/*                                                                                                                                      */  \
-/*|========================================================================================================================|            */  \
+//      1.1     DEFINE DEFAULT VISIBILITY OF APPLICATION WINDOWS...
+#if defined(__CBAPP_BUILD_CCOUNTER_APP__)       //  CASE A :    COINCIDENCE COUNTER BUILD...
+        inline constexpr bool   DEF_CCOUNTER_APP_VIS            = true;
+        inline constexpr bool   DEF_FDTD_APP_VIS                = false;
+//
+//
+# elif defined (__CBAPP_BUILD_FDTD_APP__)       //  CASE B :    FDTD APP BUILD...
+        inline constexpr bool   DEF_CCOUNTER_APP_VIS            = false;
+        inline constexpr bool   DEF_FDTD_APP_VIS                = true;
+//
+//
+# else                                          //  CASE C :    NO BUILD IS SPECIFIED...
+        inline constexpr bool   DEF_CCOUNTER_APP_VIS            = false;
+        inline constexpr bool   DEF_FDTD_APP_VIS                = false;
+//
+//
+#endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
+
+
+
+//  "_CBAPP_WINDOW_LIST"
+//
+/// @brief      Func-style Preprocessor macro to define window flags for main application windows at compile time.
+/// @param      arg1        DESC
+/// @return                 DESC
+///
+/// @todo       TODO
+//
+#define _CBAPP_WINDOW_LIST(X)                                                                                                                   \
+/*| NAME.               TITLE.                      DEFAULT OPEN.               FLAGS.                                                  */      \
+/*|========================================================================================================================|            */      \
+/*  1.  PRIMARY GUI STRUCTURE / "CORE WINDOWS"...                                                                                       */      \
+    X(Host,             "CBApp (V0)",               true,                       _CBAPP_HOST_WINDOW_FLAGS                                )       \
+    X(Dockspace,        "##RootDockspace",          true,                       _CBAPP_DOCKSPACE_WINDOW_FLAGS                           )       \
+    X(SideBar,          "##Sidebar",                true,                       _CBAPP_SIDEBAR_WINDOW_FLAGS                             )       \
+    X(TitleBar,         "##Titlebar",               true,                       _CBAPP_TITLEBAR_WINDOW_FLAGS                            )       \
+    X(MenuBar,          "##Menubar",                true,                       _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(About,            "About",                    false,                      _CBAPP_ABOUT_WINDOW_FLAGS                               )       \
+    X(MainApp,          "Home",                     true,                       _CBAPP_CORE_WINDOW_FLAGS | ImGuiWindowFlags_NoScrollbar )       \
+/*                                                                                                                                      */      \
+/*                                                                                                                                      */      \
+/*  2.  MAIN APPLICATION WINDOWS...                                                                                                     */      \
+/*                                                                                                                                      */      \
+/*          COINCIDENCE COUNTER APP...                                                                                                  */      \
+    X(CCounterApp,      "Coincidence Counter",      DEF_CCOUNTER_APP_VIS,       _CBAPP_CORE_WINDOW_FLAGS                                )       \
+/*                                                                                                                                      */      \
+    X(GraphingApp,      "Graphing App",             false,                      _CBAPP_CORE_WINDOW_FLAGS                                )       \
+/*                                                                                                                                      */      \
+/*          FDTD APP...                                                                                                                 */      \
+    X(GraphApp,         "Graph App",                DEF_FDTD_APP_VIS,           _CBAPP_CORE_WINDOW_FLAGS                                )       \
+/*                                                                                                                                      */      \
+/*                                                                                                                                      */      \
+/*  3.  TOOLS, DEMOS, MISC WINDOWS, ETC...                                                                                              */      \
+    X(ColorTool,        "Color Tool",               false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(StyleEditor,      "Style Editor (ImGui)",     false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(Logs,             "Logs",                     false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(Console,          "Console",                  false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(Metrics,          "Metrics",                  false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+/*                                                                                                                                      */      \
+/*                                                                                                                                      */      \
+/*  4.  DEMO WINDOWS...                                                                                                                 */      \
+    X(ImGuiDemo,        "ImGui Demo",               false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImPlotDemo,       "ImPlot Demo",              false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(AboutDearImGui,   "About Dear ImGui",         false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )   // END
+/*                                                                                                                                      */
+/*|========================================================================================================================|            */
 
 
 
@@ -338,7 +374,7 @@ struct AppState
     
     ImGuiID                             m_sidebar_dock_id           = 0;
     //ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_AutoHideTabBar;
-    ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_NoCloseButton;
+    ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
     ImGuiDockNode *                     m_sidebar_node              = nullptr;
     
     

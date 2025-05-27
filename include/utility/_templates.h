@@ -421,6 +421,48 @@ void sinusoid_wave_IMPL_1D(T (&data)[N], T time, T amp, T freq) noexcept
 
 
 
+//  "ScrollingSparkline"
+//
+/// @brief      DESC
+/// @tparam     arg1        DESC
+/// @return                 DESC
+///
+template<typename T, auto N>
+// Adapted ScrollingSparkline for RingBuffer<ImVec2, BUFFER_SIZE>
+void ScrollingSparkline(const float time,               const float window,         const cblib::RingBuffer<T, N> & data,
+                        const ImPlotAxisFlags flags,    const ImVec4 &   color,     const ImVec2 size,
+                        const float center)
+{
+    ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
+    if (ImPlot::BeginPlot("##Scrolling", size, ImPlotFlags_CanvasOnly))
+    {
+        ImPlot::SetupAxes(nullptr, nullptr,
+                          flags | ImPlotAxisFlags_AutoFit,
+                          flags | ImPlotAxisFlags_AutoFit);
+
+        const float xmin = time - center * window;
+        const float xmax = xmin + window;
+        ImPlot::SetupAxisLimits(ImAxis_X1, xmin, xmax, ImGuiCond_Always);
+
+        if (!data.empty())
+        {
+            ImPlot::SetNextLineStyle(color);
+            ImPlot::SetNextFillStyle(color, 0.25f);
+            ImPlot::PlotLine("##Scrolling",
+                             &data.front().x,
+                             &data.front().y,
+                              static_cast<int>( data.size() ),
+                              ImPlotLineFlags_Shaded,
+                              static_cast<int>( data.offset() ),
+                              sizeof(ImVec2));
+        }
+
+        ImPlot::EndPlot();
+    }
+    ImPlot::PopStyleVar();
+}
+
+
 
 // *************************************************************************** //
 //

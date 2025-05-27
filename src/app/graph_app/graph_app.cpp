@@ -368,44 +368,6 @@ utl::Tab_t * GraphApp::get_ctrl_tab(const std::string & uuid, std::vector<Tab_t>
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "ShowEditor"
-//
-void GraphApp::ShowEditor(void)
-{
-    if ( this->m_editor.Begin(static_cast<int>(m_steps.NX.value), static_cast<int>(m_steps.NY.value)) )
-    {
-        this->m_editor.End();
-    }
-    
-    return;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

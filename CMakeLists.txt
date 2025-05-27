@@ -25,17 +25,17 @@ project(CBApp)
 
 
 
-#   1.  COMPILER FLAGS, PRE-PROCESSOR MACROS, ETC...
+#   0.  PREPROCESSOR MACRO DEFINITIONS PER CONFIGURATION...
 ########################################################################
-########################################################################
-
-
-# 1.1     PREPROCESSOR MACRO DEFINITIONS PER CONFIGURATION...
 ########################################################################
 add_library(cb_defines INTERFACE)
 target_compile_definitions(cb_defines INTERFACE
     #
-    #   0.    MACROS FOR  "ALL"  BUILD TYPES...
+    #   0.1     CONFIG FILES...
+    IMGUI_USER_CONFIG=\"my_imconfig.h\"     #   SET FILENAME OF THE CUSTOM IMGUI CONFIG FILE...
+    CBAPP_USER_CONFIG=\"cbapp_config.h\"         #   SPECIFY CBAPP CONFIG FILE...
+    #
+    #   0.2     MACROS FOR  "ALL"  BUILD TYPES...UILD TYPES...
     _CBLIB_LOG
     # CBAPP_USE_VIEWPORT
     # CBAPP_USE_DOCKSPACE
@@ -63,7 +63,10 @@ target_compile_definitions(cb_defines INTERFACE
     $<$<CONFIG:MinSizeRel>:__CBLIB_MIN_SIZE_RELEASE__>
         #   ...Add additional MinSizeRel-only macros here...
 )
-
+# Ensure include/ is on the interface include path so the custom config file is found
+#target_include_directories(cb_defines INTERFACE
+#    ${CMAKE_CURRENT_SOURCE_DIR}/include
+#)
 
 #   Add at the top or below the 'project(CBApp)' line
 # option(BUILD_CB_LIBCBAPP_USE_VIEWPORTS "Build test executables for cblib" ON)
@@ -81,7 +84,7 @@ set(THIRD_PARTY_INCLUDE_DIR
 #
 #
 #
-#   1.  GLOBAL SETTINGS, VERSION REQUIREMENTS, ETC...
+#   1.  COMPILER FLAGS, GLOBAL SETTINGS, VERSION REQUIREMENTS, ETC...
 ########################################################################
 ########################################################################
 
@@ -99,7 +102,7 @@ target_compile_options(cb_warnings INTERFACE
     -Wall -Wextra -Wpedantic -Wshadow
     -Wno-unused-variable
     -Wno-sign-compare
-    #-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion
+    #-Wconversion -Wsign-conversion
 )
 
 
@@ -198,6 +201,7 @@ target_link_libraries(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/config
         ${CMAKE_CURRENT_SOURCE_DIR}/include/app
         ${CMAKE_CURRENT_SOURCE_DIR}/include/imgui_extensions
         ${CMAKE_CURRENT_SOURCE_DIR}/imgui

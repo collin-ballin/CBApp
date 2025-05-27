@@ -451,6 +451,266 @@ void App::TestTabBar(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
+
+
+
+
+ImPlotPoint SinewaveGetter(int i, void* data) {
+    float f = *(float*)data;
+    return ImPlotPoint(i,sinf(f*i));
+}
+
+ImVec4 GetLastItemColor() {
+    ImPlotContext& gp = *GImPlot;
+    if (gp.PreviousItem)
+        return ImGui::ColorConvertU32ToFloat4(gp.PreviousItem->Color);
+    return ImVec4();
+}
+
+
+void Demo_LegendPopups() {
+    ImGui::BulletText("You can implement legend context menus to inject per-item controls and widgets.");
+    ImGui::BulletText("Right click the legend label/icon to edit custom item attributes.");
+
+    static float  frequency = 0.1f;
+    static float  amplitude = 0.5f;
+    static ImVec4 color     = ImVec4(1,1,0,1);
+    static float  alpha     = 1.0f;
+    static bool   line      = false;
+    static float  thickness = 1;
+    static bool   markers   = false;
+    static bool   shaded    = false;
+
+    static float vals[101];
+    for (int i = 0; i < 101; ++i)
+        vals[i] = amplitude * sinf(frequency * i);
+
+    if (ImPlot::BeginPlot("Right Click the Legend")) {
+        ImPlot::SetupAxesLimits(0,100,-1,1);
+        // rendering logic
+        ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, alpha);
+        if (!line) {
+            ImPlot::SetNextFillStyle(color);
+            ImPlot::PlotBars("Right Click Me", vals, 101);
+        }
+        else {
+            if (markers) ImPlot::SetNextMarkerStyle(ImPlotMarker_Square);
+            ImPlot::SetNextLineStyle(color, thickness);
+            ImPlot::PlotLine("Right Click Me", vals, 101);
+            if (shaded) ImPlot::PlotShaded("Right Click Me",vals,101);
+        }
+        ImPlot::PopStyleVar();
+        // custom legend context menu
+        if (ImPlot::BeginLegendPopup("Right Click Me")) {
+            ImGui::SliderFloat("Frequency",&frequency,0,1,"%0.2f");
+            ImGui::SliderFloat("Amplitude",&amplitude,0,1,"%0.2f");
+            ImGui::Separator();
+            ImGui::ColorEdit3("Color",&color.x);
+            ImGui::SliderFloat("Transparency",&alpha,0,1,"%.2f");
+            ImGui::Checkbox("Line Plot", &line);
+            if (line) {
+                ImGui::SliderFloat("Thickness", &thickness, 0, 5);
+                ImGui::Checkbox("Markers", &markers);
+                ImGui::Checkbox("Shaded",&shaded);
+            }
+            ImPlot::EndLegendPopup();
+        }
+        ImPlot::EndPlot();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+// Iterates through all registered ImPlots and displays their IDs
+// Returns true if at least one plot was found.
+bool GetPlotID(const char * name) {
+    // Access the global ImPlot context
+    ImPlotContext & ctx = *ImPlot::GetCurrentContext();
+
+    // Determine number of registered plots
+    int plotCount = ctx.Plots.GetBufSize();
+
+    // Iterate and display each Plot's ID
+    for (int i = 0; i < plotCount; ++i) {
+        ImPlotPlot * plot = ctx.Plots.GetByIndex(i);
+        
+        
+        if (plot) {
+            //name
+            // Display Plot ID in the UI
+            ImGui::Text("Plot ID: %u", static_cast<unsigned>(plot->ID));
+        }
+    }
+
+    // Return true if any plots were processed
+    return (plotCount > 0);
+}
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//  "ImPlot_Testing0ALT"
+//
+void App::ImPlot_Testing0ALT() {
+    // ---------------------------------------------------------------------
+    // User‑interface controls
+    // ---------------------------------------------------------------------
+    static constexpr size_t                 ms_BUFF_SIZE    = 256;
+    static constexpr int                    rows            = 2;
+    static constexpr int                    cols            = 3;
+    static constexpr int                    NUM             = rows * cols;
+    static std::array< const char *, 6>     PLOT_NAMES      = {
+        "One", "Two", "Three", "Four", "Five", "Six"
+    };
+    //static constexpr const char *           uuid            = PLOT_NAMES[0];
+    static ImGuiID                          plot_ID         = 0;
+    static bool                             first_frame     = true;
+
+
+    // Global flags for the ImPlot demo
+    static ImPlotSubplotFlags flags = ImPlotSubplotFlags_ShareItems;
+    ImGui::CheckboxFlags("ImPlotSubplotFlags_ShareItems", (unsigned int*)&flags, ImPlotSubplotFlags_ShareItems);
+    ImGui::CheckboxFlags("ImPlotSubplotFlags_ColMajor", (unsigned int*)&flags, ImPlotSubplotFlags_ColMajor);
+    ImGui::BulletText("Drag and drop items from the legend onto plots (except for 'common')");
+
+    // ---------------------------------------------------------------------
+    // NEW: programmatic show/hide of every series (mimics legend‑icon clicks)
+    // ---------------------------------------------------------------------
+    static bool hide_all = false;            // current visibility state  (false = shown)
+    static bool apply_toggle = false;        // set true for one frame when button pressed
+
+    if (ImGui::Button(hide_all ? "Show All Series" : "Hide All Series")) {
+        hide_all     = !hide_all;            // flip state
+        apply_toggle = true;                 // apply to every item this frame only
+    }
+
+    // ---------------------------------------------------------------------
+    // Sub‑plot grid configuration
+    // ---------------------------------------------------------------------
+    static int id[] = {0,1,2,3,4,5};         // subplot index assignment for 6 data series
+    static int curj = -1;                    // series currently being dragged
+
+    if (ImPlot::BeginSubplots("##ItemSharing", rows, cols, ImVec2(-1,400), flags))
+    {
+        ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Sort | ImPlotLegendFlags_Horizontal);
+
+        for (int i = 0; i < rows * cols; ++i)
+        {
+            if ( ImPlot::BeginPlot(PLOT_NAMES[i]) )
+            {
+                
+                
+                
+                if (first_frame) {
+                    plot_ID = ImPlot::GetCurrentPlot()->ID;
+                }
+                
+                
+                
+                // -----------------------------------------------------------------
+                // "common" sine wave (always present in every subplot)
+                // -----------------------------------------------------------------
+                float fc = 0.01f;
+                if (apply_toggle)
+                    ImPlot::HideNextItem(hide_all, ImGuiCond_Always);
+                ImPlot::PlotLineG("common", SinewaveGetter, &fc, 1000);
+
+                // -----------------------------------------------------------------
+                // Six draggable series, only the one whose id[j]==i is drawn here
+                // -----------------------------------------------------------------
+                for (int j = 0; j < 6; ++j) {
+                    if (id[j] == i) {
+                        char  label[ms_BUFF_SIZE];
+                        float fj = 0.01f * (j + 2);
+                        snprintf(label, sizeof(label), "data%d", j);
+
+                        if (apply_toggle)
+                            ImPlot::HideNextItem(hide_all, ImGuiCond_Always);
+                        ImPlot::PlotLineG(label, SinewaveGetter, &fj, 1000);
+
+                        // Make the legend‑entry icon a drag source
+                        if (ImPlot::BeginDragDropSourceItem(label)) {
+                            curj = j;
+                            ImGui::SetDragDropPayload("MY_DND", nullptr, 0);
+                            ImPlot::ItemIcon(ImPlot::GetLastItemColor());
+                            ImGui::SameLine();
+                            ImGui::TextUnformatted(label);
+                            ImPlot::EndDragDropSource();
+                        }
+                    }
+                }
+
+                // Accept payload: re‑assign series j to subplot i
+                if (ImPlot::BeginDragDropTargetPlot()) {
+                    if (ImGui::AcceptDragDropPayload("MY_DND"))
+                        id[curj] = i;
+                    ImPlot::EndDragDropTarget();
+                }
+
+                ImPlot::EndPlot();
+            }
+        }
+        ImPlot::EndSubplots();
+    }
+
+    // Reset one‑frame flag after applying
+    if (apply_toggle)
+        apply_toggle = false;
+        
+        
+        
+        
+     
+    //
+    if (first_frame)
+    {
+        first_frame = false;
+        utl::DisplayAllPlotIDs();
+    }
+
+
+
+
+    return;
+}
+
+
+
+
+
+
 #ifndef CHECKBOX_FLAG
 #   define CHECKBOX_FLAG(flags, flag) ImGui::CheckboxFlags(#flag, (unsigned int*)&flags, flag)
 #endif
@@ -485,7 +745,12 @@ void App::ImPlot_Testing0(void)
     static ImPlotRect               plot_bounds;
     
     static ImPlotColormap           CustomCMap      = utl::CreateTransparentColormap(ImPlotColormap_Viridis, 0.4f, "MyCustomCMap");
-
+    static bool                     first_frame     = true;
+    
+    
+    static const char *             plot_name       = "##TestingPlotCFG";
+    ImPlotPlot *                    plot_ptr        = nullptr;
+    static ImGuiID                  plot_ID         = 0;
     
     
     //  0.  CONTROL WIDGETS...
@@ -535,20 +800,22 @@ void App::ImPlot_Testing0(void)
     //  2.  CREATE THE PLOT...
     ImGui::NewLine();   ImGui::SeparatorText("Plots");
     //
-    if ( utl::MakePlotCFG(cfg) ) {
-    
-    /*ImGui::PushID(cfg.plot_uuid);
-    if ( ImPlot::BeginPlot(cfg.plot_uuid, cfg.plot_size, cfg.plot_flags) )
+    if ( utl::MakePlotCFG(cfg) )
     {
-        //  3.  CONFIGURE THE PLOT APPEARANCE...
-        ImPlot::SetupAxes(cfg.axis_labels[0],       cfg.axis_labels[1],
-                          cfg.axis_flags[0],        cfg.axis_flags[1]);
-        ImPlot::SetupLegend(cfg.legend_loc,         cfg.legend_flags);
         
-        
-        //  ImPlot::SetupAxisLimits(ImAxis_X1, 0, NX - 1,           ImGuiCond_Always);
-        //  ImPlot::SetupAxisLimits(ImAxis_Y1, YLIMS[0], YLIMS[1],  ImGuiCond_Always);
-    */
+    
+    //  ImGui::PushID(cfg.plot_uuid);
+    //  if ( ImPlot::BeginPlot(cfg.plot_uuid, cfg.plot_size, cfg.plot_flags) )
+    //  {
+    //      //  3.  CONFIGURE THE PLOT APPEARANCE...
+    //      ImPlot::SetupAxes(cfg.axis_labels[0],       cfg.axis_labels[1],
+    //                        cfg.axis_flags[0],        cfg.axis_flags[1]);
+    //      ImPlot::SetupLegend(cfg.legend_loc,         cfg.legend_flags);
+    //
+    //
+    //      //  ImPlot::SetupAxisLimits(ImAxis_X1, 0, NX - 1,           ImGuiCond_Always);
+    //      //  ImPlot::SetupAxisLimits(ImAxis_Y1, YLIMS[0], YLIMS[1],  ImGuiCond_Always);
+    //
         
         //  4.  P3      | HEATMAP PLOT...
         {
@@ -575,7 +842,6 @@ void App::ImPlot_Testing0(void)
         //      ImPlot::PlotStairs("Post Step (default)", data, p2_count, p2_scale[0], p2_scale[1], p2_flags);
         //  }
 
-
         
         //  0.  PLOT THE LINE...
         //
@@ -588,17 +854,27 @@ void App::ImPlot_Testing0(void)
             0.0,
             ImPlotLineFlags_None);
 
-
-
         //  END OF PLOT.
         ImPlot::EndPlot();
     }
+        
+        
+        
+        
+     
+    //
+    if (first_frame)
+    {
+        first_frame = false;
+        //  std::tie(plot_ptr, plot_ID) = utl::GetPlot(plot_name);
+        //  utl::DisplayAllPlotIDs();
+    }
     
-
+    
+    
     //ImGui::PopID();
     return;
 }
-
 
 
 

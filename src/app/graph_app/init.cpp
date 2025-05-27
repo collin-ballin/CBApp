@@ -118,7 +118,6 @@ void GraphApp::init(void)
     
     
     //  6.  DEFINE FDTD STUFF...
-    m_plot_colors                           = cb::utl::GetColormapSamples( m_NUM_COLORS, m_cmap );
     this->init_ctrl_rows();
     
     

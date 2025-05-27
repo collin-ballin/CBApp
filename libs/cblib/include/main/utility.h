@@ -9,6 +9,11 @@
 #include <stdexcept>//      <======| To inherit from std::exception types.
 #include <string>//         <======| Need to implement custom exceptions.
 
+//  MY OWN HEADERS...
+#include "templates/utility/_utility.h"
+#include "templates/utility/math.h"
+
+
 
 // 	Pre-Processor 'Function-Esque' Macros / for Utility Usage.
 // *************************************************************************** //

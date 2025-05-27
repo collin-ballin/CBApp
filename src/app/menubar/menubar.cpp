@@ -8,7 +8,7 @@
 // *************************************************************************** //
 #include "app/menubar/_menubar.h"
 //#include "app/app.h"
-//#include "_config.h"
+//#include CBAPP_USER_CONFIG
 
 
 

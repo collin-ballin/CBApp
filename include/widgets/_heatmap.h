@@ -18,7 +18,7 @@
 // *************************************************************************** //
 
 //  0.1.        ** MY **  HEADERS...
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 #include "cblib.h"
 
 

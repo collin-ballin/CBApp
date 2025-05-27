@@ -16,7 +16,7 @@
 // *************************************************************************** //
 
 //  0.1.        ** MY **  HEADERS...
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 #include "cblib.h"
 //#include "app/app.h"
 #include "app/_init.h"

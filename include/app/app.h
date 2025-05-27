@@ -16,7 +16,7 @@
 // *************************************************************************** //
 
 //  0.1.        ** MY **  HEADERS...
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 #include "cblib.h"
 #include "utility/utility.h"
 #include "utility/pystream/pystream.h"
@@ -226,6 +226,7 @@ private:
     
     //  3.1             Primary GUI Functions.      [main_application.cpp]...
     void                ImPlot_Testing0             (void);
+    void                ImPlot_Testing0ALT          (void);
     void                ImPlot_Testing1             (void);
     void                ImPlot_Testing2             (void);
     void                ImPlot_Testing3             (void);

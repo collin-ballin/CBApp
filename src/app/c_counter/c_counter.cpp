@@ -287,7 +287,35 @@ void CCounterApp::RebuildDockspace(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
+//--------------------------------------------------------------------
+// Helper to compute localized average
+//--------------------------------------------------------------------
+float CCounterApp::ComputeAverage(const buffer_type &buf, AvgMode mode,
+                                  ImU64 N_samples, double seconds, float now) const
+{
+    const std::size_t sz = buf.size();
+    if (sz == 0) return 0.f;
 
+    float sum = 0.f;
+    std::size_t cnt = 0;
+
+    if (mode == AvgMode::Samples) {
+        const ImU64 N = std::min<ImU64>(N_samples, sz);
+        const std::size_t start = sz - static_cast<std::size_t>(N);
+        for (std::size_t i = start; i < sz; ++i) {
+            sum += buf[i].y;
+            ++cnt;
+        }
+    } else { // AvgMode::Seconds
+        for (std::size_t i = sz; i-- > 0; ) {
+            const float dt = now - buf[i].x;
+            if (dt > seconds) break;
+            sum += buf[i].y;
+            ++cnt;
+        }
+    }
+    return cnt ? sum / static_cast<float>(cnt) : 0.f;
+}
 
 
 

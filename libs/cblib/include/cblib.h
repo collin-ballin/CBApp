@@ -20,8 +20,6 @@
 # include "main/utility.h"
 #endif	// _CBLIB_UTILITY_H
 
-#include "templates/utility/math.h"
-
 #ifndef _CBLIB_ARRAY_H
 # include "templates/containers/array/array.h"
 #endif	// _CBLIB_ARRAY_H

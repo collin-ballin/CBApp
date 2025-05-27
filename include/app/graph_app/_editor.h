@@ -24,7 +24,7 @@
 // *************************************************************************** //
 
 //  0.1.        ** MY **  HEADERS...
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 #include "cblib.h"
 //#include "app/app.h"
 #include "app/_init.h"
@@ -61,12 +61,10 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
+namespace editor { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
-//                         SketchWidget:
-// 		        SketchWidget Widget for Dear ImGui.
-// *************************************************************************** //
-// *************************************************************************** //
+
 
 struct Channel {
     std::vector<float> data;   // heat‑map values
@@ -76,16 +74,57 @@ struct Channel {
     const char*  name  = "heat"; // label for PlotHeatmap/scale
 };
         
-enum Mode {
+enum class State : int {
     Draw        = 0,
-    Navigate    = 1
+    Navigate,
+    Count
+};
+
+enum class BrushShape : int {
+    Square      = 0,
+    Circle,
+    Count
 };
     
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}//   END OF "editor" NAMESPACE.
+
+
     
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+//                         SketchWidget:
+// 		        SketchWidget Widget for Dear ImGui.
+// *************************************************************************** //
+// *************************************************************************** //
+
 //  "SketchWidget"
 //
 class SketchWidget {
 public:
+    using   Channel         = editor::Channel;
+    using   State           = editor::State;
+    using   BrushShape      = editor::BrushShape;
+//
+//  STATIC, CONSTEXPR CLASS VARIABLES...
+    static constexpr std::array<const char *, static_cast<size_t>( State::Count)>
+                        STATE_LABELS            = { "Draw",     "Navigate" };
+    static constexpr std::array<const char *, static_cast<size_t>(BrushShape::Count)>
+                        BRUSH_SHAPE_LABELS      = { "Square",   "Circle" };
+                        
+    static constexpr float                                              k_scale_width           = 60.0f; // px reserved for color scale
+
+
+
+//  Initialization Methods.
     explicit SketchWidget(utl::PlotCFG & cfg);
     
 
@@ -101,12 +140,15 @@ public:
     //  directly). Variables set via Begin(), constants, or internal caches
     //  are NOT exposed.
     // ---------------------------------------------------------------------
-    inline int *       get_brush_size          (void)          { return &m_brush_size; }
-    inline int *       get_brush_shape         (void)          { return &m_brush_shape; }
-    inline float *     get_paint_value         (void)          { return &m_paint_value; }
-    inline float *     get_vmin                (void)          { return &m_vmin; }
-    inline float *     get_vmax                (void)          { return &m_vmax; }
-    inline int *       get_cmap                (void)          { return &m_cmap; }
+    State *             get_mode                (void)              { return std::addressof( m_mode );          }          // points into enum underlying int
+    inline void         set_mode                (const int mode)    { this->m_mode = static_cast<State>(mode); }
+    BrushShape *        get_brush_shape         (void)              { return std::addressof( m_brush_shape );   }
+    //
+    inline int *        get_brush_size          (void)              { return std::addressof( m_brush_size );    }
+    inline float *      get_paint_value         (void)              { return std::addressof( m_paint_value );   }
+    inline float *      get_vmin                (void)              { return std::addressof( m_vmin );          }
+    inline float *      get_vmax                (void)              { return std::addressof( m_vmax );          }
+    inline int *        get_cmap                (void)              { return std::addressof( m_cmap );          }
 
     //  Access to raw data buffer (read‑only)
     const std::vector<float>& get_data() const { return m_data; }
@@ -130,10 +172,7 @@ private:
                                     m_res_y                 = 0;
     
     int                             m_brush_size            = 3;
-    int                             m_brush_shape           = 0;
     float                           m_paint_value           = 1.0f;
-    
-    
     float                           m_vmin                  = 0.0f,
                                     m_vmax                  = 1.0f;
     
@@ -145,9 +184,10 @@ private:
 
 
 
-    Mode                            m_mode                  = Mode::Draw;
-    std::vector<Channel>            m_channels{1};                              // single channel for now
-    int                             m_active                = 0;                // active channel index
+    State                           m_mode                  = State::Draw;               // underlying int of Mode
+    BrushShape                      m_brush_shape           = BrushShape::Square;
+    std::vector<Channel>            m_channels{1};                                      // single channel for now
+    int                             m_active                = 0;                        // active channel index
     //
     ImGuiID                         m_heatmap_id;
     utl::PlotCFG &                  m_cfg;

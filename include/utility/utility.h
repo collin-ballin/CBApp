@@ -26,7 +26,7 @@
 
 
 //  0.1.        ** MY **  HEADERS...
-#include "_config.h"
+#include CBAPP_USER_CONFIG
 #include "cblib.h"
 #include "utility/_types.h"
 #include "utility/_constants.h"
@@ -409,6 +409,16 @@ bool                            LoadStyleFromDisk           (ImGuiStyle &       
 // *************************************************************************** //
 // *************************************************************************** //
 
+//      2.1     UTILITY...
+// *************************************************************************** //
+// *************************************************************************** //
+int                                 GetPlotItems                (ImGuiID );
+int                                 GetPlotItems                (ImPlotPlot * );
+std::pair<ImPlotPlot*, ImGuiID>     GetPlot                     (const char * );
+ImGuiID                             GetPlotID                   (const char * );
+int                                 DisplayAllPlotIDs           (void);
+
+
 //      2.1     OLD PLOTTING STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -420,7 +430,7 @@ void                                ScrollingSparkline          (const float tim
 void                                ScrollingSparkline          (const float time,              const float window,     ScrollingBuffer & data,
                                                                  const ImPlotAxisFlags flags,   const ImVec4 & color,   const ImVec2 & size=ImVec2(-1,150),
                                                                  const float center=0.75f);
-                                                                 
+
                                                                  
 //      2.2     UTILITY FUNCTIONS FOR IMPLOT STUFF...
 // *************************************************************************** //

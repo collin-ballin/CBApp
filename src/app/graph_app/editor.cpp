@@ -81,7 +81,7 @@ bool SketchWidget::Begin(int nx, int ny)
 
 
     //  4.  HANDLE USER I/O...
-    if (m_mode == Draw && ImPlot::IsPlotHovered() && ImGui::IsMouseDown(0)) {
+    if (m_mode == State::Draw && ImPlot::IsPlotHovered() && ImGui::IsMouseDown(0)) {
         const ImPlotPoint mp = ImPlot::GetPlotMousePos();
         const int         cx = static_cast<int>(mp.x);
         const int         cy = static_cast<int>(mp.y);
@@ -126,7 +126,7 @@ bool SketchWidget::Begin(int nx, int ny)
 //
 void SketchWidget::End(void)
 {
-    if (m_mode == Draw && ImPlot::IsPlotHovered()) {
+    if (m_mode == State::Draw && ImPlot::IsPlotHovered()) {
         ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 
         const ImPlotPoint mp     = ImPlot::GetPlotMousePos();
@@ -139,12 +139,30 @@ void SketchWidget::End(void)
         ImDrawList* dl = ImGui::GetForegroundDrawList();
         const ImU32   col = IM_COL32(255, 0, 0, 255);
 
-        if (m_brush_shape == 0)
-            dl->AddRect({center.x - half, center.y - half},
-                        {center.x + half, center.y + half},
-                        col, 0.0f, 0, 2.0f);
-        else
-            dl->AddCircle(center, half, col, 0, 2.0f);
+
+
+        //  SELECT SPECIFIC BRUSH CASES...
+        switch (m_brush_shape) {
+        //
+            case BrushShape::Square : {         //  CASE 1 : SQUARE.
+                dl->AddRect({center.x - half, center.y - half},
+                            {center.x + half, center.y + half},
+                            col, 0.0f, 0, 2.0f);
+                break;
+            }
+        //
+            case BrushShape::Circle : {         //  CASE 2 : CIRCLE.
+                dl->AddCircle(center, half, col, 0, 2.0f);
+                break;
+            }
+        //
+        //
+        //
+            default : {
+                break;
+            }
+        //
+        }
     }
 
     ImPlot::EndPlot();
@@ -154,7 +172,7 @@ void SketchWidget::End(void)
 
 //  "ShowControls"
 //
-void SketchWidget::ShowControls(float scale_width)
+void SketchWidget::ShowControls([[maybe_unused]] float scale_width)
 {
     return;
 }
@@ -213,9 +231,10 @@ void SketchWidget::resize_buffers(int nx, int ny)
 //
 void SketchWidget::stamp(int gx, int gy)
 {
-    auto& buf = current().data;
+    auto &      buf         = current().data;
 
-    for (int dy = -m_brush_size + 1; dy < m_brush_size; ++dy) {
+    for (int dy = -m_brush_size + 1; dy < m_brush_size; ++dy)
+    {
         for (int dx = -m_brush_size + 1; dx < m_brush_size; ++dx) {
             const int x = gx + dx;
             const int y = gy + dy;
@@ -225,10 +244,11 @@ void SketchWidget::stamp(int gx, int gy)
                 continue;
 
             //  Square brush paints the full kernel, circle brush uses radius²
-            if (m_brush_shape == 0 || (dx * dx + dy * dy) < m_brush_size * m_brush_size)
+            if (m_brush_shape == BrushShape::Square || (dx * dx + dy * dy) < m_brush_size * m_brush_size)
                 buf[static_cast<size_t>(y) * m_res_x + x] = m_paint_value;
         }
     }
+    return;
 }
 
 

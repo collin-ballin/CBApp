@@ -454,10 +454,57 @@ Perm_E           = { "Perm_E",              { 0x66000000, 0x66030505, 0x6707090A
 // Base Apple UI accents (light mode):
 //   Blue    #007AFF, Indigo  #5856D6, Purple  #AF52DE, Pink    #FF2D55,
 //   Red     #FF3B30, Orange  #FF9500, Yellow  #FFCC00, Green   #34C759
-// 
-inline constexpr std::pair<const char *, std::array<ImU32, 32> >
-CCounter_Map    = { "CCounter_Map",     { 0xFF007AFF, 0xFF007AFF, 0xFFFF8500, 0xFFFF8500,       0xFF5856D6, 0xFF5856D6, 0xFFD4D656, 0xFFD4D656,         0xFFAF52DE, 0xFFAF52DE, 0xFF81DE52, 0xFF81DE52,         0xFFFF2D55, 0xFFFF2D55, 0xFF2DFFD7, 0xFF2DFFD7,         0xFFFF3B30, 0xFFFF3B30, 0xFF30F4FF, 0xFF30F4FF,         0xFFFF9500, 0xFFFF9500, 0xFF006AFF, 0xFF006AFF,         0xFFFFCC00, 0xFFFFCC00, 0xFF0033FF, 0xFF0033FF,         0xFF34C759, 0xFF34C759, 0xFFC734A2, 0xFFC734A2 } };
+//
+inline constexpr std::pair<const char*, std::array<ImU32, 32>>
+CCounter_Map = { "CCounter_Map", {
+    // 1. ** Blue               (#007AFF)
+        0xFF007AFF,     0xFF007AFF,
 
+    // 2. Orange             (#FF8500)#0xE31C8EFF
+        0xE31C8EFF,     0xE31C8EFF,
+
+    // 3. Purple             (#5856D6)
+      0xFF5856D6,   0xFF5856D6,
+
+    // 4. Lime Green         (#D4D656)
+      0xFFD4D656,   0xFFD4D656,
+
+    // 5. Orchid             (#AF52DE)
+      0xFFAF52DE,   0xFFAF52DE,
+
+    // 6. Spring Green       (#81DE52)
+      0xFF81DE52,   0xFF81DE52,
+
+    // 7. Crimson            (#FF2D55)
+      0xFFFF2D55,   0xFFFF2D55,
+
+    // 8. ** Aquamarine         (#2DFFD7)
+        0x9032CDFF,     0x9032CDFF,
+
+    // 9. Coral Red          (#FF3B30)
+      0xFFFF3B30, 0xFFFF3B30,
+
+    // 10. Sky Blue          (#30F4FF)
+      0xFF30F4FF, 0xFF30F4FF,
+
+    // 11. Amber             (#FF9500)
+      0xFFFF9500, 0xFFFF9500,
+
+    // 12. Azure             (#006AFF)
+      0xFF006AFF, 0xFF006AFF,
+
+    // 13. Gold              (#FFCC00)
+      0xFFFFCC00, 0xFFFFCC00,
+
+    // 14. ** Royal Blue        (#0033FF)
+        0x9032CDFF,     0x9032CDFF,
+
+    // 15. Medium Sea Green  (#34C759)
+      0xFF34C759, 0xFF34C759,
+
+    // 16. Deep Pink         (#C734A2)
+      0xFFC734A2, 0xFFC734A2
+}};
 
 
 //  #FFFFCCFF                               10% = #FFF1ABFF.    20% = #FEE086FF.    30% = #FEC964FF.        40% = #FEAA48FF.        50% = #FD8C3CFF
