@@ -17,7 +17,7 @@ Commands via stdin:
 import sys, time, json, threading, queue, signal, datetime, argparse, random
 from typing import List, Tuple
 #from _FPGA_SAMPLE_DATA import SAMPLE_DATA0 as SAMPLE_PACKETS
-from _FPGA_SAMPLE_DATA import SAMPLE_DATA1 as SAMPLE_PACKETS
+from _FPGA_SAMPLE_DATA import SAMPLE_DATA2 as SAMPLE_PACKETS
 
 ################################################################################
 #

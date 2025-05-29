@@ -51,8 +51,10 @@ void CCounterApp::init(void)
 {
     ms_I_PLOT_COL_WIDTH                            *= S.m_dpi_scale;
     ms_SPACING                                     *= S.m_dpi_scale;
-    ms_COLLAPSE_BUTTON_SIZE.x                      *= S.m_dpi_scale;
-    ms_COLLAPSE_BUTTON_SIZE.y                      *= S.m_dpi_scale;
+    m_mst_plot_slider_height                       *= S.m_dpi_scale;
+    m_mst_plot_height                              *= S.m_dpi_scale;
+    //ms_COLLAPSE_BUTTON_SIZE.x                      *= S.m_dpi_scale;
+    //ms_COLLAPSE_BUTTON_SIZE.y                      *= S.m_dpi_scale;
     m_cmap                                          = ImPlot::GetColormapIndex("CCounter_Map");
     
     

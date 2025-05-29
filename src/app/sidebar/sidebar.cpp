@@ -46,7 +46,7 @@ void SideBar::initialize(void)
 //  "init"          | protected
 //
 void SideBar::init(void) {
-    this->ms_PLOT_SIZE.x                           *= S.m_dpi_scale;
+    this->ms_PLOT_SIZE.y                           *= S.m_dpi_scale;
     
     this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_NoTabBar;
     return;
@@ -308,7 +308,6 @@ void SideBar::disp_performance_metrics(void) {
     
     static constexpr float_t        PLOT_PADDING        = 1.10f;                                            //  PLOT APPEARANCE.
     static constexpr float_t        WINDOW              = app::PERF_PLOTS_HISTORY_LENGTH;   // Plot record length (sec)
-    static ImVec2                   PLOT_SIZE(-1, 150);
     
     static constexpr ImVec4         spf_c(app::DEF_APPLE_BLUE);
     static constexpr ImVec4         index_c(app::DEF_APPLE_BLUE);
@@ -328,7 +327,7 @@ void SideBar::disp_performance_metrics(void) {
     static float                    SPACING             = 0.0f;
     static float                    DEF_SPACING         = 1.5 * ImGui::GetTextLineHeightWithSpacing();
     static float                    TEXT_SPACING        = 6.5 * ImGui::GetTextLineHeightWithSpacing();
-    static float                    PLOT_SPACING        = 2.5 * PLOT_SIZE[1];
+    static float                    PLOT_SPACING        = 2.5 * ms_PLOT_SIZE[1];
     
     
     SPACING                     =   (this->m_show_perf_metrics)                             ? TEXT_SPACING : DEF_SPACING;
@@ -390,8 +389,8 @@ void SideBar::disp_performance_metrics(void) {
     
     
     //  3.  SPACING...
-    //const float SPACING = PLOT_SIZE[1] + 3.0 * ImGui::GetTextLineHeightWithSpacing();
-    // const float SPACING = 2*PLOT_SIZE[1] + 10.0 * ImGui::GetTextLineHeightWithSpacing();
+    //const float SPACING = ms_PLOT_SIZE[1] + 3.0 * ImGui::GetTextLineHeightWithSpacing();
+    // const float SPACING = 2*ms_PLOT_SIZE[1] + 10.0 * ImGui::GetTextLineHeightWithSpacing();
     // ImGui::Dummy( ImVec2(0.0f, ImGui::GetContentRegionAvail().y - SPACING) );
     
     
@@ -421,7 +420,7 @@ void SideBar::disp_performance_metrics(void) {
             //      1.2     FPS PLOTTING...
             S.PushFont( Font::FootNote );
             ImGui::PushID("##Scrolling");
-            if (ImPlot::BeginPlot("##Scrolling", PLOT_SIZE))
+            if (ImPlot::BeginPlot("##Scrolling", ms_PLOT_SIZE))
             {
                 ImPlot::SetupLegend(ImPlotLocation_SouthWest, ImPlotLegendFlags_None);            //    Legend Position.
                 ImPlot::SetupAxes(nullptr, nullptr, flags, flags);
@@ -442,7 +441,7 @@ void SideBar::disp_performance_metrics(void) {
             ImGui::SeparatorText("GPU");
             
             S.PushFont( Font::FootNote );
-            if (ImPlot::BeginPlot("##Scrolling", PLOT_SIZE))
+            if (ImPlot::BeginPlot("##Scrolling", ms_PLOT_SIZE))
             {
                 ImPlot::SetupLegend(ImPlotLocation_SouthWest, ImPlotLegendFlags_None);            //    Legend Position.
                 ImPlot::SetupAxes(nullptr, nullptr, flags, flags);

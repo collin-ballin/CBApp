@@ -78,7 +78,7 @@ void GraphApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool *
     //  4.  DEFINE COLLAPSE/EXPAND TOOLBAR BUTTON...
     static toolbar::config  ctrl_toolbar{
     //  PARENT UUID.      PARENT ANCHOR.        HOST UUID.      HOST ANCHOR.                PARENT OFFSET.      HOST OFFSET.
-        m_win_uuids[1], utl::Anchor::NorthWest, uuid,           utl::Anchor::SouthWest,     {0.0f, 0.0f},       {0.0f, -45.0f}
+        m_win_uuids[1], utl::Anchor::NorthWest, uuid,           utl::Anchor::SouthWest,     {ms_COLLAPSE_BUTTON_SIZE.x, 0.0f},       {0.0f, -45.0f}
     };
     
     if ( toolbar::begin("##sidebar_toolbar", ctrl_toolbar) )
@@ -590,9 +590,6 @@ void GraphApp::ShowEditorOLD(void)
     int                             cache_N         = static_cast<int>( POINTS.size() );
     static ImPlotDragToolFlags      drag_flags      = ImPlotDragToolFlags_None;
     
-    
-    
-
     
     //  1A.     INITIALIZE VECTOR...
     if (once) {

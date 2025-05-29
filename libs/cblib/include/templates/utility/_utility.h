@@ -79,12 +79,11 @@ struct RingBuffer
     using value_type        = T;
     using size_type         = std::size_t;
     using difference_type   = std::ptrdiff_t;
-    using reference         = const T &;
+    using reference         = T &;              // ‼️ now _mutable_
     using const_reference   = const T &;
-    using pointer           = const T *;
+    using pointer           = T *;
     using const_pointer     = const T *;
 
-private:
     /*------------------------------------------------------------------
         Storage & state
     ------------------------------------------------------------------*/
@@ -94,25 +93,59 @@ private:
 
     [[nodiscard]] inline bool full() const noexcept { return count == N; }
 
-public:
     /*------------------------------------------------------------------
         Capacity helpers
     ------------------------------------------------------------------*/
     [[nodiscard]] inline size_type size()     const noexcept { return count; }
     [[nodiscard]] inline bool      empty()    const noexcept { return count == 0; }
     [[nodiscard]] inline constexpr size_type capacity() const noexcept { return N; }
-
+    
     /*------------------------------------------------------------------
         Element access (chronological)
+        -  operator[] : unchecked (UB if idx ≥ size())
+        -  at()       : checked   (throws std::out_of_range)
     ------------------------------------------------------------------*/
-    [[nodiscard]] reference operator[](size_type idx) const noexcept {
+    [[nodiscard]] inline reference operator[](size_type idx) noexcept
+    {
+        // UB if caller violates pre-condition (idx < size())
         size_type start = full() ? head : 0;
         size_type pos   = start + idx;
         if (pos >= N) pos -= N;
         return buf[pos];
     }
-    [[nodiscard]] reference front() const noexcept { return (*this)[0]; }
-    [[nodiscard]] reference back()  const noexcept { return (*this)[count - 1]; }
+
+    [[nodiscard]] inline const_reference operator[](size_type idx) const noexcept
+    {
+        size_type start = full() ? head : 0;
+        size_type pos   = start + idx;
+        if (pos >= N) pos -= N;
+        return buf[pos];
+    }
+
+    [[nodiscard]] inline reference at(size_type idx)
+    {
+        if (idx >= count)
+            throw std::out_of_range{"RingBuffer::at – index out of range"};
+        return (*this)[idx];
+    }
+
+    [[nodiscard]] inline const_reference at(size_type idx) const
+    {
+        if (idx >= count)
+            throw std::out_of_range{"RingBuffer::at – index out of range"};
+        return (*this)[idx];
+    }
+
+    [[nodiscard]] inline reference       front()       noexcept { return (*this)[0]; }
+    [[nodiscard]] inline const_reference front() const noexcept { return (*this)[0]; }
+
+    // back()
+    [[nodiscard]] inline reference       back()       noexcept { return (*this)[count - 1]; }
+    [[nodiscard]] inline const_reference back() const noexcept { return (*this)[count - 1]; }
+
+    // top() – most recently pushed element (alias of back)
+    [[nodiscard]] inline reference       top()       noexcept { return back(); }
+    [[nodiscard]] inline const_reference top() const noexcept { return back(); }
 
     /*------------------------------------------------------------------
         Modifiers

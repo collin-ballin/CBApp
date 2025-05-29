@@ -185,8 +185,11 @@ void App::run_IMPL(void)
 #endif  //  CBAPP_NEW_DOCKSPACE  //
     
 
-
-    //          1.2     Certain Calls need to RE-BUILD the DOCKING SPACE.
+    //  1.      HANDLE ANY KEYBOARD SHORTCUTS...
+    this->KeyboardShortcutHandler();
+    
+    
+    //  2.      HANDLE ANY CALLS WHICH REQUIRED RE-DRAW OF DOCKING SPACE...
     if (S.m_rebuild_dockspace) [[unlikely]] {
         this->RebuildDockLayout();
         S.m_rebuild_dockspace = false;
@@ -194,7 +197,7 @@ void App::run_IMPL(void)
 
 
 
-    //  2.      DRAW APPLICATION WINDOWS...
+    //  3.      DRAW APPLICATION WINDOWS...
     //
     //          POLICY:     **DO NOT** check if the " winfo.render_fn" pointer is NULL...
     //                          - We assert that these must ALL be valid in the "init_asserts()".
@@ -423,6 +426,92 @@ void App::RebuildDockLayout(void)
 
     return;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//  "KeyboardShortcutHandler"
+//
+void App::KeyboardShortcutHandler(void)
+{
+    static ImGuiInputFlags          sidebar_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
+    static const ImGuiKeyChord      SIDEBAR_KEY             = ImGuiKey_GraveAccent;
+    static ImGuiInputFlags          ctrlbar_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
+    static const ImGuiKeyChord      CTRLBAR_KEY             = ImGuiMod_Shift | ImGuiKey_GraveAccent; //ImGuiMod_Shift | ImGuiKey_Apostrophe;
+    
+
+    if ( ImGui::IsKeyChordPressed(SIDEBAR_KEY, sidebar_key_flags) )
+        this->m_titlebar.toggle();
+    
+    
+    if ( ImGui::IsKeyChordPressed(CTRLBAR_KEY, ctrlbar_key_flags) ) {
+#if defined(__CBAPP_BUILD_CCOUNTER_APP__)
+        this->m_counter_app.toggle();
+# elif defined(__CBAPP_BUILD_FDTD_APP__)
+        this->m_graph_app.toggle();
+#endif  //  __CBAPP_BUILD_FDTD_APP__  //
+    }
+    
+    
+    this->SaveHandler();
+
+    return;
+}
+
+
+
+//  "SaveHandler"
+//
+void App::SaveHandler(void)
+{
+    static constexpr const char *   save_popup_id       = "S A V E   P R O G R A M  .  .  .";
+    static auto                     now                 = ImGui::GetTime();
+    static ImGuiInputFlags          save_key_flags      = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
+    static const ImGuiKeyChord      SAVE_KEY            = ImGuiMod_Ctrl | ImGuiKey_S;
+            
+
+    if ( ImGui::IsKeyChordPressed(SAVE_KEY, save_key_flags) )
+    {
+        now = ImGui::GetTime();
+        std::cout << "SAVED AT \"" << now << "\".\n";
+        
+        ImGui::OpenPopup(save_popup_id);
+    }
+    
+    
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    utl::Popup_Save(save_popup_id);
+    
+    
+    //ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags  | ImGuiInputFlags_Tooltip);
+        
+        
+    //std::cout << "
+        
+
+    return;
+}
+
+
+
+
+
+
+
+
 
 
 

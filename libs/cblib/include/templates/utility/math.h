@@ -72,7 +72,22 @@ inline T round_to(T value)
 }
 */
 
+//  "make_real_vector"
+//
+template< typename complex_t >
+inline std::vector<typename complex_t::value_type>
+make_real_vector(const std::vector<complex_t> & src)
+{
+    using T = typename complex_t::value_type;
+    std::vector<T> dst; 
+    dst.reserve(src.size());
 
+    std::transform(src.begin(), src.end(),
+                   std::back_inserter(dst),
+                   [](const complex_t& c) { return c.real(); });
+
+    return dst;            // same length, real-valued
+}
 
 
 //  "pow10_IMPL"

@@ -187,7 +187,7 @@ inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = Im
 /*  4.  DEMO WINDOWS...                                                                                                                 */      \
     X(ImGuiDemo,        "ImGui Demo",               false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(ImPlotDemo,       "ImPlot Demo",              false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(AboutDearImGui,   "About Dear ImGui",         false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )   // END
+    X(AboutMyApp,       "About This App",           false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )   // END
 /*                                                                                                                                      */
 /*|========================================================================================================================|            */
 
@@ -264,6 +264,7 @@ inline static const std::array<WinInfo, size_t(Window_t::Count)>    APPLICATION_
 public:                                                                                         \
     using               Window                          = app::Window_t;                        \
     using               Font                            = app::Font_t;                          \
+    using               Cmap                            = app::Colormap_t;                      \
                                                                                                 \
     using               ImFonts                         = utl::EnumArray<Font, ImFont *>;       \
     using               ImWindows                       = utl::EnumArray<Window, WinInfo>;      \
@@ -282,8 +283,104 @@ public:                                                                         
     using               WinInfo                         = app::WinInfo;                         \
                                                         _CBAPP_APPSTATE_ALIAS_API
 
+/*
+DEF_COLORMAPS []   = {
+//  1.  Perceptually Uniform Sequential Colormaps.
+    Inferno,            Magma,                  Cividis,
+//
+//  2.  Sequential Colormaps.
+    Blues,              YlOrRd,
+//  3.  Sequential (2) Colormaps.
+    Gist_heat,
+//
+//  4.  Diverging Colormaps.
+    Berlin,             Managua,                Vanimo,
+//
+//  5.  Cyclic Colormaps.
+    Csv,
+//
+//  6.  Qualitative Colormaps.
+//
+//  7.  Miscellaneous Colormaps.
+    Ocean,              Gist_earth,             Gist_stern,             Gnuplot,                Gnuplot2,
+    CMRmap,             Gist_rainbow,           Turbo,                  Nipy_spectral,
+//
+//  8.  Custom Colormaps.
+    Perm_B,             Perm_E
+};*/
 
 
+
+/*
+enum ImPlotColormap_ {
+    ImPlotColormap_Deep     = 0,   // a.k.a. seaborn deep             (qual=true,  n=10) (default)
+    ImPlotColormap_Dark     = 1,   // a.k.a. matplotlib "Set1"        (qual=true,  n=9 )
+    ImPlotColormap_Pastel   = 2,   // a.k.a. matplotlib "Pastel1"     (qual=true,  n=9 )
+    ImPlotColormap_Paired   = 3,   // a.k.a. matplotlib "Paired"      (qual=true,  n=12)
+    ImPlotColormap_Viridis  = 4,   // a.k.a. matplotlib "viridis"     (qual=false, n=11)
+    ImPlotColormap_Plasma   = 5,   // a.k.a. matplotlib "plasma"      (qual=false, n=11)
+    ImPlotColormap_Hot      = 6,   // a.k.a. matplotlib/MATLAB "hot"  (qual=false, n=11)
+    ImPlotColormap_Cool     = 7,   // a.k.a. matplotlib/MATLAB "cool" (qual=false, n=11)
+    ImPlotColormap_Pink     = 8,   // a.k.a. matplotlib/MATLAB "pink" (qual=false, n=11)
+    ImPlotColormap_Jet      = 9,   // a.k.a. MATLAB "jet"             (qual=false, n=11)
+    ImPlotColormap_Twilight = 10,  // a.k.a. matplotlib "twilight"    (qual=false, n=11)
+    ImPlotColormap_RdBu     = 11,  // red/blue, Color Brewer          (qual=false, n=11)
+    ImPlotColormap_BrBG     = 12,  // brown/blue-green, Color Brewer  (qual=false, n=11)
+    ImPlotColormap_PiYG     = 13,  // pink/yellow-green, Color Brewer (qual=false, n=11)
+    ImPlotColormap_Spectral = 14,  // color spectrum, Color Brewer    (qual=false, n=11)
+    ImPlotColormap_Greys    = 15,  // white/black                     (qual=false, n=2 )
+};*/
+
+
+
+enum Colormap_t : int {
+    IMPLOT_END  = 16,
+    //  1.  Perceptually Uniform Sequential Colormaps.
+    Viridis                 = ImPlotColormap_Viridis,
+    Plasma                  = ImPlotColormap_Plasma,
+    Inferno                 = IMPLOT_END + 1,
+    Magma,                  Cividis,
+    //
+    //  2.  Sequential Colormaps.
+    Greys                   = ImPlotColormap_Greys,
+    Blues                   = Cividis + 1,
+    YlOrRd,
+    //
+    //  3.  Sequential (2) Colormaps.
+    Pink                    = ImPlotColormap_Pink,
+    Cool                    = ImPlotColormap_Cool,
+    Hot                     = ImPlotColormap_Hot,
+    Berlin                  = YlOrRd + 1,
+    Managua,                Vanimo,                     Gist_heat,
+    //
+    //  4.  Diverging Colormaps.
+    Pi_YG                   = ImPlotColormap_PiYG,
+    BrBg                    = ImPlotColormap_BrBG,
+    RdBu                    = ImPlotColormap_RdBu,
+    Spectral                = ImPlotColormap_Spectral,
+    //
+    //  5.  Cyclic Colormaps.
+    Csv                     = Gist_heat + 1,
+    //
+    //  6.  Qualitative Colormaps.
+    Set1                    = ImPlotColormap_Dark,
+    Paired                  = ImPlotColormap_Paired,
+    Pastel1                 = ImPlotColormap_Pastel,
+    //
+    //  7.  Miscellaneous Colormaps.
+    Ocean                   = Csv + 1,
+    Gist_earth,             Gist_stern,                 Gnuplot,
+    Gnuplot2,               CMRmap,                     Gist_rainbow,               Turbo,
+    Jet                     = ImPlotColormap_Jet,
+    
+    Nipy_spectral           = Turbo,
+    //
+    //  8.  Custom Colormaps.
+    Perm_E,                 Perm_B,
+    //
+    //
+    Count
+};
 
 
 

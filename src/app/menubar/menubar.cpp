@@ -368,10 +368,19 @@ void MenuBar::disp_show_windows_menubar(void)
 //
 void MenuBar::disp_help_menubar(void)
 {
-    if (ImGui::MenuItem("User Guide"))      { }
+    static bool     user_guide  = false;
+    
+    if (ImGui::MenuItem("User Guide", nullptr, &user_guide))
+    {
+        //  ...
+    }
+    
     
     ImGui::Separator();
-    if (ImGui::MenuItem("About"))           { }
+    if ( ImGui::MenuItem(this->S.m_windows[ Window::AboutMyApp ].uuid.c_str(),
+                         nullptr,
+                         &this->S.m_windows[ Window::AboutMyApp ].open) )
+    
     //  ImGui::Checkbox("\"Dear ImGui\" Demo", &this->m_show_imgui_demo);   //  <--- Using a check-button
     return;
 }

@@ -126,6 +126,7 @@ void App::init(void)
     //  3.      THIRD PART OF INITIALIZATION...             | INITIALIZE DELEGATOR CLASSES
     //          (SOME OF THESE HAVE TO BE DONE **AFTER** WE CREATE IMGUI CONTEXT)...
     this->m_sidebar.initialize();
+    this->m_titlebar.initialize();
     this->m_counter_app.initialize();
 #ifndef __CBAPP_DISABLE_FDTD__
     this->m_graphing_app.initialize();
@@ -378,8 +379,8 @@ void App::dispatch_window_function(const Window & uuid)
             cb::ShowImPlotDemoWindow(       w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
-        case Window::AboutDearImGui:    {
-            cb::ShowAboutWindow(            w.uuid.c_str(),     &w.open,        w.flags);
+        case Window::AboutMyApp:        {
+            this->ShowAboutWindow(          w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //

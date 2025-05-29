@@ -24,27 +24,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//  3.      PLOTTING FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-namespace {
-    static const char *             s_brush_shapes []       = { "Square", "Circle" };
-    static const char *             s_modes []              = {"Draw","Navigate"};
-}
-
-
-// *************************************************************************** //
-//
-//
 //  1.      INITIALIZATION FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -54,6 +33,16 @@ namespace {
 SketchWidget::SketchWidget(utl::PlotCFG & cfg)
     : m_heatmap_id( ImHashStr("Perm_E") ), m_cfg(cfg) { }
 
+
+// --- NEW CTOR ---------------------------------------------------------------
+SketchWidget::SketchWidget(utl::PlotCFG& cfg,
+                           std::vector<Channel> channels)
+    : m_channels(std::move(channels)), m_heatmap_id(ImHashStr("Perm_E")), m_cfg(cfg)
+{
+    if (m_channels.empty())
+        m_channels.emplace_back();          // guarantee ≥1 channel
+    m_active = 0;
+}
 
 
 // *************************************************************************** //
@@ -65,59 +54,46 @@ SketchWidget::SketchWidget(utl::PlotCFG & cfg)
 
 //  "Begin"
 //
-bool SketchWidget::Begin(int nx, int ny)
-{
-    //  1.  RESIZE BUFFERS (If Needed)...
-    resize_buffers(nx,ny);
-    
-    //  2.  CREATE THE PLOT...
-    if( !utl::MakePlotCFG(this->m_cfg) )
+bool SketchWidget::Begin(int nx, int ny) {
+    auto & ch = current();
+
+    // adapt plot size to leave room for colour scale --------------------------
+    ImVec2 avail = ImGui::GetContentRegionAvail();
+    m_cfg.graph.size   = { static_cast<float>(avail.x - ch.scale_width - 2*ImGui::GetStyle().ItemSpacing.x), -1 };
+
+    // ensure buffers sized -----------------------------------------------------
+    resize_buffers(nx, ny);
+    if (!utl::MakePlotCFG(m_cfg))
         return false;
-        
-    //  3.  SETUP PLOT AXIS LIMITS...
+
     ImPlot::SetupAxisLimits(ImAxis_X1, 0, m_res_x, ImGuiCond_Always);
     ImPlot::SetupAxisLimits(ImAxis_Y1, 0, m_res_y, ImGuiCond_Always);
-        
 
+    // ────────────────────────────────────────────────────────────────────────
+    //  Draw-mode input BEFORE rendering so paint is baked into the buffer
+    // ────────────────────────────────────────────────────────────────────────
+    if (m_mode == State::Draw)
+        draw_mode_input();
 
-    //  4.  HANDLE USER I/O...
-    if (m_mode == State::Draw && ImPlot::IsPlotHovered() && ImGui::IsMouseDown(0)) {
-        const ImPlotPoint mp = ImPlot::GetPlotMousePos();
-        const int         cx = static_cast<int>(mp.x);
-        const int         cy = static_cast<int>(mp.y);
-
-        //  Draw either a single stamp or a full line from the last point.
-        if (m_prev_x < 0)
-            draw_line(cx, cy, cx, cy);
-        else
-            draw_line(m_prev_x, m_prev_y, cx, cy);
-
-        m_drawing = true;
-        m_prev_x  = cx;
-        m_prev_y  = cy;
-    }
-    else {
-        m_drawing = false;
-        reset_prev();
-    }
-    
-
-    //  5.  PLOT THE SKETCH...
-    auto & ch = current();
+    // ────────────────────────────────────────────────────────────────────────
+    //  Render heat-map and colour-scale
+    // ────────────────────────────────────────────────────────────────────────
     ImPlot::PushColormap(ch.cmap);
-    ImPlot::PlotHeatmap(
-        ch.name,
-        ch.data.data(),
-        m_res_y,
-        m_res_x,
-        ch.vmin,
-        ch.vmax,
-        /*fmt*/ nullptr,
-        ImPlotPoint(0, 0),
-        ImPlotPoint(static_cast<double>(m_res_x), static_cast<double>(m_res_y))
-    );
-    ImPlot::PopColormap();         
-                         
+    ImPlot::PlotHeatmap(ch.map_title, ch.data.data(),
+                        m_res_y, m_res_x,
+                        ch.paint_value.limits.min, ch.paint_value.limits.max, ch.map_units,
+                        {0,0}, { (double)m_res_x, (double)m_res_y });
+    ImGui::SameLine();
+    ImPlot::ColormapScale(ch.scale_title, ch.paint_value.limits.min, ch.paint_value.limits.max,
+                          { static_cast<float>(ch.scale_width), -1 }, ch.scale_units);
+    ImPlot::PopColormap();
+
+    // ────────────────────────────────────────────────────────────────────────
+    //  Build-mode interaction AFTER heat-map so points appear on top
+    // ────────────────────────────────────────────────────────────────────────
+    if (m_mode == State::Build)
+        build_mode_input();
+
     return true;
 }
 
@@ -170,12 +146,85 @@ void SketchWidget::End(void)
 
 
 
-//  "ShowControls"
+// *************************************************************************** //
 //
-void SketchWidget::ShowControls([[maybe_unused]] float scale_width)
-{
-    return;
+//
+//  3.      STATE - SPECIFIC FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+void SketchWidget::draw_mode_input() {
+    if (ImPlot::IsPlotHovered() && ImGui::IsMouseDown(0)) {
+        const ImPlotPoint mp = ImPlot::GetPlotMousePos();
+        int cx = (int)mp.x, cy = (int)mp.y;
+        if (m_prev_x < 0)
+            draw_line(cx, cy, cx, cy);
+        else
+            draw_line(m_prev_x, m_prev_y, cx, cy);
+        m_drawing = true;
+        m_prev_x  = cx;
+        m_prev_y  = cy;
+    } else {
+        m_drawing = false;
+        reset_prev();
+    }
 }
+
+
+// -----------------------------------------------------------------------------
+void SketchWidget::build_mode_input() {
+    // Add point: Ctrl + LMB ----------------------------------------------------
+    if (ImPlot::IsPlotHovered() &&
+        ImGui::IsMouseClicked(ImGuiMouseButton_Left) &&
+        ImGui::GetIO().KeyCtrl) {
+        if (m_points.size() < static_cast<size_t>(k_max_points)) {
+            ImPlotPoint mp = ImPlot::GetPlotMousePos();
+            m_points.push_back({ static_cast<int>(m_points.size()), mp });
+        }
+    }
+
+    const ImVec4 col_idle{0.00f, 0.48f, 1.00f, 1.00f};
+    const ImVec4 col_held{1.00f, 0.23f, 0.19f, 1.00f};
+    constexpr float radius = 10.0f;
+
+    for (size_t i = 0; i < m_points.size(); ) {
+        CBDragPoint& pt = m_points[i];
+
+        // Drag interaction -----------------------------------------------------
+        ImPlot::DragPoint(pt.id,
+                          &pt.pos.x, &pt.pos.y,
+                          pt.held ? col_held : col_idle,
+                          radius,
+                          ImPlotDragToolFlags_None,
+                          &pt.clicked, &pt.hovered, &pt.held);
+
+        bool remove = false;
+
+        // Context menu ---------------------------------------------------------
+        if (pt.hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+            ImVec2 px = ImPlot::PlotToPixels(pt.pos);
+            ImGui::SetNextWindowPos(px, ImGuiCond_Appearing, {0,1});
+            char buf[32]; snprintf(buf, sizeof(buf), "PointPopup_%d", pt.id);
+            ImGui::OpenPopup(buf);
+        }
+        char buf[32]; snprintf(buf, sizeof(buf), "PointPopup_%d", pt.id);
+        if (ImGui::BeginPopup(buf)) {
+            if (ImGui::MenuItem("Delete"))
+                remove = true;
+            ImGui::EndPopup();
+        }
+
+        if (remove) {
+            m_points.erase(m_points.begin() + static_cast<ptrdiff_t>(i));
+            // re‑index ids -----------------------------------------------------
+            for (size_t j = i; j < m_points.size(); ++j)
+                m_points[j].id = static_cast<int>(j);
+            continue; // do not increment i – we removed current index
+        }
+        ++i;
+    }
+}
+
 
 
 
@@ -184,6 +233,63 @@ void SketchWidget::ShowControls([[maybe_unused]] float scale_width)
 //
 //
 //  ?.      PRIVATE / PROTECTED FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "stamp"
+//
+void SketchWidget::stamp(int gx, int gy)
+{
+    auto &      ch          = current();
+    auto &      buf         = ch.data;
+
+    for (int dy = -m_brush_size + 1; dy < m_brush_size; ++dy)
+    {
+        for (int dx = -m_brush_size + 1; dx < m_brush_size; ++dx) {
+            const int x = gx + dx;
+            const int y = gy + dy;
+
+            //  Bounds check
+            if (x < 0 || x >= m_res_x || y < 0 || y >= m_res_y)
+                continue;
+
+            //  Square brush paints the full kernel, circle brush uses radius²
+            if (m_brush_shape == BrushShape::Square || (dx * dx + dy * dy) < m_brush_size * m_brush_size)
+                buf[static_cast<size_t>(y) * m_res_x + x] = ch.paint_value.value;
+        }
+    }
+    return;
+}
+
+
+//  "draw_line"
+//
+void SketchWidget::draw_line(int x0, int y0, int x1, int y1)
+{
+    int dx  = std::abs(x1 - x0);
+    int sx  = (x0 < x1) ? 1 : -1;
+    int dy  = std::abs(y1 - y0);
+    int sy  = (y0 < y1) ? 1 : -1;
+    int err = (dx > dy ? dx : -dy) / 2;
+
+    for (;;) {
+        stamp(x0, y0);
+        if (x0 == x1 && y0 == y1)
+            break;
+
+        const int e2 = err;
+        if (e2 > -dx) { err -= dy; x0 += sx; }
+        if (e2 <  dy) { err += dx; y0 += sy; }
+    }
+}
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  ?.      UTILITY FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -227,51 +333,35 @@ void SketchWidget::resize_buffers(int nx, int ny)
 }
 
 
-//  "stamp"
+//  "set_cmap"
 //
-void SketchWidget::stamp(int gx, int gy)
+void SketchWidget::set_cmap(const int cmap)
 {
-    auto &      buf         = current().data;
+    current().cmap = cmap;
+    //auto &  ch      = current();
+    //ch.cmap         = ( cmap % ImPlot::GetColormapCount() );
+}
 
-    for (int dy = -m_brush_size + 1; dy < m_brush_size; ++dy)
-    {
-        for (int dx = -m_brush_size + 1; dx < m_brush_size; ++dx) {
-            const int x = gx + dx;
-            const int y = gy + dy;
 
-            //  Bounds check
-            if (x < 0 || x >= m_res_x || y < 0 || y >= m_res_y)
-                continue;
-
-            //  Square brush paints the full kernel, circle brush uses radius²
-            if (m_brush_shape == BrushShape::Square || (dx * dx + dy * dy) < m_brush_size * m_brush_size)
-                buf[static_cast<size_t>(y) * m_res_x + x] = m_paint_value;
-        }
-    }
+//  "ShowControls"
+//
+void SketchWidget::ShowControls([[maybe_unused]] float scale_width)
+{
     return;
 }
 
 
-//  "draw_line"
-//
-void SketchWidget::draw_line(int x0, int y0, int x1, int y1)
-{
-    int dx  = std::abs(x1 - x0);
-    int sx  = (x0 < x1) ? 1 : -1;
-    int dy  = std::abs(y1 - y0);
-    int sy  = (y0 < y1) ? 1 : -1;
-    int err = (dx > dy ? dx : -dy) / 2;
 
-    for (;;) {
-        stamp(x0, y0);
-        if (x0 == x1 && y0 == y1)
-            break;
 
-        const int e2 = err;
-        if (e2 > -dx) { err -= dy; x0 += sx; }
-        if (e2 <  dy) { err += dx; y0 += sy; }
-    }
-}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -290,6 +380,7 @@ void SketchWidget::draw_line(int x0, int y0, int x1, int y1)
 //  ?.      UTILITY FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+
 
 /*
 
@@ -392,7 +483,7 @@ void Demo_DragPoints() {
     }
 }
 
-
+Demo_DragPoints
 void Demo_DragLines() {
     ImGui::BulletText("Click and drag the horizontal and vertical lines.");
     static double x1 = 0.2;

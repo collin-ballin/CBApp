@@ -111,6 +111,9 @@ public:
                         
     //  1.2             Public Member Functions...
     void                initialize                      (void);
+    void                toggle                          (void);
+    void                open                            (void);
+    void                close                           (void);
     void                Begin                           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ToggleAllPlots                  (const char * title_id);
     //                      Data & Interaction.
@@ -133,12 +136,14 @@ protected:
     //  CONSTANTS.
     std::array<const char *, 2>                         ms_PLOT_UUIDs                   = { "##CCounterMasterPlot",     "##CCounterIndividualPlot"};
     std::array<const char *, 2>                         ms_TABLE_UUIDs                  = { "##IndividualPlotTable",    "##CCounterControlTable"};
+    float                                               m_mst_plot_slider_height        = 20.0f;
+    float                                               m_mst_plot_height               = 400.0f;
     
     //  INDIVIDUAL PLOT STUFF...
     ImGuiTableColumnFlags                               ms_i_plot_table_flags           = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible;
     ImGuiTableColumnFlags                               ms_i_plot_column_flags          = ImGuiTableColumnFlags_WidthFixed;   //    ImGuiTableColumnFlags_WidthFixed;   ImGuiTableColumnFlags_None
     ImGuiTableColumnFlags                               ms_i_plot_plot_flags            = ImGuiTableColumnFlags_WidthStretch;
-    float                                               ms_I_PLOT_COL_WIDTH             = 80.0f;
+    float                                               ms_I_PLOT_COL_WIDTH             = 100.0f;
     float                                               ms_I_PLOT_PLOT_WIDTH            = -1.0f;
     
     float                                               ms_CENTER                       = 0.95f;
@@ -170,7 +175,7 @@ protected:
     float                                               m_dockspace_ratio               = 0.8f;
     const float                                         m_child_corner_radius           = 5.0f;
     float                                               ms_SPACING                      = 50.0f;
-    ImVec2                                              ms_COLLAPSE_BUTTON_SIZE         = ImVec2{15,    15};
+    ImVec2                                              ms_COLLAPSE_BUTTON_SIZE         = app::DEF_SIDEBAR_COLLAPSE_BUTTON_SIZE;
     std::pair<int,int>                                  m_HEIGHT_LIMITS[2]              = { { 30, 30 }, { 30, 30 } };
     static constexpr size_t                             ms_BUFFER_SIZE                  = 256;
     //
@@ -215,28 +220,29 @@ protected:
     utl::Param<ImU64>                                   m_PLOT_LIMIT                    = { 0,     {0, ms_NUM-1}        };
     //
     ChannelSpec                                         ms_channels[ms_NUM]             = {
+    //                  MASTER.                     SINGLE.                     AVERAGE.
         { 8,  "A",      {true, "##MasterA",         true, "##SingleA",          true, "##AvgA"      }      },
         { 4,  "B",      {true, "##MasterB",         true, "##SingleB",          true, "##AvgB"      }      },
-        { 2,  "C",      {true, "##MasterC",         true, "##SingleC",          true, "##AvgC"      }      },
-        { 1,  "D",      {true, "##MasterD",         true, "##SingleD",          true, "##AvgD"      }      },
+        { 2,  "C",      {true, "##MasterC",         true, "##SingleC",          false, "##AvgC"      }      },
+        { 1,  "D",      {true, "##MasterD",         true, "##SingleD",          false, "##AvgD"      }      },
     //
         {12,  "AB",     {true, "##MasterAB",        true, "##SingleAB",         true, "##AvgAB"     }      },
         {10,  "AC",     {true, "##MasterAC",        true, "##SingleAC",         true, "##AvgAC"     }      },
-        { 9,  "AD",     {true, "##MasterAD",        true, "##SingleAD",         true, "##AvgAD"     }      },
-        { 6,  "BC",     {true, "##MasterBC",        true, "##SingleBC",         true, "##AvgBC"     }      },
-        { 5,  "BD",     {true, "##MasterBD",        true, "##SingleBD",         true, "##AvgBD"     }      },
-        { 3,  "CD",     {true, "##MasterCD",        true, "##SingleCD",         true, "##AvgCD"     }      },
+        { 9,  "AD",     {true, "##MasterAD",        true, "##SingleAD",         false, "##AvgAD"     }      },
+        { 6,  "BC",     {true, "##MasterBC",        true, "##SingleBC",         false, "##AvgBC"     }      },
+        { 5,  "BD",     {true, "##MasterBD",        true, "##SingleBD",         false, "##AvgBD"     }      },
+        { 3,  "CD",     {true, "##MasterCD",        true, "##SingleCD",         false, "##AvgCD"     }      },
     //
-        {14,  "ABC",    {true, "##MasterABC",       true, "##SingleABC",        true, "##AvgABC"    }      },
-        {13,  "ABD",    {true, "##MasterABD",       true, "##SingleABD",        true, "##AvgABD"    }      },
-        {11,  "ACD",    {true, "##MasterACD",       true, "##SingleACD",        true, "##AvgACD"    }      },
-        { 7,  "BCD",    {true, "##MasterBCD",       true, "##SingleBCD",        true, "##AvgBCD"    }      },
+        {14,  "ABC",    {false, "##MasterABC",      false, "##SingleABC",       false, "##AvgABC"    }      },
+        {13,  "ABD",    {false, "##MasterABD",      false, "##SingleABD",       false, "##AvgABD"    }      },
+        {11,  "ACD",    {false, "##MasterACD",      false, "##SingleACD",       false, "##AvgACD"    }      },
+        { 7,  "BCD",    {false, "##MasterBCD",      false, "##SingleBCD",       false, "##AvgBCD"    }      },
     //
-        {15,  "ABCD",   {true, "##MasterABCD",      true, "##SingleABCD",       true, "##AvgABCD"   }      }
+        {15,  "ABCD",   {false, "##MasterABCD",     false, "##SingleABCD",      false, "##AvgABCD"   }      }
     };
     std::array<buffer_type, ms_NUM>                     m_buffers                       = { };
+    std::array<buffer_type, ms_NUM>                     m_avg_counts                    = { };
     float                                               m_max_counts[ms_NUM]            = { 0.0f };
-    float                                               m_avg_counts[ms_NUM]            = { 0.0f };
     
     
     //                                              4.  IMPORTANT DATA...
@@ -247,7 +253,8 @@ protected:
     
     
     //                                              5.  WIDGET VARIABLES...
-    bool                                                m_counter_running               = true;  
+    bool                                                m_process_running               = false;  
+    bool                                                m_counter_running               = true;
     bool                                                m_smooth_scroll                 = false;   // checkbox toggled in UI
     float                                               m_last_packet_time              = 0.0f; // time of last data arrival
     float                                               m_stream_timeout                = 0.25f;    // seconds of silence → freeze

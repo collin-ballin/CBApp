@@ -79,14 +79,14 @@ void GraphApp::init(void)
     
     //  1.  ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
     m_window_class[0].DockNodeFlagsOverrideSet      = ImGuiDockNodeFlags_HiddenTabBar;    //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
-    m_window_class[1].DockNodeFlagsOverrideSet      = ImGuiDockNodeFlags_NoTabBar; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
+    m_window_class[1].DockNodeFlagsOverrideSet      = ImGuiDockNodeFlags_HiddenTabBar; //    ImGuiDockNodeFlags_NoTabBar; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     
     
     //  2.  TABS FOR PLOT WINDOW...
     ms_PLOT_TABS                                    = {
     //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
-        Tab_t(  "Editor",                   true,           true,               ImGuiTabItemFlags_None,         nullptr),
-        Tab_t(  "1D FDTD",                  true,           true,               ImGuiTabItemFlags_None,         nullptr),
+        Tab_t(  "FDTD Editor",              true,           true,               ImGuiTabItemFlags_None,         nullptr),
+        Tab_t(  "Simulation Playback",      true,           true,               ImGuiTabItemFlags_None,         nullptr),
         //  Tab_t(  "Etch-A-Sketch",            true,           true,               ImGuiTabItemFlags_None,         nullptr),
         //  Tab_t(  "Tab 2",                    true,           false,              ImGuiTabItemFlags_None,         nullptr)
     };
@@ -96,7 +96,7 @@ void GraphApp::init(void)
     ms_CTRL_TABS                                    = {
     //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
         Tab_t(  "Model Parameters",         true,           true,               ImGuiTabItemFlags_None,         nullptr),
-        Tab_t(  "FDTD Controls",            true,           true,               ImGuiTabItemFlags_None,         nullptr),
+        Tab_t(  "Playback Controls",        true,           true,               ImGuiTabItemFlags_None,         nullptr),
         //  Tab_t(  "Sketch Controls",          true,           true,               ImGuiTabItemFlags_None,         nullptr),
         //  Tab_t(  "Tab 2",                    true,           false,              ImGuiTabItemFlags_None,         nullptr)
     };
@@ -156,7 +156,7 @@ void GraphApp::dispatch_plot_function(const std::string & uuid)
         }
         //      1.  1D FDTD...
         case 1:         {
-            this->ShowFDTD();
+            this->ShowPlayback();
             break;
         }
         //
@@ -206,7 +206,7 @@ void GraphApp::dispatch_ctrl_function(const std::string & uuid)
         }
         //      1.  FDTD...
         case 1:         {
-            this->ShowFDTDControls();
+            this->ShowPlaybackControls();
             break;
         }
         //

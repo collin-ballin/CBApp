@@ -28,6 +28,7 @@
 //  0.1.        ** MY **  HEADERS...
 #include CBAPP_USER_CONFIG
 #include "cblib.h"
+#include "app/_init.h"
 #include "utility/_types.h"
 #include "utility/_constants.h"
 #include "utility/_templates.h"
@@ -336,6 +337,7 @@ ImVec2                          GetImGuiWindowCoords        (const char * , cons
 
 
 //              1.4B    POP-UP WINDOWS, FILE-DIALOGUE WINDOWS, ETC...
+bool                            Popup_Save                  (const char * );
 bool                            Popup_AskOkCancel           (const char * );
 //
 bool                            Popup_AskQuestion           (const char * );
@@ -350,10 +352,10 @@ bool                            file_exists                 (const char * );
 
 //              1.4C    GENERAL WIDGET FUNCTIONS...
 bool                            DirectionalButton           ([[maybe_unused]] const char * ,
-                                                             Anchor ,   ImVec2 ,
-                                                             [[maybe_unused]] ImVec4    bg_col      = ImVec4(0.0f,  0.0f,   0.0f,   1.0f),
-                                                             ImVec4                     tint_col    = ImVec4(1.0f,  1.0f,   1.0f,   1.0f) );
-
+                                                             Anchor ,
+                                                             ImVec2                     size        = app::DEF_COLLAPSE_BUTTON_SIZE,
+                                                             [[maybe_unused]] ImVec4    bg_col      = app::DEF_COLLAPSE_BUTTON_BG,
+                                                             ImVec4                     tint_col    = app::DEF_COLLAPSE_BUTTON_TINT);
 
 void                            LeftLabel2                  (const char * , const float );
 void                            LeftLabel2                  (const char * , const float, const float );

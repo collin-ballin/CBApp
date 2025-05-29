@@ -247,8 +247,7 @@ void GraphApp::init_ctrl_rows(void)
                 },
                     {"Noise Sources", {
                         {"White Noise",                                 false},     {"Pink Noise",                                  false},
-                        {"Shot / Poisson Noise",                        false},     {"Burst / Random Telegraph Noise",              false},
-                        { "Schottky / Poisson Noise",                   false}
+                        {"Shot / Poisson Noise",                        false},     {"Burst / Random Telegraph Noise",              false}
                     }
                 },
                     {"Mode-Converter Sources", {
@@ -309,7 +308,7 @@ void GraphApp::init_ctrl_rows(void)
                 static const char *     items[]         = { "Soft", "Hard" };
                 static int              selected        = 0;
 
-                if (ImGui::BeginCombo("Combo", items[selected]))
+                if (ImGui::BeginCombo("##FDTD_SourceEnergy Propogation", items[selected]))
                 {
                     for (int i = 0; i < IM_ARRAYSIZE(items); ++i)
                     {
@@ -391,6 +390,16 @@ void GraphApp::init_ctrl_rows(void)
     //      4.  EDITOR ROWS...
     // *************************************************************************** //
     // *************************************************************************** //
+    static constexpr float              LABEL_COLUMN_WIDTH      = 200.0f;
+    static constexpr float              WIDGET_COLUMN_WIDTH     = 250.0f;
+
+    //  INTERACTIVE VARIABLES...
+    static ImGuiSliderFlags             SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
+
+    constexpr float                     margin                  = 0.75f;
+    constexpr float                     pad                     = 10.0f;
+    
+    
     m_editor_table_CFG                  = {
         /*  Table UUID  =   */      "EditorControlsTable",
         /*  Table Flags =   */      ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible | ImGuiTableFlags_SizingStretchProp,
@@ -408,6 +417,84 @@ void GraphApp::init_ctrl_rows(void)
     //  BEGIN  *ALL*  ROWS...
     //
     //
+        { "Editor State",       [this]
+            {// BEGIN LAMBDA.
+                constexpr size_t    N           = 2;
+                const float         T           = ImGui::GetColumnWidth() - N * pad;
+                const float         w           = T / N;
+                //
+                //
+                //      WIDGET 1.   EDITOR STATE SELECTOR...
+                State &             state       = *this->m_editor.get_mode();
+                int                 int_state   = static_cast<int>(state);
+                //
+                ImGui::SetNextItemWidth(w);
+                if ( ImGui::Combo("##FDTDEditor_EditorState", &int_state, SketchWidget::STATE_LABELS.data(), static_cast<int>(State::Count) ) )
+                {
+                    this->m_editor.set_mode(int_state);
+                }
+                //
+                //
+                //      WIDGET 2.   CHANNEL SELECTOR...
+                static constexpr const char *   channels []     = { "Real Permitivitty", "Imaginary Permitivitty" };
+                int                             channel_idx     = 0;
+                //
+                ImGui::SetNextItemWidth(w);
+                ImGui::SameLine();//0.0f, pad);
+                int active = *this->m_editor.get_active_channel();  // get current index
+                if (ImGui::BeginCombo("##FDTDEditor_ChannelSelector", m_editor.channel(active).map_title))
+                {
+                    for (int i = 0; i < m_editor.channel_count(); ++i)
+                    {
+                        bool selected = (active == i);
+                        if (ImGui::Selectable( m_editor.channel(i).map_title, selected) ) {
+                            m_editor.set_active_channel(i);
+                            active = i; // update local copy so the combo label updates immediately
+                        }
+                        if (selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+                //
+                //
+                //
+                //ImGui::Dummy( ImVec2(pad, 0.0f) );
+                //
+            }// END LAMBDA.
+        },
+    //
+        { "Paint Value Range",      [this]//    BEGIN ROW.
+            {
+                //float range [2]     = { *m_editor.get_vmin(),   *m_editor.get_vmax() };
+                
+                ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
+                ImGui::SliderFloat2("##FDTDEditor_PaintValueRange",     m_editor.get_vmin(),   -100,      100,    "%.2f",      SLIDER_FLAGS);
+            }
+        }, // END ROW.
+    //
+        { "Paint Value",            [this]//    BEGIN ROW.
+            {
+                ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
+                //  ImGui::SliderScalar("##FDTDEditor_PaintValue",  ImGuiDataType_Double,               &m_avg_window_sec.value,
+                //      &m_avg_window_sec.limits.min,       &m_avg_window_sec.limits.max,      "%.2f seconds", SLIDER_FLAGS);
+                ImGui::SliderScalar("##FDTDEditor_PaintValue",  ImGuiDataType_Float,               this->m_editor.get_paint_value(),
+                    this->m_editor.get_vmin(),       this->m_editor.get_vmax(),      "%.2f ", SLIDER_FLAGS);
+            }
+        }, // END ROW.
+    //
+        {"Colormap",                                [this]
+            {
+                int     cmap    = *this->m_editor.get_cmap();
+                float   w       = ImGui::GetColumnWidth();
+                
+                if (ImPlot::ColormapButton(ImPlot::GetColormapName(cmap), ImVec2(w, 0), cmap)) {
+                    cmap = (cmap + 1) % ImPlot::GetColormapCount();
+                    this->m_editor.set_cmap(cmap);
+                }
+            }
+        }, // END ROW.
+    //
         { "Brush Size",         [this]//    BEGIN ROW.
             {
                 //this->m_editor
@@ -416,35 +503,107 @@ void GraphApp::init_ctrl_rows(void)
             }
         }, // END ROW.
     //
-        { "Editor State",       [this]
-            {
-                State &state = *this->m_editor.get_mode();
-                int int_state = static_cast<int>(state);
-                
-                if ( ImGui::Combo("##FDTDEditor_EditorState", &int_state, SketchWidget::STATE_LABELS.data(), static_cast<int>(State::Count) ) )
-                {
-                        
-                }
-        
-                //ImGui::Combo("##FDTDEditor_EditorState", this->m_editor.get_mode(), s_modes, 2);
-            }
-        } //,
     //
-        //{ "Brush Shape",        [this]//    BEGIN ROW.
-        //    {
-        //        //  ImGui::Combo("##FDTDEditor_BrushShape",         &sketch::brush_shape, sketch::brush_shapes, IM_ARRAYSIZE(sketch::brush_shapes));
-        //        //this->m_editor
-        //        //  ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-        //        //  ImGui::SliderInt( "##FDTDEditor_BrushSize", this->m_editor.get_brush_size(), sketch::brush_shapes, IM_ARRAYSIZE(sketch::brush_shapes)    );
-        //    }
-        //} // END ROW.
+        { "Brush Shape",        [this]//    BEGIN ROW.
+            {
+                  //    ImGui::Combo("##FDTDEditor_BrushShape",         &sketch::brush_shape, sketch::brush_shapes, IM_ARRAYSIZE(sketch::brush_shapes));
+                  //    ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
+                  //    ImGui::SliderInt( "##FDTDEditor_BrushSize", this->m_editor.get_brush_size(), sketch::brush_shapes, IM_ARRAYSIZE(sketch::brush_shapes)    );
+            }
+        } // END ROW.
     //
     //
     //
     //  END  *ALL*  ROWS...
     };
     
+    
+    
+    
+    
+    
+    
+    
 
+    
+
+
+    // *************************************************************************** //
+    //
+    //
+    //      5.  PLAYBACK CONTROLS...
+    // *************************************************************************** //
+    // *************************************************************************** //
+
+    m_playback_table_CFG                = {
+        /*  Table UUID  =   */      "PlaybackControlsTable",
+        /*  Table Flags =   */      ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible | ImGuiTableFlags_SizingStretchProp,
+        /*  Column CFGs =   */      {
+                { "Label",          200.0f,         ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize },
+                { "Widget",         -1.0f,          ImGuiTableColumnFlags_WidthStretch }
+            },
+        /*  Header Row  =   */      false
+    };
+    
+    
+    //  PLAYBACK ROWS...
+    //
+    //  BEGIN  *ALL*  ROWS...
+    //
+    ms_PLAYBACK_ROWS                    = {
+        {"Playback",                                [this]
+        {
+            utl::Param<ImU64> & frame = this->m_playback.frame;
+            
+            //  WIDGET 1.  PLAYBACK SPEED SLIDER
+            ImGui::BeginDisabled( !m_playback.ready );
+            //
+                ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
+                ImGui::SliderScalar("##FDTD_PlaybackProgressBar",    ImGuiDataType_U64,      &frame.value,
+                        &frame.limits.min, &frame.limits.max,  "Frame #%llu", SLIDER_FLAGS);
+                
+                ImGui::SameLine(0.0f, pad);
+                //
+                //
+                //  WIDGET 2.   PLAY/PAUSE BUTTON...
+                if (!m_playback.playing) {
+                    if (ImGui::Button("Play", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
+                        m_playback.playing = true;
+                    }
+                }
+                else
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Button,          ImVec4(0.800f, 0.216f, 0.180f, 1.00f) );
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   app::DEF_APPLE_RED );
+                    if ( ImGui::Button("Pause", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
+                        m_playback.playing         = false;
+                        m_playback.last_time     = ImGui::GetTime();
+                    }
+                    ImGui::PopStyleColor(2);
+                }
+            //
+            ImGui::EndDisabled();
+        }
+        }, // END ROW.
+    //
+        {"Playback Speed",                  [this]
+        {
+            //  WIDGET 1.  PLAYBACK SPEED SLIDER
+            ImGui::BeginDisabled( !m_playback.ready );
+            //
+                ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
+                ImGui::SliderFloat("##FDTD_PlaybackSpeed", &m_playback.fps, 0.1f, 240.0f, "%.1f  FPS");
+                ImGui::SameLine(0.0f, pad);
+            //
+            ImGui::EndDisabled();
+        }
+        } // END ROW.
+    //
+    //
+    //
+    //  END  *ALL*  ROWS...
+    };
+    
     
     return;
 }
@@ -487,10 +646,10 @@ void GraphApp::ShowModelParameters(void)
 
 
     //  0.  EDITOR TABLE...
-    //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    //if ( ImGui::CollapsingHeader("Editor Controls") ) {
-    //    utl::MakeCtrlTable(this->ms_EDITOR_ROWS,      m_editor_table_CFG);
-    //}
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if ( ImGui::CollapsingHeader("Editor Controls") ) {
+        utl::MakeCtrlTable(this->ms_EDITOR_ROWS,      m_editor_table_CFG);
+    }
 
 
 
@@ -506,7 +665,6 @@ void GraphApp::ShowModelParameters(void)
     if ( ImGui::CollapsingHeader("Sources") ) {
         utl::MakeCtrlTable(this->ms_SOURCES_ROWS,   m_sources_table_CFG);
     }
-    
     
     
 

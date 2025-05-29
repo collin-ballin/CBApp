@@ -106,13 +106,13 @@ protected:
     // *************************************************************************** //
     
     //                          1.  BOOLEANS...
-    bool                        m_initialized                       = true;
-    bool                        m_first_frame                       = true;
+    bool                        m_initialized                       = false;
+    bool                        m_first_frame                       = false;
     bool                        m_show_perf_metrics                 = app::DEF_PERF_METRICS_STATE;
     bool                        m_show_perf_plots                   = app::DEF_PERF_PLOTS_STATE;
     //
     //                          2.  DIMENSIONS...
-    ImVec2                      ms_PLOT_SIZE                        = ImVec2(-1, 120);
+    ImVec2                      ms_PLOT_SIZE                        = ImVec2(-1, 75);
     //                                      ...
     //
     //                          3.  WINDOW / GUI ITEMS...

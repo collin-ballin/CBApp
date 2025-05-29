@@ -89,6 +89,9 @@ public:
     //  1.2                     Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
     void                        Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                        initialize                          (void);
+    void                        toggle                              (void);
+    void                        open                                (void);
+    void                        close                               (void);
 
     //  1.3                     Deleted Operators, Functions, etc.
                                 TitleBar                            (const TitleBar &    src)            = delete;   //  Copy. Constructor.

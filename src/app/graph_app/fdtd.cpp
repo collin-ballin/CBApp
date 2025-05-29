@@ -24,10 +24,10 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 using                           FDTD_t                          = GraphApp::FDTD_t;
 using                           value_type                      = GraphApp::value_type;
 
-using                           re_array                        = GraphApp::re_array;
-using                           re_frame                        = GraphApp::re_frame;
-using                           im_array                        = GraphApp::im_array;
-using                           im_frame                        = GraphApp::im_frame;
+//using                           re_array                        = GraphApp::re_array;
+//using                           re_frame                        = GraphApp::re_frame;
+//using                           im_array                        = GraphApp::im_array;
+//using                           im_frame                        = GraphApp::im_frame;
 
 
 
@@ -65,7 +65,7 @@ static bool                     ms_running                      = false;
 //
 void InitializeData([[maybe_unused]] std::atomic<bool> & flag, [[maybe_unused]] FDTD_t & model)
 {
-    //model.run();
+    model.run();
     flag.store(true, std::memory_order_release);
     return;
 }
@@ -75,11 +75,10 @@ void InitializeData([[maybe_unused]] std::atomic<bool> & flag, [[maybe_unused]] 
 //
 void GraphApp::StartDataInitAsync(void)
 {
-    //  std::thread([this]()
-    //  {
-    //      //InitializeData( data_ready, this->ms_model );
-    //
-    //  }).detach();
+    std::thread([this]()
+    {
+        InitializeData( data_ready, this->ms_model );
+    }).detach();
     
     return;
 }
@@ -93,22 +92,18 @@ void GraphApp::StartDataInitAsync(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "ShowFDTD"
+//  "ShowPlayback"
 //
-void GraphApp::ShowFDTD(void)
+void GraphApp::ShowPlayback(void)
 {
-    static utl::PlotCFG             cfg        = {
-        {   "##1DFDTDPlot",             ImVec2(-1, -1),         ImPlotFlags_None | ImPlotFlags_NoTitle  },
-        {
-            { "x-Node Index  [m dx]",   ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit },
-            { "Ez  [V / m]",            ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit }
-        }
-    };
-    
-    static ImPlotColormap                   PermECMap               = utl::CreateTransparentColormap(ImPlotColormap_Viridis, 0.4f, "MyPermittivityCMap");
-    
-    static ImPlotHeatmapFlags               eps_flags               = 0; //ImPlotHeatmapFlags_ColMajor;
-    static ImPlotRect                       plot_bounds;
+    constexpr ImVec4                E_FIELD_COLOR           = ImVec4(0.910f, 0.145f, 0.184f, 1.000f);
+    constexpr float                 SCALE_WIDTH             = 120.0f;
+    ImVec2                          SCALE_DIMS              = ImVec2(SCALE_WIDTH, -1);
+    ImVec2                          avail                   = ImGui::GetContentRegionAvail();
+    fdtd_1D_time_cfg.graph.size                             = { static_cast<float>(avail.x - SCALE_WIDTH - 2*ImGui::GetStyle().ItemSpacing.x), -1 };
+
+    static ImPlotHeatmapFlags       eps_flags               = 0; //ImPlotHeatmapFlags_ColMajor;
+    static ImPlotRect               plot_bounds;
     
     
     //  1.  ONE-SHOT TO BEGIN FDTD SIMULATION...
@@ -117,68 +112,38 @@ void GraphApp::ShowFDTD(void)
 
     //  2.  DRAWING USER-CONTROLS FOR FDTD SIMULATION...
     ImGui::PushID("AnimControls");
-    bool ready = data_ready.load(std::memory_order_acquire);
-
-
-    //  3.  IF DATA IS LOADING, DISPLAY A MESSAGE TO THE USER...
-    if (!ready) {
-        ImGui::Text("Initializing data... Please wait.");
-    }
-
-
-
-    ImGui::BeginDisabled(!ready);   //  IF DATA IS NOT READY, DISABLE THESE CONTROLS...
-    {
-        if (ready)
-        {
-            //
-            //  CASE 1 :    DATA == *READY*.  ANIMATION == *PLAYING*.
-            if (playing)
-            {
-                if (ImGui::Button("Pause")) {
-                    playing = false;
-                }
-            }
-            //
-            //  CASE 2 :    READY, BUT *NOT* PLAYING...
-            else
-            {
-                if (ImGui::Button("Start")) {
-                    playing   = true;
-                    last_time = ImGui::GetTime();
-                }
-            }
-            ImGui::SameLine();
-            ImGui::SliderFloat("Speed (fps)", &playback_fps, 0.1f, 240.0f, "%.1f");
-            ImGui::SliderInt("Frame", &current_frame, 0, NT - 1);
+        m_playback.ready = data_ready.load(std::memory_order_acquire);
+        //  3.  IF DATA IS LOADING, DISPLAY A MESSAGE TO THE USER...
+        if (!m_playback.ready) {
+            ImGui::Text("Computing FDTD Simulation...  Please wait.");
         }
-    }
-    ImGui::EndDisabled();
     ImGui::PopID();
 
 
     // Update animation frame if running and data ready
-    if (ready)
+    if (m_playback.ready)
     {
-        static float                    YLIMS [2]           = {-1.5f, 1.5f};
+        static float                    YLIMS [2]           = {-1.8f, 1.8f};
         static std::string              PLOT_LABEL          = "Ez(t)";
         double                          now                 = ImGui::GetTime();
-        double                          delta               = now - last_time;
-        //static re_frame &               ms_data             = *ms_model.get_E_time_data();
+        double                          delta               = now - m_playback.last_time;
+        
         //static float *                  ms_perm_E           = ms_model.get_perm_E_ptr();
+        static re_array                 ms_perm_E           = cblib::make_real_vector( ms_model.get_eps_r() );
+        static re_frame &               ms_Ez_T_data        = *ms_model.get_E_time_data();
+        //static re_frame &               ms_Ez_F_data        = *ms_model.get_E_freq_norm_data();
+        
+        static float                    perm_lims [2]       = {1.0, 16.0f};
         //static re_array &               ms_perm_E           = *ms_model.get_perm_E_data();
         //double static                   eps_min             = *std::min_element( ms_perm_E.begin(), ms_perm_E.end() );
         //double static                   eps_max             = *std::max_element( ms_perm_E.begin(), ms_perm_E.end() );
         static float                    eps_vrange[2]       = {};
         static bool                     first_frame         = true;
 
-        //  if (first_frame) {
-        //      for (size_t i = 0; i < NX; ++i)
-        //          std::cout << "(" << i << ", " << ms_perm_E[i] << ")\n";
-        //  }
-        if (playing && delta >= 1.0 / playback_fps) {
-            current_frame = (current_frame + 1) % NT;
-            last_time     = now;
+
+        if (m_playback.playing && delta >= 1.0 / m_playback.fps) {
+            m_playback.frame.value      = (m_playback.frame.value + 1) % m_playback.frame.limits.max;
+            m_playback.last_time        = now;
         }
 
 
@@ -186,41 +151,60 @@ void GraphApp::ShowFDTD(void)
 
 
         //  2.  CREATE THE PLOT...
-        if ( utl::MakePlotCFG(cfg) )
+        if ( utl::MakePlotCFG(fdtd_1D_time_cfg) )
         {
             //  4.  P3      | HEATMAP PLOT...
-            //      {
-            //          ImPlot::PushColormap(ImPlot::GetColormapIndex("Perm_E"));
-            //          plot_bounds     = ImPlot::GetPlotLimits();
-            //          ImPlot::PlotHeatmap("heat",
-            //                  ms_perm_E,//(float*)ms_perm_E.data(),
-            //                  1,
-            //                  NX,
-            //                  1.2f,   //YLIMS[0],
-            //                  16.0f,   //YLIMS[1],
-            //                  nullptr,
-            //                  plot_bounds.Min(),
-            //                  plot_bounds.Max(),
-            //                  eps_flags);
-            //          //
-            //          ImPlot::PopColormap();
-            //      }
+            {
+                ImPlot::SetupAxisLimits(ImAxis_X1, 0, NX-1, ImGuiCond_Always);
+                ImPlot::SetupAxisLimits(ImAxis_Y1, YLIMS[0], YLIMS[1], ImGuiCond_Once);
+                ImPlot::PushColormap(ImPlot::GetColormapIndex("Perm_E"));
+                plot_bounds     = ImPlot::GetPlotLimits();
+                ImPlot::PlotHeatmap("Relative Permitivitty (Real)",
+                        ms_perm_E.data(), //  ms_perm_E,//(float*)ms_perm_E.data(),
+                        1,
+                        NX,
+                        perm_lims[0],  //  1.2f,   //YLIMS[0],
+                        perm_lims[1],  //  16.0f,   //YLIMS[1],
+                        nullptr,
+                        plot_bounds.Min(),
+                        plot_bounds.Max(),
+                        eps_flags);
+                //
+            }
             
             
             //  5.  PLOT  Ez(x, t)  ELECTRIC FIELD...
-            //  ImPlot::SetNextLineStyle(   m_plot_colors[0],      3.0);
-            //  ImPlot::PlotLine(
-            //      PLOT_LABEL.c_str(),
-            //      &ms_data[current_frame][0],
-            //      NX,
-            //      1.0,
-            //      0.0,
-            //      ImPlotLineFlags_None);
-            //  ImPlot::EndPlot();
-        }
-        
-        
-        ImGui::PopID();
+            ImPlot::SetNextLineStyle( E_FIELD_COLOR,      3.0);
+            ImPlot::PlotLine(
+                PLOT_LABEL.c_str(),
+                &ms_Ez_T_data[ m_playback.frame.value ][0],
+                NX,
+                1.0,
+                0.0,
+                ImPlotLineFlags_None);
+            //
+            ImPlot::EndPlot();// END PLOT.
+            
+            
+            //  6.  DRAW THE COLORMAP SCALE...
+            ImGui::SameLine();
+            ImPlot::ColormapScale("Relative Permitivitty (Real)", perm_lims[0], perm_lims[1], ImVec2(SCALE_WIDTH, -1), "%.1f * eps_0");
+                        
+                        
+            
+
+        ImPlot::PopColormap();
+        }// END PLOT.
+                        
+                        
+
+
+
+
+
+
+
+
     }// END "ready".
         
         
@@ -236,70 +220,16 @@ void GraphApp::ShowFDTD(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "ShowFDTDControls"
+//  "ShowPlaybackControls"
 //
-void GraphApp::ShowFDTDControls(void)
+void GraphApp::ShowPlaybackControls(void)
 {
-    //  CONSTANTS...
-    static constexpr float              LABEL_COLUMN_WIDTH      = 200.0f;
-    static constexpr float              WIDGET_COLUMN_WIDTH     = 250.0f;
+    
+    
+    //  5.  PLAYBACK TABLE...
+    utl::MakeCtrlTable(this->ms_PLAYBACK_ROWS,   m_playback_table_CFG);
 
-    //  INTERACTIVE VARIABLES...
-
-    //  TABLE GLOBAL FLAGS...
-    static bool                         freeze_header           = false;
-    static bool                         freeze_column           = false;
-    static bool                         stretch_column_1        = true;
-
-    //  COLUMN-SPECIFIC FLAGS...
-    static ImGuiTableColumnFlags        col0_flags              = ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize;
-    static ImGuiTableColumnFlags        col1_flags              = stretch_column_1 ? ImGuiTableColumnFlags_WidthStretch : ImGuiTableColumnFlags_WidthFixed;
-    static ImGuiTableFlags              flags                   = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible; //| ImGuiTableFlags_ScrollX;
-        
-    static const utl::WidgetRow         rows[]                  = {
-        {"FDTD",                        []
-            {// BEGIN.
-                //      CASE 1 :    SCRIPT IS  **NOT**  RUNNING...
-                if (!ms_running)
-                {
-                    if (ImGui::Button("Run Simulation")) // , ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) )
-                    {
-                        //
-                        //  START THE MODEL...
-                        //
-                    }
-                }
-                else
-                {
-                    ImGui::PushStyleColor(ImGuiCol_Button,          ImVec4(0.800f, 0.216f, 0.180f, 1.00f) );
-                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   app::DEF_APPLE_RED );
-                    if (ImGui::Button("Stop Simulation")) // , ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) )
-                    {
-                        //
-                        //  STOP THE MODEL...
-                        //
-                    }
-                    ImGui::PopStyleColor(2);
-                }
-            
-            }// END.
-        }
-    };
-
-    static utl::TableCFG<2>    fdtd_table_CFG    = {
-        "FDTDControls"
-    };
-
-
-
-
-
-    //  1.  PRIMARY TABLE ENTRY...
-    //
-    utl::MakeCtrlTable(rows, fdtd_table_CFG);
-
-
-
+    
 
     return;
 }

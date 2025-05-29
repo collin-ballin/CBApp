@@ -22,8 +22,8 @@
 // *************************************************************************** //
 #define     GL_SILENCE_DEPRECATION                      1               //  MACRO DEFINED BY "DEAR IMGUI" EXAMPLE PROGRAM.
 
-#define     IMPLOT_DISABLE_OBSOLETE_FUNCTIONS           1
-#define     IMGUI_DISABLE_OBSOLETE_FUNCTIONS            1
+//  #define     IMPLOT_DISABLE_OBSOLETE_FUNCTIONS           1
+//  #define     IMGUI_DISABLE_OBSOLETE_FUNCTIONS            1
 
 // IMGUI_DISABLE_DEBUG_TOOLS   //  Used to be named "IMGUI_DISABLE_METRICS_WINDOW"
 
@@ -46,13 +46,15 @@
 
 //      2.1     CRITICAL BUILD SETTINGS...
 // *************************************************************************** //
-//#define     __CBAPP_DEBUG__                             1                 //  Enable delay before starting int main (bug-fix for X-Code IDE issue).
-#define     __CBAPP_BUILD_CCOUNTER_APP__                    1               //  BUILD FOR COINCIDENCE COUNTER...
-//#define     __CBAPP_BUILD_FDTD_APP__                        1               //  BUILD FOR FDTD APP...
+#define         CBAPP_VERSION                                   "0.02 WIP"
 
 
-//#define     __CBAPP_DISABLE_FDTD__                          1           //  BUILD FOR COINCIDENCE COUNTER...
+//#define         __CBAPP_DEBUG__                             1                 //  Enable delay before starting int main (bug-fix for X-Code IDE issue).
+// #define         __CBAPP_BUILD_CCOUNTER_APP__                    1               //  BUILD FOR COINCIDENCE COUNTER...
+#define         __CBAPP_BUILD_FDTD_APP__                        1               //  BUILD FOR FDTD APP...
 
+
+//#define         __CBAPP_DISABLE_FDTD__                          1           //  BUILD FOR COINCIDENCE COUNTER...
 
 
 //  ENFORCE THAT THERE ARE NOT MULTIPLE BUILDS ARE #DEFINED...

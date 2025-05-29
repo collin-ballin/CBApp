@@ -124,11 +124,13 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 //	TYPEDEFS, CONSTANT-STATIC VALUES, ETC...
 // *************************************************************************** //
+// *************************************************************************** //
 
 //using typename 		complex_t = std::complex<double>;
 
 
 //	INLINE FUNCTIONS...
+// *************************************************************************** //
 // *************************************************************************** //
 
 //	"real_DFT"
@@ -136,27 +138,89 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 //		"sig_t" 		===>	time-domain signal.
 //		"sig_f"			===> 	frequency-domain signal.
-template< typename T, std::size_t N, typename complex_t = std::complex<T> >
-inline std::array<complex_t, N> 
-real_DFT(const std::array<T, N> & sig_t) noexcept {
-	std::array<complex_t, N>	sig_f;
-	std::size_t					k 		= 0ULL, 	n = 0ULL;	
-	T							angle 	= 0; 
-	complex_t					sum(0.0, 0.0);
+template< typename T, typename complex_t = std::complex<T> >
+inline std::vector<complex_t>
+real_DFT(const std::vector<T> & sig_t) noexcept
+{
+    const std::size_t   N   = sig_t.size();
+    std::vector<complex_t> sig_f(N);
 
-	for (k = 0ULL; k < N; ++k) {
-		sum = complex_t(0.0, 0.0);
+    for (std::size_t k = 0; k < N; ++k) {
+        complex_t sum(0.0, 0.0);
 
-		for (n = 0ULL; n < N; ++n) {
-			angle 	 = -(2 * spc::pi * k * n) / N;
-			sum		+= sig_t[n] * complex_t( std::cos(angle), std::sin(angle) );
-		}
-		sig_f[k] = sum;
-	}
-
-	return sig_f;
+        for (std::size_t n = 0; n < N; ++n) {
+            const T angle = -( 2.0 * spc::pi * static_cast<T>(k) * static_cast<T>(n) )
+                             / static_cast<T>(N);
+            sum += sig_t[n] * complex_t( std::cos(angle), std::sin(angle) );
+        }
+        sig_f[k] = sum;
+    }
+    return sig_f;
 }
 
+
+//  "normalize_spectrum"
+//
+template< typename complex_t >
+inline std::vector<typename complex_t::value_type>
+normalize_spectrum(const std::vector<complex_t> & sig_f)
+{
+    using T = typename complex_t::value_type;
+
+    std::vector<T> mag(sig_f.size());
+    T peak = T(0);
+
+    for (std::size_t k = 0; k < sig_f.size(); ++k) {
+        mag[k] = std::abs(sig_f[k]);
+        peak   = std::max(peak, mag[k]);
+    }
+
+    if (peak > T(0)) {
+        for (auto & v : mag) v /= peak;
+    }
+    return mag;
+}
+
+//  "frequency_axis"
+//
+template< typename T >
+inline std::vector<T>
+frequency_axis(std::size_t N, T Fs)                      // N even preferred
+{
+    std::vector<T> f;
+    if (N == 0) return f;
+
+    const std::size_t M  = N/2 + 1;                      // # positive bins
+    f.resize(M);
+
+    const T df = Fs / static_cast<T>(N);
+    for (std::size_t k = 0; k < M; ++k)
+        f[k] = k * df;
+
+    return f;
+}
+
+//  "normalised_freq_axis"
+//
+template< typename T = double >
+inline std::vector<T>
+normalised_freq_axis(std::size_t N)
+{
+    std::vector<T> f;
+    if (N == 0) return f;
+
+    const std::size_t M = N/2 + 1;
+    f.resize(M);
+
+    const T df = static_cast<T>(1) / static_cast<T>(N);
+    for (std::size_t k = 0; k < M; ++k)
+        f[k] = k * df;
+
+    return f;
+}
+
+
+// *************************************************************************** //
 // *************************************************************************** //
 
 
@@ -183,17 +247,25 @@ struct grid_1D {
 	using 	const_pointer 		= std::allocator_traits<Allocator>::const_pointer;
 	using 	reference 			= value_type &;
 	using 	const_reference 	= const value_type &;
-	using 	iterator 			= T *;
+    using   iterator            = typename std::vector<T>::iterator;
+    using   const_iterator      = typename std::vector<T>::const_iterator;
 
 	using 	complex_t 			= std::complex<value_type>;
-	using 	re_array 			= std::array<value_type, N>;
-	using 	im_array 			= std::array<complex_t, N>;
-	using 	sbyte 				= std::int_fast8_t; 
+	using 	re_array 			= std::vector<value_type>;
+	using 	im_array 			= std::vector<complex_t>;
+	using 	sbyte 				= std::int_fast8_t;
+// *************************************************************************** //
+
 // *************************************************************************** //
 
 	//	Default Constructor.
 	//
-	inline grid_1D(void) noexcept {
+	inline grid_1D(void) :
+        m_Ez(N, 0.0f),                          m_Hy(N, 0.0f),
+        m_eps_r(N, complex_t(0.0f, 0.0f)),      m_mu_r(N, complex_t(0.0f, 0.0f)),
+        m_cezE(N, 0.0f),                        m_cezH(N, 0.0f),
+        m_chyE(N, 0.0f),                        m_chyH(N, 0.0f)
+    {
 		for (std::size_t m = 0ULL; m < N; ++m) {
 			this->m_Ez[m] 		= 0.0f;
 			this->m_Hy[m] 		= 0.0f;
@@ -221,9 +293,9 @@ struct grid_1D {
 
 //	Data-Members...
 // *************************************************************************** //
-	re_array		m_Ez,		m_Hy;
-	im_array		m_eps_r,	m_mu_r;
-	re_array		m_cezE,		m_cezH,		m_chyE,		m_chyH;
+	re_array		m_Ez,       m_Hy;
+	im_array	    m_eps_r,    m_mu_r;
+	re_array		m_cezE,	    m_cezH,	    m_chyE,		m_chyH;
 // *************************************************************************** //
 
 //	END GRID_1D INLINE STRUCT DEFINITION.
@@ -254,23 +326,19 @@ class FDTD_1D : grid_1D<NX, T, Allocator> {
 //	LOCAL, CLASS-DEFINED PUBLIC ALIAS DEFINITIONS ...
 // *************************************************************************** //
 public:
-	using	base			= 	grid_1D<NX, T, Allocator>;
-	using 	typename 			base::allocator_type;
-	using 	typename 			base::Alloc;
-	using 	typename 			base::value_type;
-	using 	typename 			base::size_type;
-	using 	typename 			base::difference_type;
-	using 	typename 			base::pointer;
-	using 	typename 			base::const_pointer;
-	using 	typename 			base::reference;
-	using 	typename 			base::const_reference;
-
-	using 	typename 			base::sbyte;
-	using 	typename 			base::re_array;
-	using 	typename 			base::im_array;
-	using 	typename 			base::complex_t;
-	using 	re_frame 		= std::array<re_array, NT>;
-	using 	im_frame 		= std::array<im_array, NT>;
+	using	base			    = 	grid_1D<NX, T, Allocator>       ;
+	using 	typename 			base::allocator_type                ;       using 	typename 			base::Alloc;
+	using 	typename 			base::value_type                    ;       using 	typename 			base::complex_t;
+    using 	typename 			base::size_type                     ;       using 	typename 			base::difference_type;
+    using 	typename 			base::pointer                       ;       using 	typename 			base::const_pointer;
+	using 	typename 			base::sbyte                         ;
+//
+    using 	typename 			base::reference                     ;       using 	typename 			base::const_reference;
+    using   typename            base::iterator                      ;       using   typename            base::const_iterator;
+//
+	using 	typename 			base::re_array                      ;
+    using 	typename 			base::im_array;
+	using 	re_frame 		    = std::vector<re_array>             ;       using 	im_frame 		    = std::vector<im_array>;
 
 // *************************************************************************** //
 //
@@ -285,8 +353,9 @@ protected:
 
 	std::array<value_type, NT>			m_time;
 	re_array							m_xvals;
-	re_frame							m_Hy_T,		m_Ez_T;
-	im_frame							m_Hy_F,		m_Ez_F;
+	re_frame							m_Hy_T,		        m_Ez_T;
+	im_frame							m_Hy_F,		        m_Ez_F;
+    
 
 	const size_type						m_src_pos			= 2ULL;//2ULL;
 	const size_type						m_TFSF_boundary		= 2ULL;  // NX+1;//2ULL;
@@ -297,11 +366,11 @@ protected:
 	const value_type					m_wavelen			= 40.0f;//BEFORE WE USED 24 for LAMBDA... 	30.0f;
 	const value_type					m_src_delay			= 30.0f;//30.0f;
 	const value_type					m_src_width			= 10.0f;
-	const size_type						m_num_periods		= 4ULL;     //      WORKS = 100ULL;//4ULL;
+	const size_type						m_num_periods		= 8ULL;     //      WORKS = 100ULL;//4ULL;
 
 	const value_type					m_eta_0				= spc::eta_0;
 	const value_type					m_loss				= 0.01f;    //      WORKS = 0.00f;
-	const value_type					m_perm				= 8.0;      //      WORKS = 4.0f;
+	const value_type					m_perm				= 4.0;      //      WORKS = 4.0f;
 
 
     float                               m_eps_r_ptr[NX]     = {0.0f};
@@ -316,7 +385,11 @@ public:
 
 	//	Default Constructor.
 	//
-	inline FDTD_1D(void) noexcept : base() {
+	inline FDTD_1D(void) noexcept : base(),
+        m_xvals(NX, 0.0f),
+        m_Hy_T( NT, re_array(NX, 0.0f) ),                       m_Ez_T( NT, re_array(NX, 0.0f) ),
+        m_Hy_F( NT, im_array(NX, complex_t(0.0f, 0.0f)) ),      m_Ez_F( NT, im_array(NX, complex_t(0.0f, 0.0f)) )
+    {
 		//this->m_material_width 	= size_type(4*this->m_wavelen / ( std::sqrt(this->m_perm) )) - 1;
 	
 		#ifdef CB_LOG
@@ -850,12 +923,9 @@ public:
     //inline std::array<complex_t, NX> * get_perm_E_data()       noexcept
     //{ return &base::m_eps_r; }
     
-    inline re_array * get_perm_E_data(void)
-    { return std::addressof( this->m_eps_r_real ); }
+    inline im_array & get_eps_r(void)
+    { return this->base::m_eps_r; }
     
-    inline float * get_perm_E_ptr(void)
-    { return m_eps_r_ptr; }
-
 
     //  // or, idiomatically, reference
     //  inline std::array<complex_t, NX> &       get_perm_E_data()       noexcept
@@ -907,8 +977,8 @@ public:
 
 		//	3.	COMPUTING DISCRETE FOURIER TRANSFORM...
 		for (q = 0ULL; q < NT; ++q) {
-			this->m_Hy_F[q] = real_DFT<value_type, NX>(this->m_Hy_T[q]);
-			this->m_Ez_F[q] = real_DFT<value_type, NX>(this->m_Ez_T[q]);
+			this->m_Hy_F[q] = real_DFT<value_type>(this->m_Hy_T[q]);
+			this->m_Ez_F[q] = real_DFT<value_type>(this->m_Ez_T[q]);
 		}
 
     
@@ -919,10 +989,10 @@ public:
 		this->save();
     #endif  //  _CBAPP_DISABLE_FDTD_FILE_IO  //
     
-        for (m = 0ULL; m < NX; ++m) {
-            this->m_eps_r_ptr[m]    = static_cast<float>( base::m_eps_r[m].real() );
-            this->m_eps_r_real[m]   = base::m_eps_r[m].real();
-        }
+        //  for (m = 0ULL; m < NX; ++m) {
+        //      this->m_eps_r_ptr[m]    = static_cast<float>( base::m_eps_r[m].real() );
+        //      this->m_eps_r_real[m]   = base::m_eps_r[m].real();
+        //  }
     
 		return;
 	}

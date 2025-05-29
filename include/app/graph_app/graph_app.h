@@ -72,6 +72,17 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+struct Playback {
+    utl::Param<ImU64>       frame;
+    float                   fps;
+//
+    bool                    ready           = false;
+    bool                    playing         = false;
+    double                  now             = 0.0f;
+    double                  last_time       = 0.0f;
+};
+
+
 //  "GraphApp"
 //
 class GraphApp
@@ -96,6 +107,11 @@ public:
     //  1.2             Public Member Functions...
     void                initialize                  (void);
     void                Begin                       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    inline void         toggle                      (void)                                              { this->m_child_open[1] = !m_child_open[1]; }
+
+    inline void         open                        (void)                                              { this->m_child_open[1] = true; }
+
+    inline void         close                       (void)                                              { this->m_child_open[1] = false; }
     
     //                  Utility Functions...
     
@@ -117,7 +133,7 @@ protected:
     // *************************************************************************** //
     
     //  MISC CONSTANT VALUES...
-    float                                           ms_SPACING                      = 50.0f;
+    float                                           ms_SPACING                      = 60.0f;
     ImVec2                                          ms_COLLAPSE_BUTTON_SIZE         = ImVec2{15,    15};
     
     //  CONSTANTS...
@@ -154,14 +170,15 @@ protected:
     // *************************************************************************** //
 protected:
     static constexpr size_t                         NX                              = 201ULL;
-    static constexpr std::size_t			        NT				                = 800ULL;
+    static constexpr std::size_t                    NT                              = 1200ULL;
 //
 public:
     using                                           value_type                      = double;
     using                                           FDTD_t                          = cb::FDTD_1D<NX, NT, value_type>;
+    using                                           complex_t                       = FDTD_t::complex_t;
     using                                           re_array                        = FDTD_t::re_array;
-	using 	                                        re_frame 		                = FDTD_t::re_frame;
     using                                           im_array                        = FDTD_t::im_array;
+	using 	                                        re_frame 		                = FDTD_t::re_frame;
 	using 	                                        im_frame 		                = FDTD_t::im_frame;
     //
     //
@@ -172,8 +189,11 @@ public:
     std::atomic<bool>                               data_ready                      = std::atomic<bool>(false);
     std::once_flag                                  init_once;
     //
+    Playback			                            m_playback                      = {     { 0, { 0, NT-1 } },
+                                                                                            120.0f
+                                                                                    };
     bool                                            playing                         = false;      // start paused
-    float                                           playback_fps                    = 30.0f;
+    float                                           playback_fps                    = 120.0f;
     double                                          last_time                       = 0.0;
     int                                             current_frame                   = 0;
     //
@@ -197,7 +217,7 @@ public:
                                                         { 8,        { 1,         500}       },      //  Duration
                                                     };
     //
-    //FDTD_t		                                    ms_model                        = cb::FDTD_1D<NX, NT, double>();
+    FDTD_t		                                    ms_model                        = cb::FDTD_1D<NX, NT, double>();
     re_frame *                                      m_Ez_T                          = nullptr;
 
 
@@ -239,7 +259,7 @@ public:
     //                                          3.  DOCKING SPACE...
     //
     //                                              Main Dockspace:
-    float                                           m_dockspace_ratio               = 0.70f;
+    float                                           m_dockspace_ratio               = 0.85f;
     static constexpr const char *                   m_dockspace_name                = "DockHostSpace##GApp";
     ImGuiDockNodeFlags                              m_dockspace_flags               = ImGuiDockNodeFlags_None;
     ImGuiID                                         m_dockspace_id                  = 0;
@@ -258,12 +278,14 @@ public:
     utl::TableCFG<2>                                m_stepsize_table_CFG            = {};
     utl::TableCFG<2>                                m_sources_table_CFG             = {};
     utl::TableCFG<2>                                m_editor_table_CFG              = {};
+    utl::TableCFG<2>                                m_playback_table_CFG            = {};
     //
     //                                              Table Rows:
     std::vector<utl::WidgetRow>                     ms_FDTD_ROWS                    = {};
     std::vector<utl::WidgetRow>                     ms_STEPSIZE_ROWS                = {};
     std::vector<utl::WidgetRow>                     ms_SOURCES_ROWS                 = {};
     std::vector<utl::WidgetRow>                     ms_EDITOR_ROWS                  = {};
+    std::vector<utl::WidgetRow>                     ms_PLAYBACK_ROWS                = {};
     
     
     //                                          5.  WIDGET VARIABLES...
@@ -276,6 +298,23 @@ public:
     
     //                                          7.  DELAGATOR CLASSES...
     cb::HeatMap                                     m_heatmap;
+    utl::PlotCFG                                    fdtd_1D_time_cfg                = {
+        {   "##1DFDTDPlot",             ImVec2(-1, -1),     ImPlotFlags_None | ImPlotFlags_NoTitle  },
+        {
+            { "x-Node Index  [m dx]",   ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch }, //    ImPlotAxisFlags_LockMin     ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_NoSideSwitch
+            { "E_{z}  [V / m]",            ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch }   // ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_PanStretch
+        }
+    };
+    utl::PlotCFG                                    fdtd_1D_freq_cfg                = {
+        {   "##1DFDTDFreqPlot",         ImVec2(-1, -1),     ImPlotFlags_None | ImPlotFlags_NoTitle  },
+        {
+            { "Frequency  [(q * dt)^{-1}]",         ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_AutoFit }, //    ImPlotAxisFlags_LockMin     ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_NoSideSwitch
+            { "| E_{z}(omega) |  [Norm.]",          ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_AutoFit }   // ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_PanStretch
+        }
+    };
+    //
+    //
+    //
     utl::PlotCFG                                    editor_cfg                      = {
         {   "##FDTD_Editor",            ImVec2(-1, -1),     ImPlotFlags_None | ImPlotFlags_NoTitle  },
         {
@@ -283,7 +322,18 @@ public:
             { "Ez  [V / m]",            ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit }
         }
     };
-    SketchWidget                                    m_editor                        = SketchWidget(editor_cfg);
+    std::vector<SketchWidget::Channel>              m_channels                      = {
+        {// Data.           Cmap.               paint val.      min.        max.            Map Title.
+            {},             Cmap::Perm_E,       {   4.0f,       {1.0f,      16.0f} },       "Relative Permitivitty (Real)",
+            nullptr,        "eps_r'",           "%.2f",                     120.0f
+        //  Map Units.      Scale Title.        Scale Units.                Scale Width.
+        },
+        {
+            {},             Cmap::Perm_B,       {   2.0f,       {0.0f,      8.0f} },        "Relative Permitivitty (Imag)",
+            nullptr,        "eps_r''",          "%.2f",                     120.0f
+        }
+    };
+    SketchWidget                                    m_editor                        = SketchWidget( editor_cfg, std::move(m_channels) );//m_channels);
     app::AppState                                   CBAPP_STATE_NAME;
     
         
@@ -313,8 +363,8 @@ public:
     void                ShowEditorOLD                   (void);
     void                EditorUtility                   (void);
     void                ShowModelParameters             (void);
-    void                ShowFDTD                        (void);
-    void                ShowFDTDControls                (void);
+    void                ShowPlayback                    (void);
+    void                ShowPlaybackControls            (void);
     //
     //void                InitializeData                  (void);
     void                StartDataInitAsync              (void);

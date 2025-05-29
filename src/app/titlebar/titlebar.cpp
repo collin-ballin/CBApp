@@ -141,6 +141,33 @@ void TitleBar::ValidateCache(void)
 }
 
 
+void TitleBar::toggle(void) {
+    this->S.m_show_sidebar_window           = !this->S.m_show_sidebar_window;
+    S.m_windows[ Window::SideBar ].open     = !S.m_windows[ Window::SideBar ].open;
+    this->S.m_sidebar_ratio                 = this->S.m_show_sidebar_window ? app::DEF_SB_OPEN_WIDTH : 0.0f;
+}
+
+
+void TitleBar::open(void) {
+    if (this->S.m_show_sidebar_window)  return;
+        
+    this->S.m_show_sidebar_window           = true;
+    S.m_windows[ Window::SideBar ].open     = true;
+    this->S.m_sidebar_ratio                 = this->S.m_show_sidebar_window;
+}
+
+
+void TitleBar::close(void) {
+    if (!this->S.m_show_sidebar_window) return;
+
+    this->S.m_show_sidebar_window           = false;
+    S.m_windows[ Window::SideBar ].open     = false;
+    this->S.m_sidebar_ratio                 = 0.0f;
+}
+
+
+
+
 // *************************************************************************** //
 //
 //

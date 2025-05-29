@@ -44,11 +44,12 @@ namespace cc {
 static utl::PyStream            proc(app::PYTHON_DUMMY_FPGA_FILEPATH);
 static ImGuiInputTextFlags      write_file_flags            = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue;
 
-static bool                     started                     = false;
 static bool                     enter                       = false;
 static float                    history_s                   = 30.0f;                // seconds visible in sparklines
 static float                    row_height_px               = 60.0f;
-static float                    master_row_height_px        = 400.f;                // independent of per‑row height
+static float                    m_mst_plot_slider_width     = 30.0f;
+
+
 static float                    delay_s                     = 1.0f;                 // command slider
 static char                     line_buf[512]{};                                    // manual send box
 
@@ -65,15 +66,26 @@ static char                     line_buf[512]{};                                
 //
 void CCounterApp::ShowCCPlots(void)
 {
+    static bool                     first_frame             = true;
     static const char *             plot_name               = ms_PLOT_UUIDs[0];
     //
     std::string                     raw;
-    const float                     now                     = static_cast<float>(ImGui::GetTime());
     bool                            got_packet              = false;
     //
     const float                     history_len             = m_history_length.value;
     float                           xmin                    = 0.0f,
                                     xmax                    = m_history_length.value;
+    //
+    //const float                     now                     = static_cast<float>(ImGui::GetTime());
+    static float                    now                     = static_cast<float>(ImGui::GetTime());
+                                    
+                                    
+                                    
+    if ( m_process_running )
+        now += ImGui::GetIO().DeltaTime;
+    
+    
+    //TIME += ImGui::GetIO().DeltaTime;
     const float                     spark_now               = (!m_counter_running ? m_freeze_now
                                                                 : (m_smooth_scroll ? now : m_last_packet_time));
     
@@ -93,10 +105,8 @@ void CCounterApp::ShowCCPlots(void)
                 const float   v         = static_cast<float>(counts[ch]);
                 m_buffers[i].push_back({ now, v });
                 m_max_counts[i]         = std::max(m_max_counts[i], v);
-                m_avg_counts[i]         = ComputeAverage( m_buffers[i], m_avg_mode,
-                                                          m_avg_window_samp.value,
-                                                          m_avg_window_sec.value,
-                                                          spark_now );
+                m_avg_counts[i].push_back({ now, ComputeAverage( m_buffers[i], m_avg_mode, m_avg_window_samp.value,
+                                                                 m_avg_window_sec.value, spark_now ) });
             }
         }
     }
@@ -149,33 +159,64 @@ void CCounterApp::ShowCCPlots(void)
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::CollapsingHeader("Master Plot") )
     {
+        //  5.1.    DISPLAY VERTICAL SLIDER BESIDE PLOT...
+        ImGui::VSliderFloat("##MasterPlotHeight", ImVec2(m_mst_plot_slider_height, m_mst_plot_height), &m_mst_plot_height, 750.0f, 150.0f, "");
+        //
+        //
+        //  5.2.    DISPLAY MASTER PLOT...
+        ImGui::SameLine();
         ImGui::PushID(ms_PLOT_UUIDs[0]);    //  Adjust x‑axis flags: disable AutoFit when paused so ImPlot won't override our limits
         ImPlotAxisFlags xflags = m_mst_xaxis_flags;
         if (!m_counter_running) xflags &= ~ImPlotAxisFlags_AutoFit;
         
-        if (ImPlot::BeginPlot(ms_PLOT_UUIDs[0], ImVec2(-1, master_row_height_px), m_mst_PLOT_flags))    //  m_mst_plot_flags
+        
+        
+        if (ImPlot::BeginPlot(ms_PLOT_UUIDs[0], ImVec2(-1, m_mst_plot_height), m_mst_PLOT_flags))    //  m_mst_plot_flags
         {
             ImPlot::SetupAxes(ms_mst_axis_labels[0], ms_mst_axis_labels[1], xflags, m_mst_yaxis_flags);
             ImPlot::SetupLegend(m_mst_legend_loc, m_mst_legend_flags);
             ImPlot::SetupAxisLimits(ImAxis_X1, xmin, xmax, ImGuiCond_Always);
 
+
             for (int k = 0; k < ms_NUM; ++k)
             {
                 const auto &        buf         = m_buffers[k];
+                const auto &        avg         = m_avg_counts[k];
                 auto &              channel     = ms_channels[k];
                 
                 if ( buf.empty() )
                     continue;
                 
+    
+                //  2.  PLOT AVERAGE COUNTER VALUES...
                 ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
-                ImPlot::SetNextLineStyle(m_plot_colors[k], 3.0f);
+                ImPlot::SetNextLineStyle( ImVec4( m_plot_colors[k].x, m_plot_colors[k].y, m_plot_colors[k].z, 0.35f ),   10.0f);
                 ImPlot::SetNextFillStyle(m_plot_colors[k], 0.0f);
+                if (!channel.vis.average)   ImPlot::HideNextItem( true, ImGuiCond_Always );
+                else                        ImPlot::HideNextItem( false, ImGuiCond_Always );
+                ImPlot::PlotLine("",
+                                 &avg.front().x, &avg.front().y,
+                                 static_cast<int>( avg.size() ), ImPlotLineFlags_Shaded,
+                                 static_cast<int>( avg.offset() ), sizeof(ImVec2));
+                ImPlot::PopStyleVar();
+                
+                
+                //  1.  PLOT MAIN COUNTER VALUES...
+                ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
+                ImPlot::SetNextLineStyle(m_plot_colors[k], 1.5f);
+                ImPlot::SetNextFillStyle(m_plot_colors[k], 0.0f);
+                if (!channel.vis.master)    ImPlot::HideNextItem( true, ImGuiCond_Always );
+                else                        ImPlot::HideNextItem( false, ImGuiCond_Always );
                 ImPlot::PlotLine(ms_channels[k].name,
                                  &buf.front().x, &buf.front().y,
                                  static_cast<int>( buf.size() ), ImPlotLineFlags_Shaded,
                                  static_cast<int>( buf.offset() ), sizeof(ImVec2));
-                    
-            }// END FOR-LOOP.
+                ImPlot::PopStyleVar();
+                                 
+            
+            
+            } // END FOR-LOOP.
+            
             ImPlot::EndPlot();
         }
         ImGui::PopID();
@@ -198,7 +239,7 @@ void CCounterApp::ShowCCPlots(void)
     {
         if (ImGui::BeginTable(ms_PLOT_UUIDs[1],    6,      ms_i_plot_table_flags)) //  ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg
         {
-            ImGui::TableSetupColumn("Visibility",   ms_i_plot_column_flags, -1);
+            ImGui::TableSetupColumn("Visibility",   ms_i_plot_column_flags, 2 * ms_I_PLOT_COL_WIDTH);
             ImGui::TableSetupColumn("Counter(s)",   ms_i_plot_column_flags, ms_I_PLOT_COL_WIDTH);
             ImGui::TableSetupColumn("Max",          ms_i_plot_column_flags, ms_I_PLOT_COL_WIDTH);
             ImGui::TableSetupColumn("Avg.",         ms_i_plot_column_flags, ms_I_PLOT_COL_WIDTH);
@@ -215,13 +256,11 @@ void CCounterApp::ShowCCPlots(void)
 
                 //  1.  COLUMN 1.       VISIBILITY SWITCHES...
                 ImGui::TableSetColumnIndex(0);
-                char master_ID[48];
-                std::snprintf(master_ID, 48, "##MasterVis%lu", row);
-                ImGui::Checkbox( master_ID,     &channel.vis.master );
-                //ImGui::SameLine();
-                //ImGui::Checkbox( channel.vis.average_ID,    &channel.vis.average );
-                //ImGui::SameLine();
-                //ImGui::Checkbox( channel.vis.single_ID,    &channel.vis.single );
+                ImGui::Checkbox( channel.vis.master_ID,     &channel.vis.master );
+                ImGui::SameLine();
+                ImGui::Checkbox( channel.vis.average_ID,    &channel.vis.average );
+                ImGui::SameLine();
+                ImGui::Checkbox( channel.vis.single_ID,    &channel.vis.single );
                 
                 
                 
@@ -243,7 +282,7 @@ void CCounterApp::ShowCCPlots(void)
                 //                   m_avg_window_samp.value,
                 //                   m_avg_window_sec.value,
                 //                   spark_now);
-                ImGui::Text("%.2f", m_avg_counts[row]);
+                ImGui::Text("%.2f", (buf.empty()) ? 0.0f : m_avg_counts[row].top().y );
 
 
 
@@ -256,14 +295,14 @@ void CCounterApp::ShowCCPlots(void)
 
                 //  6.  COLUMN 6.       ANIMATED PLOT...
                 ImGui::TableSetColumnIndex(5);
-                //if ( channel.vis.single )
-                //{
+                if ( channel.vis.single )
+                {
                     ImGui::PushID(static_cast<int>(row));
                     if (!buf.empty())
                         utl::ScrollingSparkline(spark_now, m_history_length.value, buf, m_plot_flags,
                                                 m_plot_colors[row], ImVec2(-1, row_height_px), ms_CENTER);
                     ImGui::PopID();
-                //}
+                }
                 
                 
             }// END "FOR-LOOP".
@@ -278,6 +317,7 @@ void CCounterApp::ShowCCPlots(void)
 
 
 
+    first_frame = false;
     //ImPlot::PopColormap();
     //ImGui::End();
 }
@@ -441,22 +481,6 @@ void CCounterApp::init_ctrl_rows(void)
     ms_CTRL_ROWS            = {
     //
     //  1.  CONTROL PARAMETERS [TABLE]...
-        {"Test",                                    []
-            {// BEGIN.
-                const char *    popup_id    = "Delete?";
-                if (ImGui::Button("Delete"))
-                    ImGui::OpenPopup(popup_id);
-                    
-                ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-                ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-
-                utl::Popup_AskOkCancel(popup_id);
-            
-            }// END.
-        },
-    //
-    //
-    //
         {"Record",                                  [this]
             {// BEGIN.
             //
@@ -481,12 +505,12 @@ void CCounterApp::init_ctrl_rows(void)
                 //  2.  START/STOP PYTHON SCRIPT BUTTON...
                 //
                 //      CASE 1 :    SCRIPT IS  **NOT**  RUNNING...
-                    if (!started)
+                    if (!m_process_running)
                     {
                         if (ImGui::Button("Start Process", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) )
                         {
-                            started         = proc.start();
-                            if (!started) {
+                            m_process_running         = proc.start();
+                            if (!m_process_running) {
                                 ImGui::OpenPopup("launch_error");
                             }
                             else {
@@ -502,7 +526,7 @@ void CCounterApp::init_ctrl_rows(void)
                         ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   app::DEF_APPLE_RED );
                         if (ImGui::Button("Stop Process", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
                             proc.stop();
-                            started = false;
+                            m_process_running = false;
                         }
                         ImGui::PopStyleColor(2);
                     }
@@ -518,7 +542,7 @@ void CCounterApp::init_ctrl_rows(void)
                     ImGui::EndPopup();
                 }
                 //
-                if (started)    {
+                if (m_process_running)    {
                     char cmd[ms_BUFFER_SIZE];
                     std::snprintf(cmd, ms_BUFFER_SIZE, "integration_window %.3f\n", m_integration_window.value);
                     proc.send(cmd);
@@ -529,14 +553,14 @@ void CCounterApp::init_ctrl_rows(void)
             //
             } // END.
         },
-        {"Communicate",                             []
+        {"Communicate",                             [this]
             {// BEGIN.
                 ImGui::BeginGroup();
                 //
                 //
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
                 if ( ImGui::InputText("##send", line_buf, IM_ARRAYSIZE(line_buf),  ImGuiInputTextFlags_EnterReturnsTrue) )   {
-                    if (started)    {
+                    if (m_process_running)    {
                     char cmd[ms_BUFFER_SIZE];
                         std::snprintf(cmd, ms_BUFFER_SIZE, "integration_window %.3f\n", delay_s);
                         proc.send(cmd);
@@ -545,7 +569,7 @@ void CCounterApp::init_ctrl_rows(void)
                 ImGui::SameLine(0.0f, pad);
                 if ( ImGui::Button("Send", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) || ImGui::IsItemDeactivatedAfterEdit() )
                 {
-                    if (started && line_buf[0]) {
+                    if (m_process_running && line_buf[0]) {
                         proc.send(line_buf);        // passthrough; must include \n if desired
                         line_buf[0]     = '\0';
                     }
@@ -568,7 +592,7 @@ void CCounterApp::init_ctrl_rows(void)
                 if ( ImGui::SliderScalar("##CoincidenceWindow",    ImGuiDataType_U64,      &m_coincidence_window.value,
                                         &m_coincidence_window.limits.min, &m_coincidence_window.limits.max,  "%llu ticks", SLIDER_FLAGS) )
                 {
-                    if (started)    {
+                    if (m_process_running)    {
                         char cmd[ms_BUFFER_SIZE];
                         std::snprintf(cmd, ms_BUFFER_SIZE, "coincidence_window %llu\n", m_coincidence_window.value);
                         proc.send(cmd);
@@ -582,7 +606,7 @@ void CCounterApp::init_ctrl_rows(void)
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
                 if ( ImGui::SliderScalar("##IntegrationWindow",          ImGuiDataType_Double,       &m_integration_window.value,
                                     &m_integration_window.limits.min,     &m_integration_window.limits.max,     "%.3f seconds", SLIDER_FLAGS) ) {
-                    if (started) {
+                    if (m_process_running) {
                         char cmd[ms_BUFFER_SIZE];
                         std::snprintf(cmd, ms_BUFFER_SIZE, "integration_window %.3f\n", m_integration_window.value);
                         proc.send(cmd);
@@ -655,8 +679,10 @@ void CCounterApp::init_ctrl_rows(void)
                 
                 ImGui::SameLine();
                 
-                if ( ImGui::Button("Reset Averages") )
-                    std::fill(std::begin(m_avg_counts), std::end(m_avg_counts), 0.f);
+                if ( ImGui::Button("Reset Averages") ) {
+                    for (auto & vec : m_avg_counts)
+                        vec.clear(); //b.Erase();
+                }
                 
                 ImGui::SameLine();
                 
@@ -678,12 +704,6 @@ void CCounterApp::init_ctrl_rows(void)
     
 
     ms_APPEARANCE_ROWS  = {
-        {"Master Plot Height",                      []
-            {
-                ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-                ImGui::SliderFloat("##MasterPlotHeight",    &master_row_height_px,  120,  750.f,  "%.0f px",  SLIDER_FLAGS);
-            }
-        },
     //
         {"Individual Plot Height",                      []
             {

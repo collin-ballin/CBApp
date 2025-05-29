@@ -144,32 +144,16 @@ public:
 protected:
     //  2.A             PROTECTED DATA-MEMBERS...
     // *************************************************************************** //
-    
     //                  1.  BOOLEANS...
-    //                          ...
-    
-    
     //                  2.  APPEARANCE...
-    //                          ...
-    
-    
-
-    
-    
     //                  4.  MISC INFORMATION...
-    //                          ...
-    
-    
     //                  5.  IMPORTANT VARIABLES...
-    //                          ...
-    
     
     //                  6.  DELAGATOR CLASSES...
     app::AppState       CBAPP_STATE_NAME                = app::AppState();
     SideBar             m_sidebar;
     TitleBar            m_titlebar;
     MenuBar             m_menubar;
-    //utl::PyStream       m_pystream                      = utl::PyStream(app::PYTHON_FILEPATH, );
     
     //                  9.  APPLICATION SUB-CLASSES...
     CCounterApp         m_counter_app;
@@ -185,7 +169,7 @@ protected:
     //  2.B             PROTECTED MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //  2B.1            Class Initializations.      [init.cpp]...
+    //  2B.1            Class Initializations.              [init.cpp]...
     //              1A.
     void                init                        (void);                     //  [init.cpp].
     void                CreateContext               (void);                     //  [init.cpp].
@@ -198,23 +182,27 @@ protected:
     void                init_asserts                (void);                     //  [init.cpp].
     
     
-    //  2C.1            Main GUI Functions.         [app.cpp]...
+    //  2C.1            Main GUI Functions.                 [app.cpp]...
     void                run_IMPL                    (void);                                                         //  [app.cpp].
     void                ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                TestTabBar                  (void);
     void                ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     
     
-    //  2D.1            Primary Menu Functions.     [interface.cpp]...
+    //  2D.1            Additional Tools / Applications.    [tools.cpp]...
     void                stream_test                 (void);                                                         //  [main_application.cpp].
     void                ShowColorTool               ([[maybe_unused]] const char * ,    [[maybe_unused]] bool * ,   [[maybe_unused]] ImGuiWindowFlags);
     void                ColorShaderTool             (void);
     void                ColorMapCreatorTool         (void);
-    
-    
-    //  2E.1            Set-Up GUI Functions.       [app.cpp]...
+    //
+    //  2D.2            Utility Functions.                  [main_application.cpp]...
+    void                KeyboardShortcutHandler     (void);
+    void                SaveHandler                 (void);
     void                RebuildDockLayout           (void);
+    
+    
+    //  2E.1            Testing / Temporary Functions.
+    void                TestTabBar                  (void);
     
     
     

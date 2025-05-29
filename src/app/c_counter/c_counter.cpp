@@ -23,6 +23,13 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+void CCounterApp::toggle(void)     { this->m_child_open[1] = !m_child_open[1]; }
+
+void CCounterApp::open(void)       { this->m_child_open[1] = true; }
+
+void CCounterApp::close(void)      { this->m_child_open[1] = false; }
+
+
 //  "Begin"
 //
 void CCounterApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
@@ -84,7 +91,9 @@ void CCounterApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
     
     if ( toolbar::begin("##sidebar_toolbar", ctrl_toolbar) )
     {
-        if ( utl::DirectionalButton("##toggle", m_child_open[1] ? Anchor::South : Anchor::North, ms_COLLAPSE_BUTTON_SIZE) )
+        
+        ImGui::SetNextItemShortcut(ImGuiMod_Shift | ImGuiKey_Tab, ImGuiInputFlags_RouteActive | ImGuiInputFlags_Tooltip);
+        if ( utl::DirectionalButton("##toggle", m_child_open[1] ? Anchor::South : Anchor::North, ms_COLLAPSE_BUTTON_SIZE ) )
         {
             m_child_open[1]     = !m_child_open[1];
             //sidebar_ratio       = show_sidebar ? 0.60 : 0.05f;

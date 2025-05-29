@@ -54,7 +54,7 @@ AppState::~AppState(void) = default;
 //  1.2     STRUCT UTILITY FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-
+    
 //  "SetDarkMode"
 //
 void AppState::SetDarkMode(void) {
@@ -282,6 +282,7 @@ void AppState::SetLightMode(void) {
 //  "LoadCustomColorMaps"
 //
 void AppState::LoadCustomColorMaps(void) {
+    IM_ASSERT( static_cast<int>( Cmap::IMPLOT_END ) == ImPlot::GetColormapCount() && "The first item in the ENUM \"Colormat_t\" does NOT start at the FIRST COLORMAP INDEX.");
 
     for (auto & map : info::DEF_COLORMAPS) {
         ImPlot::AddColormap( map.first, map.second.data(), static_cast<int>(map.second.size()), /*qual=*/false );

@@ -351,6 +351,52 @@ ImVec2 GetImGuiWindowCoords(const char * uuid, const Anchor & anchor)
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "Popup_Save"
+//
+bool Popup_Save(const char * uuid) {
+
+    if (ImGui::BeginPopupModal(uuid, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        //  TOP - BAR / PROMPT...
+        ImGui::Text("Here is a placeholder POP-UP window for saving the current application data.");
+        //
+        //
+        ImGui::NewLine();
+        ImGui::Text("Eventually, this will be a FILE DIALOGUE window that is native to the current Operating System.");
+        ImGui::Text("For now, however, this will remain a Dear ImGui MODAL POP-UP Window...");
+        const float width           = ImGui::GetItemRectSize().x;
+        const float line_height     = ImGui::GetTextLineHeightWithSpacing();
+        
+        ImGui::Dummy( ImVec2( 0, 2 * line_height) );
+        
+        
+        //  BOTTOM BAR...
+        ImGui::Separator();
+        ImGui::Dummy( ImVec2( 0, 0.5 * line_height ) );
+
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        
+        
+        ImGui::SameLine();
+        ImGui::Dummy( ImVec2( 0.70 * width, 0) );       ImGui::SameLine();
+        //
+        ImGui::SetItemDefaultFocus();
+        if (ImGui::Button("Save", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::Dummy( ImVec2( 0, 0.5 * line_height) );
+
+
+        ImGui::EndPopup();
+    }// END POP-UP.
+    
+    return true;
+}
+
+
+
 //  "Popup_AskOkCancel"
 //
 bool Popup_AskOkCancel(const char * uuid) {
