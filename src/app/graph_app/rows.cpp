@@ -506,9 +506,12 @@ void GraphApp::init_ctrl_rows(void)
     //
         { "Brush Shape",        [this]//    BEGIN ROW.
             {
-                  //    ImGui::Combo("##FDTDEditor_BrushShape",         &sketch::brush_shape, sketch::brush_shapes, IM_ARRAYSIZE(sketch::brush_shapes));
-                  //    ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-                  //    ImGui::SliderInt( "##FDTDEditor_BrushSize", this->m_editor.get_brush_size(), sketch::brush_shapes, IM_ARRAYSIZE(sketch::brush_shapes)    );
+                BrushShape &    shape       = *m_editor.get_brush_shape();
+                int             int_shape   = static_cast<int>( shape );
+                
+                if ( ImGui::Combo("##FDTDEditor_BrushShape", &int_shape, m_editor.BRUSH_SHAPE_LABELS.data(), m_editor.BRUSH_SHAPE_LABELS.size() ) ) {
+                    m_editor.set_brush_shape(int_shape);
+                }
             }
         } // END ROW.
     //
@@ -594,6 +597,19 @@ void GraphApp::init_ctrl_rows(void)
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
                 ImGui::SliderFloat("##FDTD_PlaybackSpeed", &m_playback.fps, 0.1f, 240.0f, "%.1f  FPS");
                 ImGui::SameLine(0.0f, pad);
+            //
+            ImGui::EndDisabled();
+        }
+        }, // END ROW.
+    //
+        {"Plots",                           [this]
+        {
+            //  WIDGET 1.  PLAYBACK SPEED SLIDER
+            ImGui::BeginDisabled( !m_playback.ready );
+            //
+                ImGui::Checkbox("Time Domain",          &this->m_SHOW_PLOTS[0]);
+                ImGui::SameLine();
+                ImGui::Checkbox("Freqiency Domain",     &this->m_SHOW_PLOTS[1]);
             //
             ImGui::EndDisabled();
         }

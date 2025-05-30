@@ -89,7 +89,7 @@ void MenuBar::Begin([[maybe_unused]] const char *       uuid,
         }
         
         if (ImGui::BeginMenu("Tools")) {        //  5.  "Tools" MENU...
-            ImGui::TextDisabled("Add some tools here...");      //  5.1     SHOW VISIBILITY TOGGLE MENU HERE...
+            this->disp_tools_menubar();
             ImGui::EndMenu();
         }
         
@@ -332,7 +332,7 @@ void MenuBar::disp_show_windows_menubar(void)
     
     //  3.  DRAW EACH VISIBILITY STATE IN "Tools" WINDOWS...                | SUB-MENU.
     ImGui::Separator();
-    ImGui::TextDisabled("Tools");
+    ImGui::TextDisabled("Basic Tools");
         for (idx = S.ms_TOOL_WINDOWS_BEGIN; idx < S.ms_TOOL_WINDOWS_END; ++idx)
         {
             if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
@@ -346,7 +346,23 @@ void MenuBar::disp_show_windows_menubar(void)
     
     
     
-    //  4.  DRAW EACH VISIBILITY STATE IN "Demos" WINDOWS...                | SUB-MENU.
+    //  4.  DRAW EACH VISIBILITY STATE IN "*MY* TOOLS" WINDOWS...           | SUB-MENU.
+    ImGui::Separator();
+    ImGui::TextDisabled("Collin's Tools");
+        for (idx = S.ms_MY_TOOLS_WINDOWS_BEGIN; idx < S.ms_MY_TOOLS_WINDOWS_END; ++idx)
+        {
+            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                                 nullptr,
+                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+            {
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+            }
+        }
+    //  END "Tools" SUB-MENU.
+    
+    
+    
+    //  5.  DRAW EACH VISIBILITY STATE IN "Demos" WINDOWS...                | SUB-MENU.
     ImGui::Separator();
     ImGui::TextDisabled("Demos");
         for (idx = S.ms_DEMO_WINDOWS_BEGIN; idx < S.ms_DEMO_WINDOWS_END; ++idx)
@@ -362,6 +378,67 @@ void MenuBar::disp_show_windows_menubar(void)
 
     return;
 }
+
+
+
+//  "disp_tools_menubar"
+//
+void MenuBar::disp_tools_menubar(void)
+{
+    static size_t                   idx                 = static_cast<size_t>(0);
+    static app::WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
+    
+    
+    //  1.  SUB-MENU    #1 :   "CBApp Applications"...
+    ImGui::TextDisabled("CBApp Applications");
+    {
+        for (idx = S.ms_APP_WINDOWS_BEGIN; idx < S.ms_APP_WINDOWS_END; ++idx) {
+            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                                 nullptr,
+                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+            {
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+            }
+        }
+    }//  END "Basic Tools" SUB-MENU.
+    
+    
+    
+    //  2.  SUB-MENU    #2 :   "Basic Tools"...
+    ImGui::Separator();
+    ImGui::TextDisabled("Basic Tools");
+    {
+        for (idx = S.ms_TOOL_WINDOWS_BEGIN; idx < S.ms_TOOL_WINDOWS_END; ++idx) {
+            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                                 nullptr,
+                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+            {
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+            }
+        }
+    }//  END "Custom Tools" SUB-MENU.
+    
+    
+    
+    //  3.  SUB-MENU    #3 :   "Custom Tools"...
+    ImGui::Separator();
+    ImGui::TextDisabled("Custom Tools");
+    {
+        for (idx = S.ms_MY_TOOLS_WINDOWS_BEGIN; idx < S.ms_MY_TOOLS_WINDOWS_END; ++idx) {
+            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                                 nullptr,
+                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+            {
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+            }
+        }
+    }//  END "Custom Tools" SUB-MENU.
+    
+
+
+    return;
+}
+
 
 
 //  "disp_help_menubar"

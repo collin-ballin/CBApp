@@ -72,7 +72,7 @@ inline T round_to(T value)
 }
 */
 
-//  "make_real_vector"
+//  "  "
 //
 template< typename complex_t >
 inline std::vector<typename complex_t::value_type>

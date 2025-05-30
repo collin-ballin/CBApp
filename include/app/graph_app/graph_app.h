@@ -169,8 +169,8 @@ protected:
     //  2.B             FDTD TYPENAME ALIASES...
     // *************************************************************************** //
 protected:
-    static constexpr size_t                         NX                              = 201ULL;
-    static constexpr std::size_t                    NT                              = 1200ULL;
+    static constexpr size_t                         NX                              = 401ULL;
+    static constexpr std::size_t                    NT                              = 1800ULL;
 //
 public:
     using                                           value_type                      = double;
@@ -299,18 +299,20 @@ public:
     //                                          7.  DELAGATOR CLASSES...
     cb::HeatMap                                     m_heatmap;
     utl::PlotCFG                                    fdtd_1D_time_cfg                = {
-        {   "##1DFDTDPlot",             ImVec2(-1, -1),     ImPlotFlags_None | ImPlotFlags_NoTitle  },
+        {   "##1DFDTDTimePlot",         ImVec2(-1, -1),     ImPlotFlags_None | ImPlotFlags_NoTitle  },
         {
-            { "x-Node Index  [m dx]",   ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch }, //    ImPlotAxisFlags_LockMin     ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_NoSideSwitch
-            { "E_{z}  [V / m]",            ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch }   // ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_PanStretch
-        }
+            { "x-Node Index    [m dx]",             ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch }, //    ImPlotAxisFlags_LockMin     ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_NoSideSwitch
+            { "Ez    [V / m]",                      ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch }   // ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_PanStretch
+        },
+            { ImPlotLocation_NorthEast, ImPlotLegendFlags_None}
     };
     utl::PlotCFG                                    fdtd_1D_freq_cfg                = {
         {   "##1DFDTDFreqPlot",         ImVec2(-1, -1),     ImPlotFlags_None | ImPlotFlags_NoTitle  },
         {
-            { "Frequency  [(q * dt)^{-1}]",         ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_AutoFit }, //    ImPlotAxisFlags_LockMin     ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_NoSideSwitch
-            { "| E_{z}(omega) |  [Norm.]",          ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_AutoFit }   // ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_PanStretch
-        }
+            { "Frequency    [1 / (q * dt)]",        ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_Lock }, //    ImPlotAxisFlags_LockMin     ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_NoSideSwitch
+            { "| Ez(w) |    [Norm.]",               ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_Lock }   // ImPlotAxisFlags_AutoFit   ImPlotAxisFlags_PanStretch
+        },
+            { ImPlotLocation_NorthEast, ImPlotLegendFlags_None}
     };
     //
     //
@@ -322,15 +324,16 @@ public:
             { "Ez  [V / m]",            ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit }
         }
     };
+    bool                                            m_SHOW_PLOTS [2]                = { true, false };
     std::vector<SketchWidget::Channel>              m_channels                      = {
         {// Data.           Cmap.               paint val.      min.        max.            Map Title.
             {},             Cmap::Perm_E,       {   4.0f,       {1.0f,      16.0f} },       "Relative Permitivitty (Real)",
-            nullptr,        "eps_r'",           "%.2f",                     120.0f
+            nullptr,        "Epsilon-r ' ",         "%.2f",                     120.0f
         //  Map Units.      Scale Title.        Scale Units.                Scale Width.
         },
         {
             {},             Cmap::Perm_B,       {   2.0f,       {0.0f,      8.0f} },        "Relative Permitivitty (Imag)",
-            nullptr,        "eps_r''",          "%.2f",                     120.0f
+            nullptr,        "Epsilon-r '' ",        "%.2f",                     120.0f
         }
     };
     SketchWidget                                    m_editor                        = SketchWidget( editor_cfg, std::move(m_channels) );//m_channels);

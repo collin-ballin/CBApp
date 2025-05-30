@@ -154,17 +154,34 @@ void SketchWidget::End(void)
 // *************************************************************************** //
 
 void SketchWidget::draw_mode_input() {
-    if (ImPlot::IsPlotHovered() && ImGui::IsMouseDown(0)) {
-        const ImPlotPoint mp = ImPlot::GetPlotMousePos();
-        int cx = (int)mp.x, cy = (int)mp.y;
+    if (ImPlot::IsPlotHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+        // mouse position in plot space (continuous)
+        ImPlotPoint mp = ImPlot::GetPlotMousePos();
+
+        // convert to integer grid indices, clamped to valid range
+        int gx = static_cast<int>(std::floor(mp.x + 0.5));
+        int gy = static_cast<int>(std::floor(mp.y + 0.5));
+
+        // flip Y so row‑0 corresponds to the bottom of the plot
+        gy = m_res_y - 1 - gy;
+
+        // guard against out‑of‑bounds clicks
+        if (gx < 0 || gx >= m_res_x || gy < 0 || gy >= m_res_y) {
+            m_drawing = false;
+            reset_prev();
+            return;
+        }
+
         if (m_prev_x < 0)
-            draw_line(cx, cy, cx, cy);
+            draw_line(gx, gy, gx, gy);
         else
-            draw_line(m_prev_x, m_prev_y, cx, cy);
+            draw_line(m_prev_x, m_prev_y, gx, gy);
+
         m_drawing = true;
-        m_prev_x  = cx;
-        m_prev_y  = cy;
-    } else {
+        m_prev_x  = gx;
+        m_prev_y  = gy;
+    }
+    else {
         m_drawing = false;
         reset_prev();
     }

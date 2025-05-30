@@ -336,31 +336,65 @@ namespace cmap {
     //
     //  LOOK-UP TABLE (LUT) RESOLUTION...
     constexpr int                   LUT_SIZE            = 256;
+//
+//
+//
+    enum class SampleMode { Auto = 0, Custom = 1 };
+
+    static SampleMode load_mode   = SampleMode::Auto;
+    static int        load_N      = 32;      // desired table points when custom
+
+    static SampleMode export_load_mode = SampleMode::Auto;
+    static int        export_N    = 256;     // desired LUT size when custom
+    // (export_N slider will be clamped to ≥ current control-point count)
+//
+//
+//
+    // 2) Control‑point storage ------------------------------------------
+    static std::vector<std::pair<float,ImVec4>> pts = {
+        {0.0f, ImVec4(0.231f, 0.298f, 0.753f, 1.0f)},
+        {1.0f, ImVec4(0.865f, 0.000f, 0.000f, 1.0f)}
+    };
+//
+//
+//
+    static char                 csv_buf[4096]           = "(#FF0000FF, 0.000), (#FF7F00FF, 0.167), (#FFFF00FF, 0.333), (#00FF00FF, 0.500), (#0000FFFF, 0.667), (#4B0082FF, 0.833), (#8F00FFFF, 1.000)";
+    static char                 name_buf[BUFF_SIZE]     = "MyColormap";
+    static int                  load_idx                = ImPlotColormap_Viridis;
+//
+//
+//
+    static ImPlotColormap       cmap_custom             = -1;
+    static bool                 applied                 = false;
+    static int                  export_mode             = 1;
+//
+//
+//
 }
-using namespace cmap;
+
 
 // ------------------------- helpers -----------------------------------------
-static ImVec4 lerp(const ImVec4 &a, const ImVec4 &b, float t) {
+static ImVec4 lerp(const ImVec4 &a, const ImVec4 & b, float t) {
     return ImVec4(a.x + (b.x - a.x) * t,
                   a.y + (b.y - a.y) * t,
                   a.z + (b.z - a.z) * t,
                   a.w + (b.w - a.w) * t);
 }
 
-static ImVec4 sample_cmap(float t, const std::vector<std::pair<float,ImVec4>> &pts)
+static ImVec4 sample_cmap(float t, const std::vector<std::pair<float,ImVec4>> & points)
 {
-    if (pts.empty())                   return ImVec4(0,0,0,1);
-    if (t <= pts.front().first)        return pts.front().second;
-    if (t >= pts.back().first)         return pts.back().second;
-    for (size_t i = 0; i + 1 < pts.size(); ++i) {
-        const auto &l = pts[i];
-        const auto &r = pts[i + 1];
+    if (points.empty())                   return ImVec4(0,0,0,1);
+    if (t <= points.front().first)        return points.front().second;
+    if (t >= points.back().first)         return points.back().second;
+    for (size_t i = 0; i + 1 < points.size(); ++i) {
+        const auto &l = points[i];
+        const auto &r = points[i + 1];
         if (t >= l.first && t <= r.first) {
             float u = (t - l.first)/(r.first - l.first);
             return lerp(l.second, r.second, u);
         }
     }
-    return pts.back().second; // fallback
+    return points.back().second; // fallback
 }
 
 
@@ -373,8 +407,8 @@ static bool parse_hex_rgba(const char* str, ImVec4 &out) {
     out.x=r/255.0f; out.y=g/255.0f; out.z=b/255.0f; out.w=a/255.0f; return true;
 }
 
-static bool load_from_csv(const char *input, std::vector<std::pair<float,ImVec4>>&pts) {
-    pts.clear();
+static bool load_from_csv(const char * input, std::vector<std::pair<float,ImVec4>> & points) {
+    points.clear();
     const char *p=input;
     while(*p) {
         // skip whitespace and optional opening parenthesis
@@ -396,26 +430,46 @@ static bool load_from_csv(const char *input, std::vector<std::pair<float,ImVec4>
         while(*p && *p!=')' && *p!=',') ++p;
         if(*p==')') ++p; // consume ')'
         // push
-        pts.emplace_back(std::clamp(pos,0.0f,1.0f), col);
+        points.emplace_back(std::clamp(pos,0.0f,1.0f), col);
         // skip any trailing commas
         while(*p && (*p==','||std::isspace(*p))) ++p;
     }
     // sort by position
-    std::sort(pts.begin(),pts.end(),[](auto&a,auto&b){return a.first<b.first;});
-    return !pts.empty();
+    std::sort(points.begin(),points.end(),[](auto&a,auto&b){return a.first<b.first;});
+    return !points.empty();
 }
 
 
-
-
-// -------------------- main UI function -------------------------------------
-void App::ColorMapCreatorTool()
+// -------------------- More UI Helpers -------------------------------------
+auto RadioPair = [](const char * label1, const char * label2, cmap::SampleMode& m)
 {
-    // 1) Demo widgets (unchanged) ---------------------------------------
+    int v = static_cast<int>(m);
+    ImGui::RadioButton(label1, &v, 0);
+    ImGui::SameLine();
+    ImGui::RadioButton(label2, &v, 1);
+    m = static_cast<cmap::SampleMode>(v);
+};
+
+
+
+
+
+
+
+
+
+// ──────────────────────────────────────────────────────────────────────
+//  FUNCTIONS...
+// ──────────────────────────────────────────────────────────────────────
+
+//  "CMAPDemoWidget"
+//
+void CMAPDemoWidget(void)
+{
     static int      cmap_demo       = ImPlotColormap_Viridis;
     static float    t_demo          = 0.5f;
     static ImVec4   col_demo;
-    
+
     ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     //
     if (ImGui::TreeNode("Demo Widgets"))
@@ -443,67 +497,217 @@ void App::ColorMapCreatorTool()
         ImGui::TreePop();
     }
 
+    return;
+}
+
+
+
+// ──────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────
+
+// ──────────────────────────────────────────────────────────────────────
+// 1.  LOADING FUNCTION...
+// ──────────────────────────────────────────────────────────────────────
+bool CMAPLoader(void)
+{
+    using namespace cmap;
+
+    // 5) LOAD COLOR MAP... -------------------------------------------------
+    //
+    // ----------- LOAD BUILT‑IN ----------------------------------------
+    const int                   cmap_count              = ImPlot::GetColormapCount();
+    const char *                current_name            = ImPlot::GetColormapName(load_idx);
+    
+    
+    ImGui::TextUnformatted("Load colormap from CSV values.  Ex: \"(#FF0000FF, 0.00), (#00FF0088, 0.50), (#0000FFFF, 0.99)\"");
+    
+    ImGui::InputTextMultiline("##CSV", csv_buf, IM_ARRAYSIZE(csv_buf), ImVec2(-FLT_MIN, 60));
+    //ImGui::SameLine();
+    if(ImGui::Button("Parse CSV")) {
+        if(!load_from_csv(csv_buf, pts)) ImGui::OpenPopup("csv_err");
+    }
+    if(ImGui::BeginPopupModal("csv_err", nullptr, ImGuiWindowFlags_AlwaysAutoResize)){
+        ImGui::Text("Failed to parse CSV string.\nExpected format: (#RRGGBBAA, pos), …");
+        if(ImGui::Button("OK")) ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+    
+    
+    
+    
+    
+    // ──────────────────────────────────────────────────────────────────────
+    // 3.  LOAD section  (insert inside your existing “Load Colormap” UI)
+    // ──────────────────────────────────────────────────────────────────────
+    ImGui::SeparatorText("Load Sampling");
+    ImGui::BeginGroup();
+    //
+        RadioPair("Auto##load", "Custom##load", load_mode);
+        if (load_mode == SampleMode::Custom) {
+            ImGui::SameLine();
+            ImGui::SliderInt("##loadN", &load_N, 2, 256, "Create %d Colors");
+        }
+    //
+    ImGui::EndGroup();
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+        ImGui::SetTooltip( "Compute N evenly-distributed color-samples from the colormap." );
+
+
+
+    utl::LeftLabel2("Load Colormap", LABEL_WIDTH,   MARGIN);
+    ImGui::PushID("load_section");
+    if(ImGui::BeginCombo("##LoadColormap", current_name))
+    {
+        for(int n=0;n<cmap_count;++n) {
+            bool sel = (load_idx==n);
+            if(ImGui::Selectable(ImPlot::GetColormapName(n), sel)) load_idx=n;
+            if(sel) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::SameLine();
+    if( ImGui::Button("Load", ImVec2(-1, 0)) )
+    {
+        pts.clear();
+        int src_sz = ImPlot::GetColormapSize(load_idx);
+
+        // number of samples we’ll actually pull
+        int N = (load_mode == SampleMode::Auto)
+                  ? src_sz
+                  : std::clamp(load_N, 2, src_sz);
+
+        for (int i = 0; i < N; ++i) {
+            // evenly spaced indices through original map
+            int src_idx = static_cast<int>(std::round(i * (src_sz - 1) / float(N - 1)));
+            float t     = (N > 1) ? i / float(N - 1) : 0.0f;
+            pts.emplace_back(t, ImPlot::GetColormapColor(src_idx, load_idx));
+        }
+        // ensure unique name suggestion
+        std::snprintf(name_buf,sizeof(name_buf),"%s_copy", current_name);
+    }
+    ImGui::PopID();
 
 
 
     // ------------------------------------------------------------------
-    // 2) Control‑point storage ------------------------------------------
-    ImGui::SeparatorText("Custom Colormap Editor");
+    // 6) Name input ------------------------------------------------------
+    
+    ImGui::Separator();
+    utl::LeftLabel2("Colormap Name", LABEL_WIDTH);
+    ImGui::InputText("##ColormapName",  name_buf,   BUFF_SIZE);
+    if ( ImGui::Button("Add Control Point") ) {
+        pts.emplace_back(0.5f, ImGui::GetStyle().Colors[ImGuiCol_PlotLines]);
+        //  order_changed = true;   // will renormalize below
+    }
+    ImGui::SameLine();
+    bool    apply               = ImGui::Button("Apply");
+    
+    
+    return apply;
+}
+
+
+
+//  "CMAPTable"
+//
+void CMAPTable(void)
+{
+    using namespace cmap;
     bool                    changed             = false;
     bool                    pos_changed         = false;   // slider modified
     bool                    order_changed       = false;    // up/down swap
-    static std::vector<std::pair<float,ImVec4>> pts = {
-        {0.0f, ImVec4(0.231f, 0.298f, 0.753f, 1.0f)},
-        {1.0f, ImVec4(0.865f, 0.000f, 0.000f, 1.0f)}
-    };
+
 
 
     // ------------------------------------------------------------------
     // 3) Table -----------------------------------------------------------
     if(ImGui::BeginTable("ControlPoints", 3, TABLE_FLAGS))
     {
-        ImGui::TableSetupColumn("Index",    ImGuiTableColumnFlags_WidthFixed,       IDX_COL_WIDTH);
-        ImGui::TableSetupColumn("Color",    ImGuiTableColumnFlags_WidthStretch,     COLOR_COL_WIDTH);
-        ImGui::TableSetupColumn("Order",    ImGuiTableColumnFlags_WidthFixed,       ORDER_COL_WIDTH);
+        // Weight‑based sizing so nothing gets squeezed out of view
+        ImGui::TableSetupColumn("Index",            ImGuiTableColumnFlags_WidthStretch, 0.15f);
+        ImGui::TableSetupColumn("Color/Position",   ImGuiTableColumnFlags_WidthStretch, 0.55f);
+        ImGui::TableSetupColumn("Controls",         ImGuiTableColumnFlags_WidthStretch, 0.30f);
         ImGui::TableHeadersRow();
-        for(int i = 0; i < (int)pts.size(); ++i)
+
+        for (int i = 0; i < static_cast<int>(pts.size()); /* manual increment at end */)
         {
-            ImGui::TableNextRow();ImGui::PushID(i);auto &p=pts[i];
-            //
-            //
-            //  1.  INDEX COLUMN.
-            ImGui::TableSetColumnIndex(0);ImGui::AlignTextToFramePadding();ImGui::Text("%d",i);
-            //
-            //
-            //  2.  WIDGET COLUMN.
+            ImGui::TableNextRow();
+            ImGui::PushID(i);
+
+            // ----------------------------------------------------------------------
+            // column 0 : index label
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("%d", i);
+
+            // ----------------------------------------------------------------------
+            // column 1 : position slider + color edit
             ImGui::TableSetColumnIndex(1);
-            float avail=ImGui::GetContentRegionAvail().x;
-            float pos_tmp=p.first;
-            ImGui::SetNextItemWidth(avail*0.6f); if(ImGui::SliderFloat("##pos",&pos_tmp,0.0f,1.0f,"%.2f",POS_FLAGS)&&pos_tmp!=p.first){p.first=pos_tmp;pos_changed=true;}
+            float &t  = pts[i].first;
+            ImVec4 &c = pts[i].second;
+            float tmp = t;
+
+            const float avail = ImGui::GetContentRegionAvail().x;
+            ImGui::SetNextItemWidth(avail * 0.60f);
+            if (ImGui::SliderFloat("##pos", &tmp, 0.0f, 1.0f, "%.4f") && tmp != t) {
+                t           = tmp;
+                pos_changed = true;
+            }
             ImGui::SameLine();
-            ImGui::SetNextItemWidth(avail*0.35f); ImGui::ColorEdit4("##clr",&p.second.x,ImGuiColorEditFlags_NoInputs);
-            ImGui::SameLine(); if(ImGui::Button("X")){pts.erase(pts.begin()+i);order_changed=true;ImGui::PopID();continue;}
-            //
-            //
-            //  2.  MOVE COLUMN.
+            ImGui::SetNextItemWidth(avail * 0.35f);
+            ImGui::ColorEdit4("##clr", &c.x, ImGuiColorEditFlags_NoInputs);
+
+            // ----------------------------------------------------------------------
+            // column 2 : control buttons
             ImGui::TableSetColumnIndex(2);
-            bool    up_dis     = (i==0),dn_dis=(i==pts.size()-1);
+            bool at_top    = (i == 0);
+            bool at_bottom = (i == static_cast<int>(pts.size()) - 1);
+            bool remove_row = false;
+
             ImGui::BeginGroup();
-                ImGui::BeginDisabled(up_dis);
-                    if(ImGui::ArrowButton("##up",ImGuiDir_Up)&&!up_dis){std::swap(pts[i],pts[i-1]);order_changed=true;}
+            {
+                ImGui::BeginDisabled(at_top);
+                if (ImGui::ArrowButton("##up", ImGuiDir_Up)) {
+                    std::swap(pts[i], pts[i - 1]);
+                    order_changed = true;
+                }
                 ImGui::EndDisabled();
-                
-                ImGui::SameLine(0.0f);
-                
-                ImGui::BeginDisabled(dn_dis);
-                    if(ImGui::ArrowButton("##dn",ImGuiDir_Down)&&!dn_dis){std::swap(pts[i],pts[i+1]);order_changed=true;}
+                ImGui::SameLine(0.0f, 3.0f);
+
+                ImGui::BeginDisabled(at_bottom);
+                if (ImGui::ArrowButton("##dn", ImGuiDir_Down)) {
+                    std::swap(pts[i], pts[i + 1]);
+                    order_changed = true;
+                }
                 ImGui::EndDisabled();
+                ImGui::SameLine(0.0f, 3.0f);
+
+                if (ImGui::Button("+##add")) {
+                    pts.insert(pts.begin() + i + 1, {t, c});
+                    order_changed = true;
+                }
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("Copy and paste color to row below");
+                ImGui::SameLine(0.0f, 3.0f);
+
+                if (ImGui::Button("X##del")) {
+                    remove_row = true; // defer erase until after EndGroup/PopID
+                }
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("Delete control point");
+            }
             ImGui::EndGroup();
-            //
-            //
+
             ImGui::PopID();
-            //
-        }// END "for loop".
+
+            if (remove_row) {
+                pts.erase(pts.begin() + i);
+                order_changed = true;
+                // do not increment i -> next row now occupies current index
+            }
+            else {
+                ++i; // normal increment
+            }
+        }
         
         ImGui::EndTable();
     }// END "if BeginTable".
@@ -524,77 +728,20 @@ void App::ColorMapCreatorTool()
         std::sort(pts.begin(), pts.end(), [](auto &a, auto &b){ return a.first < b.first; });
     }
     
-    
+    return;
+}
 
-    // 5) LOAD COLOR MAP... -------------------------------------------------
-    //
-    // ----------- LOAD BUILT‑IN ----------------------------------------
-    static char                 name_buf[BUFF_SIZE]     = "MyColormap";
-    const int                   cmap_count              = ImPlot::GetColormapCount();
-    static int                  load_idx                = ImPlotColormap_Viridis;
-    const char *                current_name            = ImPlot::GetColormapName(load_idx);
-    ImGui::NewLine();
-    static char                 csv_buf[2048]           = "";
-    ImGui::InputTextMultiline("##CSV", csv_buf, IM_ARRAYSIZE(csv_buf), ImVec2(-FLT_MIN, 60));
-    //ImGui::SameLine();
-    if(ImGui::Button("Parse CSV")) {
-        if(!load_from_csv(csv_buf, pts)) ImGui::OpenPopup("csv_err");
-    }
-    if(ImGui::BeginPopupModal("csv_err", nullptr, ImGuiWindowFlags_AlwaysAutoResize)){
-        ImGui::Text("Failed to parse CSV string.\nExpected format: (#RRGGBBAA, pos), …");
-        if(ImGui::Button("OK")) ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
-    }
+
     
-    
-    
-    
-    utl::LeftLabel2("Load Colormap", LABEL_WIDTH,   MARGIN);
-    ImGui::PushID("load_section");
-    if(ImGui::BeginCombo("##LoadColormap", current_name))
-    {
-        for(int n=0;n<cmap_count;++n) {
-            bool sel = (load_idx==n);
-            if(ImGui::Selectable(ImPlot::GetColormapName(n), sel)) load_idx=n;
-            if(sel) ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
-    ImGui::SameLine();
-    if( ImGui::Button("Load", ImVec2(-1, 0)) )
-    {
-        pts.clear();
-        int sz = ImPlot::GetColormapSize(load_idx);
-        for(int i=0;i<sz;++i){
-            ImVec4 c = ImPlot::GetColormapColor(i, load_idx);
-            float t  = sz>1? (float)i/(sz-1):0.0f;
-            pts.emplace_back(t,c);
-        }
-        // ensure unique name suggestion
-        std::snprintf(name_buf,sizeof(name_buf),"%s_copy", current_name);
-    }
-    ImGui::PopID();
 
 
 
-    // ------------------------------------------------------------------
-    // 6) Name input ------------------------------------------------------
-    static ImPlotColormap       cmap_custom             = -1;
-    static bool                 applied                 = false;
-    
-    ImGui::Separator();
-    utl::LeftLabel2("Colormap Name", LABEL_WIDTH);
-    ImGui::InputText("##ColormapName",  name_buf,   BUFF_SIZE);
-    if ( ImGui::Button("Add Control Point") ) {
-        pts.emplace_back(0.5f, ImGui::GetStyle().Colors[ImGuiCol_PlotLines]);
-        order_changed = true;   // will renormalize below
-    }
-    ImGui::SameLine();
-    bool                    apply               = ImGui::Button("Apply");
-    
-    
-    
-    
+//  "CMAPPreview"
+//
+void CMAPPreview(bool apply)
+{
+    using namespace cmap;
+
     // 5) Apply + preview -------------------------------------------------
     //
     if (cmap_custom >= 0) {
@@ -629,7 +776,8 @@ void App::ColorMapCreatorTool()
         static float    t_custom        = 0.5f;
         static ImVec4   col_custom;
     
-        if (ImGui::TreeNode("Additional Previews")) {
+        if (ImGui::TreeNode("Additional Previews"))
+        {
             ImGui::ColorButton("##Display", col_custom, ImGuiColorEditFlags_NoInputs);
             //ImGui::SameLine();
             //ImPlot::ColormapSlider("Slider", &t_custom, &col_custom, "%.3f", col_custom);
@@ -650,12 +798,19 @@ void App::ColorMapCreatorTool()
         }
     }
 
+    return;
+}
+
+
+    
 
 
 
-
-
-
+//  "CMAPExport"
+//
+void CMAPExport(void)
+{
+    using namespace cmap;
 
     // 6) Export ----------------------------------------------------------
     //
@@ -679,39 +834,136 @@ void App::ColorMapCreatorTool()
     
     
     
-    // Export Type selector
-    static int                          export_mode         = 0;
-    utl::LeftLabel2("Export Type", LABEL_WIDTH, MARGIN);
-    ImGui::Combo("##ExportType", &export_mode, EXPORT_MODES, IM_ARRAYSIZE(EXPORT_MODES));
-    ImGui::SameLine();
+    // ──────────────────────────────────────────────────────────────────────
+    // 4.  EXPORT section  (inside “Apply / preview / export” block)
+    // ──────────────────────────────────────────────────────────────────────
+    ImGui::SeparatorText("Export Sampling");
+    
+    ImGui::BeginGroup();
+    //
+        RadioPair("Auto##export", "Custom##export", export_load_mode);
+        if (export_load_mode == SampleMode::Custom)
+        {
+            // cannot export < current control-points (M)
+            int minN = static_cast<int>(pts.size());
+            ImGui::SameLine();
+            ImGui::SliderInt("##exportN", &export_N, minN, 512, "%d Interpolated Shades");
+        }
+    //
+    ImGui::EndGroup();
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+        ImGui::SetTooltip( "Smooths the colormap by computing a total of N linearly-interpolated shades equally spaced between each color defined in the table." );
+        
 
-    // Copy as C++ Array ------------------------------------------------
-    if( cmap_custom>=0 && ImGui::Button("Copy as C++ Array", ImVec2(-1,0)) )
-    {
-        ImGui::LogToClipboard();
-        if(export_mode==0)          //  FLOATING-POINT EXPORT...
-        {
-            ImGui::LogText("static const ImVec4 %s[%d] = {\n", name_buf[0]?name_buf:"custom_cmap", LUT_SIZE);
-            const char *    indent = "    ";
-            for(int i=0;i<LUT_SIZE;++i){ ImVec4 c = sample_cmap((float)i/(LUT_SIZE-1), pts);
-                ImGui::LogText("%sImVec4(%.3ff, %.3ff, %.3ff, %.3ff)%s\n", indent, c.x,c.y,c.z,c.w, i==LUT_SIZE-1?"":" ,");
-            }
-            ImGui::LogText("};\n");
-        }
-        else                        //  RGB EXPORT...
-        {
-            ImGui::LogText("static const ImU32 %s[%d] = {\n", name_buf[0]?name_buf:"custom_cmap", LUT_SIZE);
-            for(int i=0;i<LUT_SIZE;++i)
-            {
-                ImVec4      c       = sample_cmap((float)i/(LUT_SIZE-1), pts);
-                ImU32       ui      = ImGui::ColorConvertFloat4ToU32(c);
-                ImGui::LogText("    0x%08X%s\n", ui, i==LUT_SIZE-1?"":" ,");
-            }
-            ImGui::LogText("};\n");
-        }
-        ImGui::LogFinish();
+
+    //  when you build the LUT (before AddColormap / copy-to-clipboard):
+    int lut_sz = (export_load_mode == SampleMode::Auto)
+                   ? static_cast<int>(pts.size())
+                   : std::max(export_N, static_cast<int>(pts.size()));
+
+
+    std::vector<ImVec4> lut(lut_sz);
+    for (int i = 0; i < lut_sz; ++i) {
+        float t = (lut_sz > 1) ? i / float(lut_sz - 1) : 0.0f;
+        lut[i]  = sample_cmap(t, pts);       // uses your helper
     }
     
+    
+    
+    ImGui::BeginGroup();
+    //
+        utl::LeftLabel2("Export Type", LABEL_WIDTH, MARGIN);
+        ImGui::Combo("##ExportType", &export_mode, EXPORT_MODES, IM_ARRAYSIZE(EXPORT_MODES));
+        ImGui::SameLine();
+        //
+        // Copy as C++ Array ------------------------------------------------
+        if( cmap_custom>=0 && ImGui::Button("Copy as C-Style Array", ImVec2(-1,0)) )
+        {
+            ImGui::LogToClipboard();
+            if(export_mode==0)          //  FLOATING-POINT EXPORT...
+            {
+                ImGui::LogText("static const ImVec4 %s[%d] = {\n", name_buf[0]?name_buf:"custom_cmap", LUT_SIZE);
+                const char *    indent = "    ";
+                for(int i=0;i<LUT_SIZE;++i){ ImVec4 c = sample_cmap((float)i/(LUT_SIZE-1), pts);
+                    ImGui::LogText("%sImVec4(%.3ff, %.3ff, %.3ff, %.3ff)%s, ", indent, c.x,c.y,c.z,c.w, i==LUT_SIZE-1?"":" ,");
+                    //ImGui::LogText("%sImVec4(%.3ff, %.3ff, %.3ff, %.3ff)%s\n", indent, c.x,c.y,c.z,c.w, i==LUT_SIZE-1?"":" ,");
+                }
+                ImGui::LogText("};\n");
+            }
+            else                        //  RGB EXPORT...
+            {
+                ImGui::LogText("static const ImU32 %s[%d] = {\n", name_buf[0]?name_buf:"custom_cmap", LUT_SIZE);
+                for(int i=0;i<LUT_SIZE;++i)
+                {
+                    ImVec4      c       = sample_cmap((float)i/(LUT_SIZE-1), pts);
+                    ImU32       ui      = ImGui::ColorConvertFloat4ToU32(c);
+                    ImGui::LogText("    0x%08X%s", ui, i==LUT_SIZE-1?"":" ,");
+                    //ImGui::LogText("    0x%08X%s\n", ui, i==LUT_SIZE-1?"":" ,");
+                }
+                ImGui::LogText("};\n");
+            }
+            ImGui::LogFinish();
+        }
+    //
+    ImGui::EndGroup();
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+        ImGui::SetTooltip( "Copy this colormap to clipboard (formatted as a C++ array)." );
+
+
+
+    return;
+}
+
+
+
+
+
+
+// ──────────────────────────────────────────────────────────────────────
+//      MAIN FUNCTION...
+// ──────────────────────────────────────────────────────────────────────
+void App::ColorMapCreatorTool()
+{
+    using namespace cmap;
+    const ImVec2    SPACING     = ImVec2( 0.0f, 0.5*ImGui::GetTextLineHeightWithSpacing() );
+    
+    
+    
+    //  0.  CMAP WIDGET DEMO...
+    CMAPDemoWidget();
+
+
+
+    
+
+
+    //  1.  COLORMAP "LOADING" SECTION...
+    ImGui::Dummy(SPACING);
+    ImGui::SeparatorText("Load Existing Colormap");
+    bool apply = CMAPLoader();
+
+
+    
+    //  2.  COLORMAP PREVIEW...
+    ImGui::Dummy(SPACING);
+    ImGui::SeparatorText("Preview Colormap");
+    CMAPPreview(apply);
+
+
+
+    //  3.  TABLE OF COLORS...
+    ImGui::Dummy(SPACING);
+    ImGui::SeparatorText("Colormap Table");
+    CMAPTable();
+
+
+
+    //  4.  EXPORT COLORMAP...
+    ImGui::Dummy(SPACING);
+    ImGui::SeparatorText("Save and Export");
+    CMAPExport();
+
+
     return;
 }
 

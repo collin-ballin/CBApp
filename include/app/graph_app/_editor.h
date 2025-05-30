@@ -165,6 +165,7 @@ public:
     // ---------------------------------------------------------------------
     inline void             set_mode                (const int mode)    { this->m_mode = static_cast<State>(mode);                          }
     void                    set_cmap                (const int cmap);
+    inline void             set_brush_shape         (const int brush)   { this->m_brush_shape = static_cast<BrushShape>(brush);             }
     //
     //
     int                     channel_count           (void)  const       { return static_cast<int>(m_channels.size());                       }
@@ -210,7 +211,6 @@ private:
                                     m_res_y                 = 0;
     
     int                             m_brush_size            = 1;
-    float                           m_paint_value           = 1.0f;
     //  float                           m_vmin                  = 0.0f,
     //                                  m_vmax                  = 1.0f;
     

@@ -145,6 +145,7 @@ protected:
     void                disp_view_menubar               (void);
     void                disp_window_menubar             (void);
     void                disp_show_windows_menubar       (void);
+    void                disp_tools_menubar              (void);
     void                disp_help_menubar               (void);
     
     void                disp_imgui_submenu              (void);     //  Sub-MenuBar...

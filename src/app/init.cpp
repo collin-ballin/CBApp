@@ -348,10 +348,6 @@ void App::dispatch_window_function(const Window & uuid)
         //
         //
         //      3.  TOOLS, SUBSIDIARY APPLICATION WINDOWS...
-        case Window::ColorTool:       {
-            this->ShowColorTool(            w.uuid.c_str(),     &w.open,        w.flags);
-            break;
-        }
         case Window::StyleEditor:       {
             cb::ShowStyleEditor(            w.uuid.c_str(),     &w.open,        w.flags);
             break;
@@ -370,7 +366,15 @@ void App::dispatch_window_function(const Window & uuid)
         }
         //
         //
-        //      3.  DEMOS, ETC...
+        //
+        //      4.  *MY* TOOLS...
+        case Window::ColorTool:       {
+            this->ShowColorTool(            w.uuid.c_str(),     &w.open,        w.flags);
+            break;
+        }
+        //
+        //
+        //      5.  DEMOS, ETC...
         case Window::ImGuiDemo:         {
             cb::ShowImGuiDemoWindow(        w.uuid.c_str(),     &w.open,        w.flags);
             break;

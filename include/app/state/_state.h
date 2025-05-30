@@ -176,15 +176,18 @@ inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = Im
     X(GraphApp,         "Graph App",                DEF_FDTD_APP_VIS,           _CBAPP_CORE_WINDOW_FLAGS                                )       \
 /*                                                                                                                                      */      \
 /*                                                                                                                                      */      \
-/*  3.  TOOLS, DEMOS, MISC WINDOWS, ETC...                                                                                              */      \
-    X(ColorTool,        "Color Tool",               false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+/*  3.  BASIC TOOLS...                                                                                                                  */      \
     X(StyleEditor,      "Style Editor (ImGui)",     false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(Logs,             "Logs",                     false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(Console,          "Console",                  false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(Metrics,          "Metrics",                  false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
 /*                                                                                                                                      */      \
 /*                                                                                                                                      */      \
-/*  4.  DEMO WINDOWS...                                                                                                                 */      \
+/*  4.  CUSTOM TOOLS, ETC...                                                                                                            */      \
+    X(ColorTool,        "Color Tool",               false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+/*                                                                                                                                      */      \
+/*                                                                                                                                      */      \
+/*  5.  DEMO WINDOWS...                                                                                                                 */      \
     X(ImGuiDemo,        "ImGui Demo",               false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(ImPlotDemo,       "ImPlot Demo",              false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(AboutMyApp,       "About This App",           false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )   // END
@@ -436,11 +439,15 @@ struct AppState
     static constexpr size_t             ms_APP_WINDOWS_BEGIN        = static_cast<size_t>(Window::CCounterApp);
     static constexpr size_t             ms_APP_WINDOWS_END          = static_cast<size_t>(Window::StyleEditor);
     //
-    //              1.3     Tool Windows.
+    //              1.3     Basic Tool Windows.
     static constexpr size_t             ms_TOOL_WINDOWS_BEGIN       = static_cast<size_t>(Window::StyleEditor);
-    static constexpr size_t             ms_TOOL_WINDOWS_END         = static_cast<size_t>(Window::ImGuiDemo);
+    static constexpr size_t             ms_TOOL_WINDOWS_END         = static_cast<size_t>(Window::ColorTool);
     //
-    //              1.4     Demo Windows.
+    //              1.4     "MY Tools" / Custom Tools Windows.
+    static constexpr size_t             ms_MY_TOOLS_WINDOWS_BEGIN   = static_cast<size_t>(Window::ColorTool);
+    static constexpr size_t             ms_MY_TOOLS_WINDOWS_END     = static_cast<size_t>(Window::ImGuiDemo);
+    //
+    //              1.5     Demo Windows.
     static constexpr size_t             ms_DEMO_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiDemo);
     static constexpr size_t             ms_DEMO_WINDOWS_END         = static_cast<size_t>(Window::Count);
     //
