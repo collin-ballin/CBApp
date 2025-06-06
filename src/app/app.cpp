@@ -150,38 +150,10 @@ void App::run_IMPL(void)
 
 
     //  1.      FIRST-FRAME INITIALIZATIONS...
-    if (first_frame) [[unlikely]]
-    {
-        //  1.  CLEAR EXISTING DOCK LAYOUT...
-        ImGui::DockBuilderRemoveNode    (this->S.m_dockspace_id);
-        ImGui::DockBuilderAddNode       (this->S.m_dockspace_id,        ImGuiDockNodeFlags_DockSpace);
-        ImGui::DockBuilderSetNodeSize   (this->S.m_dockspace_id,        S.m_main_viewport->WorkSize);
-
-        //  2.  CREATE SPLIT-DOCK NODES...
-        ImGui::DockBuilderSplitNode     (this->S.m_dockspace_id,        ImGuiDir_Left,          this->S.m_sidebar_ratio,
-                                         &S.m_sidebar_dock_id,          &S.m_main_dock_id);
-
-        //  3.  GET DOCKING-NODES AND SET NODE-FLAGS...
-        S.m_main_node                                   = ImGui::DockBuilderGetNode(S.m_main_dock_id);
-        S.m_main_node->LocalFlags                      |= S.m_main_node_flags;
-        S.m_sidebar_node                                = ImGui::DockBuilderGetNode(S.m_sidebar_dock_id);
-        S.m_sidebar_node->LocalFlags                   |= S.m_sidebar_node_flags;
-      
-
-        //  4.  INSERT THE "CORE" WINDOWS INTO DOCK...
-        ImGui::DockBuilderDockWindow    (S.m_windows[Window::SideBar].uuid.c_str(),             S.m_sidebar_dock_id);
-
-
-        //  5.  DOCK ALL RIGHT-HAND WINDOWS INTO RIGHT-HAND DOCKSPACE BY DEFAULT...
-        for (idx = S.ms_RHS_WINDOWS_BEGIN; idx < WINDOWS_END; ++idx) {
-            winfo           = S.m_windows[ static_cast<Window>(idx) ];
-            if (winfo.open) {
-                ImGui::DockBuilderDockWindow( winfo.uuid.c_str(), S.m_main_dock_id );
-            }
-        }
-        ImGui::DockBuilderFinish(this->S.m_dockspace_id);
-        
+    if (first_frame) [[unlikely]] {
+        this->InitDockspace();
     }// END OF "first_frame"...
+    
 #endif  //  CBAPP_NEW_DOCKSPACE  //
     
 
@@ -250,7 +222,7 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
 {
     // ImVec2                       win_pos(this->S.m_main_viewport->WorkPos.x + 750,   this->S.m_main_viewport->WorkPos.x + 20);
     ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
-    
+    static bool                     first_frame     = true;
     
     
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
@@ -258,6 +230,26 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
     ImGui::Begin(uuid, p_open, flags);
     
         ImGui::PopStyleColor();
+    
+    
+    //  4.  TESTING TAB BAR...
+    {
+        this->TestTabBar();
+    }
+    
+    
+    //  5.  EXAMPLE APPS...
+    {
+        constexpr const char * window_uuid  = "Example: Documents";
+        
+        ShowExampleAppDocuments(window_uuid, nullptr, ImGuiWindowFlags_MenuBar);
+        
+        if (first_frame) {
+            first_frame = false;
+            ImGui::DockBuilderDockWindow(window_uuid,     S.m_main_dock_id);
+        }
+    }
+    
     
     
 #if defined(CBAPP_ENABLE_CB_DEMO) && !defined(__CBAPP_BUILD_CCOUNTER_APP__) && !defined(__CBAPP_BUILD_FDTD_APP__)
@@ -284,15 +276,6 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
             this->ImPlot_Testing2();
             ImGui::TreePop();
         }
-    }
-        
-     
-    //  4.  TESTING TAB BAR...
-    {
-        ImGui::NewLine();
-        KeepProgramAwake( this->S.m_glfw_window );
-        ImGui::NewLine();
-        this->TestTabBar();
     }
 
 
@@ -395,6 +378,75 @@ void App::ShowDockspace([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "InitDockspace"
+//
+void App::InitDockspace(void)
+{
+    // ------------------------------------------------------------------
+    // 0.  Locals & aliases
+    // ------------------------------------------------------------------
+    [[maybe_unused]] ImGuiIO   &io    = ImGui::GetIO();   (void)io;
+    [[maybe_unused]] ImGuiStyle&style = ImGui::GetStyle();
+    static size_t              idx   = 0;
+    const size_t               WINDOWS_END = S.ms_WINDOWS_END;
+
+
+    //  1.      CLEAR EXISTING DOCK LAYOUT...
+    ImGui::DockBuilderRemoveNode    (this->S.m_dockspace_id);
+    ImGui::DockBuilderAddNode       (this->S.m_dockspace_id,        ImGuiDockNodeFlags_DockSpace);
+    ImGui::DockBuilderSetNodeSize   (this->S.m_dockspace_id,        S.m_main_viewport->WorkSize);
+
+
+    // ------------------------------------------------------------------
+    // 2.  First split:  create a thin *toolbar* strip at the top (Up)
+    //      ┌──────────── toolbar ────────────┐
+    //      └──────────── dock_main_id ───────┘
+    // ------------------------------------------------------------------
+    ImGuiID dock_main_id = 0;            // temp holder for the remainder after the split
+    ImGui::DockBuilderSplitNode(
+        S.m_dockspace_id,                // node to split (root)
+        ImGuiDir_Up,                     // split direction
+        S.m_toolbar_ratio,               // height ratio (0‥1) for the toolbar
+        &S.m_toolbar_dock_id,            // resulting *toolbar* node id
+        &dock_main_id);                  // remainder (everything below the toolbar)
+        
+
+    // ------------------------------------------------------------------
+    // 3.  Second split: split the *remainder* into sidebar (Left) + main panel
+    //      ┌──────────── toolbar ────────────┐
+    //      ├─ sidebar ─┬── main panel ──────┤
+    // ------------------------------------------------------------------
+    ImGui::DockBuilderSplitNode( dock_main_id,  ImGuiDir_Left, S.m_sidebar_ratio, &S.m_sidebar_dock_id, &S.m_main_dock_id);
+
+
+    //  4.  APPLY DOCKING NODE FLAGS FOR EACH DOCKNODE...
+    S.m_toolbar_node                                = ImGui::DockBuilderGetNode(S.m_toolbar_dock_id);       //  3.1     Toolbar Dockspace.
+    S.m_sidebar_node                                = ImGui::DockBuilderGetNode(S.m_sidebar_dock_id);       //  3.2     Sidebar Dockspace.
+    S.m_main_node                                   = ImGui::DockBuilderGetNode(S.m_main_dock_id);          //  3.3     Main Dockspace.
+    S.m_toolbar_node ->LocalFlags                  |= S.m_toolbar_node_flags;                               //          Apply the flags...
+    S.m_sidebar_node ->LocalFlags                  |= S.m_sidebar_node_flags;
+    S.m_main_node    ->LocalFlags                  |= S.m_main_node_flags;
+
+
+    //  5.  PLACE EACH PERSISTENT / CORE WINDOW INTO ITS DEFAULT DOCKING SPACE...
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::ToolBar].uuid.c_str(),  S.m_toolbar_dock_id);
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::SideBar].uuid.c_str(),  S.m_sidebar_dock_id);
+    for (idx = S.ms_RHS_WINDOWS_BEGIN; idx < WINDOWS_END; ++idx)
+    {
+        app::WinInfo &w = S.m_windows[ static_cast<Window>(idx) ];
+        if (w.open)
+            ImGui::DockBuilderDockWindow(w.uuid.c_str(), S.m_main_dock_id);
+    }
+
+
+    // 6.  FINALIZE DOCKING LAYOUT AND EXIT...
+    ImGui::DockBuilderFinish(S.m_dockspace_id);
+    
+    return;
+}
+
+
+
 //  "RebuildDockLayout"
 //
 void App::RebuildDockLayout(void)
@@ -411,18 +463,32 @@ void App::RebuildDockLayout(void)
     //                                   &S.m_sidebar_dock_id,          &S.m_main_dock_id);
 
 
-    //  3.  INSERT THE "CORE" WINDOWS INTO DOCK...
+    //  2.  ENABLE WINDOW VISIBILITY...
+    S.m_windows[Window::ToolBar].open   = true;
+    S.m_windows[Window::SideBar].open   = true;
+    S.m_windows[Window::MainApp].open   = true;
+
+
+    //  3.  RE-INSERT ALL WINDOWS INTO THEIR DEFAULT DOCKING SPACE...
+    ImGui::DockBuilderDockWindow    (S.m_windows[Window::ToolBar].uuid.c_str(),     S.m_toolbar_dock_id);   //  3.1     Persistent / Core Windows.
     ImGui::DockBuilderDockWindow    (S.m_windows[Window::SideBar].uuid.c_str(),     S.m_sidebar_dock_id);
     ImGui::DockBuilderDockWindow    (S.m_windows[Window::MainApp].uuid.c_str(),     S.m_main_dock_id);
-
-
-    //  4.  INSERT ALL REMAINING WINDOWS INTO RIGHT-SIDE DOCK...
-    for (size_t idx = S.ms_APP_WINDOWS_BEGIN; idx < S.ms_WINDOWS_END; ++idx) {
+    for (size_t idx = S.ms_APP_WINDOWS_BEGIN; idx < S.ms_WINDOWS_END; ++idx) {                              //  3.2     Remaining Windows.
         winfo           = S.m_windows[ static_cast<Window>(idx) ];
         if (winfo.open) {
             ImGui::DockBuilderDockWindow( winfo.uuid.c_str(), S.m_main_dock_id );
         }
     }
+    
+    
+    //  4.  RETURN FOCUS TO MAIN APPLICATION...
+    #if defined(__CBAPP_BUILD_CCOUNTER_APP__)
+        ImGui::SetWindowFocus(this->S.m_windows[Window::CCounterApp].uuid.c_str());
+    # elif defined(__CBAPP_BUILD_FDTD_APP__)
+        ImGui::SetWindowFocus(this->S.m_windows[Window::GraphApp].uuid.c_str());
+    # else
+        ImGui::SetWindowFocus(this->S.m_windows[Window::MainApp].uuid.c_str());
+    #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
 
     return;
 }
@@ -495,12 +561,7 @@ void App::SaveHandler(void)
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     utl::Popup_Save(save_popup_id);
     
-    
     //ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags  | ImGuiInputFlags_Tooltip);
-        
-        
-    //std::cout << "
-        
 
     return;
 }

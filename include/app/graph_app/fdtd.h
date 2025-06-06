@@ -388,14 +388,14 @@ protected:
     size_type                           m_material_pos          = 252;       //      WORKS = NX+1;             //52ULL;
     size_type                           m_material_width        = 150; //     50ULL;    //      WORKS = 30ULL;
 
-    const value_type                    m_wavelen               = 40.0f; // 24.0f;//BEFORE WE USED 24 for LAMBDA...     30.0f;
+    const value_type                    m_wavelen               = 25.0f; // 24.0f;//BEFORE WE USED 24 for LAMBDA...     30.0f;
     const value_type                    m_src_delay             = 30.0f;//30.0f;
     const value_type                    m_src_width             = 10.0f;
     const size_type                     m_num_periods           = 10ULL;     //      WORKS = 100ULL;//4ULL;
 
     const value_type                    m_eta_0                 = spc::eta_0;
-    const value_type                    m_loss                  = 0.008f;    //      WORKS = 0.00f;
-    const value_type                    m_perm                  = 6.0;      //      WORKS = 4.0f;
+    const value_type                    m_loss                  = 0.0045f;    //      WORKS = 0.00f;
+    const value_type                    m_perm                  = 7.0;      //      WORKS = 4.0f;
 
 
 // *************************************************************************** //

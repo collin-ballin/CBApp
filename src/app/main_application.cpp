@@ -43,7 +43,8 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
     
     
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ));
+    //ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ));
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2( 0.5f, 0.5f ));
     if (ImGui::BeginPopupModal(uuid, p_open, ImGuiWindowFlags_AlwaysAutoResize))
     {
 
@@ -77,187 +78,261 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
         if ( ImGui::TreeNode("Third-Party Dependencies") ) {
         
             ImGui::Text("Dear ImGui %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
-        
             ImGui::Text("ImPlot %s", IMPLOT_VERSION);
         
         
             ImGui::TreePop();
         }
         
+        
+        
+        ImGui::Separator();
+        ImGui::Checkbox("Config/Build Information", &show_config_info);
+        if (show_config_info)
+        {
+            this->get_build_info();
+        }
+        
  
    
 
 
-
-        ImGui::Separator();
-
-
-
-
-        ImGui::Checkbox("Config/Build Information", &show_config_info);
-        if (show_config_info)
-        {
-            ImGuiIO& io = ImGui::GetIO();
-            ImGuiStyle& style = ImGui::GetStyle();
-
-
-
-
-
-
-
-
-
-            bool copy_to_clipboard = ImGui::Button("Copy to clipboard");
-            ImVec2 child_size = ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * 18);
-            ImGui::BeginChild(ImGui::GetID("cfg_infos"), child_size, ImGuiChildFlags_FrameStyle);
-            if (copy_to_clipboard)
-            {
-                ImGui::LogToClipboard();
-                ImGui::LogText("```\n"); // Back quotes will make text appears without formatting when pasting on GitHub
-            }
-
-            ImGui::Text("Dear ImGui %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
-            ImGui::Separator();
-            ImGui::Text("sizeof(size_t): %d, sizeof(ImDrawIdx): %d, sizeof(ImDrawVert): %d", (int)sizeof(size_t), (int)sizeof(ImDrawIdx), (int)sizeof(ImDrawVert));
-            ImGui::Text("define: __cplusplus=%d", (int)__cplusplus);
-    #ifdef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-            ImGui::Text("define: IMGUI_DISABLE_OBSOLETE_FUNCTIONS");
-    #endif
-    #ifdef IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS
-            ImGui::Text("define: IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS");
-    #endif
-    #ifdef IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS
-            ImGui::Text("define: IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS");
-    #endif
-    #ifdef IMGUI_DISABLE_WIN32_FUNCTIONS
-            ImGui::Text("define: IMGUI_DISABLE_WIN32_FUNCTIONS");
-    #endif
-    #ifdef IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS
-            ImGui::Text("define: IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS");
-    #endif
-    #ifdef IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS
-            ImGui::Text("define: IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS");
-    #endif
-    #ifdef IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS
-            ImGui::Text("define: IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS");
-    #endif
-    #ifdef IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS
-            ImGui::Text("define: IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS");
-    #endif
-    #ifdef IMGUI_DISABLE_FILE_FUNCTIONS
-            ImGui::Text("define: IMGUI_DISABLE_FILE_FUNCTIONS");
-    #endif
-    #ifdef IMGUI_DISABLE_DEFAULT_ALLOCATORS
-            ImGui::Text("define: IMGUI_DISABLE_DEFAULT_ALLOCATORS");
-    #endif
-    #ifdef IMGUI_USE_BGRA_PACKED_COLOR
-            ImGui::Text("define: IMGUI_USE_BGRA_PACKED_COLOR");
-    #endif
-    #ifdef _WIN32
-            ImGui::Text("define: _WIN32");
-    #endif
-    #ifdef _WIN64
-            ImGui::Text("define: _WIN64");
-    #endif
-    #ifdef __linux__
-            ImGui::Text("define: __linux__");
-    #endif
-    #ifdef __APPLE__
-            ImGui::Text("define: __APPLE__");
-    #endif
-    #ifdef _MSC_VER
-            ImGui::Text("define: _MSC_VER=%d", _MSC_VER);
-    #endif
-    #ifdef _MSVC_LANG
-            ImGui::Text("define: _MSVC_LANG=%d", (int)_MSVC_LANG);
-    #endif
-    #ifdef __MINGW32__
-            ImGui::Text("define: __MINGW32__");
-    #endif
-    #ifdef __MINGW64__
-            ImGui::Text("define: __MINGW64__");
-    #endif
-    #ifdef __GNUC__
-            ImGui::Text("define: __GNUC__=%d", (int)__GNUC__);
-    #endif
-    #ifdef __clang_version__
-            ImGui::Text("define: __clang_version__=%s", __clang_version__);
-    #endif
-    #ifdef __EMSCRIPTEN__
-            ImGui::Text("define: __EMSCRIPTEN__");
-            ImGui::Text("Emscripten: %d.%d.%d", __EMSCRIPTEN_major__, __EMSCRIPTEN_minor__, __EMSCRIPTEN_tiny__);
-    #endif
-    #ifdef IMGUI_HAS_VIEWPORT
-            ImGui::Text("define: IMGUI_HAS_VIEWPORT");
-    #endif
-    #ifdef IMGUI_HAS_DOCK
-            ImGui::Text("define: IMGUI_HAS_DOCK");
-    #endif
-            ImGui::Separator();
-            ImGui::Text("io.BackendPlatformName: %s", io.BackendPlatformName ? io.BackendPlatformName : "NULL");
-            ImGui::Text("io.BackendRendererName: %s", io.BackendRendererName ? io.BackendRendererName : "NULL");
-            ImGui::Text("io.ConfigFlags: 0x%08X", io.ConfigFlags);
-            if (io.ConfigFlags & ImGuiConfigFlags_NavEnableKeyboard)        ImGui::Text(" NavEnableKeyboard");
-            if (io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad)         ImGui::Text(" NavEnableGamepad");
-            if (io.ConfigFlags & ImGuiConfigFlags_NoMouse)                  ImGui::Text(" NoMouse");
-            if (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)      ImGui::Text(" NoMouseCursorChange");
-            if (io.ConfigFlags & ImGuiConfigFlags_NoKeyboard)               ImGui::Text(" NoKeyboard");
-            if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)            ImGui::Text(" DockingEnable");
-            if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)          ImGui::Text(" ViewportsEnable");
-            if (io.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)  ImGui::Text(" DpiEnableScaleViewports");
-            if (io.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleFonts)      ImGui::Text(" DpiEnableScaleFonts");
-            if (io.MouseDrawCursor)                                         ImGui::Text("io.MouseDrawCursor");
-            if (io.ConfigViewportsNoAutoMerge)                              ImGui::Text("io.ConfigViewportsNoAutoMerge");
-            if (io.ConfigViewportsNoTaskBarIcon)                            ImGui::Text("io.ConfigViewportsNoTaskBarIcon");
-            if (io.ConfigViewportsNoDecoration)                             ImGui::Text("io.ConfigViewportsNoDecoration");
-            if (io.ConfigViewportsNoDefaultParent)                          ImGui::Text("io.ConfigViewportsNoDefaultParent");
-            if (io.ConfigDockingNoSplit)                                    ImGui::Text("io.ConfigDockingNoSplit");
-            if (io.ConfigDockingWithShift)                                  ImGui::Text("io.ConfigDockingWithShift");
-            if (io.ConfigDockingAlwaysTabBar)                               ImGui::Text("io.ConfigDockingAlwaysTabBar");
-            if (io.ConfigDockingTransparentPayload)                         ImGui::Text("io.ConfigDockingTransparentPayload");
-            if (io.ConfigMacOSXBehaviors)                                   ImGui::Text("io.ConfigMacOSXBehaviors");
-            if (io.ConfigNavMoveSetMousePos)                                ImGui::Text("io.ConfigNavMoveSetMousePos");
-            if (io.ConfigNavCaptureKeyboard)                                ImGui::Text("io.ConfigNavCaptureKeyboard");
-            if (io.ConfigInputTextCursorBlink)                              ImGui::Text("io.ConfigInputTextCursorBlink");
-            if (io.ConfigWindowsResizeFromEdges)                            ImGui::Text("io.ConfigWindowsResizeFromEdges");
-            if (io.ConfigWindowsMoveFromTitleBarOnly)                       ImGui::Text("io.ConfigWindowsMoveFromTitleBarOnly");
-            if (io.ConfigMemoryCompactTimer >= 0.0f)                        ImGui::Text("io.ConfigMemoryCompactTimer = %.1f", io.ConfigMemoryCompactTimer);
-            ImGui::Text("io.BackendFlags: 0x%08X", io.BackendFlags);
-            if (io.BackendFlags & ImGuiBackendFlags_HasGamepad)             ImGui::Text(" HasGamepad");
-            if (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors)        ImGui::Text(" HasMouseCursors");
-            if (io.BackendFlags & ImGuiBackendFlags_HasSetMousePos)         ImGui::Text(" HasSetMousePos");
-            if (io.BackendFlags & ImGuiBackendFlags_PlatformHasViewports)   ImGui::Text(" PlatformHasViewports");
-            if (io.BackendFlags & ImGuiBackendFlags_HasMouseHoveredViewport)ImGui::Text(" HasMouseHoveredViewport");
-            if (io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset)   ImGui::Text(" RendererHasVtxOffset");
-            if (io.BackendFlags & ImGuiBackendFlags_RendererHasViewports)   ImGui::Text(" RendererHasViewports");
-            ImGui::Separator();
-            ImGui::Text("io.Fonts: %d fonts, Flags: 0x%08X, TexSize: %d,%d", io.Fonts->Fonts.Size, io.Fonts->Flags, io.Fonts->TexWidth, io.Fonts->TexHeight);
-            ImGui::Text("io.DisplaySize: %.2f,%.2f", io.DisplaySize.x, io.DisplaySize.y);
-            ImGui::Text("io.DisplayFramebufferScale: %.2f,%.2f", io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-            ImGui::Separator();
-            ImGui::Text("style.WindowPadding: %.2f,%.2f", style.WindowPadding.x, style.WindowPadding.y);
-            ImGui::Text("style.WindowBorderSize: %.2f", style.WindowBorderSize);
-            ImGui::Text("style.FramePadding: %.2f,%.2f", style.FramePadding.x, style.FramePadding.y);
-            ImGui::Text("style.FrameRounding: %.2f", style.FrameRounding);
-            ImGui::Text("style.FrameBorderSize: %.2f", style.FrameBorderSize);
-            ImGui::Text("style.ItemSpacing: %.2f,%.2f", style.ItemSpacing.x, style.ItemSpacing.y);
-            ImGui::Text("style.ItemInnerSpacing: %.2f,%.2f", style.ItemInnerSpacing.x, style.ItemInnerSpacing.y);
-
-            if (copy_to_clipboard)
-            {
-                ImGui::LogText("\n```\n");
-                ImGui::LogFinish();
-            }
-            ImGui::EndChild();
-        }
-    
     
 
         ImGui::EndPopup();
     }// END POP-UP.
     
     
+    return;
+}
+
+
+//  "get_build_info"
+//
+void App::get_build_info(void) const
+{
+    constexpr unsigned int              NUM_LINES       = 18;
+    [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &       style           = ImGui::GetStyle();
+
+
+
+
+
+    ImGui::BulletText("Your current configuration is:");
+    ImGui::Indent();
+    ImGui::BulletText("ImDrawIdx: %d-bit", (int)(sizeof(ImDrawIdx) * 8));
+    ImGui::BulletText("ImGuiBackendFlags_RendererHasVtxOffset: %s", (ImGui::GetIO().BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset) ? "True" : "False");
+    ImGui::Unindent();
+
+
+
+
+
+
+    //  1.  CREATE A CHILD WINDOW TO HOST ALL THE INFORMATION...
+    //
+    bool        copy_to_clipboard   = ImGui::Button("Copy to clipboard");
+    ImVec2      child_size          = ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * NUM_LINES );
+    
+    ImGui::BeginChild(ImGui::GetID("cfg_info_1"), child_size, ImGuiChildFlags_FrameStyle);
+    if (copy_to_clipboard) {
+        ImGui::LogToClipboard();
+        ImGui::LogText("```\n");    //  Back quotes will make text appears without formatting when pasting on GitHub
+    }
+    
+        this->get_info1();
+    
+
+    //  END CHILD WINDOW.   COPY INFORMATION TO CLIPBOARD.
+    if (copy_to_clipboard) {
+        ImGui::LogText("\n```\n");
+        ImGui::LogFinish();
+    }
+    ImGui::EndChild();
+    
+    
+    
+    //  WINDOW #2...
+    //
+    //ImGui::SameLine();
+    ImGui::BeginChild(ImGui::GetID("cfg_info_2"), child_size, ImGuiChildFlags_FrameStyle);
+    
+        //this->get_info1();
+    
+
+    ImGui::EndChild();  //  END CHILD WINDOW.
+    
+    
+    
+
+
+
+    return;
+}
+
+
+//  "get_info2"
+//
+void App::get_info2(void) const
+{
+    return;
+}
+
+
+
+
+//  "get_info1"
+//
+void App::get_info1(void) const
+{
+    constexpr unsigned int              NUM_LINES       = 18;
+    [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &       style           = ImGui::GetStyle();
+
+
+
+    ImGui::Text("Dear ImGui %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
+    ImGui::Separator();
+    ImGui::Text("sizeof(size_t): %d, sizeof(ImDrawIdx): %d, sizeof(ImDrawVert): %d", (int)sizeof(size_t), (int)sizeof(ImDrawIdx), (int)sizeof(ImDrawVert));
+    ImGui::Text("define: __cplusplus=%d", (int)__cplusplus);
+#ifdef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_OBSOLETE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_WIN32_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_FILE_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_FILE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_ALLOCATORS
+    ImGui::Text("define: IMGUI_DISABLE_DEFAULT_ALLOCATORS");
+#endif
+#ifdef IMGUI_USE_BGRA_PACKED_COLOR
+    ImGui::Text("define: IMGUI_USE_BGRA_PACKED_COLOR");
+#endif
+#ifdef _WIN32
+    ImGui::Text("define: _WIN32");
+#endif
+#ifdef _WIN64
+    ImGui::Text("define: _WIN64");
+#endif
+#ifdef __linux__
+    ImGui::Text("define: __linux__");
+#endif
+#ifdef __APPLE__
+    ImGui::Text("define: __APPLE__");
+#endif
+#ifdef _MSC_VER
+    ImGui::Text("define: _MSC_VER=%d", _MSC_VER);
+#endif
+#ifdef _MSVC_LANG
+    ImGui::Text("define: _MSVC_LANG=%d", (int)_MSVC_LANG);
+#endif
+#ifdef __MINGW32__
+    ImGui::Text("define: __MINGW32__");
+#endif
+#ifdef __MINGW64__
+    ImGui::Text("define: __MINGW64__");
+#endif
+#ifdef __GNUC__
+    ImGui::Text("define: __GNUC__=%d", (int)__GNUC__);
+#endif
+#ifdef __clang_version__
+    ImGui::Text("define: __clang_version__=%s", __clang_version__);
+#endif
+
+
+
+#ifdef __EMSCRIPTEN__
+    ImGui::Text("define: __EMSCRIPTEN__");
+    ImGui::Text("Emscripten: %d.%d.%d", __EMSCRIPTEN_major__, __EMSCRIPTEN_minor__, __EMSCRIPTEN_tiny__);
+#endif
+#ifdef IMGUI_HAS_VIEWPORT
+    ImGui::Text("define: IMGUI_HAS_VIEWPORT");
+#endif
+#ifdef IMGUI_HAS_DOCK
+    ImGui::Text("define: IMGUI_HAS_DOCK");
+#endif
+
+
+
+
+    //  3.  IMGUI CONFIG STUFF...
+    //
+    ImGui::Separator();
+    ImGui::Text("io.BackendPlatformName: %s", io.BackendPlatformName ? io.BackendPlatformName : "NULL");
+    ImGui::Text("io.BackendRendererName: %s", io.BackendRendererName ? io.BackendRendererName : "NULL");
+    ImGui::Text("io.ConfigFlags: 0x%08X", io.ConfigFlags);
+    if (io.ConfigFlags & ImGuiConfigFlags_NavEnableKeyboard)        ImGui::Text(" NavEnableKeyboard");
+    if (io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad)         ImGui::Text(" NavEnableGamepad");
+    if (io.ConfigFlags & ImGuiConfigFlags_NoMouse)                  ImGui::Text(" NoMouse");
+    if (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)      ImGui::Text(" NoMouseCursorChange");
+    if (io.ConfigFlags & ImGuiConfigFlags_NoKeyboard)               ImGui::Text(" NoKeyboard");
+    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)            ImGui::Text(" DockingEnable");
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)          ImGui::Text(" ViewportsEnable");
+    if (io.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)  ImGui::Text(" DpiEnableScaleViewports");
+    if (io.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleFonts)      ImGui::Text(" DpiEnableScaleFonts");
+    if (io.MouseDrawCursor)                                         ImGui::Text("io.MouseDrawCursor");
+    if (io.ConfigViewportsNoAutoMerge)                              ImGui::Text("io.ConfigViewportsNoAutoMerge");
+    if (io.ConfigViewportsNoTaskBarIcon)                            ImGui::Text("io.ConfigViewportsNoTaskBarIcon");
+    if (io.ConfigViewportsNoDecoration)                             ImGui::Text("io.ConfigViewportsNoDecoration");
+    if (io.ConfigViewportsNoDefaultParent)                          ImGui::Text("io.ConfigViewportsNoDefaultParent");
+    if (io.ConfigDockingNoSplit)                                    ImGui::Text("io.ConfigDockingNoSplit");
+    if (io.ConfigDockingWithShift)                                  ImGui::Text("io.ConfigDockingWithShift");
+    if (io.ConfigDockingAlwaysTabBar)                               ImGui::Text("io.ConfigDockingAlwaysTabBar");
+    if (io.ConfigDockingTransparentPayload)                         ImGui::Text("io.ConfigDockingTransparentPayload");
+    if (io.ConfigMacOSXBehaviors)                                   ImGui::Text("io.ConfigMacOSXBehaviors");
+    if (io.ConfigNavMoveSetMousePos)                                ImGui::Text("io.ConfigNavMoveSetMousePos");
+    if (io.ConfigNavCaptureKeyboard)                                ImGui::Text("io.ConfigNavCaptureKeyboard");
+    if (io.ConfigInputTextCursorBlink)                              ImGui::Text("io.ConfigInputTextCursorBlink");
+    if (io.ConfigWindowsResizeFromEdges)                            ImGui::Text("io.ConfigWindowsResizeFromEdges");
+    if (io.ConfigWindowsMoveFromTitleBarOnly)                       ImGui::Text("io.ConfigWindowsMoveFromTitleBarOnly");
+    if (io.ConfigMemoryCompactTimer >= 0.0f)                        ImGui::Text("io.ConfigMemoryCompactTimer = %.1f", io.ConfigMemoryCompactTimer);
+    ImGui::Text("io.BackendFlags: 0x%08X", io.BackendFlags);
+    if (io.BackendFlags & ImGuiBackendFlags_HasGamepad)             ImGui::Text(" HasGamepad");
+    if (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors)        ImGui::Text(" HasMouseCursors");
+    if (io.BackendFlags & ImGuiBackendFlags_HasSetMousePos)         ImGui::Text(" HasSetMousePos");
+    if (io.BackendFlags & ImGuiBackendFlags_PlatformHasViewports)   ImGui::Text(" PlatformHasViewports");
+    if (io.BackendFlags & ImGuiBackendFlags_HasMouseHoveredViewport)ImGui::Text(" HasMouseHoveredViewport");
+    if (io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset)   ImGui::Text(" RendererHasVtxOffset");
+    if (io.BackendFlags & ImGuiBackendFlags_RendererHasViewports)   ImGui::Text(" RendererHasViewports");
+    ImGui::Separator();
+    ImGui::Text("io.Fonts: %d fonts, Flags: 0x%08X, TexSize: %d,%d", io.Fonts->Fonts.Size, io.Fonts->Flags, io.Fonts->TexWidth, io.Fonts->TexHeight);
+    ImGui::Text("io.DisplaySize: %.2f,%.2f", io.DisplaySize.x, io.DisplaySize.y);
+    ImGui::Text("io.DisplayFramebufferScale: %.2f,%.2f", io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+    ImGui::Separator();
+    ImGui::Text("style.WindowPadding: %.2f,%.2f", style.WindowPadding.x, style.WindowPadding.y);
+    ImGui::Text("style.WindowBorderSize: %.2f", style.WindowBorderSize);
+    ImGui::Text("style.FramePadding: %.2f,%.2f", style.FramePadding.x, style.FramePadding.y);
+    ImGui::Text("style.FrameRounding: %.2f", style.FrameRounding);
+    ImGui::Text("style.FrameBorderSize: %.2f", style.FrameBorderSize);
+    ImGui::Text("style.ItemSpacing: %.2f,%.2f", style.ItemSpacing.x, style.ItemSpacing.y);
+    ImGui::Text("style.ItemInnerSpacing: %.2f,%.2f", style.ItemInnerSpacing.x, style.ItemInnerSpacing.y);
+
+
+
+
+
+
     return;
 }
 
@@ -412,74 +487,128 @@ static void DefaultTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unu
 }
 
 
-//  "TestTabBar"
-//
-void App::TestTabBar(void)
+//----------------------------------
+// Helper: hosting mode selector
+//----------------------------------
+enum class TabHostMode {
+    StaticTabBar,      // Option 2 – fixed tab‑bar
+    DockableWindows    // Option 3 – dockable windows
+};
+
+//----------------------------------
+// App::TestTabBar()
+//----------------------------------
+void App::TestTabBar()
 {
-    //  DEFINE MISC. VARIABLES...
-    static std::vector<Tab_t>       DEF_TABS                    = {
-        Tab_t(  "Tab 1",    true,   true,   ImGuiTabItemFlags_None,     nullptr),
-        Tab_t(  "Tab 2",    true,   true,   ImGuiTabItemFlags_None,     nullptr)
+    //----------------------------------------------------------
+    // 1. Persistent tab list
+    //----------------------------------------------------------
+    static std::vector<Tab_t> tabs = {
+        Tab_t("Tab 1", true,  true, ImGuiTabItemFlags_None, nullptr),
+        Tab_t("Tab 2", true,  true, ImGuiTabItemFlags_None, nullptr)
     };
-    
-    
 
-    static size_t                   N                           = 0;
-    static bool                     SHOW_HELP_TABS              = true;
-    static bool                     ENABLE_ADDING_TABS          = true;
-    static ImGuiTabItemFlags        TABBAR_FLAGS                = ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton;
+    static TabHostMode host_mode  = TabHostMode::StaticTabBar;
+    static bool        redock_all = false; // one‑shot flag
 
+    //----------------------------------------------------------
+    // 2. Mode switcher + redock button
+    //----------------------------------------------------------
+    ImGui::SeparatorText("Tab Host Mode");
+    ImGui::RadioButton("TabBar + Tabs",      reinterpret_cast<int*>(&host_mode), static_cast<int>(TabHostMode::StaticTabBar));
+    ImGui::SameLine();
+    ImGui::RadioButton("DockSpace + Window", reinterpret_cast<int*>(&host_mode), static_cast<int>(TabHostMode::DockableWindows));
 
-    //  BEGIN THE TAB BAR...
-    if ( ImGui::BeginTabBar("MY_TAB_BAR", TABBAR_FLAGS) )
+    if (host_mode == TabHostMode::DockableWindows) {
+        ImGui::SameLine();
+        if (ImGui::Button("Redock all"))
+            redock_all = true;
+    }
+    ImGui::Separator();
+
+    //----------------------------------------------------------
+    // 3. Rendering path A: single tab‑bar (static)
+    //----------------------------------------------------------
+    if (host_mode == TabHostMode::StaticTabBar)
     {
-        N   = DEF_TABS.size();
+        constexpr ImGuiTabBarFlags TABBAR_FLAGS =
+              ImGuiTabBarFlags_AutoSelectNewTabs
+            | ImGuiTabBarFlags_Reorderable
+            | ImGuiTabBarFlags_FittingPolicyResizeDown
+            | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton
+            | ImGuiTabBarFlags_TabListPopupButton;
 
-
-        //      1.      DRAW HELP-MENU TAB-BUTTON ITEM ("?")...
-        if (SHOW_HELP_TABS) {
-            if (ImGui::TabItemButton("?", ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoTooltip))
-                ImGui::OpenPopup("MyHelpMenu");
-        }
-        if (ImGui::BeginPopup("MyHelpMenu")) {
-            ImGui::Selectable("Hello!");
-            ImGui::EndPopup();
-        }
-
-
-        //      2.      DRAW THE "ADD-TAB" BUTTON ("+")...
-        //  if (ENABLE_ADDING_TABS) {
-        //      if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip))
-        //          { AddNewTabFunc(); /* Add new tab */ }
-        //  }
-
-
-
-        //      2.3     DRAW EACH OF THE TAB ITEMS...
-        size_t i = 0;
-        for (auto & tab : DEF_TABS)
+        if (ImGui::BeginTabBar("MY_TAB_BAR", TABBAR_FLAGS))
         {
-            if ( ImGui::BeginTabItem( tab.get_uuid(), (tab.no_close) ? nullptr : &tab.open, tab.flags ) )
+            //----------------------- Leading help tab ("?")
+            if (ImGui::TabItemButton("?", ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoTooltip))
+                ImGui::OpenPopup("HelpMenu");
+            if (ImGui::BeginPopup("HelpMenu"))
             {
-                if (tab.render_fn) {
-                    tab.render_fn( tab.get_uuid(), &tab.open, tab.flags );
-                }
-                else {
-                    DefaultTabRenderFunc(tab.get_uuid(), &tab.open, tab.flags);
-                    //ImGui::Text("This is tab #%zu.", i++);
-                }
-                
-            ImGui::EndTabItem();
-            }// END "BeginTabItem".
-        
-        } // END "for auto & tab".
+                ImGui::TextUnformatted("Hello from the help tab!\nAdd instructions here.");
+                ImGui::EndPopup();
+            }
 
+            //----------------------- User‑defined tabs
+            for (Tab_t& tab : tabs)
+            {
+                if (!ImGui::BeginTabItem(tab.get_uuid(),
+                                          tab.no_close ? nullptr : &tab.open,
+                                          tab.flags))
+                    continue;
 
-    ImGui::EndTabBar();
-        
-    } // END "BeginTabBar".
+                if (tab.render_fn)
+                    tab.render_fn(tab.get_uuid(), &tab.open, ImGuiWindowFlags_None);
+                else
+                    DefaultTabRenderFunc(tab.get_uuid(), &tab.open, ImGuiWindowFlags_None);
 
-    return;
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
+        }
+        return; // early exit; nothing else to do in this mode
+    }
+
+    //----------------------------------------------------------
+    // 4. Rendering path B: dockable windows
+    //----------------------------------------------------------
+    const ImGuiID dockspace_id = ImGui::GetID("APP_DOCKSPACE");
+    ImGui::DockSpace(dockspace_id, ImVec2(0, 0), ImGuiDockNodeFlags_None);
+
+    // Optional: class to tweak the appearance of windows once docked
+    static ImGuiWindowClass docked_window_class;
+    docked_window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_HiddenTabBar; // hide internal tab bar when docked
+
+    for (Tab_t& tab : tabs)
+    {
+        if (!tab.open)
+            continue;
+
+        // 4‑A. Pre‑dock / redock into the root
+        ImGuiCond cond = redock_all ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
+        ImGui::SetNextWindowDockID(dockspace_id, cond);
+        redock_all = false; // reset after first use
+
+        // 4‑B. Apply window class (e.g., hide tab‑bar when docked)
+        ImGui::SetNextWindowClass(&docked_window_class);
+
+        // 4‑C. Translate TabItem flags to Window flags (unsaved marker)
+        ImGuiWindowFlags win_flags = 0;
+        if (tab.flags & ImGuiTabItemFlags_UnsavedDocument)
+            win_flags |= ImGuiWindowFlags_UnsavedDocument;
+
+        // 4‑D. Begin window (no close button if tab.no_close)
+        if (ImGui::Begin(tab.get_uuid(),
+                         tab.no_close ? nullptr : &tab.open,
+                         win_flags))
+        {
+            if (tab.render_fn)
+                tab.render_fn(tab.get_uuid(), &tab.open, win_flags);
+            else
+                DefaultTabRenderFunc(tab.get_uuid(), &tab.open, win_flags);
+        }
+        ImGui::End();
+    }
 }
 
 

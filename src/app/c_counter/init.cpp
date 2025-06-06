@@ -49,45 +49,50 @@ void CCounterApp::initialize(void)
 //
 void CCounterApp::init(void)
 {
-    ms_I_PLOT_COL_WIDTH                            *= S.m_dpi_scale;
-    ms_SPACING                                     *= S.m_dpi_scale;
-    m_mst_plot_slider_height                       *= S.m_dpi_scale;
-    m_mst_plot_height                              *= S.m_dpi_scale;
-    //ms_COLLAPSE_BUTTON_SIZE.x                      *= S.m_dpi_scale;
-    //ms_COLLAPSE_BUTTON_SIZE.y                      *= S.m_dpi_scale;
-    m_cmap                                          = ImPlot::GetColormapIndex("CCounter_Map");
+    ms_I_PLOT_COL_WIDTH                                        *= S.m_dpi_scale;
+    ms_SPACING                                                 *= S.m_dpi_scale;
+    m_mst_plot_slider_height                                   *= S.m_dpi_scale;
+    m_mst_plot_height                                          *= S.m_dpi_scale;
+    //ms_COLLAPSE_BUTTON_SIZE.x                                *= S.m_dpi_scale;
+    //ms_COLLAPSE_BUTTON_SIZE.y                                *= S.m_dpi_scale;
+    m_cmap                                                      = ImPlot::GetColormapIndex("CCounter_Map");
     
     
-    //  1.  ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
-    m_window_class[0].DockNodeFlagsOverrideSet      = ImGuiDockNodeFlags_HiddenTabBar;    //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
-    m_window_class[1].DockNodeFlagsOverrideSet      = ImGuiDockNodeFlags_NoTabBar; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
+    //  1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
+    m_window_class[0].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
+    m_window_class[1].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar;      //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     
     
     std::snprintf(m_filepath, ms_BUFFER_SIZE, "%s", app::PYTHON_DUMMY_FPGA_FILEPATH);
     
         
+        
+    //  2.      DEFAULT TAB OPTIONS...
+    static ImGuiTabItemFlags        ms_DEF_PLOT_TAB_FLAGS       = ImGuiTabItemFlags_None;
+    static ImGuiTabItemFlags        ms_DEF_CTRL_TAB_FLAGS       = ImGuiTabItemFlags_None;
     
-    //  2.  TABS FOR PLOT WINDOW...
-    ms_PLOT_TABS                                    = {
+    
+    //  3A.     TABS FOR PLOT WINDOW...
+    ms_PLOT_TABS                                                = {
     //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
-        Tab_t(  "C-Counter Plots",          true,           true,               ImGuiTabItemFlags_None,         nullptr)
+        Tab_t(  "C-Counter Plots",          true,           true,               ms_DEF_PLOT_TAB_FLAGS,          nullptr)
     };
     
 
-    //  3.  TABS FOR CONTROL WINDOW...
-    ms_CTRL_TABS                                    = {
+    //  4A.     TABS FOR CONTROL WINDOW...
+    ms_CTRL_TABS                                                = {
     //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
-        Tab_t(  "C-Counter Controls",       true,           true,               ImGuiTabItemFlags_None,         nullptr)
+        Tab_t(  "C-Counter Controls",       true,           true,               ms_DEF_CTRL_TAB_FLAGS,          nullptr)
     };
     
     
-    //  4.  ASSIGN THE CALLBACK RENDER FUNCTIONS FOR EACH PLOT TAB...
+    //  3B.     ASSIGN THE CALLBACK RENDER FUNCTIONS FOR EACH PLOT TAB...
     for (std::size_t i = 0; i < ms_PLOT_TABS.size(); ++i) {
         auto &      tab                     = ms_PLOT_TABS[i];
         ms_PLOT_TABS[i].render_fn           = [this, tab]([[maybe_unused]] const char * id, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
                                               { this->dispatch_plot_function( tab.uuid ); };
     }
-    //  5.  ASSIGN CALLBACKS TO EACH CTRL TAB...
+    //  4B.     ASSIGN CALLBACKS TO EACH CTRL TAB...
     for (std::size_t i = 0; i < ms_CTRL_TABS.size(); ++i) {
         auto &      tab                     = ms_CTRL_TABS[i];
         ms_CTRL_TABS[i].render_fn           = [this, tab]([[maybe_unused]] const char * id, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
@@ -95,7 +100,10 @@ void CCounterApp::init(void)
     }
     
     
-    //  6.  DEFINE FDTD STUFF...
+    
+    
+    
+    
     //m_plot_colors                           = cb::utl::GetColormapSamples( m_NUM_COLORS, m_cmap );
     this->init_ctrl_rows();
     

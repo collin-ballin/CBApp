@@ -71,44 +71,53 @@ void GraphApp::initialize(void)
 //
 void GraphApp::init(void)
 {
-    ms_I_PLOT_COL_WIDTH                            *= S.m_dpi_scale;
-    ms_SPACING                                     *= S.m_dpi_scale;
-    ms_COLLAPSE_BUTTON_SIZE.x                      *= S.m_dpi_scale;
-    ms_COLLAPSE_BUTTON_SIZE.y                      *= S.m_dpi_scale;
+    ms_I_PLOT_COL_WIDTH                                        *= S.m_dpi_scale;
+    ms_SPACING                                                 *= S.m_dpi_scale;
+    ms_COLLAPSE_BUTTON_SIZE.x                                  *= S.m_dpi_scale;
+    ms_COLLAPSE_BUTTON_SIZE.y                                  *= S.m_dpi_scale;
     
     
-    //  1.  ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
-    m_window_class[0].DockNodeFlagsOverrideSet      = ImGuiDockNodeFlags_HiddenTabBar;    //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
-    m_window_class[1].DockNodeFlagsOverrideSet      = ImGuiDockNodeFlags_HiddenTabBar; //    ImGuiDockNodeFlags_NoTabBar; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
+    //  1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
+    m_window_class[0].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar;    //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
+    m_window_class[1].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar; //    ImGuiDockNodeFlags_NoTabBar; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     
     
-    //  2.  TABS FOR PLOT WINDOW...
-    ms_PLOT_TABS                                    = {
+    
+        
+        
+    //  2.      DEFAULT TAB OPTIONS...
+    static ImGuiTabItemFlags        ms_DEF_PLOT_TAB_FLAGS       = ImGuiTabItemFlags_None;
+    static ImGuiTabItemFlags        ms_DEF_CTRL_TAB_FLAGS       = ImGuiTabItemFlags_None;
+    
+    
+    //  3A.     TABS FOR PLOT WINDOW...
+    ms_PLOT_TABS                                                = {
     //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
-        Tab_t(  "FDTD Editor",              true,           true,               ImGuiTabItemFlags_None,         nullptr),
-        Tab_t(  "Simulation Playback",      true,           true,               ImGuiTabItemFlags_None,         nullptr),
+        Tab_t(  "FDTD Editor",              true,           true,               ms_DEF_PLOT_TAB_FLAGS,          nullptr),
+        Tab_t(  "Simulation Playback",      true,           true,               ms_DEF_PLOT_TAB_FLAGS,          nullptr),
         //  Tab_t(  "Etch-A-Sketch",            true,           true,               ImGuiTabItemFlags_None,         nullptr),
         //  Tab_t(  "Tab 2",                    true,           false,              ImGuiTabItemFlags_None,         nullptr)
     };
     
 
-    //  3.  TABS FOR CONTROL WINDOW...
-    ms_CTRL_TABS                                    = {
+    
+    //  3B.     TABS FOR CONTROL WINDOW...
+    ms_CTRL_TABS                                                = {
     //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
-        Tab_t(  "Model Parameters",         true,           true,               ImGuiTabItemFlags_None,         nullptr),
-        Tab_t(  "Playback Controls",        true,           true,               ImGuiTabItemFlags_None,         nullptr),
+        Tab_t(  "Model Parameters",         true,           true,               ms_DEF_CTRL_TAB_FLAGS,          nullptr),
+        Tab_t(  "Playback Controls",        true,           true,               ms_DEF_CTRL_TAB_FLAGS,          nullptr),
         //  Tab_t(  "Sketch Controls",          true,           true,               ImGuiTabItemFlags_None,         nullptr),
         //  Tab_t(  "Tab 2",                    true,           false,              ImGuiTabItemFlags_None,         nullptr)
     };
     
     
-    //  4.  ASSIGN THE CALLBACK RENDER FUNCTIONS FOR EACH PLOT TAB...
+    //  4A.     ASSIGN THE CALLBACK RENDER FUNCTIONS FOR EACH PLOT TAB...
     for (std::size_t i = 0; i < ms_PLOT_TABS.size(); ++i) {
         auto &      tab                     = ms_PLOT_TABS[i];
         ms_PLOT_TABS[i].render_fn           = [this, tab]([[maybe_unused]] const char * id, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
                                               { this->dispatch_plot_function( tab.uuid ); };
     }
-    //  5.  ASSIGN CALLBACKS TO EACH CTRL TAB...
+    //  4B.     ASSIGN CALLBACKS TO EACH CTRL TAB...
     for (std::size_t i = 0; i < ms_CTRL_TABS.size(); ++i) {
         auto &      tab                     = ms_CTRL_TABS[i];
         ms_CTRL_TABS[i].render_fn           = [this, tab]([[maybe_unused]] const char * id, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)

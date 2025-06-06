@@ -170,7 +170,7 @@ protected:
     // *************************************************************************** //
 protected:
     static constexpr size_t                         NX                              = 401ULL;
-    static constexpr std::size_t                    NT                              = 1800ULL;
+    static constexpr std::size_t                    NT                              = 100ULL;
 //
 public:
     using                                           value_type                      = double;
@@ -207,8 +207,9 @@ public:
                                                     };
     //
     fdtd::Steps<ImU64>                              m_steps                         = {
-                                                        { 200,      { 1,        1000}       },      //  NX
-                                                        { 1,        { 1,        1000}       },      //  NY
+                                                        //{ 200,      { 1,        1000}       },    //  NX
+                                                        { 10,       { 1,        1000}       },      //  NX
+                                                        { 5,        { 1,        1000}       },      //  NY
                                                         { 1,        { 1,        1000}       },      //  NZ
                                                         { 400,      { 1,        2000}       }       //  NT
                                                     };

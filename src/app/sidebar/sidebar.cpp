@@ -177,8 +177,42 @@ void SideBar::disp_appearance_mode(void)
         ref = &ref_saved_style;
 
 
+
     return;
 }
+
+
+
+/*
+void Demo_Config() {
+    ImGui::ShowFontSelector("Font");
+    ImGui::ShowStyleSelector("ImGui Style");
+    ImPlot::ShowStyleSelector("ImPlot Style");
+    ImPlot::ShowColormapSelector("ImPlot Colormap");
+    ImPlot::ShowInputMapSelector("Input Map");
+    ImGui::Separator();
+    ImGui::Checkbox("Use Local Time", &ImPlot::GetStyle().UseLocalTime);
+    ImGui::Checkbox("Use ISO 8601", &ImPlot::GetStyle().UseISO8601);
+    ImGui::Checkbox("Use 24 Hour Clock", &ImPlot::GetStyle().Use24HourClock);
+    ImGui::Separator();
+    if (ImPlot::BeginPlot("Preview")) {
+        static double now = (double)time(nullptr);
+        ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Time);
+        ImPlot::SetupAxisLimits(ImAxis_X1, now, now + 24*3600);
+        for (int i = 0; i < 10; ++i) {
+            double x[2] = {now, now + 24*3600};
+            double y[2] = {0,i/9.0};
+            ImGui::PushID(i);
+            ImPlot::PlotLine("##Line",x,y,2);
+            ImGui::PopID();
+        }
+        ImPlot::EndPlot();
+    }
+}
+*/
+
+
+
 
 
 

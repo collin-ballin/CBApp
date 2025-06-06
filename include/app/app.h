@@ -30,6 +30,7 @@
 //
 #include "app/menubar/_menubar.h"           //  Delegator Classes.
 #include "app/sidebar/_sidebar.h"
+#include "app/toolbar/_toolbar.h"
 #include "app/titlebar/_titlebar.h"
 
 
@@ -106,6 +107,7 @@ void                    ShowExampleAppDockSpace     ([[maybe_unused]] const char
 void                    ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 void                    ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 void                    ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+void                    ShowExampleAppDocuments     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 
 
 
@@ -152,6 +154,7 @@ protected:
     //                  6.  DELAGATOR CLASSES...
     app::AppState       CBAPP_STATE_NAME                = app::AppState();
     SideBar             m_sidebar;
+    ToolBar             m_toolbar;
     TitleBar            m_titlebar;
     MenuBar             m_menubar;
     
@@ -187,6 +190,9 @@ protected:
     void                ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                get_build_info              (void) const;
+    void                get_info1                   (void) const;
+    void                get_info2                   (void) const;
     
     
     //  2D.1            Additional Tools / Applications.    [tools.cpp]...
@@ -198,6 +204,7 @@ protected:
     //  2D.2            Utility Functions.                  [main_application.cpp]...
     void                KeyboardShortcutHandler     (void);
     void                SaveHandler                 (void);
+    void                InitDockspace               (void);
     void                RebuildDockLayout           (void);
     
     

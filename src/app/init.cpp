@@ -92,7 +92,8 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 App::App(void)
-    : m_sidebar(S),         m_titlebar(S),              m_menubar(S),
+    : m_sidebar(S),         m_toolbar(S),               m_titlebar(S),
+      m_menubar(S),
 #ifndef __CBAPP_DISABLE_FDTD__
       m_counter_app(S),     m_graphing_app(100, 200),   m_graph_app(S)
 # else
@@ -126,6 +127,7 @@ void App::init(void)
     //  3.      THIRD PART OF INITIALIZATION...             | INITIALIZE DELEGATOR CLASSES
     //          (SOME OF THESE HAVE TO BE DONE **AFTER** WE CREATE IMGUI CONTEXT)...
     this->m_sidebar.initialize();
+    this->m_toolbar.initialize();
     this->m_titlebar.initialize();
     this->m_counter_app.initialize();
 #ifndef __CBAPP_DISABLE_FDTD__
@@ -312,6 +314,10 @@ void App::dispatch_window_function(const Window & uuid)
             this->m_sidebar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
+        case Window::ToolBar:           {
+            this->m_toolbar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
+            break;
+        }
         case Window::TitleBar:           {
             this->m_titlebar.Begin(         w.uuid.c_str(),     nullptr,        w.flags);
             break;
@@ -368,7 +374,7 @@ void App::dispatch_window_function(const Window & uuid)
         //
         //
         //      4.  *MY* TOOLS...
-        case Window::ColorTool:       {
+        case Window::ColorTool:         {
             this->ShowColorTool(            w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }

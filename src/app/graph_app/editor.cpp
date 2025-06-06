@@ -21,9 +21,53 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  0.      STATIC VARIABLES...
 // *************************************************************************** //
 // *************************************************************************** //
+using   Channel         = editor::Channel;
+using   State           = editor::State;
+using   BrushShape      = editor::BrushShape;
+using   CBDragPoint     = editor::DragPoint;
+using   PopupAction     = editor::PopupAction;
+using   PointType       = editor::PointType;
+using   BuildCtx        = editor::BuildCtx;
+
+
+static constexpr ImVec4         COL_TYPE_A          = ImVec4(0.00f, 0.48f, 1.00f, 1.00f);   // blue
+static constexpr ImVec4         COL_TYPE_B          = ImVec4(1.00f, 0.23f, 0.19f, 1.00f);   // red
+static constexpr ImVec4         COL_TYPE_C          = ImVec4(0.10f, 0.80f, 0.10f, 1.00f);   // green
+static constexpr ImVec4         COL_UNASN           = ImVec4(0.70f, 0.70f, 0.70f, 1.00f);   // light gray
+static constexpr ImVec4         COL_HELD            = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);   // gray while dragging
+static constexpr ImVec4         COL_SELECTED        = ImVec4(0.95f, 0.75f, 0.05f, 1.00f);   // gold highlight
+static constexpr ImU32          COL_LASSO_OUT       = IM_COL32(255,215,0,255);   // gold outline
+static constexpr ImU32          COL_LASSO_FILL      = IM_COL32(255,215,0,40);    // translucent fill
+static constexpr float          POINT_RADIUS        = 10.0f;                                //  radius in pixels
 
 
 
+//  0.      STATIC FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "GetIdleColor"
+//
+inline ImVec4 GetIdleColor(PointType t) {
+    switch (t) {
+        case PointType::TypeA:      return COL_TYPE_A;
+        case PointType::TypeB:      return COL_TYPE_B;
+        case PointType::TypeC:      return COL_TYPE_C;
+        default:                    return COL_UNASN;
+    }
+}
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
 //  1.      INITIALIZATION FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -35,8 +79,7 @@ SketchWidget::SketchWidget(utl::PlotCFG & cfg)
 
 
 // --- NEW CTOR ---------------------------------------------------------------
-SketchWidget::SketchWidget(utl::PlotCFG& cfg,
-                           std::vector<Channel> channels)
+SketchWidget::SketchWidget(utl::PlotCFG& cfg, std::vector<Channel> channels)
     : m_channels(std::move(channels)), m_heatmap_id(ImHashStr("Perm_E")), m_cfg(cfg)
 {
     if (m_channels.empty())
@@ -149,7 +192,38 @@ void SketchWidget::End(void)
 // *************************************************************************** //
 //
 //
-//  3.      STATE - SPECIFIC FUNCTIONS...
+//  ?.      BUILD-MODE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "build_mode_input"
+//
+void SketchWidget::build_mode_input() {
+    BuildCtx ctx = editor::make_build_ctx();
+    PopupAction global_action = PopupAction::None;
+    PointType   set_type      = PointType::Unassigned;
+
+    build_add_new_point(ctx);
+    build_update_points(ctx, global_action, set_type);
+    build_handle_selection_popup(ctx, global_action, set_type);
+    build_apply_global_action(global_action, set_type);
+    build_update_lasso(ctx);
+    build_nudge_selected(ctx);
+    draw_lasso();
+    // Delete key shortcut
+    if (ctx.plot_hovered && ImGui::IsKeyPressed(ImGuiKey_Delete) && !m_selected.empty())
+        delete_selected_points();
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  3.      "DRAW-MODE" STATE - SPECIFIC FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -188,59 +262,7 @@ void SketchWidget::draw_mode_input() {
 }
 
 
-// -----------------------------------------------------------------------------
-void SketchWidget::build_mode_input() {
-    // Add point: Ctrl + LMB ----------------------------------------------------
-    if (ImPlot::IsPlotHovered() &&
-        ImGui::IsMouseClicked(ImGuiMouseButton_Left) &&
-        ImGui::GetIO().KeyCtrl) {
-        if (m_points.size() < static_cast<size_t>(k_max_points)) {
-            ImPlotPoint mp = ImPlot::GetPlotMousePos();
-            m_points.push_back({ static_cast<int>(m_points.size()), mp });
-        }
-    }
 
-    const ImVec4 col_idle{0.00f, 0.48f, 1.00f, 1.00f};
-    const ImVec4 col_held{1.00f, 0.23f, 0.19f, 1.00f};
-    constexpr float radius = 10.0f;
-
-    for (size_t i = 0; i < m_points.size(); ) {
-        CBDragPoint& pt = m_points[i];
-
-        // Drag interaction -----------------------------------------------------
-        ImPlot::DragPoint(pt.id,
-                          &pt.pos.x, &pt.pos.y,
-                          pt.held ? col_held : col_idle,
-                          radius,
-                          ImPlotDragToolFlags_None,
-                          &pt.clicked, &pt.hovered, &pt.held);
-
-        bool remove = false;
-
-        // Context menu ---------------------------------------------------------
-        if (pt.hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-            ImVec2 px = ImPlot::PlotToPixels(pt.pos);
-            ImGui::SetNextWindowPos(px, ImGuiCond_Appearing, {0,1});
-            char buf[32]; snprintf(buf, sizeof(buf), "PointPopup_%d", pt.id);
-            ImGui::OpenPopup(buf);
-        }
-        char buf[32]; snprintf(buf, sizeof(buf), "PointPopup_%d", pt.id);
-        if (ImGui::BeginPopup(buf)) {
-            if (ImGui::MenuItem("Delete"))
-                remove = true;
-            ImGui::EndPopup();
-        }
-
-        if (remove) {
-            m_points.erase(m_points.begin() + static_cast<ptrdiff_t>(i));
-            // re‑index ids -----------------------------------------------------
-            for (size_t j = i; j < m_points.size(); ++j)
-                m_points[j].id = static_cast<int>(j);
-            continue; // do not increment i – we removed current index
-        }
-        ++i;
-    }
-}
 
 
 
@@ -301,8 +323,6 @@ void SketchWidget::draw_line(int x0, int y0, int x1, int y1)
 }
 
 
-
-
 // *************************************************************************** //
 //
 //
@@ -350,6 +370,31 @@ void SketchWidget::resize_buffers(int nx, int ny)
 }
 
 
+//  "set_mode"
+//
+void SketchWidget::set_mode(const int mode) {
+    State mode_type     = static_cast<State>(mode);
+    this->m_mode        = mode_type;
+    
+    switch (mode_type)
+    {
+        case State::Build : {
+            m_cfg.graph.flags       = ImPlotFlags_None | ImPlotFlags_CanvasOnly;
+            break;
+        }
+        default : {
+            m_cfg.graph.flags       = ImPlotFlags_None | ImPlotFlags_NoLegend;
+            //m_cfg.graph.flags      |= ~ImPlotFlags_NoLegend;
+            //m_cfg.graph.flags      |= ImPlotFlags_NoMenus;
+            break;
+        }
+    }
+    
+    
+    return;
+}
+    
+    
 //  "set_cmap"
 //
 void SketchWidget::set_cmap(const int cmap)

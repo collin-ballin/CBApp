@@ -46,11 +46,11 @@
 
 //      2.1     CRITICAL BUILD SETTINGS...
 // *************************************************************************** //
-#define         CBAPP_VERSION                                   "0.02 WIP"
+#define         CBAPP_VERSION                                   "0.03 WIP"
 
 
 //#define         __CBAPP_DEBUG__                             1                 //  Enable delay before starting int main (bug-fix for X-Code IDE issue).
-//#define         __CBAPP_BUILD_CCOUNTER_APP__                    1               //  BUILD FOR COINCIDENCE COUNTER...
+// #define         __CBAPP_BUILD_CCOUNTER_APP__                    1               //  BUILD FOR COINCIDENCE COUNTER...
 #define         __CBAPP_BUILD_FDTD_APP__                        1               //  BUILD FOR FDTD APP...
 
 
@@ -74,7 +74,7 @@
 //#define     CBAPP_USE_VIEWPORT                          1               //  Debug util.  | Should be removed soon (as of 25th/04/2025).
 //#define     CBAPP_USE_DOCKSPACE                         1               //  Debug util.  | Should be removed soon (as of 25th/04/2025).
 #define     CBAPP_NEW_DOCKSPACE                             1
-#define     CBAPP_ENABLE_MOVE_AND_RESIZE                    1           //  Allow user to moving / resizing core windows.
+//#define     CBAPP_ENABLE_MOVE_AND_RESIZE                    1           //  Allow user to moving / resizing core windows.
 #define     CBAPP_USE_FONTSCALE_DPI                         1           //  Use "S.m_dpi_fontscale" SEPERATE FROM "S.m_dpi_scale".
 
 

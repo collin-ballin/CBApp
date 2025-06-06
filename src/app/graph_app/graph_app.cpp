@@ -164,7 +164,6 @@ void GraphApp::display_plots(void)
 
 
     ImGui::EndTabBar();
-        
     } // END "BeginTabBar".
 
     return;
@@ -484,8 +483,8 @@ static constexpr float      WIDGET_WIDTH        = 250.0f;
 void GraphApp::EditorUtility(void)
 {
     // ---------------------------------------------------------------------
-    const int res_x = m_steps.NX.value;   // external grid width
-    const int res_y = m_steps.NY.value;   // external grid height
+    const int res_x = static_cast<int>( m_steps.NX.value );   // external grid width
+    const int res_y = static_cast<int>( m_steps.NY.value );   // external grid height
     sketch.resize(res_x, res_y);
 
     ImPlotHeatmapFlags hm_flags   = 0;

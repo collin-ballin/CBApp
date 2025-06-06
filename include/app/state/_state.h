@@ -90,6 +90,7 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 inline constexpr ImGuiWindowFlags      _CBAPP_HOST_WINDOW_FLAGS             = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
 inline constexpr ImGuiWindowFlags      _CBAPP_DOCKSPACE_WINDOW_FLAGS        = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
 inline constexpr ImGuiWindowFlags      _CBAPP_SIDEBAR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+inline constexpr ImGuiWindowFlags      _CBAPP_TOOLBAR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
 inline constexpr ImGuiWindowFlags      _CBAPP_TITLEBAR_WINDOW_FLAGS         = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoFocusOnAppearing;
 inline constexpr ImGuiWindowFlags      _CBAPP_CORE_WINDOW_FLAGS             = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
 
@@ -159,6 +160,7 @@ inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = Im
     X(Host,             "CBApp (V0)",               true,                       _CBAPP_HOST_WINDOW_FLAGS                                )       \
     X(Dockspace,        "##RootDockspace",          true,                       _CBAPP_DOCKSPACE_WINDOW_FLAGS                           )       \
     X(SideBar,          "##Sidebar",                true,                       _CBAPP_SIDEBAR_WINDOW_FLAGS                             )       \
+    X(ToolBar,          "##ToolBar",                true,                       _CBAPP_TOOLBAR_WINDOW_FLAGS                             )       \
     X(TitleBar,         "##Titlebar",               true,                       _CBAPP_TITLEBAR_WINDOW_FLAGS                            )       \
     X(MenuBar,          "##Menubar",                true,                       _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(About,            "About",                    false,                      _CBAPP_ABOUT_WINDOW_FLAGS                               )       \
@@ -450,13 +452,6 @@ struct AppState
     //              1.5     Demo Windows.
     static constexpr size_t             ms_DEMO_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiDemo);
     static constexpr size_t             ms_DEMO_WINDOWS_END         = static_cast<size_t>(Window::Count);
-    //
-    //          2.  Misc. Constant Values:
-    //  const char *                        DEF_TITLEBAR_WIN_TITLE      = "TitleBar";
-    //  static constexpr float              ms_TITLEBAR_RATIO           = 0.10f;
-    //  ImGuiID                             m_top_dock_id               = 0;        //  |===>   These are for initial separation.
-    //  ImGuiID                             m_center_dock_id            = 0;        //
-    
     
     
     //  2.      MISC. INFORMATION...
@@ -466,38 +461,20 @@ struct AppState
     
     
     
-    //  3.      DOCKSPACE...
-    //std::vector<std::string>            m_primary_windows           = { };
-    bool                                m_rebuild_dockspace         = false;
-    const char *                        m_dock_name                 = "##RootDockspace";
-    ImGuiID                             m_dockspace_id              = 0;
-    //
-    ImGuiID                             m_main_dock_id              = 0;
-    ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_CentralNode; //ImGuiDockNodeFlags_NoDocking; ImGuiDockNodeFlags_NoDockingOverMe
-    ImGuiDockNode *                     m_main_node                 = nullptr;
-    
-    ImGuiID                             m_sidebar_dock_id           = 0;
-    //ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_AutoHideTabBar;
-    ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
-    ImGuiDockNode *                     m_sidebar_node              = nullptr;
-    
-    
-    
-    //  4.      GLFW AND HOST WINDOW STUFF...
+    //  3.      GLFW AND HOST WINDOW STUFF...
     ImGuiConfigFlags                    m_io_flags                  = ImGuiConfigFlags_None | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
     ImGuiViewport *                     m_main_viewport             = nullptr;
     GLFWwindow *                        m_glfw_window               = nullptr;
     
     
-    //  5.      COLORS...
+    //  4.      COLORS...
     ImVec4                              m_glfw_bg                   = cb::app::DEF_ROOT_WIN_BG;
     ImVec4                              m_dock_bg                   = cb::app::DEF_INVISIBLE_COLOR;
-    ImVec4                              m_sidebar_bg                = cb::app::DEF_SIDEBAR_WIN_BG;
     ImVec4                              m_titlebar_bg               = cb::app::DEF_TITLEBAR_WIN_BG;
     ImVec4                              m_main_bg                   = cb::app::DEF_MAIN_WIN_BG;
     
     
-    //  6.      DIMENSIONS...
+    //  5.      DIMENSIONS...
     //
     //              6.1     System.
     int                                 m_system_w                  = -1;       //  Sys. Display Dims.
@@ -509,15 +486,41 @@ struct AppState
     //                              Main Window Dims.
     int                                 m_window_w                  = 1280;
     int                                 m_window_h                  = 720;
-    //
-    //              6.3     Sidebar.
-    ImVec2                              m_sidebar_width             = ImVec2(40.0f, 400.0f);
-    float                               m_sidebar_ratio             = app::DEF_SB_OPEN_WIDTH;
     
     
-    //  7.      BOOLEANS...
+    //  6.      BOOLEANS...
     //
     bool                                m_running                   = true;
+    
+    
+    //  7.      SPECIFICS...
+    //
+    //              8.1     Main Dockingspace.
+    const char *                        m_dock_name                 = "##RootDockspace";
+    ImGuiID                             m_dockspace_id              = 0;
+    //
+    ImGuiID                             m_main_dock_id              = 0;
+    ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_CentralNode; //ImGuiDockNodeFlags_NoDocking; ImGuiDockNodeFlags_NoDockingOverMe
+    ImGuiDockNode *                     m_main_node                 = nullptr;
+    bool                                m_rebuild_dockspace         = false;
+    //
+    //              8.2     Toolbar.
+    ImGuiID                             m_toolbar_dock_id           = 0;
+    ImGuiDockNodeFlags                  m_toolbar_node_flags        = ImGuiDockNodeFlags_None; //ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNode *                     m_toolbar_node              = nullptr;
+    //
+    ImVec4                              m_toolbar_bg                = ImVec4(0.000f,    0.000f,     0.000f,     1.000f);
+    float                               m_toolbar_ratio             = 0.02;
+    bool                                m_show_toolbar_window       = true;
+    //
+    //              8.3     Sidebar.
+    ImGuiID                             m_sidebar_dock_id           = 0;
+    ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNode *                     m_sidebar_node              = nullptr;
+    //
+    ImVec4                              m_sidebar_bg                = cb::app::DEF_SIDEBAR_WIN_BG;
+    ImVec2                              m_sidebar_width             = ImVec2(40.0f, 400.0f);
+    float                               m_sidebar_ratio             = app::DEF_SB_OPEN_WIDTH;
     bool                                m_show_sidebar_window       = true;
     
     
