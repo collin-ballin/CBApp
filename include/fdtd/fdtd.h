@@ -19,84 +19,498 @@
 
 
 
-//#define            CB_BAREBONES                       1
-#define                _CBAPP_DISABLE_FDTD_FILE_IO            1
+#include <iostream>
+#include <filesystem>
+#include <stdexcept>
 
+#include <cmath>
+#include <complex>
+#include <cstdint>
 
+#include <vector>
+#include <array>
+#include <initializer_list>
 
-#ifndef _GLIBCXX_IOSTREAM
-#    include <iostream>
-#endif    /*  _GLIBCXX_IOSTREAM  */
+#include <utility>
+#include <cstring>
 
-#ifndef _GLIBCXX_CMATH
-#    include <cmath>
-#endif    /*  _GLIBCXX_CMATH  */
-
-#ifndef _GLIBCXX_ARRAY
-#    include <array>
-#endif    /*  _GLIBCXX_ARRAY  */
-
-#ifndef _GLIBCXX_STDEXCEPT
-#    include <stdexcept>
-#endif    /*  _GLIBCXX_STDEXCEPT  */
-
-#if __cplusplus >= 201103L
-#    ifndef _GLIBCXX_INITIALIZER_LIST
-#         include <initializer_list>
-#    endif    /*  _GLIBCXX_INITIALIZER_LIST  */
-#endif    // C++11.
-
-#ifndef _GLIBCXX_UTILITY
-#    include <utility>
-#endif    /*  _GLIBCXX_UTILITY  */
-
-#ifndef _GLIBCXX_CSTRING
-#    include <cstring>
-#endif    /*  _GLIBCXX_CSTRING  */
-
-#ifndef _GLIBCXX_CSTDINT
-#    include <cstdint>
-#endif    /*  _GLIBCXX_CSTDINT  */
-
-#ifndef _LIBCPP_FILESYSTEM
-#    include <filesystem>
-#endif     /*    _LIBCPP_FILESYSTEM    */
-
-#ifndef _GLIBCXX_COMPLEX
-#    include <complex>
-#endif     /*     _GLIBCXX_COMPLEX    */
-
-#ifndef _GLIBCXX_TYPEINFO
-#    include <typeinfo>
-#endif     /*     _GLIBCXX_TYPEINFO    */
-
-
-//  #ifndef _CB_FDTD_SOURCES_H
-//  #    include <sources.h>
-//  #endif /*    _CB_FDTD_SOURCES_H    */
-
-
-/*#ifndef _CBLIB_BINARY_FILE_H
-#    include "../../../../misc/binary_file.h"
-#endif */ /*    _CBLIB_BINARY_FILE_H    */
+#include <typeinfo>
+#include "fdtd/_fdtd_impl.h"
 
 
 
 
 
 
-namespace cb { namespace spc {//     BEGINNING NAMESPACE "cb" :: "spc"...
+namespace cb { namespace fdtd {//     BEGINNING NAMESPACE "cb" :: "fdtd"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-constexpr long double        pi                         = 3.141592653589793L;
-constexpr long double        c                          = 2.997924580000000e+08L;
-constexpr long double        eps_0                      = 8.854187812800001e-12L;
-constexpr long double        mu_0                       = 1.256637062120000e-06L;
-constexpr long double        eta_0                      = 3.767303136680000e+02L;
-constexpr long double        electron_mass              = 9.109383701500001e-31L;
-constexpr long double        elementary_charge          = 1.602176634000000e-19L;
-constexpr long double        electron_volt              = 1.602176634000000e-19L;
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+//                 PRIMARY TEMPLATE DECLARATION:
+//         1-Dimensional FDTD Class Template Definition
+// *************************************************************************** //
+// *************************************************************************** //
+template< typename          T               = double,
+          typename          Allocator       = std::allocator<T> >
+class FDTD_1D {
+// *************************************************************************** //
+// *************************************************************************** //
+//
+//
+//    LOCAL, CLASS-DEFINED PUBLIC ALIAS DEFINITIONS ...
+// *************************************************************************** //
+public:
+    using       base            = grid_1D<T, Allocator>;
+    using       typename        base::allocator_type                ;       using       typename            base::Alloc;
+    using       typename        base::value_type                    ;       using       typename            base::complex_t;
+    using       typename        base::size_type                     ;       using       typename            base::difference_type;
+    using       typename        base::pointer                       ;       using       typename            base::const_pointer;
+    using       typename        base::sbyte                         ;
+//
+    using       typename        base::reference                     ;       using       typename            base::const_reference;
+    using       typename        base::iterator                      ;       using       typename            base::const_iterator;
+//
+    using       typename        base::re_array                      ;
+    using       typename        base::im_array;
+    using       re_frame        = std::vector<re_array>             ;       using       im_frame            = std::vector<im_array>;
+
+// *************************************************************************** //
+//
+//
+//    PROTECTED DATA-MEMBERS ...
+// *************************************************************************** //
+protected:
+    size_type                           NX                      = 0ULL;
+    size_type                           NT                      = 0ULL;
+    bool                                initialized             = false;
+    bool                                complete                = false;
+    grid_1D<T, Allocator>               m_base;
+//
+    std::vector<value_type>             m_time;
+    re_array                            m_xvals;
+    re_frame                            m_Hy_T,                 m_Ez_T,
+                                        m_Hy_F_NORM,            m_Ez_F_NORM;
+    im_frame                            m_Hy_F,                 m_Ez_F;
+    
+
+    const size_type                     m_src_pos               = 2ULL;     //2ULL;
+    const size_type                     m_TFSF_boundary         = 2ULL;     // NX+1;//2ULL;
+    const size_type                     m_loss_layer            = 252ULL;   //      WORKS = NX+1;           //300ULL;
+    size_type                           m_material_pos          = 252;      //      WORKS = NX+1;             //52ULL;
+    size_type                           m_material_width        = 150;      //     50ULL;    //      WORKS = 30ULL;
+
+    const value_type                    m_wavelen               = 25.0f;    // 24.0f;//BEFORE WE USED 24 for LAMBDA...     30.0f;
+    const value_type                    m_src_delay             = 30.0f;    //30.0f;
+    const value_type                    m_src_width             = 10.0f;
+    const size_type                     m_num_periods           = 10ULL;    //      WORKS = 100ULL;//4ULL;
+
+    const value_type                    m_eta_0                 = spc::eta_0;
+    const value_type                    m_loss                  = 0.0045f;  //      WORKS = 0.00f;
+    const value_type                    m_perm                  = 7.0;      //      WORKS = 4.0f;
+
+
+// *************************************************************************** //
+//
+//
+//    CONSTRUCTORS, DESTRUCTOR, AND INITIALIZER FUNCTIONS ...
+// *************************************************************************** //
+public:
+
+    //    Default Constructor.
+    //
+    inline FDTD_1D(void) noexcept
+        :   m_base(),
+            m_xvals(0.0f),
+            m_Hy_T( re_array(0.0f) ),                                   m_Ez_T( re_array(0.0f) ),
+            m_Hy_F_NORM( re_array(0.0f) ),                              m_Ez_F_NORM( re_array(0.0f) ),
+            m_Hy_F( im_array(complex_t(0.0f, 0.0f)) ),                  m_Ez_F( im_array(complex_t(0.0f, 0.0f)) )
+    {
+        // ...
+    }
+    
+    
+    /*inline FDTD_1D(void) noexcept : base(),
+        m_xvals(NX, 0.0f),
+        m_Hy_T( NT, re_array(NX, 0.0f) ),                           m_Ez_T( NT, re_array(NX, 0.0f) ),
+        m_Hy_F_NORM( NT, re_array(NX, 0.0f) ),                      m_Ez_F_NORM( NT, re_array(NX, 0.0f) ),
+        m_Hy_F( NT, im_array(NX, complex_t(0.0f, 0.0f)) ),          m_Ez_F( NT, im_array(NX, complex_t(0.0f, 0.0f)) )
+    {
+        //this->m_material_width     = size_type(4*this->m_wavelen / ( std::sqrt(this->m_perm) )) - 1;
+    
+
+        //this->m_material_width        = 20ULL;
+        this->initialize();
+    }*/
+    
+    
+
+
+
+
+    //    Default Destructor.
+    //
+    inline virtual ~FDTD_1D(void) = default;
+
+
+// *************************************************************************** //
+//
+//
+//    OVERLOADED OPERATORS ...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//
+//
+//    PRIVATE MEMBER FUNCTIONS ...
+// *************************************************************************** //
+// *************************************************************************** //
+private:
+
+    //    "initialize"
+    //
+    inline void initialize(void) noexcept
+    {
+    /*
+        //    INITIALIZE X-VALS.
+        for (size_type m = 0ULL; m < NX; ++m)
+            this->m_xvals[m] = m;
+
+        for (size_type q = 0; q < NT; ++q) {//    INITIALIZE  Hy(t), Ez(t)  TO ZERO.
+            this->m_time[q] = q;
+
+            for (size_type m = 0; m < NX; ++m) {
+                this->m_Hy_T[q][m] = 0.0f;
+                this->m_Ez_T[q][m] = 0.0f;
+
+                this->m_Hy_F[q][m] = complex_t(0.0, 0.0);
+                this->m_Ez_F[q][m] = complex_t(0.0, 0.0);
+            }
+        }
+    */
+        return;
+    }
+    
+
+// *************************************************************************** //
+//
+//
+//
+//    PROTECTED MEMBER FUNCTIONS ...
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+
+    //    "init_interface"
+    //
+    inline void init_interface(void) noexcept
+    {
+    /*
+        size_type    m = 0ULL;
+
+        //    0.    Setting permittivity and permeability.
+        for (m = 0ULL; m < NX; ++m) {
+            m_base.m_mu_r[m]            = complex_t(1.0, 0.0);
+
+            if (m < this->m_material_pos)//        REGION 1:    FREE-SPACE.
+                m_base.m_eps_r[m]    = complex_t(1.0f, 0.0);
+            else//                                REGION 2:    DIELEC.
+                m_base.m_eps_r[m]    = complex_t(this->m_perm, 0.0);
+        }
+
+        //    1.    E-field Update Coeffs.
+        for (m = 0ULL; m < NX; ++m) {
+            m_base.m_Hy[m]        = 0.0f;
+            m_base.m_Ez[m]        = 0.0f;
+
+            if (m < this->m_material_pos ) {//        REGION 1:    FREE-SPACE.
+                m_base.m_cezE[m]                 = 1.0f;
+                m_base.m_cezH[m]                 = this->m_eta_0;
+            }
+            else if (m < this->m_loss_layer) {//    REGION 2:    DIELEC.
+                m_base.m_cezE[m]                 = 1.0f;
+                m_base.m_cezH[m]                 = this->m_eta_0 / this->m_base.m_eps_r[m].real();
+            }
+            else {//                                REGION 3:    LOSSY-LAYER.
+                value_type            re_eps    = this->m_base.m_eps_r[m].real();
+                m_base.m_cezE[m]                 = (1.0 - this->m_loss)/(1.0 + this->m_loss);
+                m_base.m_cezH[m]                 = this->m_eta_0 / this->m_perm / (1.0 + this->m_loss);
+
+                this->m_base.m_eps_r[m]          = complex_t(re_eps, this->m_loss);
+            }
+        }
+
+        //    2.    H-field Update Coeffs.
+        for (m = 0ULL; m < NX; ++m) {
+            if (m < this->m_loss_layer) {//         REGION 1:    FREE-SPACE.
+                m_base.m_chyH[m]     = 1.0f;
+                m_base.m_chyE[m]     = 1.0f / this->m_eta_0;
+            }
+            else {//                                REGION 2:    LOSSY-LAYER.
+                m_base.m_chyH[m]     = (1.0f - this->m_loss)/(1.0f + this->m_loss);
+                m_base.m_chyE[m]     = 1.0f / this->m_eta_0 / (1.0f + this->m_loss);
+            }
+        }
+    */
+        return;
+    }
+
+
+    //    "init_grid"
+    //
+    inline void init_grid(void) noexcept {
+    /*
+        this->thin_film();
+    */
+        return;
+    }
+    
+
+// *************************************************************************** //
+//
+//
+//
+//    MAIN FDTD FUNCTIONS ...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    //    "update_H"
+    //
+    inline void update_H(void)
+    {
+        for (size_type m = 0ULL; m < NX-1; ++m) {
+                m_base.m_Hy[m] = m_base.m_chyH[m] * m_base.m_Hy[m] +
+                                m_base.m_chyE[m] * (m_base.m_Ez[m + 1] - m_base.m_Ez[m]);
+        }
+
+        return;
+    }
+
+
+    //    "update_E"
+    //
+    inline void update_E(void)
+    {
+        for (size_type m = 1ULL; m < NX-1; ++m) {
+                m_base.m_Ez[m] = m_base.m_cezE[m] * m_base.m_Ez[m] +
+                                m_base.m_cezH[m] * (m_base.m_Hy[m] - m_base.m_Hy[m - 1]);
+        }
+
+        return;
+    }
+
+    //    "abc_1"
+    //
+    inline void abc_1(void) {
+        m_base.m_Hy[NX-2] = m_base.m_Hy[NX-1];
+        return;
+    }
+
+    //    "abc_2"
+    //
+    inline void abc_2(void) {
+        m_base.m_Ez[0] = m_base.m_Ez[1];
+        return;
+    }
+
+
+    //    "gaussian_source"
+    //
+    inline value_type gaussian_source(const value_type Sc, const value_type q, const value_type m)
+    {
+        value_type arg    = std::pow( (q - this->m_src_delay - m/Sc) / this->m_src_width, 2 );
+        return std::exp( -arg );
+    }
+
+    //    "harmonic_source"
+    //
+    inline value_type harmonic_source(const value_type Sc, const value_type q, const value_type m)
+    {
+        const size_type         pos             = this->m_src_pos;
+        const size_type         q_total         = size_type(this->m_num_periods * this->m_src_delay);
+        const value_type        tau             = (2 * spc::pi / this->m_wavelen);
+        const value_type        t_soft          = q_total / (this->m_num_periods);
+        value_type              temp            = std::sqrt( m_base.m_mu_r[pos].real() * m_base.m_eps_r[pos].real() );
+        value_type              arg             = tau * (Sc * q - temp*m );
+
+        //    Branchless "soft" ON-switch to gently ramp up the source amplitude.
+        value_type              ON              = 1.0f - (q >= q_total);
+
+        //    LAMBDA:    Compute quadratic smoothing from 0.0 ===> 1.0...
+        auto soft_start = [](value_type x, const value_type t_final) {
+            value_type    x_norm    = x / t_final;
+            x_norm                  = x_norm - (x_norm > 1.0) * (x_norm - 1.0);
+            return x_norm;
+        };
+
+        return ON * soft_start(q, t_soft) * ( std::sin(arg) );
+    }
+
+    //    "ricker_source"
+    //
+    inline value_type ricker_source(const value_type Sc, const value_type q, const value_type m)
+    {
+        const value_type    d        = 1;
+        value_type            pi_2    = spc::pi * spc::pi;
+        value_type            term    = std::pow( (Sc * q - m)/this->m_wavelen - d, 2);
+    
+        return (1 - 2 * pi_2 * term) * ( std::exp(-pi_2 * term) );
+    }
+
+    //    "source"
+    //
+    inline value_type source(const value_type Sc, const value_type q, const value_type m)
+    {
+        //return ricker_source(Sc, q, m);
+        return harmonic_source(Sc, q, m);
+        //return gaussian_source(Sc, q, m);
+    }
+
+    //    "update_TFSF"
+    //
+    inline void update_TFSF(const size_type q)
+    {
+        const value_type    Sc    = 1.0f;
+        m_base.m_Hy[this->m_TFSF_boundary - 1]    -= this->source(Sc, q, 0.0f) * m_base.m_chyE[this->m_TFSF_boundary];
+        m_base.m_Ez[this->m_TFSF_boundary]        += this->source(Sc, q + 0.5f, -0.5f);
+        return;
+    }
+
+    //    "hard_source"
+    //
+    inline void hard_source(const size_type q)
+    {
+        const value_type    Sc            = 1.0f;
+        m_base.m_Ez[this->m_src_pos]       += this->gaussian_source(Sc, q, 0.0f);
+
+        return;
+    }
+
+
+// *************************************************************************** //
+//
+//
+//    PUBLIC UTILITY FUNCTIONS ...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+
+    //  "get_E_time_data"
+    //
+    inline re_frame * get_E_time_data(void) {
+        return std::addressof( this->m_Ez_T );
+    }
+    
+    //  "get_E_freq_data"
+    //
+    inline re_frame * get_E_freq_data(void) {
+        return std::addressof( this->m_Ez_F_NORM );
+    }
+
+    //  "get_fourier_freqs"
+    //
+    inline re_array get_fourier_freqs(void) const
+    {
+        // Normalised 0 … 0.5 cycles/step grid (size NX/2+1)
+        return normalised_freq_axis<value_type>(NX);
+    }
+
+    //  "get_perm_E_data"
+    //
+    inline im_array & get_eps_r(void)
+    { return this->m_base.m_eps_r; }
+    
+
+
+// *************************************************************************** //
+//
+//
+//    PUBLIC MEMBER FUNCTIONS ...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    //    "run"
+    //
+    inline void run(void)
+    {
+        size_type        m = 0ULL,     q = 0ULL;
+        this->init_grid();
+        
+    
+
+
+        //    MAIN FDTD LOOP...
+        for (q=0ULL; q < NT; ++q)
+        {
+            //    1.    SIMULATE...
+            this->abc_1();
+            this->update_H();
+            this->update_TFSF(q);
+            this->abc_2();
+            this->update_E();
+
+            //    2.    COPYING DATA...
+            for (m = 0ULL; m < NX; ++m) {
+                this->m_Ez_T[q][m] = m_base.m_Ez[m];
+                this->m_Hy_T[q][m] = m_base.m_Hy[m];
+            }
+        }
+
+
+        //    3.    COMPUTING DISCRETE FOURIER TRANSFORM...
+        for (q = 0ULL; q < NT; ++q) {
+            this->m_Hy_F[q] = real_DFT<value_type>(this->m_Hy_T[q]);
+            this->m_Ez_F[q] = real_DFT<value_type>(this->m_Ez_T[q]);
+        }
+    
+    
+        // 4. NORMALISE DFT magnitudes (real, 0‒1) -------------------------
+        //using complex_t = typename m_base.complex_t;
+        for (q = 0ULL; q < NT; ++q) {
+            m_Hy_F_NORM[q] = normalize_spectrum<complex_t>( m_Hy_F[q] );
+            m_Ez_F_NORM[q] = normalize_spectrum<complex_t>( m_Ez_F[q] );
+        }
+    
+    
+    
+        return;
+    }
+
+
+// *************************************************************************** //
+//
+//
+//
+//    ...
+// *************************************************************************** //
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+//    END FDTD_1D INLINE CLASS DEFINITION.
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // *************************************************************************** //
@@ -105,7 +519,7 @@ constexpr long double        electron_volt              = 1.602176634000000e-19L
 //
 // *************************************************************************** //
 // *************************************************************************** //
-} }//   END OF "cb" :: "spc" NAMESPACE.
+} }//   END OF "cb" :: "fdtd" NAMESPACE.
 
 
 

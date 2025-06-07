@@ -303,6 +303,30 @@ void AppState::LoadCustomColorMaps(void) {
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "DockAtHome"
+//
+void AppState::DockAtHome(const Window & idx) {
+    app::WinInfo &w = this->m_windows[static_cast<Window>(idx)];
+    if (w.open)     ImGui::DockBuilderDockWindow(w.uuid.c_str(), this->m_main_dock_id);
+    return;
+}
+//
+void AppState::DockAtHome(const char * uuid)        { ImGui::DockBuilderDockWindow( uuid, m_main_dock_id ); }
+
+
+//  "DockAtDetView"
+//
+void AppState::DockAtDetView(const Window & idx) {
+    app::WinInfo &  w = this->m_windows[static_cast<Window>(idx)];
+    if (w.open)     ImGui::DockBuilderDockWindow(w.uuid.c_str(), this->m_detview_dockspace_id);
+    return;
+}
+//
+void AppState::DockAtDetView(const char * uuid)     { ImGui::DockBuilderDockWindow( uuid, m_detview_dockspace_id ); }
+    
+    
+    
+    
 //  "PushFont"
 //
 void AppState::PushFont( [[maybe_unused]] const Font & which) {

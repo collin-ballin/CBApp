@@ -70,33 +70,42 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  1.1     [ CBAPP_ENABLE_MOVE_AND_RESIZE ]    IF WINDOW MOVEMENT AND RESIZING IS #DEFINED...
-//      IF "NO_MOVE_RESIZE", SETif we’re *not* in move‑and‑resize mode, disable move & resize by default:
+//      1.0
+inline constexpr const char *           _IMGUI_DEMO_UUID                    = "Dear ImGui Demo";
+inline constexpr const char *           _IMPLOT_DEMO_UUID                   = "ImPlot Demo";
+
+
+//      1.1     [ CBAPP_ENABLE_MOVE_AND_RESIZE ]    IF WINDOW MOVEMENT AND RESIZING IS #DEFINED...
+//              IF "NO_MOVE_RESIZE", SETif we’re *not* in move‑and‑resize mode, disable move & resize by default:
 #ifdef CBAPP_ENABLE_MOVE_AND_RESIZE
     # define _CBAPP_NO_MOVE_RESIZE_FLAGS        0
 #else
     # define _CBAPP_NO_MOVE_RESIZE_FLAGS        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
 #endif  //  CBAPP_ENABLE_MOVE_AND_RESIZE  //
 
-#define _CBAPP_NO_SAVE_WINDOW_SIZE              0
-//ImGuiWindowFlags_NoSavedSettings
+
+#ifdef CBAPP_DISABLE_SAVE_WINDOW_SIZE
+    # define _CBAPP_NO_MOVE_RESIZE_FLAGS        ImGuiWindowFlags_NoSavedSettings
+#else
+    # define _CBAPP_NO_SAVE_WINDOW_SIZE         0
+#endif  //  CBAPP_DISABLE_SAVE_WINDOW_SIZE  //
 
 
 
 
 
-//  1.2     "HOST", "SIDEBAR",  AND "CORE" WINDOW FLAGS...
+
+//      1.2     "HOST", "SIDEBAR",  AND "CORE" WINDOW FLAGS...
 //
-inline constexpr ImGuiWindowFlags      _CBAPP_HOST_WINDOW_FLAGS             = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
-inline constexpr ImGuiWindowFlags      _CBAPP_DOCKSPACE_WINDOW_FLAGS        = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
-inline constexpr ImGuiWindowFlags      _CBAPP_SIDEBAR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
-inline constexpr ImGuiWindowFlags      _CBAPP_TOOLBAR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
-inline constexpr ImGuiWindowFlags      _CBAPP_TITLEBAR_WINDOW_FLAGS         = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoFocusOnAppearing;
-inline constexpr ImGuiWindowFlags      _CBAPP_CORE_WINDOW_FLAGS             = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
+inline constexpr ImGuiWindowFlags       _CBAPP_HOST_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+inline constexpr ImGuiWindowFlags       _CBAPP_DOCKSPACE_WINDOW_FLAGS       = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+inline constexpr ImGuiWindowFlags       _CBAPP_CONTROLBAR_WINDOW_FLAGS      = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_AlwaysAutoResize |   ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+inline constexpr ImGuiWindowFlags       _CBAPP_BROWSER_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+inline constexpr ImGuiWindowFlags       _CBAPP_DETVIEW_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+inline constexpr ImGuiWindowFlags       _CBAPP_CORE_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
 
-
-inline constexpr ImGuiWindowFlags      _CBAPP_ABOUT_WINDOW_FLAGS            = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
-inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse;
+inline constexpr ImGuiWindowFlags       _CBAPP_ABOUT_WINDOW_FLAGS           = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
+inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse;
 
 
 
@@ -159,11 +168,10 @@ inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = Im
 /*  1.  PRIMARY GUI STRUCTURE / "CORE WINDOWS"...                                                                                       */      \
     X(Host,             "CBApp (V0)",               true,                       _CBAPP_HOST_WINDOW_FLAGS                                )       \
     X(Dockspace,        "##RootDockspace",          true,                       _CBAPP_DOCKSPACE_WINDOW_FLAGS                           )       \
-    X(SideBar,          "##Sidebar",                true,                       _CBAPP_SIDEBAR_WINDOW_FLAGS                             )       \
-    X(ToolBar,          "##ToolBar",                true,                       _CBAPP_TOOLBAR_WINDOW_FLAGS                             )       \
-    X(TitleBar,         "##Titlebar",               true,                       _CBAPP_TITLEBAR_WINDOW_FLAGS                            )       \
     X(MenuBar,          "##Menubar",                true,                       _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(About,            "About",                    false,                      _CBAPP_ABOUT_WINDOW_FLAGS                               )       \
+    X(ControlBar,       "##ControlBar",             true,                       _CBAPP_CONTROLBAR_WINDOW_FLAGS                          )       \
+    X(Browser,          "##Browser",                true,                       _CBAPP_BROWSER_WINDOW_FLAGS                             )       \
+    X(DetailView,       "##DetailView",             true,                       _CBAPP_DETVIEW_WINDOW_FLAGS                             )       \
     X(MainApp,          "Home",                     true,                       _CBAPP_CORE_WINDOW_FLAGS | ImGuiWindowFlags_NoScrollbar )       \
 /*                                                                                                                                      */      \
 /*                                                                                                                                      */      \
@@ -190,8 +198,8 @@ inline constexpr ImGuiWindowFlags      _CBAPP_DEFAULT_WINDOW_FLAGS          = Im
 /*                                                                                                                                      */      \
 /*                                                                                                                                      */      \
 /*  5.  DEMO WINDOWS...                                                                                                                 */      \
-    X(ImGuiDemo,        "ImGui Demo",               false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImPlotDemo,       "ImPlot Demo",              false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImGuiDemo,        _IMGUI_DEMO_UUID,           false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImPlotDemo,       _IMPLOT_DEMO_UUID,          false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(AboutMyApp,       "About This App",           false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )   // END
 /*                                                                                                                                      */
 /*|========================================================================================================================|            */
@@ -413,6 +421,11 @@ struct AppState
     void                                SetLightMode                (void);
     void                                LoadCustomColorMaps         (void);
     
+    
+    void                                DockAtHome                  (const Window &);
+    void                                DockAtHome                  (const char *);
+    void                                DockAtDetView               (const Window &);
+    void                                DockAtDetView               (const char *);
     void                                PushFont                    ([[maybe_unused]] const Font & );
     void                                PopFont                     (void);
 
@@ -423,9 +436,10 @@ struct AppState
     // *************************************************************************** //
     
     //  0.      GROUPS / SUB-CLASSES OF "APPSTATE"...
-    utl::Logger &                       m_logger;               //  1.  LOGGER...
-    ImWindows                           m_windows;              //  2.  APPLICATION WINDOW STATE...
-    ImFonts                             m_fonts;                //  3.  APPLICATION FONTS...
+    utl::Logger &                       m_logger;                   //  1.      LOGGER...
+    ImWindows                           m_windows;                  //  2.      APPLICATION WINDOW STATE...
+    std::vector<WinInfo *>              m_detview_windows = {};     //  2.1     WINDOWS INSIDE DETAIL VIEW...
+    ImFonts                             m_fonts;                    //  3.      APPLICATION FONTS...
     
     
     
@@ -434,7 +448,7 @@ struct AppState
     //          1.  Window Variables:
     //              1.1     ALL Windows.
     static constexpr size_t             ms_WINDOWS_BEGIN            = static_cast<size_t>(Window::Dockspace);
-    static constexpr size_t             ms_RHS_WINDOWS_BEGIN        = static_cast<size_t>(Window::About);
+    static constexpr size_t             ms_RHS_WINDOWS_BEGIN        = static_cast<size_t>(Window::MainApp);
     static constexpr size_t             ms_WINDOWS_END              = static_cast<size_t>(Window::Count);
     //
     //              1.2     Main Application Windows.
@@ -500,32 +514,44 @@ struct AppState
     ImGuiID                             m_dockspace_id              = 0;
     //
     ImGuiID                             m_main_dock_id              = 0;
-    ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_CentralNode; //ImGuiDockNodeFlags_NoDocking; ImGuiDockNodeFlags_NoDockingOverMe
+    ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_CentralNode; //ImGuiDockNodeFlags_NoDocking; ImGuiDockNodeFlags_NoDockingOverMe
     ImGuiDockNode *                     m_main_node                 = nullptr;
     bool                                m_rebuild_dockspace         = false;
     //
     //              8.2     Toolbar.
     ImGuiID                             m_toolbar_dock_id           = 0;
-    ImGuiDockNodeFlags                  m_toolbar_node_flags        = ImGuiDockNodeFlags_None; //ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNodeFlags                  m_toolbar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_HiddenTabBar | ImGuiDockNodeFlags_NoResize; //ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
     ImGuiDockNode *                     m_toolbar_node              = nullptr;
     //
-    ImVec4                              m_toolbar_bg                = ImVec4(0.000f,    0.000f,     0.000f,     1.000f);
+    ImVec4                              m_toolbar_bg                = ImVec4(0.247f,     0.251f,     0.255f,     0.850f); // ImVec4(0.141f,    0.141f,     0.141f,     1.000f);
     float                               m_toolbar_ratio             = 0.02;
     bool                                m_show_toolbar_window       = true;
     //
     //              8.3     Sidebar.
     ImGuiID                             m_sidebar_dock_id           = 0;
-    ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
     ImGuiDockNode *                     m_sidebar_node              = nullptr;
     //
     ImVec4                              m_sidebar_bg                = cb::app::DEF_SIDEBAR_WIN_BG;
-    ImVec2                              m_sidebar_width             = ImVec2(40.0f, 400.0f);
     float                               m_sidebar_ratio             = app::DEF_SB_OPEN_WIDTH;
     bool                                m_show_sidebar_window       = true;
+    //
+    //              8.4     DetView.
+    ImGuiID                             m_detview_dock_id           = 0;
+    ImGuiDockNodeFlags                  m_detview_node_flags        = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNode *                     m_detview_node              = nullptr;
+    //
+    ImVec4                              m_detview_bg                = ImVec4(0.090f,    0.098f,     0.118f,     1.000f);
+    float                               m_detview_ratio             = 0.35f;
+    bool                                m_show_detview_window       = true;
+    //
+    //
+    //              9.1     DETVIEW DOCKSPACE.
+    static constexpr const char *       m_detview_dockspace_uuid    = "##DetailViewDockspace";
+    ImGuiID                             m_detview_dockspace_id      = 0;
+    ImGuiDockNodeFlags                  m_detview_dockspace_flags   = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
     
-    
-    
-
 
 
     //  99.     ADD MORE SHARED STATE DATA MEMBERS HERE...

@@ -28,10 +28,11 @@
 #include "app/_graphing_app.h"     
 #include "app/graph_app/graph_app.h"
 //
-#include "app/menubar/_menubar.h"           //  Delegator Classes.
-#include "app/sidebar/_sidebar.h"
-#include "app/toolbar/_toolbar.h"
-#include "app/titlebar/_titlebar.h"
+#include "app/delegators/_menubar.h"        //  Delegator Classes.
+#include "app/delegators/_browser.h"
+#include "app/delegators/_controlbar.h"
+#include "app/delegators/_detail_view.h"
+//#include "app/titlebar/_titlebar.h"
 
 
 
@@ -104,8 +105,6 @@ void                    ShowExampleAppConsole       ([[maybe_unused]] const char
 void                    ShowMetricsWindow           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 void                    ShowExampleAppDockSpace     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 
-void                    ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-void                    ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 void                    ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 void                    ShowExampleAppDocuments     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 
@@ -153,10 +152,10 @@ protected:
     
     //                  6.  DELAGATOR CLASSES...
     app::AppState       CBAPP_STATE_NAME                = app::AppState();
-    SideBar             m_sidebar;
-    ToolBar             m_toolbar;
-    TitleBar            m_titlebar;
     MenuBar             m_menubar;
+    ControlBar          m_controlbar;
+    Browser             m_browser;
+    DetailView          m_detview;
     
     //                  9.  APPLICATION SUB-CLASSES...
     CCounterApp         m_counter_app;
@@ -195,9 +194,8 @@ protected:
     void                get_info2                   (void) const;
     
     
-    //  2D.1            Additional Tools / Applications.    [tools.cpp]...
-    void                stream_test                 (void);                                                         //  [main_application.cpp].
-    void                ShowColorTool               ([[maybe_unused]] const char * ,    [[maybe_unused]] bool * ,   [[maybe_unused]] ImGuiWindowFlags);
+    //  2D.1            Additional Tools / Applications.    [tools.cpp]...                                //  [main_application.cpp].
+    void                ShowColorTool               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ColorShaderTool             (void);
     void                ColorMapCreatorTool         (void);
     //
@@ -209,7 +207,11 @@ protected:
     
     
     //  2E.1            Testing / Temporary Functions.
+    void                stream_test                 (void);
     void                TestTabBar                  (void);
+    //
+    void                ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     
     
     

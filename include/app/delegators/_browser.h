@@ -1,21 +1,21 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****            _ T I T L E B A R . H  ____  F I L E            ****
+*       ****             _ B R O W S E R . H  ____  F I L E             ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond
-*               DATED:      May 07, 2025.
+*               DATED:      May 06, 2025.
 *
 *       ********************************************************************
-*                FILE:      [./TitleBar.h]
+*                FILE:      [./Browser.h]
 *
 *
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CBAPP_APP_TITLEBAR_H
-#define _CBAPP_APP_TITLEBAR_H  1
+#ifndef _CBAPP_APP_SIDEBAR_H
+#define _CBAPP_APP_SIDEBAR_H  1
 
 
 
@@ -42,6 +42,7 @@
 
 #include <string>           //  <======| std::string, ...
 #include <string_view>
+#include <filesystem>
 #include <vector>           //  <======| std::vector, ...
 #include <stdexcept>        //  <======| ...
 #include <limits.h>
@@ -72,7 +73,7 @@ namespace cb { // BEGINNING NAMESPACE "cb"...
 // *************************************************************** //
 // *************************************************************** //
 
-class TitleBar
+class Browser
 {
     CBAPP_APPSTATE_ALIAS_API                //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
     friend class                App;
@@ -83,21 +84,18 @@ public:
     //  1               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     //  1.1                     Default Constructor, Destructor, etc.       [app/sidebar/sidebar.cpp]...
-    explicit                    TitleBar                            (app::AppState & );                             //  Def. Constructor.
-                                ~TitleBar                           (void);                                         //  Def. Destructor.
+    explicit                    Browser                             (app::AppState & );                             //  Def. Constructor.
+                                ~Browser                            (void);                                         //  Def. Destructor.
     
     //  1.2                     Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
     void                        Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                        initialize                          (void);
-    void                        toggle                              (void);
-    void                        open                                (void);
-    void                        close                               (void);
 
     //  1.3                     Deleted Operators, Functions, etc.
-                                TitleBar                            (const TitleBar &    src)            = delete;   //  Copy. Constructor.
-                                TitleBar                            (TitleBar &&         src)            = delete;   //  Move Constructor.
-    TitleBar &                  operator =                          (const TitleBar &    src)            = delete;   //  Assgn. Operator.
-    TitleBar &                  operator =                          (TitleBar &&         src)            = delete;   //  Move-Assgn. Operator.
+                                Browser                             (const Browser &    src)            = delete;   //  Copy. Constructor.
+                                Browser                             (Browser &&         src)            = delete;   //  Move Constructor.
+    Browser &                   operator =                          (const Browser &    src)            = delete;   //  Assgn. Operator.
+    Browser &                   operator =                          (Browser &&         src)            = delete;   //  Move-Assgn. Operator.
 
     
     
@@ -107,42 +105,45 @@ protected:
     //  2.A             PROTECTED DATA-MEMBERS...
     // *************************************************************************** //
     
-    //                                  1.  CONSTANTS...
-    bool                                m_initialized                       = false;
-    ImVec2                              m_scb_size                          = app::DEF_SIDEBAR_COLLAPSE_BUTTON_SIZE;
-    const char *                        m_scb_uuid                          = "##SideBarCollapseButton";
+    //                          1.  BOOLEANS...
+    bool                        m_initialized                       = false;
+    bool                        m_first_frame                       = false;
+    bool                        m_show_perf_metrics                 = app::DEF_PERF_METRICS_STATE;
+    bool                        m_show_perf_plots                   = app::DEF_PERF_PLOTS_STATE;
     //
-    //                                  2.  APPEARANCE...
-    //                                          ...
-    //
-    //                                  3.  WINDOW / GUI ITEMS...
-    //                                          ...
-    //
-    //                                      3.1     Sidebar-Button Toggle Window:
-    bool                                m_invalid_cache                     = true;
-    ImVec2                              m_win_size_cache                    = ImVec2(0.0f,      0.0f);
-    ImVec2                              m_win_pos                           = ImVec2(-1.0f,     -1.0f);
-    //
-    //
-    //                                  4.  MISC INFORMATION...
+    //                          2.  DIMENSIONS...
+    ImVec2                      ms_PLOT_SIZE                        = ImVec2(-1, 75);
     //                                      ...
     //
-    //                                  5.  IMPORTANT VARIABLES...
-    AppState &                          CBAPP_STATE_NAME;
+    //                          3.  WINDOW / GUI ITEMS...
+    ImGuiWindowClass            m_window_class;
+    //
+    //                          4.  MISC INFORMATION...
+    //                                      ...
+    //
+    //                          5.  IMPORTANT VARIABLES...
+    AppState &                  CBAPP_STATE_NAME;
     
     
     //  2.B             PROTECTED MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //  2B.1                    Class Initializations.              [app/titlebar/titlebar.cpp]...
+    //  2B.1                    Class Initializations.              [app/sidebar/sidebar.cpp]...
     void                        init                                (void);
+    void                        load                                (void);
     void                        destroy                             (void);
     
     
-    //  2B.2                    Secondary Class Methods.            [app/titlebar/titlebar.cpp]...
-    void                        ShoWTitleBarWindow                  (void);
-    void                        ValidateCache                       (void);
-    void                        compute_win_pos                     (void);
+    //  2B.2                    Secondary Class Methods.            [app/sidebar/sidebar.cpp]...
+    void                        Display_Preferences_Menu            (void);
+    //
+    void                        draw_sidebar_button                 (void);
+    void                        disp_appearance_mode                (void);     //  Other...
+    void                        disp_font_selector                  (void);
+    void                        disp_color_palette                  (void);
+    void                        color_tool                          (void);
+    void                        disp_ui_scale                       (void);
+    void                        disp_performance_metrics            (void);
     
     
     

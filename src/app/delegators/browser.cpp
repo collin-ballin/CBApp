@@ -1,7 +1,7 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****           _ S I D E B A R . C P P  ____  F I L E           ****
+*       ****            B R O W S E R . C P P  ____  F I L E            ****
 *       ********************************************************************
 *              AUTHOR:      Collin A. Bond
 *               DATED:      May 06, 2025.
@@ -9,7 +9,7 @@
 **************************************************************************************
 **************************************************************************************/
 #include "app/app.h"
-#include "app/sidebar/_sidebar.h"
+#include "app/delegators/_browser.h"
 #include <random>
 #include <algorithm>
 
@@ -27,14 +27,13 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 //  Default Constructor.
 //
-SideBar::SideBar(app::AppState & src)
+Browser::Browser(app::AppState & src)
     : S(src)                        { }
 
 
 //  "initialize"
 //
-void SideBar::initialize(void)
-{
+void Browser::initialize(void) {
     if (this->m_initialized)
         return;
         
@@ -45,7 +44,7 @@ void SideBar::initialize(void)
 
 //  "init"          | protected
 //
-void SideBar::init(void) {
+void Browser::init(void) {
     this->ms_PLOT_SIZE.y                           *= S.m_dpi_scale;
     
     this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_NoTabBar;
@@ -55,12 +54,12 @@ void SideBar::init(void) {
 
 //  Destructor.
 //
-SideBar::~SideBar(void)             { this->destroy(); }
+Browser::~Browser(void)             { this->destroy(); }
 
 
 //  "destroy"       | protected
 //
-void SideBar::destroy(void)         { }
+void Browser::destroy(void)         { }
 
 
 
@@ -74,7 +73,7 @@ void SideBar::destroy(void)         { }
 
 //  "Begin"
 //
-void SideBar::Begin([[maybe_unused]] const char *       uuid,
+void Browser::Begin([[maybe_unused]] const char *       uuid,
                     [[maybe_unused]] bool *             p_open,
                     [[maybe_unused]] ImGuiWindowFlags   flags)
 {
@@ -111,7 +110,7 @@ void SideBar::Begin([[maybe_unused]] const char *       uuid,
 
 //  "Display_Preferences_Menu"
 //
-void SideBar::Display_Preferences_Menu(void)
+void Browser::Display_Preferences_Menu(void)
 {
     ImGuiIO &                   io              = ImGui::GetIO(); (void)io;
     ImGuiStyle &                style           = ImGui::GetStyle();
@@ -155,7 +154,7 @@ void SideBar::Display_Preferences_Menu(void)
 
 //  "disp_appearance_mode"
 //
-void SideBar::disp_appearance_mode(void)
+void Browser::disp_appearance_mode(void)
 {
     [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
@@ -219,7 +218,7 @@ void Demo_Config() {
 
 //  "disp_font_selector"
 //
-void SideBar::disp_font_selector(void)
+void Browser::disp_font_selector(void)
 {
     ImGui::ShowFontSelector("Global Font##Selector");
     return;
@@ -230,7 +229,7 @@ void SideBar::disp_font_selector(void)
 
 //  "disp_color_palette"
 //
-void SideBar::disp_color_palette(void)
+void Browser::disp_color_palette(void)
 {
     ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
     ImGuiStyle &                    style           = ImGui::GetStyle();
@@ -290,7 +289,7 @@ void SideBar::disp_color_palette(void)
 
 //  "disp_ui_scale"
 //
-void SideBar::disp_ui_scale(void) {
+void Browser::disp_ui_scale(void) {
 
     if (ImGui::BeginTabItem("Fonts"))
     {
@@ -326,7 +325,7 @@ void SideBar::disp_ui_scale(void) {
 
 //  "disp_performance_metrics"
 //
-void SideBar::disp_performance_metrics(void) {
+void Browser::disp_performance_metrics(void) {
     using float_t                                       = float;
     using int_t                                         = int;
     

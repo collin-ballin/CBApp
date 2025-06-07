@@ -1,21 +1,21 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****             _ T O O L B A R . H  ____  F I L E             ****
+*       ****         _ D E T A I L _ V I E W . H  ____  F I L E         ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond
 *               DATED:      June 05, 2025.
 *
 *       ********************************************************************
-*                FILE:      [./ToolBar.h]
+*                FILE:      [./DetailView.h]
 *
 *
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CBAPP_APP_TOOLBAR_H
-#define _CBAPP_APP_TOOLBAR_H  1
+#ifndef _CBAPP_APP_DETAIL_VIEW_H
+#define _CBAPP_APP_DETAIL_VIEW_H  1
 
 
 
@@ -73,7 +73,7 @@ namespace cb { // BEGINNING NAMESPACE "cb"...
 // *************************************************************** //
 // *************************************************************** //
 
-class ToolBar
+class DetailView
 {
     CBAPP_APPSTATE_ALIAS_API                //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
     friend class                App;
@@ -84,18 +84,25 @@ public:
     //  1               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     //  1.1                     Default Constructor, Destructor, etc.       [app/sidebar/sidebar.cpp]...
-    explicit                    ToolBar                             (app::AppState & );                             //  Def. Constructor.
-                                ~ToolBar                            (void);                                         //  Def. Destructor.
+    explicit                    DetailView                          (app::AppState & );                             //  Def. Constructor.
+                                ~DetailView                         (void);                                         //  Def. Destructor.
     
-    //  1.2                     Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
+    //  1.2B                    Public API.
+    void                        open                                (void);
+    void                        close                               (void);
+    void                        toggle                              (void);
+    
+    
+    //  1.2C                    Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
     void                        Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                        initialize                          (void);
 
+
     //  1.3                     Deleted Operators, Functions, etc.
-                                ToolBar                             (const ToolBar &    src)            = delete;   //  Copy. Constructor.
-                                ToolBar                             (ToolBar &&         src)            = delete;   //  Move Constructor.
-    ToolBar &                   operator =                          (const ToolBar &    src)            = delete;   //  Assgn. Operator.
-    ToolBar &                   operator =                          (ToolBar &&         src)            = delete;   //  Move-Assgn. Operator.
+                                DetailView                          (const DetailView &    src)            = delete;   //  Copy. Constructor.
+                                DetailView                          (DetailView &&         src)            = delete;   //  Move Constructor.
+    DetailView &                operator =                          (const DetailView &    src)            = delete;   //  Assgn. Operator.
+    DetailView &                operator =                          (DetailView &&         src)            = delete;   //  Move-Assgn. Operator.
 
     
     
@@ -108,11 +115,9 @@ protected:
     //                          1.  BOOLEANS...
     bool                        m_initialized                       = false;
     bool                        m_first_frame                       = false;
-    bool                        m_show_perf_metrics                 = app::DEF_PERF_METRICS_STATE;
-    bool                        m_show_perf_plots                   = app::DEF_PERF_PLOTS_STATE;
+    bool                        m_is_open                           = false;
     //
     //                          2.  DIMENSIONS...
-    ImVec2                      ms_PLOT_SIZE                        = ImVec2(-1, 75);
     //                                      ...
     //
     //                          3.  WINDOW / GUI ITEMS...
@@ -122,6 +127,7 @@ protected:
     //                                      ...
     //
     //                          5.  IMPORTANT VARIABLES...
+    std::vector<WinInfo *>      m_detview_children                  = { };
     AppState &                  CBAPP_STATE_NAME;
     
     
@@ -135,15 +141,13 @@ protected:
     
     
     //  2B.2                    Secondary Class Methods.            [app/sidebar/sidebar.cpp]...
-    void                        Display_Preferences_Menu            (void);
+    void                        set_visibility_IMPL                 (const bool);
+    void                        open_all                            (void);
+    void                        close_all                           (void);
     //
-    void                        draw_sidebar_button                 (void);
-    void                        disp_appearance_mode                (void);     //  Other...
-    void                        disp_font_selector                  (void);
-    void                        disp_color_palette                  (void);
-    void                        color_tool                          (void);
-    void                        disp_ui_scale                       (void);
-    void                        disp_performance_metrics            (void);
+    void                        add_child_window                    (WinInfo * );
+    void                        remove_child_window                 (WinInfo * );
+    void                        TestTabBar                          (void);
     
     
     

@@ -32,6 +32,61 @@ void GraphApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool *
 
     //  1.  CREATING THE HOST WINDOW...
     ImGui::Begin(uuid, p_open, flags);
+        this->display_plots();
+    ImGui::End();
+    
+    
+    
+    //  2.  CREATE TOP WINDOW FOR PLOTS...
+    if (m_detview_window.open) {
+        ImGui::SetNextWindowClass(&this->m_window_class[1]);
+        ImGui::Begin( m_detview_window.uuid.c_str(), nullptr, m_detview_window.flags );
+            this->display_controls();
+        ImGui::End();
+    }
+    
+    
+
+    //  //  3.  CREATE BOTTOM WINDOW FOR CONTROLS...
+    //  if (m_child_open[1]) {
+    //      ImGui::SetNextWindowClass(&this->m_window_class[1]);
+    //      ImGui::PushStyleColor(ImGuiCol_WindowBg, app::DEF_LIVE_DARKBLUE);
+    //      ImGui::Begin(m_win_uuids[1], nullptr, m_docked_win_flags[1]);
+    //          this->display_controls();
+    //      ImGui::End();
+    //      ImGui::PopStyleColor();
+    //  }
+    
+    
+    
+    
+
+    
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+//  "Begin"
+//
+/*
+void GraphApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    static bool                     init                    = true;
+    static constexpr const char *   controls_uuid           = "Controls";
+
+
+    //  1.  CREATING THE HOST WINDOW...
+    ImGui::Begin(uuid, p_open, flags);
         //  Generate a persistent dockspace ID
         m_dockspace_id          = ImGui::GetID(m_dockspace_name);
         
@@ -57,44 +112,55 @@ void GraphApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool *
     ImGui::End();
     
     
+    
     //  2.  CREATE TOP WINDOW FOR PLOTS...
     ImGui::SetNextWindowClass(&this->m_window_class[0]);
+    
+    WinInfo m_detview_window(
+    
     ImGui::Begin(m_win_uuids[0], nullptr, m_docked_win_flags[0]);
         this->display_plots();
     ImGui::End();
     
+
+    //  //  3.  CREATE BOTTOM WINDOW FOR CONTROLS...
+    //  if (m_child_open[1]) {
+    //      ImGui::SetNextWindowClass(&this->m_window_class[1]);
+    //      ImGui::PushStyleColor(ImGuiCol_WindowBg, app::DEF_LIVE_DARKBLUE);
+    //      ImGui::Begin(m_win_uuids[1], nullptr, m_docked_win_flags[1]);
+    //          this->display_controls();
+    //      ImGui::End();
+    //      ImGui::PopStyleColor();
+    //  }
     
-    //  3.  CREATE BOTTOM WINDOW FOR CONTROLS...
-    if (m_child_open[1]) {
-        ImGui::SetNextWindowClass(&this->m_window_class[1]);
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, app::DEF_LIVE_DARKBLUE);
-        ImGui::Begin(m_win_uuids[1], nullptr, m_docked_win_flags[1]);
-            this->display_controls();
-        ImGui::End();
-        ImGui::PopStyleColor();
-    }
+    
+    
+    
+    
+    
+    
     
     
     //  4.  DEFINE COLLAPSE/EXPAND TOOLBAR BUTTON...
-    static toolbar::config  ctrl_toolbar{
-    //  PARENT UUID.      PARENT ANCHOR.        HOST UUID.      HOST ANCHOR.                PARENT OFFSET.      HOST OFFSET.
-        m_win_uuids[1], utl::Anchor::NorthWest, uuid,           utl::Anchor::SouthWest,     {ms_COLLAPSE_BUTTON_SIZE.x, 0.0f},       {0.0f, -45.0f}
-    };
-    
-    if ( toolbar::begin("##sidebar_toolbar", ctrl_toolbar) )
-    {
-        if ( utl::DirectionalButton("##toggle", m_child_open[1] ? Anchor::South : Anchor::North, ms_COLLAPSE_BUTTON_SIZE) )
-        {
-            m_child_open[1]     = !m_child_open[1];
-            //sidebar_ratio       = show_sidebar ? 0.60 : 0.05f;
-        }
-    }
-    toolbar::end();
+    //      static toolbar::config  ctrl_toolbar {
+    //      //  PARENT UUID.        PARENT ANCHOR.          HOST UUID.      HOST ANCHOR.                PARENT OFFSET.                          HOST OFFSET.
+    //          m_win_uuids[1],     utl::Anchor::NorthWest, uuid,           utl::Anchor::SouthWest,     {ms_COLLAPSE_BUTTON_SIZE.x, 0.0f},      {0.0f, -45.0f}
+    //      };
+    //
+    //      if ( toolbar::begin("##sidebar_toolbar", ctrl_toolbar) )
+    //      {
+    //          if ( utl::DirectionalButton("##toggle", m_child_open[1] ? Anchor::South : Anchor::North, ms_COLLAPSE_BUTTON_SIZE) )
+    //          {
+    //              m_child_open[1]     = !m_child_open[1];
+    //              //sidebar_ratio       = show_sidebar ? 0.60 : 0.05f;
+    //          }
+    //      }
+    //      toolbar::end();
     
     
     
     return;
-}
+}*/
 
 
 

@@ -18,7 +18,6 @@
 #define _CBAPP_GRAPH_APP_H  1
 
 
-
 //  1.  INCLUDES    | Headers, Modules, etc...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -59,6 +58,7 @@
 
 
 
+_CBAPP_WARN_UNUSED_PUSH
 namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -91,6 +91,7 @@ class GraphApp
     //  using               BRUSH_SHAPE_LABELS          = SketchWidget::BRUSH_SHAPE_LABELS;
     using               State                       = SketchWidget::State;
     using               BrushShape                  = SketchWidget::BrushShape;
+    friend class        App;
     CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 // *************************************************************************** //
 // *************************************************************************** //
@@ -241,6 +242,13 @@ public:
                                                         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
                                                         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY
                                                     };
+    WinInfo                                         m_detview_window                = {
+                                                        "ControlChild",
+                                                        ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
+                                                        true,
+                                                        nullptr
+                                                    };
+    //
     std::array< const char *, 2 >                   m_tabbar_uuids                  = { "PlotTabBar##GApp",     "PlotTabBar##GApp" };
     ImGuiTabBarFlags                                m_tabbar_flags[2]               = {
                                                         ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton,
@@ -411,7 +419,8 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //
 }//   END OF "cb" NAMESPACE.
-
+//
+_CBAPP_WARN_UNUSED_POP
 
 
 

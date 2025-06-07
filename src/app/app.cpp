@@ -228,7 +228,7 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
     ImGui::PushStyleColor(ImGuiCol_WindowBg, this->S.m_main_bg);
     ImGui::Begin(uuid, p_open, flags);
-    
+        
         ImGui::PopStyleColor();
     
     
@@ -385,11 +385,13 @@ void App::InitDockspace(void)
     // ------------------------------------------------------------------
     // 0.  Locals & aliases
     // ------------------------------------------------------------------
-    [[maybe_unused]] ImGuiIO   &io    = ImGui::GetIO();   (void)io;
-    [[maybe_unused]] ImGuiStyle&style = ImGui::GetStyle();
-    static size_t              idx   = 0;
-    const size_t               WINDOWS_END = S.ms_WINDOWS_END;
-
+    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO();   (void)io;
+    [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
+    static size_t                   idx                 = 0;
+    const size_t                    WINDOWS_END         = S.ms_WINDOWS_END;
+    const float                     toolbar_px          = 1.6f * ImGui::GetTextLineHeightWithSpacing();    // + style.FramePadding.y * 2.0f + style.ItemSpacing.y;
+    S.m_toolbar_ratio                                   = toolbar_px / S.m_main_viewport->WorkSize.y;
+    
 
     //  1.      CLEAR EXISTING DOCK LAYOUT...
     ImGui::DockBuilderRemoveNode    (this->S.m_dockspace_id);
@@ -402,46 +404,66 @@ void App::InitDockspace(void)
     //      ┌──────────── toolbar ────────────┐
     //      └──────────── dock_main_id ───────┘
     // ------------------------------------------------------------------
-    ImGuiID dock_main_id = 0;            // temp holder for the remainder after the split
+    ImGuiID work_bottom_id = 0;
     ImGui::DockBuilderSplitNode(
-        S.m_dockspace_id,                // node to split (root)
-        ImGuiDir_Up,                     // split direction
-        S.m_toolbar_ratio,               // height ratio (0‥1) for the toolbar
-        &S.m_toolbar_dock_id,            // resulting *toolbar* node id
-        &dock_main_id);                  // remainder (everything below the toolbar)
+        S.m_dockspace_id,
+        ImGuiDir_Up,
+        S.m_toolbar_ratio,
+        &S.m_toolbar_dock_id,
+        &work_bottom_id);
         
+    
+    //------------------------------------------------------------------
+    // 3.  Split work_bottom → Browser (Left) + right_area
+    //------------------------------------------------------------------
+    ImGuiID right_area_id = 0;
+    ImGui::DockBuilderSplitNode(
+        work_bottom_id,
+        ImGuiDir_Left,
+        S.m_sidebar_ratio,
+        &S.m_sidebar_dock_id,
+        &right_area_id);
 
-    // ------------------------------------------------------------------
-    // 3.  Second split: split the *remainder* into sidebar (Left) + main panel
-    //      ┌──────────── toolbar ────────────┐
-    //      ├─ sidebar ─┬── main panel ──────┤
-    // ------------------------------------------------------------------
-    ImGui::DockBuilderSplitNode( dock_main_id,  ImGuiDir_Left, S.m_sidebar_ratio, &S.m_sidebar_dock_id, &S.m_main_dock_id);
+    //------------------------------------------------------------------
+    // 4.  Split right_area → DetailView (Down) + Main (remainder)
+    //------------------------------------------------------------------
+    ImGui::DockBuilderSplitNode(
+        right_area_id,
+        ImGuiDir_Down,
+        S.m_detview_ratio,
+        &S.m_detview_dock_id,   // bottom panel
+        &S.m_main_dock_id);     // top panel
 
+    //------------------------------------------------------------------
+    // 5.  Fetch nodes & apply flags
+    //------------------------------------------------------------------
+    S.m_toolbar_node  = ImGui::DockBuilderGetNode(S.m_toolbar_dock_id);
+    S.m_sidebar_node  = ImGui::DockBuilderGetNode(S.m_sidebar_dock_id);
+    S.m_detview_node  = ImGui::DockBuilderGetNode(S.m_detview_dock_id);
+    S.m_main_node     = ImGui::DockBuilderGetNode(S.m_main_dock_id);
 
-    //  4.  APPLY DOCKING NODE FLAGS FOR EACH DOCKNODE...
-    S.m_toolbar_node                                = ImGui::DockBuilderGetNode(S.m_toolbar_dock_id);       //  3.1     Toolbar Dockspace.
-    S.m_sidebar_node                                = ImGui::DockBuilderGetNode(S.m_sidebar_dock_id);       //  3.2     Sidebar Dockspace.
-    S.m_main_node                                   = ImGui::DockBuilderGetNode(S.m_main_dock_id);          //  3.3     Main Dockspace.
-    S.m_toolbar_node ->LocalFlags                  |= S.m_toolbar_node_flags;                               //          Apply the flags...
-    S.m_sidebar_node ->LocalFlags                  |= S.m_sidebar_node_flags;
-    S.m_main_node    ->LocalFlags                  |= S.m_main_node_flags;
+    S.m_toolbar_node ->LocalFlags |= S.m_toolbar_node_flags  | ImGuiDockNodeFlags_NoResize;
+    S.m_sidebar_node ->LocalFlags |= S.m_sidebar_node_flags;
+    S.m_main_node    ->LocalFlags |= S.m_main_node_flags;
+    S.m_detview_node ->LocalFlags |= S.m_detview_node_flags;
 
-
-    //  5.  PLACE EACH PERSISTENT / CORE WINDOW INTO ITS DEFAULT DOCKING SPACE...
-    ImGui::DockBuilderDockWindow(S.m_windows[Window::ToolBar].uuid.c_str(),  S.m_toolbar_dock_id);
-    ImGui::DockBuilderDockWindow(S.m_windows[Window::SideBar].uuid.c_str(),  S.m_sidebar_dock_id);
-    for (idx = S.ms_RHS_WINDOWS_BEGIN; idx < WINDOWS_END; ++idx)
+    //------------------------------------------------------------------
+    // 6.  Dock core windows into their default locations
+    //------------------------------------------------------------------
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::ControlBar ].uuid.c_str(), S.m_toolbar_dock_id);
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::Browser    ].uuid.c_str(), S.m_sidebar_dock_id);
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::DetailView ].uuid.c_str(), S.m_detview_dock_id);
+    for (idx = S.ms_RHS_WINDOWS_BEGIN; idx < S.ms_WINDOWS_END; ++idx)
     {
-        app::WinInfo &w = S.m_windows[ static_cast<Window>(idx) ];
+        app::WinInfo &w = S.m_windows[static_cast<Window>(idx)];
         if (w.open)
             ImGui::DockBuilderDockWindow(w.uuid.c_str(), S.m_main_dock_id);
     }
 
-
-    // 6.  FINALIZE DOCKING LAYOUT AND EXIT...
+    //------------------------------------------------------------------
+    // 7.  Finalise layout
+    //------------------------------------------------------------------
     ImGui::DockBuilderFinish(S.m_dockspace_id);
-    
     return;
 }
 
@@ -464,15 +486,16 @@ void App::RebuildDockLayout(void)
 
 
     //  2.  ENABLE WINDOW VISIBILITY...
-    S.m_windows[Window::ToolBar].open   = true;
-    S.m_windows[Window::SideBar].open   = true;
-    S.m_windows[Window::MainApp].open   = true;
+    S.m_windows[Window::ControlBar].open    = true;
+    S.m_windows[Window::Browser].open       = true;
+    S.m_windows[Window::MainApp].open       = true;
+    S.m_windows[Window::DetailView].open    = true;
 
 
     //  3.  RE-INSERT ALL WINDOWS INTO THEIR DEFAULT DOCKING SPACE...
-    ImGui::DockBuilderDockWindow    (S.m_windows[Window::ToolBar].uuid.c_str(),     S.m_toolbar_dock_id);   //  3.1     Persistent / Core Windows.
-    ImGui::DockBuilderDockWindow    (S.m_windows[Window::SideBar].uuid.c_str(),     S.m_sidebar_dock_id);
-    ImGui::DockBuilderDockWindow    (S.m_windows[Window::MainApp].uuid.c_str(),     S.m_main_dock_id);
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::ControlBar ].uuid.c_str(), S.m_toolbar_dock_id);
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::Browser    ].uuid.c_str(), S.m_sidebar_dock_id);
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::DetailView ].uuid.c_str(), S.m_detview_dock_id);
     for (size_t idx = S.ms_APP_WINDOWS_BEGIN; idx < S.ms_WINDOWS_END; ++idx) {                              //  3.2     Remaining Windows.
         winfo           = S.m_windows[ static_cast<Window>(idx) ];
         if (winfo.open) {
@@ -512,24 +535,23 @@ void App::RebuildDockLayout(void)
 //
 void App::KeyboardShortcutHandler(void)
 {
-    static ImGuiInputFlags          sidebar_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
-    static const ImGuiKeyChord      SIDEBAR_KEY             = ImGuiKey_GraveAccent;
-    static ImGuiInputFlags          ctrlbar_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
-    static const ImGuiKeyChord      CTRLBAR_KEY             = ImGuiMod_Shift | ImGuiKey_GraveAccent; //ImGuiMod_Shift | ImGuiKey_Apostrophe;
+    static ImGuiInputFlags          browser_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
+    static const ImGuiKeyChord      BROWSER_KEY             = ImGuiKey_GraveAccent;
+    static ImGuiInputFlags          detview_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
+    static const ImGuiKeyChord      DETVIEW_KEY             = ImGuiMod_Shift | ImGuiKey_GraveAccent; //ImGuiMod_Shift | ImGuiKey_Apostrophe;
     
 
-    if ( ImGui::IsKeyChordPressed(SIDEBAR_KEY, sidebar_key_flags) )
-        this->m_titlebar.toggle();
-    
-    
-    if ( ImGui::IsKeyChordPressed(CTRLBAR_KEY, ctrlbar_key_flags) ) {
-#if defined(__CBAPP_BUILD_CCOUNTER_APP__)
-        this->m_counter_app.toggle();
-# elif defined(__CBAPP_BUILD_FDTD_APP__)
-        this->m_graph_app.toggle();
-#endif  //  __CBAPP_BUILD_FDTD_APP__  //
+    //  1.  HOTKEY TO OPEN/CLOSE BROWSER...
+    if ( ImGui::IsKeyChordPressed(BROWSER_KEY, browser_key_flags) ) {
+        //this->S.m_show_sidebar_window = !this->S.m_show_sidebar_window;
+        this->m_controlbar.toggle_sidebar();
     }
     
+    //  2.  HOTKEY TO OPEN/CLOSE DETAIL VIEW...
+    if ( ImGui::IsKeyChordPressed(DETVIEW_KEY, detview_key_flags) ) {
+    
+        this->m_detview.toggle();
+    }
     
     this->SaveHandler();
 
@@ -590,7 +612,7 @@ void App::SaveHandler(void)
 //
 //
 //      //  3.  INSERT THE "CORE" WINDOWS INTO DOCK...
-//      ImGui::DockBuilderDockWindow    (S.m_windows[Window::SideBar].uuid.c_str(),     S.m_sidebar_dock_id);
+//      ImGui::DockBuilderDockWindow    (S.m_windows[Window::Browser].uuid.c_str(),     S.m_sidebar_dock_id);
 //
 //
 //      //  4.  INSERT ALL REMAINING WINDOWS INTO RIGHT-SIDE DOCK...

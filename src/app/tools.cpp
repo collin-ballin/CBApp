@@ -27,6 +27,36 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "ShowImGuiDemoWindow"
+//
+void App::ShowImGuiDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    ImGui::ShowDemoWindow(p_open);
+    //ImGui::DockBuilderDockWindow(S.m_windows[Window::SideBar].uuid.c_str(),  S.m_sidebar_dock_id);
+    return;
+}
+
+
+//  "ShowImPlotDemoWindow"
+//
+void App::ShowImPlotDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    ImPlot::ShowDemoWindow(p_open);
+    return;
+}
+
+
+
+    
+
+
+// *************************************************************************** //
+//
+//
+//  3.4     COLOR TOOLS...
+// *************************************************************************** //
+// *************************************************************************** //
+
 //  "ShowColorTool"
 //
 void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)

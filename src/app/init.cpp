@@ -92,8 +92,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 App::App(void)
-    : m_sidebar(S),         m_toolbar(S),               m_titlebar(S),
-      m_menubar(S),
+    : m_menubar(S),         m_controlbar(S),            m_browser(S),       m_detview(S),
 #ifndef __CBAPP_DISABLE_FDTD__
       m_counter_app(S),     m_graphing_app(100, 200),   m_graph_app(S)
 # else
@@ -101,7 +100,7 @@ App::App(void)
 #endif  //  __CBAPP_DISABLE_FDTD__  //
 {
     glfwSetErrorCallback(utl::glfw_error_callback);         //  1.  SET GLFW CALLBACK & CHECK IF PROPERLY INITIALIZED...
-    if (!glfwInit())
+    if ( !glfwInit() )
         throw std::runtime_error(cb::error::GLFW_INIT_ERROR);
     
     
@@ -126,9 +125,9 @@ void App::init(void)
     
     //  3.      THIRD PART OF INITIALIZATION...             | INITIALIZE DELEGATOR CLASSES
     //          (SOME OF THESE HAVE TO BE DONE **AFTER** WE CREATE IMGUI CONTEXT)...
-    this->m_sidebar.initialize();
-    this->m_toolbar.initialize();
-    this->m_titlebar.initialize();
+    this->m_controlbar.initialize();
+    this->m_browser.initialize();
+    this->m_detview.initialize();
     this->m_counter_app.initialize();
 #ifndef __CBAPP_DISABLE_FDTD__
     this->m_graphing_app.initialize();
@@ -276,7 +275,7 @@ void App::init_appstate(void)
     
     //      4.1     FALLING BACK TO DEFAULT FONTS...
     if (!good_fonts) {
-        std::cout << "CBLOG WARNING \t | Failure to load custom application fonts.  Falling back to default DEAR IMGUI Fonts." << std::endl;
+        S.m_logger.warning( std::format("Failure to load custom application fonts.  Falling back to default DEAR IMGUI Fonts") );
         for (int i = 0; i < static_cast<int>(Font::Count); ++i) {
             const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
             ImFontConfig    config;
@@ -288,11 +287,16 @@ void App::init_appstate(void)
     
     //      5.      LOADING CUSTOM COLORMAPS...
     S.LoadCustomColorMaps();
-
+    
+    
+    //      6.      INITIALIZE OTHER MEMBERS INSIDE APPSTATE...
+    //  if (S.m_home_dockspace_id <= 0)
+    //      S.m_home_dockspace_id    = ImHashStr(S.m_home_dockspace_uuid);
+    S.m_detview_windows.push_back( std::addressof( this->m_graph_app.m_detview_window ) );
 
     return;
 }
-
+auto val = ImGuiDockNodeFlags_HiddenTabBar;
 
 //  "dispatch_window_function"
 //
@@ -310,20 +314,20 @@ void App::dispatch_window_function(const Window & uuid)
             this->ShowDockspace(            w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
-        case Window::SideBar:           {
-            this->m_sidebar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
-            break;
-        }
-        case Window::ToolBar:           {
-            this->m_toolbar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
-            break;
-        }
-        case Window::TitleBar:           {
-            this->m_titlebar.Begin(         w.uuid.c_str(),     nullptr,        w.flags);
-            break;
-        }
         case Window::MenuBar:           {
             this->m_menubar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
+            break;
+        }
+        case Window::ControlBar:        {
+            this->m_controlbar.Begin(       w.uuid.c_str(),     nullptr,        w.flags);
+            break;
+        }
+        case Window::Browser:           {
+            this->m_browser.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
+            break;
+        }
+        case Window::DetailView:        {
+            this->m_detview.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::MainApp:           {
@@ -382,11 +386,11 @@ void App::dispatch_window_function(const Window & uuid)
         //
         //      5.  DEMOS, ETC...
         case Window::ImGuiDemo:         {
-            cb::ShowImGuiDemoWindow(        w.uuid.c_str(),     &w.open,        w.flags);
+            this->ShowImGuiDemoWindow(      w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::ImPlotDemo:        {
-            cb::ShowImPlotDemoWindow(       w.uuid.c_str(),     &w.open,        w.flags);
+            this->ShowImPlotDemoWindow(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::AboutMyApp:        {

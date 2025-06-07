@@ -1,21 +1,21 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****             _ S I D E B A R . H  ____  F I L E             ****
+*       ****          _ C O N T R O L B A R . H  ____  F I L E          ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond
-*               DATED:      May 06, 2025.
+*               DATED:      June 05, 2025.
 *
 *       ********************************************************************
-*                FILE:      [./SideBar.h]
+*                FILE:      [./ControlBar.h]
 *
 *
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CBAPP_APP_SIDEBAR_H
-#define _CBAPP_APP_SIDEBAR_H  1
+#ifndef _CBAPP_APP_CONTROLBAR_H
+#define _CBAPP_APP_CONTROLBAR_H  1
 
 
 
@@ -73,7 +73,7 @@ namespace cb { // BEGINNING NAMESPACE "cb"...
 // *************************************************************** //
 // *************************************************************** //
 
-class SideBar
+class ControlBar
 {
     CBAPP_APPSTATE_ALIAS_API                //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
     friend class                App;
@@ -84,18 +84,28 @@ public:
     //  1               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     //  1.1                     Default Constructor, Destructor, etc.       [app/sidebar/sidebar.cpp]...
-    explicit                    SideBar                             (app::AppState & );                             //  Def. Constructor.
-                                ~SideBar                            (void);                                         //  Def. Destructor.
+    explicit                    ControlBar                          (app::AppState & );                             //  Def. Constructor.
+                                ~ControlBar                         (void);                                         //  Def. Destructor.
     
-    //  1.2                     Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
+    //  1.2B                    Public API.
+    void                        toggle_sidebar                      (void);
+    void                        open_sidebar                        (void);
+    void                        close_sidebar                       (void);
+    void                        toggle_detview                      (void);
+    void                        open_detview                        (void);
+    void                        close_detview                       (void);
+    
+    
+    //  1.2C                    Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
     void                        Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                        initialize                          (void);
 
+
     //  1.3                     Deleted Operators, Functions, etc.
-                                SideBar                             (const SideBar &    src)            = delete;   //  Copy. Constructor.
-                                SideBar                             (SideBar &&         src)            = delete;   //  Move Constructor.
-    SideBar &                   operator =                          (const SideBar &    src)            = delete;   //  Assgn. Operator.
-    SideBar &                   operator =                          (SideBar &&         src)            = delete;   //  Move-Assgn. Operator.
+                                ControlBar                          (const ControlBar &    src)            = delete;   //  Copy. Constructor.
+                                ControlBar                          (ControlBar &&         src)            = delete;   //  Move Constructor.
+    ControlBar &                operator =                          (const ControlBar &    src)            = delete;   //  Assgn. Operator.
+    ControlBar &                operator =                          (ControlBar &&         src)            = delete;   //  Move-Assgn. Operator.
 
     
     

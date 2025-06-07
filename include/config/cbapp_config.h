@@ -46,6 +46,7 @@
 
 //      2.1     CRITICAL BUILD SETTINGS...
 // *************************************************************************** //
+// *************************************************************************** //
 #define         CBAPP_VERSION                                   "0.03 WIP"
 
 
@@ -66,24 +67,72 @@
 
 //      2.2     W-I-P APPLICATION OPTIONS...
 // *************************************************************************** //
+// *************************************************************************** //
 //#define     CBAPP_ETCH_A_SKETCH                             1           //  DELETE THIS LATER...
 
 
 //      2.3     DEBUGGING UTILITIES...
 // *************************************************************************** //
-//#define     CBAPP_USE_VIEWPORT                          1               //  Debug util.  | Should be removed soon (as of 25th/04/2025).
-//#define     CBAPP_USE_DOCKSPACE                         1               //  Debug util.  | Should be removed soon (as of 25th/04/2025).
+// *************************************************************************** //
+//  #define     CBAPP_USE_VIEWPORT                                  1           //  Debug util.  | Should be removed soon (as of 25th/04/2025).
+//  #define     CBAPP_USE_DOCKSPACE                                 1           //  Debug util.  | Should be removed soon (as of 25th/04/2025).
 #define     CBAPP_NEW_DOCKSPACE                             1
-//#define     CBAPP_ENABLE_MOVE_AND_RESIZE                    1           //  Allow user to moving / resizing core windows.
+
+
+
+//      2.4     APP SETTINGS...
+// *************************************************************************** //
+// *************************************************************************** //
+//  #define     CBAPP_ENABLE_MOVE_AND_RESIZE                        1           //  Allow user to moving / resizing core windows.
+//  #define     CBAPP_DISABLE_SAVE_WINDOW_SIZE                      1           //  Prevent windows from saving/loading from "ini".     //  ImGuiWindowFlags_NoSavedSettings
 #define     CBAPP_USE_FONTSCALE_DPI                         1           //  Use "S.m_dpi_fontscale" SEPERATE FROM "S.m_dpi_scale".
 
-
-//#define     CBAPP_DISABLE_INI                         1               //  Prevent use of ".ini" file to save/recall data.
+//  #define     CBAPP_DISABLE_INI                                   1           //  Prevent use of ".ini" file to save/recall data.
 #define     CBAPP_LOAD_STYLE_FILE                           1           //  Prevent use of ".json" file to save/recall "ImGui" style data.
 
 
 
 
+
+
+//      2.5     OTHER MACROS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  clang-specific macros
+// *************************************************************************** //
+#if defined(__clang__)
+    #define _CBAPP_WARN_UNUSED_PUSH                                         \
+        _Pragma("clang diagnostic push")                                    \
+        _Pragma("clang diagnostic warning \"-Wunused-private-field\"")
+    #define _CBAPP_WARN_UNUSED_POP                                          \
+        _Pragma("clang diagnostic pop")
+// *************************************************************************** //
+//
+//
+//
+//  gcc (including mingw)-specific macros
+// *************************************************************************** //
+# elif defined(__GNUC__)
+    #define _CBAPP_WARN_UNUSED_PUSH                                         \
+        _Pragma("GCC diagnostic push")                                      \
+        _Pragma("GCC diagnostic warning \"-Wunused-private-field\"")
+    #define _CBAPP_WARN_UNUSED_POP                                          \
+        _Pragma("GCC diagnostic pop")
+//
+//
+// other compilers: no-ops
+// *************************************************************************** //
+# else
+    #define _CBAPP_WARN_UNUSED_PUSH
+    #define _CBAPP_WARN_UNUSED_POP
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+#endif  //  defined(__clang__)  //
 
 
 
@@ -223,6 +272,9 @@
 //
 // *************************************************************************** //
 #endif  //  __CBLIB_MIN_SIZE_RELEASE__  //
+
+
+
 
 
 
