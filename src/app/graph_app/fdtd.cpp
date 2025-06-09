@@ -144,7 +144,7 @@ void GraphApp::ShowPlayback(void)
         double                          now                 = ImGui::GetTime();
         double                          delta               = now - m_playback.last_time;
         
-        static re_array                 ms_perm_E           = cblib::make_real_vector( ms_model.get_eps_r() );
+        static re_array                 ms_perm_E           = cblib::math::make_real_vector( ms_model.get_eps_r() );
         static re_array                 ms_frequencies      = ms_model.get_fourier_freqs();
         static re_frame &               ms_Ez_T_data        = *ms_model.get_E_time_data();
         static re_frame &               ms_Ez_F_data        = *ms_model.get_E_freq_data();

@@ -31,13 +31,43 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "pre_run"
+//
+void App::pre_run(void)
+{
+    IM_ASSERT( S.m_notes.size() == 1 && "\"S.m_notes\" should have 1 timestamp at this point");
+    
+    //utl::get_glsl_version();
+    
+    Timestamp_t         start_time      = cblib::utl::get_timestamp();
+    //auto                dt              = start_time - S.m_notes[0].first;
+    auto dt = cblib::utl::format_elapsed_timestamp(start_time - S.m_notes[0].first);
+    
+    
+    auto                startup_log     = std::format(
+        "PROGRAM BOOTED SUCCESSFULLY.\n"
+        "   Spawned         : {}\n"
+        "   Started         : {}\n"
+        "   Load Time       : {}\n{}",
+        S.m_notes[0].first,
+        start_time,
+        dt, start_time - S.m_notes[0].first
+    );
+    
+    S.m_notes.push_back( std::make_pair(start_time, "Program started ({})") );
+    S.m_logger.notify( startup_log );
+    
+    return;
+}
+
+
 //  "run"
 //
 void App::run(void)
 {
-    static ImGuiIO &            io          = ImGui::GetIO(); (void)io;
-    ImGuiContext *              g           = ImGui::GetCurrentContext();
-    
+    [[maybe_unused]] ImGuiIO &          io          = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiContext *     g           = ImGui::GetCurrentContext();
+    this->pre_run();
 
 
     //  1.  MAIN PROGRAM LOOP...
@@ -390,7 +420,7 @@ void App::InitDockspace(void)
     static size_t                   idx                 = 0;
     const size_t                    WINDOWS_END         = S.ms_WINDOWS_END;
     const float                     toolbar_px          = 1.6f * ImGui::GetTextLineHeightWithSpacing();    // + style.FramePadding.y * 2.0f + style.ItemSpacing.y;
-    S.m_toolbar_ratio                                   = toolbar_px / S.m_main_viewport->WorkSize.y;
+    S.m_controlbar_ratio                                   = toolbar_px / S.m_main_viewport->WorkSize.y;
     
 
     //  1.      CLEAR EXISTING DOCK LAYOUT...
@@ -408,8 +438,8 @@ void App::InitDockspace(void)
     ImGui::DockBuilderSplitNode(
         S.m_dockspace_id,
         ImGuiDir_Up,
-        S.m_toolbar_ratio,
-        &S.m_toolbar_dock_id,
+        S.m_controlbar_ratio,
+        &S.m_controlbar_dock_id,
         &work_bottom_id);
         
     
@@ -420,8 +450,8 @@ void App::InitDockspace(void)
     ImGui::DockBuilderSplitNode(
         work_bottom_id,
         ImGuiDir_Left,
-        S.m_sidebar_ratio,
-        &S.m_sidebar_dock_id,
+        S.m_browser_ratio,
+        &S.m_browser_dock_id,
         &right_area_id);
 
     //------------------------------------------------------------------
@@ -437,21 +467,21 @@ void App::InitDockspace(void)
     //------------------------------------------------------------------
     // 5.  Fetch nodes & apply flags
     //------------------------------------------------------------------
-    S.m_toolbar_node  = ImGui::DockBuilderGetNode(S.m_toolbar_dock_id);
-    S.m_sidebar_node  = ImGui::DockBuilderGetNode(S.m_sidebar_dock_id);
+    S.m_controlbar_node  = ImGui::DockBuilderGetNode(S.m_controlbar_dock_id);
+    S.m_browser_node  = ImGui::DockBuilderGetNode(S.m_browser_dock_id);
     S.m_detview_node  = ImGui::DockBuilderGetNode(S.m_detview_dock_id);
     S.m_main_node     = ImGui::DockBuilderGetNode(S.m_main_dock_id);
 
-    S.m_toolbar_node ->LocalFlags |= S.m_toolbar_node_flags  | ImGuiDockNodeFlags_NoResize;
-    S.m_sidebar_node ->LocalFlags |= S.m_sidebar_node_flags;
+    S.m_controlbar_node ->LocalFlags |= S.m_controlbar_node_flags  | ImGuiDockNodeFlags_NoResize;
+    S.m_browser_node ->LocalFlags |= S.m_browser_node_flags;
     S.m_main_node    ->LocalFlags |= S.m_main_node_flags;
     S.m_detview_node ->LocalFlags |= S.m_detview_node_flags;
 
     //------------------------------------------------------------------
     // 6.  Dock core windows into their default locations
     //------------------------------------------------------------------
-    ImGui::DockBuilderDockWindow(S.m_windows[Window::ControlBar ].uuid.c_str(), S.m_toolbar_dock_id);
-    ImGui::DockBuilderDockWindow(S.m_windows[Window::Browser    ].uuid.c_str(), S.m_sidebar_dock_id);
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::ControlBar ].uuid.c_str(), S.m_controlbar_dock_id);
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::Browser    ].uuid.c_str(), S.m_browser_dock_id);
     ImGui::DockBuilderDockWindow(S.m_windows[Window::DetailView ].uuid.c_str(), S.m_detview_dock_id);
     for (idx = S.ms_RHS_WINDOWS_BEGIN; idx < S.ms_WINDOWS_END; ++idx)
     {
@@ -481,8 +511,8 @@ void App::RebuildDockLayout(void)
     //  ImGui::DockBuilderSetNodeSize   (this->S.m_dockspace_id,        S.m_main_viewport->WorkSize);
 
     //  //  2.  CREATE SPLIT-DOCK NODES...
-    //  ImGui::DockBuilderSplitNode     (this->S.m_dockspace_id,        ImGuiDir_Left,          this->S.m_sidebar_ratio,
-    //                                   &S.m_sidebar_dock_id,          &S.m_main_dock_id);
+    //  ImGui::DockBuilderSplitNode     (this->S.m_dockspace_id,        ImGuiDir_Left,          this->S.m_browser_ratio,
+    //                                   &S.m_browser_dock_id,          &S.m_main_dock_id);
 
 
     //  2.  ENABLE WINDOW VISIBILITY...
@@ -493,8 +523,8 @@ void App::RebuildDockLayout(void)
 
 
     //  3.  RE-INSERT ALL WINDOWS INTO THEIR DEFAULT DOCKING SPACE...
-    ImGui::DockBuilderDockWindow(S.m_windows[Window::ControlBar ].uuid.c_str(), S.m_toolbar_dock_id);
-    ImGui::DockBuilderDockWindow(S.m_windows[Window::Browser    ].uuid.c_str(), S.m_sidebar_dock_id);
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::ControlBar ].uuid.c_str(), S.m_controlbar_dock_id);
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::Browser    ].uuid.c_str(), S.m_browser_dock_id);
     ImGui::DockBuilderDockWindow(S.m_windows[Window::DetailView ].uuid.c_str(), S.m_detview_dock_id);
     for (size_t idx = S.ms_APP_WINDOWS_BEGIN; idx < S.ms_WINDOWS_END; ++idx) {                              //  3.2     Remaining Windows.
         winfo           = S.m_windows[ static_cast<Window>(idx) ];
@@ -543,7 +573,7 @@ void App::KeyboardShortcutHandler(void)
 
     //  1.  HOTKEY TO OPEN/CLOSE BROWSER...
     if ( ImGui::IsKeyChordPressed(BROWSER_KEY, browser_key_flags) ) {
-        //this->S.m_show_sidebar_window = !this->S.m_show_sidebar_window;
+        //this->S.m_show_browser_window = !this->S.m_show_browser_window;
         this->m_controlbar.toggle_sidebar();
     }
     
@@ -607,12 +637,12 @@ void App::SaveHandler(void)
 //      ImGui::DockBuilderSetNodeSize   (this->S.m_dockspace_id,        S.m_main_viewport->WorkSize);
 //
 //      //  2.  CREATE SPLIT-DOCK NODES...
-//      ImGui::DockBuilderSplitNode     (this->S.m_dockspace_id,        ImGuiDir_Left,          this->S.m_sidebar_ratio,
-//                                       &S.m_sidebar_dock_id,          &S.m_main_dock_id);
+//      ImGui::DockBuilderSplitNode     (this->S.m_dockspace_id,        ImGuiDir_Left,          this->S.m_browser_ratio,
+//                                       &S.m_browser_dock_id,          &S.m_main_dock_id);
 //
 //
 //      //  3.  INSERT THE "CORE" WINDOWS INTO DOCK...
-//      ImGui::DockBuilderDockWindow    (S.m_windows[Window::Browser].uuid.c_str(),     S.m_sidebar_dock_id);
+//      ImGui::DockBuilderDockWindow    (S.m_windows[Window::Browser].uuid.c_str(),     S.m_browser_dock_id);
 //
 //
 //      //  4.  INSERT ALL REMAINING WINDOWS INTO RIGHT-SIDE DOCK...

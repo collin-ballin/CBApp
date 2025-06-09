@@ -188,13 +188,11 @@ void DetailView::set_visibility_IMPL(const bool p_open) {
 
     //  CASE 1 :    CLOSE THE WINDOW...
     if (!p_open) {
-        std::cout << "Closing DetailView..." << std::endl;
         this->close_all();
     }
     //
     //  CASE 2 :    OPEN THE WINDOW...
     else {
-        std::cout << "Opening DetailView..." << std::endl;
         this->open_all();
     }
 

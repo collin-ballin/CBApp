@@ -1,0 +1,104 @@
+{
+    "AnnotationPadding": [
+        2.0,
+        2.0
+    ],
+    "Colormap": 0,
+    "Colors": [
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000"
+    ],
+    "DigitalBitGap": 4.0,
+    "DigitalBitHeight": 8.0,
+    "ErrorBarSize": 5.0,
+    "ErrorBarWeight": 1.5,
+    "FillAlpha": 1.0,
+    "FitPadding": [
+        0.0,
+        0.0
+    ],
+    "LabelPadding": [
+        5.0,
+        5.0
+    ],
+    "LegendInnerPadding": [
+        5.0,
+        5.0
+    ],
+    "LegendPadding": [
+        10.0,
+        10.0
+    ],
+    "LegendSpacing": [
+        5.0,
+        0.0
+    ],
+    "LineWeight": 1.0,
+    "MajorGridSize": [
+        1.0,
+        1.0
+    ],
+    "MajorTickLen": [
+        10.0,
+        10.0
+    ],
+    "MajorTickSize": [
+        1.0,
+        1.0
+    ],
+    "Marker": -1,
+    "MarkerSize": 4.0,
+    "MarkerWeight": 1.0,
+    "MinorAlpha": 0.25,
+    "MinorGridSize": [
+        1.0,
+        1.0
+    ],
+    "MinorTickLen": [
+        5.0,
+        5.0
+    ],
+    "MinorTickSize": [
+        1.0,
+        1.0
+    ],
+    "MousePosPadding": [
+        10.0,
+        10.0
+    ],
+    "PlotBorderSize": 1.0,
+    "PlotDefaultSize": [
+        400.0,
+        300.0
+    ],
+    "PlotMinSize": [
+        200.0,
+        150.0
+    ],
+    "PlotPadding": [
+        10.0,
+        10.0
+    ],
+    "Use24HourClock": false,
+    "UseISO8601": false,
+    "UseLocalTime": false
+}

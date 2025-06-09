@@ -24,6 +24,7 @@
 
 //  0.1.        ** MY **  HEADERS...
 #include CBAPP_USER_CONFIG
+#include "fdtd/fdtd.h"
 #include "cblib.h"
 //#include "app/app.h"
 #include "app/_init.h"
@@ -58,7 +59,7 @@
 
 
 
-_CBAPP_WARN_UNUSED_PUSH
+//_CBAPP_WARN_UNUSED_PUSH
 namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -108,23 +109,6 @@ public:
     //  1.2             Public Member Functions...
     void                initialize                  (void);
     void                Begin                       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    inline void         toggle                      (void)                                              { this->m_child_open[1] = !m_child_open[1]; }
-
-    inline void         open                        (void)                                              { this->m_child_open[1] = true; }
-
-    inline void         close                       (void)                                              { this->m_child_open[1] = false; }
-    
-    //                  Utility Functions...
-    
-
-
-
-    //  1.3             Deleted Operators, Functions, etc...
-    //                     App                      (const App & src)               = delete;   //  Copy. Constructor.
-    //                     App                      (App && src)                    = delete;   //  Move Constructor.
-    // App &               operator =               (const App & src)               = delete;   //  Assgn. Operator.
-    // App &               operator =               (App && src)                    = delete;   //  Move-Assgn. Operator.
-
 
 
 // *************************************************************************** //
@@ -137,20 +121,10 @@ protected:
     float                                           ms_SPACING                      = 60.0f;
     ImVec2                                          ms_COLLAPSE_BUTTON_SIZE         = ImVec2{15,    15};
     
-    //  CONSTANTS...
-    std::array<const char *, 2>                     ms_PLOT_UUIDs                   = { "##GAppMasterPlot",         "##GAppIndividualPlot"};
-    std::array<const char *, 2>                     ms_TABLE_UUIDs                  = { "##IndividualPlotTable",    "##GAppControlTable"};
-    
     //  INDIVIDUAL PLOT STUFF...
-    ImGuiTableColumnFlags                           ms_i_plot_table_flags           = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible;
-    ImGuiTableColumnFlags                           ms_i_plot_column_flags          = ImGuiTableColumnFlags_WidthFixed;   //    ImGuiTableColumnFlags_WidthFixed;   ImGuiTableColumnFlags_None
-    ImGuiTableColumnFlags                           ms_i_plot_plot_flags            = ImGuiTableColumnFlags_WidthStretch;
     float                                           ms_I_PLOT_COL_WIDTH             = 80.0f;
-    float                                           ms_I_PLOT_PLOT_WIDTH            = -1.0f;
     
     //  MISC APPLICATION STUFF...
-    static constexpr const char *                   ms_TABBAR_OPEN_TEXT             = "     ";
-    static constexpr const char *                   ms_TABBAR_CLOSED_TEXT           = "^^^^^";
     bool                                            m_initialized                   = false;
     bool                                            m_rebuild_dockspace             = false;
     
@@ -176,6 +150,7 @@ protected:
 public:
     using                                           value_type                      = double;
     using                                           FDTD_t                          = cb::FDTD_1D<NX, NT, value_type>;
+    using                                           NEW_FDTD_t                      = fdtd::FDTD_1D<value_type>;
     using                                           complex_t                       = FDTD_t::complex_t;
     using                                           re_array                        = FDTD_t::re_array;
     using                                           im_array                        = FDTD_t::im_array;
@@ -219,7 +194,8 @@ public:
                                                         { 8,        { 1,         500}       },      //  Duration
                                                     };
     //
-    FDTD_t		                                    ms_model                        = cb::FDTD_1D<NX, NT, double>();
+    FDTD_t                                          ms_model                        = cb::FDTD_1D<NX, NT, double>();
+    NEW_FDTD_t		                                ms_simulation                   = NEW_FDTD_t();
     re_frame *                                      m_Ez_T                          = nullptr;
 
 
@@ -420,7 +396,7 @@ public:
 // *************************************************************************** //
 }//   END OF "cb" NAMESPACE.
 //
-_CBAPP_WARN_UNUSED_POP
+//_CBAPP_WARN_UNUSED_POP
 
 
 

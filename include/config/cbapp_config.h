@@ -1,11 +1,19 @@
-//
-//  _config.h
-//  CBApp
-//
-//  Created by Collin Bond on 4/23/25.
-//
-// *************************************************************************** //
-// *************************************************************************** //
+/***********************************************************************************
+*
+*       ********************************************************************
+*       ****         C B A P P _ C O N F I G . h  ____  F I L E         ****
+*       ********************************************************************
+*
+*              AUTHOR:      Collin A. Bond
+*               DATED:      May 23, 2025.
+*
+*       ********************************************************************
+*                FILE:      [include/app/state/_state.h]
+*
+*
+*
+**************************************************************************************
+**************************************************************************************/
 #pragma once
 
 
@@ -51,8 +59,8 @@
 
 
 //#define         __CBAPP_DEBUG__                             1                 //  Enable delay before starting int main (bug-fix for X-Code IDE issue).
-// #define         __CBAPP_BUILD_CCOUNTER_APP__                    1               //  BUILD FOR COINCIDENCE COUNTER...
-#define         __CBAPP_BUILD_FDTD_APP__                        1               //  BUILD FOR FDTD APP...
+#define         __CBAPP_BUILD_CCOUNTER_APP__                    1               //  BUILD FOR COINCIDENCE COUNTER...
+// #define         __CBAPP_BUILD_FDTD_APP__                        1               //  BUILD FOR FDTD APP...
 
 
 //#define         __CBAPP_DISABLE_FDTD__                          1           //  BUILD FOR COINCIDENCE COUNTER...
@@ -98,6 +106,17 @@
 //      2.5     OTHER MACROS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//              1.      META-DATA CAPTURE FOR LOGGING.
+// *************************************************************************** //
+#define CB_LOG(level, msg, ...)         \
+    Logger::instance().log_ex(          \
+        msg, level,                     \
+        __FILE__, __LINE__,             \
+        __func__,                       \
+        std::this_thread::get_id(),     \
+        ##__VA_ARGS__)
+
 
 //  clang-specific macros
 // *************************************************************************** //

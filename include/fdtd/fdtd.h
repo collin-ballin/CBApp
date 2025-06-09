@@ -65,17 +65,16 @@ class FDTD_1D {
 // *************************************************************************** //
 public:
     using       base            = grid_1D<T, Allocator>;
-    using       typename        base::allocator_type                ;       using       typename            base::Alloc;
-    using       typename        base::value_type                    ;       using       typename            base::complex_t;
-    using       typename        base::size_type                     ;       using       typename            base::difference_type;
-    using       typename        base::pointer                       ;       using       typename            base::const_pointer;
-    using       typename        base::sbyte                         ;
+    using       allocator_type  = base::allocator_type              ;       using       Alloc               = base::allocator_type;
+    using       value_type      = base::value_type                  ;       using       complex_t           = base::complex_t;
+    using       size_type       = base::size_type                   ;       using       difference_type     = base::difference_type;
+    using       pointer         = base::pointer                     ;       using       const_pointer       = base::const_pointer;
+    using       sbyte           = base::sbyte                       ;
 //
-    using       typename        base::reference                     ;       using       typename            base::const_reference;
-    using       typename        base::iterator                      ;       using       typename            base::const_iterator;
+    using       reference       = base::reference                   ;       using       const_reference     = base::const_reference;
+    using       iterator        = base::iterator                    ;       using       const_iterator      = base::const_iterator;
 //
-    using       typename        base::re_array                      ;
-    using       typename        base::im_array;
+    using       re_array        = base::re_array                    ;       using       im_array            = base::im_array;
     using       re_frame        = std::vector<re_array>             ;       using       im_frame            = std::vector<im_array>;
 
 // *************************************************************************** //
@@ -124,10 +123,10 @@ public:
     //
     inline FDTD_1D(void) noexcept
         :   m_base(),
-            m_xvals(0.0f),
-            m_Hy_T( re_array(0.0f) ),                                   m_Ez_T( re_array(0.0f) ),
-            m_Hy_F_NORM( re_array(0.0f) ),                              m_Ez_F_NORM( re_array(0.0f) ),
-            m_Hy_F( im_array(complex_t(0.0f, 0.0f)) ),                  m_Ez_F( im_array(complex_t(0.0f, 0.0f)) )
+            m_xvals     ( 0,    value_type(0.0f) ),
+            m_Hy_T      ( 0,    re_array(0.0f) ),                           m_Ez_T      ( 0,    re_array(0.0f) ),
+            m_Hy_F_NORM ( 0,    re_array(0.0f) ),                           m_Ez_F_NORM ( 0,    re_array(0.0f) ),
+            m_Hy_F      ( 0,    im_array(0, complex_t(0.0f, 0.0f)) ),       m_Ez_F      ( 0,    im_array(0, complex_t(0.0f, 0.0f)) )
     {
         // ...
     }
@@ -177,7 +176,6 @@ private:
     //
     inline void initialize(void) noexcept
     {
-    /*
         //    INITIALIZE X-VALS.
         for (size_type m = 0ULL; m < NX; ++m)
             this->m_xvals[m] = m;
@@ -193,7 +191,7 @@ private:
                 this->m_Ez_F[q][m] = complex_t(0.0, 0.0);
             }
         }
-    */
+        
         return;
     }
     

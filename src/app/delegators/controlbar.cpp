@@ -75,26 +75,26 @@ void ControlBar::destroy(void)         { }
 //  "toggle_sidebar"
 //
 void ControlBar::toggle_sidebar(void) {
-    this->S.m_show_sidebar_window           = !this->S.m_show_sidebar_window;
+    this->S.m_show_browser_window           = !this->S.m_show_browser_window;
     S.m_windows[ Window::Browser ].open     = !S.m_windows[ Window::Browser ].open;
-    this->S.m_sidebar_ratio                 = this->S.m_show_sidebar_window ? app::DEF_SB_OPEN_WIDTH : 0.0f;
+    //this->S.m_browser_ratio                 = this->S.m_show_browser_window ? app::DEF_SB_OPEN_WIDTH : 0.0f;
 }
 
 
 void ControlBar::open_sidebar(void) {
-    if (this->S.m_show_sidebar_window)  return;
+    if (this->S.m_show_browser_window)  return;
         
-    this->S.m_show_sidebar_window           = true;
+    this->S.m_show_browser_window           = true;
     S.m_windows[ Window::Browser ].open     = true;
-    this->S.m_sidebar_ratio                 = this->S.m_show_sidebar_window;
+    this->S.m_browser_ratio                 = this->S.m_show_browser_window;
 }
 
 void ControlBar::close_sidebar(void) {
-    if (!this->S.m_show_sidebar_window) return;
+    if (!this->S.m_show_browser_window) return;
 
-    this->S.m_show_sidebar_window           = false;
+    this->S.m_show_browser_window           = false;
     S.m_windows[ Window::Browser ].open     = false;
-    this->S.m_sidebar_ratio                 = 0.0f;
+    this->S.m_browser_ratio                 = 0.0f;
 }
 
 
@@ -137,33 +137,46 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
 {
     [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
-    static bool                     my_bool         = true;
+    constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiButtonFlags_None;
+    const float                     ROW_H           = ImGui::GetFrameHeight();      //  font_size + 2*FramePadding.y
+    const ImVec2                    BUTTON_SIZE     = ImVec2(ROW_H, ROW_H);         //  exactly one‑row square buttons
     
     
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, S.m_toolbar_bg);   // Push before ImGui::Begin()
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, S.m_controlbar_bg);   // Push before ImGui::Begin()
     ImGui::SetNextWindowClass(&this->m_window_class);
-    
+    ImGui::SetNextWindowSizeConstraints( ImVec2(-1, ROW_H), ImVec2(FLT_MAX, ROW_H) );
     ImGui::Begin(uuid, p_open, flags);
         ImGui::PopStyleColor();
+        
+        
+        //  2.  SETUP NEW STYLE OPTIONS FOR CONTROL BAR WIDGETS...
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4.0f, 2.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,  ImVec2(4.0f, 0.0f));
+
         S.PushFont(Font::Small);
         
 
         
         //      1.      OPEN / CLOSE SIDEBAR WINDOW...
-        if ( ImGui::ArrowButton("##ControlBar_ToggleSidebar", (this->S.m_show_sidebar_window) ? ImGuiDir_Left : ImGuiDir_Right ) ) {
-                this->S.m_show_sidebar_window           = !this->S.m_show_sidebar_window;
+        if ( ImGui::ArrowButtonEx("##ControlBar_ToggleSidebar",     (this->S.m_show_browser_window) ? ImGuiDir_Left : ImGuiDir_Right,
+                                  BUTTON_SIZE,                      BUTTON_FLAGS) )
+        {
+                this->S.m_show_browser_window           = !this->S.m_show_browser_window;
                 S.m_windows[ Window::Browser ].open     = !S.m_windows[ Window::Browser ].open;
-                this->S.m_sidebar_ratio                 = this->S.m_show_sidebar_window ? app::DEF_SB_OPEN_WIDTH : 0.0f;
         }
         
 
         
         //      2.      OPEN / CLOSE DETAIL VIEW WINDOW...
         ImGui::SameLine();
-        if ( ImGui::ArrowButton("##ControlBar_ToggleDetailView", (this->S.m_show_detview_window) ? ImGuiDir_Down : ImGuiDir_Up ) ) {
+        if ( ImGui::ArrowButtonEx("##ControlBar_ToggleDetailView",  (this->S.m_show_detview_window) ? ImGuiDir_Down : ImGuiDir_Up,
+                                  BUTTON_SIZE,                      BUTTON_FLAGS) )
+        {
             this->S.m_show_detview_window = !this->S.m_show_detview_window;
         }
+                                  
+                     
         
         
         //ImGui::Checkbox("Button", &my_bool);
@@ -171,16 +184,17 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
         
         
     
-    S.PopFont();
+        S.PopFont();
+        ImGui::PopStyleVar(2); // FramePadding, ItemSpacing
     ImGui::End();
     
     return;
 }
 
 
-    //  this->S.m_show_sidebar_window           = !this->S.m_show_sidebar_window;
+    //  this->S.m_show_browser_window           = !this->S.m_show_browser_window;
     //  S.m_windows[ Window::Browser ].open     = !S.m_windows[ Window::Browser ].open;
-    //  this->S.m_sidebar_ratio                 = this->S.m_show_sidebar_window ? app::DEF_SB_OPEN_WIDTH : 0.0f;
+    //  this->S.m_browser_ratio                 = this->S.m_show_browser_window ? app::DEF_SB_OPEN_WIDTH : 0.0f;
 
 
 

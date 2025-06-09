@@ -23,19 +23,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-
-
-//  STATIC VARIABLES FOR COINCIDENCE COUNTER...
-namespace cc {
-    //  SKETCH STUFF...
-    //  COPIED...
-    //  };
-
-    static ImVec2                   HEADER_SEP_TOP              = ImVec2();
-    static ImVec2                   HEADER_SEP_BOTTOM           = ImVec2();
-}
-
-
 //  Per‑channel ring buffers for ImPlot
 //static std::array<utl::ScrollingBuffer, ms_NUM>   buffers;
 //static float                    max_counts[ms_NUM]         = {};
@@ -45,9 +32,7 @@ static utl::PyStream            proc(app::PYTHON_DUMMY_FPGA_FILEPATH);
 static ImGuiInputTextFlags      write_file_flags            = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue;
 
 static bool                     enter                       = false;
-static float                    history_s                   = 30.0f;                // seconds visible in sparklines
 static float                    row_height_px               = 60.0f;
-static float                    m_mst_plot_slider_width     = 30.0f;
 
 
 static float                    delay_s                     = 1.0f;                 // command slider
@@ -66,13 +51,9 @@ static char                     line_buf[512]{};                                
 //
 void CCounterApp::ShowCCPlots(void)
 {
-    static bool                     first_frame             = true;
-    static const char *             plot_name               = ms_PLOT_UUIDs[0];
-    //
     std::string                     raw;
     bool                            got_packet              = false;
     //
-    const float                     history_len             = m_history_length.value;
     float                           xmin                    = 0.0f,
                                     xmax                    = m_history_length.value;
     //
@@ -317,7 +298,6 @@ void CCounterApp::ShowCCPlots(void)
 
 
 
-    first_frame = false;
     //ImPlot::PopColormap();
     //ImGui::End();
 }
@@ -334,15 +314,6 @@ void CCounterApp::ShowCCPlots(void)
 //
 void CCounterApp::ShowCCControls(void)
 {
-    //  CONSTANTS...
-    static constexpr float              LABEL_COLUMN_WIDTH      = 200.0f;
-    static constexpr float              WIDGET_COLUMN_WIDTH     = 250.0f;
-
-    //  INTERACTIVE VARIABLES...
-    static ImGuiSliderFlags             SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
-
-
-
     //  1.  CONTROL PARAMETERS [FREE-STANDING / TEMPORARY]...
     //      if (ImGui::Button("Toggle All Plots")) {
     //          this->m_toggle_mst_plots = true; //this->ToggleAllPlots( this->ms_PLOT_UUIDs[0] );
@@ -464,9 +435,6 @@ void CCounterApp::ToggleAllPlots(const char * title) {
 //
 void CCounterApp::init_ctrl_rows(void)
 {
-    static constexpr float              LABEL_COLUMN_WIDTH      = 200.0f;
-    static constexpr float              WIDGET_COLUMN_WIDTH     = 250.0f;
-
     //  INTERACTIVE VARIABLES...
     static ImGuiSliderFlags             SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
 

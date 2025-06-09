@@ -18,6 +18,21 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 
 
+//  0.      STATIC HELPER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+static void append_indent(std::ostream& os, std::size_t n) { os << std::string(n, ' '); }
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
 //  1A.     INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -25,8 +40,12 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 //  Default Constructor.            | PRIVATE BECAUSE SINGLETON...
 //
 Logger::Logger(void) {
+#if defined(_WIN32)
+    enable_vt_win();                // sets m_vt_enabled
+#else
+    m_vt_enabled = true;
+#endif
 #if CBAPP_LOG_ENABLED
-    //enable_vt_win();
     start_worker();
 #endif
 }
@@ -93,6 +112,12 @@ void Logger::error(const char * msg)                            { enqueue(msg,  
 void Logger::error(const std::string & msg)                     { enqueue(msg.c_str(),  Level::Error);      }
 
 
+//  "notify"
+//
+void Logger::notify(const char * msg)                           { enqueue(msg,          Level::Notify);   }
+void Logger::notify(const std::string & msg)                    { enqueue(msg.c_str(),  Level::Notify);   }
+
+
 //  "critical"
 //
 void Logger::critical(const char * msg)                         { enqueue(msg,          Level::Critical);   }
@@ -111,15 +136,19 @@ void Logger::critical(const std::string & msg)                  { enqueue(msg.c_
 // *************************************************************************** //
 
 //  "set_level"
-//
-void  Logger::set_level(const Level & level)    { this->m_threshold = level; }
+void  Logger::set_level(const Level & level)                    { this->m_threshold = level; }
 
 
 //  "get_level"
-//
-Logger::Level Logger::get_level(void) const     { return m_threshold; }
+Logger::Level Logger::get_level(void) const                     { return m_threshold; }
 
 
+//  "set_console_format"
+void Logger::set_console_format(ConsoleFormat fmt)              { m_console_fmt = fmt; }
+
+
+//  "get_console_format"
+Logger::ConsoleFormat Logger::get_console_format(void) const    { return m_console_fmt; }
 
 
 
@@ -138,22 +167,31 @@ Logger::Level Logger::get_level(void) const     { return m_threshold; }
 
 //  "enqueue"
 //
-void Logger::enqueue(const char * msg, Level lvl)
+void Logger::enqueue(const char* msg, Level lvl)
 {
-    //  1.  APPLY FILTER...
-    if ( static_cast<int>(lvl) < static_cast<int>(m_threshold) )
+    enqueue_event(LogEvent{
+        lvl, msg, next_count(lvl),
+        /*file*/ nullptr,
+        /*line*/ 0,
+        /*func*/ nullptr,
+        std::this_thread::get_id(),
+        iso_timestamp()
+    });
+}
+
+
+//  "enqueue_event"
+//
+void Logger::enqueue_event(LogEvent&& ev)
+{
+    if (static_cast<int>(ev.level) < static_cast<int>(m_threshold))
         return;
-    
-    std::unique_lock<std::mutex>    lock(m_mtx);
-    
+
+    std::unique_lock<std::mutex> lock(m_mtx);
     m_cv.wait(lock, [this]{ return m_queue.size() < QUEUE_CAPACITY; });
-    
-    m_queue.push(LogEvent{lvl, msg, next_count(lvl)});
-    
-    
+    m_queue.push(std::move(ev));
     lock.unlock();
-    m_cv.notify_one();   // wake worker
-    return;
+    m_cv.notify_one();
 }
 
 
@@ -199,20 +237,93 @@ void Logger::stop_worker(void) {
 }
 
 
-//  "write_event"
-//
-void Logger::write_event(const LogEvent & ev)
+// ---------------------------------------------------------------------------
+// FORMATTED OUTPUT WITH HANGING-INDENT + WORD WRAP
+// ---------------------------------------------------------------------------
+
+
+// ---------------------------------------------------------------------------
+// Member helper: build textual header "[CBLOG LEVEL ###] : "
+// ---------------------------------------------------------------------------
+std::string Logger::build_header(const LogEvent& ev)
 {
-    std::ostringstream os;
-    
-    os << '[' << HEADER << ' ';
-    os << std::left  << std::setw(MAX_LEVEL_LEN) << level_str(ev.level) << ' ';
-    os << std::right << std::setfill('0') << std::setw(COUNTER_WIDTH) << ev.count << std::setfill(' ') << ']';
-    os << "    : \"" << ev.text << "\"";
-    std::cout << os.str() << std::endl;
-    
-    return;
+    std::ostringstream ss;
+    ss << '[' << HEADER << ' '
+       << std::left  << std::setw(MAX_LEVEL_LEN) << level_str(ev.level) << ' '
+       << std::right << std::setfill('0') << std::setw(COUNTER_WIDTH) << ev.count
+       << std::setfill(' ') << "]    : ";
+    return ss.str();
 }
+
+// ---------------------------------------------------------------------------
+// Member helper: hanging‑indent, word‑wrapped body (writes directly to `out`)
+// ---------------------------------------------------------------------------
+void Logger::write_body(const std::string& msg, std::ostream& out, std::size_t indent_len) const
+{
+    out << BODY_OPEN_DELIM;
+    std::size_t col = indent_len + std::char_traits<char>::length(BODY_OPEN_DELIM);
+
+    std::ostringstream line;
+    auto flush_line = [&]{ out << line.str(); line.str({}); line.clear(); };
+    auto newline    = [&]{ flush_line(); out << '\n'; append_indent(out, indent_len); col = indent_len; };
+
+    for (std::size_t i = 0; i < msg.size();) {
+        if (msg[i] == '\n') { newline(); ++i; continue; }
+        std::size_t word_end = msg.find_first_of(" \n", i);
+        if (word_end == std::string::npos) word_end = msg.size();
+        std::string_view word(&msg[i], word_end - i);
+
+        if (col > indent_len && col + word.size() + 1 > MAX_COL_WIDTH) newline();
+        if (col > indent_len) { line << ' '; ++col; }
+        line << word; col += word.size();
+        i = word_end;
+        if (i < msg.size() && msg[i] == ' ') ++i; // skip single space
+    }
+    flush_line();
+    out << BODY_CLOSE_DELIM;
+}
+
+// ---------------------------------------------------------------------------
+// Member helper: metadata line (file, line, func, thread, timestamp)
+// ---------------------------------------------------------------------------
+std::string Logger::build_metadata(const LogEvent& ev, std::size_t indent_len)
+{
+    ConsoleFormat fmt = m_console_fmt.load(std::memory_order_relaxed);
+    std::ostringstream ss;
+    append_indent(ss, indent_len);
+    ss << '(';
+    bool first = true;
+
+    if ((fmt & CF_FILE) && ev.file)           { ss << ev.file; first = false; }
+    if ((fmt & CF_LINE) && ev.file)           { ss << ':' << ev.line; }
+    if ((fmt & CF_FUNCTION) && ev.func)       { if (!first) ss << ' '; ss << ev.func; first = false; }
+    if (fmt & CF_THREAD_ID)                   { if (!first) ss << ' '; ss << "tid=" << ev.thread_id; first = false; }
+    if (fmt & CF_TIMESTAMP)                   { if (!first) ss << ' '; ss << ev.ts_iso8601; }
+
+    ss << ')';
+    return ss.str();
+}
+
+// ---------------------------------------------------------------------------
+// Public sink: write_event – orchestrates helpers
+// ---------------------------------------------------------------------------
+void Logger::write_event(const LogEvent& ev)
+{
+    const bool          color       = m_vt_enabled.load(std::memory_order_relaxed);
+    const char *        prefix      = color ? ansi_code(level_to_color(ev.level)) : "";
+    const char *        suffix      = color ? ansi_code(TermColor::Reset)         : "";
+    const std::string   header      = this->build_header(ev);
+    const std::size_t   indent_len  = header.size();
+
+    std::ostringstream out;
+    out << header;
+    this->write_body(ev.text, out, indent_len);
+    out << '\n' << this->build_metadata(ev, indent_len);
+
+    std::cout << prefix << out.str() << suffix << std::endl;
+}
+
+
 //
 //
 // *************************************************************************** //
@@ -236,21 +347,41 @@ void Logger::write_event(const LogEvent & ev)
 // *************************************************************************** //
 //
 # ifdef _WIN32
-    // void Logger::enable_vt_win(void)
-    // {
-    //     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    //     if (h == INVALID_HANDLE_VALUE) { m_colour_enabled = false; return; }
-    //     DWORD mode = 0;
-    //     if (!GetConsoleMode(h, &mode)) { m_colour_enabled = false; return; }
-    //     if (!(mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
-    //         SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    // }
+void Logger::enable_vt_win()
+{
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!h || h == INVALID_HANDLE_VALUE) { m_vt_enabled = false; return; }
+
+    DWORD mode = 0;
+    if (!GetConsoleMode(h, &mode)) { m_vt_enabled = false; return; }
+
+    if (SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+        m_vt_enabled = true;
+    else
+        m_vt_enabled = false;       // older console; no VT
+}
 # else
-    //void Logger::enable_vt_win(void)    { }
+    void Logger::enable_vt_win(void)    { }
 #endif  //  _WIN32
 //
 // *************************************************************************** //
 #endif
+
+
+//  "level_to_color"
+//
+Logger::TermColor Logger::level_to_color(Level lvl)
+{
+    switch (lvl) {
+        case Level::Debug:     return TermColor::Grey;
+        case Level::Info:      return TermColor::Green;
+        case Level::Warning:   return TermColor::Yellow;
+        case Level::Error:     return TermColor::Red;
+        case Level::Exception: return TermColor::Cyan;
+        case Level::Critical:  return TermColor::Magenta;
+        default:               return TermColor::Reset;
+    }
+}
 
 
 

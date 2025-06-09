@@ -1008,11 +1008,13 @@ struct ExampleAppConsole
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "ShowStyleEditor"
+
+
+//  "ShowImGuiStyleEditor"
 //
-void ShowStyleEditor([[maybe_unused]]    const char *        uuid,
-                     [[maybe_unused]]     bool *              p_open,
-                     [[maybe_unused]]     ImGuiWindowFlags    flags)
+void ShowImGuiStyleEditor([[maybe_unused]]              const char *            uuid,
+                          [[maybe_unused]]              bool *                  p_open,
+                          [[maybe_unused]]              ImGuiWindowFlags        flags)
 {
     ImGui::Begin(uuid, p_open, flags);
         ImGui::ShowStyleEditor();
@@ -1020,6 +1022,55 @@ void ShowStyleEditor([[maybe_unused]]    const char *        uuid,
     
     return;
 }
+
+
+//  "ShowImPlotStyleEditor"
+//
+void ShowImPlotStyleEditor([[maybe_unused]]             const char *            uuid,
+                           [[maybe_unused]]             bool *                  p_open,
+                           [[maybe_unused]]             ImGuiWindowFlags        flags)
+{
+    ImGui::Begin(uuid, p_open, flags);
+        ImPlot::ShowStyleEditor();
+    ImGui::End();
+    
+    return;
+}
+
+
+//  "ShowImGuiMetricsWindow"
+//
+void ShowImGuiMetricsWindow([[maybe_unused]]            const char *            uuid,
+                            [[maybe_unused]]            bool *                  p_open,
+                            [[maybe_unused]]            ImGuiWindowFlags        flags)
+{
+    ImGui::ShowMetricsWindow(p_open);
+    return;
+}
+
+
+//  "ShowImPlotMetricsWindow"
+//
+void ShowImPlotMetricsWindow([[maybe_unused]]           const char *            uuid,
+                             [[maybe_unused]]           bool *                  p_open,
+                             [[maybe_unused]]           ImGuiWindowFlags        flags)
+{
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //  "ShowExampleAppConsole"
@@ -1031,17 +1082,6 @@ void ShowExampleAppConsole([[maybe_unused]]     const char *        uuid,
     static ExampleAppConsole console;
     console.Draw(uuid, p_open);
     //console.Draw(uuid, p_open, flags);
-    return;
-}
-
-
-//  "ShowMetricsWindow"
-//
-void ShowMetricsWindow([[maybe_unused]]     const char *        uuid,
-                       [[maybe_unused]]     bool *              p_open,
-                       [[maybe_unused]]     ImGuiWindowFlags    flags)
-{
-    ImGui::ShowMetricsWindow(p_open);
     return;
 }
 

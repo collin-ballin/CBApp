@@ -38,6 +38,7 @@
 #include <cstdlib>          // C-Headers...
 #include <stdio.h>
 #include <unistd.h>
+#include <chrono>
 
 #include <string>           //  <======| std::string, ...
 #include <string_view>
@@ -99,9 +100,9 @@ inline constexpr const char *           _IMPLOT_DEMO_UUID                   = "I
 //
 inline constexpr ImGuiWindowFlags       _CBAPP_HOST_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
 inline constexpr ImGuiWindowFlags       _CBAPP_DOCKSPACE_WINDOW_FLAGS       = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
-inline constexpr ImGuiWindowFlags       _CBAPP_CONTROLBAR_WINDOW_FLAGS      = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_AlwaysAutoResize |   ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
-inline constexpr ImGuiWindowFlags       _CBAPP_BROWSER_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
-inline constexpr ImGuiWindowFlags       _CBAPP_DETVIEW_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+inline constexpr ImGuiWindowFlags       _CBAPP_CONTROLBAR_WINDOW_FLAGS      = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+inline constexpr ImGuiWindowFlags       _CBAPP_BROWSER_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+inline constexpr ImGuiWindowFlags       _CBAPP_DETVIEW_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 inline constexpr ImGuiWindowFlags       _CBAPP_CORE_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
 
 inline constexpr ImGuiWindowFlags       _CBAPP_ABOUT_WINDOW_FLAGS           = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
@@ -162,47 +163,50 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 ///
 /// @todo       TODO
 //
-#define _CBAPP_WINDOW_LIST(X)                                                                                                                   \
-/*| NAME.               TITLE.                      DEFAULT OPEN.               FLAGS.                                                  */      \
-/*|========================================================================================================================|            */      \
-/*  1.  PRIMARY GUI STRUCTURE / "CORE WINDOWS"...                                                                                       */      \
-    X(Host,             "CBApp (V0)",               true,                       _CBAPP_HOST_WINDOW_FLAGS                                )       \
-    X(Dockspace,        "##RootDockspace",          true,                       _CBAPP_DOCKSPACE_WINDOW_FLAGS                           )       \
-    X(MenuBar,          "##Menubar",                true,                       _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ControlBar,       "##ControlBar",             true,                       _CBAPP_CONTROLBAR_WINDOW_FLAGS                          )       \
-    X(Browser,          "##Browser",                true,                       _CBAPP_BROWSER_WINDOW_FLAGS                             )       \
-    X(DetailView,       "##DetailView",             true,                       _CBAPP_DETVIEW_WINDOW_FLAGS                             )       \
-    X(MainApp,          "Home",                     true,                       _CBAPP_CORE_WINDOW_FLAGS | ImGuiWindowFlags_NoScrollbar )       \
-/*                                                                                                                                      */      \
-/*                                                                                                                                      */      \
-/*  2.  MAIN APPLICATION WINDOWS...                                                                                                     */      \
-/*                                                                                                                                      */      \
-/*          COINCIDENCE COUNTER APP...                                                                                                  */      \
-    X(CCounterApp,      "Coincidence Counter",      DEF_CCOUNTER_APP_VIS,       _CBAPP_CORE_WINDOW_FLAGS                                )       \
-/*                                                                                                                                      */      \
-    X(GraphingApp,      "Graphing App",             false,                      _CBAPP_CORE_WINDOW_FLAGS                                )       \
-/*                                                                                                                                      */      \
-/*          FDTD APP...                                                                                                                 */      \
-    X(GraphApp,         "Graph App",                DEF_FDTD_APP_VIS,           _CBAPP_CORE_WINDOW_FLAGS                                )       \
-/*                                                                                                                                      */      \
-/*                                                                                                                                      */      \
-/*  3.  BASIC TOOLS...                                                                                                                  */      \
-    X(StyleEditor,      "Style Editor (ImGui)",     false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(Logs,             "Logs",                     false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(Console,          "Console",                  false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(Metrics,          "Metrics",                  false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-/*                                                                                                                                      */      \
-/*                                                                                                                                      */      \
-/*  4.  CUSTOM TOOLS, ETC...                                                                                                            */      \
-    X(ColorTool,        "Color Tool",               false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-/*                                                                                                                                      */      \
-/*                                                                                                                                      */      \
-/*  5.  DEMO WINDOWS...                                                                                                                 */      \
-    X(ImGuiDemo,        _IMGUI_DEMO_UUID,           false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImPlotDemo,       _IMPLOT_DEMO_UUID,          false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(AboutMyApp,       "About This App",           false,                      _CBAPP_DEFAULT_WINDOW_FLAGS                             )   // END
-/*                                                                                                                                      */
-/*|========================================================================================================================|            */
+#define _CBAPP_WINDOW_LIST(X)                                                                                                                       \
+/*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                                                  */      \
+/*|========================================================================================================================|                */      \
+/*  1.  PRIMARY GUI STRUCTURE / "CORE WINDOWS"...                                                                                           */      \
+    X(Host,                 "CBApp (V0)",                   true,                   _CBAPP_HOST_WINDOW_FLAGS                                )       \
+    X(Dockspace,            "##RootDockspace",              true,                   _CBAPP_DOCKSPACE_WINDOW_FLAGS                           )       \
+    X(MenuBar,              "##Menubar",                    true,                   _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ControlBar,           "##ControlBar",                 true,                   _CBAPP_CONTROLBAR_WINDOW_FLAGS                          )       \
+    X(Browser,              "##Browser",                    true,                   _CBAPP_BROWSER_WINDOW_FLAGS                             )       \
+    X(DetailView,           "##DetailView",                 true,                   _CBAPP_DETVIEW_WINDOW_FLAGS                             )       \
+    X(MainApp,              "Home",                         true,                   _CBAPP_CORE_WINDOW_FLAGS | ImGuiWindowFlags_NoScrollbar )       \
+/*                                                                                                                                          */      \
+/*                                                                                                                                          */      \
+/*  2.  MAIN APPLICATION WINDOWS...                                                                                                         */      \
+/*                                                                                                                                          */      \
+/*          COINCIDENCE COUNTER APP...                                                                                                      */      \
+    X(CCounterApp,          "Coincidence Counter",          DEF_CCOUNTER_APP_VIS,   _CBAPP_CORE_WINDOW_FLAGS                                )       \
+/*                                                                                                                                          */      \
+    X(GraphingApp,          "Graphing App",                 false,                  _CBAPP_CORE_WINDOW_FLAGS                                )       \
+/*                                                                                                                                          */      \
+/*          FDTD APP...                                                                                                                     */      \
+    X(GraphApp,             "Graph App",                    DEF_FDTD_APP_VIS,       _CBAPP_CORE_WINDOW_FLAGS                                )       \
+/*                                                                                                                                          */      \
+/*                                                                                                                                          */      \
+/*  3.  BASIC TOOLS...                                                                                                                      */      \
+    X(ImGuiStyleEditor,     "Style Editor (ImGui)",         false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImPlotStyleEditor,    "Style Editor (ImPlot)",        false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImGuiMetrics,         "Dear ImGui Metrics/Debugger",  false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImPlotMetrics,        "ImPlot Metrics",               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+/*                                                                                                                                          */      \
+    X(Logs,                 "Logs",                         false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(Console,              "Console",                      false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+/*                                                                                                                                          */      \
+/*                                                                                                                                          */      \
+/*  4.  CUSTOM TOOLS, ETC...                                                                                                                */      \
+    X(ColorTool,            "Color Tool",                   false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+/*                                                                                                                                          */      \
+/*                                                                                                                                          */      \
+/*  5.  DEMO WINDOWS...                                                                                                                     */      \
+    X(ImGuiDemo,            _IMGUI_DEMO_UUID,               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImPlotDemo,           _IMPLOT_DEMO_UUID,              false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(AboutMyApp,           "About This App",               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )   // END
+/*                                                                                                                                          */
+/*|========================================================================================================================|                */
 
 
 
@@ -273,19 +277,20 @@ inline static const std::array<WinInfo, size_t(Window_t::Count)>    APPLICATION_
 //  INTERNAL "API" USED **EXCLUSIVELY** INSIDE "AppState" CLASS.
 //      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
 //
-#define                 _CBAPP_APPSTATE_ALIAS_API                                               \
-public:                                                                                         \
-    using               Window                          = app::Window_t;                        \
-    using               Font                            = app::Font_t;                          \
-    using               Cmap                            = app::Colormap_t;                      \
-                                                                                                \
-    using               ImFonts                         = utl::EnumArray<Font, ImFont *>;       \
-    using               ImWindows                       = utl::EnumArray<Window, WinInfo>;      \
-    using               Anchor                          = utl::Anchor;                          \
-                                                                                                \
-    using               Logger                          = utl::Logger;                          \
-    using               LogLevel                        = Logger::Level;                        \
-    using               Tab_t                           = utl::Tab_t;                          
+#define                 _CBAPP_APPSTATE_ALIAS_API                                                               \
+public:                                                                                                         \
+    using               Window                          = app::Window_t;                                        \
+    using               Font                            = app::Font_t;                                          \
+    using               Cmap                            = app::Colormap_t;                                      \
+    using               Timestamp_t                     = std::chrono::time_point<std::chrono::system_clock>;   \
+                                                                                                                \
+    using               ImFonts                         = utl::EnumArray<Font, ImFont *>;                       \
+    using               ImWindows                       = utl::EnumArray<Window, WinInfo>;                      \
+    using               Anchor                          = utl::Anchor;                                          \
+                                                                                                                \
+    using               Logger                          = utl::Logger;                                          \
+    using               LogLevel                        = Logger::Level;                                        \
+    using               Tab_t                           = utl::Tab_t;
 
 
 //  EXPORTED "API" USED BY "CBApp" DELEGATOR CLASSES THAT USE AN "AppState" OBJECT.
@@ -436,10 +441,12 @@ struct AppState
     // *************************************************************************** //
     
     //  0.      GROUPS / SUB-CLASSES OF "APPSTATE"...
-    utl::Logger &                       m_logger;                   //  1.      LOGGER...
-    ImWindows                           m_windows;                  //  2.      APPLICATION WINDOW STATE...
-    std::vector<WinInfo *>              m_detview_windows = {};     //  2.1     WINDOWS INSIDE DETAIL VIEW...
-    ImFonts                             m_fonts;                    //  3.      APPLICATION FONTS...
+    utl::Logger &                       m_logger;                                                   //  1.      LOGGER...
+    ImWindows                           m_windows;                                                  //  2.      APPLICATION WINDOW STATE...
+    std::vector<WinInfo *>              m_detview_windows           = {};                           //  2.1     WINDOWS INSIDE DETAIL VIEW...
+    ImFonts                             m_fonts;                                                    //  3.      APPLICATION FONTS...
+    std::vector< std::pair<std::chrono::time_point<std::chrono::system_clock>, std::string> >
+                                         m_notes                    = {};
     
     
     
@@ -453,10 +460,10 @@ struct AppState
     //
     //              1.2     Main Application Windows.
     static constexpr size_t             ms_APP_WINDOWS_BEGIN        = static_cast<size_t>(Window::CCounterApp);
-    static constexpr size_t             ms_APP_WINDOWS_END          = static_cast<size_t>(Window::StyleEditor);
+    static constexpr size_t             ms_APP_WINDOWS_END          = static_cast<size_t>(Window::ImGuiStyleEditor);
     //
     //              1.3     Basic Tool Windows.
-    static constexpr size_t             ms_TOOL_WINDOWS_BEGIN       = static_cast<size_t>(Window::StyleEditor);
+    static constexpr size_t             ms_TOOL_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiStyleEditor);
     static constexpr size_t             ms_TOOL_WINDOWS_END         = static_cast<size_t>(Window::ColorTool);
     //
     //              1.4     "MY Tools" / Custom Tools Windows.
@@ -484,7 +491,7 @@ struct AppState
     //  4.      COLORS...
     ImVec4                              m_glfw_bg                   = cb::app::DEF_ROOT_WIN_BG;
     ImVec4                              m_dock_bg                   = cb::app::DEF_INVISIBLE_COLOR;
-    ImVec4                              m_titlebar_bg               = cb::app::DEF_TITLEBAR_WIN_BG;
+    ImVec4                              m_titlebar_bg               = cb::app::DEF_CONTROLBAR_WIN_BG;
     ImVec4                              m_main_bg                   = cb::app::DEF_MAIN_WIN_BG;
     
     
@@ -518,23 +525,23 @@ struct AppState
     ImGuiDockNode *                     m_main_node                 = nullptr;
     bool                                m_rebuild_dockspace         = false;
     //
-    //              8.2     Toolbar.
-    ImGuiID                             m_toolbar_dock_id           = 0;
-    ImGuiDockNodeFlags                  m_toolbar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_HiddenTabBar | ImGuiDockNodeFlags_NoResize; //ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
-    ImGuiDockNode *                     m_toolbar_node              = nullptr;
+    //              8.2     ControlBar.
+    ImGuiID                             m_controlbar_dock_id        = 0;
+    ImGuiDockNodeFlags                  m_controlbar_node_flags     = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_HiddenTabBar | ImGuiDockNodeFlags_NoResize; //ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNode *                     m_controlbar_node           = nullptr;
     //
-    ImVec4                              m_toolbar_bg                = ImVec4(0.247f,     0.251f,     0.255f,     0.850f); // ImVec4(0.141f,    0.141f,     0.141f,     1.000f);
-    float                               m_toolbar_ratio             = 0.02;
-    bool                                m_show_toolbar_window       = true;
+    ImVec4                              m_controlbar_bg             = ImVec4(0.247f,     0.251f,     0.255f,     0.850f); // ImVec4(0.141f,    0.141f,     0.141f,     1.000f);
+    float                               m_controlbar_ratio          = 0.02;
+    bool                                m_show_controlbar_window    = true;
     //
     //              8.3     Sidebar.
-    ImGuiID                             m_sidebar_dock_id           = 0;
-    ImGuiDockNodeFlags                  m_sidebar_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
-    ImGuiDockNode *                     m_sidebar_node              = nullptr;
+    ImGuiID                             m_browser_dock_id           = 0;
+    ImGuiDockNodeFlags                  m_browser_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNode *                     m_browser_node              = nullptr;
     //
-    ImVec4                              m_sidebar_bg                = cb::app::DEF_SIDEBAR_WIN_BG;
-    float                               m_sidebar_ratio             = app::DEF_SB_OPEN_WIDTH;
-    bool                                m_show_sidebar_window       = true;
+    ImVec4                              m_browser_bg                = cb::app::DEF_BROWSER_WIN_BG;
+    float                               m_browser_ratio             = app::DEF_BROWSER_RATIO;
+    bool                                m_show_browser_window       = true;
     //
     //              8.4     DetView.
     ImGuiID                             m_detview_dock_id           = 0;
@@ -542,7 +549,7 @@ struct AppState
     ImGuiDockNode *                     m_detview_node              = nullptr;
     //
     ImVec4                              m_detview_bg                = ImVec4(0.090f,    0.098f,     0.118f,     1.000f);
-    float                               m_detview_ratio             = 0.35f;
+    float                               m_detview_ratio             = 0.45f;
     bool                                m_show_detview_window       = true;
     //
     //

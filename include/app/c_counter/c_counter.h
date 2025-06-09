@@ -87,15 +87,17 @@ struct ChannelSpec {
 // *************************************************************************** //
 // *************************************************************************** //
 
-
-static constexpr size_t     BUFFER_SIZE                 = 2000;
+namespace ccounter {
+    inline static constexpr size_t     BUFFER_SIZE                 = 2000;
+}
 
 //  "CCounterApp"
 //
 class CCounterApp
 {
     //using               buffer_type                     = utl::ScrollingBuffer;     // cblib::RingBuffer<int, 2000>
-    using               buffer_type                     = cblib::RingBuffer<ImVec2, BUFFER_SIZE>;
+    using               buffer_type                     = cblib::RingBuffer<ImVec2, ccounter::BUFFER_SIZE>;
+    friend class        App;
     CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 // *************************************************************************** //
 // *************************************************************************** //
@@ -175,7 +177,6 @@ protected:
     float                                               m_dockspace_ratio               = 0.8f;
     const float                                         m_child_corner_radius           = 5.0f;
     float                                               ms_SPACING                      = 50.0f;
-    ImVec2                                              ms_COLLAPSE_BUTTON_SIZE         = app::DEF_SIDEBAR_COLLAPSE_BUTTON_SIZE;
     std::pair<int,int>                                  m_HEIGHT_LIMITS[2]              = { { 30, 30 }, { 30, 30 } };
     static constexpr size_t                             ms_BUFFER_SIZE                  = 256;
     //
@@ -187,6 +188,12 @@ protected:
         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY
     };
+    WinInfo                                             m_detview_window                = {
+                                                            "ControlChild",
+                                                            ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
+                                                            true,
+                                                            nullptr
+                                                        };
     std::array< const char *, 2 >                       m_tabbar_uuids                  = { "PlotTabBar##GApp",     "PlotTabBar##GApp" };
     ImGuiTabBarFlags                                    m_tabbar_flags[2]               = {
         ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton,

@@ -100,9 +100,6 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3" CACHE STRING "Minimum macOS deployment ve
 add_library(cb_warnings INTERFACE)
 target_compile_options(cb_warnings INTERFACE
     -Wall -Wextra -Wpedantic -Wshadow
-    -Wunused-variable
-    -Werror=unused-private-field
-    
     -Wno-sign-compare
     #-Wconversion -Wsign-conversion
 )

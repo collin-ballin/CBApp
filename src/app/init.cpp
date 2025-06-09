@@ -19,64 +19,6 @@
 # include "imgui_internal.h"
 // #endif  //  CBAPP_USE_VIEWPORT  //
 
-#ifdef __CBAPP_DEBUG__              //  <======|  Fix for issue wherein multiple instances of application
-# include <thread>                  //            are launched when DEBUG build is run inside Xcode IDE...
-# include <chrono>
-#endif     //  __CBAPP_DEBUG__  //
-
-
-
-//  0.      UTILITY FUNCTIONS [NON-MEMBER FUNCTIONS]...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "run_application"
-//  Client-code interface to creating and running the application...
-//
-int cb::run_application([[maybe_unused]] int argc, [[maybe_unused]] char ** argv)
-{
-    constexpr const char *  xcp_header              = "MAIN | ";
-    constexpr const char *  xcp_type_runtime        = "Caught std::runtime_error exception";
-    constexpr const char *  xcp_type_unknown        = "Caught std::runtime_error exception";
-    constexpr const char *  xcp_at_start            = "while initializing the application.\n";
-    constexpr const char *  xcp_at_runtime          = "during program runtime.\n";
-    int                     status                  = EXIT_SUCCESS;
-    
-    
-#ifdef __CBAPP_DEBUG__    //  WORK-AROUND / PATCH FOR XCODE ISSUE...
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-#endif
-
-    try {   //  1.     CREATE APPLICATION INSTANCE...
-        App my_app;
-        
-        try {   //  2.     ENTER APPLICATION MAIN-LOOP...
-            my_app.run();
-        }
-        catch (const std::runtime_error & e) {      //  2.1     CATCH RUNTIME ERROR (PROGRAM WAS INITIALIZED CORRECTLY)...
-            std::cerr << xcp_header << xcp_type_runtime << xcp_at_runtime << "Traceback: " << e.what() << "\n";
-            status = EXIT_FAILURE;
-        }
-        catch (...) {                               //  2.2     CATCH OTHER EXCEPTIONS AND EXIT...
-            std::cerr << xcp_header << xcp_type_unknown << xcp_at_runtime;
-            status = EXIT_FAILURE;
-        }
-    }
-    catch (const std::runtime_error & e) {      //  1.1     CATCH INITIALIZATION-TIME ERROR (DURING "DEAR IMGUI" INITIALIZATION)...
-        std::cerr << xcp_header << xcp_type_runtime << xcp_at_start << "Traceback: " << e.what() << "\n";
-        status = EXIT_FAILURE;
-    }
-    catch (...) {                               //  1.2.    CATCH OTHER EXCEPTIONS AND EXIT...
-        std::cerr << xcp_header << xcp_type_unknown << xcp_at_start;
-        status = EXIT_FAILURE;
-    }
-    
-    return status;
-}
-
-
-
-
 
 
 namespace cb { //     BEGINNING NAMESPACE "cb"...
@@ -99,9 +41,16 @@ App::App(void)
       m_counter_app(S)
 #endif  //  __CBAPP_DISABLE_FDTD__  //
 {
+    this->install_signal_handlers();
+    
+    S.m_notes.reserve(5);
+    S.m_notes.push_back( std::make_pair(cblib::utl::get_timestamp(), "Beginning initialization ({})") );
+    
+
     glfwSetErrorCallback(utl::glfw_error_callback);         //  1.  SET GLFW CALLBACK & CHECK IF PROPERLY INITIALIZED...
-    if ( !glfwInit() )
+    if ( !glfwInit() ) {
         throw std::runtime_error(cb::error::GLFW_INIT_ERROR);
+    }
     
     
     this->S.m_glsl_version = utl::get_glsl_version();       //  2.  DECIDE WHICH GL + GLSL VERSION...
@@ -137,7 +86,9 @@ void App::init(void)
        
     //  4.      PERFORM ALL RUNTIME ASSERTION STATEMENTS AND
     //          STATE VALIDATIONS BEFORE APPLICATION BEGINS...
-    this->init_asserts();
+    if ( this->init_asserts() ) {
+        S.m_logger.debug( std::format("Initial runtime assertions were passed") );
+    }
 
     return;
 }
@@ -202,7 +153,6 @@ void App::CreateContext(void)
 #endif      //  __EMSCRIPTEN__  //
     ImGui_ImplOpenGL3_Init(this->S.m_glsl_version);
 
-
     return;
 }
 
@@ -220,25 +170,22 @@ void App::CreateContext(void)
 //
 void App::init_appstate(void)
 {
-    ImGuiIO &       io                  = ImGui::GetIO(); (void)io;
-    ImGuiStyle &    style               = ImGui::GetStyle();
-    auto &          m_windows           = this->S.m_windows;
-    auto &          m_fonts             = this->S.m_fonts;
-    auto [m_sys_width, m_sys_height]    = utl::GetMonitorDimensions(this->S.m_glfw_window);
-    bool            good_fonts          = true;
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+    auto &                          m_windows       = this->S.m_windows;
+    auto &                          m_fonts         = this->S.m_fonts;
+    std::tie( S.m_system_w, S.m_system_h )          = utl::GetMonitorDimensions(this->S.m_glfw_window);
+    bool                            good_fonts      = true;
+
     
-    S.m_dpi_scale                       = utl::GetDPIScaling(this->S.m_glfw_window);
-    S.m_dpi_fontscale                   = S.m_dpi_scale;
+    S.m_dpi_scale                                   = utl::GetDPIScaling(this->S.m_glfw_window);
+    S.m_dpi_fontscale                               = S.m_dpi_scale;
 #ifdef CBAPP_USE_FONTSCALE_DPI
-    S.m_dpi_fontscale                   = cblib::round_to<3>( utl::GetDPIFontScaling(this->S.m_glfw_window) );
+    S.m_dpi_fontscale                               = cblib::math::round_to<3>( utl::GetDPIFontScaling(this->S.m_glfw_window) );
 #endif  //  CBAPP_USE_FONTSCALE_DPI  //
 
-
-    S.m_logger.info( std::format("DPI Scale={}",        S.m_dpi_scale) );
-    S.m_logger.info( std::format("DPI Fontcale={}",     S.m_dpi_fontscale) );
-    
-
-
+    CB_LOG(LogLevel::Debug, "System DPI Scale: {}.  System DPI Fontscale: {}",        S.m_dpi_scale, S.m_dpi_fontscale );
+    //S.m_logger.debug( std::format("System DPI Scale: {}.  System DPI Fontscale: {}",        S.m_dpi_scale, S.m_dpi_fontscale) );
 
 
     //  1.  LOAD MISC. APPLICATION SETTINGS...
@@ -275,7 +222,7 @@ void App::init_appstate(void)
     
     //      4.1     FALLING BACK TO DEFAULT FONTS...
     if (!good_fonts) {
-        S.m_logger.warning( std::format("Failure to load custom application fonts.  Falling back to default DEAR IMGUI Fonts") );
+        S.m_logger.warning( std::format("Failure to load custom fonts.  Reverting to default DEAR IMGUI Fonts") );
         for (int i = 0; i < static_cast<int>(Font::Count); ++i) {
             const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
             ImFontConfig    config;
@@ -293,10 +240,11 @@ void App::init_appstate(void)
     //  if (S.m_home_dockspace_id <= 0)
     //      S.m_home_dockspace_id    = ImHashStr(S.m_home_dockspace_uuid);
     S.m_detview_windows.push_back( std::addressof( this->m_graph_app.m_detview_window ) );
+    S.m_detview_windows.push_back( std::addressof( this->m_counter_app.m_detview_window ) );
 
     return;
 }
-auto val = ImGuiDockNodeFlags_HiddenTabBar;
+
 
 //  "dispatch_window_function"
 //
@@ -358,20 +306,30 @@ void App::dispatch_window_function(const Window & uuid)
         //
         //
         //      3.  TOOLS, SUBSIDIARY APPLICATION WINDOWS...
-        case Window::StyleEditor:       {
-            cb::ShowStyleEditor(            w.uuid.c_str(),     &w.open,        w.flags);
+        case Window::ImGuiStyleEditor:  {
+            this->ShowImGuiStyleEditor(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
+        case Window::ImPlotStyleEditor: {
+            this->ShowImGuiStyleEditor(     w.uuid.c_str(),     &w.open,        w.flags);
+            break;
+        }
+        case Window::ImGuiMetrics:      {
+            this->ShowImGuiMetricsWindow(   w.uuid.c_str(),     &w.open,        w.flags);
+            break;
+        }
+        case Window::ImPlotMetrics:      {
+            this->ShowImPlotMetricsWindow(  w.uuid.c_str(),     &w.open,        w.flags);
+            break;
+        }
+        //
+        //
         case Window::Logs:              {
             cb::ShowExampleAppLog(          w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::Console:           {
             cb::ShowExampleAppConsole(      w.uuid.c_str(),     &w.open,        w.flags);
-            break;
-        }
-        case Window::Metrics:           {
-            cb::ShowMetricsWindow(          w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //
@@ -425,19 +383,20 @@ void App::load(void)
 #ifndef __EMSCRIPTEN__
     [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
-    auto &                          m_windows       = this->S.m_windows;
-    auto &                          m_fonts         = this->S.m_fonts;
     
-    
-    
-    //ImGui::StyleColorsDark();
-    S.SetDarkMode();
     
 #if defined(CBAPP_DISABLE_INI)
+    S.m_logger.debug( std::format("#CBAPP_DISABLE_INI is defined -- Loading from \".ini\" file is disabled") );
     io.IniFilename                      = nullptr;
 # else
     io.IniFilename                      = cb::app::INI_FILEPATH;
-    ImGui::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH);
+    //ImGui::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH);
+    if ( utl::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH) ) {
+        S.m_logger.debug( std::format("Successfully loaded ImGui \".ini\" from \"{}\"", cb::app::INI_FILEPATH) );
+    }
+    else {
+        S.m_logger.warning( std::format("Failure to load \".ini\" info from file \"{}\".  Fall back to default .ini content", cb::app::INI_FILEPATH) );
+    }
 #endif  //  CBAPP_DISABLE_INI  //
     
     
@@ -447,7 +406,25 @@ void App::load(void)
     
 
 #ifdef CBAPP_LOAD_STYLE_FILE
-    utl::LoadStyleFromDisk(style, cb::app::STYLE_FILEPATH);
+    //  1.  Load ImGui Style...
+    if ( utl::LoadImGuiStyleFromDisk(style, cb::app::IMGUI_STYLE_FILEPATH) ) {
+        S.m_logger.debug( std::format("Successfully loaded ImGui style from \"{}\"", cb::app::IMGUI_STYLE_FILEPATH) );
+    }
+    else {
+        S.m_logger.warning( std::format("Failure to load ImGui style from \"{}\".  Fall back to default S.SetDarkMode()", cb::app::IMGUI_STYLE_FILEPATH) );
+        S.SetDarkMode();
+    }
+    //
+    //  2.  Load ImPlot Style...
+    //if ( utl::LoadImPlotStyleFromDisk(ImPlot::GetStyle(), cb::app::IMPLOT_STYLE_FILEPATH) ) {
+    //    S.m_logger.debug( std::format("Successfully loaded ImPlot style from \"{}\"", cb::app::IMPLOT_STYLE_FILEPATH) );
+    //}
+    //else {
+    //    S.m_logger.warning( std::format("Failure to load ImPlot style from \"{}\".", cb::app::IMPLOT_STYLE_FILEPATH) );
+    //}
+# else
+    S.m_logger.debug( std::format("#CBAPP_LOAD_STYLE_FILE is defined -- Loading from external style file is disabled") );
+    S.SetDarkMode();
 #endif  //  CBAPP_LOAD_STYLE_FILE  //
 
 
@@ -459,11 +436,10 @@ void App::load(void)
 
 //  "init_asserts"
 //
-void App::init_asserts(void)
+bool App::init_asserts(void)
 {
     [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
-    const auto &                    m_windows           = this->S.m_windows;
     const auto &                    m_fonts             = this->S.m_fonts;
     const size_t                    N_WINDOWS           = static_cast<size_t>(Window::Count);
     
@@ -479,7 +455,7 @@ void App::init_asserts(void)
         IM_ASSERT( winfo.render_fn != nullptr && error::ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS );
     }
 
-    return;
+    return true;
 }
 
 
@@ -507,7 +483,11 @@ App::~App(void)
 
 //  "destroy"       | protected
 //
-void App::destroy(void) {
+void App::destroy(void)
+{
+    S.m_logger.notify( std::format("Application terminating") );
+
+
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImPlot::DestroyContext();

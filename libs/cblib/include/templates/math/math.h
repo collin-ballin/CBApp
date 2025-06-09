@@ -36,7 +36,13 @@
 
 
 
-namespace cblib {   //     BEGINNING NAMESPACE "cblib"...
+//  MY OWN HEADERS...
+#include "templates/math/_utility.h"
+#include "templates/math/_vectors.h"
+
+
+
+namespace cblib { namespace math {   //     BEGINNING NAMESPACE "cblib" :: "math"...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -51,67 +57,6 @@ namespace cblib {   //     BEGINNING NAMESPACE "cblib"...
 //  1.  MATH STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
-
-/*
-// constexpr power-of-10 helper
-template<typename T, int N>
-constexpr T pow10_helper() {
-    if constexpr (N > 0)  return T(10) * pow10_helper<T, N - 1>();
-    else if constexpr (N < 0) return T(1) / pow10_helper<T, -N>();
-    else                    return T(1);
-}
-
-// round_to: always rounds up (ceiling) to N decimal places
-// Enabled only for floating-point types via SFINAE
-template< typename T, int N,
-          typename = std::enable_if_t<std::is_floating_point_v<T>> >
-inline T round_to(T value)
-{
-    constexpr T base = pow10_helper<T, N>();
-    return std::ceil(value * base) / base;
-}
-*/
-
-//  "  "
-//
-template< typename complex_t >
-inline std::vector<typename complex_t::value_type>
-make_real_vector(const std::vector<complex_t> & src)
-{
-    using T = typename complex_t::value_type;
-    std::vector<T> dst; 
-    dst.reserve(src.size());
-
-    std::transform(src.begin(), src.end(),
-                   std::back_inserter(dst),
-                   [](const complex_t& c) { return c.real(); });
-
-    return dst;            // same length, real-valued
-}
-
-
-//  "pow10_IMPL"
-//      - Constexpr power-of-10 helper.
-template<typename T, auto N>
-constexpr T pow10_IMPL(void) {
-    if constexpr (N > 0)  return T(10) * pow10_helper<T, N - 1>();
-    else if constexpr (N < 0) return T(1) / pow10_helper<T, -N>();
-    else                    return T(1);
-}
-
-//  "round_to"
-//
-//      - Always rounds up (ceiling) to N decimal places.
-//      - Enabled only for floating-point types via SFINAE.
-template<auto N, typename T>
-inline T round_to(const T value) {
-    T base = std::pow( T(10), N );
-    return std::ceil(value * base) / base;
-}
-
-
-
-
 
 //  "is_close"
 //  checks if two floating-point values are close within
@@ -172,7 +117,7 @@ inline constexpr bool is_close(T a, T b) noexcept {
 //
 // *************************************************************************** //
 // *************************************************************************** //
-}//   END OF "cblib" NAMESPACE.
+} }//   END OF "cblib" :: "math" NAMESPACE.
 
 
 

@@ -243,10 +243,13 @@ struct grid_1D {
     //    Default Constructor.
     //
     inline grid_1D(void) :
-        m_Ez(0.0f),                          m_Hy(0.0f),
-        m_eps_r(complex_t(0.0f, 0.0f)),      m_mu_r(complex_t(0.0f, 0.0f)),
-        m_cezE(0.0f),                        m_cezH(0.0f),
-        m_chyE(0.0f),                        m_chyH(0.0f)       { }
+        m_Ez        (0, value_type(0.0f)        ),      m_Hy    ( 0, value_type(0.0f)       ),
+        m_eps_r     (0, complex_t(0.0f, 0.0f)   ),      m_mu_r  ( 0, complex_t(0.0f, 0.0f)  ),
+        m_cezE      (0, value_type(0.0f)        ),      m_cezH  ( 0, value_type(0.0f)       ),
+        m_chyE      (0, value_type(0.0f)        ),      m_chyH  ( 0, value_type(0.0f)       )
+    {
+        //  ...
+    }
     
     
     /*inline grid_1D(void) :

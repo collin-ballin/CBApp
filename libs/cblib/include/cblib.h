@@ -18,15 +18,23 @@
 // *************************************************************************** //
 #ifndef _CBLIB_UTILITY_H
 # include "main/utility.h"
-#endif	// _CBLIB_UTILITY_H
+#endif	// _CBLIB_UTILITY_H  //
+
+#ifndef _CBLIB_UTILITY_UTILITY_H
+# include "templates/utility/utility.h"
+#endif	// _CBLIB_UTILITY_UTILITY_H  //
+
+#ifndef _CBLIB_MATH_H
+# include "templates/math/math.h"
+#endif	// _CBLIB_MATH_H  //
 
 #ifndef _CBLIB_ARRAY_H
 # include "templates/containers/array/array.h"
-#endif	// _CBLIB_ARRAY_H
+#endif	// _CBLIB_ARRAY_H  //
 	
 #ifndef _CBLIB_MATRIX_H
 # include "templates/containers/matrix/matrix.h"
-#endif	// _CBLIB_MATRIX_H
+#endif	// _CBLIB_MATRIX_H  //
 
 
 

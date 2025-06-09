@@ -1,11 +1,19 @@
-//
-//  app/init.h
-//  CBApp
-//
-//  Created by Collin Bond on 4/15/25.
-//
-// *************************************************************************** //
-// *************************************************************************** //
+/***********************************************************************************
+*
+*       ********************************************************************
+*       ****                 I N I T . h  ____  F I L E                 ****
+*       ********************************************************************
+*
+*              AUTHOR:      Collin A. Bond
+*               DATED:      Aprin 15, 2025.
+*
+*       ********************************************************************
+*                FILE:      [include/app/state/_state.h]
+*
+*
+*
+**************************************************************************************
+**************************************************************************************/
 #ifndef _CBAPP_APP_INIT_H
 #define _CBAPP_APP_INIT_H                  1
 
@@ -63,9 +71,6 @@ inline const char * path_to_char(const std::filesystem::path & dir, const char *
 //
 //                              A.  GENERAL APPLICATION STUFF.
 inline constexpr float              DEF_MOUSEWHEEL_SCROLL_SPEED         = 0.50f;
-// inline constexpr const char *       DEF_SIDEBAR_WIN_TITLE               = "Sidebar";
-// inline constexpr const char *       DEF_MAIN_WIN_TITLE                  = "My Application";
-// inline constexpr const char *       DEF_GRAPHING_APP_TITLE              = "Graphing Application";
 //
 //                              B.  PLOT AND DATA VISUALIZATIONS.
 inline constexpr float              DEF_PLOT_LW                         = 0.50f;
@@ -77,19 +82,8 @@ inline constexpr float              DEF_PLOT_LW                         = 0.50f;
 //                              A.  ROOT WINDOW.
 inline constexpr float              DEF_ROOT_WINDOW_SCALE               = 0.80f;
 //
-//                              B.  SIDEBAR.
-inline constexpr ImVec2             DEF_SIDEBAR_INSET_PADDING_SCALE     = ImVec2(1.0f,      1.0f);      //  Scale of "style.WindowPadding" used inside Titlebar Window...
-inline constexpr ImVec2             DEF_SIDEBAR_COLLAPSE_BUTTON_SIZE    = ImVec2(12.0f,     12.0f);     //  Size of the OPEN/CLOSE Button...
-inline constexpr float              DEF_SB_CLOSED_WIDTH                 = 0.20;                     //  SIDEBAR WINDOW...
-inline constexpr float              DEF_SB_OPEN_WIDTH                   = 0.20;
-//
-inline constexpr ImVec2             DEF_COLLAPSE_BUTTON_SIZE            = ImVec2(10.0f,     10.0f);     //  Size of the OPEN/CLOSE Button...
-inline constexpr ImVec4             DEF_COLLAPSE_BUTTON_BG              = ImVec4(0.000f,    0.000f,     0.000f,     0.500f);
-inline constexpr ImVec4             DEF_COLLAPSE_BUTTON_TINT            = ImVec4(1.000f,    1.000f,     1.000f,     0.900f);
-//
-//                                  B1. Sidebae "Toggle" Button:
-inline constexpr float              DEF_SB_TWIN_WINDOWBORDERSIZE        = 0.0f;
-inline constexpr float              DEF_SB_TWIN_WINDOWROUNDING          = 4.0f;
+//                              B.  BROWSER.
+inline constexpr float              DEF_BROWSER_RATIO                   = 0.20;
 //
 //                                  B2. Settings:
 inline constexpr bool               DEF_PERF_METRICS_STATE              = true;     //  begin program w/ perf. metrics panel open or closed.
@@ -112,10 +106,10 @@ inline constexpr ImVec4             DEF_LIVE_DARKBLUE                   = ImVec4
 //
 //
 //                              B.  WINDOW COLORS.
-inline constexpr ImVec4             DEF_ROOT_WIN_BG                     = ImVec4(0.000f,    0.000f,     0.000f,     0.000f);
-inline constexpr ImVec4             DEF_SIDEBAR_WIN_BG                  = ImVec4(0.192f,    0.192f,     0.192f,     1.000f);
+inline constexpr ImVec4             DEF_ROOT_WIN_BG                     = ImVec4(1.000f,    1.000f,     1.000f,     0.350f);
+inline constexpr ImVec4             DEF_BROWSER_WIN_BG                  = ImVec4(0.192f,    0.192f,     0.192f,     1.000f);
 inline constexpr ImVec4             DEF_MAIN_WIN_BG                     = ImVec4(0.125f,    0.133f,     0.141f,     1.000f);
-inline constexpr ImVec4             DEF_TITLEBAR_WIN_BG                 = ImVec4(0.000f,    0.000f,     0.000f,     0.800f);
+inline constexpr ImVec4             DEF_CONTROLBAR_WIN_BG               = ImVec4(0.000f,    0.000f,     0.000f,     0.800f);
 
   
   
@@ -174,7 +168,8 @@ inline constexpr const char *       USER_DATA_DIR                       = "../..
 inline constexpr const char *       INI_FILEPATH                        = "../../assets/config/cb_app.ini";
 inline constexpr const char *       INI_BACKUP_FILEPATH                 = "../../assets/config/.backup.ini";     //  "../../assets/fonts/swap_cb_app.ini";
 
-inline constexpr const char *       STYLE_FILEPATH                      = "../../assets/config/imgui_style.json";
+inline constexpr const char *       IMGUI_STYLE_FILEPATH                = "../../assets/config/imgui_style.json";
+inline constexpr const char *       IMPLOT_STYLE_FILEPATH               = "../../assets/config/implot_style.json";
 
 inline constexpr const char *       PYTHON_FPGA_FILEPATH                = "../../scripts/python/fpga.py";
 inline constexpr const char *       PYTHON_ECHO_FILEPATH                = "../../scripts/python/echo.py";

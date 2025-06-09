@@ -147,7 +147,7 @@ protected:
     //  2B.2                    Secondary Class Methods.            [app/sidebar/sidebar.cpp]...
     void                        Display_Preferences_Menu            (void);
     //
-    void                        draw_sidebar_button                 (void);
+    void                        draw_browser_button                 (void);
     void                        disp_appearance_mode                (void);     //  Other...
     void                        disp_font_selector                  (void);
     void                        disp_color_palette                  (void);

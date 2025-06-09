@@ -41,13 +41,18 @@
 
 
 //  0.2     STANDARD LIBRARY HEADERS...
-#include <stdio.h>
-#include <vector>
-#include <thread>
+#include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <sstream>
+#include <stdio.h>
+#include <chrono>
 #include <string>
 #include <string_view>
+#include <iomanip>
+
+#include <vector>
+#include <thread>
 #include <type_traits>
 #include <math.h>
 
@@ -71,215 +76,6 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//          0.1A        Widget-Table / Control-Table Stuff:
-// *************************************************************************** //
-
-/*
-//  "WidgetRow"
-//      Declarative per-row widget logic
-struct WidgetRow {
-    const char *            label;
-    std::function<void()>   render;
-};
-
-//  "TableCFG"
-//      - POD struct to define that STATE INFORMATION of a table in Dear ImGui.
-template<auto NC>
-struct TableCFG {
-    const char *            uuid                = nullptr;
-    ImGuiTableFlags         table_flags         = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible;
-    ImGuiTableColumnFlags   column_flags[NC]    = {};
-    bool                    header_row          = true;
-};
-
-
-template <>
-struct TableCFG<2> {
-    const char *            uuid                = nullptr;
-    ImGuiTableFlags         table_flags         = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible;
-    ImGuiTableColumnFlags   column_flags[2]     = {
-                                ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize,
-                                ImGuiTableColumnFlags_WidthStretch
-                            };
-    bool                    header_row          = true;
-};
-
-
-
-//          0.1B        Tab-Bar Stuff:
-// *************************************************************************** //
-
-//  "Tab_t"
-//
-struct Tab_t    {
-    using                   callback_t      = std::function<void(const char*, bool*, ImGuiWindowFlags)>;
-    const char *            uuid;
-    bool                    open;
-    bool                    no_close;
-    ImGuiTabItemFlags       flags;
-    callback_t              render_fn;
-};
-
-
-
-//          0.1C        Window Information / Position Information:
-// *************************************************************************** //
-
-//  "WindowLocation"
-//
-enum class WindowLocation {
-    Center,             //  default.
-    LeftHalf,           //  left half of the monitor.
-    RightHalf,          //  right half of the monitor.
-    Fill,               //  Expand window to fill the entire screen.
-    COUNT
-};
-
-
-//  "Anchor"
-//
-enum class Anchor {
-    Center,             //  default.
-    East,
-    NorthEast,
-    North,
-    NorthWest,
-    West,
-    SouthWest,
-    South,
-    SouthEast,
-//
-    COUNT
-};
-
-//  "AnchorAngles"
-//
-inline constexpr std::array<float, 9>   AnchorAngles = {
-    0.0f,                // Center (same as North)
-    IM_PI * 0.5f,        // East
-    IM_PI * 0.25f,       // NorthEast
-    0.0f,                // North
-    -IM_PI * 0.25f,      // NorthWest
-    -IM_PI * 0.5f,       // West
-    -IM_PI * 0.75f,      // SouthWest
-    IM_PI,               // South
-    IM_PI * 0.75f        // SouthEast
-};
-
-
-
-// *************************************************************************** //
-//
-//
-//  0.2     INLINE DEFINITIONS (HEADER ONLY)        |   PLOTS AND GRAPHS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "AnimPlotCFG"
-//
-struct AnimPlotCFG {
-    bool        playing             = false;
-    double      last_time           = 0.0;
-    int         current_frame       = 0;
-};
-
-
-//  "PlotCFG"
-//
-struct PlotCFG {
-//
-//          1.                      MAIN PLOT PARAMETERS...
-    const char *                        plot_uuid                   = nullptr;
-    ImVec2                              plot_size                   = ImVec2(-1.0f, -1.0f);
-    ImPlotFlags                         plot_flags                  = ImPlotFlags_None | ImPlotFlags_NoTitle;
-//
-//          2.                      AXIS PARAMETERS...
-    std::array<const char *, 2>         axis_labels                 = {
-                                            "X-axis    [Arb.]",
-                                            "Y-axis    [Arb.]"
-                                        };
-    std::array<ImPlotAxisFlags, 2>      axis_flags                  = {
-                                            ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit,
-                                            ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit
-                                        };
-//
-//          3.                      LEGEND PARAMETERS...
-    ImPlotLocation                      legend_loc                  = ImPlotLocation_NorthWest;                                                 // legend position.
-    ImPlotLegendFlags                   legend_flags                = ImPlotLegendFlags_None;       //  ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
-};
-
-
-
-// *************************************************************************** //
-//
-//
-//  0.2     INLINE DEFINITIONS (HEADER ONLY)        |   MISC / SPECIFIC USE-CASES...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "ChannelIdx"
-//
-enum ChannelIdx : std::size_t {
-    UNUSED = 0,
-    D,  C,  CD,
-    B,  BD, BC, BCD,
-    A,  AD, AC, ACD,
-    AB, ABD, ABC, ABCD,
-    CHANNEL_COUNT   // = 16
-};
-
-
-//  "CoincidencePacket"
-//      Holds a single FPGA “packet”
-struct CoincidencePacket
-{
-    std::array<int, CHANNEL_COUNT> counts{};
-    int cycles{};
-
-    //  Convenience accessors
-    int d           (void) const    { return counts[D];  }
-    int c           (void) const    { return counts[C];  }
-    int cd          (void) const    { return counts[CD]; }
-    int b           (void) const    { return counts[B];  }
-    int bd          (void) const    { return counts[BD]; }
-    int bc          (void) const    { return counts[BC]; }
-    int bcd         (void) const    { return counts[BCD];}
-    int a           (void) const    { return counts[A];  }
-    int ad          (void) const    { return counts[AD]; }
-    int ac          (void) const    { return counts[AC]; }
-    int acd         (void) const    { return counts[ACD];}
-    int ab          (void) const    { return counts[AB]; }
-    int abd         (void) const    { return counts[ABD];}
-    int abc         (void) const    { return counts[ABC];}
-    int abcd        (void) const    { return counts[ABCD];}
-};
-
-
-//  "parse_packet"
-//      Parse one JSON‑line; returns nullopt on format errors
-inline std::optional<CoincidencePacket>
-parse_packet(std::string_view line)
-{
-    using json = nlohmann::json;
-    CoincidencePacket pkt;
-
-    try {
-        json j = json::parse(line);
-        const auto& arr = j.at("counts");
-        if (arr.size() != CHANNEL_COUNT)         // sanity check
-            return std::nullopt;
-
-        for (std::size_t i = 0; i < CHANNEL_COUNT; ++i)
-            pkt.counts[i] = arr[i].get<int>();
-
-        pkt.cycles = j.at("cycles").get<int>();
-        return pkt;
-
-    } catch (const json::exception&) {
-        return std::nullopt;                     // malformed JSON / keys
-    }
-}
-*/
 
 
 // *************************************************************************** //
@@ -303,7 +99,6 @@ inline bool                     GetIO_KeyCtrl               (void) {
                                 }
 
 
-
 //      1.2     WINDOW / GLFW FUNCTIONS...
 // *************************************************************************** //
 void                            glfw_error_callback         (int error, const char * description);
@@ -314,7 +109,7 @@ void                            glfw_error_callback         (int error, const ch
 //      1.3     WINDOW SIZE / GEOMETRY FUNCTIONS...
 // *************************************************************************** //
 [[nodiscard]]
-std::pair<int, int>             GetMonitorDimensions        (GLFWwindow * window);
+std::tuple<int,int>             GetMonitorDimensions        (GLFWwindow * window);
 [[nodiscard]] float             GetDPIScaling               (GLFWwindow * window);
 [[nodiscard]] float             GetDPIFontScaling           (GLFWwindow * window);
 
@@ -325,7 +120,7 @@ void                            set_next_window_geometry    (GLFWwindow * glfw_w
                                                                                        float width_frac, float height_frac);
 
 void                            SetGLFWWindowLocation       (GLFWwindow *   win, const      WindowLocation          loc,
-                                                            const float     scale=0.5f,     const GLFWmonitor *     monitor=nullptr);
+                                                             const float    scale=0.5f,     const GLFWmonitor *     monitor=nullptr);
 ImVec2                          GetImGuiWindowCoords        (const char * , const Anchor & );
 
 
@@ -351,12 +146,6 @@ bool                            file_exists                 (const char * );
 
 
 //              1.4C    GENERAL WIDGET FUNCTIONS...
-bool                            DirectionalButton           ([[maybe_unused]] const char * ,
-                                                             Anchor ,
-                                                             ImVec2                     size        = app::DEF_COLLAPSE_BUTTON_SIZE,
-                                                             [[maybe_unused]] ImVec4    bg_col      = app::DEF_COLLAPSE_BUTTON_BG,
-                                                             ImVec4                     tint_col    = app::DEF_COLLAPSE_BUTTON_TINT);
-
 void                            LeftLabel2                  (const char * , const float );
 void                            LeftLabel2                  (const char * , const float, const float );
 void                            LeftLabel                   (const char * ,
@@ -366,32 +155,51 @@ void                            LeftLabel                   (const char * ,   co
 void                            LeftLabel                   (const char * ,   const ImVec2 & ,  const ImVec2 & );
 
 
-
 //      1.5     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
 // *************************************************************************** //
 const char *                    get_glsl_version            (void);
 
 
-
 //      1.6     MISC I/O FUNCTIONS...
 // *************************************************************************** //
-                                //  1.6A-1      SAVING/WRITING FUNCTIONS...
-bool                            SaveStyleToDisk             (const ImGuiStyle &     style,  const std::string &         file_path);
-bool                            SaveStyleToDisk             (const ImGuiStyle &     style,  const char *                file_path);
-bool                            SaveStyleToDisk             (const ImGuiStyle &     style,  std::string_view            file_path);
+//              1.6A-1      SAVING/WRITING FUNCTIONS...
+                //              1.  ImGui Style:
+bool                            SaveImGuiStyleToDisk        (const ImGuiStyle &     style,  const std::string &         file_path);
+bool                            SaveImGuiStyleToDisk        (const ImGuiStyle &     style,  const char *                file_path);
+bool                            SaveImGuiStyleToDisk        (const ImGuiStyle &     style,  std::string_view            file_path);
+                            //
+bool                            SaveImGuiStyleToDiskAsync   (const ImGuiStyle &     style,  const char *                file_path);
+// bool                          SaveImGuiStyleToDiskAsync   (ImGuiStyle             style,  const char *                file_path);
+                //
+                //              2.  ImPlot Style:
+bool                            SaveImPlotStyleToDisk       (const ImPlotStyle &    style,  const std::string &         file_path);
+bool                            SaveImPlotStyleToDisk       (const ImPlotStyle &    style,  const char *                file_path);
+bool                            SaveImPlotStyleToDisk       (const ImPlotStyle &    style,  std::string_view            file_path);
+                            //
+bool                            SaveImPlotStyleToDiskAsync  (const ImPlotStyle &    style,  const char *                file_path);
+// bool                         SaveImPlotStyleToDiskAsync  (ImPlotStyle            style,  const char *                file_path);
 
-                                //  1.6A-2      ASYNCHRONUS SAVING/WRITING FUNCTIONS...
-bool                            SaveStyleToDiskAsync        (const ImGuiStyle &     style,  const char *                file_path);
-bool                            SaveStyleToDiskAsync        (ImGuiStyle             style,  const char *                file_path);
 
 
-                                //  1.6B-1      LOADING FUNCTIONS...
-bool                            LoadStyleFromDisk           (ImGuiStyle &           style,  const char *                file_path);
-bool                            LoadStyleFromDisk           (ImGuiStyle &           style,  const std::string &         file_path);
-bool                            LoadStyleFromDisk           (ImGuiStyle &           style,  const std::string_view &    file_path);
+//              1.6B-1      LOADING FUNCTIONS...
+                //              1.  ImGui Style:
+bool                            LoadImGuiStyleFromDisk      (ImGuiStyle &           style,  const char *                file_path);
+bool                            LoadImGuiStyleFromDisk      (ImGuiStyle &           style,  const std::string &         file_path);
+bool                            LoadImGuiStyleFromDisk      (ImGuiStyle &           style,  const std::string_view &    file_path);
+                //
+                //              2.  ImPlot Style:
+bool                            LoadImPlotStyleFromDisk     (ImPlotStyle &         style,  const char *                file_path);
+bool                            LoadImPlotStyleFromDisk     (ImPlotStyle &         style,  const std::string &         file_path);
+bool                            LoadImPlotStyleFromDisk     (ImPlotStyle &         style,  const std::string_view &    file_path);
+                //
+                //              3.  ImGui ".ini" File:
+bool                            LoadIniSettingsFromDisk     (const char *);
 
-                                //  1.6B-2      ASYNCHRONUS LOADING FUNCTIONS...
-
+//              1.6B-2      ASYNCHRONUS LOADING FUNCTIONS...
+                            //
+                            //      ...
+                            //
+                                
 
 //
 //

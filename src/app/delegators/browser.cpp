@@ -82,7 +82,7 @@ void Browser::Begin([[maybe_unused]] const char *       uuid,
     
     
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, S.m_sidebar_bg);   // Push before ImGui::Begin()
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, S.m_browser_bg);   // Push before ImGui::Begin()
     ImGui::SetNextWindowClass(&this->m_window_class);
     
     ImGui::Begin(uuid, p_open, flags);
@@ -90,7 +90,7 @@ void Browser::Begin([[maybe_unused]] const char *       uuid,
         
 
         //  3.  DETERMINE WINDOW COLLAPSE...
-        if (this->S.m_show_sidebar_window)
+        if (this->S.m_show_browser_window)
         {
             this->Display_Preferences_Menu();
         }
@@ -112,9 +112,8 @@ void Browser::Begin([[maybe_unused]] const char *       uuid,
 //
 void Browser::Display_Preferences_Menu(void)
 {
-    ImGuiIO &                   io              = ImGui::GetIO(); (void)io;
-    ImGuiStyle &                style           = ImGui::GetStyle();
-    static const ImVec2         TABBAR_SPACE    = ImVec2(0, 2 * style.WindowPadding.y);
+    [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &       style           = ImGui::GetStyle();
     
     
     //ImGui::Dummy( TABBAR_SPACE );  //  Make space for the CLOSE-SIDEBAR button...
@@ -245,7 +244,7 @@ void Browser::disp_color_palette(void)
         
         ImGui::ColorEdit4("GLFW Window Bg##2f",         (float*)&S.m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
         ImGui::ColorEdit4("Dockspace Bg##2f",           (float*)&S.m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Sidebar Menu Bg##2f",        (float*)&S.m_sidebar_bg,    ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
+        ImGui::ColorEdit4("Sidebar Menu Bg##2f",        (float*)&S.m_browser_bg,    ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
         ImGui::ColorEdit4("Main Window Bg##2f",         (float*)&S.m_main_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
         ImGui::ColorEdit4("Default Window Bg##2f",      (float*)&def_win_bg,        ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
         

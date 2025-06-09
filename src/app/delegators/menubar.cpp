@@ -9,6 +9,7 @@
 **************************************************************************************
 **************************************************************************************/
 #include "app/delegators/_menubar.h"
+#include <future>
 //#include "app/app.h"
 //#include CBAPP_USER_CONFIG
 
@@ -263,9 +264,9 @@ void MenuBar::disp_window_menubar(void)
         ImGui::Separator();
         if (ImGui::MenuItem("Rebuild Dockspace", nullptr))    {
             S.m_rebuild_dockspace           = true;
-            //this->S.m_sidebar_ratio         = app::DEF_SB_OPEN_WIDTH;
-            //if (!this->S.m_show_sidebar_window)
-            //    this->S.m_show_sidebar_window = false;
+            //this->S.m_browser_ratio         = app::DEF_SB_OPEN_WIDTH;
+            //if (!this->S.m_show_browser_window)
+            //    this->S.m_show_browser_window = false;
         }
     
     
@@ -291,7 +292,6 @@ void MenuBar::disp_window_menubar(void)
 void MenuBar::disp_show_windows_menubar(void)
 {
     static size_t                   idx                 = static_cast<size_t>(0);
-    static app::WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
     
     
     //  1.  DRAW EACH VISIBILITY STATE IN "Core Windows" WINDOWS...                 | SUB-MENU.
@@ -387,8 +387,8 @@ void MenuBar::disp_show_windows_menubar(void)
 //
 void MenuBar::disp_tools_menubar(void)
 {
-    static size_t                   idx                 = static_cast<size_t>(0);
-    static app::WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
+    [[maybe_unused]] static size_t                   idx                 = static_cast<size_t>(0);
+    [[maybe_unused]] static app::WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
     
     
     //  1.  SUB-MENU    #1 :   "CBApp Applications"...
@@ -530,6 +530,7 @@ void MenuBar::disp_imgui_submenu(void)
             TIME       += ImGui::GetIO().DeltaTime;
             TRIGGER     = static_cast<bool>( !(COOLDOWN <= std::abs(TIME - TIME_CACHE)) );
             ImGui::TextDisabled("Data was saved to \"%s\" at %.3f sec.", custom_ini_file, TIME_CACHE);
+            S.m_logger.info( std::format("ImGui \".ini\" data was written to file \"{}\" at {:.3f} sec.", custom_ini_file, TIME_CACHE) );
         }
         
         
@@ -568,11 +569,34 @@ void MenuBar::disp_imgui_submenu(void)
     if (ImGui::BeginMenu("Save ImGui \"Style\" File"))
     {
 
-        if (ImGui::MenuItem("Save ImGui \"Style\" File",       nullptr)) {
-            utl::SaveStyleToDisk( ImGui::GetStyle(), cb::app::STYLE_FILEPATH);
+        if (ImGui::MenuItem("Save ImGui \"Style\" File",       nullptr))
+        {
+        
+            //  SPAWN SECONDARY THREAD...
+            auto _  = std::async(std::launch::async, []()
+            {
+            //
+                //  1.  Save ImPlot Settings...
+                if ( utl::SaveImGuiStyleToDisk(      ImGui::GetStyle(),      cb::app::IMGUI_STYLE_FILEPATH) ) {
+                    CB_LOG(LogLevel::Info, "Default ImGui style settings overwritten (\"{}\")", cb::app::IMGUI_STYLE_FILEPATH);
+                }
+                else {
+                    CB_LOG(LogLevel::Warning, "Failed to overwrite default ImGui style settings at (\"{}\")", cb::app::IMGUI_STYLE_FILEPATH);
+                }
+                
+                //  2.  Save ImPlot Settings...
+                if ( utl::SaveImPlotStyleToDisk(      ImPlot::GetStyle(),      cb::app::IMPLOT_STYLE_FILEPATH) ) {
+                    CB_LOG(LogLevel::Info, "Default ImPlot style settings overwritten (\"{}\")", cb::app::IMPLOT_STYLE_FILEPATH);
+                }
+                else {
+                    CB_LOG(LogLevel::Warning, "Failed to overwrite default ImPlot style settings at (\"{}\")", cb::app::IMPLOT_STYLE_FILEPATH);
+                }
+                
+                //  utl::SaveImPlotStyleToDisk(     ImPlot::GetStyle(),     cb::app::IMPLOT_STYLE_FILEPATH);
+            //
+            });
+            
         }
-
-
         ImGui::EndMenu();
     }
 #endif  //  CBAPP_DISABLE_INI  //

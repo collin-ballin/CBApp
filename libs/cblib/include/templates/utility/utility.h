@@ -1,7 +1,7 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****                 M A T H . H  ____  F I L E                 ****
+*       ****              U T I L I T Y . H  ____  F I L E              ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond
@@ -39,6 +39,13 @@
 
 
 
+//  MY OWN HEADERS...
+#include "templates/utility/type_traits.h"
+#include "templates/utility/_strings.h"
+#include "templates/utility/helper.h"
+
+
+
 namespace cblib {   //     BEGINNING NAMESPACE "cblib"...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -59,15 +66,6 @@ namespace cblib {   //     BEGINNING NAMESPACE "cblib"...
 ///
 /// @tparam     T, template type parameter, type of stored elements.
 /// @tparam     N, template non-type parameter, buffer capacity.
-
-
-//------------------------------------------------------------------------------
-//  RingBuffer : header‑only, fixed‑capacity ring (circular) buffer
-//  • Chronological indexing: [0] == oldest, [size()-1] == newest
-//  • Overwrites the oldest element when full
-//  • STL‑like interface: size(), empty(), push_back(), emplace_back(), front(), back(), etc.
-//------------------------------------------------------------------------------
-
 template<typename T, std::size_t N>
 struct RingBuffer
 {

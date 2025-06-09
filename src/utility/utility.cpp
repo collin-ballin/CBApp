@@ -102,10 +102,10 @@ void glfw_error_callback(int error, const char * description)
 
 //  "GetMonitorDimensions"
 //
-[[nodiscard]] std::pair<int, int> GetMonitorDimensions(GLFWwindow * window) {
+[[nodiscard]] std::tuple<int,int> GetMonitorDimensions(GLFWwindow * window) {
     GLFWmonitor *           monitor     = cb::utl::get_current_monitor(window);
     const GLFWvidmode *     mode        = glfwGetVideoMode(monitor);
-    return { mode->width, mode->height };
+    return std::make_tuple(mode->width,mode->height);
 }
 
 
@@ -674,220 +674,511 @@ GLFWwindow * create_glfw_window(const float scale, const char * title) {
 // *************************************************************************** //
 // *************************************************************************** //
 
+namespace StyleJson {
+    // Convert ImU32 to "RRGGBBAA"
+    inline std::string to_hex(ImU32 col) {
+        std::ostringstream oss;
+        oss << std::uppercase << std::hex << std::setw(8) << std::setfill('0') << col;
+        return oss.str();
+    }
+
+    // Parse "RRGGBBAA" or "#RRGGBBAA" string or unsigned int to ImU32
+    inline ImU32 from_json(const nlohmann::json &jval) {
+        if (jval.is_string()) {
+            std::string s = jval.get<std::string>();
+            if (!s.empty() && s[0] == '#') s.erase(0, 1);
+            return static_cast<ImU32>(std::stoul(s, nullptr, 16));
+        }
+        if (jval.is_number_unsigned()) {
+            return jval.get<ImU32>();
+        }
+        return 0u;
+    }
+}
+
+
+
+// *************************************************************************** //
+//
+//
+//
 //  1.6A-1      SAVING/WRITING FUNCTIONS...
 // *************************************************************************** //
+// *************************************************************************** //
 
-//  "SaveStyleToDisk_IMPL"
+//  "SaveImGuiStyleToDisk_IMPL"
 //
-bool SaveStyleToDisk_IMPL(const ImGuiStyle& style, const std::string& file_path) {
-    using       json    = nlohmann::json;
-    static_assert(std::is_copy_constructible_v<ImGuiStyle> || std::is_trivially_copyable_v<ImGuiStyle>);
-    json        j;
-    
-    // scalar members
-    j["Alpha"]                                      = style.Alpha;
-    j["DisabledAlpha"]                              = style.DisabledAlpha;
-    j["WindowRounding"]                             = style.WindowRounding;
-    j["WindowBorderSize"]                           = style.WindowBorderSize;
-    j["WindowBorderHoverPadding"]                   = style.WindowBorderHoverPadding;
-    j["ChildRounding"]                              = style.ChildRounding;
-    j["ChildBorderSize"]                            = style.ChildBorderSize;
-    j["PopupRounding"]                              = style.PopupRounding;
-    j["PopupBorderSize"]                            = style.PopupBorderSize;
-    j["FrameRounding"]                              = style.FrameRounding;
-    j["FrameBorderSize"]                            = style.FrameBorderSize;
-    j["ItemSpacingX"]                               = style.ItemSpacing.x;
-    j["ItemSpacingY"]                               = style.ItemSpacing.y;
-    j["ItemInnerSpacingX"]                          = style.ItemInnerSpacing.x;
-    j["ItemInnerSpacingY"]                          = style.ItemInnerSpacing.y;
-    j["IndentSpacing"]                              = style.IndentSpacing;
-    j["ColumnsMinSpacing"]                          = style.ColumnsMinSpacing;
-    j["ScrollbarSize"]                              = style.ScrollbarSize;
-    j["ScrollbarRounding"]                          = style.ScrollbarRounding;
-    j["GrabMinSize"]                                = style.GrabMinSize;
-    j["GrabRounding"]                               = style.GrabRounding;
-    j["TabRounding"]                                = style.TabRounding;
-    j["TabBorderSize"]                              = style.TabBorderSize;
-    j["TabCloseButtonMinWidthSelected"]             = style.TabCloseButtonMinWidthSelected;
-    j["TabCloseButtonMinWidthUnselected"]           = style.TabCloseButtonMinWidthUnselected;
-    j["TabBarBorderSize"]                           = style.TabBarBorderSize;
-    j["TabBarOverlineSize"]                         = style.TabBarOverlineSize;
-    j["DockingSeparatorSize"]                       = style.DockingSeparatorSize;
-    j["MouseCursorScale"]                           = style.MouseCursorScale;
-    j["CurveTessellationTol"]                       = style.CurveTessellationTol;
-    j["CircleTessellationMaxError"]                 = style.CircleTessellationMaxError;
-    j["TreeLinesSize"]                              = style.TreeLinesSize;
-    
-    // vector members
-    j["WindowPadding"]                              = { style.WindowPadding.x, style.WindowPadding.y };
-    j["WindowMinSize"]                              = { style.WindowMinSize.x, style.WindowMinSize.y };
-    j["WindowTitleAlign"]                           = { style.WindowTitleAlign.x, style.WindowTitleAlign.y };
-    j["FramePadding"]                               = { style.FramePadding.x, style.FramePadding.y };
-    j["CellPadding"]                                = { style.CellPadding.x, style.CellPadding.y };
-    j["TouchExtraPadding"]                          = { style.TouchExtraPadding.x, style.TouchExtraPadding.y };
-    j["DisplayWindowPadding"]                       = { style.DisplayWindowPadding.x, style.DisplayWindowPadding.y };
-    j["DisplaySafeAreaPadding"]                     = { style.DisplaySafeAreaPadding.x, style.DisplaySafeAreaPadding.y };
-    
-    //  colors
-    for (int i = 0; i < ImGuiCol_COUNT; ++i) {
-        const ImVec4& c = style.Colors[i];
-        j["Colors"][i] = { c.x, c.y, c.z, c.w };
-    }
-    
-    //  behaviors
-    j["AntiAliasedLines"]                           = style.AntiAliasedLines;
-    j["AntiAliasedLinesUseTex"]                     = style.AntiAliasedLinesUseTex;
-    j["AntiAliasedFill"]                            = style.AntiAliasedFill;
+bool SaveImGuiStyleToDisk_IMPL(const ImGuiStyle &style, const std::string &file_path) {
+    using json = nlohmann::json;
+    json j;
 
-    // write file
+    // --- scalars ---
+#define J_SCALAR(name) j[#name] = style.name
+    J_SCALAR(Alpha);
+    J_SCALAR(DisabledAlpha);
+    J_SCALAR(WindowRounding);
+    J_SCALAR(WindowBorderSize);
+    J_SCALAR(WindowBorderHoverPadding);
+    J_SCALAR(ChildRounding);
+    J_SCALAR(ChildBorderSize);
+    J_SCALAR(PopupRounding);
+    J_SCALAR(PopupBorderSize);
+    J_SCALAR(FrameRounding);
+    J_SCALAR(FrameBorderSize);
+    j["ItemSpacingX"] = style.ItemSpacing.x;
+    j["ItemSpacingY"] = style.ItemSpacing.y;
+    j["ItemInnerSpacingX"] = style.ItemInnerSpacing.x;
+    j["ItemInnerSpacingY"] = style.ItemInnerSpacing.y;
+    J_SCALAR(IndentSpacing);
+    J_SCALAR(ColumnsMinSpacing);
+    J_SCALAR(ScrollbarSize);
+    J_SCALAR(ScrollbarRounding);
+    J_SCALAR(GrabMinSize);
+    J_SCALAR(GrabRounding);
+    J_SCALAR(TabRounding);
+    J_SCALAR(TabBorderSize);
+    J_SCALAR(TabCloseButtonMinWidthSelected);
+    J_SCALAR(TabCloseButtonMinWidthUnselected);
+    J_SCALAR(TabBarBorderSize);
+    J_SCALAR(TabBarOverlineSize);
+    J_SCALAR(DockingSeparatorSize);
+    J_SCALAR(MouseCursorScale);
+    J_SCALAR(CurveTessellationTol);
+    J_SCALAR(CircleTessellationMaxError);
+    J_SCALAR(TreeLinesSize);
+#undef J_SCALAR
+
+    // --- vectors ---
+    auto vec2 = [](const ImVec2 &v) { return json{v.x, v.y}; };
+    j["WindowPadding"] = vec2(style.WindowPadding);
+    j["WindowMinSize"] = vec2(style.WindowMinSize);
+    j["WindowTitleAlign"] = vec2(style.WindowTitleAlign);
+    j["FramePadding"] = vec2(style.FramePadding);
+    j["CellPadding"] = vec2(style.CellPadding);
+    j["TouchExtraPadding"] = vec2(style.TouchExtraPadding);
+    j["DisplayWindowPadding"] = vec2(style.DisplayWindowPadding);
+    j["DisplaySafeAreaPadding"] = vec2(style.DisplaySafeAreaPadding);
+
+    // --- colors ---
+    j["Colors"] = json::array();
+    for (int i = 0; i < ImGuiCol_COUNT; ++i) {
+        ImU32 packed = ImGui::ColorConvertFloat4ToU32(style.Colors[i]);
+        j["Colors"].push_back(StyleJson::to_hex(packed));
+    }
+
+    // --- behaviors ---
+    j["AntiAliasedLines"] = style.AntiAliasedLines;
+    j["AntiAliasedLinesUseTex"] = style.AntiAliasedLinesUseTex;
+    j["AntiAliasedFill"] = style.AntiAliasedFill;
+
+    // Write file
     std::ofstream ofs(file_path);
     if (!ofs) return false;
     ofs << j.dump(4);
-    
     return true;
 }
 
-//  "SaveStyleToDisk"
-bool SaveStyleToDisk(const ImGuiStyle & style, const char * file_path)
-    { return SaveStyleToDisk_IMPL(style, file_path); }
+//  "SaveImGuiStyleToDisk"
+bool SaveImGuiStyleToDisk(const ImGuiStyle & style, const char * file_path)
+    { return SaveImGuiStyleToDisk_IMPL(style, file_path); }
 
-//  "SaveStyleToDisk"
-bool SaveStyleToDisk(const ImGuiStyle & style, const std::string & file_path)
-    { return SaveStyleToDisk_IMPL(style, file_path.c_str()); }
+//  "SaveImGuiStyleToDisk"
+bool SaveImGuiStyleToDisk(const ImGuiStyle & style, const std::string & file_path)
+    { return SaveImGuiStyleToDisk_IMPL(style, file_path.c_str()); }
 
-//  "SaveStyleToDisk"
-bool SaveStyleToDisk(const ImGuiStyle & style, const std::string_view & file_path)
-    { return SaveStyleToDisk_IMPL(style, std::string( file_path ).c_str()); }
+//  "SaveImGuiStyleToDisk"
+bool SaveImGuiStyleToDisk(const ImGuiStyle & style, const std::string_view & file_path)
+    { return SaveImGuiStyleToDisk_IMPL(style, std::string( file_path ).c_str()); }
 
 
 
-//  1.6A-2      ASYNCHRONUC SAVING/WRITING FUNCTIONS...
+//  1.6A-1      IMPLOT STYLE...
+// *************************************************************************** //
 // *************************************************************************** //
 
-//  "SaveStyleToDiskAsync"
-bool SaveStyleToDiskAsync(const ImGuiStyle & style, const char * file_path) {
+//  "SaveImPlotStyleToDisk_IMPL"
+//
+inline bool SaveImPlotStyleToDisk_IMPL(const ImPlotStyle & style, const std::string & file_path)
+{
+    using json = nlohmann::json;
+    json j;
+
+    // -- scalars --------------------------------------------------------------
+#define J_SCALAR(name) j[#name] = style.name
+    J_SCALAR(LineWeight);
+    J_SCALAR(Marker);
+    J_SCALAR(MarkerSize);
+    J_SCALAR(MarkerWeight);
+    J_SCALAR(FillAlpha);
+    J_SCALAR(ErrorBarSize);
+    J_SCALAR(ErrorBarWeight);
+    J_SCALAR(DigitalBitHeight);
+    J_SCALAR(DigitalBitGap);
+    J_SCALAR(PlotBorderSize);
+    J_SCALAR(MinorAlpha);
+    //J_SCALAR(ReferenceScale);
+    J_SCALAR(Colormap);
+    J_SCALAR(UseLocalTime);
+    J_SCALAR(UseISO8601);
+    J_SCALAR(Use24HourClock);
+#undef J_SCALAR
+
+    // -- vec2 helper ----------------------------------------------------------
+    auto vec2 = [](const ImVec2& v){ return json{v.x, v.y}; };
+
+    // -- vectors --------------------------------------------------------------
+    j["MajorTickLen"]       = vec2(style.MajorTickLen);
+    j["MinorTickLen"]       = vec2(style.MinorTickLen);
+    j["MajorTickSize"]      = vec2(style.MajorTickSize);
+    j["MinorTickSize"]      = vec2(style.MinorTickSize);
+    j["MajorGridSize"]      = vec2(style.MajorGridSize);
+    j["MinorGridSize"]      = vec2(style.MinorGridSize);
+    j["PlotPadding"]        = vec2(style.PlotPadding);
+    j["LabelPadding"]       = vec2(style.LabelPadding);
+    j["LegendPadding"]      = vec2(style.LegendPadding);
+    j["LegendInnerPadding"] = vec2(style.LegendInnerPadding);
+    j["LegendSpacing"]      = vec2(style.LegendSpacing);
+    j["MousePosPadding"]    = vec2(style.MousePosPadding);
+    j["AnnotationPadding"]  = vec2(style.AnnotationPadding);
+    j["FitPadding"]         = vec2(style.FitPadding);
+    j["PlotDefaultSize"]    = vec2(style.PlotDefaultSize);
+    j["PlotMinSize"]        = vec2(style.PlotMinSize);
+
+    // -- enums ----------------------------------------------------------------
+    //j["LegendOrientation"] = static_cast<int>(style.LegendOrientation);
+    //j["LegendLocation"]    = static_cast<int>(style.LegendLocation);
+
+    // -- colors ---------------------------------------------------------------
+    j["Colors"] = json::array();
+    for (int i = 0; i < ImPlotCol_COUNT; ++i) {
+        ImU32 packed = ImGui::ColorConvertFloat4ToU32(style.Colors[i]);
+        j["Colors"].push_back(StyleJson::to_hex(packed));
+    }
+
+    // -- write file -----------------------------------------------------------
+    std::ofstream ofs(file_path);
+    if (!ofs) return false;
+    ofs << j.dump(4);
+    return true;
+}
+
+//  "SaveImPlotStyleToDisk"
+bool SaveImPlotStyleToDisk(const ImPlotStyle & style, const char * file_path)
+    { return SaveImPlotStyleToDisk_IMPL(style, file_path); }
+
+//  "SaveImPlotStyleToDisk"
+bool SaveImPlotStyleToDisk(const ImPlotStyle & style, const std::string & file_path)
+    { return SaveImPlotStyleToDisk_IMPL(style, file_path.c_str()); }
+
+//  "SaveImPlotStyleToDisk"
+bool SaveImPlotStyleToDisk(const ImPlotStyle & style, const std::string_view & file_path)
+    { return SaveImPlotStyleToDisk_IMPL(style, std::string( file_path ).c_str()); }
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  1.6A-2      ASYNCHRONUC SAVING/WRITING FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "SaveImGuiStyleToDiskAsync"
+bool SaveImGuiStyleToDiskAsync(const ImGuiStyle & style, const char * file_path) {
     //  ** CRITICAL **  Create a local, deep-copy of "style" object to prevent race condition if the main thread alters
     bool                status  =   false;      //  the "style" data while the worker thread is writing it's data to the file.
     const ImGuiStyle    copy(style);            //      Note:   We could also accomplish this by **PASSING THE ARG BY VALUE**.
     std::thread([&status, &copy, &file_path]() {
-        status = SaveStyleToDisk_IMPL(copy, file_path);
+        status = SaveImGuiStyleToDisk_IMPL(copy, file_path);
+    }).detach();
+
+    return status;
+}
+
+//  "SaveImGuiStyleToDiskAsync"
+//  bool SaveImGuiStyleToDiskAsync(ImGuiStyle style, const char * file_path) {
+//      bool  status = false;
+//      std::thread([&status, &style, &file_path]()     { status = SaveImGuiStyleToDisk_IMPL(style, file_path); }).detach();
+//      return status;
+//  }
+
+
+
+//  "SaveImPlotStyleToDiskAsync"
+bool SaveImPlotStyleToDiskAsync(const ImPlotStyle & style, const char * file_path) {
+    //  ** CRITICAL **  Create a local, deep-copy of "style" object to prevent race condition if the main thread alters
+    bool                status  =   false;      //  the "style" data while the worker thread is writing it's data to the file.
+    const ImPlotStyle   copy(style);            //      Note:   We could also accomplish this by **PASSING THE ARG BY VALUE**.
+    std::thread([&status, &copy, &file_path]() {
+        status = SaveImPlotStyleToDisk_IMPL(copy, file_path);
     }).detach();
     
     return status;
 }
 
-//  "SaveStyleToDiskAsync"
-bool SaveStyleToDiskAsync(ImGuiStyle style, const char * file_path) {
-    bool  status = false;
-    std::thread([&status, &style, &file_path]()     { status = SaveStyleToDisk_IMPL(style, file_path); }).detach();
-    return status;
-}
+//  "SaveImPlotStyleToDiskAsync"
+//  bool SaveImPlotStyleToDiskAsync(ImPlotStyle style, const char * file_path) {
+//      bool  status = false;
+//      std::thread([&status, &style, &file_path]()     { status = SaveImPlotStyleToDisk_IMPL(style, file_path); }).detach();
+//      return status;
+//  }
 
 
 
+
+
+
+// *************************************************************************** //
+//
+//
+//
 //  1.6B-1      LOADING FUNCTIONS...
 // *************************************************************************** //
+// *************************************************************************** //
 
-//  "LoadStyleFromDisk_IMPL"
+//  "LoadImGuiStyleFromDisk_IMPL"
 //
-bool LoadStyleFromDisk_IMPL(ImGuiStyle & style, const char * file_path)
+bool LoadImGuiStyleFromDisk_IMPL(ImGuiStyle & style, const char * file_path)
 {
-    using               json    = nlohmann::json;
-    std::ifstream       ifs(file_path);
+    using json = nlohmann::json;
     
-    if (!ifs)
+    if (!std::filesystem::exists(file_path))    // Return false immediately if path doesn't exist
         return false;
         
-    json                j;
-    ifs >> j;
+    std::ifstream ifs(file_path);
+    if (!ifs) return false;
+    json j; ifs >> j;
 
-
-    //  helpers to pull with default
-    auto getf = [&](auto& dst, const char* key) {
+    // --- helpers ---
+    auto getf = [&](auto &dst, const char *key) {
         using T = std::remove_reference_t<decltype(dst)>;
-        if (j.contains(key))
-            dst = j[key].get<T>();
+        if (j.contains(key)) dst = j[key].get<T>();
     };
-    auto get2 = [&](ImVec2& v, const char* key){
-        if (j.contains(key) && j[key].is_array() && j[key].size()==2) {
+    auto get2 = [&](ImVec2 &v, const char *key) {
+        if (j.contains(key) && j[key].is_array() && j[key].size() == 2) {
             v.x = j[key][0].get<float>();
             v.y = j[key][1].get<float>();
         }
     };
-    auto getcol = [&](int i){
-        if (j.contains("Colors") && j["Colors"].is_array() && j["Colors"].size()>i) {
-            auto& arr = j["Colors"][i];
-            style.Colors[i] = ImVec4(arr[0].get<float>(),
-                                     arr[1].get<float>(),
-                                     arr[2].get<float>(),
-                                     arr[3].get<float>());
+    auto getcol = [&](int i) {
+        if (!j.contains("Colors")) return;
+        const auto &arr = j["Colors"];
+        if (!arr.is_array() || i >= (int)arr.size()) return;
+        const auto &entry = arr[i];
+        if (entry.is_string() || entry.is_number_unsigned()) {
+            ImU32 packed = StyleJson::from_json(entry);
+            style.Colors[i] = ImGui::ColorConvertU32ToFloat4(packed);
+        } else if (entry.is_array() && entry.size() == 4) {
+            style.Colors[i] = ImVec4(
+                entry[0].get<float>(), entry[1].get<float>(),
+                entry[2].get<float>(), entry[3].get<float>());
         }
     };
 
-    getf(style.Alpha,                       "Alpha");
-    getf(style.DisabledAlpha,               "DisabledAlpha");
-    getf(style.WindowRounding,              "WindowRounding");
-    getf(style.WindowBorderSize,            "WindowBorderSize");
-    getf(style.ChildRounding,               "ChildRounding");
-    getf(style.ChildBorderSize,             "ChildBorderSize");
-    getf(style.PopupRounding,               "PopupRounding");
-    getf(style.PopupBorderSize,             "PopupBorderSize");
-    getf(style.FrameRounding,               "FrameRounding");
-    getf(style.FrameBorderSize,             "FrameBorderSize");
-    getf(style.ItemSpacing.x,               "ItemSpacingX");
-    getf(style.ItemSpacing.y,               "ItemSpacingY");
-    getf(style.ItemInnerSpacing.x,          "ItemInnerSpacingX");
-    getf(style.ItemInnerSpacing.y,          "ItemInnerSpacingY");
-    getf(style.IndentSpacing,               "IndentSpacing");
-    getf(style.ColumnsMinSpacing,           "ColumnsMinSpacing");
-    getf(style.ScrollbarSize,               "ScrollbarSize");
-    getf(style.ScrollbarRounding,           "ScrollbarRounding");
-    getf(style.GrabMinSize,                 "GrabMinSize");
-    getf(style.GrabRounding,                "GrabRounding");
-    getf(style.TabRounding,                 "TabRounding");
-    getf(style.TabBorderSize,               "TabBorderSize");
-    getf(style.TabBarBorderSize,            "TabBarBorderSize");
-    getf(style.TabBarOverlineSize,          "TabBarOverlineSize");
-    getf(style.DockingSeparatorSize,        "DockingSeparatorSize");
-    getf(style.MouseCursorScale,            "MouseCursorScale");
-    getf(style.CurveTessellationTol,        "CurveTessellationTol");
-    getf(style.CircleTessellationMaxError,  "CircleTessellationMaxError");
-    getf(style.TreeLinesSize,               "TreeLinesSize");
-    
-    //  vectors
-    get2(style.WindowPadding,               "WindowPadding");
-    get2(style.WindowMinSize,               "WindowMinSize");
-    get2(style.WindowTitleAlign,            "WindowTitleAlign");
-    get2(style.FramePadding,                "FramePadding");
-    get2(style.CellPadding,                 "CellPadding");
-    get2(style.TouchExtraPadding,           "TouchExtraPadding");
-    get2(style.DisplayWindowPadding,        "DisplayWindowPadding");
-    get2(style.DisplaySafeAreaPadding,      "DisplaySafeAreaPadding");
-    
-    //  colors
-    for (int i = 0; i < ImGuiCol_COUNT; ++i)
-        getcol(i);
-        
-    //  behaviors
-    getf(style.AntiAliasedLines,            "AntiAliasedLines");
-    getf(style.AntiAliasedLinesUseTex,      "AntiAliasedLinesUseTex");
-    getf(style.AntiAliasedFill,             "AntiAliasedFill");
+    // --- scalars ---
+#define GET_SCALAR(name) getf(style.name, #name)
+    GET_SCALAR(Alpha);
+    GET_SCALAR(DisabledAlpha);
+    GET_SCALAR(WindowRounding);
+    GET_SCALAR(WindowBorderSize);
+    GET_SCALAR(WindowBorderHoverPadding);
+    GET_SCALAR(ChildRounding);
+    GET_SCALAR(ChildBorderSize);
+    GET_SCALAR(PopupRounding);
+    GET_SCALAR(PopupBorderSize);
+    GET_SCALAR(FrameRounding);
+    GET_SCALAR(FrameBorderSize);
+    getf(style.ItemSpacing.x, "ItemSpacingX");
+    getf(style.ItemSpacing.y, "ItemSpacingY");
+    getf(style.ItemInnerSpacing.x, "ItemInnerSpacingX");
+    getf(style.ItemInnerSpacing.y, "ItemInnerSpacingY");
+    GET_SCALAR(IndentSpacing);
+    GET_SCALAR(ColumnsMinSpacing);
+    GET_SCALAR(ScrollbarSize);
+    GET_SCALAR(ScrollbarRounding);
+    GET_SCALAR(GrabMinSize);
+    GET_SCALAR(GrabRounding);
+    GET_SCALAR(TabRounding);
+    GET_SCALAR(TabBorderSize);
+    GET_SCALAR(TabCloseButtonMinWidthSelected);
+    GET_SCALAR(TabCloseButtonMinWidthUnselected);
+    GET_SCALAR(TabBarBorderSize);
+    GET_SCALAR(TabBarOverlineSize);
+    GET_SCALAR(DockingSeparatorSize);
+    GET_SCALAR(MouseCursorScale);
+    GET_SCALAR(CurveTessellationTol);
+    GET_SCALAR(CircleTessellationMaxError);
+    GET_SCALAR(TreeLinesSize);
+#undef GET_SCALAR
+
+    // --- vectors ---
+    get2(style.WindowPadding, "WindowPadding");
+    get2(style.WindowMinSize, "WindowMinSize");
+    get2(style.WindowTitleAlign, "WindowTitleAlign");
+    get2(style.FramePadding, "FramePadding");
+    get2(style.CellPadding, "CellPadding");
+    get2(style.TouchExtraPadding, "TouchExtraPadding");
+    get2(style.DisplayWindowPadding, "DisplayWindowPadding");
+    get2(style.DisplaySafeAreaPadding, "DisplaySafeAreaPadding");
+
+    // --- colors ---
+    for (int i = 0; i < ImGuiCol_COUNT; ++i) getcol(i);
+
+    // --- behaviors ---
+    getf(style.AntiAliasedLines,       "AntiAliasedLines");
+    getf(style.AntiAliasedLinesUseTex, "AntiAliasedLinesUseTex");
+    getf(style.AntiAliasedFill,        "AntiAliasedFill");
 
     return true;
 }
 
-
-//  "LoadStyleFromDisk"
-bool LoadStyleFromDisk(ImGuiStyle & style, const char * file_path)
-    { return LoadStyleFromDisk_IMPL(style, file_path); }
+//  "LoadImGuiStyleFromDisk"
+bool LoadImGuiStyleFromDisk(ImGuiStyle & style, const char * file_path)
+    { return LoadImGuiStyleFromDisk_IMPL(style, file_path); }
     
-//  "LoadStyleFromDisk"
-bool LoadStyleFromDisk(ImGuiStyle & style, const std::string & file_path)
-    { return LoadStyleFromDisk_IMPL(style, file_path.c_str() ); }
+//  "LoadImGuiStyleFromDisk"
+bool LoadImGuiStyleFromDisk(ImGuiStyle & style, const std::string & file_path)
+    { return LoadImGuiStyleFromDisk_IMPL(style, file_path.c_str() ); }
 
-//  "LoadStyleFromDisk"
-bool LoadStyleFromDisk(ImGuiStyle & style, const std::string_view & file_path)
-    { return LoadStyleFromDisk_IMPL(style, std::string( file_path ).c_str() ); }
+//  "LoadImGuiStyleFromDisk"
+bool LoadImGuiStyleFromDisk(ImGuiStyle & style, const std::string_view & file_path)
+    { return LoadImGuiStyleFromDisk_IMPL(style, std::string( file_path ).c_str() ); }
+
+
+
+
+
+
+//  1.6B-1      IMPLOT STYLE...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "LoadImPlotStyleFromDisk_IMPL"
+//
+inline bool LoadImPlotStyleFromDisk_IMPL(ImPlotStyle & style, const char *   file_path)
+{
+    using json = nlohmann::json;
+    
+    if (!std::filesystem::exists(file_path))    // Return false immediately if path doesn't exist
+        return false;
+        
+    std::ifstream ifs(file_path);
+    if (!ifs) return false;
+    json j; ifs >> j;
+
+    // helpers
+    auto getf = [&](auto& dst, const char* key) {
+        using T = std::remove_reference_t<decltype(dst)>;
+        if (j.contains(key)) dst = j[key].get<T>();
+    };
+    auto get2 = [&](ImVec2& v, const char* key) {
+        if (j.contains(key) && j[key].is_array() && j[key].size() == 2) {
+            v.x = j[key][0].get<float>();
+            v.y = j[key][1].get<float>();
+        }
+    };
+    auto getcol = [&](int i) {
+        if (!j.contains("Colors")) return;
+        const auto& arr = j["Colors"];
+        if (!arr.is_array() || i >= (int)arr.size()) return;
+        const auto& entry = arr[i];
+        if (entry.is_string() || entry.is_number_unsigned()) {
+            ImU32 packed = StyleJson::from_json(entry);
+            style.Colors[i] = ImGui::ColorConvertU32ToFloat4(packed);
+        }
+        else if (entry.is_array() && entry.size() == 4) {
+            style.Colors[i] = {entry[0].get<float>(), entry[1].get<float>(),
+                               entry[2].get<float>(), entry[3].get<float>()};
+        }
+    };
+
+#define GET_SCALAR(name) getf(style.name, #name)
+    GET_SCALAR(LineWeight);    GET_SCALAR(Marker);         GET_SCALAR(MarkerSize);
+    GET_SCALAR(MarkerWeight);  GET_SCALAR(FillAlpha);      GET_SCALAR(ErrorBarSize);
+    GET_SCALAR(ErrorBarWeight);GET_SCALAR(DigitalBitHeight);GET_SCALAR(DigitalBitGap);
+    //  GET_SCALAR(PlotBorderSize);GET_SCALAR(MinorAlpha);     GET_SCALAR(ReferenceScale);
+    GET_SCALAR(Colormap);      GET_SCALAR(UseLocalTime);   GET_SCALAR(UseISO8601);
+    GET_SCALAR(Use24HourClock);
+#undef GET_SCALAR
+
+    // vectors
+    get2(style.MajorTickLen,       "MajorTickLen");
+    get2(style.MinorTickLen,       "MinorTickLen");
+    get2(style.MajorTickSize,      "MajorTickSize");
+    get2(style.MinorTickSize,      "MinorTickSize");
+    get2(style.MajorGridSize,      "MajorGridSize");
+    get2(style.MinorGridSize,      "MinorGridSize");
+    get2(style.PlotPadding,        "PlotPadding");
+    get2(style.LabelPadding,       "LabelPadding");
+    get2(style.LegendPadding,      "LegendPadding");
+    get2(style.LegendInnerPadding, "LegendInnerPadding");
+    get2(style.LegendSpacing,      "LegendSpacing");
+    get2(style.MousePosPadding,    "MousePosPadding");
+    get2(style.AnnotationPadding,  "AnnotationPadding");
+    get2(style.FitPadding,         "FitPadding");
+    get2(style.PlotDefaultSize,    "PlotDefaultSize");
+    get2(style.PlotMinSize,        "PlotMinSize");
+
+    // enums
+    //  if (j.contains("LegendOrientation"))
+    //      style.LegendOrientation = static_cast<ImPlotLegendOrientation>(j["LegendOrientation"].get<int>());
+    //  if (j.contains("LegendLocation"))
+    //      style.LegendLocation = static_cast<ImPlotLegendLocation>(j["LegendLocation"].get<int>());
+
+    // colors
+    for (int i = 0; i < ImPlotCol_COUNT; ++i) getcol(i);
+
+    return true;
+}
+
+//  "LoadImPlotStyleFromDisk"
+bool LoadImPlotStyleFromDisk(ImPlotStyle & style, const char * file_path)
+    { return LoadImPlotStyleFromDisk_IMPL(style, file_path); }
+    
+//  "LoadImPlotStyleFromDisk"
+bool LoadImPlotStyleFromDisk(ImPlotStyle & style, const std::string & file_path)
+    { return LoadImPlotStyleFromDisk_IMPL(style, file_path.c_str() ); }
+
+//  "LoadImPlotStyleFromDisk"
+bool LoadImPlotStyleFromDisk(ImPlotStyle & style, const std::string_view & file_path)
+    { return LoadImPlotStyleFromDisk_IMPL(style, std::string( file_path ).c_str() ); }
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  1.6B-1      IMGUI ".ini" STYLE...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "LoadIniSettingsFromDisk"
+bool LoadIniSettingsFromDisk(const char * ini_filename) {
+    size_t      file_data_size      = 0;
+    char *      file_data           = (char*)ImFileLoadToMemory(ini_filename, "rb", &file_data_size);
+    if (!file_data)
+        return false;
+        
+    if (file_data_size > 0)     ImGui::LoadIniSettingsFromMemory(file_data, (size_t)file_data_size);
+    IM_FREE(file_data);
+    return true;
+}
+
+
 
 
 

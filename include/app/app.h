@@ -92,20 +92,18 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  0.      UTILITY FUNCTIONS [NON-MEMBER FUNCTIONS]...
+//  0.      UTILITY FUNCTIONS [NON-MEMBER FUNCTIONS]        [handler.cpp]...
 int                     run_application             ([[maybe_unused]] int argc, [[maybe_unused]] char ** argv);
+
+
 [[maybe_unused]]
 void                    KeepProgramAwake            (GLFWwindow * );
 
 
 //  DEAR IMGUI DEMO APPLICATIONS...
-void                    ShowStyleEditor             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+//
 void                    ShowExampleAppLog           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 void                    ShowExampleAppConsole       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-void                    ShowMetricsWindow           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-void                    ShowExampleAppDockSpace     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-
-void                    ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 void                    ShowExampleAppDocuments     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 
 
@@ -181,11 +179,13 @@ protected:
     void                dispatch_window_function    (const Window & uuid);      //  [init.cpp].
     //              1C.
     void                load                        (void);                     //  [init.cpp].
-    void                init_asserts                (void);                     //  [init.cpp].
+    bool                init_asserts                (void);                     //  [init.cpp].
+    static void         install_signal_handlers     (void);                     //  [handler.cpp].
     
     
     //  2C.1            Main GUI Functions.                 [app.cpp]...
-    void                run_IMPL                    (void);                                                         //  [app.cpp].
+    void                run_IMPL                    (void);
+    void                pre_run                     (void);
     void                ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
@@ -210,7 +210,13 @@ protected:
     void                stream_test                 (void);
     void                TestTabBar                  (void);
     //
+    //
+    void                ShowImGuiMetricsWindow      ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                ShowImGuiStyleEditor        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    //
+    void                ShowImPlotStyleEditor       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                ShowImPlotMetricsWindow     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     
     
