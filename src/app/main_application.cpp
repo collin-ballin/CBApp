@@ -50,10 +50,8 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
 
         
         
-        ImGui::Text("CBApp %s", CBAPP_VERSION);
+        ImGui::Text("CBApp Version %s (%s)", __CBAPP_VERSION__, __CBAPP_BUILD__);
         ImGui::Text("Developed by Collin Andrew Bond  (c)  2024-2025");
-        
-
 
 
 

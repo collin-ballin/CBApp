@@ -1,0 +1,3 @@
+#pragma once
+#define     __CBAPP_VERSION__       "@PROJECT_VERSION@ WIP"
+#define     __CBAPP_BUILD__         "@BUILD_NUMBER@"
