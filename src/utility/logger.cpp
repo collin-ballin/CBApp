@@ -24,6 +24,12 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 
 static void append_indent(std::ostream& os, std::size_t n) { os << std::string(n, ' '); }
 
+static std::string tid_hex(std::thread::id tid)
+{
+    std::ostringstream s;
+    s << std::hex << std::uppercase << std::hash<std::thread::id>{}(tid);
+    return s.str();
+}
 
 
 
@@ -40,11 +46,25 @@ static void append_indent(std::ostream& os, std::size_t n) { os << std::string(n
 //  Default Constructor.            | PRIVATE BECAUSE SINGLETON...
 //
 Logger::Logger(void) {
-#if defined(_WIN32)
-    enable_vt_win();                // sets m_vt_enabled
-#else
-    m_vt_enabled = true;
-#endif
+#if defined(_WIN32)     //  1.  BUILDING FOR WINDOWS...
+//
+    #ifdef CBAPP_DISABLE_TERMINAL_COLORS
+        m_vt_enabled = false;
+    # else
+        enable_vt_win();            // sets m_vt_enabled
+    #endif  //  CBAPP_DISABLE_TERMINAL_COLORS  //
+//
+#else                   //  2.  BUILDING FOR macOS...
+//
+    #ifdef CBAPP_DISABLE_TERMINAL_COLORS
+        m_vt_enabled = false;
+    # else
+        m_vt_enabled = true;
+    #endif  //  CBAPP_DISABLE_TERMINAL_COLORS  //
+//
+#endif  //  _WIN32  //
+    
+
 #if CBAPP_LOG_ENABLED
     start_worker();
 #endif
@@ -57,14 +77,6 @@ Logger::~Logger(void) {
 #if CBAPP_LOG_ENABLED
         stop_worker();
 #endif
-}
-
-
-//  "instance"
-//
-Logger & Logger::instance(void) {
-    static Logger inst;
-    return inst;
 }
 
 
@@ -150,7 +162,11 @@ void Logger::set_console_format(ConsoleFormat fmt)              { m_console_fmt 
 //  "get_console_format"
 Logger::ConsoleFormat Logger::get_console_format(void) const    { return m_console_fmt; }
 
+//  "set_path_depth"
+void Logger::set_path_depth(std::size_t d)                      { m_path_depth = d; }
 
+//  "get_path_depth"
+std::size_t Logger::get_path_depth(void) const                  { return m_path_depth; }
 
 
 
@@ -286,20 +302,43 @@ void Logger::write_body(const std::string& msg, std::ostream& out, std::size_t i
 // ---------------------------------------------------------------------------
 // Member helper: metadata line (file, line, func, thread, timestamp)
 // ---------------------------------------------------------------------------
-std::string Logger::build_metadata(const LogEvent& ev, std::size_t indent_len)
+std::string Logger::build_metadata(const LogEvent & ev, std::size_t indent_len)
 {
-    ConsoleFormat fmt = m_console_fmt.load(std::memory_order_relaxed);
-    std::ostringstream ss;
+    bool                    first   = true;
+    ConsoleFormat           fmt     = m_console_fmt.load(std::memory_order_relaxed);
+    std::ostringstream      ss;
     append_indent(ss, indent_len);
+    
     ss << '(';
-    bool first = true;
-
-    if ((fmt & CF_FILE) && ev.file)           { ss << ev.file; first = false; }
-    if ((fmt & CF_LINE) && ev.file)           { ss << ':' << ev.line; }
-    if ((fmt & CF_FUNCTION) && ev.func)       { if (!first) ss << ' '; ss << ev.func; first = false; }
-    if (fmt & CF_THREAD_ID)                   { if (!first) ss << ' '; ss << "tid=" << ev.thread_id; first = false; }
-    if (fmt & CF_TIMESTAMP)                   { if (!first) ss << ' '; ss << ev.ts_iso8601; }
-
+    if (fmt & CF_THREAD_ID) {                                       //  1.  Thread ID.
+        if (!first) ss << ' ';
+        ss << "thread: 0x" << tid_hex(ev.thread_id) << ".";
+        first = false;
+    }
+    
+    if ((fmt & CF_FUNCTION) && ev.func) {                           //  2.  Function-Name.
+        if (!first) ss << ' ';
+        ss << "func: " << ev.func << ".";
+        first = false;
+    }
+    
+    if ((fmt & CF_FILE) && ev.file) {                               //  3.  Filename.
+        if (!first) ss << ' ';
+        ss << "file: " << path_tail(ev.file, m_path_depth) << ".";
+        first = false;
+    }
+    
+    if ((fmt & CF_LINE) && ev.file) {                               //  4.  Line Number.
+        if (!first) ss << ' ';
+        ss << "line: " << ev.line << ".";
+    }
+    
+    if (fmt & CF_TIMESTAMP) {                                       //  5.  Time-Stamp.
+        if (!first) ss << ' ';
+        ss << ev.ts_iso8601;
+        first = false;
+    }
+    
     ss << ')';
     return ss.str();
 }
@@ -307,7 +346,7 @@ std::string Logger::build_metadata(const LogEvent& ev, std::size_t indent_len)
 // ---------------------------------------------------------------------------
 // Public sink: write_event – orchestrates helpers
 // ---------------------------------------------------------------------------
-void Logger::write_event(const LogEvent& ev)
+void Logger::write_event(const LogEvent & ev)
 {
     const bool          color       = m_vt_enabled.load(std::memory_order_relaxed);
     const char *        prefix      = color ? ansi_code(level_to_color(ev.level)) : "";
@@ -368,6 +407,16 @@ void Logger::enable_vt_win()
 #endif
 
 
+
+
+
+// *************************************************************************** //
+//
+//
+//      UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
 //  "level_to_color"
 //
 Logger::TermColor Logger::level_to_color(Level lvl)
@@ -381,6 +430,18 @@ Logger::TermColor Logger::level_to_color(Level lvl)
         case Level::Critical:  return TermColor::Magenta;
         default:               return TermColor::Reset;
     }
+}
+
+//  "path_tail"
+//
+std::string Logger::path_tail(std::string_view s, std::size_t depth) {
+    // works for '/' and '\\'
+    for (std::size_t i = 0; i < depth && !s.empty(); ++i) {
+        auto pos = s.find_last_of("/\\");
+        if (pos == std::string_view::npos) break;
+        s.remove_prefix(pos + 1);
+    }
+    return std::string{s};
 }
 
 

@@ -29,7 +29,7 @@ cmake_minimum_required(VERSION 3.10)
 ########################################################################
 ########################################################################
 #   Bump the semantic version here when you cut a *feature* release.
-project(CBApp VERSION 0.1.0 LANGUAGES CXX)
+project(CBApp VERSION 0.3.0 LANGUAGES CXX)
 
 #   Derive a monotonically increasing build number (Git commit count).
 #   Fallback to 1 if Git is unavailable (e.g. first CI checkout).
@@ -152,16 +152,21 @@ set(IMGUI_CORE_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_demo.cpp        # Optional
 )
 #
-#       4.3     Collect only the backends you need (GLFW and OpenGL3).
+#       4.3     Collect Misc ImGui source files.
+set(IMGUI_MISC_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp
+)
+#
+#       4.4     Collect only the backends you need (GLFW and OpenGL3).
 set(IMGUI_BACKEND_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_glfw.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.cpp
 )
 #
-#       4.4     Combine all ImGui source files.
-set(IMGUI_SRCS ${IMGUI_CORE_SRCS} ${IMGUI_BACKEND_SRCS})
+#       4.5     Combine all ImGui source files.
+set(IMGUI_SRCS ${IMGUI_CORE_SRCS} ${IMGUI_MISC_SRCS} ${IMGUI_BACKEND_SRCS})
 #
-#       4.5     Recursively gather your application source files.
+#       4.6     Recursively gather your application source files.
 file(GLOB_RECURSE APP_SRCS
     CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
@@ -208,6 +213,7 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/include/imgui_extensions
         ${CMAKE_CURRENT_SOURCE_DIR}/imgui
         ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends
+        ${CMAKE_CURRENT_SOURCE_DIR}/misc/cpp
         ${THIRD_PARTY_INCLUDE_DIR}
 )
 
@@ -242,8 +248,21 @@ configure_file(
 
 
 #       5.7     Organize source files in Xcode
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "src" FILES ${APP_SRCS})
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/imgui PREFIX "imgui" FILES ${IMGUI_SRCS})
+# source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "src" FILES ${APP_SRCS})
+# source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/imgui PREFIX "imgui" FILES ${IMGUI_SRCS})
+source_group(
+    TREE   ${CMAKE_CURRENT_SOURCE_DIR}/imgui
+    PREFIX "imgui"
+    FILES  ${IMGUI_CORE_SRCS} ${IMGUI_BACKEND_SRCS}
+)
+#               Extra group just for the misc file
+source_group(
+    TREE   ${CMAKE_CURRENT_SOURCE_DIR}/misc        # its real location
+    PREFIX "imgui/misc"                            # how it should appear
+    FILES  ${IMGUI_MISC_SRCS}
+)
+
+
 
 
 

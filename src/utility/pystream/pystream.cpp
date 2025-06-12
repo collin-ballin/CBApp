@@ -254,11 +254,14 @@ bool PyStream::launch_process()
         cmd = ss.str();
     }
 
-    STARTUPINFOW si{ sizeof(STARTUPINFOW) };
-    si.dwFlags   = STARTF_USESTDHANDLES;
-    si.hStdInput = stdin_r;
-    si.hStdOutput= stdout_w;
-    si.hStdError = stdout_w; // merge stderr
+    //STARTUPINFOW si{ sizeof(STARTUPINFOW) };
+    STARTUPINFOW    si{};             // value-initialises every byte to 0
+    si.cb           = sizeof(si);     // required by CreateProcessW
+
+    si.dwFlags      = STARTF_USESTDHANDLES;
+    si.hStdInput    = stdin_r;
+    si.hStdOutput   = stdout_w;
+    si.hStdError    = stdout_w; // merge stderr
 
     if (!CreateProcessW(nullptr, cmd.data(), nullptr, nullptr, TRUE,
                         0, nullptr, nullptr, &si, &m_proc_info))

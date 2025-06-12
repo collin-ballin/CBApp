@@ -36,7 +36,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 App::App(void)
     : m_menubar(S),         m_controlbar(S),            m_browser(S),       m_detview(S),
 #ifndef __CBAPP_DISABLE_FDTD__
-      m_counter_app(S),     m_graphing_app(100, 200),   m_graph_app(S)
+      m_counter_app(S),     m_graph_app(S)
 # else
       m_counter_app(S)
 #endif  //  __CBAPP_DISABLE_FDTD__  //
@@ -79,7 +79,6 @@ void App::init(void)
     this->m_detview.initialize();
     this->m_counter_app.initialize();
 #ifndef __CBAPP_DISABLE_FDTD__
-    this->m_graphing_app.initialize();
     this->m_graph_app.initialize();
 #endif  //  __CBAPP_DISABLE_FDTD__  //
        
@@ -290,12 +289,6 @@ void App::dispatch_window_function(const Window & uuid)
             this->m_counter_app.Begin(      w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
-        case Window::GraphingApp:       {
-    #ifndef __CBAPP_DISABLE_FDTD__
-            this->m_graphing_app.Begin(     w.uuid.c_str(),     nullptr,        w.flags);
-    #endif  //  __CBAPP_DISABLE_FDTD__  //
-            break;
-        }
         case Window::GraphApp:          {
     #ifndef __CBAPP_DISABLE_FDTD__
             this->m_graph_app.Begin(        w.uuid.c_str(),     nullptr,        w.flags);
@@ -338,6 +331,10 @@ void App::dispatch_window_function(const Window & uuid)
         //      4.  *MY* TOOLS...
         case Window::ColorTool:         {
             this->ShowColorTool(            w.uuid.c_str(),     &w.open,        w.flags);
+            break;
+        }
+        case Window::CustomRendering:   {
+            cb::ShowCustomRendering(        w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //

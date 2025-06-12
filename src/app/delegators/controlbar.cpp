@@ -151,8 +151,8 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
         
         
         //  2.  SETUP NEW STYLE OPTIONS FOR CONTROL BAR WIDGETS...
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4.0f, 2.0f));
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,  ImVec2(4.0f, 0.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.0f, 5.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,  ImVec2(10.0f, 0.0f));
 
         S.PushFont(Font::Small);
         
@@ -175,6 +175,16 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
         {
             this->S.m_show_detview_window = !this->S.m_show_detview_window;
         }
+        
+
+        
+        //      3.      TOGGLE SYSTEM PREFERENCES...
+        ImGui::SameLine();
+        if ( ImGui::Button( (this->S.m_show_system_preferences)
+                            ? "Browser##ControlBar" : "Preferences##ControlBar", ImVec2(120, BUTTON_SIZE.y )) ) {
+            this->S.m_show_system_preferences = !this->S.m_show_system_preferences;
+        }
+        
                                   
                      
         

@@ -56,12 +56,9 @@
 //      2.1     CRITICAL BUILD SETTINGS...
 // *************************************************************************** //
 // *************************************************************************** //
-//#define         CBAPP_VERSION                                   "0.03 WIP"
-
-
 //#define         __CBAPP_DEBUG__                             1                 //  Enable delay before starting int main (bug-fix for X-Code IDE issue).
-#define         __CBAPP_BUILD_CCOUNTER_APP__                    1               //  BUILD FOR COINCIDENCE COUNTER...
-// #define         __CBAPP_BUILD_FDTD_APP__                        1               //  BUILD FOR FDTD APP...
+//  #define         __CBAPP_BUILD_CCOUNTER_APP__                    1               //  BUILD FOR COINCIDENCE COUNTER...
+#define         __CBAPP_BUILD_FDTD_APP__                        1               //  BUILD FOR FDTD APP...
 
 
 //#define         __CBAPP_DISABLE_FDTD__                          1           //  BUILD FOR COINCIDENCE COUNTER...
@@ -98,7 +95,7 @@
 
 //  #define     CBAPP_DISABLE_INI                                   1           //  Prevent use of ".ini" file to save/recall data.
 #define     CBAPP_LOAD_STYLE_FILE                           1           //  Prevent use of ".json" file to save/recall "ImGui" style data.
-
+#define     CBAPP_DISABLE_TERMINAL_COLORS                   1
 
 
 
@@ -110,13 +107,12 @@
 
 //              1.      META-DATA CAPTURE FOR LOGGING.
 // *************************************************************************** //
-#define CB_LOG(level, msg, ...)         \
-    Logger::instance().log_ex(          \
-        msg, level,                     \
-        __FILE__, __LINE__,             \
-        __func__,                       \
-        std::this_thread::get_id(),     \
-        ##__VA_ARGS__)
+#define CB_LOG(level, fmt, ...)                                             \
+    Logger::instance().log_ex(                                              \
+        fmt,                                                                \
+        level,                                                              \
+        __FILE__, __LINE__, __func__, std::this_thread::get_id()            \
+        __VA_OPT__(, ) __VA_ARGS__)
 
 
 //  clang-specific macros

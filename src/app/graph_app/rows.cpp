@@ -18,6 +18,69 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
+
+/*
+// A simple record type we want to browse & edit
+struct Person {
+    std::string     name;
+    int             age    = 30;
+    bool            alive  = true;
+};
+
+
+//  "Test_Browser"
+//
+void App::Test_Browser(void)
+{
+    static std::vector<Person>      people                  = {       //  1.  In your application state (not every frame):
+        {"Ada",         36,         true},
+        {"Grace",       85,         false},
+        {"Linus",       54,         true}
+    };
+
+
+    //  2.  Property-editor lambda (called once per frame for the selected item)
+    static auto                     draw_person_properties  = [](Person& p){
+        ImGui::InputText("Name", &p.name);
+        ImGui::SliderInt("Age", &p.age, 0, 120);
+        ImGui::Checkbox("Alive", &p.alive);
+    };
+    
+    
+    //  3.  Instantiate the widget (flat list selector in this example)
+    static CB_Browser<Person>       browser(
+        people,
+        draw_person_properties,
+        [](const Person& p){ return p.name; }
+    );
+    
+    //  static cb::ui::CB_Browser<Person> browser{
+    //      .items           = &people,                 // pass address of container
+    //      .draw_properties = draw_person_properties,
+    //      .label_provider  = [](const Person& p){ return p.name; }
+    //  };
+
+
+    // 4.  Draw the browser every frame
+    browser.draw();
+
+
+    // 5.  React to selection outside the widget if you like
+    if (auto* person = browser.selected()) {
+    }
+
+
+
+
+
+
+    return;
+}*/
+
+
+
+
+
 //  1.      LOADING ROWS AND TABLE CONFIGURATIONS FOR APPLICATION WIDGETS...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -390,8 +453,6 @@ void GraphApp::init_ctrl_rows(void)
     //      4.  EDITOR ROWS...
     // *************************************************************************** //
     // *************************************************************************** //
-    static constexpr float              LABEL_COLUMN_WIDTH      = 200.0f;
-    static constexpr float              WIDGET_COLUMN_WIDTH     = 250.0f;
 
     //  INTERACTIVE VARIABLES...
     static ImGuiSliderFlags             SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
@@ -436,8 +497,6 @@ void GraphApp::init_ctrl_rows(void)
                 //
                 //
                 //      WIDGET 2.   CHANNEL SELECTOR...
-                static constexpr const char *   channels []     = { "Real Permitivitty", "Imaginary Permitivitty" };
-                int                             channel_idx     = 0;
                 //
                 ImGui::SetNextItemWidth(w);
                 ImGui::SameLine();//0.0f, pad);
@@ -463,6 +522,21 @@ void GraphApp::init_ctrl_rows(void)
                 //
             }// END LAMBDA.
         },
+    //
+    //
+    //
+        { "New Browser",        [this]//    BEGIN ROW.
+            {
+
+                this->m_editor.draw_point_browser();
+
+            }
+        }, // END ROW.
+    //
+    //
+    //
+    //
+    //
     //
         { "Paint Value Range",      [this]//    BEGIN ROW.
             {
@@ -514,6 +588,52 @@ void GraphApp::init_ctrl_rows(void)
                 }
             }
         } // END ROW.
+    //
+    //
+    //
+    //
+    //
+    //
+        //  { "Browser",        [this]//    BEGIN ROW.
+        //      {
+        //          using                           Point                   = SketchWidget::CBDragPoint;
+        //          using                           PointType               = SketchWidget::PointType;
+        //
+        //          static std::vector<Point>       data                    = {       //  1.  In your application state (not every frame):
+        //          };
+        //
+        //
+        //          //  2.  Property-editor lambda (called once per frame for the selected item)
+        //          static auto                     draw_point_properties   = [this](Point & p)
+        //          {
+        //              int         point_type_index    = static_cast<int>(p.type);
+        //              double      x_min               = static_cast<double>(m_steps.NX.limits.min),
+        //                          x_max               = static_cast<double>(m_steps.NX.limits.max),
+        //                          y_min               = static_cast<double>(m_steps.NY.limits.min),
+        //                          y_max               = static_cast<double>(m_steps.NY.limits.max);
+        //
+        //              ImGui::SliderScalar("x-position", ImGuiDataType_Double,   &p.pos.x,      &x_min,        &x_max,     "%.1f");
+        //              ImGui::SliderScalar("y-position", ImGuiDataType_Double,   &p.pos.y,      &y_min,        &y_max,     "%.1f");
+        //              if ( ImGui::Combo( "Point Type", &point_type_index,
+        //                            SketchWidget::POINT_TYPE_LABELS.data(),
+        //                            static_cast<int>(SketchWidget::POINT_TYPE_LABELS.size()) )
+        //              ) {
+        //                  p.type = static_cast<PointType>(point_type_index);
+        //              }
+        //          };
+    
+    
+        //          //  3.  Instantiate the widget (flat list selector in this example)
+        //          static CB_Browser<Point>       browser(
+        //              this->m_editor.get_points(),
+        //              draw_point_properties,
+        //              [](const Point & p){ return std::to_string(p.id); }
+        //          );
+
+        //          browser.draw();
+
+        //      }
+        //  } // END ROW.
     //
     //
     //
@@ -629,6 +749,10 @@ void GraphApp::init_ctrl_rows(void)
 
 
 
+
+
+
+
 // *************************************************************************** //
 //
 //
@@ -655,7 +779,6 @@ void GraphApp::ShowEditor(void)
 void GraphApp::ShowModelParameters(void)
 {
     //  OTHER CONSTANTS...
-    static const ImVec2                 SPACING                     = ImVec2( 0.0f, 0.25*ImGui::GetTextLineHeightWithSpacing() );
     
     //  CONSTANTS...
 

@@ -89,8 +89,9 @@ static PopupAction build_context_menu(MenuScope scope,
                                       PointType&   bulk_type_ref) {
     PopupAction action = PopupAction::None;
 
-    if (ImGui::MenuItem("Delete"))
+    if (ImGui::MenuItem("Delete")) {
         action = PopupAction::Delete;
+    }
 
     // ── Type submenu ────────────────────────────────────────────────────
     if (ImGui::BeginMenu("Type")) {
@@ -219,14 +220,45 @@ void SketchWidget::draw_lasso() const {
 
 //  "delete_selected_points"
 //
-void SketchWidget::delete_selected_points(void) {
-    std::sort(m_selected.begin(), m_selected.end(), std::greater<int>());
-    for (int idx : m_selected) {
-        if (idx >= 0 && idx < int(m_points.size()))
-            m_points.erase(m_points.begin() + idx);
+void SketchWidget::delete_selected_points()
+{
+    if (m_selected.empty())
+        return;
+
+    // 1. Sort the list of indices to remove (ascending)
+    std::sort(m_selected.begin(), m_selected.end());      //  e.g. [1,4,7]
+    const std::vector<int>& removed = m_selected;         //  alias for clarity
+
+    // 2. Erase any line that references a soon-to-be-deleted point
+    m_lines.erase(std::remove_if(m_lines.begin(), m_lines.end(),
+                  [&](const CBLine& ln){
+                      return std::binary_search(removed.begin(), removed.end(), ln.a) ||
+                             std::binary_search(removed.begin(), removed.end(), ln.b);
+                  }),
+                  m_lines.end());
+
+    // 3. Re-map point indices for surviving lines
+    auto remap = [&](int idx) {
+        // subtract how many removed indices are strictly less than idx
+        return idx - int(std::lower_bound(removed.begin(), removed.end(), idx) - removed.begin());
+    };
+    for (auto& ln : m_lines) {
+        ln.a = remap(ln.a);
+        ln.b = remap(ln.b);
     }
-    for (size_t j = 0; j < m_points.size(); ++j)
-        m_points[j].id = int(j);
+
+    // 4. Delete points (DESC order so earlier erases don’t shift later ones)
+    for (auto it = removed.rbegin(); it != removed.rend(); ++it)
+        m_points.erase(m_points.begin() + *it);
+
+    // 5. Renumber point IDs
+    for (std::size_t i = 0; i < m_points.size(); ++i)
+        m_points[i].id = int(i);
+
+    // 6. Renumber line IDs (purely cosmetic stability)
+    for (std::size_t k = 0; k < m_lines.size(); ++k)
+        m_lines[k].id = int(k);
+
     clear_selection();
 }
 
@@ -317,11 +349,15 @@ PopupAction SketchWidget::show_multi_popup(PointType& out_type)
 //  show_selection_popup : bulk context menu for current selection
 //  (requires `PointType m_bulk_type` and PopupAction prototype in header)
 //-------------------------------------------------------------------------
-PopupAction SketchWidget::show_selection_popup() {
+PopupAction SketchWidget::show_selection_popup()
+{
     PopupAction action = PopupAction::None;
-    if (ImGui::BeginPopup("SelectionPopup")) {
-        if (ImGui::MenuItem("Delete"))
+    
+    if ( ImGui::BeginPopup("SelectionPopup") )
+    {
+        if (ImGui::MenuItem("Delete")) {
             action = PopupAction::Delete;
+        }
 
         if (ImGui::BeginMenu("Type")) {
             for (int t = 0; t < int(PointType::Count); ++t) {
@@ -371,7 +407,8 @@ void SketchWidget::remove_lines_with_point(int idx) {
 }
 
 // call this at END of build_update_points() after point positions are final:
-void SketchWidget::render_lines() {
+void SketchWidget::render_lines()
+{
     for (const auto& ln : m_lines) {
         const ImPlotPoint& p0 = m_points[ln.a].pos;
         const ImPlotPoint& p1 = m_points[ln.b].pos;
@@ -488,9 +525,9 @@ void SketchWidget::build_update_points(const BuildCtx& ctx,
 //
 //      Updated build_handle_selection_popup
 //      (includes Connect/Disconnect menu entries when exactly two same-type points are selected)
-void SketchWidget::build_handle_selection_popup(const BuildCtx& ctx,
-                                                PopupAction&   global_action,
-                                                PointType&     set_type)
+void SketchWidget::build_handle_selection_popup(const BuildCtx &    ctx,
+                                                PopupAction &       global_action,
+                                                PointType &         set_type)
 {
     // 1. If right-click on plot, no point under cursor, and at least one point is selected
     if (ctx.right_click && ctx.plot_hovered && !m_internal_click_on_pt && !m_selected.empty()) {
@@ -506,28 +543,32 @@ void SketchWidget::build_handle_selection_popup(const BuildCtx& ctx,
 
     
     // 3. If exactly two points are selected, and they share the same type, show Connect/Disconnect
-    if (m_selected.size() == 2) {
-        int i = m_selected[0];
-        int j = m_selected[1];
-        bool same_type = (m_points[i].type == m_points[j].type);
-        if (same_type) {
-            bool already = line_exists(i, j);
-            const char* lbl = already ? "Disconnect" : "Connect";
-            if (ImGui::MenuItem(lbl)) {
-                if (already) {
-                    // Remove the existing line between i and j
-                    m_lines.erase(std::remove_if(m_lines.begin(), m_lines.end(),
-                                  [i, j](const CBLine& ln) {
-                                      return (ln.a == i && ln.b == j) || (ln.a == j && ln.b == i);
-                                  }),
-                                  m_lines.end());
-                }
-                else {
-                    // Add a new line between i and j
-                    add_line(i, j);
-                }
-            }
-        }
+    if (m_selected.size() == 2)
+    {
+        int     i           = m_selected[0];
+        int     j           = m_selected[1];
+        bool    same_type   = (m_points[i].type == m_points[j].type);
+        
+        //  if (same_type)
+        //  {
+        //      bool            already     = line_exists(i, j);
+        //      const char *    lbl         = already ? "Disconnect" : "Connect";
+        //
+        //      if (ImGui::MenuItem(lbl))
+        //      {
+        //          if (already)    //      Remove the existing line between i and j
+        //          {
+        //              m_lines.erase(std::remove_if(m_lines.begin(), m_lines.end(),
+        //                            [i, j](const CBLine& ln) {
+        //                                return (ln.a == i && ln.b == j) || (ln.a == j && ln.b == i);
+        //                            }),
+        //                            m_lines.end());
+        //          }
+        //          else {          //      Add a new line between i and j
+        //              add_line(i, j);
+        //          }
+        //      }
+        //  }
     }
     
     return;
@@ -550,7 +591,9 @@ void SketchWidget::build_apply_global_action(PopupAction global_action, PointTyp
                 
             for (size_t j = 0; j < m_points.size(); ++j)
                 m_points[j].id = int(j);
+                
             clear_selection();
+            break;
         }
         //
         //  2.  SET TYPE...
@@ -691,6 +734,41 @@ void SketchWidget::connect_points(void)
 
     return;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  ?.      ETCH-A-SKETCH V5 STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

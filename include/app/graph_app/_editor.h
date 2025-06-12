@@ -49,6 +49,7 @@
 
 //  0.3     "DEAR IMGUI" HEADERS...
 #include "imgui.h"
+#include "imgui_stdlib.h"
 #include "imgui_internal.h"
 #include "implot.h"
 #include "implot_internal.h"
@@ -235,6 +236,7 @@ public:
 
     // Built‑in control block (optional)
     void                            ShowControls                    (float scale_width = 80.0f);
+    void                            draw_point_browser              (void);
 
     // ---------------------------------------------------------------------
     //  Public variable accessors (return pointers so ImGui widgets can bind
@@ -262,8 +264,26 @@ public:
 
     //  Access to raw data buffer (read‑only)
     const std::vector<float> &      get_data(void) const                                { return m_data; }
+    std::vector<CBDragPoint> &      get_points(void)                                    { return m_points; }
 
 private:
+//
+    //----------------------------------------------------
+    //----------------------------------------------------
+    //
+    //  BROWSER FUNCTIONS...
+    void                            draw_point_list_column                              (const std::function<std::string(const CBDragPoint&)>& );
+    void                            draw_point_inspector_column                         (void);
+    
+    //  NEW DATA MEMBERS...
+    ImGuiTextFilter                 m_pt_filter;                                // list filter
+    int                             m_pt_sel_idx                    = -1;       // row currently selected
+    float                           m_pt_left_w                     = 200.f;    // column width (px)
+    int                             m_pt_anchor_idx                 = -1;
+    //
+    //----------------------------------------------------
+    //----------------------------------------------------
+
     // mode dispatch helpers ----------------------------------------------------
     inline void                     default_mode_input              (void)              { return; }   // placeholder
     void                            draw_mode_input                 (void);

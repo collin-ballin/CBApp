@@ -25,7 +25,6 @@
 #include "app/state/_state.h"
 //
 #include "app/c_counter/c_counter.h"        //  Seperate Application Classes.
-#include "app/_graphing_app.h"     
 #include "app/graph_app/graph_app.h"
 //
 #include "app/delegators/_menubar.h"        //  Delegator Classes.
@@ -61,6 +60,7 @@
 
 //  0.3     "DEAR IMGUI" HEADERS...
 #include "imgui.h"
+#include "imgui_stdlib.h"
 #include "imgui_internal.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -102,6 +102,7 @@ void                    KeepProgramAwake            (GLFWwindow * );
 
 //  DEAR IMGUI DEMO APPLICATIONS...
 //
+void                    ShowCustomRendering         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 void                    ShowExampleAppLog           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 void                    ShowExampleAppConsole       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 void                    ShowExampleAppDocuments     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
@@ -158,7 +159,6 @@ protected:
     //                  9.  APPLICATION SUB-CLASSES...
     CCounterApp         m_counter_app;
 #ifndef __CBAPP_DISABLE_FDTD__
-    GraphingApp         m_graphing_app;
     GraphApp            m_graph_app;
 #endif  //  __CBAPP_DISABLE_FDTD__  //
 #ifdef CBAPP_ENABLE_CB_DEMO
@@ -184,11 +184,13 @@ protected:
     
     
     //  2C.1            Main GUI Functions.                 [app.cpp]...
-    void                run_IMPL                    (void);
-    void                pre_run                     (void);
     void                ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    //
+    //  2C.2            Utilities for Main GUI Functions.   [app.cpp]...
+    void                run_IMPL                    (void);
+    void                pre_run                     (void);
     void                get_build_info              (void) const;
     void                get_info1                   (void) const;
     void                get_info2                   (void) const;
@@ -207,7 +209,7 @@ protected:
     
     
     //  2E.1            Testing / Temporary Functions.
-    void                stream_test                 (void);
+    void                PyStreamTest                (void);
     void                TestTabBar                  (void);
     //
     //
@@ -230,13 +232,11 @@ private:
     //  3.1             Primary GUI Functions.      [main_application.cpp]...
     void                ImPlot_Testing0             (void);
     void                ImPlot_Testing0ALT          (void);
-    void                ImPlot_Testing1             (void);
-    void                ImPlot_Testing2             (void);
-    void                ImPlot_Testing3             (void);
+    void                Test_Browser                (void);
+    void                Test_Editor                 (void);
     
     //  3.2             Misc. GUI Functions.        [temp.cpp]...
-    void                Test_Basic_Widgets          (void);
-    void                ImGui_Demo_Code             (void);
+    //                      ...
 
 
 

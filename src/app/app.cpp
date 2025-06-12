@@ -40,22 +40,21 @@ void App::pre_run(void)
     //utl::get_glsl_version();
     
     Timestamp_t         start_time      = cblib::utl::get_timestamp();
-    //auto                dt              = start_time - S.m_notes[0].first;
-    auto dt = cblib::utl::format_elapsed_timestamp(start_time - S.m_notes[0].first);
-    
-    
-    auto                startup_log     = std::format(
-        "PROGRAM BOOTED SUCCESSFULLY.\n"
-        "   Spawned         : {}\n"
-        "   Started         : {}\n"
-        "   Load Time       : {}\n{}",
+    auto                dt              = cblib::utl::format_elapsed_timestamp(start_time - S.m_notes[0].first);
+    auto                startup_log     = std::format("PROGRAM BOOT INFO...\n"
+        "Spawn          : {}\n"
+        "Initialized    : {}\n"
+        "Load Time      : {}\n",
         S.m_notes[0].first,
         start_time,
-        dt, start_time - S.m_notes[0].first
+        dt
     );
     
     S.m_notes.push_back( std::make_pair(start_time, "Program started ({})") );
-    S.m_logger.notify( startup_log );
+    
+    
+    S.m_logger.notify( "PROGRAM BOOTED SUCCESSFULLY" );
+    CB_LOG( LogLevel::Info, startup_log );
     
     return;
 }
@@ -250,24 +249,47 @@ void App::run_IMPL(void)
 //
 void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
-    // ImVec2                       win_pos(this->S.m_main_viewport->WorkPos.x + 750,   this->S.m_main_viewport->WorkPos.x + 20);
-    ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
-    static bool                     first_frame     = true;
+    [[maybe_unused]] ImGuiIO &          io                  = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] static bool        first_frame         = true;
+    
     
     
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
     ImGui::PushStyleColor(ImGuiCol_WindowBg, this->S.m_main_bg);
     ImGui::Begin(uuid, p_open, flags);
-        
         ImGui::PopStyleColor();
     
     
-    //  4.  TESTING TAB BAR...
-    {
-        this->TestTabBar();
-    }
+#ifndef _DONT_DEFINE_THIS
+// *************************************************************************** //
+      
+        this->Test_Editor();
+      
+# else
+// *************************************************************************** //
     
     
+        ImGui::Text("Here is the main window of the application!");
+        ImGui::Text("Not too much going on here right now due to the tabular design of the project.  Rather, most "
+                    "of the user's time will be spent on the designated tab for the application they intend to work with.");
+        ImGui::NewLine();
+    
+    
+        this->Test_Browser();
+        
+        
+        ImGui::NewLine();
+    
+        //  4.  TESTING TAB BAR...
+        {
+            this->TestTabBar();
+        }
+    
+    
+    
+#if defined(CBAPP_ENABLE_CB_DEMO) && !defined(__CBAPP_BUILD_CCOUNTER_APP__) && !defined(__CBAPP_BUILD_FDTD_APP__)
+//
+//
     //  5.  EXAMPLE APPS...
     {
         constexpr const char * window_uuid  = "Example: Documents";
@@ -279,10 +301,6 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
             ImGui::DockBuilderDockWindow(window_uuid,     S.m_main_dock_id);
         }
     }
-    
-    
-    
-#if defined(CBAPP_ENABLE_CB_DEMO) && !defined(__CBAPP_BUILD_CCOUNTER_APP__) && !defined(__CBAPP_BUILD_FDTD_APP__)
 
 
     //  2.  TESTING PLOTTING / GRAPHING 0...
@@ -297,75 +315,13 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
             ImGui::DockBuilderDockWindow( plot_uuid, S.m_main_dock_id );
         }
     }
-
-    //  3.  TESTING PLOTTING / GRAPHING 2...
-    {
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("Graphing 2"))
-        {
-            this->ImPlot_Testing2();
-            ImGui::TreePop();
-        }
-    }
-
-
-    //  3.  TESTING PLOTTING / GRAPHING 1...
-    {
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("Graphing 1"))
-        {
-            this->ImPlot_Testing1();
-            ImGui::TreePop();
-        }
-    }
-
-
-    //  4.  TESTING PLOTTING / GRAPHING 2...
-    {
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("Graphing 2"))
-        {
-            this->ImPlot_Testing2();
-            ImGui::TreePop();
-        }
-    }
-    
-    
-    //  5.  TESTING PLOTTING / GRAPHING 2...
-    {
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNode("Graphing 3"))
-        {
-            this->ImPlot_Testing3();
-            ImGui::TreePop();
-        }
-    }
-    
-    
-    
-    //  10. TESTING RADIOBUTTONS...
-    {
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("Basic Widgets"))
-        {
-            this->Test_Basic_Widgets();
-            ImGui::TreePop();
-        }
-    }
-    
-    
-    
-    //  11. TESTING RADIOBUTTONS...
-    {
-        ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-        if (ImGui::TreeNode("ImGui Demo Code"))
-        {
-            this->ImGui_Demo_Code();
-            ImGui::TreePop();
-        }
-    }
+//
+//
 #endif  //  CBAPP_ENABLE_CB_DEMO  AND  !__CBAPP_BUILD_CCOUNTER_APP__   AND  !__CBAPP_BUILD_FDTD_APP__  //
-
+//
+//
+// *************************************************************************** //
+#endif  //  DONT_DEFINE_THIS
     
     ImGui::End();
     return;

@@ -132,7 +132,7 @@ string_to_timestamp(const std::string & ts_str, const char * fmt = "%Y-%m-%dT%H:
 //
 inline std::string format_elapsed_timestamp(std::chrono::system_clock::duration dt) 
 {
-    using clock             = std::chrono::system_clock                     ;   using duration      = clock::duration;
+    //using clock             = std::chrono::system_clock                     ;   //using duration      = clock::duration;
     using days              = std::chrono::days                             ;   using hours         = std::chrono::hours;
     using minutes           = std::chrono::minutes                          ;   using seconds       = std::chrono::seconds;
     using milliseconds      = std::chrono::milliseconds                     ;   using microseconds  = std::chrono::microseconds;

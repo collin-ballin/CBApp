@@ -163,7 +163,29 @@ struct LogEvent {
 
 //  "iso_timestamp"
 //
-inline std::string iso_timestamp()
+inline std::string iso_timestamp(void)
+{
+    using namespace std::chrono;
+
+    const auto  now   = system_clock::now();
+    const auto  secs  = time_point_cast<seconds>(now);               // truncate
+    const auto  ms    = duration_cast<milliseconds>(now - secs).count(); // 0-999
+
+    std::time_t tt = system_clock::to_time_t(secs);
+    std::tm      tm;
+#if defined(_WIN32)
+    gmtime_s(&tm, &tt);          // Windows
+#else
+    gmtime_r(&tt, &tm);          // POSIX / macOS / Linux
+#endif
+
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S")
+        << '.' << std::setw(3) << std::setfill('0') << ms
+        << 'Z';
+    return oss.str();
+}
+/*
 {
     using namespace std::chrono;
 
@@ -185,7 +207,7 @@ inline std::string iso_timestamp()
         << 'Z';                 // UTC designator
     return oss.str();
 }
-
+*/
 
 
 
@@ -212,35 +234,16 @@ public:
     
     //  1.               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
-    //  1.1             Default Constructor, Destructor, etc...
-    static Logger &         instance                    (void);
-                        
-    //  1.2                 Public Member Functions...
-    void                    log                         (const char * , Level );
-    void                    log                         (const std::string & , Level );
+    // *************************************************************************** //
     
-    void                    debug                       (const char * );
-    void                    debug                       (const std::string & );
+    //
+    //
+    //  1.2A            Public API Logging Functions (Part 1/3)...
+    // *************************************************************************** //
+    static inline Logger &  instance                    (void)                                      { static Logger inst; return inst; }
     
-    void                    info                        (const char * );
-    void                    info                        (const std::string & );
-    
-    void                    warning                     (const char * );
-    void                    warning                     (const std::string & );
-    
-    void                    exception                   (const char * );
-    void                    exception                   (const std::string & );
-    
-    void                    error                       (const char * );
-    void                    error                       (const std::string & );
-    
-    void                    notify                      (const char * );
-    void                    notify                      (const std::string & );
-    
-    void                    critical                    (const char * );
-    void                    critical                    (const std::string & );
-    
-    
+    //  "log_ex"
+    //
     template<class... Args>
     inline void             log_ex( std::format_string<Args...> fmt,
                                     Level lvl,
@@ -259,26 +262,31 @@ public:
         (void)fmt; (void)lvl; (void)file; (void)line; (void)func; (void)tid;
     #endif
     }
-    template<typename... Args>
-    inline void logf(const std::string& fmt_str, Args&&... args) {
-        auto    s = std::format(fmt_str, std::forward<Args>(args)...);
-        write_to_sink(s);
+    
+    //  "log_ex"
+    //
+    inline void             log_ex( std::string_view msg,
+                                    Level           lvl,
+                                    const char*     file,
+                                    int             line,
+                                    const char*     func,
+                                    std::thread::id tid ) {
+        #if CBAPP_LOG_ENABLED
+            enqueue_event(LogEvent{
+                lvl, std::string(msg), next_count(lvl),
+                file, line, func, tid, iso_timestamp()
+            });
+        #else
+            (void)msg; (void)lvl; (void)file; (void)line; (void)func; (void)tid;
+        #endif
     }
-    template<class... Args>
-    inline void             debugf                      (std::format_string<Args...> f, Args&&... a)    { logf(Level::Debug,        f, std::forward<Args>(a)...);   }
-    template<class... Args>
-    inline void             infof                       (std::format_string<Args...> f, Args&&... a)    { logf(Level::Info,         f, std::forward<Args>(a)...);   }
-    template<class... Args>
-    inline void             warningf                    (std::format_string<Args...> f, Args&&... a)    { logf(Level::Warning,      f, std::forward<Args>(a)...);   }
-    template<class... Args>
-    inline void             exceptionf                  (std::format_string<Args...> f, Args&&... a)    { logf(Level::Exception,    f, std::forward<Args>(a)...);   }
-    template<class... Args>
-    inline void             errorf                      (std::format_string<Args...> f, Args&&... a)    { logf(Level::Error,        f, std::forward<Args>(a)...);   }
-    template<class... Args>
-    inline void             notifyf                     (std::format_string<Args...> f, Args&&... a)    { logf(Level::Notify,       f, std::forward<Args>(a)...);   }
-    template<class... Args>
-    inline void             criticalf                   (std::format_string<Args...> f, Args&&... a)    { logf(Level::Critical,     f, std::forward<Args>(a)...);   }
+    //
+    //
+    //  1.2B            Public API Logging Functions (Part 2/3)...
+    // *************************************************************************** //
 
+    //  "logf"
+    //
     template<class... Args>
     inline void             logf                        (Level lvl, std::format_string<Args...> fmt, Args&&... args) {
     #if CBAPP_LOG_ENABLED
@@ -288,13 +296,62 @@ public:
             (void)fmt; (void)sizeof...(args);
     #endif
     }
+    
+    //  "logf"
+    //
+    template<typename... Args>
+    inline void logf(const std::string& fmt_str, Args&&... args) {
+        auto    s = std::format(fmt_str, std::forward<Args>(args)...);
+        write_to_sink(s);
+    }
+    //
+    //
+    //  1.2C            Public API Logging Functions (Part 3/3)...
+    // *************************************************************************** //
+    
+    void                    log                         (const char * , Level );
+    void                    log                         (const std::string & , Level );
+    template<class... Args>
+    inline void             debugf                      (std::format_string<Args...> f, Args&&... a)    { logf(Level::Debug,        f, std::forward<Args>(a)...);   }
+    void                    debug                       (const char * );
+    void                    debug                       (const std::string & );
+    template<class... Args>
+    inline void             infof                       (std::format_string<Args...> f, Args&&... a)    { logf(Level::Info,         f, std::forward<Args>(a)...);   }
+    void                    info                        (const char * );
+    void                    info                        (const std::string & );
+    template<class... Args>
+    inline void             warningf                    (std::format_string<Args...> f, Args&&... a)    { logf(Level::Warning,      f, std::forward<Args>(a)...);   }
+    void                    warning                     (const char * );
+    void                    warning                     (const std::string & );
+    template<class... Args>
+    inline void             exceptionf                  (std::format_string<Args...> f, Args&&... a)    { logf(Level::Exception,    f, std::forward<Args>(a)...);   }
+    void                    exception                   (const char * );
+    void                    exception                   (const std::string & );
+    template<class... Args>
+    inline void             errorf                      (std::format_string<Args...> f, Args&&... a)    { logf(Level::Error,        f, std::forward<Args>(a)...);   }
+    void                    error                       (const char * );
+    void                    error                       (const std::string & );
+    template<class... Args>
+    inline void             notifyf                     (std::format_string<Args...> f, Args&&... a)    { logf(Level::Notify,       f, std::forward<Args>(a)...);   }
+    void                    notify                      (const char * );
+    void                    notify                      (const std::string & );
+    template<class... Args>
+    inline void             criticalf                   (std::format_string<Args...> f, Args&&... a)    { logf(Level::Critical,     f, std::forward<Args>(a)...);   }
+    void                    critical                    (const char * );
+    void                    critical                    (const std::string & );
 
                         
+    //
+    //
     //  1.3                 Public Utility Functions...
+    // *************************************************************************** //
+    
     void                    set_level                   (const Level &);
     Level                   get_level                   (void)  const;
     void                    set_console_format          (ConsoleFormat );
     ConsoleFormat           get_console_format          (void) const;
+    void                    set_path_depth              (std::size_t d);              // runtime knob
+    std::size_t             get_path_depth              (void) const;
 
 
     //  1.4                 Deleted Operators, Functions, etc...
@@ -328,23 +385,25 @@ protected:
     std::thread                             m_worker;
     std::atomic<bool>                       m_running                   {false};
     std::atomic<bool>                       m_vt_enabled                {false};      // set once in ctor
+    std::atomic<std::size_t>                m_path_depth                {2};              // default “.../dir/file.cpp”
 #if defined(__CBAPP_DEBUG__) || defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__)
     Level                                   m_threshold                 = Level::Debug;
     std::atomic<ConsoleFormat>              m_console_fmt               { CF_DEFAULT };
 # else
-    Level                                   m_threshold                 = Level::Debug;
+    Level                                   m_threshold                 = Level::Info;
     std::atomic<ConsoleFormat>              m_console_fmt               { CF_DEFAULT };
-    //  Level                                   m_threshold                 = Level::Warning;
-    //  std::atomic<ConsoleFormat>              m_console_fmt               { CF_DEFAULT };
 #endif  //  __CBAPP_DEBUG__ || __CBLIB_RELEASE_WITH_DEBUG_INFO__  //
     
     
+    
     //  2.B                 PROTECTED MEMBER FUNCTIONS...
+    // *************************************************************************** //
     // *************************************************************************** //
     
     //  2B.1                Class Initializations.          [Logger.cpp]...     ---Private for Singleton.
                             Logger                          (void);                     //  Def. Constructor.
                             ~Logger                         (void);                     //  Def. Destructor.
+                        
                         
     
     //  2B.2            Inline Class Utility Functions.
@@ -352,19 +411,18 @@ protected:
     inline static constexpr
     const char *            level_str(Level lvl) {
         switch (lvl) {
-            case Level::None :          return "NONE";
-            case Level::Debug :         return "DEBUG";
-            case Level::Info :          return "INFO";
-            case Level::Warning :       return "WARNING";
-            case Level::Exception :     return "EXCEPTION";
-            case Level::Error :         return "ERROR";
-            case Level::Notify :        return "NOTIFY";
-            case Level::Critical :      return "CRITICAL";
-            default :                   return "UNKNOWN";
+            case Level::None        :   return "NONE";
+            case Level::Debug       :   return "DEBUG";
+            case Level::Info        :   return "INFO";
+            case Level::Warning     :   return "WARNING";
+            case Level::Exception   :   return "EXCEPTION";
+            case Level::Error       :   return "ERROR";
+            case Level::Notify      :   return "NOTIFY";
+            case Level::Critical    :   return "CRITICAL";
+            default                 :   return "UNKNOWN";
         }
     }
-    inline std::size_t      next_count                      (Level lvl)
-    { return ++m_counts[static_cast<int>(lvl)]; }
+    inline std::size_t      next_count                      (Level lvl)                             { return ++m_counts[static_cast<int>(lvl)]; }
                         
     
     //  2B.3                Class Utility Functions.        [Logger.cpp]...
@@ -379,6 +437,7 @@ protected:
     std::string             build_header                    (const LogEvent & );
     void                    write_body                      (const std::string & , std::ostream & out, std::size_t ) const;
     std::string             build_metadata                  (const LogEvent & , std::size_t );
+    static std::string      path_tail                       (std::string_view full, std::size_t depth);
     //
     TermColor               level_to_color                  (Level lvl);
     void                    enable_vt_win                   (void);

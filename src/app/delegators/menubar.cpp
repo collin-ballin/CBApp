@@ -497,8 +497,8 @@ void MenuBar::disp_imgui_submenu(void)
     static bool                     TRIGGER             = false;
     
     if (ONCE) {
-        std::strncpy(current_ini_file,  io.IniFilename,     BUFF_SIZE);
-        std::strncpy(default_ini_file,  app::INI_FILEPATH,  BUFF_SIZE);
+        std::strncpy(current_ini_file,  io.IniFilename,     BUFF_SIZE-1);
+        std::strncpy(default_ini_file,  app::INI_FILEPATH,  BUFF_SIZE-1);
         
         ONCE = false;
     }

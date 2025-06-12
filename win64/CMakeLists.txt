@@ -21,7 +21,7 @@ cmake_minimum_required(VERSION 3.16)
 # ---------------------------------------------------------------------
 # 0.  PROJECT + VERSION (single source of truth)
 # ---------------------------------------------------------------------
-project(CBApp_Win64 VERSION 0.1.0 LANGUAGES CXX)
+project(CBApp_Win64 VERSION 0.3.0 LANGUAGES CXX)
 
 # Auto build number = total Git commits (fallback 1 when Git unavailable)
 set(PROJECT_ROOT ${CMAKE_CURRENT_LIST_DIR}/..)
@@ -53,7 +53,16 @@ target_compile_definitions(cb_defines INTERFACE
 
 add_library(cb_warnings INTERFACE)
 target_compile_options(cb_warnings INTERFACE
-    -Wall -Wextra -Wpedantic -Wshadow -Wno-unused-variable -Wno-sign-compare)
+    -Wall -Wextra -Wpedantic -Wshadow
+#
+    -Werror=stringop-truncation
+#
+    -Wno-unused-but-set-variable
+    -Wno-unused-variable
+#
+    -Wno-deprecated-enum-enum-conversion
+    -Wno-misleading-indentation
+    -Wno-sign-compare)
 
 
 
@@ -97,6 +106,7 @@ file(GLOB_RECURSE APP_SRCS     CONFIGURE_DEPENDS ${PROJECT_ROOT}/src/*.cpp)
 file(GLOB_RECURSE APP_HEADERS                    ${PROJECT_ROOT}/include/*.h)
 
 set(IMGUI_SRCS
+    ${PROJECT_ROOT}/misc/cpp/imgui_stdlib.cpp
     ${PROJECT_ROOT}/imgui/imgui.cpp
     ${PROJECT_ROOT}/imgui/imgui_draw.cpp
     ${PROJECT_ROOT}/imgui/imgui_widgets.cpp
@@ -121,6 +131,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${PROJECT_ROOT}/include/imgui_extensions
     ${PROJECT_ROOT}/imgui
     ${PROJECT_ROOT}/imgui/backends
+    ${PROJECT_ROOT}/misc/cpp
     ${THIRD_PARTY_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw cb_defines cb_warnings opengl32)
@@ -131,9 +142,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glfw cb_defines cb_warnings opengl
 # 6.1  Generated header with version/build info
 # ---------------------------------------------------------------------
 set(VERSION_HEADER_DIR ${CMAKE_BINARY_DIR}/generated)
-set(COMPANY_NAME    "Collin Bond Physics Lab")
+set(COMPANY_NAME    "Collin Andrew Bond")
 set(LEGAL_COPYRIGHT "© 2025 Collin A. Bond. All rights reserved.")
 set(TRADEMARKS      "")            # leave empty or add your mark
+
 
 # Short git hash for the Comments field
 execute_process(COMMAND git -C "${PROJECT_ROOT}" rev-parse --short HEAD

@@ -1029,7 +1029,6 @@ public:
     
     
         // 4. NORMALISE DFT magnitudes (real, 0‒1) -------------------------
-        using complex_t = typename base::complex_t;
         for (q = 0ULL; q < NT; ++q) {
             m_Hy_F_NORM[q] = normalize_spectrum<complex_t>( m_Hy_F[q] );
             m_Ez_F_NORM[q] = normalize_spectrum<complex_t>( m_Ez_F[q] );

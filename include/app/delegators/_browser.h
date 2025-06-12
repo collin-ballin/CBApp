@@ -30,7 +30,6 @@
 #include "widgets/widgets.h"
 #include "app/_init.h"
 #include "app/state/_state.h"
-#include "app/_graphing_app.h"
 
 
 
@@ -53,7 +52,7 @@
 //  1.3     "DEAR IMGUI" HEADERS...
 #include "imgui.h"
 #include "implot.h"
-# include "imgui_internal.h"
+#include "imgui_internal.h"
 
 
 
@@ -136,6 +135,7 @@ protected:
     
     //  2B.2                    Secondary Class Methods.            [app/sidebar/sidebar.cpp]...
     void                        Display_Preferences_Menu            (void);
+    void                        DisplayBrowserInterface             (void);
     //
     void                        draw_browser_button                 (void);
     void                        disp_appearance_mode                (void);     //  Other...

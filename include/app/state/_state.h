@@ -29,7 +29,6 @@
 #include "utility/utility.h"
 #include "widgets/widgets.h"
 #include "app/_init.h"
-#include "app/_graphing_app.h"
 
 
 
@@ -103,7 +102,10 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DOCKSPACE_WINDOW_FLAGS       = Im
 inline constexpr ImGuiWindowFlags       _CBAPP_CONTROLBAR_WINDOW_FLAGS      = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
 inline constexpr ImGuiWindowFlags       _CBAPP_BROWSER_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
 inline constexpr ImGuiWindowFlags       _CBAPP_DETVIEW_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+inline constexpr ImGuiWindowFlags       _CBAPP_HOME_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+
 inline constexpr ImGuiWindowFlags       _CBAPP_CORE_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
+
 
 inline constexpr ImGuiWindowFlags       _CBAPP_ABOUT_WINDOW_FLAGS           = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
 inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse;
@@ -173,15 +175,13 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
     X(ControlBar,           "##ControlBar",                 true,                   _CBAPP_CONTROLBAR_WINDOW_FLAGS                          )       \
     X(Browser,              "##Browser",                    true,                   _CBAPP_BROWSER_WINDOW_FLAGS                             )       \
     X(DetailView,           "##DetailView",                 true,                   _CBAPP_DETVIEW_WINDOW_FLAGS                             )       \
-    X(MainApp,              "Home",                         true,                   _CBAPP_CORE_WINDOW_FLAGS | ImGuiWindowFlags_NoScrollbar )       \
+    X(MainApp,              "Home",                         true,                   _CBAPP_HOME_WINDOW_FLAGS                                )       \
 /*                                                                                                                                          */      \
 /*                                                                                                                                          */      \
 /*  2.  MAIN APPLICATION WINDOWS...                                                                                                         */      \
 /*                                                                                                                                          */      \
 /*          COINCIDENCE COUNTER APP...                                                                                                      */      \
     X(CCounterApp,          "Coincidence Counter",          DEF_CCOUNTER_APP_VIS,   _CBAPP_CORE_WINDOW_FLAGS                                )       \
-/*                                                                                                                                          */      \
-    X(GraphingApp,          "Graphing App",                 false,                  _CBAPP_CORE_WINDOW_FLAGS                                )       \
 /*                                                                                                                                          */      \
 /*          FDTD APP...                                                                                                                     */      \
     X(GraphApp,             "Graph App",                    DEF_FDTD_APP_VIS,       _CBAPP_CORE_WINDOW_FLAGS                                )       \
@@ -199,6 +199,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 /*                                                                                                                                          */      \
 /*  4.  CUSTOM TOOLS, ETC...                                                                                                                */      \
     X(ColorTool,            "Color Tool",                   false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(CustomRendering,      "Custom Rendering",             true,                   _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
 /*                                                                                                                                          */      \
 /*                                                                                                                                          */      \
 /*  5.  DEMO WINDOWS...                                                                                                                     */      \
@@ -491,8 +492,11 @@ struct AppState
     //  4.      COLORS...
     ImVec4                              m_glfw_bg                   = cb::app::DEF_ROOT_WIN_BG;
     ImVec4                              m_dock_bg                   = cb::app::DEF_INVISIBLE_COLOR;
-    ImVec4                              m_titlebar_bg               = cb::app::DEF_CONTROLBAR_WIN_BG;
     ImVec4                              m_main_bg                   = cb::app::DEF_MAIN_WIN_BG;
+    //
+    ImVec4                              m_controlbar_bg             = cb::app::DEF_CONTROLBAR_WIN_BG;
+    ImVec4                              m_browser_bg                = cb::app::DEF_BROWSER_WIN_BG;
+    ImVec4                              m_detview_bg                = cb::app::DEF_DETVIEW_WIN_BG; 
     
     
     //  5.      DIMENSIONS...
@@ -512,6 +516,13 @@ struct AppState
     //  6.      BOOLEANS...
     //
     bool                                m_running                   = true;
+    bool                                m_rebuild_dockspace         = false;
+    //
+    bool                                m_show_controlbar_window    = true;
+    bool                                m_show_browser_window       = true;
+    bool                                m_show_detview_window       = true;
+    //
+    bool                                m_show_system_preferences   = false;
     
     
     //  7.      SPECIFICS...
@@ -523,34 +534,27 @@ struct AppState
     ImGuiID                             m_main_dock_id              = 0;
     ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_CentralNode; //ImGuiDockNodeFlags_NoDocking; ImGuiDockNodeFlags_NoDockingOverMe
     ImGuiDockNode *                     m_main_node                 = nullptr;
-    bool                                m_rebuild_dockspace         = false;
     //
     //              8.2     ControlBar.
     ImGuiID                             m_controlbar_dock_id        = 0;
     ImGuiDockNodeFlags                  m_controlbar_node_flags     = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_HiddenTabBar | ImGuiDockNodeFlags_NoResize; //ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
     ImGuiDockNode *                     m_controlbar_node           = nullptr;
     //
-    ImVec4                              m_controlbar_bg             = ImVec4(0.247f,     0.251f,     0.255f,     0.850f); // ImVec4(0.141f,    0.141f,     0.141f,     1.000f);
     float                               m_controlbar_ratio          = 0.02;
-    bool                                m_show_controlbar_window    = true;
     //
     //              8.3     Sidebar.
     ImGuiID                             m_browser_dock_id           = 0;
     ImGuiDockNodeFlags                  m_browser_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
     ImGuiDockNode *                     m_browser_node              = nullptr;
     //
-    ImVec4                              m_browser_bg                = cb::app::DEF_BROWSER_WIN_BG;
     float                               m_browser_ratio             = app::DEF_BROWSER_RATIO;
-    bool                                m_show_browser_window       = true;
     //
     //              8.4     DetView.
     ImGuiID                             m_detview_dock_id           = 0;
     ImGuiDockNodeFlags                  m_detview_node_flags        = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
     ImGuiDockNode *                     m_detview_node              = nullptr;
     //
-    ImVec4                              m_detview_bg                = ImVec4(0.090f,    0.098f,     0.118f,     1.000f);
     float                               m_detview_ratio             = 0.45f;
-    bool                                m_show_detview_window       = true;
     //
     //
     //              9.1     DETVIEW DOCKSPACE.

@@ -92,7 +92,12 @@ void Browser::Begin([[maybe_unused]] const char *       uuid,
         //  3.  DETERMINE WINDOW COLLAPSE...
         if (this->S.m_show_browser_window)
         {
-            this->Display_Preferences_Menu();
+            if (this->S.m_show_system_preferences) {
+                this->Display_Preferences_Menu();
+            }
+            else {
+                this->DisplayBrowserInterface();
+            }
         }
         else
         {
@@ -107,6 +112,18 @@ void Browser::Begin([[maybe_unused]] const char *       uuid,
     return;
 }
 
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  3B.     PROTECTED MEMBER FUNCTIONS (FOR SYSTEM PREFERENCES)...
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "Display_Preferences_Menu"
 //
@@ -143,13 +160,6 @@ void Browser::Display_Preferences_Menu(void)
 }
 
 
-
-// *************************************************************************** //
-//
-//
-//  2.      PROTECTED MEMBER FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
 
 //  "disp_appearance_mode"
 //

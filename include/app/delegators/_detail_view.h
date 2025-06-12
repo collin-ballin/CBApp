@@ -30,7 +30,6 @@
 #include "widgets/widgets.h"
 #include "app/_init.h"
 #include "app/state/_state.h"
-#include "app/_graphing_app.h"
 
 
 
