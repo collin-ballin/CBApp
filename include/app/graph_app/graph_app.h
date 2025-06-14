@@ -219,7 +219,7 @@ public:
                                                         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
                                                         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY
                                                     };
-    WinInfo                                         m_detview_window                = {
+    app::WinInfo                                         m_detview_window                = {
                                                         "ControlChild",
                                                         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
                                                         true,

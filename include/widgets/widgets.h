@@ -21,7 +21,7 @@
 #include CBAPP_USER_CONFIG
 #include "cblib.h"
 #include "widgets/_heatmap.h"
-#include "widgets/_editor.h"
+#include "widgets/editor/editor.h"
 #include "utility/utility.h"
 
 

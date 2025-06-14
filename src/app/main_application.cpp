@@ -1133,11 +1133,11 @@ void App::Test_Browser(void)
 //
 void App::Test_Editor(void)
 {
-    static cb::Editor my_editor;
 
 
-    my_editor.Begin();
+    m_editor.Begin();
 
+    m_editor.DrawPointBrowser(this->m_editor_WinInfo.uuid.c_str(), &this->m_editor_WinInfo.open, this->m_editor_WinInfo.flags );
 
     return;
 }

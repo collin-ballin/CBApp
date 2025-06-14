@@ -126,7 +126,7 @@ protected:
     //                                      ...
     //
     //                          5.  IMPORTANT VARIABLES...
-    std::vector<WinInfo *>      m_detview_children                  = { };
+    std::vector<app::WinInfo *>      m_detview_children                  = { };
     AppState &                  CBAPP_STATE_NAME;
     
     
@@ -144,8 +144,8 @@ protected:
     void                        open_all                            (void);
     void                        close_all                           (void);
     //
-    void                        add_child_window                    (WinInfo * );
-    void                        remove_child_window                 (WinInfo * );
+    void                        add_child_window                    (app::WinInfo * );
+    void                        remove_child_window                 (app::WinInfo * );
     void                        TestTabBar                          (void);
     
     

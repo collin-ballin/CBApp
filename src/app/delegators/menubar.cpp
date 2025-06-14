@@ -387,8 +387,8 @@ void MenuBar::disp_show_windows_menubar(void)
 //
 void MenuBar::disp_tools_menubar(void)
 {
-    [[maybe_unused]] static size_t                   idx                 = static_cast<size_t>(0);
-    [[maybe_unused]] static app::WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
+    [[maybe_unused]] static size_t              idx                 = static_cast<size_t>(0);
+    [[maybe_unused]] static WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
     
     
     //  1.  SUB-MENU    #1 :   "CBApp Applications"...

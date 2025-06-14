@@ -112,7 +112,7 @@ void GraphApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool *
     //  2.  CREATE TOP WINDOW FOR PLOTS...
     ImGui::SetNextWindowClass(&this->m_window_class[0]);
     
-    WinInfo m_detview_window(
+    app::WinInfo m_detview_window(
     
     ImGui::Begin(m_win_uuids[0], nullptr, m_docked_win_flags[0]);
         this->display_plots();

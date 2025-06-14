@@ -1,11 +1,19 @@
-//
-//  app.h
-//  CBApp
-//
-//  Created by Collin Bond on 4/16/25.
-//
-// *************************************************************************** //
-// *************************************************************************** //
+/***********************************************************************************
+*
+*       ********************************************************************
+*       ****                  A P P . H  ____  F I L E                  ****
+*       ********************************************************************
+*
+*              AUTHOR:      Collin A. Bond
+*               DATED:      April 16, 2025.
+*
+*       ********************************************************************
+*                FILE:      [./PyStream.h]
+*
+*
+*
+**************************************************************************************
+**************************************************************************************/
 #ifndef _CBAPP_APP_H
 #define _CBAPP_APP_H  1
 
@@ -156,6 +164,7 @@ protected:
     Browser             m_browser;
     DetailView          m_detview;
     
+    
     //                  9.  APPLICATION SUB-CLASSES...
     CCounterApp         m_counter_app;
 #ifndef __CBAPP_DISABLE_FDTD__
@@ -164,6 +173,16 @@ protected:
 #ifdef CBAPP_ENABLE_CB_DEMO
     CBDemo              m_cb_demo                       = CBDemo();
 #endif  //  CBAPP_ENABLE_CB_DEMO  //
+    //
+    //
+    cb::Editor          m_editor;
+    app::WinInfo        m_editor_WinInfo                = WinInfo({
+        m_editor.WinInfo_uuid,
+        m_editor.WinInfo_flags,
+        m_editor.WinInfo_open,
+        std::bind_front( &Editor::DrawPointBrowser, &this->m_editor )
+        //nullptr //m_editor.DrawPointBrowser()
+    });
     
     
     //  2.B             PROTECTED MEMBER FUNCTIONS...

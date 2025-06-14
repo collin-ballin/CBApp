@@ -250,6 +250,8 @@ configure_file(
 #       5.7     Organize source files in Xcode
 # source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "src" FILES ${APP_SRCS})
 # source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/imgui PREFIX "imgui" FILES ${IMGUI_SRCS})
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "src" FILES ${APP_SRCS})
 source_group(
     TREE   ${CMAKE_CURRENT_SOURCE_DIR}/imgui
     PREFIX "imgui"

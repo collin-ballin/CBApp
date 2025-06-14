@@ -238,6 +238,8 @@ void App::init_appstate(void)
     //      6.      INITIALIZE OTHER MEMBERS INSIDE APPSTATE...
     //  if (S.m_home_dockspace_id <= 0)
     //      S.m_home_dockspace_id    = ImHashStr(S.m_home_dockspace_uuid);
+    //
+    S.m_detview_windows.push_back( std::addressof( this->m_editor_WinInfo ) );
     S.m_detview_windows.push_back( std::addressof( this->m_graph_app.m_detview_window ) );
     S.m_detview_windows.push_back( std::addressof( this->m_counter_app.m_detview_window ) );
 
