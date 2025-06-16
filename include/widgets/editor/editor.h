@@ -161,6 +161,9 @@ private:
     // *************************************************************************** //
     //      BROWSER STUFF.                  |   "browser.cpp" ...
     // *************************************************************************** //
+    void                        _draw_path_inspector_column     (void);
+    void                        _draw_path_list_column          (void);
+    
     void                        _draw_point_list_column         (void);
     void                        _draw_point_inspector_column    (void);
     //
@@ -178,32 +181,33 @@ private:
     // *************************************************************************** //
     //      RENDERING FUNCTIONS.            |   "render.cpp" ...
     // *************************************************************************** //
-    void                        _draw_grid                      (ImDrawList*, const ImVec2&, const ImVec2 &) const;
+    void                        _draw_grid                      (ImDrawList *, const ImVec2 &, const ImVec2 &) const;
     //
     //                      RENDERING INTERACTIBLES:
-    void                        _draw_paths                     (ImDrawList*, const ImVec2&) const;
-    void                        _draw_lines                     (ImDrawList*, const ImVec2&) const;
-    void                        _draw_points                    (ImDrawList*,const ImVec2&) const;
+    void                        _draw_paths                     (ImDrawList *,   const ImVec2 & ) const;
+    void                        _draw_lines                     (ImDrawList *,   const ImVec2 & ) const;
+    void                        _draw_points                    (ImDrawList *,   const ImVec2 & ) const;
     //
     //
     // *************************************************************************** //
     //      SELECTION MECHANICS.            |   "selection.cpp" ...
     // *************************************************************************** //
-    int                         _hit_point                      (const Interaction&) const;
-    std::optional<Hit>          _hit_any                        (const Interaction&) const;
+    int                         _hit_point                      (const Interaction & ) const;
+    std::optional<Hit>          _hit_any                        (const Interaction & ) const;
     //
-    void                        _process_selection              (const Interaction&);
-    void                        _update_cursor_select           (const Interaction&) const;
+    void                        _process_selection              (const Interaction & );
+    void                        _update_cursor_select           (const Interaction & ) const;
     void                        _rebuild_vertex_selection       (void);   // decl
     //
-    void                        _draw_selection_overlay         (ImDrawList*, const ImVec2&) const;
+    void                        _draw_selection_overlay         (ImDrawList *, const ImVec2 & ) const;
     //
-    bool                        _selection_bounds               (ImVec2& tl, ImVec2& br) const;
-    void                        _draw_selected_handles          (ImDrawList*, const ImVec2&) const;
-    void                        _draw_selection_bbox            (ImDrawList*, const ImVec2&) const;
+    bool                        _selection_bounds               (ImVec2 & tl, ImVec2 & br) const;
+    void                        _draw_selected_handles          (ImDrawList *, const ImVec2 & ) const;
+    void                        _draw_selection_bbox            (ImDrawList *, const ImVec2 & ) const;
     //
     //                      BOUNDING BOX MECHANICS:
-    void                        _start_bbox_drag                (uint8_t handle_idx, const ImVec2& tl, const ImVec2& br);
+    void                        _start_bbox_drag                (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
+    void                        _update_bbox                    (void);
     //
     //
     // *************************************************************************** //
@@ -217,8 +221,13 @@ private:
     void                        _add_point                      (ImVec2 w);
     void                        _erase_vertex_and_fix_paths     (uint32_t vid);
     //
+    //                      APP UTILITY OPERATIONS:
+    void                        _start_lasso_tool               (void);
+    void                        _update_lasso                   (const Interaction & );
+    void                        _zoom_canvas                    (const Interaction & );
+    //
     //                      MISC. UTILITIES:
-    void                        _draw_controls                  (const ImVec2&);
+    void                        _draw_controls                  (const ImVec2 & );
     void                        _clear_all                      (void);
 
 
@@ -264,7 +273,23 @@ private:
     std::vector<Line>           m_lines;
     std::vector<Path>           m_paths;                       // new path container
     PenState                    m_pen;
-    BoxDrag                     m_boxdrag;
+    mutable BoxDrag             m_boxdrag;
+//  "BoxDrag" struct (add fields for handle_ws0, orig_w, orig_h after mouse_ws0)
+struct BoxDrag
+{
+    bool      active      = false;
+    uint8_t   handle_idx  = 0;
+    ImVec2    anchor_ws   = {0,0};
+    ImVec2    bbox_tl_ws  = {0,0};
+    ImVec2    bbox_br_ws  = {0,0};
+    std::vector<uint32_t> v_ids;
+    std::vector<ImVec2>   v_orig;
+    ImVec2    mouse_ws0   = {0,0};
+    ImVec2    handle_ws0;            // initial world‑space position of the dragged handle
+    float     orig_w = 1.f;          // original bbox width  (world units)
+    float     orig_h = 1.f;          // original bbox height (world units)
+    bool      first_frame = true;
+};
 
 
     Selection                   m_sel;
@@ -307,7 +332,8 @@ private:
     static constexpr float      HANDLE_BOX_SIZE                 = 4.0f;                         //  px half-side
     static constexpr ImU32      HANDLE_COL                      = IM_COL32(0, 180, 255, 255);   //  cyan
     static constexpr ImU32      HANDLE_HOVER_COL                = IM_COL32(255, 255, 0, 255);   //  yellow
-    mutable int                 m_hover_handle                  = -1;                           //  -1 = none, 0-7 otherwise (corners+edges)
+    mutable int                 m_hover_handle                  = -1;
+    mutable ImVec2              m_origin_scr                    = {0.f, 0.f};   // screen-space canvas origin                       //  -1 = none, 0-7 otherwise (corners+edges)
 
 
 

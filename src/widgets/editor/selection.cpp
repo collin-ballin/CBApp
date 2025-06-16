@@ -555,38 +555,138 @@ void Editor::_draw_selected_handles(ImDrawList* dl, const ImVec2& origin) const
 //
 void Editor::_start_bbox_drag(uint8_t hidx, const ImVec2& tl, const ImVec2& br)
 {
-    m_boxdrag = {};                       // reset
-    m_boxdrag.active     = true;
-    m_boxdrag.handle_idx = hidx;
-    m_boxdrag.bbox_tl_ws = tl;
-    m_boxdrag.bbox_br_ws = br;
+    // reset drag state first
+    m_boxdrag = {};
+    m_boxdrag.active        = true;
+    m_boxdrag.handle_idx    = hidx;
+    m_boxdrag.bbox_tl_ws    = tl;
+    m_boxdrag.bbox_br_ws    = br;
 
-    // pivot (opposite corner or mid)
-    ImVec2 hw{ (tl.x + br.x)*0.5f, (tl.y + br.y)*0.5f };
+    // pivot (opposite corner or mid-edge)
+    ImVec2 hw{ (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
     const ImVec2 pivots[8] = {
-        br,                // 0 TL → pivot BR
-        { hw.x, br.y },    // 1 top-mid → bottom-mid
-        { tl.x, br.y },    // 2 TR → BL
-        { tl.x, hw.y },    // 3 right-mid → left-mid
-        tl,                // 4 BR → TL
-        { hw.x, tl.y },    // 5 bottom-mid → top-mid
-        { br.x, tl.y },    // 6 BL → TR
-        { br.x, hw.y }     // 7 left-mid → right-mid
+        br,                 // 0 TL  -> pivot BR
+        { hw.x, br.y },     // 1 T   -> B
+        { tl.x, br.y },     // 2 TR  -> BL
+        { tl.x, hw.y },     // 3 R   -> L
+        tl,                 // 4 BR  -> TL
+        { hw.x, tl.y },     // 5 B   -> T
+        { br.x, tl.y },     // 6 BL  -> TR
+        { br.x, hw.y }      // 7 L   -> R
     };
     m_boxdrag.anchor_ws = pivots[hidx];
 
-    // snapshot affected vertices (all selected verts)
+    /* snapshot affected vertices */
     for (uint32_t vid : m_sel.vertices)
-    {
         if (const Pos* v = find_vertex(m_vertices, vid))
         {
             m_boxdrag.v_ids.push_back(vid);
             m_boxdrag.v_orig.push_back({ v->x, v->y });
         }
-    }
+
+    /* store mouse position in world coords AFTER reset */
+    ImVec2 m_scr = ImGui::GetIO().MousePos;
+    m_boxdrag.mouse_ws0 = { (m_scr.x - m_origin_scr.x) / m_zoom,
+                            (m_scr.y - m_origin_scr.y) / m_zoom };
+
+    /* reset first-frame flag for update routine */
+    m_boxdrag.first_frame = true;
 }
 
 
+//  "_update_bbox"
+//
+void Editor::_update_bbox()
+{
+    if (!m_boxdrag.active)
+        return;
+
+    /* if cursor hasn't moved since click, keep original scale */
+    if (m_boxdrag.first_frame &&
+        ImGui::GetIO().MouseDelta.x == 0.f &&
+        ImGui::GetIO().MouseDelta.y == 0.f)
+        return;
+
+    m_boxdrag.first_frame = false;   // first frame handled
+
+    /* stop drag */
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+    {
+        m_boxdrag.first_frame = true;          // reset for next drag
+        m_boxdrag = {};
+        return;
+    }
+
+    /* current mouse in world coords */
+    ImVec2 cur_ws{ (ImGui::GetIO().MousePos.x - m_origin_scr.x) / m_zoom,
+                   (ImGui::GetIO().MousePos.y - m_origin_scr.y) / m_zoom };
+
+    /* reference point for scaling */
+    ImVec2 ref_ws = m_boxdrag.first_frame ? m_boxdrag.mouse_ws0 : cur_ws;
+
+    ImVec2 h_ws{ ref_ws.x - m_boxdrag.anchor_ws.x,
+                 ref_ws.y - m_boxdrag.anchor_ws.y };
+
+    /* original vector from anchor to handle */
+    ImVec2 h0_ws;
+    switch (m_boxdrag.handle_idx)
+    {
+        case 0: h0_ws = { m_boxdrag.bbox_tl_ws.x - m_boxdrag.anchor_ws.x,
+                          m_boxdrag.bbox_tl_ws.y - m_boxdrag.anchor_ws.y }; break; // TL
+        case 1: h0_ws = { 0,
+                          m_boxdrag.bbox_tl_ws.y - m_boxdrag.anchor_ws.y }; break; // T
+        case 2: h0_ws = { m_boxdrag.bbox_br_ws.x - m_boxdrag.anchor_ws.x,
+                          m_boxdrag.bbox_tl_ws.y - m_boxdrag.anchor_ws.y }; break; // TR
+        case 3: h0_ws = { m_boxdrag.bbox_br_ws.x - m_boxdrag.anchor_ws.x,
+                          0 }; break;                                              // R
+        case 4: h0_ws = { m_boxdrag.bbox_br_ws.x - m_boxdrag.anchor_ws.x,
+                          m_boxdrag.bbox_br_ws.y - m_boxdrag.anchor_ws.y }; break; // BR
+        case 5: h0_ws = { 0,
+                          m_boxdrag.bbox_br_ws.y - m_boxdrag.anchor_ws.y }; break; // B
+        case 6: h0_ws = { m_boxdrag.bbox_tl_ws.x - m_boxdrag.anchor_ws.x,
+                          m_boxdrag.bbox_br_ws.y - m_boxdrag.anchor_ws.y }; break; // BL
+        case 7: h0_ws = { m_boxdrag.bbox_tl_ws.x - m_boxdrag.anchor_ws.x,
+                          0 }; break;                                              // L
+    }
+
+    float sx = (h0_ws.x != 0.f) ? h_ws.x / h0_ws.x : 1.f;
+    float sy = (h0_ws.y != 0.f) ? h_ws.y / h0_ws.y : 1.f;
+
+    /* lock one axis for edge handles (1=T,3=R,5=B,7=L) */
+    const bool handle_top    = (m_boxdrag.handle_idx == 1);
+    const bool handle_right  = (m_boxdrag.handle_idx == 3);
+    const bool handle_bottom = (m_boxdrag.handle_idx == 5);
+    const bool handle_left   = (m_boxdrag.handle_idx == 7);
+
+    if (handle_top || handle_bottom)  sx = 1.f;   // vertical edge → X scale locked
+    if (handle_left || handle_right)  sy = 1.f;   // horizontal edge → Y scale locked
+
+    /* Shift → uniform scale */
+    if (ImGui::GetIO().KeyShift)
+    {
+        float s = std::max(std::fabs(sx), std::fabs(sy));
+        sx = (sx < 0.f ? -s : s);
+        sy = (sy < 0.f ? -s : s);
+    }
+
+    /* re‑assert locked axis after uniform adjustment */
+    if (handle_top || handle_bottom)  sx = 1.f;
+    if (handle_left || handle_right)  sy = 1.f;
+
+    /* apply to vertices */
+    for (size_t i = 0; i < m_boxdrag.v_ids.size(); ++i)
+    {
+        Pos* v = find_vertex(m_vertices, m_boxdrag.v_ids[i]);
+        const ImVec2& o = m_boxdrag.v_orig[i];
+        if (v)
+        {
+            ImVec2 d{ o.x - m_boxdrag.anchor_ws.x,
+                      o.y - m_boxdrag.anchor_ws.y };
+            v->x = m_boxdrag.anchor_ws.x + d.x * sx;
+            v->y = m_boxdrag.anchor_ws.y + d.y * sy;
+        }
+    }
+}
 
 
 

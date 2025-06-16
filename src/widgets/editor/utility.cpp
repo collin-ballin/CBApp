@@ -105,6 +105,202 @@ void Editor::_erase_vertex_and_fix_paths(uint32_t vid)
 
 
 
+// *************************************************************************** //
+//
+//
+//
+//  3.  APP UTILITY OPERATIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_start_lasso_tool"
+//
+//  LASSO START
+//      Only begins if the user clicks on empty canvas (no object hit).
+//      Unless Shift or Ctrl is held, any prior selection is cleared.
+void Editor::_start_lasso_tool(void)
+{
+    ImGuiIO &       io      = ImGui::GetIO();
+    
+    m_lasso_active          = true;
+    m_lasso_start           = io.MousePos;                      // in screen coords
+    m_lasso_end             = m_lasso_start;
+    
+    if ( !io.KeyShift && !io.KeyCtrl )
+        m_sel.clear();  // fresh selection
+
+    return;
+}
+
+
+
+//  "_update_lasso"
+//
+//  LASSO UPDATE
+//      While the mouse button is held, draw the translucent rectangle.
+//      When the button is released, convert the rect to world space
+//      and add all intersecting objects to the selection set.
+void Editor::_update_lasso(const Interaction & it)
+{
+    ImGuiIO &       io      = ImGui::GetIO();
+    m_lasso_end             = io.MousePos;
+
+
+
+    // Visual feedback
+    it.dl->AddRectFilled(m_lasso_start, m_lasso_end, COL_LASSO_FILL);
+    it.dl->AddRect      (m_lasso_start, m_lasso_end, COL_LASSO_OUT);
+
+    // On mouse-up: finalise selection
+    if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
+    {
+        // Screen-space rect → TL/BR order
+        ImVec2 tl_scr{ std::min(m_lasso_start.x, m_lasso_end.x),
+                       std::min(m_lasso_start.y, m_lasso_end.y) };
+        ImVec2 br_scr{ std::max(m_lasso_start.x, m_lasso_end.x),
+                       std::max(m_lasso_start.y, m_lasso_end.y) };
+
+        // Convert to world space (inverse pan + zoom)
+        ImVec2 tl_w{ (tl_scr.x - it.origin.x) / m_zoom,
+                     (tl_scr.y - it.origin.y) / m_zoom };
+        ImVec2 br_w{ (br_scr.x - it.origin.x) / m_zoom,
+                     (br_scr.y - it.origin.y) / m_zoom };
+
+        bool additive = io.KeyShift || io.KeyCtrl;
+        if (!additive)                       // fresh selection if no modifier
+            m_sel.clear();
+
+        /* ---------- Points ---------- */
+        for (size_t i = 0; i < m_points.size(); ++i)
+        {
+            const Pos * v = find_vertex(m_vertices, m_points[i].v);
+            if (!v) continue;
+            bool inside = (v->x >= tl_w.x && v->x <= br_w.x &&
+                           v->y >= tl_w.y && v->y <= br_w.y);
+            if (!inside) continue;
+
+            if (additive) {                  // ⇧ / Ctrl  ⇒ toggle
+                if (!m_sel.points.erase(i))   // erase returns 0 if not present
+                    m_sel.points.insert(i);
+            } else {
+                m_sel.points.insert(i);
+            }
+        }
+
+        // ---------- Lines (segment–rect test) ----------
+        auto seg_rect_intersect = [](ImVec2 a, ImVec2 b, ImVec2 tl, ImVec2 br)->bool
+        {
+            auto inside = [&](ImVec2 p){
+                return p.x >= tl.x && p.x <= br.x && p.y >= tl.y && p.y <= br.y;
+            };
+            if (inside(a) || inside(b))
+                return true;
+
+            // quick reject: both points on same outside side
+            if ((a.x < tl.x && b.x < tl.x) || (a.x > br.x && b.x > br.x) ||
+                (a.y < tl.y && b.y < tl.y) || (a.y > br.y && b.y > br.y))
+                return false;
+
+            // helper for segment–segment intersection
+            auto ccw = [](ImVec2 p1, ImVec2 p2, ImVec2 p3){
+                return (p3.y - p1.y)*(p2.x - p1.x) > (p2.y - p1.y)*(p3.x - p1.x);
+            };
+            auto intersect = [&](ImVec2 p1, ImVec2 p2, ImVec2 p3, ImVec2 p4){
+                return ccw(p1,p3,p4) != ccw(p2,p3,p4) && ccw(p1,p2,p3) != ccw(p1,p2,p4);
+            };
+
+            ImVec2 tr{ br.x, tl.y }, bl{ tl.x, br.y };
+            return intersect(a,b, tl,tr) || intersect(a,b,tr,br) ||
+                   intersect(a,b, br,bl) || intersect(a,b, bl,tl);
+        };
+        
+        
+        for (size_t i = 0; i < m_lines.size(); ++i)
+        {
+            const Pos* a = find_vertex(m_vertices, m_lines[i].a);
+            const Pos* b = find_vertex(m_vertices, m_lines[i].b);
+            if (!a || !b) continue;
+
+            if (!seg_rect_intersect({a->x,a->y}, {b->x,b->y}, tl_w, br_w))
+                continue;
+
+            if (additive) {
+                if (!m_sel.lines.erase(i))
+                    m_sel.lines.insert(i);    // toggle
+            } else {
+                m_sel.lines.insert(i);
+            }
+        }
+        
+        
+        // ---------- Paths (segment–rect test, straight segments only) ----------
+        for (size_t pi = 0; pi < m_paths.size(); ++pi)
+        {
+            const Path& p = m_paths[pi];
+            const size_t N = p.verts.size();
+            if (N < 2) continue;
+
+            bool intersects = false;
+            for (size_t si = 0; si < N - 1 + (p.closed ? 1 : 0); ++si)
+            {
+                const Pos* a = find_vertex(m_vertices, p.verts[si]);
+                const Pos* b = find_vertex(m_vertices, p.verts[(si+1)%N]);
+                if (!a || !b) continue;
+                if (seg_rect_intersect({a->x,a->y}, {b->x,b->y}, tl_w, br_w))
+                { intersects = true; break; }
+            }
+            if (!intersects) continue;
+
+            if (additive) {
+                if (!m_sel.paths.erase(pi))
+                    m_sel.paths.insert(pi);    // toggle
+            } else {
+                m_sel.paths.insert(pi);
+            }
+        }
+        
+
+        /* ---------- Sync vertex list ---------- */
+        _rebuild_vertex_selection();
+
+        m_lasso_active = false;                   // reset
+    }
+    
+    
+    return;
+}
+    
+    
+    
+    
+    
+    
+    
+    
+//  "_zoom_canvas"
+//
+void Editor::_zoom_canvas(const Interaction & it)
+{
+    ImGuiIO &   io          = ImGui::GetIO();
+    float       new_zoom    = std::clamp( m_zoom * (1.0f + io.MouseWheel * 0.1f), 0.25f, 4.0f );
+        
+        
+    if (std::fabs(new_zoom - m_zoom) > 1e-6f)   //  Preserve cursor-centred zoom
+    {
+        ImVec2 world_before{ (io.MousePos.x - it.origin.x) / m_zoom,
+                             (io.MousePos.y - it.origin.y) / m_zoom };
+        m_zoom = new_zoom;
+        ImVec2 new_origin{ io.MousePos.x - world_before.x * m_zoom,
+                           io.MousePos.y - world_before.y * m_zoom };
+        m_scroll.x = new_origin.x - it.tl.x;
+        m_scroll.y = new_origin.y - it.tl.y;
+    }
+    
+    return;
+}
+
+
+
 
 
 

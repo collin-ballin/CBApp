@@ -62,45 +62,6 @@
 
 
 
-//  1.  MISC / MATH STRUCTS...
-//
-namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "Range"
-//      - 1.
-template<typename T>
-struct Range {
-    T min, max;
-};
-
-
-//  "Param"
-//      - 2.    A parameter that carries both a value and its valid range
-template<typename T>
-struct Param {
-    inline T Value      (void)      { return value;         }
-    inline T RangeMin   (void)      { return limits.min;    }
-    inline T RangeMax   (void)      { return limits.max;    }
-//
-    T           value;
-    Range<T>    limits;
-};
-
-
-
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-} }//   END OF "cb" :: "fdtd" NAMESPACE.
-
-
-
-
 
 
 namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
@@ -407,71 +368,6 @@ parse_packet(std::string_view line,
         return std::nullopt;
     }
 }
-
-
-
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-} }//   END OF "cb" :: "fdtd" NAMESPACE.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-namespace cb { namespace fdtd { //     BEGINNING NAMESPACE "cb" :: "fdtd"...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-//          3A.     FDTD:
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "StepSizes"
-//      FDTD Struct for SIMULATION STEPSIZES...
-template<typename T>
-struct StepSizes {
-    utl::Param<T>    dx;
-    utl::Param<T>    dy;
-    utl::Param<T>    dz;
-    utl::Param<T>    dt;
-    utl::Param<T>    Sc;
-};
-
-
-//  "Steps"
-//      FDTD structure for NUMBER OF SIMULATION STEPS...
-template<typename T>
-struct Steps {
-    utl::Param<T>    NX;
-    utl::Param<T>    NY;
-    utl::Param<T>    NZ;
-    utl::Param<T>    NT;
-};
-
-
-//  "Parameters"
-//      FDTD structure for NUMBER OF SIMULATION STEPS...
-template<typename I, typename F>
-struct Parameters {
-    utl::Param<I>    wavelength;
-    utl::Param<I>    duration;
-};
 
 
 

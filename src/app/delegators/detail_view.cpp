@@ -156,7 +156,7 @@ void DetailView::Begin([[maybe_unused]] const char *        uuid,
     //  2.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
     ImGui::PushStyleColor(ImGuiCol_WindowBg, S.m_detview_bg);   // Push before ImGui::Begin()
     this->m_window_class.DockNodeFlagsOverrideSet   = S.m_detview_window_flags;
-    //ImGui::SetNextWindowClass(&this->m_window_class);
+    ImGui::SetNextWindowClass(&this->m_window_class);
     ImGui::Begin(uuid, p_open, flags);
         ImGui::PopStyleColor();
         

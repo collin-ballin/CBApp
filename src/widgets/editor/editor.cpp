@@ -59,65 +59,81 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::Begin(const char * id)
 {
-    const float bar_h = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
+    const float     bar_h           = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
 
-    // ------------------ Layout rect ------------------
-    ImVec2 p0 = ImGui::GetCursorScreenPos();
-    ImVec2 avail = ImGui::GetContentRegionAvail();
-    avail.x = std::max(avail.x, 50.f);
-    avail.y = std::max(avail.y, 50.f);
-    if (avail.y > bar_h) avail.y -= bar_h;
-    ImVec2 p1 = { p0.x + avail.x, p0.y + avail.y };
 
-    ImDrawList* dl = ImGui::GetWindowDrawList();
-    ImGuiIO& io    = ImGui::GetIO();
-
+    //  0.  LAYOUT RECTANGLE...
+    ImVec2          p0              = ImGui::GetCursorScreenPos();
+    ImVec2          avail           = ImGui::GetContentRegionAvail();
+    avail.x                         = std::max(avail.x, 50.f);
+    avail.y                         = std::max(avail.y, 50.f);
+    if (avail.y > bar_h)
+        avail.y -= bar_h;
+        
+    ImVec2          p1              = { p0.x + avail.x, p0.y + avail.y };
+    ImDrawList *    dl              = ImGui::GetWindowDrawList();
+    ImGuiIO &       io              = ImGui::GetIO();
 
     dl->AddRectFilled(p0, p1, IM_COL32(50, 50, 50, 255));
     dl->AddRect      (p0, p1, IM_COL32(255, 255, 255, 255));
 
-    // Capture area
-    ImGui::InvisibleButton(id, avail, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
-    bool hovered = ImGui::IsItemHovered();
-    bool active  = ImGui::IsItemActive();
-    bool space   = ImGui::IsKeyDown(ImGuiKey_Space);
 
-    // Local hot‑keys — only active when cursor is over the canvas area
+
+    //  1.  CAPTURE AREA...
+    //
+    ImGui::InvisibleButton(id, avail, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
+    bool            hovered         = ImGui::IsItemHovered();
+    bool            active          = ImGui::IsItemActive();
+    bool            space           = ImGui::IsKeyDown(ImGuiKey_Space);
+
+
+
+    //  2.  LOCAL HOT KEYS --- Only active when cursor is over the canvas area...
+    //
     if (hovered) {
         const bool no_mod = !io.KeyCtrl && !io.KeyShift && !io.KeyAlt && !io.KeySuper;
-        if (no_mod && ImGui::IsKeyPressed(ImGuiKey_V))
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_V) )
             m_mode = Mode::Default;
-        if (no_mod && ImGui::IsKeyPressed(ImGuiKey_P))
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_P) )
             m_mode = Mode::Point;
-        if (no_mod && ImGui::IsKeyPressed(ImGuiKey_N))
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_N) )
             m_mode = Mode::Pen;
     }
 
-    ImVec2 origin = { p0.x + m_scroll.x, p0.y + m_scroll.y };
-    ImVec2 mouse_canvas = { io.MousePos.x - origin.x, io.MousePos.y - origin.y };
+    ImVec2          origin          = { p0.x + m_scroll.x, p0.y + m_scroll.y };
+    ImVec2          mouse_canvas    = { io.MousePos.x - origin.x, io.MousePos.y - origin.y };
+    Interaction     it              { hovered, active, space, mouse_canvas, origin, p0, dl };
 
-    Interaction it{ hovered, active, space, mouse_canvas, origin, p0, dl };
 
-    // Cursor hint: hand when object under mouse is selectable
-    if (!space && _mode_has(Cap_Select))
+
+    //  3.  CURSOR HINT --- Draw "hand shaped cursor" when hovering over a selectable object...
+    //
+    if ( !space && _mode_has(Cap_Select) )
         _update_cursor_select(it);
 
-    // Cursor + pan with Space+LMB
-    if (space && hovered)
+
+
+    //  4.  PAN NAVIGATOR WHEN USER IS HOLDING DOWN "SPACE" BAR...
+    //
+    if ( space && hovered )
         ImGui::SetMouseCursor(ImGui::IsMouseDown(ImGuiMouseButton_Left) ? ImGuiMouseCursor_ResizeAll : ImGuiMouseCursor_Hand);
 
-    if (space && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f))
+
+
+    if ( space && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f) )
     {
         m_scroll.x += io.MouseDelta.x;
         m_scroll.y += io.MouseDelta.y;
     }
 
     // Global selection / drag (unless Space held or mode opts out)
-    if (!space && _mode_has(Cap_Select))
+    if ( !space && _mode_has(Cap_Select) )
         _process_selection(it);
 
+
+
     // Mode‑specific processing (skip while panning)
-    if (!(space && ImGui::IsMouseDown(ImGuiMouseButton_Left)))
+    if ( !(space && ImGui::IsMouseDown(ImGuiMouseButton_Left)) )
     {
         switch (m_mode)
         {
@@ -128,6 +144,8 @@ void Editor::Begin(const char * id)
             default: break;
         }
     }
+
+
 
     // ------------------ Rendering ------------------
     dl->PushClipRect(p0, p1, true);
@@ -162,181 +180,53 @@ void Editor::Begin(const char * id)
 //
 void Editor::_handle_default(const Interaction& it)
 {
-    // Ignore everything else while the user is panning with the Space key
+    ImGuiIO & io = ImGui::GetIO();
+    
+    
+    //  0.  BBOX HANDLE HOVER...
+    if ( !m_boxdrag.active && m_hover_handle != -1 && ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
+    {
+        ImVec2 tl, br;
+        if (_selection_bounds(tl, br))
+            _start_bbox_drag(static_cast<uint8_t>(m_hover_handle), tl, br);
+    }
+        
+        
+    //  2.   Update BBOX...
+    if (m_boxdrag.active)
+        _update_bbox();
+    
+    
+    //  3.  IGNORE ALL INPUT IF SPACE KEY IS HELD DOWN...
     if (it.space)
         return;
 
-    ImGuiIO& io = ImGui::GetIO();
 
-    /*---------------------------------------------------------------------
-     * 1) LASSO START
-     *    Only begins if the user clicks on empty canvas (no object hit).
-     *    Unless Shift or Ctrl is held, any prior selection is cleared.
-     *-------------------------------------------------------------------*/
-    if (!m_lasso_active &&
-        it.hovered &&
-        ImGui::IsMouseClicked(ImGuiMouseButton_Left) &&
-        !_hit_any(it))                                // ← nothing under cursor
-    {
-        m_lasso_active = true;
-        m_lasso_start  = io.MousePos;                 // in screen coords
-        m_lasso_end    = m_lasso_start;
-        if (!io.KeyShift && !io.KeyCtrl)
-            m_sel.clear();                            // fresh selection
-    }
-
-    /*---------------------------------------------------------------------
-     * 2) LASSO UPDATE
-     *    While the mouse button is held, draw the translucent rectangle.
-     *    When the button is released, convert the rect to world space
-     *    and add all intersecting objects to the selection set.
-     *-------------------------------------------------------------------*/
-    if (m_lasso_active)
-    {
-        m_lasso_end = io.MousePos;
-
-        // Visual feedback
-        it.dl->AddRectFilled(m_lasso_start, m_lasso_end, COL_LASSO_FILL);
-        it.dl->AddRect      (m_lasso_start, m_lasso_end, COL_LASSO_OUT);
-
-        // On mouse-up: finalise selection
-        if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
-        {
-            // Screen-space rect → TL/BR order
-            ImVec2 tl_scr{ std::min(m_lasso_start.x, m_lasso_end.x),
-                           std::min(m_lasso_start.y, m_lasso_end.y) };
-            ImVec2 br_scr{ std::max(m_lasso_start.x, m_lasso_end.x),
-                           std::max(m_lasso_start.y, m_lasso_end.y) };
-
-            // Convert to world space (inverse pan + zoom)
-            ImVec2 tl_w{ (tl_scr.x - it.origin.x) / m_zoom,
-                         (tl_scr.y - it.origin.y) / m_zoom };
-            ImVec2 br_w{ (br_scr.x - it.origin.x) / m_zoom,
-                         (br_scr.y - it.origin.y) / m_zoom };
-
-            bool additive = io.KeyShift || io.KeyCtrl;
-            if (!additive)                       // fresh selection if no modifier
-                m_sel.clear();
-
-            /* ---------- Points ---------- */
-            for (size_t i = 0; i < m_points.size(); ++i)
-            {
-                const Pos* v = find_vertex(m_vertices, m_points[i].v);
-                if (!v) continue;
-                bool inside = (v->x >= tl_w.x && v->x <= br_w.x &&
-                               v->y >= tl_w.y && v->y <= br_w.y);
-                if (!inside) continue;
-
-                if (additive) {                  // ⇧ / Ctrl  ⇒ toggle
-                    if (!m_sel.points.erase(i))   // erase returns 0 if not present
-                        m_sel.points.insert(i);
-                } else {
-                    m_sel.points.insert(i);
-                }
-            }
-
-            // ---------- Lines (segment–rect test) ----------
-            auto seg_rect_intersect = [](ImVec2 a, ImVec2 b, ImVec2 tl, ImVec2 br)->bool
-            {
-                auto inside = [&](ImVec2 p){
-                    return p.x >= tl.x && p.x <= br.x && p.y >= tl.y && p.y <= br.y;
-                };
-                if (inside(a) || inside(b))
-                    return true;
-
-                // quick reject: both points on same outside side
-                if ((a.x < tl.x && b.x < tl.x) || (a.x > br.x && b.x > br.x) ||
-                    (a.y < tl.y && b.y < tl.y) || (a.y > br.y && b.y > br.y))
-                    return false;
-
-                // helper for segment–segment intersection
-                auto ccw = [](ImVec2 p1, ImVec2 p2, ImVec2 p3){
-                    return (p3.y - p1.y)*(p2.x - p1.x) > (p2.y - p1.y)*(p3.x - p1.x);
-                };
-                auto intersect = [&](ImVec2 p1, ImVec2 p2, ImVec2 p3, ImVec2 p4){
-                    return ccw(p1,p3,p4) != ccw(p2,p3,p4) && ccw(p1,p2,p3) != ccw(p1,p2,p4);
-                };
-
-                ImVec2 tr{ br.x, tl.y }, bl{ tl.x, br.y };
-                return intersect(a,b, tl,tr) || intersect(a,b,tr,br) ||
-                       intersect(a,b, br,bl) || intersect(a,b, bl,tl);
-            };
-            
-            
-            for (size_t i = 0; i < m_lines.size(); ++i)
-            {
-                const Pos* a = find_vertex(m_vertices, m_lines[i].a);
-                const Pos* b = find_vertex(m_vertices, m_lines[i].b);
-                if (!a || !b) continue;
-
-                if (!seg_rect_intersect({a->x,a->y}, {b->x,b->y}, tl_w, br_w))
-                    continue;
-
-                if (additive) {
-                    if (!m_sel.lines.erase(i))
-                        m_sel.lines.insert(i);    // toggle
-                } else {
-                    m_sel.lines.insert(i);
-                }
-            }
-            
-            
-            // ---------- Paths (segment–rect test, straight segments only) ----------
-            for (size_t pi = 0; pi < m_paths.size(); ++pi)
-            {
-                const Path& p = m_paths[pi];
-                const size_t N = p.verts.size();
-                if (N < 2) continue;
-
-                bool intersects = false;
-                for (size_t si = 0; si < N - 1 + (p.closed ? 1 : 0); ++si)
-                {
-                    const Pos* a = find_vertex(m_vertices, p.verts[si]);
-                    const Pos* b = find_vertex(m_vertices, p.verts[(si+1)%N]);
-                    if (!a || !b) continue;
-                    if (seg_rect_intersect({a->x,a->y}, {b->x,b->y}, tl_w, br_w))
-                    { intersects = true; break; }
-                }
-                if (!intersects) continue;
-
-                if (additive) {
-                    if (!m_sel.paths.erase(pi))
-                        m_sel.paths.insert(pi);    // toggle
-                } else {
-                    m_sel.paths.insert(pi);
-                }
-            }
-            
-
-            /* ---------- Sync vertex list ---------- */
-            _rebuild_vertex_selection();
-
-            m_lasso_active = false;                   // reset
-        }
-
+    //  4.  LASSO START...                                                      //          |=== nothing under cursor
+    if ( !m_lasso_active && it.hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !_hit_any(it) )
+        this->_start_lasso_tool();
+    
+    
+    //  5.  LASSO UPDATE...
+    if (m_lasso_active) {
+        this->_update_lasso(it);
         return;   // Skip zoom handling while dragging lasso
     }
+        
 
-    /*---------------------------------------------------------------------
-     * 3) ZOOM (mouse wheel) – only when not lassoing
-     *-------------------------------------------------------------------*/
+    //  6.   ZOOM (mouse wheel) – only when not lassoing...
     if (it.hovered && io.MouseWheel != 0.0f)
-    {
-        float new_zoom = std::clamp(m_zoom * (1.0f + io.MouseWheel * 0.1f),
-                                    0.25f, 4.0f);
-        if (std::fabs(new_zoom - m_zoom) > 1e-6f)
-        {
-            // Preserve cursor-centred zoom
-            ImVec2 world_before{ (io.MousePos.x - it.origin.x) / m_zoom,
-                                 (io.MousePos.y - it.origin.y) / m_zoom };
-            m_zoom = new_zoom;
-            ImVec2 new_origin{ io.MousePos.x - world_before.x * m_zoom,
-                               io.MousePos.y - world_before.y * m_zoom };
-            m_scroll.x = new_origin.x - it.tl.x;
-            m_scroll.y = new_origin.y - it.tl.y;
-        }
-    }
+        this->_zoom_canvas(it);
+        
+    
+    return;
 }
+
+
+
+
+
+
 
 
 //  "_handle_line"
@@ -404,6 +294,39 @@ void Editor::_handle_point(const Interaction& it)
     }
 }
 
+
+//  "_handle_pen"
+//
+void Editor::_handle_pen(const Interaction & it)
+{
+    if (it.space) return;                           // ignore while panning
+
+    // 0) Highest-priority: cancel key
+    if (_pen_cancel_if_escape(it))
+        return;
+
+    // 1) If we're already dragging a handle, update & early-out
+    if (m_pen.dragging_handle)
+    {
+        _pen_update_handle_drag(it);
+        return;
+    }
+
+    // 2) Start handle-drag on Alt-click (returns true if it consumed the click)
+    if (_pen_try_begin_handle_drag(it))
+        return;
+
+    // 3) Mouse-click logic for creating / extending / closing a path
+    if (it.hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+        if (!m_pen.active)
+            _pen_begin_path_if_click_empty(it);
+        else
+            _pen_append_or_close_live_path(it);
+    }
+    
+    return;
+}
 
 
 

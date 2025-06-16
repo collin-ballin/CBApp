@@ -229,12 +229,14 @@ struct PenState {
 //  "BoxDrag"
 //
 struct BoxDrag {
-    bool                active      = false;
-    uint8_t             handle_idx  = 0;         // 0-7
-    ImVec2              anchor_ws;               // fixed pivot (world)
-    ImVec2              bbox_tl_ws, bbox_br_ws;  // original bbox
-    std::vector<uint32_t> v_ids;                 // vertex IDs affected
-    std::vector<ImVec2>   v_orig;                // their original positions
+    bool      active        = false;
+    uint8_t   handle_idx    = 0;      // 0-7
+    ImVec2    anchor_ws;
+    ImVec2    bbox_tl_ws, bbox_br_ws;
+    ImVec2    mouse_ws0;              // cursor pos on drag start (world)
+    bool      first_frame   = true;   // NEW
+    std::vector<uint32_t> v_ids;
+    std::vector<ImVec2>   v_orig;
 };
 
 

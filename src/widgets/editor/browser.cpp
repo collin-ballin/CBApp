@@ -94,15 +94,17 @@ Editor::~Editor(void)   { }
 void Editor::DrawBrowser(void)
 {
     //  Fixed‑width left column
-        ImGui::BeginChild("##Editor_Browser_Left", ImVec2(this->ms_LIST_COLUMN_WIDTH, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
-            _draw_point_list_column();
-        ImGui::EndChild();
-
-        ImGui::SameLine();
-
-        ImGui::BeginChild("##Editor_Browser_Right", ImVec2(0, 0), ImGuiChildFlags_Borders);
-            _draw_point_inspector_column();
-        ImGui::EndChild();
+    ImGui::BeginChild("##Editor_Browser_Left", ImVec2(this->ms_LIST_COLUMN_WIDTH, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+        _draw_path_list_column();
+        //_draw_point_list_column();
+    ImGui::EndChild();
+    //
+    ImGui::SameLine();
+    //
+    ImGui::BeginChild("##Editor_Browser_Right", ImVec2(0, 0), ImGuiChildFlags_Borders);
+        _draw_path_inspector_column();
+        //_draw_point_inspector_column();
+    ImGui::EndChild();
     //
     //
     return;
@@ -121,13 +123,19 @@ void Editor::DrawBrowser_Window([[maybe_unused]] const char * uuid, [[maybe_unus
         //
         //  Fixed‑width left column
             ImGui::BeginChild("##Editor_Browser_Left", ImVec2(this->ms_LIST_COLUMN_WIDTH, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
-                _draw_point_list_column();
+                
+                _draw_path_list_column();
+                //_draw_point_list_column();
+                
             ImGui::EndChild();
-
+            //
             ImGui::SameLine();
-
+            //
             ImGui::BeginChild("##Editor_Browser_Right", ImVec2(0, 0), ImGuiChildFlags_Borders);
-                _draw_point_inspector_column();
+                
+                _draw_path_inspector_column();
+                //_draw_point_inspector_column();
+                
             ImGui::EndChild();
         //
         //
@@ -146,7 +154,132 @@ void Editor::DrawBrowser_Window([[maybe_unused]] const char * uuid, [[maybe_unus
 // *************************************************************************** //
 //
 //
-//  2.  INTERNAL IMPLEMENTATIONS...
+//  2.  NEW INTERNAL BROWSER IMPLEMENTATIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_draw_path_list_column"
+//
+void Editor::_draw_path_list_column(void)
+{
+    // 1) filter input --------------------------------------------------
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    if (ImGui::InputTextWithHint("##Editor_Browser_LeftFilter", "filter",
+                                 m_browser_filter.InputBuf,
+                                 IM_ARRAYSIZE(m_browser_filter.InputBuf)))
+        m_browser_filter.Build();
+
+    ImGui::Separator();
+
+    const int total = static_cast<int>(m_paths.size());
+    ImGuiListClipper clipper;
+    clipper.Begin(total, -1);
+
+    while (clipper.Step())
+        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+        {
+            char label[12]; std::snprintf(label, sizeof(label), "Path%02d", i);
+            if (!m_browser_filter.PassFilter(label)) continue;
+
+            bool selected = m_sel.paths.count(static_cast<size_t>(i));
+            if (ImGui::Selectable(label, selected))
+            {
+                const bool ctrl  = ImGui::GetIO().KeyCtrl;
+                const bool shift = ImGui::GetIO().KeyShift;
+
+                if (!ctrl && !shift)
+                {   m_sel.clear();  m_sel.paths.insert(i);  m_browser_anchor = i; }
+                else if (shift && m_browser_anchor >= 0)
+                {   int lo = std::min(m_browser_anchor, i), hi = std::max(m_browser_anchor, i);
+                    if (!ctrl) m_sel.clear();
+                    for (int k = lo; k <= hi; ++k) m_sel.paths.insert(k);
+                }
+                else if (ctrl)
+                {   if (!m_sel.paths.erase(i)) { m_sel.paths.insert(i); m_browser_anchor = i; } }
+
+                _rebuild_vertex_selection();   // keep vertices in sync
+            }
+        }
+    clipper.End();
+}
+
+
+
+//  "_draw_path_inspector_column"
+//
+void Editor::_draw_path_inspector_column(void)
+{
+    const size_t sel_count = m_sel.paths.size();
+
+    /* 0 selected */
+    if (sel_count == 0) { ImGui::TextDisabled("No paths selected."); return; }
+
+    /* >1 selected */
+    if (sel_count > 1)
+    {
+        ImGui::Text("%zu paths selected", sel_count);
+        ImGui::Separator();
+        if (ImGui::Button("Delete Selected", {150,0}))
+        {
+            std::vector<size_t> idxs(m_sel.paths.begin(), m_sel.paths.end());
+            std::sort(idxs.rbegin(), idxs.rend());
+            for (size_t i : idxs) if (i < m_paths.size())
+                m_paths.erase(m_paths.begin() + static_cast<long>(i));
+            m_sel.clear();
+        }
+        return;
+    }
+
+    /* exactly 1 selected */
+    size_t idx = *m_sel.paths.begin();
+    if (idx >= m_paths.size()) { ImGui::TextDisabled("[invalid path]"); return; }
+
+    Path& p = m_paths[idx];
+    ImGui::Text("Path %zu  (%zu vertices)", idx, p.verts.size());
+    ImGui::Separator();
+
+    ImGui::TextDisabled("Vertices:");
+    for (size_t k = 0; k < p.verts.size(); ++k)
+    {
+        char lbl[8]; std::snprintf(lbl, sizeof(lbl), "V%02zu", k);
+        ImGui::BulletText("%s  (id=%u)", lbl, p.verts[k]);
+    }
+
+    ImGui::Separator();
+    if (ImGui::Button("Delete Path", {120,0}))
+    {
+        m_paths.erase(m_paths.begin() + static_cast<long>(idx));
+        m_sel.clear();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  3.  OLD BROWSER INTERNAL IMPLEMENTATIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -237,7 +370,6 @@ void Editor::_draw_point_list_column()
 //-------------------------------------------------------------------------
 // RIGHT COLUMN – inspector panel adapting to selection count
 //-------------------------------------------------------------------------
-
 void Editor::_draw_point_inspector_column()
 {
     const size_t sel_count = m_sel.points.size();
@@ -407,6 +539,28 @@ void Editor::_draw_point_inspector_column()
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -33,60 +33,12 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-
-
-// *************************************************************************** //
-//
-//
-//  1.      MAIN ORCHESTRATOR...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-//──────────────────────── handle_pen  ────────────────────────────────
-void Editor::_handle_pen(const Interaction & it)
-{
-    if (it.space) return;                           // ignore while panning
-
-    // 0) Highest-priority: cancel key
-    if (_pen_cancel_if_escape(it))
-        return;
-
-    // 1) If we're already dragging a handle, update & early-out
-    if (m_pen.dragging_handle)
-    {
-        _pen_update_handle_drag(it);
-        return;
-    }
-
-    // 2) Start handle-drag on Alt-click (returns true if it consumed the click)
-    if (_pen_try_begin_handle_drag(it))
-        return;
-
-    // 3) Mouse-click logic for creating / extending / closing a path
-    if (it.hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-    {
-        if (!m_pen.active)
-            _pen_begin_path_if_click_empty(it);
-        else
-            _pen_append_or_close_live_path(it);
-    }
-    
-    return;
-}
-
-
-
-
-
-
 // *************************************************************************** //
 //
 //
 //  2.      SUBSIDIARY FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-
 
 //  "_pen_cancel_if_escape"
 //

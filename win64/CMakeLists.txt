@@ -127,6 +127,7 @@ add_executable(${PROJECT_NAME} ${APP_SRCS} ${IMGUI_SRCS} ${APP_HEADERS})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${PROJECT_ROOT}/include
+    ${PROJECT_ROOT}/include/config
     ${PROJECT_ROOT}/include/app
     ${PROJECT_ROOT}/include/imgui_extensions
     ${PROJECT_ROOT}/imgui

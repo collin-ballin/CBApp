@@ -335,10 +335,10 @@ public:                                                                         
 //      - Exported API to provide alias for types afforded by "cblib".
 //
 #define                 CBAPP_CBLIB_TYPES_API                                                   \
-    template<typename T>                                                                        \
-    using               Param                           = cblib::math::Param<T>;                \
-    template<typename T>                                                                        \
-    using               Range                           = cblib::math::Range<T>;
+    template<typename T_>                                                                       \
+    using               Param                           = cblib::math::Param<T_>;               \
+    template<typename T_>                                                                       \
+    using               Range                           = cblib::math::Range<T_>;
 
 
 

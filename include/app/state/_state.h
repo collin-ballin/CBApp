@@ -72,17 +72,24 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 
 //  "get_app_title"
 //
-inline constexpr const std::string get_app_title(void) {
-    constexpr std::string_view  version     = std::string_view(__CBAPP_VERSION__);
-    constexpr std::string_view  build       = std::string_view(__CBAPP_BUILD__);
-    return std::string("CBApp (") + std::string(version) + " [" + std::string(build) + "])";
-}
+//  inline constexpr const std::string_view get_app_title(void) {
+//      constexpr std::string_view  title       = "CBApp (";
+//      constexpr std::string_view  version     = std::string_view(__CBAPP_VERSION__);
+//      constexpr std::string_view  build       = std::string_view(__CBAPP_BUILD__);
+//
+//      //cblib::utl::strcat_string_view_cx<title, version, build, >;
+//
+//      constexpr std::string_view  result      = cblib::utl::strcat_string_view_cx< title, version, build >;
+//      return result;
+//      //return std::string_view("CBApp (") + std::string_view(version) + " [" + std::string(build) + "])";
+//  }
 
 
 
 //      1.0
-//inline constexpr const char *           _CBAPP_APP_NAME []                  = __CBAPP_VERSION__ + __CBAPP_BUILD__;
-inline constexpr const std::string              _CBAPP_APP_TITLE                =  get_app_title();
+//  inline constexpr const char *           _CBAPP_APP_NAME []                  = __CBAPP_VERSION__ + __CBAPP_BUILD__;
+//  static inline constexpr std::string_view        _CBAPP_APP_TITLE_IMPL           =  get_app_title();
+inline constexpr const char *                   _CBAPP_APP_TITLE                =  "CBApp (V0.3.0 WIP)";    //std::string( _CBAPP_APP_TITLE_IMPL );
 //
 //
 //      1.1
@@ -187,7 +194,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 /*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                                                  */      \
 /*|========================================================================================================================|                */      \
 /*  1.  PRIMARY GUI STRUCTURE / "CORE WINDOWS"...                                                                                           */      \
-    X(Host,                 _CBAPP_APP_TITLE.c_str(),       true,                   _CBAPP_HOST_WINDOW_FLAGS                                )       \
+    X(Host,                 _CBAPP_APP_TITLE,               true,                   _CBAPP_HOST_WINDOW_FLAGS                                )       \
     X(Dockspace,            "##RootDockspace",              true,                   _CBAPP_DOCKSPACE_WINDOW_FLAGS                           )       \
     X(MenuBar,              "##Menubar",                    true,                   _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(ControlBar,           "##ControlBar",                 true,                   _CBAPP_CONTROLBAR_WINDOW_FLAGS                          )       \
@@ -202,7 +209,6 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
     X(CCounterApp,          "Coincidence Counter",          DEF_CCOUNTER_APP_VIS,   _CBAPP_CORE_WINDOW_FLAGS                                )       \
 /*                                                                                                                                          */      \
 /*          EDITOR APP...                                                                                                                   */      \
-/*  X(EditorApp,            "Editor App",                   DEF_FDTD_APP_VIS,       _CBAPP_EDITOR_WINDOW_FLAGS                              ) */    \
     X(EditorApp,            "Editor App",                   true,                   _CBAPP_EDITOR_WINDOW_FLAGS                              )       \
 /*                                                                                                                                          */      \
 /*          FDTD APP...                                                                                                                     */      \
@@ -548,7 +554,7 @@ struct AppState
     static constexpr const char *       m_detview_dockspace_uuid    = "##DetailViewDockspace";
     ImGuiID                             m_detview_dockspace_id      = 0;
     ImGuiDockNodeFlags                  m_detview_dockspace_flags   = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoCloseButton;// | ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_NoSplit
-    ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_None; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_HiddenTabBar; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
     
 
 

@@ -1,11 +1,11 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****                 F D T D . H  ____  F I L E                 ****
+*       ****               _ T Y P E S . H  ____  F I L E               ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond
-*               DATED:      May 18, 2025.
+*               DATED:      June 15, 2025.
 *
 *       ********************************************************************
 *                FILE:      [include/fdtd.h]
@@ -14,15 +14,13 @@
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CB_FDTD_H
-#define _CB_FDTD_H  1
+#ifndef _CB_FDTD_TYPES_H
+#define _CB_FDTD_TYPES_H  1
 
 
 //  0.1.        ** MY **  HEADERS...
 #include CBAPP_USER_CONFIG
-#include "fdtd/_types.h"
-#include "fdtd/_fdtd_impl.h"
-#include "fdtd/_fdtd_1d.h"
+#include "cblib.h"
 
 
 //  0.2     STANDARD LIBRARY HEADERS...
@@ -54,6 +52,52 @@ namespace cb { namespace fdtd {//     BEGINNING NAMESPACE "cb" :: "fdtd"...
 
 
 
+//  "StepSizes"
+//      FDTD Struct for SIMULATION STEPSIZES...
+template<typename T>
+struct StepSizes {
+    CBAPP_CBLIB_TYPES_API           //  BRING-IN TYPENAME ALIASES FOR TYPES DEFINED IN "CBLIB".
+//
+    Param<T>        dx;
+    Param<T>        dy;
+    Param<T>        dz;
+    Param<T>        dt;
+    Param<T>        Sc;
+};
+
+
+//  "Steps"
+//      FDTD structure for NUMBER OF SIMULATION STEPS...
+template<typename T>
+struct Steps {
+    CBAPP_CBLIB_TYPES_API           //  BRING-IN TYPENAME ALIASES FOR TYPES DEFINED IN "CBLIB".
+//
+    Param<T>        NX;
+    Param<T>        NY;
+    Param<T>        NZ;
+    Param<T>        NT;
+};
+
+
+//  "Parameters"
+//      FDTD structure for NUMBER OF SIMULATION STEPS...
+template<typename I, typename F>
+struct Parameters {
+    CBAPP_CBLIB_TYPES_API           //  BRING-IN TYPENAME ALIASES FOR TYPES DEFINED IN "CBLIB".
+//
+    Param<I>        wavelength;
+    Param<I>        duration;
+};
+
+
+
+
+
+
+
+
+
+
 
 
 // *************************************************************************** //
@@ -76,7 +120,7 @@ namespace cb { namespace fdtd {//     BEGINNING NAMESPACE "cb" :: "fdtd"...
 
 
 
-#endif      //  _CB_FDTD_H  //
+#endif      //  _CB_FDTD_TYPES_H  //
 // *************************************************************************** //
 // *************************************************************************** //
 //
