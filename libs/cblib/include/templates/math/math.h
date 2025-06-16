@@ -37,6 +37,7 @@
 
 
 //  MY OWN HEADERS...
+#include "templates/math/_types.h"
 #include "templates/math/_utility.h"
 #include "templates/math/_vectors.h"
 

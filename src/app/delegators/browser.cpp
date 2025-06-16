@@ -152,6 +152,24 @@ void Browser::Display_Preferences_Menu(void)
         ImGui::TreePop();
     }
 
+
+
+
+    const ImVec2            BUTTON_SIZE     = ImVec2(0, 40);
+    static bool             home            = true;
+    if ( ImGui::Button( (home)
+                    ? "Detail View##ControlBar" : "Home ##ControlBar", ImVec2(120, BUTTON_SIZE.y )) )
+    {
+        home = !home;
+        
+        if (home) {
+            S.DockAtHome( S.m_windows[Window::CustomRendering].get_uuid() );
+        }
+        else {
+            S.DockAtDetView( S.m_windows[Window::CustomRendering].get_uuid() );
+        }
+    }
+    
     
     
     this->disp_performance_metrics();

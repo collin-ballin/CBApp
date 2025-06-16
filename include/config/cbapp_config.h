@@ -297,6 +297,78 @@
 
 
 
+// *************************************************************************** //
+//
+//
+//      3.1     APPLICATION APIs AND INTERNAL TYPENAME ALIASES...
+// *************************************************************************** //
+// *************************************************************************** //
+//  MEMBER VARIABLE NAME FOR "AppState" OBJECT IN EACH CLASS...
+//      - Using this to consosolidate the lengthy member-accessor statements "this->m_state.my_object.my_data_member", etc ...
+#define                 CBAPP_STATE_NAME                S
+
+
+
+//  _CBAPP_APPSTATE_ALIAS_API           |   ** INTERNAL **
+//
+//      - "API" USED **EXCLUSIVELY** INSIDE "AppState" CLASS.
+//      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
+//
+#define                 _CBAPP_APPSTATE_ALIAS_API                                                               \
+public:                                                                                                         \
+    using               Window                          = app::Window_t;                                        \
+    using               Font                            = app::Font_t;                                          \
+    using               Cmap                            = app::Colormap_t;                                      \
+    using               Timestamp_t                     = std::chrono::time_point<std::chrono::system_clock>;   \
+                                                                                                                \
+    using               ImFonts                         = utl::EnumArray<Font, ImFont *>;                       \
+    using               ImWindows                       = utl::EnumArray<Window, WinInfo>;                      \
+    using               Anchor                          = utl::Anchor;                                          \
+                                                                                                                \
+    using               Logger                          = utl::Logger;                                          \
+    using               LogLevel                        = Logger::Level;                                        \
+    using               Tab_t                           = utl::Tab_t;
+
+
+
+//  "CBAPP_CBLIB_TYPES_API"             |   ** EXPORTED**
+//      - Exported API to provide alias for types afforded by "cblib".
+//
+#define                 CBAPP_CBLIB_TYPES_API                                                   \
+    template<typename T>                                                                        \
+    using               Param                           = cblib::math::Param<T>;                \
+    template<typename T>                                                                        \
+    using               Range                           = cblib::math::Range<T>;
+
+
+
+//  "CBAPP_APPSTATE_ALIAS_API"          |   ** EXPORTED**
+//
+//      - "API" USED BY "CBApp" DELEGATOR CLASSES THAT USE AN "AppState" OBJECT.
+//      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
+//
+#define                 CBAPP_APPSTATE_ALIAS_API                                                \
+    using               AppState                        = app::AppState;                        \
+    using               WinInfo                         = app::WinInfo;                         \
+                                                        CBAPP_CBLIB_TYPES_API                   \
+                                                        _CBAPP_APPSTATE_ALIAS_API
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+//
+//
+// *************************************************************************** //               //  END.
+
+
+
+
+
+
+
+
+
 
 
 

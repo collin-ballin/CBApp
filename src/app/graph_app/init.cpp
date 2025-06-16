@@ -27,7 +27,11 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 GraphApp::GraphApp(app::AppState & src)
     : S(src)
 {
-    this->m_heatmap     = cb::HeatMap(256, 256);
+    //  1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
+    m_window_class[0].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_None;// ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
+    m_window_class[1].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_None;// ImGuiDockNodeFlags_HiddenTabBar;      //    ImGuiDockNodeFlags_NoTabBar; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
+    
+    //  this->m_detview_window.render_fn    = std::bind_front(&GraphApp::display_controls, this);
 }
 
 
@@ -71,19 +75,8 @@ void GraphApp::initialize(void)
 //
 void GraphApp::init(void)
 {
-    ms_I_PLOT_COL_WIDTH                                        *= S.m_dpi_scale;
-    ms_SPACING                                                 *= S.m_dpi_scale;
-    ms_COLLAPSE_BUTTON_SIZE.x                                  *= S.m_dpi_scale;
-    ms_COLLAPSE_BUTTON_SIZE.y                                  *= S.m_dpi_scale;
-    
-    
-    //  1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
-    m_window_class[0].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
-    m_window_class[1].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar;      //    ImGuiDockNodeFlags_NoTabBar; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
-    
-    
-    
-        
+    //ms_I_PLOT_COL_WIDTH                                        *= S.m_dpi_scale;
+    //ms_SPACING                                                 *= S.m_dpi_scale;
         
     //  2.      DEFAULT TAB OPTIONS...
     static ImGuiTabItemFlags        ms_DEF_PLOT_TAB_FLAGS       = ImGuiTabItemFlags_None;

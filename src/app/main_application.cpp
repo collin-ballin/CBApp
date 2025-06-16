@@ -1137,7 +1137,8 @@ void App::Test_Editor(void)
 
     m_editor.Begin();
 
-    m_editor.DrawPointBrowser(this->m_editor_WinInfo.uuid.c_str(), &this->m_editor_WinInfo.open, this->m_editor_WinInfo.flags );
+    
+    //m_editor.DrawBrowser_Window(this->m_editor_WinInfo.uuid.c_str(), &this->m_editor_WinInfo.open, this->m_editor_WinInfo.flags );
 
     return;
 }

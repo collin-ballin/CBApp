@@ -88,11 +88,34 @@ Editor::~Editor(void)   { }
 //-------------------------------------------------------------------------
 // PUBLIC FACADE – minimal wrapper to draw both columns side‑by‑side
 //-------------------------------------------------------------------------
-void Editor::DrawPointBrowser([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+
+//  "DrawBrowser"
+//
+void Editor::DrawBrowser(void)
+{
+    //  Fixed‑width left column
+        ImGui::BeginChild("##Editor_Browser_Left", ImVec2(this->ms_LIST_COLUMN_WIDTH, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+            _draw_point_list_column();
+        ImGui::EndChild();
+
+        ImGui::SameLine();
+
+        ImGui::BeginChild("##Editor_Browser_Right", ImVec2(0, 0), ImGuiChildFlags_Borders);
+            _draw_point_inspector_column();
+        ImGui::EndChild();
+    //
+    //
+    return;
+}
+
+
+//  "DrawBrowser_Window"
+//
+void Editor::DrawBrowser_Window([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
 
     if (p_open) {
-        ImGui::SetNextWindowClass(&this->m_window_class);
+        //ImGui::SetNextWindowClass(&this->m_window_class);
         ImGui::Begin( uuid, nullptr, flags );
         //
         //
@@ -264,7 +287,18 @@ void Editor::_draw_point_inspector_column()
             if (pt.sty.color == COL_POINT_DEFAULT + i) type_idx = i;
 
         if (ImGui::Combo("Type", &type_idx, TYPES, IM_ARRAYSIZE(TYPES)))
-            pt.sty.color = COL_POINT_DEFAULT + type_idx;   // simple mapping
+            pt.sty.color = COL_POINT_DEFAULT + type_idx;
+
+        /* --- NEW: delete this point ----------------------------------- */
+        ImGui::Separator();
+        if (ImGui::Button("Delete Point", {120,0}))
+        {
+            _erase_vertex_and_fix_paths(pt.v);
+            m_sel.clear();
+            _rebuild_vertex_selection();
+            return;
+        }
+        
 
         /* Connections list --------------------------------------------- */
         ImGui::Separator();
@@ -320,6 +354,23 @@ void Editor::_draw_point_inspector_column()
                                     IM_COL32_WHITE, 2.f });
             }
         }
+        
+        
+        ImGui::Separator();
+        if (ImGui::Button("Delete Selected", {150,0}))
+        {
+            std::vector<uint32_t> vids;
+            for (size_t idx : m_sel.points)
+                vids.push_back( m_points[idx].v );
+
+            for (uint32_t vid : vids)
+                _erase_vertex_and_fix_paths(vid);
+
+            m_sel.clear();
+            _rebuild_vertex_selection();
+            return;
+        }
+        
 
         ImGui::Separator();
         static const char* TYPES[] = { "Default", "A", "B", "C" };
@@ -344,19 +395,17 @@ void Editor::_draw_point_inspector_column()
 
     if (ImGui::Button("Delete Selected", {150,0}))
     {
-        /* Detach lines first to keep indices valid --------------------- */
-        for (size_t idx : m_sel.points)
-            detach_point(m_lines, idx);
+        std::vector<uint32_t> vids;
+        for (size_t pi : m_sel.points)
+            vids.push_back(m_points[pi].v);        // collect vertex IDs first
 
-        /* Erase points in reverse order for stability ------------------ */
-        std::vector<size_t> to_erase(m_sel.points.begin(), m_sel.points.end());
-        std::sort(to_erase.rbegin(), to_erase.rend());
-        for (size_t pi : to_erase)
-            m_points.erase(m_points.begin() + static_cast<int>(pi));
+        for (uint32_t vid : vids)
+            _erase_vertex_and_fix_paths(vid);      // remove vertex + fix paths
 
         m_sel.clear();
         _rebuild_vertex_selection();
     }
+
 }
 
 

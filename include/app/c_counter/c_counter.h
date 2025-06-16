@@ -89,15 +89,14 @@ struct ChannelSpec {
 // *************************************************************************** //
 
 namespace ccounter {
-    inline static constexpr size_t     BUFFER_SIZE                 = 2000;
+    inline static constexpr size_t     BUFFER_SIZE          = 2000;
 }
 
 //  "CCounterApp"
 //
 class CCounterApp
 {
-    //using               buffer_type                     = utl::ScrollingBuffer;     // cblib::RingBuffer<int, 2000>
-    using               buffer_type                     = cblib::RingBuffer<ImVec2, ccounter::BUFFER_SIZE>;
+    using               buffer_type                     = cblib::RingBuffer<ImVec2, ccounter::BUFFER_SIZE>;     // utl::ScrollingBuffer;     // cblib::RingBuffer<int, 2000>
     friend class        App;
     CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 // *************************************************************************** //
@@ -225,7 +224,7 @@ protected:
     
     //                                              4.  IMPORTANT DATA...
     static constexpr size_t                             ms_NUM                          = 15;
-    utl::Param<ImU64>                                   m_PLOT_LIMIT                    = { 0,     {0, ms_NUM-1}        };
+    Param<ImU64>                                        m_PLOT_LIMIT                    = { 0,     {0, ms_NUM-1}        };
     //
     ChannelSpec                                         ms_channels[ms_NUM]             = {
     //                  MASTER.                     SINGLE.                     AVERAGE.
@@ -277,13 +276,12 @@ protected:
     //
     enum class                                          AvgMode { Samples, Seconds };                                       //  Averaging mode selector
     AvgMode                                             m_avg_mode = AvgMode::Samples;                                      //  Current mode (UI‑controlled)
-    utl::Param<ImU64>                                   m_avg_window_samp               = { 10,     {1, 100}        };      //  N samples (for AvgMode::Samples)
-    utl::Param<double>                                  m_avg_window_sec                = { 30.0f,  {5.0f,   90.0}  };      //  Window length in seconds (for AvgMode::Seconds)
+    Param<ImU64>                                        m_avg_window_samp               = { 10,     {1, 100}        };      //  N samples (for AvgMode::Samples)
+    Param<double>                                       m_avg_window_sec                = { 30.0f,  {5.0f,   90.0}  };      //  Window length in seconds (for AvgMode::Seconds)
 
-    
-    utl::Param<ImU64>                                   m_coincidence_window            = { 10,     {1, 100}        };
-    utl::Param<double>                                  m_integration_window            = { 1.00f,  {0.001f, 2.50f} };
-    utl::Param<double>                                  m_history_length                = { 30.0f,  {5.0f,   90.0}  };
+    Param<ImU64>                                        m_coincidence_window            = { 10,     {1, 100}        };
+    Param<double>                                       m_integration_window            = { 1.00f,  {0.001f, 2.50f} };
+    Param<double>                                       m_history_length                = { 30.0f,  {5.0f,   90.0}  };
     char                                                m_filepath[ms_BUFFER_SIZE]      = { };
     bool                                                m_use_mutex_count               = false;
     

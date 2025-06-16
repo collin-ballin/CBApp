@@ -146,15 +146,17 @@ void DetailView::Begin([[maybe_unused]] const char *        uuid,
     bool                            update          = (this->m_is_open != S.m_show_detview_window);
     
     
+    
+    //  1.  IF NO UPDATE ON VISIBILITY STATUS, EXIT...
     if (!update && !S.m_show_detview_window)
         return;
 
     
     
-    //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
+    //  2.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
     ImGui::PushStyleColor(ImGuiCol_WindowBg, S.m_detview_bg);   // Push before ImGui::Begin()
     this->m_window_class.DockNodeFlagsOverrideSet   = S.m_detview_window_flags;
-    ImGui::SetNextWindowClass(&this->m_window_class);
+    //ImGui::SetNextWindowClass(&this->m_window_class);
     ImGui::Begin(uuid, p_open, flags);
         ImGui::PopStyleColor();
         
@@ -166,10 +168,9 @@ void DetailView::Begin([[maybe_unused]] const char *        uuid,
             set_visibility_IMPL(S.m_show_detview_window);
         
         }
-        
+
 
     ImGui::End();
-    
     return;
 }
 
@@ -288,7 +289,6 @@ void DetailView::close_all(void)
         }
     }
     this->m_is_open                         = false;
-    //this->S.m_show_detview_window           = false;
     return;
 }
 
@@ -297,16 +297,32 @@ void DetailView::close_all(void)
 //
 void DetailView::open_all(void)
 {
+    S.m_detview_dockspace_flags     = (S.m_detview_windows.size() < 1)
+        ? (S.m_detview_dockspace_flags | ImGuiDockNodeFlags_HiddenTabBar)  // set the bit
+        : (S.m_detview_dockspace_flags & ~ImGuiDockNodeFlags_HiddenTabBar);  // clear the bit
+        
     for (auto & win : S.m_detview_windows) {
         if (win) {
-            win->open = true;
-            S.DockAtDetView( win->uuid.c_str() );
+            win->open = true;   S.DockAtDetView( win->uuid.c_str() );
         }
     }
     this->m_is_open                         = true;
-    //this->S.m_show_detview_window           = true;
     return;
 }
+//
+//
+//  void DetailView::open_all(void)
+//  {
+//      for (auto & win : S.m_detview_windows) {
+//          if (win) {
+//              win->open = true;
+//              S.DockAtDetView( win->uuid.c_str() );
+//          }
+//      }
+//      this->m_is_open                         = true;
+//      //this->S.m_show_detview_window           = true;
+//      return;
+//  }
 
 
 

@@ -676,7 +676,7 @@ void GraphApp::init_ctrl_rows(void)
     ms_PLAYBACK_ROWS                    = {
         {"Playback",                                [this]
         {
-            utl::Param<ImU64> & frame = this->m_playback.frame;
+            Param<ImU64> & frame = this->m_playback.frame;
             
             //  WIDGET 1.  PLAYBACK SPEED SLIDER
             ImGui::BeginDisabled( !m_playback.ready );

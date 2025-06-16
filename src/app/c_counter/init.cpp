@@ -30,8 +30,14 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 
 CCounterApp::CCounterApp(app::AppState & src)
-    : S(src)                        { }
-
+    : S(src)
+{
+    //  1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
+    m_window_class[0].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
+    m_window_class[1].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar;      //    ImGuiDockNodeFlags_NoTabBar; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
+    
+    //  this->m_detview_window.render_fn    = std::bind_front(&CCounterApp::display_controls, this);
+}
 
 //  "initialize"
 //

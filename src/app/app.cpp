@@ -258,23 +258,15 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
     ImGui::Begin(uuid, p_open, flags);
         ImGui::PopStyleColor();
     
-    
-#ifndef _DONT_DEFINE_THIS
-// *************************************************************************** //
-      
-        this->Test_Editor();
-      
-# else
-// *************************************************************************** //
-    
-    
+
+
         ImGui::Text("Here is the main window of the application!");
         ImGui::Text("Not too much going on here right now due to the tabular design of the project.  Rather, most "
                     "of the user's time will be spent on the designated tab for the application they intend to work with.");
         ImGui::NewLine();
     
     
-        this->Test_Browser();
+        //this->Test_Browser();
         
         
         ImGui::NewLine();
@@ -317,10 +309,7 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
 //
 //
 #endif  //  CBAPP_ENABLE_CB_DEMO  AND  !__CBAPP_BUILD_CCOUNTER_APP__   AND  !__CBAPP_BUILD_FDTD_APP__  //
-//
-//
-// *************************************************************************** //
-#endif  //  DONT_DEFINE_THIS
+    
     
     ImGui::End();
     return;
@@ -373,9 +362,8 @@ void App::InitDockspace(void)
     [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO();   (void)io;
     [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
     static size_t                   idx                 = 0;
-    const size_t                    WINDOWS_END         = S.ms_WINDOWS_END;
     const float                     toolbar_px          = 1.6f * ImGui::GetTextLineHeightWithSpacing();    // + style.FramePadding.y * 2.0f + style.ItemSpacing.y;
-    S.m_controlbar_ratio                                   = toolbar_px / S.m_main_viewport->WorkSize.y;
+    S.m_controlbar_ratio                                = toolbar_px / S.m_main_viewport->WorkSize.y;
     
 
     //  1.      CLEAR EXISTING DOCK LAYOUT...
@@ -422,15 +410,15 @@ void App::InitDockspace(void)
     //------------------------------------------------------------------
     // 5.  Fetch nodes & apply flags
     //------------------------------------------------------------------
-    S.m_controlbar_node  = ImGui::DockBuilderGetNode(S.m_controlbar_dock_id);
-    S.m_browser_node  = ImGui::DockBuilderGetNode(S.m_browser_dock_id);
-    S.m_detview_node  = ImGui::DockBuilderGetNode(S.m_detview_dock_id);
-    S.m_main_node     = ImGui::DockBuilderGetNode(S.m_main_dock_id);
+    S.m_controlbar_node                 = ImGui::DockBuilderGetNode(S.m_controlbar_dock_id);
+    S.m_browser_node                    = ImGui::DockBuilderGetNode(S.m_browser_dock_id);
+    S.m_detview_node                    = ImGui::DockBuilderGetNode(S.m_detview_dock_id);
+    S.m_main_node                       = ImGui::DockBuilderGetNode(S.m_main_dock_id);
 
-    S.m_controlbar_node ->LocalFlags |= S.m_controlbar_node_flags  | ImGuiDockNodeFlags_NoResize;
-    S.m_browser_node ->LocalFlags |= S.m_browser_node_flags;
-    S.m_main_node    ->LocalFlags |= S.m_main_node_flags;
-    S.m_detview_node ->LocalFlags |= S.m_detview_node_flags;
+    S.m_controlbar_node ->LocalFlags   |= S.m_controlbar_node_flags;
+    S.m_browser_node    ->LocalFlags   |= S.m_browser_node_flags;
+    S.m_main_node       ->LocalFlags   |= S.m_main_node_flags;
+    S.m_detview_node    ->LocalFlags   |= S.m_detview_node_flags;
 
     //------------------------------------------------------------------
     // 6.  Dock core windows into their default locations

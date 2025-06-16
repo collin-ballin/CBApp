@@ -194,6 +194,7 @@ inline std::string format_elapsed_timestamp(std::chrono::system_clock::duration 
 // *************************************************************************** //
 //
 //
+//
 //  2.  COMPILE-TIME STRING STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -207,41 +208,79 @@ constexpr std::size_t cc_strlen_IMPL(const char * s) noexcept {
 }
 
 
-//  "join_ptr"
-//      - NTTPs are pointers-to-pointer
+//      "join_ptr"
+//          - NTTPs are pointers-to-pointer
 //
-template<const char * const * ... ParPtrs>
-struct join_ptr
-{
-    static constexpr std::size_t len = (cc_strlen_IMPL(*ParPtrs) + ... + 0);
+//  template<const char * const * ... ParPtrs>
+//  struct join_ptr
+//  {
+//      static constexpr std::size_t len = (cc_strlen_IMPL(*ParPtrs) + ... + 0);
+//
+//      static constexpr auto impl() {
+//          std::array<char, len + 1> buf{};
+//          std::size_t pos = 0;
+//          (([&]{
+//              const char* str = *ParPtrs;
+//              for (std::size_t i = 0, n = cc_strlen_IMPL(str); i < n; ++i)
+//                  buf[pos++] = str[i];
+//          }()), ...);
+//          buf[len] = '\0';
+//          return buf;
+//      }
+//
+//      static constexpr auto arr   = impl();
+//      static constexpr const char* c_str = arr.data();
+//  };
+//
+//
+//  //  "strcat_constexpr"
+//  //  Define "aliases" for convience...
+//  //
+//  template<const char * const * ... ParPtrs>
+//  inline constexpr const char * strcat_constexpr = join_ptr<ParPtrs...>::c_str;
 
-    static constexpr auto impl() {
-        std::array<char, len + 1> buf{};
-        std::size_t pos = 0;
-        (([&]{
-            const char* str = *ParPtrs;
-            for (std::size_t i = 0, n = cc_strlen_IMPL(str); i < n; ++i)
-                buf[pos++] = str[i];
-        }()), ...);
-        buf[len] = '\0';
-        return buf;
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  3.  COMPILE-TIME CONST CHAR * CONCATONATION...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "strcat_string_view_cx"
+//
+//  "_CX"    =   "constexpr"        :  "COMPILE-TIME OPERATION" ...
+//
+template <std::string_view const&... Strs>
+struct strcat_string_view_cx {
+    static constexpr auto impl() noexcept {
+        constexpr std::size_t len = (Strs.size() + ... + 0);
+        std::array<char, len + 1> arr{};
+        auto append = [i = 0, &arr](auto const& s) mutable {
+            for (char c : s) arr[i++] = c;
+        };
+        (append(Strs), ...);
+        arr[len] = '\0';
+        return arr;
     }
 
-    static constexpr auto arr   = impl();
-    static constexpr const char* c_str = arr.data();
+    static constexpr auto               arr                 = impl();
+    static constexpr std::string_view   value               { arr.data(), arr.size() - 1 };
+    static constexpr const char *       c_str               = arr.data();
 };
 
 
-//  "strcat_constexpr"
-//  Define "aliases" for convience...
-//
-template<const char * const * ... ParPtrs>
-inline constexpr const char * strcat_constexpr = join_ptr<ParPtrs...>::c_str;
 
+template <std::string_view const&... Strs>
+inline constexpr auto                   strcat_cx_v         = strcat_string_view_cx<Strs...>::value;
 
-
-
-
+template <std::string_view const&... Strs>
+inline constexpr const char *           strcat_cx_cstr      = strcat_string_view_cx<Strs...>::c_str;
 
 
 
@@ -254,7 +293,7 @@ inline constexpr const char * strcat_constexpr = join_ptr<ParPtrs...>::c_str;
 //
 // *************************************************************************** //
 // *************************************************************************** //
-} }//   END OF "cblib" :: "math" NAMESPACE.
+} }//   END OF "cblib" :: "utl" NAMESPACE.
 
 
 

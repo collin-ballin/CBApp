@@ -73,17 +73,17 @@ namespace editor { //     BEGINNING NAMESPACE "cb" :: "editor"...
 // *************************************************************************** //
 
 struct      Channel {
-    std::vector<float>      data;   // heat‑map values
-    int                     cmap            = 0;            // ImPlot colormap index
+    std::vector<float>          data;   // heat‑map values
+    int                         cmap            = 0;            // ImPlot colormap index
     
-    utl::Param<float>       paint_value     = { 0.5f, {0.0f, 1.0f}};
+    cblib::math::Param<float>   paint_value     = { 0.5f, {0.0f, 1.0f}};
 //
-    const char *            map_title       = "Map";        // label for PlotHeatmap/scale
-    const char *            map_units       = nullptr; 
+    const char *                map_title       = "Map";        // label for PlotHeatmap/scale
+    const char *                map_units       = nullptr;
 //
-    const char *            scale_title     = "Scale";
-    const char *            scale_units     = "%.1f Arb.";
-    const double            scale_width     = 100.0f;
+    const char *                scale_title     = "Scale";
+    const char *                scale_units     = "%.1f Arb.";
+    const double                scale_width     = 100.0f;
 };
         
 enum class  State : int {

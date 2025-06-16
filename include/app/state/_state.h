@@ -70,12 +70,27 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "get_app_title"
+//
+inline constexpr const std::string get_app_title(void) {
+    constexpr std::string_view  version     = std::string_view(__CBAPP_VERSION__);
+    constexpr std::string_view  build       = std::string_view(__CBAPP_BUILD__);
+    return std::string("CBApp (") + std::string(version) + " [" + std::string(build) + "])";
+}
+
+
+
 //      1.0
-inline constexpr const char *           _IMGUI_DEMO_UUID                    = "Dear ImGui Demo";
-inline constexpr const char *           _IMPLOT_DEMO_UUID                   = "ImPlot Demo";
-
-
-//      1.1     [ CBAPP_ENABLE_MOVE_AND_RESIZE ]    IF WINDOW MOVEMENT AND RESIZING IS #DEFINED...
+//inline constexpr const char *           _CBAPP_APP_NAME []                  = __CBAPP_VERSION__ + __CBAPP_BUILD__;
+inline constexpr const std::string              _CBAPP_APP_TITLE                =  get_app_title();
+//
+//
+//      1.1
+inline constexpr const char *                   _IMGUI_DEMO_UUID                = "Dear ImGui Demo";
+inline constexpr const char *                   _IMPLOT_DEMO_UUID               = "ImPlot Demo";
+//
+//
+//      1.3     [ CBAPP_ENABLE_MOVE_AND_RESIZE ]    IF WINDOW MOVEMENT AND RESIZING IS #DEFINED...
 //              IF "NO_MOVE_RESIZE", SETif we’re *not* in move‑and‑resize mode, disable move & resize by default:
 #ifdef CBAPP_ENABLE_MOVE_AND_RESIZE
     # define _CBAPP_NO_MOVE_RESIZE_FLAGS        0
@@ -101,9 +116,12 @@ inline constexpr ImGuiWindowFlags       _CBAPP_HOST_WINDOW_FLAGS            = Im
 inline constexpr ImGuiWindowFlags       _CBAPP_DOCKSPACE_WINDOW_FLAGS       = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
 inline constexpr ImGuiWindowFlags       _CBAPP_CONTROLBAR_WINDOW_FLAGS      = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
 inline constexpr ImGuiWindowFlags       _CBAPP_BROWSER_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
-inline constexpr ImGuiWindowFlags       _CBAPP_DETVIEW_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+inline constexpr ImGuiWindowFlags       _CBAPP_DETVIEW_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
+
 inline constexpr ImGuiWindowFlags       _CBAPP_HOME_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
+
+inline constexpr ImGuiWindowFlags       _CBAPP_EDITOR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 inline constexpr ImGuiWindowFlags       _CBAPP_CORE_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
 
 
@@ -169,7 +187,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 /*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                                                  */      \
 /*|========================================================================================================================|                */      \
 /*  1.  PRIMARY GUI STRUCTURE / "CORE WINDOWS"...                                                                                           */      \
-    X(Host,                 "CBApp (V0)",                   true,                   _CBAPP_HOST_WINDOW_FLAGS                                )       \
+    X(Host,                 _CBAPP_APP_TITLE.c_str(),       true,                   _CBAPP_HOST_WINDOW_FLAGS                                )       \
     X(Dockspace,            "##RootDockspace",              true,                   _CBAPP_DOCKSPACE_WINDOW_FLAGS                           )       \
     X(MenuBar,              "##Menubar",                    true,                   _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(ControlBar,           "##ControlBar",                 true,                   _CBAPP_CONTROLBAR_WINDOW_FLAGS                          )       \
@@ -182,6 +200,10 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 /*                                                                                                                                          */      \
 /*          COINCIDENCE COUNTER APP...                                                                                                      */      \
     X(CCounterApp,          "Coincidence Counter",          DEF_CCOUNTER_APP_VIS,   _CBAPP_CORE_WINDOW_FLAGS                                )       \
+/*                                                                                                                                          */      \
+/*          EDITOR APP...                                                                                                                   */      \
+/*  X(EditorApp,            "Editor App",                   DEF_FDTD_APP_VIS,       _CBAPP_EDITOR_WINDOW_FLAGS                              ) */    \
+    X(EditorApp,            "Editor App",                   true,                   _CBAPP_EDITOR_WINDOW_FLAGS                              )       \
 /*                                                                                                                                          */      \
 /*          FDTD APP...                                                                                                                     */      \
     X(GraphApp,             "Graph App",                    DEF_FDTD_APP_VIS,       _CBAPP_CORE_WINDOW_FLAGS                                )       \
@@ -266,41 +288,6 @@ inline static const std::array<WinInfo, size_t(Window_t::Count)>    APPLICATION_
 // *************************************************************************** //
 
 
-//      3.1     APPLICATION APIs AND INTERNAL TYPENAME ALIASES...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  MEMBER VARIABLE NAME FOR "AppState" OBJECT IN EACH CLASS...
-//      - Using this to consosolidate the lengthy member-accessor statements "this->m_state.my_object.my_data_member", etc ...
-#define                 CBAPP_STATE_NAME                S
-
-
-//  INTERNAL "API" USED **EXCLUSIVELY** INSIDE "AppState" CLASS.
-//      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
-//
-#define                 _CBAPP_APPSTATE_ALIAS_API                                                               \
-public:                                                                                                         \
-    using               Window                          = app::Window_t;                                        \
-    using               Font                            = app::Font_t;                                          \
-    using               Cmap                            = app::Colormap_t;                                      \
-    using               Timestamp_t                     = std::chrono::time_point<std::chrono::system_clock>;   \
-                                                                                                                \
-    using               ImFonts                         = utl::EnumArray<Font, ImFont *>;                       \
-    using               ImWindows                       = utl::EnumArray<Window, WinInfo>;                      \
-    using               Anchor                          = utl::Anchor;                                          \
-                                                                                                                \
-    using               Logger                          = utl::Logger;                                          \
-    using               LogLevel                        = Logger::Level;                                        \
-    using               Tab_t                           = utl::Tab_t;
-
-
-//  EXPORTED "API" USED BY "CBApp" DELEGATOR CLASSES THAT USE AN "AppState" OBJECT.
-//      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
-//
-#define                 CBAPP_APPSTATE_ALIAS_API                                                \
-    using               AppState                        = app::AppState;                        \
-    using               WinInfo                         = app::WinInfo;                         \
-                                                        _CBAPP_APPSTATE_ALIAS_API
 
 /*
 DEF_COLORMAPS []   = {
@@ -446,8 +433,8 @@ struct AppState
     ImWindows                           m_windows;                                                  //  2.      APPLICATION WINDOW STATE...
     std::vector<WinInfo *>              m_detview_windows           = {};                           //  2.1     WINDOWS INSIDE DETAIL VIEW...
     ImFonts                             m_fonts;                                                    //  3.      APPLICATION FONTS...
-    std::vector< std::pair<std::chrono::time_point<std::chrono::system_clock>, std::string> >
-                                         m_notes                    = {};
+    std::vector< std::pair<Timestamp_t, std::string> >
+                                        m_notes                     = {};
     
     
     
@@ -532,7 +519,7 @@ struct AppState
     ImGuiID                             m_dockspace_id              = 0;
     //
     ImGuiID                             m_main_dock_id              = 0;
-    ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_CentralNode; //ImGuiDockNodeFlags_NoDocking; ImGuiDockNodeFlags_NoDockingOverMe
+    ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_CentralNode | ImGuiDockNodeFlags_NoCloseButton; //ImGuiDockNodeFlags_NoDocking; ImGuiDockNodeFlags_NoDockingOverMe
     ImGuiDockNode *                     m_main_node                 = nullptr;
     //
     //              8.2     ControlBar.
@@ -560,8 +547,8 @@ struct AppState
     //              9.1     DETVIEW DOCKSPACE.
     static constexpr const char *       m_detview_dockspace_uuid    = "##DetailViewDockspace";
     ImGuiID                             m_detview_dockspace_id      = 0;
-    ImGuiDockNodeFlags                  m_detview_dockspace_flags   = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_NoSplit
-    ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNodeFlags                  m_detview_dockspace_flags   = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoCloseButton;// | ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_None; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
     
 
 

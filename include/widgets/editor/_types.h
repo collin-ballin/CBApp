@@ -71,18 +71,25 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 
 // Inserted constants after GRID_STEP and HIT_THRESH_SQ
-static constexpr float GRID_STEP                = 64.0f;
-static constexpr float HIT_THRESH_SQ            = 6.0f * 6.0f;
+static constexpr float      GRID_STEP                   = 64.0f;
+static constexpr float      HIT_THRESH_SQ               = 6.0f * 6.0f;
 
 
 // ---- standardized style -----------------------------------------------
-static constexpr ImU32 COL_POINT_DEFAULT        = IM_COL32(0,255,0,255);   // idle green
-static constexpr ImU32 COL_POINT_HELD           = IM_COL32(255,100,0,255); // while dragging
-static constexpr ImU32 COL_SELECTION_OUT        = IM_COL32(255,215,0,255); // gold outline
-static constexpr float DEFAULT_POINT_RADIUS     = 12.0f;                  // px
+static constexpr ImU32      COL_POINT_DEFAULT           = IM_COL32(0,255,0,255);   // idle green
+static constexpr ImU32      COL_POINT_HELD              = IM_COL32(255,100,0,255); // while dragging
+static constexpr ImU32      COL_SELECTION_OUT           = IM_COL32(255,215,0,255); // gold outline
+static constexpr float      DEFAULT_POINT_RADIUS        = 12.0f;                  // px
 
-static constexpr ImU32 COL_LASSO_OUT            = IM_COL32(255,215,0,255); // gold outline
-static constexpr ImU32 COL_LASSO_FILL           = IM_COL32(255,215,0,40);  // translucent fill
+static constexpr ImU32      COL_LASSO_OUT               = IM_COL32(255,215,0,255); // gold outline
+static constexpr ImU32      COL_LASSO_FILL              = IM_COL32(255,215,0,40);  // translucent fill
+
+
+//  APPEARANCE FOR SELECTION STUFF...
+static constexpr float      HANDLE_BOX_SIZE             = 4.f;
+
+
+
 
 
 
@@ -148,7 +155,12 @@ struct Hit {
 
 
 
-//──────────── WIDGET STTUFF ────────────────────────────────────────────────────
+// *************************************************************************** //
+//
+//
+//      WIDGET STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "Mode"
 //
@@ -193,6 +205,18 @@ enum Capability : uint8_t { Cap_Select = 1 << 0 };
 
 
 
+
+
+
+// *************************************************************************** //
+//
+//
+//      ARRAYS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "PenState"
+//
 struct PenState {
     bool        active          = false;
     size_t      path_index      = static_cast<size_t>(-1);
@@ -202,10 +226,28 @@ struct PenState {
 };
 
 
+//  "BoxDrag"
+//
+struct BoxDrag {
+    bool                active      = false;
+    uint8_t             handle_idx  = 0;         // 0-7
+    ImVec2              anchor_ws;               // fixed pivot (world)
+    ImVec2              bbox_tl_ws, bbox_br_ws;  // original bbox
+    std::vector<uint32_t> v_ids;                 // vertex IDs affected
+    std::vector<ImVec2>   v_orig;                // their original positions
+};
 
 
 
 
+
+
+// *************************************************************************** //
+//
+//
+//      ARRAYS...
+// *************************************************************************** //
+// *************************************************************************** //
 
 // Per‑mode capability mask
 static constexpr std::array<uint8_t, static_cast<size_t>(Mode::Count)>

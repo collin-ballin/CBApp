@@ -36,7 +36,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 App::App(void)
     : m_menubar(S),         m_controlbar(S),            m_browser(S),       m_detview(S),
 #ifndef __CBAPP_DISABLE_FDTD__
-      m_counter_app(S),     m_graph_app(S)
+      m_counter_app(S),     m_editor_app(S),            m_graph_app(S)
 # else
       m_counter_app(S)
 #endif  //  __CBAPP_DISABLE_FDTD__  //
@@ -79,6 +79,7 @@ void App::init(void)
     this->m_detview.initialize();
     this->m_counter_app.initialize();
 #ifndef __CBAPP_DISABLE_FDTD__
+    this->m_editor_app.initialize();
     this->m_graph_app.initialize();
 #endif  //  __CBAPP_DISABLE_FDTD__  //
        
@@ -239,8 +240,9 @@ void App::init_appstate(void)
     //  if (S.m_home_dockspace_id <= 0)
     //      S.m_home_dockspace_id    = ImHashStr(S.m_home_dockspace_uuid);
     //
-    S.m_detview_windows.push_back( std::addressof( this->m_editor_WinInfo ) );
+    //S.m_detview_windows.push_back( std::addressof( this->m_editor_WinInfo ) );
     S.m_detview_windows.push_back( std::addressof( this->m_graph_app.m_detview_window ) );
+    S.m_detview_windows.push_back( std::addressof( this->m_editor_app.m_detview_window ) );
     S.m_detview_windows.push_back( std::addressof( this->m_counter_app.m_detview_window ) );
 
     return;
@@ -289,6 +291,12 @@ void App::dispatch_window_function(const Window & uuid)
         //      2.  MAIN APPLICATION WINDOWS...
         case Window::CCounterApp:       {
             this->m_counter_app.Begin(      w.uuid.c_str(),     nullptr,        w.flags);
+            break;
+        }
+        case Window::EditorApp:         {
+    #ifndef __CBAPP_DISABLE_FDTD__
+            this->m_editor_app.Begin(       w.uuid.c_str(),     nullptr,        w.flags);
+    #endif  //  __CBAPP_DISABLE_FDTD__  //
             break;
         }
         case Window::GraphApp:          {
@@ -484,7 +492,8 @@ App::~App(void)
 //
 void App::destroy(void)
 {
-    S.m_logger.notify( std::format("Application terminating") );
+    CB_LOG(LogLevel::Notify, "Application terminating");
+    //CB_LOG(LogLevel::Notify, "Application terminating",        S.m_dpi_scale, S.m_dpi_fontscale );
 
 
     ImGui_ImplOpenGL3_Shutdown();

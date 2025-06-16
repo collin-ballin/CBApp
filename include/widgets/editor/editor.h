@@ -118,7 +118,6 @@ public:
 //
 // *************************************************************************** //
 // *************************************************************************** //
-    
     static constexpr std::array<const char*, static_cast<size_t>(Mode::Count)>
                                 ms_MODE_LABELS                  = { "Default", "Line", "Point", "Pen" };
     static constexpr float      ms_LIST_COLUMN_WIDTH            = 240.0f;   // px width of point‑list column
@@ -135,7 +134,8 @@ public:
     //  2.              PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     void                        Begin                           (const char* id = "##EditorCanvas");
-    void                        DrawPointBrowser                ([[maybe_unused]] const char *, [[maybe_unused]] bool *, [[maybe_unused]] ImGuiWindowFlags);
+    void                        DrawBrowser                     (void);
+    void                        DrawBrowser_Window              ([[maybe_unused]] const char *, [[maybe_unused]] bool *, [[maybe_unused]] ImGuiWindowFlags);
 
 
 
@@ -145,76 +145,101 @@ private:
     //
     //  2.A             PROTECTED OPERATION MEMBER FUNCTIONS...
     // *************************************************************************** //
+    // *************************************************************************** //
+    
+    
 
-    //  mode handlers
+    // *************************************************************************** //
+    //      PRIMARY STATE HANDLERS.         |   "editor.cpp" ...
+    // *************************************************************************** //
     void                        _handle_default                 (const Interaction & );
     void                        _handle_line                    (const Interaction & );
     void                        _handle_point                   (const Interaction & );
-    
-    //  pen tool stuff...
     void                        _handle_pen                     (const Interaction & );
     //
-    // ───────── Pen–tool helpers ───────────────────────────────
+    //
+    // *************************************************************************** //
+    //      BROWSER STUFF.                  |   "browser.cpp" ...
+    // *************************************************************************** //
+    void                        _draw_point_list_column         (void);
+    void                        _draw_point_inspector_column    (void);
+    //
+    //
+    // *************************************************************************** //
+    //      PEN-TOOL STUFF.                 |   "pen_tool.cpp" ...
+    // *************************************************************************** //
     bool                        _pen_cancel_if_escape           (const Interaction & );
     bool                        _pen_try_begin_handle_drag      (const Interaction & );
     void                        _pen_update_handle_drag         (const Interaction & );
     void                        _pen_begin_path_if_click_empty  (const Interaction & );
     void                        _pen_append_or_close_live_path  (const Interaction & );
     //
-    static constexpr ImU32      PEN_ANCHOR_COL                  = IM_COL32(255,200,0,255);
-    static constexpr float      PEN_ANCHOR_RADIUS               = 5.0f;
-    static constexpr int        ms_BEZIER_SEGMENTS              = 0;
-    static constexpr int        ms_BEZIER_HIT_STEPS             = 20;
-    
-    
-    
-    
-    //  browser functions
-    void                        _draw_point_list_column         (void);
-    void                        _draw_point_inspector_column    (void);
-    
     //
-    //  2.B             NEW STUFF...
     // *************************************************************************** //
+    //      RENDERING FUNCTIONS.            |   "render.cpp" ...
+    // *************************************************************************** //
+    void                        _draw_grid                      (ImDrawList*, const ImVec2&, const ImVec2 &) const;
+    //
+    //                      RENDERING INTERACTIBLES:
     void                        _draw_paths                     (ImDrawList*, const ImVec2&) const;
-    
-    
+    void                        _draw_lines                     (ImDrawList*, const ImVec2&) const;
+    void                        _draw_points                    (ImDrawList*,const ImVec2&) const;
+    //
+    //
+    // *************************************************************************** //
+    //      SELECTION MECHANICS.            |   "selection.cpp" ...
+    // *************************************************************************** //
+    int                         _hit_point                      (const Interaction&) const;
+    std::optional<Hit>          _hit_any                        (const Interaction&) const;
+    //
+    void                        _process_selection              (const Interaction&);
+    void                        _update_cursor_select           (const Interaction&) const;
+    void                        _rebuild_vertex_selection       (void);   // decl
+    //
+    void                        _draw_selection_overlay         (ImDrawList*, const ImVec2&) const;
+    //
+    bool                        _selection_bounds               (ImVec2& tl, ImVec2& br) const;
+    void                        _draw_selected_handles          (ImDrawList*, const ImVec2&) const;
+    void                        _draw_selection_bbox            (ImDrawList*, const ImVec2&) const;
+    //
+    //                      BOUNDING BOX MECHANICS:
+    void                        _start_bbox_drag                (uint8_t handle_idx, const ImVec2& tl, const ImVec2& br);
+    //
+    //
+    // *************************************************************************** //
+    //      UTILITIES.                      |   "utility.cpp" ...
+    // *************************************************************************** //
+    Pos *                       find_vertex                     (std::vector<Pos> & , uint32_t);
+    const Pos *                 find_vertex                     (const std::vector<Pos> & , uint32_t) const;
+    //
+    //                      DATA MODIFIER UTILITIES:
+    uint32_t                    _add_vertex                     (ImVec2 w);
+    void                        _add_point                      (ImVec2 w);
+    void                        _erase_vertex_and_fix_paths     (uint32_t vid);
+    //
+    //                      MISC. UTILITIES:
+    void                        _draw_controls                  (const ImVec2&);
+    void                        _clear_all                      (void);
 
+
+
+    // *************************************************************************** //
+    //
+    //
     //  2.C             INLINE FUNCTIONS...
+    // *************************************************************************** //
     // *************************************************************************** //
     
     //  capability query
     inline bool                 _mode_has                       (Capability cap) const {
         return MODE_CAPS[static_cast<size_t>(m_mode)] & cap;
     }
-    
-    Pos *                       find_vertex                     (std::vector<Pos> & , uint32_t);
-    const Pos *                 find_vertex                     (const std::vector<Pos> & , uint32_t) const;
-    
-
-
-    //  2.D             PROTECTED UTILITY FUNCTIONS...
-    // *************************************************************************** //
-
-    //  helpers
-    uint32_t                    _add_vertex                     (ImVec2 w);
-    void                        _add_point                      (ImVec2 w);
-
-    int                         _hit_point                      (const Interaction&) const;
-    std::optional<Hit>          _hit_any                        (const Interaction&) const;
-
-    void                        _process_selection              (const Interaction&);
-    void                        _update_cursor_select           (const Interaction&) const;
-
-    void                        _draw_selection_overlay         (ImDrawList*, const ImVec2&) const;
-    void                        _draw_grid                      (ImDrawList*, const ImVec2&, const ImVec2&) const;
-    void                        _draw_lines                     (ImDrawList*, const ImVec2&) const;
-    void                        _draw_points                    (ImDrawList*,const ImVec2&) const;
-    void                        _draw_controls                  (const ImVec2&);
-    void                        _clear_all                      (void);
     //
-    bool                        _selection_bounds               (ImVec2& tl, ImVec2& br) const;
-    void                        _rebuild_vertex_selection       (void);   // decl
+    //
+    //
+    // *************************************************************************** //
+    // *************************************************************************** //   END INLINE FUNCITONS...
+
 
 
     // *************************************************************************** //
@@ -228,7 +253,7 @@ private:
     std::string                 WinInfo_uuid                    = "Editor Browser";
     ImGuiWindowFlags            WinInfo_flags                   = ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY;
     bool                        WinInfo_open                    = true;
-    ImGuiWindowClass            m_window_class; 
+    ImGuiWindowClass            m_window_class;
     //
     ImGuiTextFilter             m_browser_filter;                           // search box text filter
     int                         m_browser_anchor                = -1;       // anchor index for Shift‑range select
@@ -239,6 +264,7 @@ private:
     std::vector<Line>           m_lines;
     std::vector<Path>           m_paths;                       // new path container
     PenState                    m_pen;
+    BoxDrag                     m_boxdrag;
 
 
     Selection                   m_sel;
@@ -260,6 +286,32 @@ private:
     // --- pending click selection state ---
     std::optional<Hit>          m_pending_hit;   // candidate under mouse when button pressed
     bool                        m_pending_clear                 = false;
+    //
+    //
+    //
+    //      STATIC / CONSTANTS...
+    // *************************************************************************** //
+    // *************************************************************************** //
+    static constexpr ImU32      PEN_ANCHOR_COL                  = IM_COL32(255, 200, 0, 255);
+    static constexpr float      PEN_ANCHOR_RADIUS               = 5.0f;
+    static constexpr int        ms_BEZIER_SEGMENTS              = 0;
+    static constexpr int        ms_BEZIER_HIT_STEPS             = 20;
+
+    static constexpr ImU32      ms_HANDLE_COL                   = IM_COL32(255, 215, 0, 255);   //  gold
+    static constexpr float      ms_HANDLE_SIZE                  = 3.0f;                         //  px half-side
+    static constexpr ImU32      SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 255);   //  cyan-blue
+    static constexpr float      SELECTION_BBOX_TH               = 1.5f;
+    
+    //  BOUNDING BOX...
+    // ── Bounding-box interaction (stage 1) ────────────────────────────────
+    static constexpr float      HANDLE_BOX_SIZE                 = 4.0f;                         //  px half-side
+    static constexpr ImU32      HANDLE_COL                      = IM_COL32(0, 180, 255, 255);   //  cyan
+    static constexpr ImU32      HANDLE_HOVER_COL                = IM_COL32(255, 255, 0, 255);   //  yellow
+    mutable int                 m_hover_handle                  = -1;                           //  -1 = none, 0-7 otherwise (corners+edges)
+
+
+
+// *************************************************************************** //
 //
 //
 //

@@ -74,8 +74,12 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  CBAPP_CBLIB_TYPES_API           //  BRING-IN TYPENAME ALIASES FOR TYPES DEFINED IN "CBLIB".
+
 struct Playback {
-    utl::Param<ImU64>       frame;
+    CBAPP_CBLIB_TYPES_API           //  BRING-IN TYPENAME ALIASES FOR TYPES DEFINED IN "CBLIB".
+//
+    Param<ImU64>       frame;
     float                   fps;
 //
     bool                    ready           = false;
@@ -114,39 +118,13 @@ public:
 
 // *************************************************************************** //
 // *************************************************************************** //
-protected:
-    //  2.A             PROTECTED DATA-MEMBERS...
+
     // *************************************************************************** //
-    
-    //  MISC CONSTANT VALUES...
-    float                                           ms_SPACING                      = 60.0f;
-    ImVec2                                          ms_COLLAPSE_BUTTON_SIZE         = ImVec2{15,    15};
-    
-    //  INDIVIDUAL PLOT STUFF...
-    float                                           ms_I_PLOT_COL_WIDTH             = 80.0f;
-    
-    //  MISC APPLICATION STUFF...
-    bool                                            m_initialized                   = false;
-    bool                                            m_rebuild_dockspace             = false;
-    
-    //  VARIOUS FLAGS...
-    ImPlotLineFlags                                 m_channel_flags                 = ImPlotLineFlags_None | ImPlotLineFlags_Shaded;
-    ImPlotAxisFlags                                 m_plot_flags                    = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
-    ImPlotFlags                                     m_mst_PLOT_flags                = ImPlotFlags_None | ImPlotFlags_NoTitle;
-    ImPlotAxisFlags                                 m_mst_plot_flags                = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoSideSwitch;
-    ImPlotAxisFlags                                 m_mst_xaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
-    ImPlotAxisFlags                                 m_mst_yaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
-    
-    ImPlotLocation                                  m_mst_legend_loc                = ImPlotLocation_NorthWest;                                                 // legend position.
-    ImPlotLegendFlags                               m_mst_legend_flags              = ImPlotLegendFlags_None | ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
-    //
-    //
-    //
     //  2.B             FDTD TYPENAME ALIASES...
     // *************************************************************************** //
 protected:
     static constexpr size_t                         NX                              = 401ULL;
-    static constexpr std::size_t                    NT                              = 100ULL;
+    static constexpr size_t                         NT                              = 100ULL;
 //
 public:
     using                                           value_type                      = double;
@@ -159,41 +137,36 @@ public:
 	using 	                                        im_frame 		                = FDTD_t::im_frame;
     //
     //
+    //
+    // *************************************************************************** //
     //  2.C             FDTD DATA MEMBERS...
     // *************************************************************************** //
  protected:
     //                                  0.1     MISC FDTD STUFF...
+    Playback			                            m_playback                      = {     { 0, { 0, NT-1 } },     120.0f      };
     std::atomic<bool>                               data_ready                      = std::atomic<bool>(false);
     std::once_flag                                  init_once;
     //
-    Playback			                            m_playback                      = {     { 0, { 0, NT-1 } },
-                                                                                            120.0f
-                                                                                    };
-    bool                                            playing                         = false;      // start paused
-    float                                           playback_fps                    = 120.0f;
-    double                                          last_time                       = 0.0;
-    int                                             current_frame                   = 0;
     //
     //                                  0.2     FDTD DATA-MEMBERS STUFF...
     fdtd::StepSizes<double>                         m_stepsizes                     = {
-                                                        { 1.0f,     { 1e-9f,     10.0f}     },      //  dx
-                                                        { 1.0f,     { 1e-9f,     10.0f}     },      //  dy
-                                                        { 1.0f,     { 1e-9f,     10.0f}     },      //  dz
-                                                        { 1.0f,     { 1e-9f,     10.0f}     },      //  dt
-                                                        { 1.0f,     { 0.0f,       2.0f}     },      //  Sc
-                                                    };
-    //
+        { 1.0f,             { 1e-9f,            10.0f}     },                               //  dx
+        { 1.0f,             { 1e-9f,            10.0f}     },                               //  dy
+        { 1.0f,             { 1e-9f,            10.0f}     },                               //  dz
+        { 1.0f,             { 1e-9f,            10.0f}     },                               //  dt
+        { 1.0f,             { 0.0f,              2.0f}     },                               //  Sc
+    };
     fdtd::Steps<ImU64>                              m_steps                         = {
-                                                        //{ 200,      { 1,        1000}       },    //  NX
-                                                        { 10,       { 1,        1000}       },      //  NX
-                                                        { 5,        { 1,        1000}       },      //  NY
-                                                        { 1,        { 1,        1000}       },      //  NZ
-                                                        { 400,      { 1,        2000}       }       //  NT
-                                                    };
+        //{ 200,      { 1,        1000}       },                                            //  [OLD] NX
+        { 10,               { 1,        1000}               },                              //  NX
+        { 5,                { 1,        1000}               },                              //  NY
+        { 1,                { 1,        1000}               },                              //  NZ
+        { 400,              { 1,        2000}               }                               //  NT
+    };
     fdtd::Parameters<ImU64, double>                 m_params                        = {
-                                                        { 20,       { 1,         100}       },      //  Wavelength
-                                                        { 8,        { 1,         500}       },      //  Duration
-                                                    };
+        { 20,               { 1,         100}               },                              //  Wavelength
+        { 8,                { 1,         500}               },                              //  Duration
+    };
     //
     FDTD_t                                          ms_model                        = cb::FDTD_1D<NX, NT, double>();
     NEW_FDTD_t		                                ms_simulation                   = NEW_FDTD_t();
@@ -207,55 +180,27 @@ public:
     //      ARRAY INDEX [ 1 ]       =   CONTROL WINDOW...
     //
     //  *************************************************************************** //
-    //                                          1.  APPEARANCE CONSTANTS...
-    const float                                     m_child_corner_radius           = 5.0f;
-    std::pair<int,int>                              m_HEIGHT_LIMITS[2]              = { { 30, 30 }, { 5, 5 } };
+    //                                          1.  MISC APPLICATION STUFF...
+    bool                                            m_initialized                   = false;
+    bool                                            m_running                       = false;
     //
     //
     //                                          2.  CHILDREN PARAMETERS...
-    bool                                            m_child_open[2]                 = {true, true};
-    std::array< const char *, 2 >                   m_child_ids                     = { "PlotChild",            "ControlChild" };
-    ImGuiChildFlags                                 m_child_flags[2]                = {
-                                                        ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
-                                                        ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY
-                                                    };
-    app::WinInfo                                         m_detview_window                = {
+    app::WinInfo                                    m_detview_window                = {
                                                         "ControlChild",
                                                         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
                                                         true,
                                                         nullptr
                                                     };
-    //
     std::array< const char *, 2 >                   m_tabbar_uuids                  = { "PlotTabBar##GApp",     "PlotTabBar##GApp" };
     ImGuiTabBarFlags                                m_tabbar_flags[2]               = {
                                                         ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_TabListPopupButton,
                                                         ImGuiTabBarFlags_None | ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyResizeDown | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton
                                                     };
-    
-    
-    //                                          3.  SUBSIDIARY WINDOWS...
-    ImVec2                                          m_ctrl_size                     = ImVec2(-1, -1);
-    std::array< const char *, 2 >                   m_win_uuids                     = { "Visuals",              "Controls" };
-    ImGuiWindowFlags                                m_docked_win_flags[2]           = {
-                                                        ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus,    // ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground,
-                                                        ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus     //  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground
-                                                    };
-    
-    
-    //                                          3.  DOCKING SPACE...
-    //
-    //                                              Main Dockspace:
-    float                                           m_dockspace_ratio               = 0.85f;
-    static constexpr const char *                   m_dockspace_name                = "DockHostSpace##GApp";
-    ImGuiDockNodeFlags                              m_dockspace_flags               = ImGuiDockNodeFlags_None;
-    ImGuiID                                         m_dockspace_id                  = 0;
     ImGuiWindowClass                                m_window_class[2]               = {};
     //
-    //      Nested Dockspaces:
-    ImGuiID                                         m_dock_ids[2]                   = { 0, 0 };
-    
-    
-    //                                          4.  IMPORTANT DATA...
+    //
+    //                                          4.  IMPORTANT APPLICATION DATA...
     std::vector<Tab_t>                              ms_PLOT_TABS                    = {};
     std::vector<Tab_t>                              ms_CTRL_TABS                    = {};
     //
@@ -272,18 +217,12 @@ public:
     std::vector<utl::WidgetRow>                     ms_SOURCES_ROWS                 = {};
     std::vector<utl::WidgetRow>                     ms_EDITOR_ROWS                  = {};
     std::vector<utl::WidgetRow>                     ms_PLAYBACK_ROWS                = {};
-    
-    
-    //                                          5.  WIDGET VARIABLES...
-    bool                                            m_running                       = false;
-    
+    //
+    //
     //                                          6.  PLOTTING STUFF...
-    static constexpr size_t                         m_NUM_COLORS                    = 3;
-    std::vector<ImVec4>                             m_plot_colors                   = std::vector<ImVec4>(m_NUM_COLORS);
-    
-    
+    //
+    //
     //                                          7.  DELAGATOR CLASSES...
-    cb::HeatMap                                     m_heatmap;
     utl::PlotCFG                                    fdtd_1D_time_cfg                = {
         {   "##1DFDTDTimePlot",         ImVec2(-1, -1),     ImPlotFlags_None | ImPlotFlags_NoTitle  },
         {
@@ -322,12 +261,17 @@ public:
             nullptr,        "Epsilon-r '' ",        "%.2f",                     120.0f
         }
     };
+    //
+    //
     SketchWidget                                    m_editor                        = SketchWidget( editor_cfg, std::move(m_channels) );//m_channels);
     app::AppState                                   CBAPP_STATE_NAME;
     
         
-    
-    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
     //  2.B             PROTECTED MEMBER FUNCTIONS...
     // *************************************************************************** //
     
@@ -369,7 +313,6 @@ public:
     
     
     //  2C.1            Utility Functions...
-    void                RebuildDockspace                (void);
     void                AddNewPlotTab                   (void);
     void                AddNewCtrlTab                   (void);
     void                DefaultPlotTabRenderFunc        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);

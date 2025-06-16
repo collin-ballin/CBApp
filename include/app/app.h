@@ -33,6 +33,7 @@
 #include "app/state/_state.h"
 //
 #include "app/c_counter/c_counter.h"        //  Seperate Application Classes.
+#include "app/editor_app/editor_app.h"
 #include "app/graph_app/graph_app.h"
 //
 #include "app/delegators/_menubar.h"        //  Delegator Classes.
@@ -168,6 +169,7 @@ protected:
     //                  9.  APPLICATION SUB-CLASSES...
     CCounterApp         m_counter_app;
 #ifndef __CBAPP_DISABLE_FDTD__
+    EditorApp           m_editor_app;
     GraphApp            m_graph_app;
 #endif  //  __CBAPP_DISABLE_FDTD__  //
 #ifdef CBAPP_ENABLE_CB_DEMO
@@ -180,8 +182,7 @@ protected:
         m_editor.WinInfo_uuid,
         m_editor.WinInfo_flags,
         m_editor.WinInfo_open,
-        std::bind_front( &Editor::DrawPointBrowser, &this->m_editor )
-        //nullptr //m_editor.DrawPointBrowser()
+        std::bind_front( &Editor::DrawBrowser_Window, &this->m_editor )
     });
     
     
@@ -204,6 +205,7 @@ protected:
     
     //  2C.1            Main GUI Functions.                 [app.cpp]...
     void                ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                MaintainDockspace           (void);
     void                ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     //

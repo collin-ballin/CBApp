@@ -43,27 +43,11 @@ void CCounterApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
     
     //  2.  CREATE TOP WINDOW FOR PLOTS...
     if (m_detview_window.open) {
-        ImGui::SetNextWindowClass(&this->m_window_class[1]);
+        //ImGui::SetNextWindowClass(&this->m_window_class[1]);
         ImGui::Begin( m_detview_window.uuid.c_str(), nullptr, m_detview_window.flags );
             this->display_controls();
         ImGui::End();
     }
-    
-    
-
-    //  //  3.  CREATE BOTTOM WINDOW FOR CONTROLS...
-    //  if (m_child_open[1]) {
-    //      ImGui::SetNextWindowClass(&this->m_window_class[1]);
-    //      ImGui::PushStyleColor(ImGuiCol_WindowBg, app::DEF_LIVE_DARKBLUE);
-    //      ImGui::Begin(m_win_uuids[1], nullptr, m_docked_win_flags[1]);
-    //          this->display_controls();
-    //      ImGui::End();
-    //      ImGui::PopStyleColor();
-    //  }
-    
-    
-    
-    
 
     
     return;
@@ -80,7 +64,6 @@ void CCounterApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 //  2.      PROTECTED MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-
 
 //  "display_plots"
 //
