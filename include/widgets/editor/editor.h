@@ -95,9 +95,24 @@ static inline ImVec2 cubic_eval(const Vertex * a, const Vertex* b, float t)
              w0*P0.y + w1*P1.y + w2*P2.y + w3*P3.y };
 }
 
-static inline ImVec4 u32_to_f4(ImU32 c) { return ImGui::ColorConvertU32ToFloat4(c); }
+static bool point_in_polygon(const std::vector<ImVec2>& poly, ImVec2 p)
+{
+    bool inside = false;
+    const size_t n = poly.size();
+    for (size_t i = 0, j = n - 1; i < n; j = i++)
+    {
+        bool intersect = ((poly[i].y > p.y) != (poly[j].y > p.y)) &&
+                         (p.x < (poly[j].x - poly[i].x) * (p.y - poly[i].y) /
+                                 (poly[j].y - poly[i].y + 1e-6f) + poly[i].x);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
 
-static inline ImU32  f4_to_u32(ImVec4 f){ return ImGui::ColorConvertFloat4ToU32(f); }
+
+static inline ImVec4 u32_to_f4(ImU32 c)     { return ImGui::ColorConvertU32ToFloat4(c); }
+
+static inline ImU32  f4_to_u32(ImVec4 f)    { return ImGui::ColorConvertFloat4ToU32(f); }
 
 
 
@@ -108,20 +123,21 @@ static inline ImU32  f4_to_u32(ImVec4 f){ return ImGui::ColorConvertFloat4ToU32(
 //                 Editor Widget for Dear ImGui.
 // *************************************************************************** //
 // *************************************************************************** //
-
+       
 //  "Editor"
 //
 class Editor {
 public:
         friend class            App;
         using                   Pos                             = Vertex;
+        using                   EndpointInfo                    = EndpointInfo;
 //      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 //
 //
 // *************************************************************************** //
 // *************************************************************************** //
     static constexpr std::array<const char*, static_cast<size_t>(Mode::Count)>
-                                ms_MODE_LABELS                  = { "Default", "Line", "Point", "Pen" };
+                                ms_MODE_LABELS                  = DEF_EDITOR_STATE_NAMES;
     static constexpr float      ms_LIST_COLUMN_WIDTH            = 240.0f;   // px width of point‑list column
 
 
@@ -157,6 +173,9 @@ private:
     void                        _handle_line                    (const Interaction & );
     void                        _handle_point                   (const Interaction & );
     void                        _handle_pen                     (const Interaction & );
+    void                        _handle_scissor                 (const Interaction & );
+    void                        _handle_add_anchor              (const Interaction & );
+    void                        _handle_remove_anchor           (const Interaction & );
     //
     //
     // *************************************************************************** //
@@ -181,6 +200,11 @@ private:
     inline bool                 _pen_click_hits_first_vertex    (const Interaction &, const Path &) const;
     void                        _pen_append_or_close_live_path  (const Interaction & );
     //
+    std::optional<size_t>       _path_idx_if_last_vertex        (uint32_t vid) const;
+    inline bool                 _can_join_selected_path         (void) const;
+    void                        _join_selected_open_path        (void);
+    void                        _draw_pen_cursor                (const ImVec2 &, ImU32);
+    //
     //
     // *************************************************************************** //
     //      RENDERING FUNCTIONS.            |   "render.cpp" ...
@@ -204,6 +228,7 @@ private:
     // *************************************************************************** //
     int                         _hit_point                      (const Interaction & ) const;
     std::optional<Hit>          _hit_any                        (const Interaction & ) const;
+    std::optional<PathHit>      _hit_path_segment               (const Interaction & ) const;
     //
     void                        _process_selection              (const Interaction & );
     void                        _update_cursor_select           (const Interaction & ) const;
@@ -225,13 +250,17 @@ private:
     // *************************************************************************** //
     Pos *                       find_vertex                     (std::vector<Pos> & , uint32_t);
     const Pos *                 find_vertex                     (const std::vector<Pos> & , uint32_t) const;
+    std::optional<EndpointInfo> _endpoint_if_open               (uint32_t vid) const;
     //
     //                      DATA MODIFIER UTILITIES:
+    void                        _add_point_glyph                (uint32_t vid);
     uint32_t                    _add_vertex                     (ImVec2 w);
     void                        _add_point                      (ImVec2 w);
     void                        _erase_vertex_and_fix_paths     (uint32_t vid);
+    void                        _erase_path_and_orphans         (size_t vid);
     //
     //                      APP UTILITY OPERATIONS:
+    void                        _scissor_cut                    (const PathHit & );
     void                        _start_lasso_tool               (void);
     void                        _update_lasso                   (const Interaction & );
     //
@@ -394,6 +423,13 @@ private:
     static constexpr float      ms_CHILD_BORDER2                = 1.0f;
     static constexpr float      ms_CHILD_ROUND1                 = 8.0f;
     static constexpr float      ms_CHILD_ROUND2                 = 4.0f;
+    //
+    //      Pen-Tool Cursor Stuff.
+    static constexpr float      PEN_RING_RADIUS                 = 6.0f;                         // px
+    static constexpr float      PEN_RING_THICK                  = 1.5f;                         // px
+    static constexpr float      PEN_DOT_RADIUS                  = 2.0f;                         // px
+    static constexpr ImU32      PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);      // yellow
+    static constexpr ImU32      PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);      // green
 
 
 

@@ -358,8 +358,9 @@ void Editor::_draw_single_path_inspector(void)
     //  1.  HEADER-ENTRY AND "DELETE" BUTTON...
     ImGui::Text("Object %zu  (%zu vertices)", pidx, path.verts.size());
     ImGui::SameLine();
-    if ( ImGui::Button("Delete Object") ) {
-        m_paths.erase(m_paths.begin() + static_cast<long>(pidx));
+    if (ImGui::Button("Delete Object"))
+    {
+        _erase_path_and_orphans(pidx);   // ← replaces direct m_paths.erase()
         m_sel.clear();
         m_inspector_vertex_idx = -1;
         return;
@@ -379,7 +380,7 @@ void Editor::_draw_single_path_inspector(void)
         utl::LeftLabel("Stroke:");          ImGui::SameLine();
         stroke_dirty                        = ImGui::ColorEdit4( "##Stroke",    (float*)&stroke_f,  COLOR_FLAGS );
         //
-        ImGui::BeginDisabled( is_area );
+        ImGui::BeginDisabled( !is_area );
             utl::LeftLabel("Fill:");        ImGui::SameLine();
             fill_dirty                      = ImGui::ColorEdit4( "##Fill",      (float*)&fill_f,    COLOR_FLAGS );
         ImGui::EndDisabled();

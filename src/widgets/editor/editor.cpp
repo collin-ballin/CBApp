@@ -91,15 +91,21 @@ void Editor::Begin(const char * id)
 
     //  2.  LOCAL HOT KEYS --- Only active when cursor is over the canvas area...
     //
-    if (hovered) {
+    if (hovered)
+    {
         const bool no_mod = !io.KeyCtrl && !io.KeyShift && !io.KeyAlt && !io.KeySuper;
-        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_V) )
-            m_mode = Mode::Default;
-        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_N) )
-            m_mode = Mode::Point;
-        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_P) )
-            m_mode = Mode::Pen;
+        
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_V) )        { m_mode = Mode::Default;           }
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_N) )        { m_mode = Mode::Point;             }
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_P) )        { m_mode = Mode::Pen;               }
+        //
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_C) )        { m_mode = Mode::Scissor;           }
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_Equal) )    { m_mode = Mode::AddAnchor;         }
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_Minus) )    { m_mode = Mode::RemoveAnchor;      }
     }
+    
+    if ( m_mode != Mode::Pen )  m_pen = {};          // clears active/dragging state
+
 
     ImVec2          origin          = { m_p0.x + m_scroll.x, m_p0.y + m_scroll.y };
     ImVec2          mouse_canvas    = { io.MousePos.x - origin.x, io.MousePos.y - origin.y };
@@ -112,12 +118,16 @@ void Editor::Begin(const char * id)
     if ( !space && _mode_has(Cap_Select) )
         _update_cursor_select(it);
 
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J))
+        _join_selected_open_path();
+
 
 
     //  4.  PAN NAVIGATOR WHEN USER IS HOLDING DOWN "SPACE" BAR...
     //
     if ( space && hovered )
-        ImGui::SetMouseCursor(ImGui::IsMouseDown(ImGuiMouseButton_Left) ? ImGuiMouseCursor_ResizeAll : ImGuiMouseCursor_Hand);
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+
 
 
     //  5.  HANDLE "PANNING" IF USER (1) HOLDS SPACE KEY (2) CLICKS-AND-DRAGS WITH LMB...
@@ -127,31 +137,36 @@ void Editor::Begin(const char * id)
         _clamp_scroll();
     }
 
-    // Global selection / drag (unless Space held or mode opts out)
+    //  Global selection / drag (unless Space held or mode opts out)
     if ( !space && _mode_has(Cap_Select) )
         _process_selection(it);
 
 
 
-    // Mode‑specific processing (skip while panning)
+    //  MODE DISPATCHER (Mode‑specific processing---skip while panning)...
     if ( !(space && ImGui::IsMouseDown(ImGuiMouseButton_Left)) )
     {
-        switch (m_mode)
-        {
-            case Mode::Default:     _handle_default(it);    break;
-            case Mode::Line:        _handle_line(it);       break;
-            case Mode::Point:       _handle_point(it);      break;
-            case Mode::Pen:         _handle_pen(it);        break;
+        switch (m_mode) {
+            case Mode::Default:         this->_handle_default           (it);       break;
+            case Mode::Line:            this->_handle_line              (it);       break;
+            case Mode::Point:           this->_handle_point             (it);       break;
+            case Mode::Pen:             this->_handle_pen               (it);       break;
+            case Mode::Scissor:         this->_handle_scissor           (it);       break;
+            case Mode::AddAnchor:       this->_handle_add_anchor        (it);       break;
+            case Mode::RemoveAnchor:    this->_handle_remove_anchor     (it);       break;
+            //
             default: break;
         }
     }
+
+    //  PEN TOOL CURSOR...
+    //if ( m_mode == Mode::Pen && it.hovered && !space )
+    //    _draw_pen_cursor(it);
 
 
 
     // ------------------ Rendering ------------------
     dl->PushClipRect(m_p0, m_p1, true);
-    //if (m_show_grid) _draw_grid(dl, m_p0, m_avail);
-    //
     _grid_handle_shortcuts();         // adjust step if hot-key pressed
     _grid_draw(dl, m_p0, m_avail);    // draw if visible
 
@@ -281,15 +296,46 @@ void Editor::_handle_line(const Interaction& it)
 //
 void Editor::_handle_point(const Interaction& it)
 {
-    if (it.space) return;
+    // handle-drag branch (unchanged)
+    if (m_pen.dragging_handle) {
+        _pen_update_handle_drag(it);
+        return;
+    }
 
-    ImVec2 w = { it.canvas.x / m_zoom, it.canvas.y / m_zoom };
-
-    if (it.hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    // ── Click logic ──────────────────────────────────────────────────────
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && it.hovered)
     {
-        // global selection already ran; only add a new point if click hit nothing
-        if (!_hit_any(it))
-            _add_point(w);
+        // (A) If a path is already live → append / close as usual
+        if (m_pen.active) {
+            _pen_append_or_close_live_path(it);
+            return;
+        }
+
+        // (B) No live path: did we click on an existing point?
+        int pi = _hit_point(it);
+        if (pi >= 0) {
+            uint32_t vid = m_points[pi].v;
+            if (auto idx = _path_idx_if_last_vertex(vid)) {
+                // Continue that path on the NEXT click
+                m_pen.active     = true;
+                m_pen.path_index = *idx;
+                m_pen.last_vid   = vid;
+                return;          // wait for next click to add a vertex
+            }
+        }
+
+        // (C) Otherwise start a brand-new path
+        ImVec2 ws{ it.canvas.x / m_zoom, it.canvas.y / m_zoom };
+        uint32_t vid = _add_vertex(ws);
+        _add_point_glyph(vid);
+
+        Path p;
+        p.verts.push_back(vid);
+        m_paths.push_back(std::move(p));
+
+        m_pen.active     = true;
+        m_pen.path_index = m_paths.size() - 1;
+        m_pen.last_vid   = vid;
     }
 }
 
@@ -298,37 +344,105 @@ void Editor::_handle_point(const Interaction& it)
 //
 void Editor::_handle_pen(const Interaction & it)
 {
-    if (it.space) return;                           // ignore while panning
-
-    // 0) Highest-priority: cancel key
-    if (_pen_cancel_if_escape(it))
+    // Abort current path on ESC
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+        m_pen = {};
         return;
+    }
 
-    // 1) If we're already dragging a handle, update & early-out
-    if (m_pen.dragging_handle)
-    {
+    // Handle-drag (unchanged)
+    if (m_pen.dragging_handle) {
         _pen_update_handle_drag(it);
         return;
     }
 
-    // 2) Start handle-drag on Alt-click (returns true if it consumed the click)
-    if (_pen_try_begin_handle_drag(it))
-        return;
+    // Hover test for extendable endpoint
+    bool can_extend_here = false;
+    int  point_idx = _hit_point(it);
+    uint32_t end_vid = 0;
+    size_t   end_path = static_cast<size_t>(-1);
 
-    // 3) Mouse-click logic for creating / extending / closing a path
-    if (it.hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-    {
-        if (!m_pen.active)
-            _pen_begin_path_if_click_empty(it);
-        else
-            _pen_append_or_close_live_path(it);
+    if (point_idx >= 0) {
+        end_vid = m_points[point_idx].v;
+        if (auto idx = _path_idx_if_last_vertex(end_vid)) {
+            can_extend_here = true;
+            end_path = *idx;
+        }
     }
-    
-    return;
+
+    // Cursor hint (green if extendable, else yellow)
+    if (it.hovered && !it.space) {
+        ImVec2 mouse_screen = ImGui::GetIO().MousePos;
+        _draw_pen_cursor(mouse_screen,
+                         can_extend_here ? PEN_COL_EXTEND : PEN_COL_NORMAL);
+    }
+
+    // Click handling (unchanged logic but colour consts removed)
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && it.hovered)
+    {
+        if (can_extend_here && !m_pen.active) {
+            m_pen.active     = true;
+            m_pen.path_index = end_path;
+            m_pen.last_vid   = end_vid;
+            return;                 // wait for next click to extend
+        }
+
+        if (m_pen.active) {
+            _pen_append_or_close_live_path(it);
+            return;
+        }
+
+        // Start new path
+        ImVec2 ws{ it.canvas.x / m_zoom, it.canvas.y / m_zoom };
+        uint32_t vid = _add_vertex(ws);
+        _add_point_glyph(vid);
+
+        Path p;
+        p.verts.push_back(vid);
+        m_paths.push_back(std::move(p));
+
+        m_pen.active     = true;
+        m_pen.path_index = m_paths.size() - 1;
+        m_pen.last_vid   = vid;
+    }
 }
 
 
 
+//  "_handle_scissor"
+//
+void Editor::_handle_scissor(const Interaction & it)
+{
+    if (!it.hovered) return;
+
+    // test once per frame
+    std::optional<PathHit> hit = _hit_path_segment(it);
+
+    // cursor hint (vertical beam) whenever a cut location is valid
+    if (hit) ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
+
+    // left-click performs the cut
+    if (hit && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        _scissor_cut(*hit);
+        
+    return;
+}
+
+
+//  "_handle_add_anchor"
+//
+void Editor::_handle_add_anchor(const Interaction & it)
+{
+    return;
+}
+
+
+//  "_handle_remove_anchor"
+//
+void Editor::_handle_remove_anchor(const Interaction & it)
+{
+    return;
+}
 
 
 

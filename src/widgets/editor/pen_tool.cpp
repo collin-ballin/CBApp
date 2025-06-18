@@ -117,7 +117,7 @@ void Editor::_pen_begin_path_if_click_empty(const Interaction & it)
     Path p; p.verts = { vid }; p.closed = false;
     m_paths.push_back(std::move(p));
 
-    m_pen = { true, m_paths.size()-1, vid, false, 0 };
+    m_pen = { true, m_paths.size() - 1, vid, false, 0, false };
 }
 
 
@@ -172,10 +172,23 @@ void Editor::_pen_append_or_close_live_path(const Interaction & it)
     }
 
     // 3. add a new vertex (as before)
-    uint32_t vid = _add_vertex(w);
-    m_points.push_back({ vid, { PEN_ANCHOR_COL, PEN_ANCHOR_RADIUS, true } });
-    p.verts.push_back(vid);
-    m_pen.last_vid = vid;
+    //  uint32_t vid = _add_vertex(w);
+    //  m_points.push_back({ vid, { PEN_ANCHOR_COL, PEN_ANCHOR_RADIUS, true } });
+    //  p.verts.push_back(vid);
+    //  m_pen.last_vid = vid;
+    
+    //  3.   NEW ADDING VERTEX POLICY...
+    uint32_t new_vid = _add_vertex(w);
+    _add_point_glyph(new_vid);
+
+    if (m_pen.prepend)
+        p.verts.insert(p.verts.begin(), new_vid);  // add to front
+    else
+        p.verts.push_back(new_vid);                // add to back
+
+    m_pen.last_vid = new_vid;
+    
+    return;
 }
 
 
@@ -184,11 +197,68 @@ void Editor::_pen_append_or_close_live_path(const Interaction & it)
 
 
 
+// *************************************************************************** //
+//
+//
+//  PEN TOOL UTILITIES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_path_idx_if_last_vertex"
+//
+std::optional<size_t> Editor::_path_idx_if_last_vertex(uint32_t vid) const
+{
+    for (size_t i = 0; i < m_paths.size(); ++i)
+        if (!m_paths[i].closed && !m_paths[i].verts.empty() &&
+            m_paths[i].verts.back() == vid)
+            return i;
+    return std::nullopt;
+}
 
 
+//  "_can_join_selected_path"
+//
+inline bool Editor::_can_join_selected_path(void) const
+{
+    return m_sel.paths.size() == 1
+        && *m_sel.paths.begin() < m_paths.size()
+        && !m_paths[*m_sel.paths.begin()].closed;
+}
 
 
+//  "_join_selected_open_path"
+//      Join the single selected path back onto itself (Ctrl+J command)
+//
+void Editor::_join_selected_open_path(void)
+{
+    if (!_can_join_selected_path()) return;
 
+    size_t idx = *m_sel.paths.begin();
+    Path&  p   = m_paths[idx];
+
+    if (p.verts.size() < 2) return;        // need at least a segment
+
+    p.closed = true;
+
+    // optional: give a faint default fill so the user sees area immediately
+    if ((p.style.fill_color & 0xFF000000) == 0) {
+        ImVec4 f = ImGui::ColorConvertU32ToFloat4(p.style.stroke_color);
+        f.w = 0.25f;                       // 25 % opacity
+        p.style.fill_color = ImGui::ColorConvertFloat4ToU32(f);
+    }
+}
+
+
+//  "_draw_pen_cursor"
+//
+void Editor::_draw_pen_cursor(const ImVec2& p, ImU32 col)
+{
+    ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+    ImDrawList* dl = ImGui::GetForegroundDrawList();
+
+    dl->AddCircle      (p, PEN_RING_RADIUS, col, 32, PEN_RING_THICK);
+    dl->AddCircleFilled(p, PEN_DOT_RADIUS,  col, 16);
+}
 
 
 

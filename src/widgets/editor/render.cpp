@@ -165,6 +165,8 @@ void Editor::_grid_handle_shortcuts()
         m_grid.world_step = std::max(ms_GRID_STEP_MIN,  m_grid.world_step * 0.5f);
     if (ImGui::IsKeyPressed(ImGuiKey_Minus))            // CTRL –
         m_grid.world_step *= 2.f;
+        
+    return;
 }
 
 

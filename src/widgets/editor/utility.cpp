@@ -37,11 +37,18 @@ const Editor::Pos * Editor::find_vertex(const std::vector<Pos>& verts, uint32_t 
 }
 
 
-
-
-
-
-
+//  "_endpoint_if_open"
+//
+std::optional<Editor::EndpointInfo> Editor::_endpoint_if_open(uint32_t vid) const
+{
+    for (size_t i = 0; i < m_paths.size(); ++i) {
+        const Path& p = m_paths[i];
+        if (p.closed || p.verts.empty()) continue;
+        if (p.verts.front() == vid) return EndpointInfo{ i, /*prepend=*/true  };
+        if (p.verts.back () == vid) return EndpointInfo{ i, /*prepend=*/false };
+    }
+    return std::nullopt;
+}
 
 
 
@@ -53,6 +60,15 @@ const Editor::Pos * Editor::find_vertex(const std::vector<Pos>& verts, uint32_t 
 //  2.  DATA MODIFIER UTILITIES...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "_add_point_glyph"
+//
+void Editor::_add_point_glyph(uint32_t vid)
+{
+    PointStyle ps;
+    m_points.push_back({ vid, ps });
+}
+
 
 //  "_add_vertex"
 //
@@ -102,6 +118,29 @@ void Editor::_erase_vertex_and_fix_paths(uint32_t vid)
 }
 
 
+//  "_erase_path_and_orphans"
+//
+void Editor::_erase_path_and_orphans(size_t pidx)
+{
+    if (pidx >= m_paths.size()) return;
+
+    // 1. move-out the doomed path so we still have its vertex IDs
+    Path doomed = std::move(m_paths[pidx]);
+    m_paths.erase(m_paths.begin() + pidx);
+
+    // 2. collect every vertex still used anywhere
+    std::unordered_set<uint32_t> still_used;
+    for (const Path& p : m_paths)
+        for (uint32_t vid : p.verts)
+            still_used.insert(vid);
+
+    // 3. any vertex unique to the deleted path gets fully erased
+    for (uint32_t vid : doomed.verts)
+        if (!still_used.count(vid))
+            _erase_vertex_and_fix_paths(vid);      // your existing helper
+            
+    return;
+}
 
 
 
@@ -113,6 +152,50 @@ void Editor::_erase_vertex_and_fix_paths(uint32_t vid)
 //  3.  APP UTILITY OPERATIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "_scissor_cut"
+//      Core cut routine: split a Path at the hit position
+//
+void Editor::_scissor_cut(const PathHit& h)
+{
+    Path& path = m_paths[h.path_idx];
+    const size_t insert_pos = h.seg_idx + 1;          // after the hit segment’s i-th vertex
+
+    // 1. two coincident vertices: one for each side of the cut
+    uint32_t vid_left  = _add_vertex(h.pos_ws);   // will live in the original path
+    _add_point_glyph(vid_left);
+
+    uint32_t vid_right = _add_vertex(h.pos_ws);   // goes into the new right-hand path
+    _add_point_glyph(vid_right);
+
+    // 2. insert the LEFT vertex into the original path
+    path.verts.insert(path.verts.begin() + insert_pos, vid_left);
+    path.closed = false;                          // guarantee it’s now open
+
+    // 3. build the RIGHT-hand path
+    Path right;
+    right.style  = path.style;                    // clone stroke
+    right.closed = false;
+
+    // first vertex is the RIGHT duplicate
+    right.verts.push_back(vid_right);
+
+    // then everything *after* the left vertex
+    right.verts.insert(right.verts.end(),
+                       path.verts.begin() + insert_pos + 1,
+                       path.verts.end());
+
+    // 4. trim the original (left) path so it ends at vid_left
+    path.verts.erase(path.verts.begin() + insert_pos + 1, path.verts.end());
+
+    // 5. store the new path
+    m_paths.push_back(std::move(right));
+
+    // NOTE: Bézier handle subdivision is still “TODO” —
+    //       handles on vid_left / vid_right are zeroed by _add_vertex,
+    //       so curvature continuity is lost for now.
+}
+
 
 //  "_start_lasso_tool"
 //
@@ -284,11 +367,6 @@ void Editor::_update_lasso(const Interaction & it)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_world_from_screen"
-//
-
-
-
 //  "_zoom_canvas"
 //
 void Editor::_zoom_canvas(const Interaction& it)
@@ -353,17 +431,6 @@ void Editor::_clamp_zoom(float& target_zoom)
 //      MISC. UTILITIES...
 // *************************************************************************** //
 // *************************************************************************** //
-
-/* enum ImGuiOldColumnFlags_
-{
-    ImGuiOldColumnFlags_None                    = 0,
-    ImGuiOldColumnFlags_NoBorder                = 1 << 0,   // Disable column dividers
-    ImGuiOldColumnFlags_NoResize                = 1 << 1,   // Disable resizing columns when clicking on the dividers
-    ImGuiOldColumnFlags_NoPreserveWidths        = 1 << 2,   // Disable column width preservation when adjusting columns
-    ImGuiOldColumnFlags_NoForceWithinWindow     = 1 << 3,   // Disable forcing columns to fit within window
-    ImGuiOldColumnFlags_GrowParentContentsSize  = 1 << 4,   // Restore pre-1.51 behavior of extending the parent window contents size but _without affecting the columns width at all_. Will eventually remove.
-};*/
-
 
 //  "_draw_controls"
 //

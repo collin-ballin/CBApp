@@ -116,9 +116,126 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
                 }
             }
         }
+        // interior test for closed shapes
+        if (p.closed)
+        {
+            std::vector<ImVec2> poly;
+            poly.reserve(N * 4);          // room for Bézier sampling
+
+            for (size_t vi = 0; vi < N; ++vi)
+            {
+                const Pos* a = find_vertex(m_vertices, p.verts[vi]);
+                const Pos* b = find_vertex(m_vertices, p.verts[(vi + 1) % N]);
+                if (!a || !b) continue;
+
+                if (!is_curved(a, b))
+                {
+                    poly.push_back({ a->x, a->y });
+                }
+                else
+                {
+                    for (int k = 0; k <= ms_BEZIER_HIT_STEPS; ++k)
+                    {
+                        float t = static_cast<float>(k) / ms_BEZIER_HIT_STEPS;
+                        ImVec2 wpt = cubic_eval(a, b, t);
+                        poly.push_back({ wpt.x, wpt.y });
+                    }
+                }
+            }
+
+            if (!poly.empty() && point_in_polygon(poly, w))
+                return Hit{ Hit::Type::Path, pi };
+        }
     }
     
     return std::nullopt;
+}
+
+
+//  "_hit_path_segment"
+//
+//      Segment-precision hit-test (straight + Bézier).
+//      Returns nearest segment within a 6-px pick radius (early-out on miss).
+//
+std::optional<PathHit> Editor::_hit_path_segment(const Interaction& it) const
+{
+    constexpr float PICK_PX   = 6.0f;
+    const float     thresh_sq = (PICK_PX * PICK_PX) / (m_zoom * m_zoom);
+
+    // mouse position in world space
+    const float mx = it.canvas.x / m_zoom;
+    const float my = it.canvas.y / m_zoom;
+
+    std::optional<PathHit> best;
+    float best_d2 = thresh_sq;
+
+    auto is_zero = [](const ImVec2& v){ return v.x == 0.0f && v.y == 0.0f; };
+
+    for (size_t pi = 0; pi < m_paths.size(); ++pi)
+    {
+        const Path&  p = m_paths[pi];
+        const size_t N = p.verts.size();
+        if (N < 2) continue;
+
+        const bool   closed     = p.closed;
+        const size_t seg_count  = N - (closed ? 0 : 1);
+
+        for (size_t si = 0; si < seg_count; ++si)
+        {
+            uint32_t id0 = p.verts[si];
+            uint32_t id1 = p.verts[(si + 1) % N];
+
+            const Pos* a = find_vertex(m_vertices, id0);
+            const Pos* b = find_vertex(m_vertices, id1);
+            if (!a || !b) continue;          // dangling ID safety
+
+            bool curved = !is_zero(a->out_handle) || !is_zero(b->in_handle);
+
+            if (!curved)
+            {
+                // ------ straight-segment distance ------
+                float ax = a->x, ay = a->y;
+                float bx = b->x, by = b->y;
+
+                float abx = bx - ax, aby = by - ay;
+                float ab_len_sq = abx * abx + aby * aby;
+                if (ab_len_sq == 0.0f) continue;
+
+                float apx = mx - ax, apy = my - ay;
+                float t   = std::clamp((apx * abx + apy * aby) / ab_len_sq, 0.0f, 1.0f);
+
+                float cx = ax + abx * t;
+                float cy = ay + aby * t;
+
+                float dx = mx - cx, dy = my - cy;
+                float d2 = dx * dx + dy * dy;
+
+                if (d2 < best_d2) {
+                    best_d2 = d2;
+                    best    = PathHit{ pi, si, t, ImVec2(cx, cy) };
+                }
+            }
+            else
+            {
+                // ------ Bézier segment: sample ------
+                const int STEPS = ms_BEZIER_HIT_STEPS;
+                for (int k = 1; k <= STEPS; ++k)
+                {
+                    float  t     = static_cast<float>(k) / STEPS;
+                    ImVec2 p_ws  = cubic_eval(a, b, t);   // your existing helper
+
+                    float dx = mx - p_ws.x, dy = my - p_ws.y;
+                    float d2 = dx * dx + dy * dy;
+
+                    if (d2 < best_d2) {
+                        best_d2 = d2;
+                        best    = PathHit{ pi, si, t, p_ws };
+                    }
+                }
+            }
+        }
+    }
+    return best;   // std::nullopt if nothing within PICK_PX
 }
 
 
@@ -356,9 +473,28 @@ void Editor::_process_selection(const Interaction& it)
 //
 void Editor::_update_cursor_select(const Interaction& it) const
 {
-    if (!it.hovered) return;                    // outside canvas
-    if (_hit_any(it))                           // anything under mouse?
-        ImGui::SetMouseCursor(ImGuiMouseCursor_Hand); // ImGui’s “link” cursor
+    if (!it.hovered) return;               // cursor not over canvas
+
+    // ignore while dragging a selection or bbox
+    if (m_dragging || m_boxdrag.active) return;
+
+    auto hit = _hit_any(it);               // point / path / line / none
+    if (!hit) return;
+
+    switch (hit->type)
+    {
+        case Hit::Type::Point:             // a vertex glyph
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+            break;
+
+        case Hit::Type::Path:              // open or closed path
+        case Hit::Type::Line:
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            break;
+
+        default:
+            break;
+    }
 }
 
 

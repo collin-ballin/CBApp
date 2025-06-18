@@ -154,6 +154,14 @@ struct Hit {
 };
 
 
+//  "PathHit"
+//
+struct PathHit {
+    size_t  path_idx   = 0;   // which Path in m_paths
+    size_t  seg_idx    = 0;   // segment i   (verts[i] → verts[i+1])
+    float   t          = 0.f; // param along that segment
+    ImVec2  pos_ws{};         // exact split position (world-space)
+};
 
 
 
@@ -165,6 +173,31 @@ struct Hit {
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "Mode"
+//      - Enum type for each "tool" that we have in the application.
+//
+enum class Mode : int {
+    Default = 0,        //  "Select"                (KEY: "v").
+    Line,
+    Point,              //  "Point"                 (KEY: "n").
+    Pen,                //  "Pen"                   (KEY: "p").
+    Scissor,            //  "Scissors"              (KEY: "c").
+    AddAnchor,          //  "Add Anchor"            (KEY: "+").
+    RemoveAnchor,       //  "Remove Anchor"         (KEY: "-").
+//
+    Count
+};
+
+
+//  "DEF_EDITOR_STATE_NAMES"
+//
+constexpr std::array<const char*, static_cast<size_t>(Mode::Count)>
+    DEF_EDITOR_STATE_NAMES  = { {
+    "Default",              "Line",                     "Point",                    "Pen",
+    "Scissor",              "Add Anchor Point",         "Remove Anchor Point"
+} };
+
+
 //  "GridSettings"
 //
 struct GridSettings {
@@ -173,16 +206,6 @@ struct GridSettings {
     bool    snap_on      = false;
 };
 
-
-//  "Mode"
-//
-enum class Mode : int {
-    Default = 0,
-    Line,
-    Point,
-    Pen,
-    Count
-};
 
 
 //  "Interaction"
@@ -235,21 +258,13 @@ struct PenState {
     uint32_t    last_vid        = 0;
     bool        dragging_handle = false;
     uint32_t    handle_vid      = 0;
+    bool        prepend         = false;
 };
 
 
-//  "BoxDrag"
-//
-//  struct BoxDrag {
-//      bool      active        = false;
-//      uint8_t   handle_idx    = 0;      // 0-7
-//      ImVec2    anchor_ws;
-//      ImVec2    bbox_tl_ws, bbox_br_ws;
-//      ImVec2    mouse_ws0;              // cursor pos on drag start (world)
-//      bool      first_frame   = true;   // NEW
-//      std::vector<uint32_t> v_ids;
-//      std::vector<ImVec2>   v_orig;
-//  };
+// editor.h  (private)
+struct EndpointInfo { size_t path_idx; bool prepend; };   // prepend==true ↔ first vertex
+
 
 
 //  "BoxDrag" struct (add fields for handle_ws0, orig_w, orig_h after mouse_ws0)
