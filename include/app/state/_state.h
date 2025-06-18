@@ -488,8 +488,15 @@ struct AppState
     ImVec4                              m_main_bg                   = cb::app::DEF_MAIN_WIN_BG;
     //
     ImVec4                              m_controlbar_bg             = cb::app::DEF_CONTROLBAR_WIN_BG;
+    //
+    //                              Browser Colors:
     ImVec4                              m_browser_bg                = cb::app::DEF_BROWSER_WIN_BG;
-    ImVec4                              m_detview_bg                = cb::app::DEF_DETVIEW_WIN_BG; 
+    ImVec4                              m_browser_left_bg           = ImVec4(0.142f,    0.142f,     0.142f,     1.000f);//  #242424     (5% shade of browser bg)
+    ImVec4                              m_browser_right_bg          = ImVec4(0.242f,    0.242f,     0.242f,     1.000f);//  ##3E3E3E    (5% tint of browser bg)
+    float                               m_browser_child_rounding    = 8.0f;
+    //
+    //                              DetailView Colors:
+    ImVec4                              m_detview_bg                = cb::app::DEF_DETVIEW_WIN_BG;
     
     
     //  5.      DIMENSIONS...

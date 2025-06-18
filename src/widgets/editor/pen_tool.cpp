@@ -121,24 +121,48 @@ void Editor::_pen_begin_path_if_click_empty(const Interaction & it)
 }
 
 
+//  "_pen_click_hits_first_vertex"
+//
+inline bool Editor::_pen_click_hits_first_vertex(const Interaction& it,
+                                                 const Path& p) const
+{
+    int pi = _hit_point(it);                    // index in m_points, or -1
+    if (pi < 0) return false;
+    return m_points[pi].v == p.verts.front();   // hit == first anchor
+}
+
+
 //  "_pen_append_or_close_live_path"
 //
 void Editor::_pen_append_or_close_live_path(const Interaction & it)
 {
-    Path& p = m_paths[m_pen.path_index];
-    const float close_thresh_sq = HIT_THRESH_SQ / (m_zoom*m_zoom);
+    Path &  p   = m_paths[m_pen.path_index];
 
-    ImVec2 w{ it.canvas.x / m_zoom, it.canvas.y / m_zoom };
-
-    // close if near first vertex
-    if (!p.verts.empty())
+    //  1.  Did we click the starting anchor?  (new fast test)
+    if ( _pen_click_hits_first_vertex(it, p) )
     {
-        const Pos* first = find_vertex(m_vertices, p.verts.front());
-        if (first)
+        p.closed    = true;
+        if (p.closed && (p.style.fill_color & 0xFF000000) == 0)
         {
+            ImVec4 stroke_f = ImGui::ColorConvertU32ToFloat4(p.style.stroke_color);
+            stroke_f.w = 0.4f;                                      // 40 % opacity
+            p.style.fill_color = ImGui::ColorConvertFloat4ToU32(stroke_f);
+        }
+
+        m_pen       = {};
+        m_mode      = Mode::Default;
+        return;
+    }
+    
+
+    //  2.  Fallback: distance test (unchanged)
+    const float thresh = HIT_THRESH_SQ / (m_zoom * m_zoom);
+    ImVec2 w{ it.canvas.x / m_zoom, it.canvas.y / m_zoom };
+    if (!p.verts.empty()) {
+        const Pos* first = find_vertex(m_vertices, p.verts.front());
+        if (first) {
             float dx = first->x - w.x, dy = first->y - w.y;
-            if (dx*dx + dy*dy <= close_thresh_sq)
-            {
+            if (dx*dx + dy*dy <= thresh) {
                 p.closed = true;
                 m_pen = {};
                 m_mode = Mode::Default;
@@ -147,10 +171,9 @@ void Editor::_pen_append_or_close_live_path(const Interaction & it)
         }
     }
 
-    // otherwise append new anchor
+    // 3. add a new vertex (as before)
     uint32_t vid = _add_vertex(w);
     m_points.push_back({ vid, { PEN_ANCHOR_COL, PEN_ANCHOR_RADIUS, true } });
-
     p.verts.push_back(vid);
     m_pen.last_vid = vid;
 }

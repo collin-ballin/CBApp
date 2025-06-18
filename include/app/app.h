@@ -178,12 +178,6 @@ protected:
     //
     //
     cb::Editor          m_editor;
-    app::WinInfo        m_editor_WinInfo                = WinInfo({
-        m_editor.WinInfo_uuid,
-        m_editor.WinInfo_flags,
-        m_editor.WinInfo_open,
-        std::bind_front( &Editor::DrawBrowser_Window, &this->m_editor )
-    });
     
     
     //  2.B             PROTECTED MEMBER FUNCTIONS...

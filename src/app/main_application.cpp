@@ -1133,16 +1133,61 @@ void App::Test_Browser(void)
 //
 void App::Test_Editor(void)
 {
+    // Runtime‑tunable totals.
+    static int total_buttons   = 6;   // how many widgets overall
+    static int columns_per_row = 4;   // NC (columns per row)
 
+    ImGui::SliderInt("Total Buttons",   &total_buttons,   1, 24, "%d", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::SliderInt("Columns / Row",   &columns_per_row, 1, 8,  "%d", ImGuiSliderFlags_AlwaysClamp);
 
-    m_editor.Begin();
+    // Labels pool (wraps if total_buttons exceeds length).
+    static const char* labels_pool[] = {
+        "Alpha", "Beta SuperLong", "Gamma", "Delta", "Epsilon Extra",
+        "Zeta", "Eta WideLabel", "Theta", "Iota", "Kappa VeryVeryLongLabel",
+        "Lambda", "Mu", "Nu", "Xi", "Omicron", "Pi"
+    };
+    constexpr int LABEL_POOL_SIZE = sizeof(labels_pool) / sizeof(labels_pool[0]);
 
-    
-    //m_editor.DrawBrowser_Window(this->m_editor_WinInfo.uuid.c_str(), &this->m_editor_WinInfo.open, this->m_editor_WinInfo.flags );
+    ImVec2 btn_size = ImVec2(64, 64);
 
-    return;
+    // Compute rows required.
+    int rows = (total_buttons + columns_per_row - 1) / columns_per_row;
+
+    for (int r = 0; r < rows; ++r)
+    {
+        // Build per‑row label array (empty strings for unused trailing cells).
+        const int COL_CAP = 8;                 // slider's max columns; adjust if needed
+        static const char* row_labels[COL_CAP];
+
+        for (int c = 0; c < columns_per_row; ++c)
+        {
+            int global_idx = r * columns_per_row + c;
+            if (global_idx < total_buttons)
+                row_labels[c] = labels_pool[global_idx % LABEL_POOL_SIZE];
+            else
+                row_labels[c] = ""; // empty placeholder
+        }
+
+        std::string row_uuid = "##CollimatedRow" + std::to_string(r);
+
+        utl::collimated_row(
+            row_uuid.c_str(),
+            columns_per_row,          // always draw full grid width for alignment
+            btn_size,
+            row_labels,
+            columns_per_row,
+            [&](int col_idx, float x, const ImVec2& size, const char* /*lbl*/)
+            {
+                int global_idx = r * columns_per_row + col_idx;
+                if (global_idx >= total_buttons)
+                    return; // leave cell empty
+
+                ImGui::SetCursorPosX(x);
+                std::string id = "##Btn" + std::to_string(global_idx);
+                ImGui::Button(id.c_str(), size);
+            });
+    }
 }
-
 
 
 

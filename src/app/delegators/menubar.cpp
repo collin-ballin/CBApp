@@ -481,8 +481,8 @@ void MenuBar::disp_imgui_submenu(void)
 #ifdef CBAPP_DISABLE_INI
     ImGui::TextDisabled("Disabled at compile-time (#ifdef CBAPP_DISABLE_INI)");
 # else
-    ImGuiIO &                       io                  = ImGui::GetIO(); (void)io;
-    ImGuiStyle &                    style               = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
     static ImGuiInputTextFlags      read_file_flags     = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_EnterReturnsTrue;
     static ImGuiInputTextFlags      write_file_flags    = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue;
     static constexpr std::size_t    BUFF_SIZE           = 256ULL;
@@ -499,7 +499,6 @@ void MenuBar::disp_imgui_submenu(void)
     if (ONCE) {
         std::strncpy(current_ini_file,  io.IniFilename,     BUFF_SIZE-1);
         std::strncpy(default_ini_file,  app::INI_FILEPATH,  BUFF_SIZE-1);
-        
         ONCE = false;
     }
     

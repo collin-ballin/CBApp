@@ -101,7 +101,6 @@ static constexpr float      HANDLE_BOX_SIZE             = 4.f;
 // *************************************************************************** //
 // *************************************************************************** //
 
-
 //───────────────── VERTEX (anchor‑point) ────────────────────────────────
 // A pure geometry node. `in_handle` and `out_handle` are offsets from
 // `pos`; when they are both zero the segment attached to this vertex is
@@ -129,6 +128,7 @@ struct Line         { uint32_t a, b; ImU32 color = IM_COL32(255,255,0,255); floa
 // only stores ordering and style.
 struct PathStyle {
     ImU32 stroke_color = IM_COL32(255,255,0,255);
+    ImU32 fill_color   = IM_COL32(255,255,255,0);   // default: transparent white
     float stroke_width = 2.0f;
 };
 
@@ -136,18 +136,21 @@ struct PathStyle {
 //  "Path"
 //
 struct Path {
-    std::vector<uint32_t> verts;   // ordered anchor IDs
-    bool                  closed   = false;
-    PathStyle             style{};
+    inline bool is_area(void) const noexcept
+    { return this->closed && this->verts.size() >= 3; }
+//
+    std::vector<uint32_t>   verts;   // ordered anchor IDs
+    bool                    closed      = false;
+    PathStyle               style       = PathStyle();
 };
 
 
 //  "Hit"
 //
 struct Hit {
-  enum class Type { Point, Line, Path };
-  Type   type{};
-  size_t index{};
+  enum class    Type { Point, Line, Path };
+  Type          type{};
+  size_t        index{};
 };
 
 
@@ -161,6 +164,15 @@ struct Hit {
 //      WIDGET STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "GridSettings"
+//
+struct GridSettings {
+    float   world_step   = 20.0f;   // grid pitch in world units
+    bool    visible      = true;
+    bool    snap_on      = false;
+};
+
 
 //  "Mode"
 //
@@ -228,20 +240,44 @@ struct PenState {
 
 //  "BoxDrag"
 //
-struct BoxDrag {
-    bool      active        = false;
-    uint8_t   handle_idx    = 0;      // 0-7
-    ImVec2    anchor_ws;
-    ImVec2    bbox_tl_ws, bbox_br_ws;
-    ImVec2    mouse_ws0;              // cursor pos on drag start (world)
-    bool      first_frame   = true;   // NEW
+//  struct BoxDrag {
+//      bool      active        = false;
+//      uint8_t   handle_idx    = 0;      // 0-7
+//      ImVec2    anchor_ws;
+//      ImVec2    bbox_tl_ws, bbox_br_ws;
+//      ImVec2    mouse_ws0;              // cursor pos on drag start (world)
+//      bool      first_frame   = true;   // NEW
+//      std::vector<uint32_t> v_ids;
+//      std::vector<ImVec2>   v_orig;
+//  };
+
+
+//  "BoxDrag" struct (add fields for handle_ws0, orig_w, orig_h after mouse_ws0)
+struct BoxDrag
+{
+    bool      active      = false;
+    uint8_t   handle_idx  = 0;
+    ImVec2    anchor_ws   = {0,0};
+    ImVec2    bbox_tl_ws  = {0,0};
+    ImVec2    bbox_br_ws  = {0,0};
     std::vector<uint32_t> v_ids;
     std::vector<ImVec2>   v_orig;
+    ImVec2    mouse_ws0   = {0,0};
+    ImVec2    handle_ws0;            // initial world‑space position of the dragged handle
+    float     orig_w = 1.f;          // original bbox width  (world units)
+    float     orig_h = 1.f;          // original bbox height (world units)
+    bool      first_frame = true;
 };
 
 
-
-
+//  "MoveDrag"
+//
+struct MoveDrag {
+    bool                  active   = false;
+    ImVec2                anchor_ws;
+    std::vector<uint32_t> v_ids;
+    std::vector<ImVec2>   v_orig;
+};
 
 
 // *************************************************************************** //

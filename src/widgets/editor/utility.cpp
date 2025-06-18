@@ -58,6 +58,7 @@ const Editor::Pos * Editor::find_vertex(const std::vector<Pos>& verts, uint32_t 
 //
 uint32_t Editor::_add_vertex(ImVec2 w)
 {
+    w = _grid_snap(w);                       // <- snap if enabled
     m_vertices.push_back({ m_next_id++, w.x, w.y });
     return m_vertices.back().id;
 }
@@ -274,30 +275,68 @@ void Editor::_update_lasso(const Interaction & it)
     
     
     
-    
-    
-    
+
+// *************************************************************************** //
+//
+//
+//
+//      LOCAMOTION UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_world_from_screen"
+//
+
+
+
 //  "_zoom_canvas"
 //
-void Editor::_zoom_canvas(const Interaction & it)
+void Editor::_zoom_canvas(const Interaction& it)
 {
-    ImGuiIO &   io          = ImGui::GetIO();
-    float       new_zoom    = std::clamp( m_zoom * (1.0f + io.MouseWheel * 0.1f), 0.25f, 4.0f );
-        
-        
-    if (std::fabs(new_zoom - m_zoom) > 1e-6f)   //  Preserve cursor-centred zoom
-    {
-        ImVec2 world_before{ (io.MousePos.x - it.origin.x) / m_zoom,
-                             (io.MousePos.y - it.origin.y) / m_zoom };
-        m_zoom = new_zoom;
-        ImVec2 new_origin{ io.MousePos.x - world_before.x * m_zoom,
-                           io.MousePos.y - world_before.y * m_zoom };
-        m_scroll.x = new_origin.x - it.tl.x;
-        m_scroll.y = new_origin.y - it.tl.y;
-    }
-    
-    return;
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.MouseWheel == 0.0f) return;
+
+    // 1) pick anchor
+    ImVec2 scr_anchor = it.hovered ? it.canvas
+                                   : ImVec2(m_avail.x * 0.5f, m_avail.y * 0.5f);
+
+    // 2) world coord under anchor before zoom
+    ImVec2 world_anchor { (scr_anchor.x + m_scroll.x) / m_zoom,
+                          (scr_anchor.y + m_scroll.y) / m_zoom };
+
+    // 3) new zoom (±10 %)
+    float new_zoom = m_zoom * (1.f + io.MouseWheel * 0.10f);
+    _clamp_zoom(new_zoom);
+
+    // 4) re-compute scroll so anchor stays pinned
+    m_scroll.x = world_anchor.x * new_zoom - scr_anchor.x;
+    m_scroll.y = world_anchor.y * new_zoom - scr_anchor.y;
+    m_zoom     = new_zoom;
+
+    _clamp_scroll();        // keep inside finite canvas
 }
+
+
+void Editor::_clamp_scroll()
+{
+    const float max_x = std::max(0.f, m_world_extent.x * m_zoom - m_avail.x);
+    const float max_y = std::max(0.f, m_world_extent.y * m_zoom - m_avail.y);
+    m_scroll.x = std::clamp(m_scroll.x, 0.f, max_x);
+    m_scroll.y = std::clamp(m_scroll.y, 0.f, max_y);
+}
+
+
+void Editor::_clamp_zoom(float& target_zoom)
+{
+    const float viewFitX = m_avail.x / m_world_extent.x;
+    const float viewFitY = m_avail.y / m_world_extent.y;
+    const float min_zoom = std::max(viewFitX, viewFitY) * 0.25f;   // let user shrink to 25 % of “fit”
+    const float max_zoom = 32.0f;                                  // arbitrary upper bound
+    target_zoom = std::clamp(target_zoom, min_zoom, max_zoom);
+}
+
+
+
 
 
 
@@ -315,32 +354,161 @@ void Editor::_zoom_canvas(const Interaction & it)
 // *************************************************************************** //
 // *************************************************************************** //
 
+/* enum ImGuiOldColumnFlags_
+{
+    ImGuiOldColumnFlags_None                    = 0,
+    ImGuiOldColumnFlags_NoBorder                = 1 << 0,   // Disable column dividers
+    ImGuiOldColumnFlags_NoResize                = 1 << 1,   // Disable resizing columns when clicking on the dividers
+    ImGuiOldColumnFlags_NoPreserveWidths        = 1 << 2,   // Disable column width preservation when adjusting columns
+    ImGuiOldColumnFlags_NoForceWithinWindow     = 1 << 3,   // Disable forcing columns to fit within window
+    ImGuiOldColumnFlags_GrowParentContentsSize  = 1 << 4,   // Restore pre-1.51 behavior of extending the parent window contents size but _without affecting the columns width at all_. Will eventually remove.
+};*/
+
+
 //  "_draw_controls"
 //
-void Editor::_draw_controls(const ImVec2& pos)
+void Editor::_draw_controls(void)
 {
-    ImGui::SetCursorScreenPos(pos);
-    ImGui::BeginGroup();
+    static constexpr const char *   uuid            = "##Editor_Controls_Columns";
+    static constexpr int            NC              = 8;
+    static ImGuiOldColumnFlags      column_flags    = ImGuiOldColumnFlags_None;
+    static ImVec2                   WIDGET_SIZE     = ImVec2( 160,  32 );
+    static ImVec2                   BUTTON_SIZE     = ImVec2( 32,   WIDGET_SIZE.y );
+    //
+    constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiButtonFlags_None;
+    int                             mode_i          = static_cast<int>(m_mode);
+    
+   
+   
+    //  BEGIN COLUMNS...
+    //
+    ImGui::Columns(NC, uuid, column_flags);
+    //
+    //
+    //
+        //  1.  EDITOR STATE...
+        ImGui::Text("State:");
+        //
+        ImGui::SetNextItemWidth( WIDGET_SIZE.x );
+        if ( ImGui::Combo("##Editor_Controls_EditorState",      &mode_i,
+                          ms_MODE_LABELS.data(),                static_cast<int>(Mode::Count)) )
+        {
+            m_mode = static_cast<Mode>(mode_i);
+        }
+    
+    
+    
+        //  2.  GRID VISIBILITY...
+        ImGui::NextColumn();
+        ImGui::Text("Show Grid:");
+        //
+        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::Checkbox("##Editor_Controls_ShowGrid",           &m_grid.visible);
 
-    // Mode selector
-    int mode_i = static_cast<int>(m_mode);
-    ImGui::SetNextItemWidth(110.0f);
-    ImGui::Combo("Mode", &mode_i, ms_MODE_LABELS.data(),
-                 static_cast<int>(Mode::Count));
-    m_mode = static_cast<Mode>(mode_i);
 
-    // Grid toggle
-    ImGui::SameLine(0.0f, 15.0f);
-    ImGui::Checkbox("Grid", &m_show_grid);
 
-    // Clear button
-    ImGui::SameLine(0.0f, 15.0f);
-    if (ImGui::Button("Clear"))
-        _clear_all();
+        //  3.  SNAP-TO-GRID...
+        ImGui::NextColumn();
+        ImGui::Text("Snap-To-Grid:");
+        //
+        ImGui::Checkbox("##Editor_Controls_SnapToGrid",         &m_grid.snap_on);
+        
+        
+        
+        //  4.  GRID-LINE DENSITY...
+        ImGui::NextColumn();
+        ImGui::Text("Grid Density:");
+        //
+        //
+        //
+        if ( ImGui::ArrowButtonEx("##Editor_Controls_GridDensityDown",      ImGuiDir_Down,
+                          BUTTON_SIZE,                                      BUTTON_FLAGS) )
+        {
+            m_grid.world_step *= 2.f;
+        }
+        //
+        ImGui::SameLine(0.0f, 0.0f);
+        //
+        if ( ImGui::ArrowButtonEx("##Editor_Controls_GridDensityUp",        ImGuiDir_Up,
+                          BUTTON_SIZE,                                      BUTTON_FLAGS) )
+        {
+            m_grid.world_step = std::max(ms_GRID_STEP_MIN, m_grid.world_step * 0.5f);
+        }
+        //
+        ImGui::SameLine();
+        //
+        ImGui::Text("(%.1f)", m_grid.world_step);
 
-    ImGui::EndGroup();
+
+
+        //  5.  CANVAS SETTINGS...
+        ImGui::NextColumn();
+        //ImGui::Text("##Editor_Controls_CanvasSettings");
+        ImGui::Text("");
+        //
+        //
+        if ( ImGui::Button("Canvas Settings", WIDGET_SIZE) ) {
+            ImGui::OpenPopup("Editor_CanvasSettingsPopup");
+        }
+        if ( ImGui::BeginPopup("Editor_CanvasSettingsPopup") ) {
+            this->_display_canvas_settings();
+            ImGui::EndPopup();
+        }
+
+
+        
+        //  6.  EMPTY SPACES FOR LATER...
+        //
+        for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
+            ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
+        }
+
+
+
+        //  X.  CLEAR ALL...
+        //ImGui::NextColumn();
+        //ImGui::TextUnformatted("##Editor_Controls_ClearCanvas");
+        ImGui::Text("");
+        if ( ImGui::Button("Clear", WIDGET_SIZE) ) {
+            _clear_all();
+        }
+    //
+    //
+    //
+    ImGui::Columns(1);      //  END COLUMNS...
+    
+    
+    return;
 }
 
+
+//  "_display_canvas_settings"
+//
+void Editor::_display_canvas_settings(void)
+{
+    ImGui::NewLine();
+    
+    ImGui::DragFloat2("World extent", &m_world_extent.x,
+                  10.0f, 100.0f, 5000.0f, "%.0f");
+                  
+    ImGui::NewLine();
+                
+    return;
+}
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  OTHER MISC...
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "_clear_all"
 //

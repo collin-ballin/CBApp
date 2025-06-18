@@ -101,7 +101,10 @@ inline constexpr ImVec4             DEF_INVISIBLE_COLOR                 = ImVec4
 inline constexpr ImVec4             DEF_LIVE_SELECTBLUE                 = ImVec4(0.255,     0.298f,     0.361f,     1.000f);
 inline constexpr ImVec4             DEF_LIVE_LIGHTBLUE                  = ImVec4(0.188,     0.224f,     0.271f,     1.000f);
 inline constexpr ImVec4             DEF_LIVE_MIDBLUE                    = ImVec4(0.137f,    0.161f,     0.196f,     1.000f);
-inline constexpr ImVec4             DEF_LIVE_DARKBLUE                   = ImVec4(0.090f,    0.098f,     0.118f,     1.000f);
+inline constexpr ImVec4             DEF_LIVE_DARKBLUE                   = ImVec4(0.090f,    0.098f,     0.118f,     1.000f);    //  #17191E
+//  DEF_LIVE_DARKBLUE           |||| ____________UPTINT #1_____________ | ____________UPTINT #2_____________    |
+//                              ||||   #343944                          | ImVec4(0.205f,0.223f,0.268f,1.000f)   |
+//                              ||||   ##52596B                         | ImVec4(0.320f,0.348f,0.418f,1.000f)   |
 //
 //
 //                              B.  WINDOW COLORS.
@@ -109,7 +112,7 @@ inline constexpr ImVec4             DEF_ROOT_WIN_BG                     = ImVec4
 inline constexpr ImVec4             DEF_MAIN_WIN_BG                     = ImVec4(0.125f,    0.133f,     0.141f,     1.000f);
 //
 inline constexpr ImVec4             DEF_CONTROLBAR_WIN_BG               = ImVec4(0.000f,    0.000f,     0.000f,     0.350f);
-inline constexpr ImVec4             DEF_BROWSER_WIN_BG                  = ImVec4(0.192f,    0.192f,     0.192f,     1.000f);
+inline constexpr ImVec4             DEF_BROWSER_WIN_BG                  = ImVec4(0.192f,    0.192f,     0.192f,     1.000f);//  #313131
 inline constexpr ImVec4             DEF_DETVIEW_WIN_BG                  = ImVec4(0.090f,    0.098f,     0.118f,     1.000f);
 
   

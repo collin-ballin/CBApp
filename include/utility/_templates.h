@@ -31,7 +31,92 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 
 
 
-//  1.4A    INLINE TEMPLATES FOR HELPER WIDGET FUNCTIONS / ABSTRACTIONS...
+//  1.4A    INLINE TEMPLATES FOR HELPER WIDGET FUNCTIONS / ABSTRACTIONS     [1 OF 2]...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "centered_offset"
+//      Utility: horizontal offset to center an item of width w inside a container W.
+//
+inline float centered_offset(float container_width, float item_width)
+{
+    return (container_width - item_width) * 0.5f;
+}
+
+
+//  "collimated_row"
+//
+//      Draws a single ImGui::Columns() section with `count` equally sized columns.
+//      For each column it invokes `draw_widget_fn`, then automatically renders a
+//      centered label underneath, shifting both widget+label just enough (plus a
+//      configurable safety factor) to avoid clipping.
+//
+//      draw_widget_fn signature:
+//          void(int col_index, float widget_x, const ImVec2 &item_size, const char *label)
+//      ➜  The function should set the cursor X to `widget_x` before drawing the
+//         widget (button, checkbox, etc.). This gives the caller full control
+//         over the widget type while letting the helper handle alignment math.
+//
+template<typename DrawFn>
+inline void collimated_row(const char* uuid,
+                           int         count,
+                           ImVec2      item_size,
+                           const char* const* labels,
+                           int         label_count,
+                           DrawFn      draw_widget_fn,
+                           float       safety_factor = 1.2f,
+                           ImGuiOldColumnFlags flags = 0)
+{
+    if (count <= 0) return;
+
+    ImGui::Columns(count, uuid, flags);
+
+    for (int col = 0; col < count; ++col)
+    {
+        if (col > 0) ImGui::NextColumn();
+
+        const char* label = (labels && col < label_count) ? labels[col] : "";
+        ImVec2 text_sz = ImGui::CalcTextSize(label);
+        float  col_w   = ImGui::GetColumnWidth();
+        float  x0      = ImGui::GetCursorPosX();
+
+        // Baseline centered positions.
+        float widget_x = x0 + centered_offset(col_w, item_size.x);
+        float label_x  = x0 + centered_offset(col_w, text_sz.x);
+
+        // Minimal shift to prevent clipping.
+        float shift = 0.0f;
+        if (label_x < x0)
+            shift = (x0 - label_x) * safety_factor; // shift right
+        else if (label_x + text_sz.x > x0 + col_w)
+            shift = -((label_x + text_sz.x) - (x0 + col_w)) * safety_factor; // shift left
+
+        widget_x += shift;
+        label_x  += shift;
+
+        // Draw widget via user callback.
+        draw_widget_fn(col, widget_x, item_size, label);
+
+        // Draw label (or keep spacing for empty cell).
+        ImGui::SetCursorPosX(label_x);
+        if (label && *label)
+            ImGui::TextUnformatted(label);
+        else
+            ImGui::Dummy(ImVec2(0, ImGui::GetFontSize()));
+    }
+
+    ImGui::Columns(1); // restore
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  1.4A    INLINE TEMPLATES FOR HELPER WIDGET FUNCTIONS / ABSTRACTIONS     [2 OF 2]...
 // *************************************************************************** //
 // *************************************************************************** //
 

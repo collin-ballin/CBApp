@@ -138,8 +138,16 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
 //
 void Editor::_process_selection(const Interaction& it)
 {
-    ImGuiIO& io = ImGui::GetIO();
-    ImVec2 w{ it.canvas.x / m_zoom, it.canvas.y / m_zoom };
+    ImGuiIO &       io              = ImGui::GetIO();
+    const bool      lmbDown         = io.MouseDown[ImGuiMouseButton_Left];
+    const bool      lmbClick        = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+    const bool      lmbUp           = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
+    const bool      draggingNow     = lmbDown && ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, 0.0f);
+    //
+    bool            lmb             = ImGui::IsMouseDown(ImGuiMouseButton_Left); //    drag move / drag start ---------------------------
+    bool            dragging_now    = ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f);
+    ImVec2          w               = ImVec2( it.canvas.x / m_zoom, it.canvas.y / m_zoom );
+
 
     // helper: unconditionally ensure an item is in the selection
     auto select_hit = [&](const Hit& hit){
@@ -166,20 +174,24 @@ void Editor::_process_selection(const Interaction& it)
         }
     };
 
-    //------------- mouse press: record candidate --------------------------
+
+
+    // ------------------------------------------------------------------ //
+    // 1) Record a pending hit on mouse-press (unchanged)
+    // ------------------------------------------------------------------ //
     if (it.hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
     {
         m_pending_hit   = _hit_any(it);                // may be nullopt
         m_pending_clear = !io.KeyShift && !io.KeyCtrl; // will clear unless additive
     }
 
-    //------------- drag move / drag start ---------------------------
-    bool lmb = ImGui::IsMouseDown(ImGuiMouseButton_Left);
-    bool dragging_now = ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f);
 
-    // case A: selection already exists and cursor is inside it (original logic)
+    // ------------------------------------------------------------------ //
+    // 2) Decide when a move-drag starts  (unchanged selection rules)
+    // ------------------------------------------------------------------ //
     if (!m_dragging && lmb && !m_sel.empty() && !m_pending_hit)
     {
+        // Case A: drag started inside an existing selection
         static ImVec2 press_world{};
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             press_world = w;
@@ -190,6 +202,7 @@ void Editor::_process_selection(const Interaction& it)
         if (idx >= 0 && m_sel.points.count(idx))
             inside_selected = true;
 
+        // Case B: drag started on a non-selected object
         if (!inside_selected && m_sel.vertices.size() > 1)
         {
             ImVec2 tl, br;
@@ -198,8 +211,27 @@ void Editor::_process_selection(const Interaction& it)
                                    press_world.y >= tl.y && press_world.y <= br.y);
         }
 
+        //  BEGIN DRAGGING...
         if (inside_selected && dragging_now)
+        {
+            // ----- begin move-drag ------------------------------------------------
             m_dragging = true;
+            m_movedrag = {};                        // clear old
+            m_movedrag.active    = true;
+            m_movedrag.anchor_ws = _world_from_screen(it.canvas);
+
+            m_movedrag.v_ids.reserve(m_sel.vertices.size());
+            m_movedrag.v_orig.reserve(m_sel.vertices.size());
+
+            for (uint32_t vid : m_sel.vertices)
+            {
+                if (const Pos* v = find_vertex(m_vertices, vid))
+                {
+                    m_movedrag.v_ids .push_back(vid);
+                    m_movedrag.v_orig.push_back({v->x, v->y});
+                }
+            }
+        }
     }
 
     // case B: mouse is dragging on an *unselected* object (m_pending_hit present)
@@ -228,7 +260,20 @@ void Editor::_process_selection(const Interaction& it)
                     v->y += d_world.y;
                 }
         }
-        if (!lmb) m_dragging = false;
+        if (!lmb)
+        {
+            /*  snap the vertices we just moved  */
+            if (m_dragging && m_grid.snap_on)
+                for (uint32_t vid : m_sel.vertices)
+                    if (Pos* v = find_vertex(m_vertices, vid))
+                    {
+                        ImVec2 snapped = _grid_snap({v->x, v->y});
+                        v->x = snapped.x;
+                        v->y = snapped.y;
+                    }
+
+            m_dragging = false;
+        }
     }
 
     //------------- mouse release: apply pending selection -----------------

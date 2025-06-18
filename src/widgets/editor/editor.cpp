@@ -59,29 +59,30 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::Begin(const char * id)
 {
-    const float     bar_h           = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
+    m_bar_h                         = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
+    m_avail                         = ImGui::GetContentRegionAvail();
+    m_avail.x                       = std::max(m_avail.x,   50.f);
+    m_avail.y                       = std::max(m_avail.y,   50.f);
+    if (m_avail.y > m_bar_h)
+        m_avail.y -= m_bar_h;
+    
+    m_p0                            = ImGui::GetCursorScreenPos();
+    m_p1                            = { m_p0.x + m_avail.x,     m_p0.y + m_avail.y };
+
 
 
     //  0.  LAYOUT RECTANGLE...
-    ImVec2          p0              = ImGui::GetCursorScreenPos();
-    ImVec2          avail           = ImGui::GetContentRegionAvail();
-    avail.x                         = std::max(avail.x, 50.f);
-    avail.y                         = std::max(avail.y, 50.f);
-    if (avail.y > bar_h)
-        avail.y -= bar_h;
-        
-    ImVec2          p1              = { p0.x + avail.x, p0.y + avail.y };
     ImDrawList *    dl              = ImGui::GetWindowDrawList();
     ImGuiIO &       io              = ImGui::GetIO();
 
-    dl->AddRectFilled(p0, p1, IM_COL32(50, 50, 50, 255));
-    dl->AddRect      (p0, p1, IM_COL32(255, 255, 255, 255));
+    dl->AddRectFilled(m_p0, m_p1,   IM_COL32(50, 50, 50, 255));
+    dl->AddRect      (m_p0, m_p1,   IM_COL32(255, 255, 255, 255));
 
 
 
     //  1.  CAPTURE AREA...
     //
-    ImGui::InvisibleButton(id, avail, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
+    ImGui::InvisibleButton(id, m_avail, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
     bool            hovered         = ImGui::IsItemHovered();
     bool            active          = ImGui::IsItemActive();
     bool            space           = ImGui::IsKeyDown(ImGuiKey_Space);
@@ -94,15 +95,15 @@ void Editor::Begin(const char * id)
         const bool no_mod = !io.KeyCtrl && !io.KeyShift && !io.KeyAlt && !io.KeySuper;
         if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_V) )
             m_mode = Mode::Default;
-        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_P) )
-            m_mode = Mode::Point;
         if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_N) )
+            m_mode = Mode::Point;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_P) )
             m_mode = Mode::Pen;
     }
 
-    ImVec2          origin          = { p0.x + m_scroll.x, p0.y + m_scroll.y };
+    ImVec2          origin          = { m_p0.x + m_scroll.x, m_p0.y + m_scroll.y };
     ImVec2          mouse_canvas    = { io.MousePos.x - origin.x, io.MousePos.y - origin.y };
-    Interaction     it              { hovered, active, space, mouse_canvas, origin, p0, dl };
+    Interaction     it              { hovered, active, space, mouse_canvas, origin, m_p0, dl };
 
 
 
@@ -119,11 +120,11 @@ void Editor::Begin(const char * id)
         ImGui::SetMouseCursor(ImGui::IsMouseDown(ImGuiMouseButton_Left) ? ImGuiMouseCursor_ResizeAll : ImGuiMouseCursor_Hand);
 
 
-
-    if ( space && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f) )
-    {
-        m_scroll.x += io.MouseDelta.x;
-        m_scroll.y += io.MouseDelta.y;
+    //  5.  HANDLE "PANNING" IF USER (1) HOLDS SPACE KEY (2) CLICKS-AND-DRAGS WITH LMB...
+    if ( it.space && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f) ) {
+        m_scroll.x += io.MouseDelta.x;   // ← add instead of subtract
+        m_scroll.y += io.MouseDelta.y;   // ← add instead of subtract
+        _clamp_scroll();
     }
 
     // Global selection / drag (unless Space held or mode opts out)
@@ -148,8 +149,13 @@ void Editor::Begin(const char * id)
 
 
     // ------------------ Rendering ------------------
-    dl->PushClipRect(p0, p1, true);
-    if (m_show_grid) _draw_grid(dl, p0, avail);
+    dl->PushClipRect(m_p0, m_p1, true);
+    //if (m_show_grid) _draw_grid(dl, m_p0, m_avail);
+    //
+    _grid_handle_shortcuts();         // adjust step if hot-key pressed
+    _grid_draw(dl, m_p0, m_avail);    // draw if visible
+
+
     
     _draw_lines(dl, origin);
     _draw_paths(dl, origin);   // new
@@ -157,11 +163,6 @@ void Editor::Begin(const char * id)
     
     _draw_selection_overlay(dl, origin);
     dl->PopClipRect();
-
-    // ------------------ Control bar ----------------
-    _draw_controls({ p0.x, p1.y + ImGui::GetStyle().ItemSpacing.y });
-    ImGui::Dummy({ avail.x, bar_h });
-    
     
     return;
 }
@@ -180,12 +181,10 @@ void Editor::Begin(const char * id)
 //
 void Editor::_handle_default(const Interaction& it)
 {
-    ImGuiIO & io = ImGui::GetIO();
-    
+    ImGuiIO &   io          = ImGui::GetIO();
     
     //  0.  BBOX HANDLE HOVER...
-    if ( !m_boxdrag.active && m_hover_handle != -1 && ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
-    {
+    if ( !m_boxdrag.active && m_hover_handle != -1 && ImGui::IsMouseClicked(ImGuiMouseButton_Left) ) {
         ImVec2 tl, br;
         if (_selection_bounds(tl, br))
             _start_bbox_drag(static_cast<uint8_t>(m_hover_handle), tl, br);
@@ -193,13 +192,11 @@ void Editor::_handle_default(const Interaction& it)
         
         
     //  2.   Update BBOX...
-    if (m_boxdrag.active)
-        _update_bbox();
+    if (m_boxdrag.active)                           { _update_bbox(); }
     
     
     //  3.  IGNORE ALL INPUT IF SPACE KEY IS HELD DOWN...
-    if (it.space)
-        return;
+    if (it.space)                                   { return; }
 
 
     //  4.  LASSO START...                                                      //          |=== nothing under cursor
@@ -208,16 +205,18 @@ void Editor::_handle_default(const Interaction& it)
     
     
     //  5.  LASSO UPDATE...
-    if (m_lasso_active) {
-        this->_update_lasso(it);
-        return;   // Skip zoom handling while dragging lasso
-    }
+    if (m_lasso_active)                             { this->_update_lasso(it); return; }        // Skip zoom handling while dragging lasso
         
 
     //  6.   ZOOM (mouse wheel) – only when not lassoing...
-    if (it.hovered && io.MouseWheel != 0.0f)
-        this->_zoom_canvas(it);
+    if (it.hovered && io.MouseWheel != 0.0f)        { this->_zoom_canvas(it); }
         
+        
+    //  7.   EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
+    if (m_pen.dragging_handle)                      { _pen_update_handle_drag(it); return; }    // continue an active handle drag
+    if ( _pen_try_begin_handle_drag(it) )           { return; }                                 // Alt-click started a new drag
+    
+    
     
     return;
 }

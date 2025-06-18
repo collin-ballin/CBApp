@@ -146,6 +146,7 @@ bool                            file_exists                 (const char * );
 
 
 //              1.4C    GENERAL WIDGET FUNCTIONS...
+void                            LeftLabelSimple             (const char * );
 void                            LeftLabel2                  (const char * , const float );
 void                            LeftLabel2                  (const char * , const float, const float );
 void                            LeftLabel                   (const char * ,

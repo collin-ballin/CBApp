@@ -263,7 +263,7 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
         ImGui::Text("Here is the main window of the application!");
         ImGui::Text("Not too much going on here right now due to the tabular design of the project.  Rather, most "
                     "of the user's time will be spent on the designated tab for the application they intend to work with.");
-        ImGui::NewLine();
+        ImGui::Separator();     ImGui::NewLine();
     
     
         //this->Test_Browser();
@@ -271,7 +271,12 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
         
         ImGui::NewLine();
     
-        //  4.  TESTING TAB BAR...
+        //  4.  TESTING COLUMNS...
+        //  {
+        //      this->Test_Editor();
+        //  }
+    
+        //  5.  TESTING TAB BAR...
         //  {
         //      this->TestTabBar();
         //  }

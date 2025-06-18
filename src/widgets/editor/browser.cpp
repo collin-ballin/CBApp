@@ -43,6 +43,14 @@ static void detach_point(std::vector<Line>& lines, size_t pi)
                  lines.end());
 }
 
+// Return index into m_points for a given vertex‑id (or -1 if not found)
+static int point_index_from_vid(const std::vector<Point>& pts, uint32_t vid)
+{
+    for (int i = 0; i < static_cast<int>(pts.size()); ++i)
+        if (pts[i].v == vid) return i;
+    return -1;
+}
+
 
 
 // *************************************************************************** //
@@ -93,61 +101,39 @@ Editor::~Editor(void)   { }
 //
 void Editor::DrawBrowser(void)
 {
-    //  Fixed‑width left column
-    ImGui::BeginChild("##Editor_Browser_Left", ImVec2(this->ms_LIST_COLUMN_WIDTH, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
-        _draw_path_list_column();
-        //_draw_point_list_column();
-    ImGui::EndChild();
-    //
-    ImGui::SameLine();
-    //
-    ImGui::BeginChild("##Editor_Browser_Right", ImVec2(0, 0), ImGuiChildFlags_Borders);
-        _draw_path_inspector_column();
-        //_draw_point_inspector_column();
-    ImGui::EndChild();
+    //  1.  CONTROL BAR...
+    _draw_controls();
+    
+    
+    //  2.  LEFTHAND BROWSER SELECTION MENU...
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER1);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    ms_CHILD_ROUND1);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg,             ms_CHILD_FRAME_BG1L);
     //
     //
-    return;
-}
-
-
-//  "DrawBrowser_Window"
-//
-void Editor::DrawBrowser_Window([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
-{
-
-    if (p_open) {
-        //ImGui::SetNextWindowClass(&this->m_window_class);
-        ImGui::Begin( uuid, nullptr, flags );
+    //
+        //  2.  LEFTHAND BROWSER SELECTION MENU...
+        ImGui::BeginChild("##Editor_Browser_Left", ImVec2(this->ms_LIST_COLUMN_WIDTH, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+            _draw_path_list_column();
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
         //
+        ImGui::SameLine();
         //
-        //  Fixed‑width left column
-            ImGui::BeginChild("##Editor_Browser_Left", ImVec2(this->ms_LIST_COLUMN_WIDTH, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
-                
-                _draw_path_list_column();
-                //_draw_point_list_column();
-                
-            ImGui::EndChild();
-            //
-            ImGui::SameLine();
-            //
-            ImGui::BeginChild("##Editor_Browser_Right", ImVec2(0, 0), ImGuiChildFlags_Borders);
-                
-                _draw_path_inspector_column();
-                //_draw_point_inspector_column();
-                
-            ImGui::EndChild();
-        //
-        //
-        ImGui::End();
-    }
+        //  3.  RIGHTHAND BROWSER INSPECTOR MENU...
+        ImGui::PushStyleColor(ImGuiCol_ChildBg,         ms_CHILD_FRAME_BG1R);
+        ImGui::BeginChild("##Editor_Browser_Right", ImVec2(0, 0), ImGuiChildFlags_Borders);
+            _draw_path_inspector_column();
+        ImGui::EndChild();
+    //
+    //
+    //
+    ImGui::PopStyleColor();
+    ImGui::PopStyleVar(2);  //  ImGuiStyleVar_ChildBorderSize, ImGuiStyleVar_ChildRounding
     
     
     return;
 }
-
-
-
 
 
 
@@ -209,48 +195,15 @@ void Editor::_draw_path_list_column(void)
 //
 void Editor::_draw_path_inspector_column(void)
 {
-    const size_t sel_count = m_sel.paths.size();
-
-    /* 0 selected */
-    if (sel_count == 0) { ImGui::TextDisabled("No paths selected."); return; }
-
-    /* >1 selected */
-    if (sel_count > 1)
-    {
-        ImGui::Text("%zu paths selected", sel_count);
-        ImGui::Separator();
-        if (ImGui::Button("Delete Selected", {150,0}))
-        {
-            std::vector<size_t> idxs(m_sel.paths.begin(), m_sel.paths.end());
-            std::sort(idxs.rbegin(), idxs.rend());
-            for (size_t i : idxs) if (i < m_paths.size())
-                m_paths.erase(m_paths.begin() + static_cast<long>(i));
-            m_sel.clear();
-        }
+    if (m_sel.paths.empty()) {
+        ImGui::TextDisabled("No selection.");
         return;
     }
 
-    /* exactly 1 selected */
-    size_t idx = *m_sel.paths.begin();
-    if (idx >= m_paths.size()) { ImGui::TextDisabled("[invalid path]"); return; }
-
-    Path& p = m_paths[idx];
-    ImGui::Text("Path %zu  (%zu vertices)", idx, p.verts.size());
-    ImGui::Separator();
-
-    ImGui::TextDisabled("Vertices:");
-    for (size_t k = 0; k < p.verts.size(); ++k)
-    {
-        char lbl[8]; std::snprintf(lbl, sizeof(lbl), "V%02zu", k);
-        ImGui::BulletText("%s  (id=%u)", lbl, p.verts[k]);
-    }
-
-    ImGui::Separator();
-    if (ImGui::Button("Delete Path", {120,0}))
-    {
-        m_paths.erase(m_paths.begin() + static_cast<long>(idx));
-        m_sel.clear();
-    }
+    if (m_sel.paths.size() == 1)
+        _draw_single_path_inspector();
+    else
+        _draw_multi_path_inspector();
 }
 
 
@@ -259,285 +212,91 @@ void Editor::_draw_path_inspector_column(void)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // *************************************************************************** //
 //
 //
-//  3.  OLD BROWSER INTERNAL IMPLEMENTATIONS...
+//  3.  SUBSIDIARY BROWSER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//-------------------------------------------------------------------------
-// LEFT COLUMN – searchable list of points
-//-------------------------------------------------------------------------
-void Editor::_draw_point_list_column()
+//  "_draw_vertex_list_subcolumn"
+//
+void Editor::_draw_vertex_list_subcolumn(Path& path)
 {
-    // 1) filter input
-    ImGui::SetNextItemWidth(-FLT_MIN);
-    if ( ImGui::InputTextWithHint("##Editor_Browser_LeftFilter", "filter",
-                                  m_browser_filter.InputBuf,
-                                  IM_ARRAYSIZE(m_browser_filter.InputBuf)) ) {
-        m_browser_filter.Build();
-    }
-    
-    
-    //m_browser_filter.Draw("##Editor_Browser_LeftFilter", -1);
+    const int total = static_cast<int>(path.verts.size());
+    ImGuiListClipper clipper; clipper.Begin(total, -1);
 
-
-
-    // 2) list header spacing
-    ImGui::Separator();
-
-    // 3) list area
-    const int       total   = static_cast<int>(m_points.size());
-
-    ImGuiListClipper clipper;
-    clipper.Begin(total, -1);
     while (clipper.Step())
-    {
-        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+        for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
         {
-            // Row label "P00", "P01", ...
-            char label[8];
-            std::snprintf(label, sizeof(label), "P%02d", i);
-
-            // Apply filter to ID label only (for simplicity). Extend if you
-            // need to filter by type later.
-            if (!m_browser_filter.PassFilter(label))
-                continue;
-
-            bool selected = m_sel.points.count(static_cast<size_t>(i));
-            if (ImGui::Selectable(label, selected))
-            {
-                const bool ctrl  = ImGui::GetIO().KeyCtrl;
-                const bool shift = ImGui::GetIO().KeyShift;
-
-                if (!ctrl && !shift)
-                {
-                    // single‑select
-                    m_sel.clear();
-                    m_sel.points.insert(i);
-                    m_browser_anchor = i;
-                }
-                else if (shift && m_browser_anchor >= 0)
-                {
-                    // range select [anchor, i]
-                    int lo = std::min(m_browser_anchor, i);
-                    int hi = std::max(m_browser_anchor, i);
-                    if (!ctrl) m_sel.clear();
-                    for (int k = lo; k <= hi; ++k)
-                        m_sel.points.insert(k);
-                }
-                else if (ctrl)
-                {
-                    // toggle
-                    if (!m_sel.points.erase(i))
-                    {
-                        m_sel.points.insert(i);
-                        m_browser_anchor = i;
-                    }
-                }
-
-                // keep vertex list in sync
-                _rebuild_vertex_selection();
-            }
+            char lbl[8]; std::snprintf(lbl, sizeof(lbl), "V%02d", row);
+            bool selected = (row == m_inspector_vertex_idx);
+            if (ImGui::Selectable(lbl, selected))
+                m_inspector_vertex_idx = (selected ? -1 : row);      // toggle
         }
-    }
     clipper.End();
 }
 
 
-
-
-
-
-//-------------------------------------------------------------------------
-// RIGHT COLUMN – inspector panel adapting to selection count
-//-------------------------------------------------------------------------
-void Editor::_draw_point_inspector_column()
+//  "_draw_vertex_inspector_subcolumn"
+//
+void Editor::_draw_vertex_inspector_subcolumn(Path & path)
 {
-    const size_t sel_count = m_sel.points.size();
-
-    /* ------------------------------------------------------------------ */
-    /* 0 selected                                                         */
-    /* ------------------------------------------------------------------ */
-    if (sel_count == 0)
+    /* guard – nothing chosen */
+    if (m_inspector_vertex_idx < 0 ||
+        m_inspector_vertex_idx >= static_cast<int>(path.verts.size()))
     {
-        ImGui::TextDisabled("No points selected.");
+        ImGui::TextDisabled("Select a vertex from the lefthand column...");
         return;
     }
 
-    /* ------------------------------------------------------------------ */
-    /* 1 selected                                                         */
-    /* ------------------------------------------------------------------ */
-    if (sel_count == 1)
-    {
-        size_t idx = *m_sel.points.begin();
-        if (idx >= m_points.size()) { ImGui::TextDisabled("[invalid point]"); return; }
+    /* resolve vertex ptr */
+    uint32_t vid = path.verts[static_cast<size_t>(m_inspector_vertex_idx)];
+    Pos* v = find_vertex(m_vertices, vid);
+    if (!v) { ImGui::TextDisabled("[stale vertex]"); return; }
 
-        Point& pt = m_points[idx];
-        Pos*   v  = find_vertex(m_vertices, pt.v);
-        if (!v) { ImGui::TextDisabled("[invalid vertex]"); return; }
-
-        ImGui::Text("Point P%02zu", idx);
-        ImGui::Separator();
-
-        /* X/Y controls (snap to grid on release) ----------------------- */
-        const float grid   = GRID_STEP / m_zoom;          // world-units/grid
-        const float speed  = 0.1f * grid;                 // drag sensitivity
-        auto  snap = [grid](float f){ return std::round(f / grid) * grid; };
-
-        bool edited = false;
-        edited |= ImGui::DragFloat("X", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
-        edited |= ImGui::DragFloat("Y", &v->y, speed, -FLT_MAX, FLT_MAX, "%.3f");
-        if (edited && !ImGui::IsItemActive())
-        {
-            v->x = snap(v->x);
-            v->y = snap(v->y);
-        }
-
-        /* Type combo --------------------------------------------------- */
-        static const char* TYPES[] = { "Default", "A", "B", "C" };
-        int type_idx = 0;
-        for (int i = 0; i < 4; ++i)
-            if (pt.sty.color == COL_POINT_DEFAULT + i) type_idx = i;
-
-        if (ImGui::Combo("Type", &type_idx, TYPES, IM_ARRAYSIZE(TYPES)))
-            pt.sty.color = COL_POINT_DEFAULT + type_idx;
-
-        /* --- NEW: delete this point ----------------------------------- */
-        ImGui::Separator();
-        if (ImGui::Button("Delete Point", {120,0}))
-        {
-            _erase_vertex_and_fix_paths(pt.v);
-            m_sel.clear();
-            _rebuild_vertex_selection();
-            return;
-        }
-        
-
-        /* Connections list --------------------------------------------- */
-        ImGui::Separator();
-        ImGui::Text("Connections:");
-
-        bool dirty = false;
-        for (size_t li = 0; li < m_lines.size(); /*++li done inside*/)
-        {
-            const Line& ln = m_lines[li];
-            if (ln.a != idx && ln.b != idx) { ++li; continue; }
-
-            size_t peer = (ln.a == idx) ? ln.b : ln.a;
-            char   lbl[16]; std::snprintf(lbl, sizeof(lbl), "P%02zu", peer);
-
-            ImGui::BulletText("%s", lbl);
-            ImGui::SameLine();
-            ImGui::PushID(static_cast<int>(li));
-            if (ImGui::SmallButton("X"))
-            {
-                m_lines.erase(m_lines.begin() + static_cast<int>(li));
-                dirty = true;
-            }
-            else ++li;          // advance only when not erasing
-            ImGui::PopID();
-        }
-        if (dirty) _rebuild_vertex_selection();
-        return;
-    }
-
-    /* ------------------------------------------------------------------ */
-    /* 2 selected                                                         */
-    /* ------------------------------------------------------------------ */
-    if (sel_count == 2)
-    {
-        std::array<size_t,2> pair{};
-        std::copy(m_sel.points.begin(), m_sel.points.end(), pair.begin());
-        size_t a = pair[0], b = pair[1];
-
-        bool connected = line_exists(m_lines, a, b);
-        if (ImGui::Button(connected ? "Disconnect" : "Connect", {120,0}))
-        {
-            if (connected)
-            {
-                m_lines.erase(std::remove_if(m_lines.begin(), m_lines.end(),
-                             [a,b](const Line& ln){
-                                 return (ln.a==a && ln.b==b) || (ln.a==b && ln.b==a);
-                             }), m_lines.end());
-            }
-            else
-            {
-                m_lines.push_back({ static_cast<uint32_t>(a),
-                                    static_cast<uint32_t>(b),
-                                    IM_COL32_WHITE, 2.f });
-            }
-        }
-        
-        
-        ImGui::Separator();
-        if (ImGui::Button("Delete Selected", {150,0}))
-        {
-            std::vector<uint32_t> vids;
-            for (size_t idx : m_sel.points)
-                vids.push_back( m_points[idx].v );
-
-            for (uint32_t vid : vids)
-                _erase_vertex_and_fix_paths(vid);
-
-            m_sel.clear();
-            _rebuild_vertex_selection();
-            return;
-        }
-        
-
-        ImGui::Separator();
-        static const char* TYPES[] = { "Default", "A", "B", "C" };
-        int type_idx = 0;
-        if (ImGui::Combo("Type", &type_idx, TYPES, IM_ARRAYSIZE(TYPES)))
-            for (size_t idx : m_sel.points)
-                m_points[idx].sty.color = COL_POINT_DEFAULT + type_idx;
-        return;
-    }
-
-    /* ------------------------------------------------------------------ */
-    /* >2 selected                                                        */
-    /* ------------------------------------------------------------------ */
-    ImGui::Text("%zu points selected", sel_count);
+    /* controls --------------------------------------------------------- */
+    ImGui::Text("Vertex V%02d  (id=%u)", m_inspector_vertex_idx, vid);
     ImGui::Separator();
 
-    static const char* TYPES[] = { "Default", "A", "B", "C" };
-    int type_idx = 0;
-    if (ImGui::Combo("Set Type", &type_idx, TYPES, IM_ARRAYSIZE(TYPES)))
-        for (size_t idx : m_sel.points)
-            m_points[idx].sty.color = COL_POINT_DEFAULT + type_idx;
 
-    if (ImGui::Button("Delete Selected", {150,0}))
+    const float grid  = GRID_STEP / m_zoom;
+    const float speed = 0.1f * grid;
+    auto snap = [grid](float f){ return std::round(f / grid) * grid; };
+
+
+    bool edited = false;
+    edited |= ImGui::DragFloat("X", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
+    edited |= ImGui::DragFloat("Y", &v->y, speed, -FLT_MAX, FLT_MAX, "%.3f");
+    if (edited && !ImGui::IsItemActive()) { v->x = snap(v->x); v->y = snap(v->y); }
+
+    /* optional glyph style -------------------------------------------- */
+    int pt_idx = -1;
+    for (size_t i = 0; i < m_points.size(); ++i)
+        if (m_points[i].v == vid) { pt_idx = static_cast<int>(i); break; }
+
+
+    //  VERTEX TYPES (Not Implemented)...
+    if (pt_idx >= 0)
     {
-        std::vector<uint32_t> vids;
-        for (size_t pi : m_sel.points)
-            vids.push_back(m_points[pi].v);        // collect vertex IDs first
+        static const char* TYPES[] = { "Default", "A", "B", "C" };
+        int type_sel = 0;
+        for (int i = 0; i < 4; ++i)
+            if (m_points[pt_idx].sty.color == COL_POINT_DEFAULT + i) type_sel = i;
 
-        for (uint32_t vid : vids)
-            _erase_vertex_and_fix_paths(vid);      // remove vertex + fix paths
+        if (ImGui::Combo("Type", &type_sel, TYPES, IM_ARRAYSIZE(TYPES)))
+            m_points[pt_idx].sty.color = COL_POINT_DEFAULT + type_sel;
+    }
+    
+    
 
-        m_sel.clear();
+    ImGui::Separator();
+    if (ImGui::Button("Delete Vertex", {120,0}))
+    {
+        _erase_vertex_and_fix_paths(vid);
+        m_inspector_vertex_idx = -1;
         _rebuild_vertex_selection();
     }
-
 }
 
 
@@ -546,12 +305,140 @@ void Editor::_draw_point_inspector_column()
 
 
 
+// *************************************************************************** //
+//
+//
+//  4.  INSPECTOR COLUMN DISPATCHER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+/*---------------------------------------------------------------
+    1.  Multi-selection inspector  (>=2 paths)
+----------------------------------------------------------------*/
+void Editor::_draw_multi_path_inspector(void)
+{
+    ImGui::Text("%zu paths selected", m_sel.paths.size());
+    ImGui::Separator();
+
+    if (ImGui::Button("Delete Selections", {150,0}))
+    {
+        std::vector<size_t> idxs(m_sel.paths.begin(), m_sel.paths.end());
+        std::sort(idxs.rbegin(), idxs.rend());
+        for (size_t i : idxs)
+            if (i < m_paths.size())
+                m_paths.erase(m_paths.begin() + static_cast<long>(i));
+
+        m_sel.clear();
+        m_inspector_vertex_idx = -1;
+    }
+}
+
+
+/*---------------------------------------------------------------
+    2.  Single-path inspector  (exactly one path)
+----------------------------------------------------------------*/
+void Editor::_draw_single_path_inspector(void)
+{
+    constexpr ImGuiColorEditFlags   COLOR_FLAGS     = ImGuiColorEditFlags_NoInputs;
+    const ImGuiStyle &              style           = ImGui::GetStyle();
+    //
+    size_t                          pidx            = *m_sel.paths.begin();
+    
+    
+    
+    //  CASE 0 :    ERROR...
+    if (pidx >= m_paths.size()) {
+        ImGui::TextDisabled("[invalid object]"); return;
+    }
+    Path &          path            = m_paths[pidx];
+    bool            is_area         = path.is_area();
 
 
 
+    //  1.  HEADER-ENTRY AND "DELETE" BUTTON...
+    ImGui::Text("Object %zu  (%zu vertices)", pidx, path.verts.size());
+    ImGui::SameLine();
+    if ( ImGui::Button("Delete Object") ) {
+        m_paths.erase(m_paths.begin() + static_cast<long>(pidx));
+        m_sel.clear();
+        m_inspector_vertex_idx = -1;
+        return;
+    }
+    ImGui::Separator();
 
 
 
+    //  2.  LINE-STROKE, AREA-FILL COLORS...
+    {
+        ImVec4          stroke_f            = u32_to_f4(path.style.stroke_color);
+        ImVec4          fill_f              = u32_to_f4(path.style.fill_color);
+        bool            stroke_dirty        = false;
+        bool            fill_dirty          = false;
+
+
+        utl::LeftLabel("Stroke:");          ImGui::SameLine();
+        stroke_dirty                        = ImGui::ColorEdit4( "##Stroke",    (float*)&stroke_f,  COLOR_FLAGS );
+        //
+        ImGui::BeginDisabled( is_area );
+            utl::LeftLabel("Fill:");        ImGui::SameLine();
+            fill_dirty                      = ImGui::ColorEdit4( "##Fill",      (float*)&fill_f,    COLOR_FLAGS );
+        ImGui::EndDisabled();
+
+
+        if (stroke_dirty)   { path.style.stroke_color = f4_to_u32(stroke_f); }
+        if (fill_dirty)     { path.style.fill_color   = f4_to_u32(fill_f); }
+        if (!is_area)       { path.style.fill_color  &= 0x00FFFFFF; }   // clear alpha
+
+    }
+
+
+    //  3.  LINE WIDTH...
+    {
+        float w = path.style.stroke_width;
+        
+        utl::LeftLabel("Line Width:");    ImGui::SameLine();
+        if ( ImGui::SliderFloat("##Width",   &w,     0.5f,   20.0f, "%.1f px") )
+            { path.style.stroke_width = w; }
+    }
+    ImGui::Separator();
+
+
+
+    //  4.  "VERTEX BROWSER" FOR THE OBJECT...
+    float availY = ImGui::GetContentRegionAvail().y;
+    float sub_h  = availY * ms_VERTEX_SUBBROWSER_HEIGHT; 
+    float filler = availY - sub_h - style.WindowPadding.y;
+    
+    if (filler > 0.0f)
+        { ImGui::Dummy(ImVec2(0, filler)); }
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER2);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    ms_CHILD_ROUND2);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg,             ms_CHILD_FRAME_BG2L);
+    //
+    //
+    //  //  4.1.    LEFT-HAND VERTEX BROWSER.
+        ImGui::BeginChild("##VertexPanel_Left", ImVec2(ms_LIST_COLUMN_WIDTH, sub_h), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+            _draw_vertex_list_subcolumn(path);
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+        //
+        ImGui::SameLine();
+        //
+        //  4.2.    RIGHT-HAND VERTEX BROWSER.
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ms_CHILD_FRAME_BG2R);
+        ImGui::BeginChild("##VertexPanel_Right", ImVec2(0, sub_h),
+                          ImGuiChildFlags_Borders);
+            _draw_vertex_inspector_subcolumn(path);
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+    //
+    //
+    ImGui::PopStyleVar(2);   // border size, rounding
+    
+    
+    return;
+}
 
 
 

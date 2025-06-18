@@ -2365,8 +2365,9 @@ struct ExampleAppPropertyEditor
         this->draw_collections_column(root_node);   //  LEFT SIDE :     Categories / Groups / Collections...
 
         ImGui::SameLine();
-        
+
         this->draw_assets_column(root_node);        //  RIGHT SIDE :    Selected Item / Asset...
+        
         
         return;
     }
@@ -2438,19 +2439,39 @@ struct BrowserData
 void Browser::DisplayBrowserInterface(void)
 {
     //  display_table_demo();
+    static bool                         first_frame = true;
     static BrowserData                  browser_data;
     static ExampleAppPropertyEditor     browser;
     
-    if (browser_data.data == NULL)
-        browser_data.data = ExampleTree_CreateDemoTree();
+    if (first_frame) {
+        first_frame = false;
+        if (browser_data.data == NULL)
+            browser_data.data = ExampleTree_CreateDemoTree();
+    }
         
-        
-    browser.Begin(browser_data.data);
 
+    //ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER2);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,        S.m_browser_child_rounding);
+    //
+    //
+    //
+        ImGui::PushStyleColor(ImGuiCol_ChildBg,             S.m_browser_left_bg);
+            browser.draw_collections_column(browser_data.data);         //  LEFT SIDE :     Categories / Groups / Collections...
+        ImGui::PopStyleColor();
+        //
+        ImGui::SameLine();
+        //
+        ImGui::PushStyleColor(ImGuiCol_ChildBg,             S.m_browser_right_bg);
+            browser.draw_assets_column(browser_data.data);              //  RIGHT SIDE :    Selected Item / Asset...
+        ImGui::PopStyleColor();
+    //
+    //
+    //
+    ImGui::PopStyleVar();   //  ImGuiStyleVar_ChildRounding
+    
+    
     return;
 }
-
-
 
 
 

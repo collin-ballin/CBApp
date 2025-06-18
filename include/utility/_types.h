@@ -91,6 +91,14 @@ struct WidgetRow {
 };
 
 
+//  "CellSpec"
+//
+struct CellSpec {
+    const char*                                                         label {""};
+    std::function<void(const ImVec2& widget_pos, const ImVec2& size)>   draw;
+};
+
+
 //  "ColumnCFG"
 //
 struct ColumnCFG {

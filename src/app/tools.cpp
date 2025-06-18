@@ -121,7 +121,6 @@ void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 
     
     //  2.  COLOR-SHADE CALCULATOR TOOL...
-    //ImGui::NewLine();
     ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     if ( ImGui::CollapsingHeader("Color Tint/Shade Calculator") ) {
         this->ColorShaderTool();
@@ -129,7 +128,7 @@ void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 
     
     //  3.  COLORMAP CREATOR TOOL...
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     if ( ImGui::CollapsingHeader("Color-Map Creator") ) {
         this->ColorMapCreatorTool();
     }
@@ -140,19 +139,37 @@ void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 }
 
 
-//  "ColorShaderTool"
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
 //
-void App::ColorShaderTool(void)
-{
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+
+enum CopyFormat : int { FMT_HEX, FMT_HEXA, FMT_IM_COL32, FMT_IMVEC4, FMT_COUNT };
+
+
+//  "shader"
+//
+namespace shader {
     constexpr size_t                BUFFER_SIZE             = 256;
-    [[maybe_unused]] ImGuiIO &      io                      = ImGui::GetIO(); (void)io;
-    [[maybe_unused]] ImGuiStyle &   style                   = ImGui::GetStyle();
+    static bool                     first_frame             = true;
     
     //  DIMENSIONS...
-    static ImVec2                   base_img_size           = ImVec2(180 * S.m_dpi_scale,   180 * S.m_dpi_scale);
-    static ImVec2                   palette_img_size        = ImVec2(30 * S.m_dpi_scale,    30 * S.m_dpi_scale);
-    static float                    LABEL_COLUMN_WIDTH      = 150.0f * S.m_dpi_scale;
-    static float                    WIDGET_COLUMN_WIDTH     = 300.0f * S.m_dpi_scale;
+    static ImVec2                   base_img_size           = ImVec2(180,   180);
+    static ImVec2                   palette_img_size        = ImVec2(30,    30);
+    static float                    LABEL_COLUMN_WIDTH      = 150.0f;
+    static float                    WIDGET_COLUMN_WIDTH     = 300.0f;
 
     static ImVec4                   base_color              = ImVec4(114.0f/255.0f, 144.0f/255.0f, 154.0f/255.0f, 1.0f);    //  Base color in RGB (normalized to [0,1]).
     static char                     hex_input[BUFFER_SIZE]  = "#728C9A";    //  Hex input for base color.
@@ -175,9 +192,27 @@ void App::ColorShaderTool(void)
     static ImGuiColorEditFlags      BASE_IMG_FLAGS          = ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs;    // ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs; //ImGuiColorEditFlags_NoAlpha
     static ImGuiColorEditFlags      PALETTE_IMG_FLAGS       = ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoOptions; //ImGuiColorEditFlags_NoAlpha
     
+    
+    static int                      copy_format             = FMT_HEX;  // default
+    static const char *             copy_format_labels[FMT_COUNT] = {
+        "#RRGGBB",        //   0  e.g.  #1E90FF
+        "#RRGGBBAA",      //   1  with alpha
+        "IM_COL32",       //   2  IM_COL32(30,144,255,255)
+        "ImVec4"          //   3  ImVec4(0.118f,0.565f,1.000f,1.0f)
+    };
+}
 
 
 
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_color_shader_widgets"
+//
+void _color_shader_widgets(void)
+{
+    using namespace shader;
+    
     
     //  1.  PREVIEW OF BASE COLOR...
     //ImGui::ColorButton("##BaseColorImage",  base_color,     BASE_IMG_FLAGS,    base_img_size);
@@ -194,6 +229,14 @@ void App::ColorShaderTool(void)
         ImGui::TableSetupColumn("Label",  col0_flags, LABEL_COLUMN_WIDTH);
         ImGui::TableSetupColumn("Widget", col1_flags, stretch_column_1 ? 1.0f : WIDGET_COLUMN_WIDTH);
         // ImGui::TableHeadersRow();
+
+        
+        //  0.      COPY SELECTION TYPE...
+        ImGui::TableNextRow();  ImGui::TableSetColumnIndex(0);  ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Copy format");
+        ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
+        ImGui::SetNextItemWidth(ImGui::GetColumnWidth());
+        ImGui::Combo("##copy_fmt", &copy_format, copy_format_labels, FMT_COUNT);
         
 
         //  1A.     BASE-COLOR [Hex INPUT]...
@@ -224,19 +267,6 @@ void App::ColorShaderTool(void)
         ImGui::ColorEdit4("##BaseColorHSV",     (float*)&base_color,        COLOR_INPUT_FLAGS | ImGuiColorEditFlags_DisplayHSV);
 
 
-
-
-        //  ImGui::Text("Color widget HSV with Alpha:");
-        //  ImGui::ColorEdit4("MyColor##2", (float*)&color, ImGuiColorEditFlags_DisplayHSV | base_flags);
-
-        //  IMGUI_DEMO_MARKER("Widgets/Color/ColorEdit (float display)");
-        //  ImGui::Text("Color widget with Float Display:");
-        //  ImGui::ColorEdit4("MyColor##2f", (float*)&color, ImGuiColorEditFlags_Float | base_flags);
-        
-        
-
-
-
         //  3.      NUMBER-OF-STEPS...
         ImGui::TableNextRow();  ImGui::TableSetColumnIndex(0);  ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted("Steps");
@@ -250,35 +280,66 @@ void App::ColorShaderTool(void)
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted("Shading Amount");
         ImGui::TableSetColumnIndex(1);      ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-        ImGui::SliderFloat("##delta_l", &delta_l, 0.01f, 0.5f, "%.2f%%");
+        //ImGui::SliderFloat("##delta_l", &delta_l, 0.001f, 0.500f, "%.3f%%");
+        
+        float delta_pct = delta_l * 100.0f;                      // 0.1 → 50.0 %
+        if (ImGui::SliderFloat("##delta_l",        // label
+                               &delta_pct,         // displayed %
+                               0.1f, 50.0f,        // min / max %
+                               "%.1f%%"))          // one decimal place
+        {
+            delta_l = delta_pct / 100.0f;          // convert back to 0 – 0.5
+        }
 
         ImGui::EndTable();
     }
 
 
-    ImGui::NewLine();
-    ImGui::SeparatorText("Color Palette");
+    return;
+}
+
+
+
+//  "_color_shader_table"
+//
+static void _color_shader_table(void)
+{
+    using namespace shader;
+
 
     //  GENERATE THE COLOR PALETTE...
     //  3.  Helper: color button with tooltip & copy-on-click
-    auto color_button_with_tooltip = [&](const char * id, const ImVec4 & col)
+    //
+    auto to_string_color = [&](const ImVec4& c)->std::string
+    {
+        int r = int(c.x * 255.0f + 0.5f);
+        int g = int(c.y * 255.0f + 0.5f);
+        int b = int(c.z * 255.0f + 0.5f);
+        int a = int(c.w * 255.0f + 0.5f);
+        char buf[64]{};
+
+        switch (copy_format)
+        {
+            case FMT_HEX:      snprintf(buf, sizeof(buf), "#%02X%02X%02X",       r, g, b);                break;
+            case FMT_HEXA:     snprintf(buf, sizeof(buf), "#%02X%02X%02X%02X",   r, g, b, a);             break;
+            case FMT_IM_COL32: snprintf(buf, sizeof(buf), "IM_COL32(%d,%d,%d,%d)", r, g, b, a);          break;
+            case FMT_IMVEC4:   snprintf(buf, sizeof(buf), "ImVec4(%.3ff,%.3ff,%.3ff,%.3ff)",
+                                        c.x, c.y, c.z, c.w);                                                     break;
+            default:           snprintf(buf, sizeof(buf), "#%02X%02X%02X",       r, g, b);                break;
+        }
+        return {buf};
+    };
+
+    auto color_button_with_tooltip = [&](const char* id, const ImVec4& col)
     {
         ImGui::ColorButton(id, col, PALETTE_IMG_FLAGS, palette_img_size);
         if (ImGui::IsItemHovered())
-        {
-            char hex_buf[8];
-            snprintf(hex_buf, sizeof(hex_buf), "#%02X%02X%02X",
-                     int(col.x * 255), int(col.y * 255), int(col.z * 255));
-            ImGui::SetTooltip("%s\n(click to copy)", hex_buf);
-        }
+            ImGui::SetTooltip("%s\n(click to copy)", to_string_color(col).c_str());
         if (ImGui::IsItemClicked())
-        {
-            char hex_buf[8];
-            snprintf(hex_buf, sizeof(hex_buf), "#%02X%02X%02X",
-                     int(col.x * 255), int(col.y * 255), int(col.z * 255));
-            ImGui::SetClipboardText(hex_buf);
-        }
+            ImGui::SetClipboardText(to_string_color(col).c_str());
     };
+    
+
 
     //  4.  Generate palette table with fixed first column and stretch others
     float           h, s, l;
@@ -351,7 +412,7 @@ void App::ColorShaderTool(void)
         // Complementary Shades row
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted("Comp Shades");
+        ImGui::TextUnformatted("Complimentary Shades");
         for (int i = 0; i < steps; ++i)
         {
             ImGui::TableSetColumnIndex(i + 1);
@@ -369,7 +430,7 @@ void App::ColorShaderTool(void)
         // Complementary Tints row
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted("Comp Tints");
+        ImGui::TextUnformatted("Compimentary Tints");
         for (int i = 0; i < steps; ++i)
         {
             ImGui::TableSetColumnIndex(i + 1);
@@ -386,9 +447,53 @@ void App::ColorShaderTool(void)
 
         ImGui::EndTable();
     }
+
+
+    return;
+}
+
+
+
+//  "ColorShaderTool"
+//
+void App::ColorShaderTool(void)
+{
+    using namespace shader;
+    [[maybe_unused]] ImGuiIO &      io                      = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style                   = ImGui::GetStyle();
+    
+    if (first_frame) {
+        first_frame                 = false;
+        base_img_size.x            *= S.m_dpi_scale;        base_img_size.y            *= S.m_dpi_scale;
+        palette_img_size.x         *= S.m_dpi_scale;        palette_img_size.y         *= S.m_dpi_scale;
+        LABEL_COLUMN_WIDTH          = 150.0f * S.m_dpi_scale;
+        WIDGET_COLUMN_WIDTH         = 300.0f * S.m_dpi_scale;
+    }
+    
+    
+    
+    _color_shader_widgets();
+    
+    
+    ImGui::NewLine();
+    ImGui::SeparatorText("Color Palette");
+    
+    
+    _color_shader_table();
+    
+    
     
     return;
 }
+
+
+
+
+
+
+
+
+
 
 
 
