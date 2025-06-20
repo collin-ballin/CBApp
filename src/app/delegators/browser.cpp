@@ -155,20 +155,20 @@ void Browser::Display_Preferences_Menu(void)
 
 
 
-    const ImVec2            BUTTON_SIZE     = ImVec2(0, 40);
-    static bool             home            = true;
-    if ( ImGui::Button( (home)
-                    ? "Detail View##ControlBar" : "Home ##ControlBar", ImVec2(120, BUTTON_SIZE.y )) )
-    {
-        home = !home;
-        
-        if (home) {
-            S.DockAtHome( S.m_windows[Window::CustomRendering].get_uuid() );
-        }
-        else {
-            S.DockAtDetView( S.m_windows[Window::CustomRendering].get_uuid() );
-        }
-    }
+    //  const ImVec2            BUTTON_SIZE     = ImVec2(0, 40);
+    //  static bool             home            = true;
+    //  if ( ImGui::Button( (home)
+    //                  ? "Detail View##ControlBar" : "Home ##ControlBar", ImVec2(120, BUTTON_SIZE.y )) )
+    //  {
+    //      home = !home;
+    //
+    //      if (home) {
+    //          S.DockAtHome( S.m_windows[Window::CustomRendering].get_uuid() );
+    //      }
+    //      else {
+    //          S.DockAtDetView( S.m_windows[Window::CustomRendering].get_uuid() );
+    //      }
+    //  }
     
     
     
@@ -438,9 +438,9 @@ void Browser::disp_performance_metrics(void) {
     for (const auto & pt : spf_plot.Data)
         MAX_FPS     = ImMax(static_cast<float>(MAX_FPS),    pt.y);
     for (const auto & pt : index_plot.Data)
-        MAX_GPU     = ImMax(static_cast<float>(MAX_GPU),  pt.y);
+        MAX_GPU     = ImMax(static_cast<float>(MAX_GPU),    pt.y);
     for (const auto & pt : vertex_plot.Data)
-        MAX_GPU     = ImMax(static_cast<float>(MAX_GPU),  pt.y);
+        MAX_GPU     = ImMax(static_cast<float>(MAX_GPU),    pt.y);
     MAX_FPS                 *= PLOT_PADDING;
     MAX_GPU                 *= PLOT_PADDING;
     

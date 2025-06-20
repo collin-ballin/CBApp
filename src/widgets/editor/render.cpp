@@ -53,11 +53,10 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // -----------------------------------------------------------------------------
 // GRID HELPERS
 // -----------------------------------------------------------------------------
-float Editor::_grid_step_px() const            { return m_grid.world_step * m_zoom; }
-
 ImVec2 Editor::_grid_snap(ImVec2 w) const
 {
-    if (!m_grid.snap_on) return w;
+    if ( !this->want_snap() ) return w;
+    
     const float s = m_grid.world_step;
     w.x = std::round(w.x / s) * s;
     w.y = std::round(w.y / s) * s;
@@ -65,33 +64,37 @@ ImVec2 Editor::_grid_snap(ImVec2 w) const
 }
 
 
+//  "_grid_draw"
+//
 void Editor::_grid_draw(ImDrawList* dl, const ImVec2& p0, const ImVec2& sz) const
 {
     if (!m_grid.visible) return;
 
-    const float step_px = _grid_step_px();
-    const ImU32 lineCol = IM_COL32(200,200,200, 64);
-    const ImU32 textCol = ImGui::GetColorU32(ImGuiCol_Text);   // respect current theme
+    const float     step_px         = _grid_step_px();
+    const ImU32     lineCol         = IM_COL32(200,200,200, 64);
+    const ImU32     textCol         = ImGui::GetColorU32(ImGuiCol_Text);   // respect current theme
 
     // Label skip: ensure ≥50 px between labels
-    const int skip = std::max(1, int(std::ceil(50.f / step_px)));
-    const int maxLabels = 150;     // safety hard cap per edge
+    const int       skip            = std::max(1, int(std::ceil(50.f / step_px)));
+    const int       maxLabels       = 150;     // safety hard cap per edge
 
     ImGui::PushClipRect(p0, {p0.x + sz.x, p0.y + sz.y}, true);
 
-    float first_wx = -m_scroll.x / m_zoom;
-    float first_wy = -m_scroll.y / m_zoom;
-
-    int labelCountX = 0, labelCountY = 0;
-    int gridIndex   = 0;
-
-    // X lines + labels
-    for (float x = std::fmod(m_scroll.x, step_px); x < sz.x; x += step_px, ++gridIndex)
-    {
+    float           first_wx        = -m_scroll.x / m_zoom;
+    float           first_wy        = -m_scroll.y / m_zoom;
+    int             labelCountX     = 0, labelCountY = 0;
+    int             gridIndex       = 0;
+    
+    //  1.  X lines + labels
+    float           start_x         = std::fmod(m_scroll.x, step_px);
+    
+    if (start_x < 0.0f)     { start_x += step_px; }          // ensure start_x ∈ [0, step_px)
+    gridIndex = 0;
+    
+    for (float x = start_x; x < sz.x; x += step_px, ++gridIndex) {
         dl->AddLine({ p0.x + x, p0.y }, { p0.x + x, p0.y + sz.y }, lineCol);
 
-        if (gridIndex % skip == 0 && labelCountX < maxLabels)
-        {
+        if (gridIndex % skip == 0 && labelCountX < maxLabels) {
             float wx = first_wx + x / m_zoom;
             char buf[16]; std::snprintf(buf, sizeof(buf), "%.0f", wx);
             dl->AddText({ p0.x + x + ms_GRID_LABEL_PAD, p0.y + ms_GRID_LABEL_PAD }, textCol, buf);
@@ -99,10 +102,13 @@ void Editor::_grid_draw(ImDrawList* dl, const ImVec2& p0, const ImVec2& sz) cons
         }
     }
 
-    // Y lines + labels
+
+    //  2.  Y lines + labels
+    float           start_y         = std::fmod(m_scroll.y, step_px);
+    if (start_y < 0.0f)     { start_y += step_px; }
     gridIndex = 0;
-    for (float y = std::fmod(m_scroll.y, step_px); y < sz.y; y += step_px, ++gridIndex)
-    {
+    
+    for (float y = start_y; y < sz.y; y += step_px, ++gridIndex) {
         dl->AddLine({ p0.x, p0.y + y }, { p0.x + sz.x, p0.y + y }, lineCol);
 
         if (gridIndex % skip == 0 && labelCountY < maxLabels)
@@ -113,58 +119,39 @@ void Editor::_grid_draw(ImDrawList* dl, const ImVec2& p0, const ImVec2& sz) cons
             ++labelCountY;
         }
     }
+    
     ImGui::PopClipRect();
+    return;
 }
 
 
-// ---------------------------------------------------------------------------
-// Editor::Begin – (partial, fit-to-canvas initialization)
-// ---------------------------------------------------------------------------
-// (NOTE: The following should be inserted in Editor::Begin after m_p1 is set)
-// (Implementation provided per instructions)
-
-// ... inside Editor::Begin, after:
-//     m_p1 = { m_p0.x + m_avail.x,     m_p0.y + m_avail.y };
+//  "_grid_handle_shortcuts"
 //
-// Insert:
+//      I think our policy should be to RETURN OUT after implementing a SINGLE hotkey.
+//      In other words, only allow ONE hotkey activation per frame.  It seems problematic to allow
+//      the user to perform both a CTRL+ AND CTRL- (inverse operations) in the same frame.
 //
-// ------------------------------------------------------------------
-// One‑time “fit to canvas” initialisation
-// ------------------------------------------------------------------
-// (This code should be in Editor::Begin, not here, but placed here for patch context)
-/*
-    if (m_first_frame_init)
-    {
-        // Fit‑zoom so the entire world rectangle is visible with ~10 % margin
-        const float fitX = m_avail.x / m_world_extent.x;
-        const float fitY = m_avail.y / m_world_extent.y;
-        m_zoom = 0.9f * std::min(fitX, fitY);
-        _clamp_zoom(m_zoom);          // respect min/max bounds
-
-        // Centre the view
-        m_scroll = ImVec2((m_world_extent.x * m_zoom - m_avail.x) * 0.5f,
-                          (m_world_extent.y * m_zoom - m_avail.y) * 0.5f);
-        _clamp_scroll();
-
-        // Choose a sensible initial grid pitch: 10 cells across the shorter axis
-        m_grid.world_step = std::max(ms_GRID_STEP_MIN,
-                                     std::min(m_world_extent.x, m_world_extent.y) / 10.0f);
-
-        m_first_frame_init = false;
-    }
-*/
-
-
-// optional: call this once per frame to handle CTRL + / – hot-keys
-void Editor::_grid_handle_shortcuts()
+void Editor::_grid_handle_shortcuts(void)
 {
-    ImGuiIO& io = ImGui::GetIO();
-    if (!io.KeyCtrl) return;
+    ImGuiIO &   io      = ImGui::GetIO();
+    
+    
+    //  1.  TOGGLE SNAP-TO-GRID.            [ SHIFT G ]
+    if ( io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_G) )
+    { m_grid.snap_on = !m_grid.snap_on; return; }
+   
+   
+    //  Exit early if CTRL key is not pressed.
+    if ( !io.KeyCtrl )          return;
 
-    if (ImGui::IsKeyPressed(ImGuiKey_Equal))            // CTRL +
-        m_grid.world_step = std::max(ms_GRID_STEP_MIN,  m_grid.world_step * 0.5f);
-    if (ImGui::IsKeyPressed(ImGuiKey_Minus))            // CTRL –
-        m_grid.world_step *= 2.f;
+
+    //  2.  INCREASE GRID SPACING.          [ CTRL + ]
+    if ( ImGui::IsKeyPressed(ImGuiKey_Equal) )
+    { m_grid.world_step = std::max(ms_GRID_STEP_MIN,  m_grid.world_step * 0.5f); return; }
+       
+    //  3.  DECREASE GRID SPACING.          [ CTRL – ]
+    if ( ImGui::IsKeyPressed(ImGuiKey_Minus) )
+    { m_grid.world_step *= 2.f; return; }
         
     return;
 }

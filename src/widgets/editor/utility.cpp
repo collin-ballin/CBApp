@@ -54,10 +54,40 @@ std::optional<Editor::EndpointInfo> Editor::_endpoint_if_open(uint32_t vid) cons
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
-//  2.  DATA MODIFIER UTILITIES...
+//  3.  DATA MODIFIER UTILITIES...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -72,8 +102,7 @@ void Editor::_add_point_glyph(uint32_t vid)
 
 //  "_add_vertex"
 //
-uint32_t Editor::_add_vertex(ImVec2 w)
-{
+uint32_t Editor::_add_vertex(ImVec2 w) {
     w = _grid_snap(w);                       // <- snap if enabled
     m_vertices.push_back({ m_next_id++, w.x, w.y });
     return m_vertices.back().id;
@@ -122,7 +151,7 @@ void Editor::_erase_vertex_and_fix_paths(uint32_t vid)
 //
 void Editor::_erase_path_and_orphans(size_t pidx)
 {
-    if (pidx >= m_paths.size()) return;
+    if ( pidx >= m_paths.size() ) return;
 
     // 1. move-out the doomed path so we still have its vertex IDs
     Path doomed = std::move(m_paths[pidx]);
@@ -152,6 +181,38 @@ void Editor::_erase_path_and_orphans(size_t pidx)
 //  3.  APP UTILITY OPERATIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "_try_begin_handle_drag"
+//
+bool Editor::_try_begin_handle_drag(const Interaction& it)
+{
+    if (m_dragging_handle ||
+        !ImGui::IsMouseClicked(ImGuiMouseButton_Left) || !it.hovered)
+        return false;
+
+    if (auto h = _hit_any(it); h && h->type == Hit::Type::Handle)
+    {
+        m_dragging_handle = true;
+        m_drag_vid        = h->index;      // vertex-id
+        m_dragging_out    = h->out;
+        return true;                       // we’re in drag state
+    }
+
+    /* Alt-click fallback (pull new handle) --------------------------- */
+    if (alt_down()) {
+        if (auto h = _hit_any(it); h && h->type == Hit::Type::Point)
+        {
+            m_dragging_handle = true;
+            m_drag_vid        = m_points[h->index].v;
+            m_dragging_out    = true;      // always out first
+            if (Vertex* v = find_vertex_mut(m_vertices, m_drag_vid))
+                v->out_handle = {0,0};
+            return true;
+        }
+    }
+    return false;
+}
+
 
 //  "_scissor_cut"
 //      Core cut routine: split a Path at the hit position
@@ -367,43 +428,96 @@ void Editor::_update_lasso(const Interaction & it)
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "_update_world_extent"
+//
+void Editor::_update_world_extent()
+{
+    if (m_vertices.empty()) {
+        m_world_bounds = { 0,0,  0,0 };
+        return;
+    }
+
+    float   min_x   =  std::numeric_limits<float>::max();
+    float   min_y   =  std::numeric_limits<float>::max();
+    float   max_x   = -std::numeric_limits<float>::max();
+    float   max_y   = -std::numeric_limits<float>::max();
+
+    for (const Vertex & v : m_vertices) {
+        min_x   = std::min(min_x, v.x);
+        min_y   = std::min(min_y, v.y);
+        max_x   = std::max(max_x, v.x);
+        max_y   = std::max(max_y, v.y);
+    }
+
+    const float margin =  m_grid.world_step * 4.0f;     // breathing room
+    m_world_bounds     = { min_x - margin,  min_y - margin,
+                           max_x + margin,  max_y + margin };
+}
+
+
 //  "_zoom_canvas"
 //
 void Editor::_zoom_canvas(const Interaction& it)
 {
     ImGuiIO& io = ImGui::GetIO();
-    if (io.MouseWheel == 0.0f) return;
+    if (io.MouseWheel == 0.0f || ImGui::IsMouseDown(ImGuiMouseButton_Left) ) return;
 
-    // 1) pick anchor
     ImVec2 scr_anchor = it.hovered ? it.canvas
                                    : ImVec2(m_avail.x * 0.5f, m_avail.y * 0.5f);
 
-    // 2) world coord under anchor before zoom
-    ImVec2 world_anchor { (scr_anchor.x + m_scroll.x) / m_zoom,
-                          (scr_anchor.y + m_scroll.y) / m_zoom };
+    ImVec2 world_anchor{
+        (scr_anchor.x + m_scroll.x) / m_zoom,
+        (scr_anchor.y + m_scroll.y) / m_zoom
+    };
 
-    // 3) new zoom (±10 %)
     float new_zoom = m_zoom * (1.f + io.MouseWheel * 0.10f);
-    _clamp_zoom(new_zoom);
+    _clamp_zoom(new_zoom);                 // respects min/max zoom
 
-    // 4) re-compute scroll so anchor stays pinned
     m_scroll.x = world_anchor.x * new_zoom - scr_anchor.x;
     m_scroll.y = world_anchor.y * new_zoom - scr_anchor.y;
-    m_zoom     = new_zoom;
 
-    _clamp_scroll();        // keep inside finite canvas
+    _clamp_scroll();                       // apply symmetric limits
+    m_zoom = new_zoom;
 }
 
 
-void Editor::_clamp_scroll()
+//  "_clamp_scroll"
+//
+void Editor::_clamp_scroll(void)
 {
-    const float max_x = std::max(0.f, m_world_extent.x * m_zoom - m_avail.x);
-    const float max_y = std::max(0.f, m_world_extent.y * m_zoom - m_avail.y);
-    m_scroll.x = std::clamp(m_scroll.x, 0.f, max_x);
-    m_scroll.y = std::clamp(m_scroll.y, 0.f, max_y);
+    const float pad_x  =  m_avail.x * 0.5f;        // half‑viewport slack
+    const float pad_y  =  m_avail.y * 0.5f;
+
+    const float wl_px  =  m_world_bounds.min_x * m_zoom;   // world‑left  in px
+    const float wr_px  =  m_world_bounds.max_x * m_zoom;   // world‑right in px
+    const float wt_px  =  m_world_bounds.min_y * m_zoom;   // world‑top   in px
+    const float wb_px  =  m_world_bounds.max_y * m_zoom;   // world‑bot   in px
+
+    // X‑axis limits
+    float min_scroll_x = wl_px - pad_x;
+    float max_scroll_x = wr_px - m_avail.x + pad_x;
+    if ((wr_px - wl_px) <= m_avail.x) {                       // world narrower than view
+        const float centre = (wl_px + wr_px - m_avail.x) * 0.5f;
+        min_scroll_x = centre - pad_x;
+        max_scroll_x = centre + pad_x;
+    }
+
+    // Y‑axis limits
+    float min_scroll_y = wt_px - pad_y;
+    float max_scroll_y = wb_px - m_avail.y + pad_y;
+    if ((wb_px - wt_px) <= m_avail.y) {                       // world shorter than view
+        const float centre = (wt_px + wb_px - m_avail.y) * 0.5f;
+        min_scroll_y = centre - pad_y;
+        max_scroll_y = centre + pad_y;
+    }
+
+    m_scroll.x   = std::clamp(m_scroll.x, min_scroll_x, max_scroll_x);
+    m_scroll.y   = std::clamp(m_scroll.y, min_scroll_y, max_scroll_y);
 }
 
 
+//  "_clamp_zoom"
+//
 void Editor::_clamp_zoom(float& target_zoom)
 {
     const float viewFitX = m_avail.x / m_world_extent.x;
@@ -438,18 +552,18 @@ void Editor::_draw_controls(void)
 {
     static constexpr const char *   uuid            = "##Editor_Controls_Columns";
     static constexpr int            NC              = 8;
-    static ImGuiOldColumnFlags      column_flags    = ImGuiOldColumnFlags_None;
-    static ImVec2                   WIDGET_SIZE     = ImVec2( 160,  32 );
+    static ImGuiOldColumnFlags      COLUMN_FLAGS    = ImGuiOldColumnFlags_None;
+    static ImVec2                   WIDGET_SIZE     = ImVec2( -1,  32 );
     static ImVec2                   BUTTON_SIZE     = ImVec2( 32,   WIDGET_SIZE.y );
     //
-    constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiButtonFlags_None;
+    constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
     int                             mode_i          = static_cast<int>(m_mode);
     
    
    
     //  BEGIN COLUMNS...
     //
-    ImGui::Columns(NC, uuid, column_flags);
+    ImGui::Columns(NC, uuid, COLUMN_FLAGS);
     //
     //
     //
@@ -525,7 +639,6 @@ void Editor::_draw_controls(void)
 
         
         //  6.  EMPTY SPACES FOR LATER...
-        //
         for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
             ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
         }
@@ -579,17 +692,30 @@ void Editor::_display_canvas_settings(void)
 
 //  "_clear_all"
 //
-void Editor::_clear_all()
+void Editor::_clear_all(void)
 {
+    const size_t    N       = this->m_paths.size();
+    
+    
+    //  1.  CLEAR ALL EDITOR DATA...
+    for (size_t idx = 0; idx < N; ++idx) {
+        _erase_path_and_orphans(idx);  // ← replaces direct m_paths.erase()
+    }
+
     m_vertices.clear();
     m_points.clear();
     m_lines.clear();
     m_sel.clear();
+    
+    
+    //  2.  RESET EDITOR STATE...
     m_lasso_active  = false;
     m_dragging      = false;
     m_drawing       = false;
     m_next_id       = 1;
-    m_pen = {};
+    m_pen           = {};
+    
+    return;
 }
 
 

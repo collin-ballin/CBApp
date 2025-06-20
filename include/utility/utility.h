@@ -76,6 +76,44 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "RightHandJustify"
+//
+//      Right-align the next widget of width W inside the current ImGui window.
+//      Call this *immediately* before you emit the widget you want right-justified.
+//  Example:
+//      RightHandJustify(80.0f);
+//      ImGui::Button("OK", ImVec2(80.0f, 0.0f));
+//
+inline void RightHandJustify(const float W) {                   // W is read-only
+    const ImGuiStyle &  style           = ImGui::GetStyle();
+    const float         rhs_padding     = style.WindowPadding.x;
+    const float         avail_x         = ImGui::GetContentRegionAvail().x;
+    float               dummy_w         = avail_x - W - rhs_padding;
+    if (dummy_w < 0.0f)     dummy_w = 0.0f;
+
+    ImGui::SameLine();                                           // continue current row (default spacing)
+    ImGui::Dummy(ImVec2(dummy_w, 0.0f));                         // skip to right
+    ImGui::SameLine(0.0f, 0.0f);                                 // keep next item on this row
+    return;
+}
+//
+//  Overload for ImVec2 – ignores Y component.
+inline void RightHandJustify(const ImVec2 & size) {
+    const ImGuiStyle &  style           = ImGui::GetStyle();
+    const float         rhs_padding     = style.WindowPadding.x;
+    const float         avail_x         = ImGui::GetContentRegionAvail().x;
+    float               dummy_w         = avail_x - size.x - rhs_padding;
+    
+    ImGui::SameLine();                                          // continue current row (default spacing)
+    if (dummy_w < 0.0f)     dummy_w = 0.0f;
+    ImGui::Dummy( ImVec2(dummy_w, 0.0f) );                      // skip to right
+    ImGui::SameLine(0.0f, 0.0f);                                // keep next item on this row
+    return;
+}
+
+
+
+
 
 
 // *************************************************************************** //

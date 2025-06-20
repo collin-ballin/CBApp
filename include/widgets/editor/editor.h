@@ -109,11 +109,72 @@ static bool point_in_polygon(const std::vector<ImVec2>& poly, ImVec2 p)
     return inside;
 }
 
-
 static inline ImVec4 u32_to_f4(ImU32 c)     { return ImGui::ColorConvertU32ToFloat4(c); }
 
 static inline ImU32  f4_to_u32(ImVec4 f)    { return ImGui::ColorConvertFloat4ToU32(f); }
 
+//  Returns length of a 2-D vector
+static inline float vec_len(const ImVec2& v) { return sqrtf(v.x*v.x + v.y*v.y); }
+
+//  Normalises `v` unless zero; returns {0,0} if zero
+static inline ImVec2 vec_norm(const ImVec2& v)
+{
+    float l = vec_len(v);
+    return (l > 0.f) ? ImVec2{ v.x / l, v.y / l } : ImVec2{0,0};
+}
+
+//  Mirrors the opposite handle according to anchor kind
+static inline void mirror_handles(Vertex& v, bool dragged_out_handle)
+{
+    ImVec2& h_dragged = dragged_out_handle ? v.out_handle : v.in_handle;
+    ImVec2& h_other   = dragged_out_handle ? v.in_handle  : v.out_handle;
+
+    switch (v.kind)
+    {
+        case AnchorType::Corner:
+            /* no coupling */ break;
+
+        case AnchorType::Smooth: {
+            float len = vec_len(h_other);           // keep original length
+            ImVec2 dir = vec_norm(h_dragged);
+            h_other = ImVec2{ -dir.x * len, -dir.y * len };
+            break;
+        }
+        case AnchorType::Symmetric:
+            h_other = ImVec2{ -h_dragged.x, -h_dragged.y };
+            break;
+    }
+}
+
+
+//  "find_vertex_mut"
+//
+static inline Vertex* find_vertex_mut(std::vector<Vertex>& arr, uint32_t id)
+{
+    for (Vertex& v : arr)
+        if (v.id == id) return &v;
+    return nullptr;
+}
+
+
+static inline bool alt_down()
+{
+    ImGuiIO& io = ImGui::GetIO();
+#if defined(ImGuiMod_Alt)          // 1.90+
+    if (io.KeyMods & ImGuiMod_Alt) return true;
+#endif
+#if defined(ImGuiKey_ModAlt)       // some back-ends set this explicitly
+    if (ImGui::IsKeyDown(ImGuiKey_ModAlt)) return true;
+#endif
+    if (io.KeyAlt)                 // 1.89 back-ends set this bool
+        return true;
+#if defined(ImGuiKey_LeftAlt)
+    if (ImGui::IsKeyDown(ImGuiKey_LeftAlt)  ||
+        ImGui::IsKeyDown(ImGuiKey_RightAlt))
+        return true;
+#endif
+    return false;
+}
 
 
 
@@ -174,8 +235,9 @@ private:
     void                        _handle_point                   (const Interaction & );
     void                        _handle_pen                     (const Interaction & );
     void                        _handle_scissor                 (const Interaction & );
-    void                        _handle_add_anchor              (const Interaction & );
-    void                        _handle_remove_anchor           (const Interaction & );
+    void                        _handle_add_anchor              ([[maybe_unused]] const Interaction & );
+    void                        _handle_remove_anchor           ([[maybe_unused]] const Interaction & );
+    void                        _handle_edit_anchor             ([[maybe_unused]] const Interaction & );
     //
     //
     // *************************************************************************** //
@@ -193,9 +255,10 @@ private:
     // *************************************************************************** //
     //      PEN-TOOL STUFF.                 |   "pen_tool.cpp" ...
     // *************************************************************************** //
-    bool                        _pen_cancel_if_escape           (const Interaction & );
+    bool                        _pen_cancel_if_escape           ([[maybe_unused]] const Interaction & );
+    void                        _pen_begin_handle_drag          (uint32_t vid, bool out_handle, const bool force_select=false);
     bool                        _pen_try_begin_handle_drag      (const Interaction & );
-    void                        _pen_update_handle_drag         (const Interaction & );
+    void                        _pen_update_handle_drag         ([[maybe_unused]] const Interaction & );
     void                        _pen_begin_path_if_click_empty  (const Interaction & );
     inline bool                 _pen_click_hits_first_vertex    (const Interaction &, const Path &) const;
     void                        _pen_append_or_close_live_path  (const Interaction & );
@@ -212,7 +275,6 @@ private:
     //
     //                      GRID:
     void                        _draw_grid                      (ImDrawList *, const ImVec2 &, const ImVec2 &) const;
-    float                       _grid_step_px                   (void) const;
     ImVec2                      _grid_snap                      (ImVec2 ) const;
     void                        _grid_draw                      (ImDrawList *, const ImVec2 &, const ImVec2 & ) const;
     void                        _grid_handle_shortcuts          (void);
@@ -231,6 +293,14 @@ private:
     std::optional<PathHit>      _hit_path_segment               (const Interaction & ) const;
     //
     void                        _process_selection              (const Interaction & );
+    //
+    void                        show_selection_context_menu     (const Interaction & it);
+    void                        resolve_pending_selection       (const Interaction & it);
+    void                        update_move_drag_state          (const Interaction & it);
+    void                        start_move_drag                 (const ImVec2 & anchor_ws);
+    void                        add_hit_to_selection            (const Hit & hit);
+    //
+    //
     void                        _update_cursor_select           (const Interaction & ) const;
     void                        _rebuild_vertex_selection       (void);   // decl
     //
@@ -243,6 +313,22 @@ private:
     //                      BOUNDING BOX MECHANICS:
     void                        _start_bbox_drag                (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
     void                        _update_bbox                    (void);
+    //
+    //
+    // *************************************************************************** //
+    //      OVERLAY.                        |   "tools.cpp" ...
+    // *************************************************************************** //
+    void                        _handle_overlay                 ([[maybe_unused]] const Interaction & );
+    bool                        _overlay_begin_window           (void);
+    void                        _overlay_end_window             (void);
+    //
+    void                        _overlay_draw_context_menu      (void);
+    void                        _overlay_update_position        (void);
+    void                        overlay_log                     (std::string msg, float secs = 2.0f);
+    //
+    void                        _overlay_draw_content           ([[maybe_unused]]const Interaction &);
+    void                        _overlay_display_main_content   ([[maybe_unused]]const Interaction &);
+    void                        _overlay_display_extra_content  ([[maybe_unused]]const Interaction &);
     //
     //
     // *************************************************************************** //
@@ -260,12 +346,14 @@ private:
     void                        _erase_path_and_orphans         (size_t vid);
     //
     //                      APP UTILITY OPERATIONS:
+    bool                        _try_begin_handle_drag          (const Interaction & );
     void                        _scissor_cut                    (const PathHit & );
     void                        _start_lasso_tool               (void);
     void                        _update_lasso                   (const Interaction & );
     //
     //                      LOCAMOTION UTILITIES:
     inline ImVec2               _world_from_screen              (ImVec2 scr) const  { return { (scr.x + m_scroll.x) / m_zoom, (scr.y + m_scroll.y) / m_zoom }; }
+    void                        _update_world_extent            (void);
     void                        _zoom_canvas                    (const Interaction & );
     void                        _clamp_scroll                   (void);
     void                        _clamp_zoom                     (float & );
@@ -283,10 +371,27 @@ private:
     //  2.C             INLINE FUNCTIONS...
     // *************************************************************************** //
     // *************************************************************************** //
-    //  capability query
-    inline bool                 _mode_has                       (Capability cap) const {
-        return MODE_CAPS[static_cast<size_t>(m_mode)] & cap;
-    }
+    
+    //  "_mode_has"
+    inline bool                 _mode_has                       (Capability cap) const
+    { return MODE_CAPS[static_cast<size_t>(m_mode)] & cap; }
+    
+    
+    //  "maybe_snap"
+    inline ImVec2               maybe_snap                      (ImVec2 w) const
+    { return m_grid.snap_on ? _grid_snap(w) : w; }
+        
+        
+    //  "want_snap"
+    inline bool                 want_snap                       (void) const
+    { return m_grid.snap_on || ImGui::GetIO().KeyShift; }
+        
+        
+    //  "_grid_step_px"
+    inline float                _grid_step_px                   (void) const
+    { return m_grid.world_step * m_zoom; }
+    
+    
     //
     //
     //
@@ -332,13 +437,20 @@ private:
     // *************************************************************************** //
     //      APPLICATION STATE...
     // *************************************************************************** //
+    //                      OVERALL STATE:
     Mode                        m_mode                          = Mode::Default;
     bool                        m_show_grid                     = true;
     //
-    bool                        m_drawing                       = false;
+    //                      MISC. STATE:
     bool                        m_dragging                      = false;
     bool                        m_lasso_active                  = false;
     bool                        m_pending_clear                 = false;    //  pending click selection state ---
+    //
+    //                      PEN-TOOL STATE:
+    bool                        m_drawing                       = false;
+    bool                        m_dragging_handle               = false;
+    bool                        m_dragging_out                  = true;
+    uint32_t                    m_drag_vid                      = 0;
     // *************************************************************************** //
     //
     //
@@ -346,10 +458,16 @@ private:
     // *************************************************************************** //
     //      OBJECTS...
     // *************************************************************************** //
-    GridSettings                m_grid;
+    Bounds                      m_world_bounds                  = {
+        /*min_x=*/0.0f,         /*min_y=*/0.0f,
+        /*max_x=*/1000.0f,      /*max_y=*/1000.0f
+    };
+    PenState                    m_pen;
+    GridSettings                m_grid                          = { 100.0f,  true,  false };
+    OverlayState                m_overlay;
+    //
     std::optional<Hit>          m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
     Selection                   m_sel;
-    PenState                    m_pen;
     mutable BoxDrag             m_boxdrag;
     MoveDrag                    m_movedrag;
     // *************************************************************************** //
@@ -363,6 +481,7 @@ private:
     float                       m_zoom                          = 1.0f;
     ImVec2                      m_scroll                        = ImVec2( 0.0f,     0.0f    );
     ImVec2                      m_world_extent                  = ImVec2( 1000.f,   1000.f  );
+    //
     static constexpr float      ms_GRID_STEP_MIN                = 2.0f;   // world-units
     static constexpr float      ms_GRID_LABEL_PAD               = 2.0f;
     //
@@ -381,35 +500,59 @@ private:
     ImVec2                      m_p0                            = ImVec2(0.0f, 0.0f);
     ImVec2                      m_p1                            = ImVec2(0.0f, 0.0f);
     // *************************************************************************** //
-    //
-    //
-    //
-    //
-    //
-    //
+
+
+
+
+
+
     // *************************************************************************** //
     //      STATIC / CONSTANTS...
     // *************************************************************************** //
-    static constexpr ImU32      PEN_ANCHOR_COL                  = IM_COL32(255, 200, 0, 255);
+    //
+    //                      INTERACTION / RESPONSIVENESS CONSTANTS:
+    static constexpr int        PEN_DRAG_TIME_THRESHOLD         = 0.05;     // seconds.
+    static constexpr float      PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;     // px  (was 2)
+    //
+    //
+    //                      USER INTERFACE CONSTANTS:
+    //                          Handles.
+    static constexpr ImU32      ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);   //  gold
+    static constexpr float      ms_HANDLE_SIZE                  = 3.0f;                         //  px half-side
+    static constexpr ImU32      ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);   //  yellow
+    //
+    //                          Pen-Tool Anchors.
+    static constexpr ImU32      PEN_ANCHOR_COLOR                = IM_COL32(255, 200, 0, 255);
     static constexpr float      PEN_ANCHOR_RADIUS               = 5.0f;
+    //
+    //                          Lasso.
+    //                          //  ...
+    //
+    //                          Bounding Box.
+    static constexpr ImU32      SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 255);   //  cyan-blue
+    static constexpr float      SELECTION_BBOX_TH               = 1.5f;
+    //
+    //
+    //                      CURSOR CONSTANTS:
+    //                          Pen-Tool Cursor Stuff.
+    static constexpr float      PEN_RING_RADIUS                 = 6.0f;                         // px
+    static constexpr float      PEN_RING_THICK                  = 1.5f;                         // px
+    static constexpr float      PEN_DOT_RADIUS                  = 2.0f;                         // px
+    static constexpr ImU32      PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);      // yellow
+    static constexpr ImU32      PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);      // green
+    //
+    //
+    //
+    //                      UTILITY:
+    // *************************************************************************** //
+    //
+    //                      RENDERING CONSTANTS:
     static constexpr int        ms_BEZIER_SEGMENTS              = 0;
     static constexpr int        ms_BEZIER_HIT_STEPS             = 20;
     static constexpr int        ms_BEZIER_FILL_STEPS            = 24;
-
-    static constexpr ImU32      ms_HANDLE_COL                   = IM_COL32(255, 215, 0, 255);   //  gold
-    static constexpr float      ms_HANDLE_SIZE                  = 3.0f;                         //  px half-side
-    static constexpr ImU32      SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 255);   //  cyan-blue
-    static constexpr float      SELECTION_BBOX_TH               = 1.5f;
-    
-    //  BOUNDING BOX...     Bounding-box interaction (stage 1) ────────────────────────────────
-    static constexpr float      HANDLE_BOX_SIZE                 = 4.0f;                         //  px half-side
-    static constexpr ImU32      HANDLE_COL                      = IM_COL32(0, 180, 255, 255);   //  cyan
-    static constexpr ImU32      HANDLE_HOVER_COL                = IM_COL32(255, 255, 0, 255);   //  yellow
     //
-    //
-    //
-    //  APPEARANCE CONSTANTS...
-    static constexpr float      ms_VERTEX_SUBBROWSER_HEIGHT     = 0.65f;
+    //                      APPEARANCE / WIDGETS / UI CONSTANTS:
+    static constexpr float      ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;
     static constexpr ImVec4     ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//  BASE = #343944
     static constexpr ImVec4     ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//  #17191E
     static constexpr ImVec4     ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//  #21242B
@@ -418,18 +561,11 @@ private:
     static constexpr ImVec4     ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//  ##353A46
     static constexpr ImVec4     ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//  #5B6377
     //
-    //      Browser border sizes.
+    //                          Browser Child-Window Sizes.
     static constexpr float      ms_CHILD_BORDER1                = 2.0f;
     static constexpr float      ms_CHILD_BORDER2                = 1.0f;
     static constexpr float      ms_CHILD_ROUND1                 = 8.0f;
     static constexpr float      ms_CHILD_ROUND2                 = 4.0f;
-    //
-    //      Pen-Tool Cursor Stuff.
-    static constexpr float      PEN_RING_RADIUS                 = 6.0f;                         // px
-    static constexpr float      PEN_RING_THICK                  = 1.5f;                         // px
-    static constexpr float      PEN_DOT_RADIUS                  = 2.0f;                         // px
-    static constexpr ImU32      PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);      // yellow
-    static constexpr ImU32      PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);      // green
 
 
 
@@ -443,6 +579,16 @@ private:
 };//    END "EDITOR" CLASS DEFINITION.
 
 
+
+
+//  MORE STATIC HELPERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "mode_label"
+//
+static inline const char * mode_label(Mode m)
+{ return Editor::ms_MODE_LABELS[ static_cast<size_t>(m) ]; }
 
 
 

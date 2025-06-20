@@ -81,7 +81,10 @@ Editor::Editor(void) {
 
 //  Destructor.
 //
-Editor::~Editor(void)   { }
+Editor::~Editor(void)
+{
+    this->_clear_all();
+}
 
 
 
@@ -242,7 +245,7 @@ void Editor::_draw_vertex_list_subcolumn(Path& path)
 //
 void Editor::_draw_vertex_inspector_subcolumn(Path & path)
 {
-    /* guard – nothing chosen */
+    //  CASE 0 :    NO VALID SELECTION...
     if (m_inspector_vertex_idx < 0 ||
         m_inspector_vertex_idx >= static_cast<int>(path.verts.size()))
     {
@@ -250,46 +253,91 @@ void Editor::_draw_vertex_inspector_subcolumn(Path & path)
         return;
     }
 
-    /* resolve vertex ptr */
-    uint32_t vid = path.verts[static_cast<size_t>(m_inspector_vertex_idx)];
-    Pos* v = find_vertex(m_vertices, vid);
-    if (!v) { ImGui::TextDisabled("[stale vertex]"); return; }
+    //  0.  OBTAIN POINTER TO VERTEX...
+    uint32_t    vid     = path.verts[static_cast<size_t>(m_inspector_vertex_idx)];
+    Vertex *    v       = find_vertex_mut(m_vertices, vid);
+    
+    //  CASE 1 :    STALE VERTEX...
+    if (!v) {
+        ImGui::TextDisabled("[stale vertex]");
+        return;
+    }
 
-    /* controls --------------------------------------------------------- */
+
+
+    //  1.  HEADER CONTENT...
     ImGui::Text("Vertex V%02d  (id=%u)", m_inspector_vertex_idx, vid);
     ImGui::Separator();
+    //
+    //      1.1.    Constants:
+    const float     grid        = GRID_STEP / m_zoom;
+    const float     speed       = 0.1f * grid;
+    auto            snap        = [grid](float f){ return std::round(f / grid) * grid; };
+    bool            dirty       = false;
+    int             kind_idx    = static_cast<int>(v->kind);
 
 
-    const float grid  = GRID_STEP / m_zoom;
-    const float speed = 0.1f * grid;
-    auto snap = [grid](float f){ return std::round(f / grid) * grid; };
 
-
-    bool edited = false;
-    edited |= ImGui::DragFloat("X", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
-    edited |= ImGui::DragFloat("Y", &v->y, speed, -FLT_MAX, FLT_MAX, "%.3f");
-    if (edited && !ImGui::IsItemActive()) { v->x = snap(v->x); v->y = snap(v->y); }
-
-    /* optional glyph style -------------------------------------------- */
-    int pt_idx = -1;
-    for (size_t i = 0; i < m_points.size(); ++i)
-        if (m_points[i].v == vid) { pt_idx = static_cast<int>(i); break; }
-
-
-    //  VERTEX TYPES (Not Implemented)...
-    if (pt_idx >= 0)
-    {
-        static const char* TYPES[] = { "Default", "A", "B", "C" };
-        int type_sel = 0;
-        for (int i = 0; i < 4; ++i)
-            if (m_points[pt_idx].sty.color == COL_POINT_DEFAULT + i) type_sel = i;
-
-        if (ImGui::Combo("Type", &type_sel, TYPES, IM_ARRAYSIZE(TYPES)))
-            m_points[pt_idx].sty.color = COL_POINT_DEFAULT + type_sel;
+    //  2.  WIDGETS...
+    //
+    //      2.1.    Position:
+    utl::LeftLabel("Position:");
+    dirty                      |= ImGui::DragFloat2("##Editor_VertexBrowser_Pos", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
+    //
+    if ( dirty && /*!ImGui::IsItemActive() && */ this->want_snap() ) {
+        dirty       = false;
+        ImVec2 s    = _grid_snap({v->x, v->y});
+        v->x        = s.x;
+        v->y        = s.y;
     }
-    
-    
 
+
+
+    //      2.2.    Bézier Handles / Control Points
+    ImGui::SeparatorText("Handles");
+    //
+    //              2.2A    ANCHOR TYPE (corner / smooth / symmetric):
+    {
+        utl::LeftLabel("Anchor Type:");
+        dirty               = ImGui::Combo( "##Editor_VertexBrowser_AnchorType", &kind_idx,
+                                            ANCHOR_TYPE_NAMES, IM_ARRAYSIZE(ANCHOR_TYPE_NAMES) );
+        if (dirty) {
+            v->kind     = static_cast<AnchorType>(kind_idx);
+            dirty       = false;
+        }
+    }
+    //
+    //
+    //              2.2B    OUTWARD (to next vertex):
+    //
+    utl::LeftLabel("Outward:");
+    dirty               = ImGui::DragFloat2("##Editor_VertexBrowser_OutwardControl",    &v->out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
+    if ( dirty && !ImGui::IsItemActive() )
+    {
+        v->out_handle.x     = snap(v->out_handle.x);
+        v->out_handle.y     = snap(v->out_handle.y);
+        mirror_handles(*v, /*dragging_out=*/true);  // keep smooth/symmetric rule
+        dirty               = false;
+    }
+    //
+    //
+    //              2.2C    INWARD (from previous vertex):
+    utl::LeftLabel("Inward:");
+    //
+    dirty              = ImGui::DragFloat2("##Editor_VertexBrowser_InwardControl",     &v->in_handle.x,    speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
+    if ( dirty && !ImGui::IsItemActive() ) {
+        v->in_handle.x      = snap(v->in_handle.x);
+        v->in_handle.y      = snap(v->in_handle.y);
+        mirror_handles(*v, /*dragging_out=*/false);
+        dirty               = false;
+    }
+
+
+
+
+
+
+    /* delete ----------------------------------------------------------- */
     ImGui::Separator();
     if (ImGui::Button("Delete Vertex", {120,0}))
     {
@@ -297,6 +345,9 @@ void Editor::_draw_vertex_inspector_subcolumn(Path & path)
         m_inspector_vertex_idx = -1;
         _rebuild_vertex_selection();
     }
+    
+    
+    return;
 }
 
 
@@ -377,29 +428,49 @@ void Editor::_draw_single_path_inspector(void)
         bool            fill_dirty          = false;
 
 
-        utl::LeftLabel("Stroke:");          ImGui::SameLine();
-        stroke_dirty                        = ImGui::ColorEdit4( "##Stroke",    (float*)&stroke_f,  COLOR_FLAGS );
+        utl::LeftLabelSimple("Stroke:");    ImGui::SameLine();
+        stroke_dirty                        = ImGui::ColorEdit4( "##Editor_VertexBrowser_LineColor",    (float*)&stroke_f,  COLOR_FLAGS );
         //
+        ImGui::SameLine();
         ImGui::BeginDisabled( !is_area );
-            utl::LeftLabel("Fill:");        ImGui::SameLine();
-            fill_dirty                      = ImGui::ColorEdit4( "##Fill",      (float*)&fill_f,    COLOR_FLAGS );
+            utl::LeftLabelSimple("Fill:");  ImGui::SameLine();
+            fill_dirty                      = ImGui::ColorEdit4( "##Editor_VertexBrowser_FillColor",    (float*)&fill_f,    COLOR_FLAGS );
         ImGui::EndDisabled();
-
-
+        
         if (stroke_dirty)   { path.style.stroke_color = f4_to_u32(stroke_f); }
         if (fill_dirty)     { path.style.fill_color   = f4_to_u32(fill_f); }
         if (!is_area)       { path.style.fill_color  &= 0x00FFFFFF; }   // clear alpha
 
+        ImGui::SameLine(); 
     }
 
 
     //  3.  LINE WIDTH...
     {
-        float w = path.style.stroke_width;
+        static constexpr float  min_width   = 0.25;
+        static constexpr float  max_width   = 32;
+        bool                    dirty       = false;
+        float                   w           = path.style.stroke_width;
         
-        utl::LeftLabel("Line Width:");    ImGui::SameLine();
-        if ( ImGui::SliderFloat("##Width",   &w,     0.5f,   20.0f, "%.1f px") )
-            { path.style.stroke_width = w; }
+        utl::LeftLabelSimple("Line Width:");    ImGui::SameLine();
+        ImGui::SetNextItemWidth(200.0f);
+        //
+        //  CASE 1 :    Value < 2.0f
+        if (w < 2.0f) {
+            dirty = ImGui::InputFloat("##Editor_VertexBrowser_LineWidth", &w,   0.125f,   0.25f,      "%.3f px");
+        }
+        //
+        //  CASE 2 :    2.0 <= Value.
+        else {
+            dirty = ImGui::InputFloat("##Editor_VertexBrowser_LineWidth", &w,   1.0f,     2.0f,       "%.1f px");
+        }
+        //
+        //
+        //
+        if ( dirty ) {
+            w = std::clamp(w, min_width, max_width);
+            path.style.stroke_width = w;
+        }
     }
     ImGui::Separator();
 

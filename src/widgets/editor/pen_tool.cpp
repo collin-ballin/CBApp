@@ -42,7 +42,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 //  "_pen_cancel_if_escape"
 //
-bool Editor::_pen_cancel_if_escape(const Interaction & it)
+bool Editor::_pen_cancel_if_escape([[maybe_unused]] const Interaction & it)
 {
     if (m_pen.active && ImGui::IsKeyPressed(ImGuiKey_Escape))
     {
@@ -58,24 +58,58 @@ bool Editor::_pen_cancel_if_escape(const Interaction & it)
 }
 
 
+//  "_pen_begin_handle_drag"
+//
+void Editor::_pen_begin_handle_drag(uint32_t vid, bool out_handle, const bool force_select)
+{
+    // existing flag setup …
+    m_pen.dragging_handle  = true;
+    m_pen.handle_vid       = vid;
+    m_pen.dragging_out     = out_handle;
+
+    m_dragging_handle      = true;
+    m_drag_vid             = vid;
+    m_dragging_out         = out_handle;
+
+    // ── NEW: set vertex kind = Symmetric so mirror_handles links both arms
+    if ( Vertex * v = find_vertex_mut(m_vertices, vid) )
+        v->kind = AnchorType::Symmetric;
+
+
+    // --- NEW: make the vertex temporarily selected --------------------
+    if (force_select) {
+        m_sel.clear();                               // optional: keep if you want solo-select
+        m_sel.vertices.insert(vid);
+
+        for (size_t i = 0; i < m_points.size(); ++i) // select its Point glyph
+            if (m_points[i].v == vid) {
+                m_sel.points.insert(i);
+                break;
+            }
+    }
+    return;
+}
+
+
 //  "_pen_try_begin_handle_drag"
 //
 bool Editor::_pen_try_begin_handle_drag(const Interaction & it)
 {
-    ImGuiIO& io = ImGui::GetIO();
-    if (!io.KeyAlt || !ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    if (m_dragging_handle || !alt_down() ||
+        !ImGui::IsMouseClicked(ImGuiMouseButton_Left) || !it.hovered)
         return false;
 
-    int pi = _hit_point(it);
+    int pi = _hit_point(it);                 // glyph hit-test
     if (pi < 0) return false;
 
-    m_pen.handle_vid      = m_points[pi].v;
-    m_pen.dragging_handle = true;
+    m_dragging_handle = true;
+    m_drag_vid        = m_points[pi].v;
+    m_dragging_out    = true;                // always start with out-handle
 
-    if (Pos* v = find_vertex(m_vertices, m_pen.handle_vid))
-        v->out_handle = { 0,0 };                    // reset for first motion
+    if (Vertex* v = find_vertex_mut(m_vertices, m_drag_vid))
+        v->out_handle = {0,0};
 
-    return true;                                    // consume the click
+    return true;                             // we consumed the click
 }
 
 
@@ -83,24 +117,75 @@ bool Editor::_pen_try_begin_handle_drag(const Interaction & it)
 //
 void Editor::_pen_update_handle_drag(const Interaction & it)
 {
-    if (Pos* v = find_vertex(m_vertices, m_pen.handle_vid))
-    {
-        ImVec2 w{ it.canvas.x / m_zoom, it.canvas.y / m_zoom };
-        v->out_handle = { w.x - v->x, w.y - v->y };
+    Vertex * v = find_vertex_mut(m_vertices, m_drag_vid);
+    if (!v) { m_dragging_handle = false; m_pen.dragging_handle = false; return; }
 
-        // visualiser (amber line + square)
-        ImVec2 a_scr{ it.origin.x + v->x * m_zoom,
-                      it.origin.y + v->y * m_zoom };
-        ImVec2 h_scr{ a_scr.x + v->out_handle.x * m_zoom,
-                      a_scr.y + v->out_handle.y * m_zoom };
+    ImVec2 ws_anchor{ v->x, v->y };
+    ImVec2 ws_mouse { it.canvas.x / m_zoom, it.canvas.y / m_zoom };
 
-        it.dl->AddLine(a_scr, h_scr, PEN_ANCHOR_COL);
-        it.dl->AddRectFilled({ h_scr.x-3, h_scr.y-3 },
-                             { h_scr.x+3, h_scr.y+3 },
-                             PEN_ANCHOR_COL);
+    // ── NEW: apply grid snap whenever snap_on is true
+    if ( this->want_snap() )
+        ws_mouse = _grid_snap(ws_mouse);
+
+    // optional inversion for Pen in-handle
+    if (m_mode == Mode::Pen && !m_dragging_out) {
+        ws_mouse.x = ws_anchor.x - (ws_mouse.x - ws_anchor.x);
+        ws_mouse.y = ws_anchor.y - (ws_mouse.y - ws_anchor.y);
     }
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+
+    ImVec2 offset{ ws_mouse.x - ws_anchor.x,
+                   ws_mouse.y - ws_anchor.y };
+
+    if (m_dragging_out)  v->out_handle = offset;
+    else                 v->in_handle  = offset;
+
+    mirror_handles(*v, m_dragging_out);
+
+    if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+        m_dragging_handle     = false;
         m_pen.dragging_handle = false;
+    }
+
+      
+
+/*
+    Vertex* v = find_vertex_mut(m_vertices, m_pen.handle_vid);
+    if (!v) { m_pen.dragging_handle = false; return; }
+
+    ImVec2 ws_anchor{ v->x, v->y };
+    ImVec2 ws_mouse { it.canvas.x / m_zoom, it.canvas.y / m_zoom };
+    ImVec2 offset   { ws_mouse.x - ws_anchor.x, ws_mouse.y - ws_anchor.y };
+
+    if (m_pen.dragging_out)
+        v->out_handle = offset;
+    else
+        v->in_handle  = offset;
+
+    mirror_handles(*v, m_pen.dragging_out);
+
+    // ── NEW: live visual (gold) ────────────────────────────────────────
+    ImDrawList* dl = ImGui::GetForegroundDrawList();
+    constexpr ImU32 COL     = IM_COL32(255,215,0,255);   // gold
+    constexpr float THICK   = 1.0f;
+    constexpr float BOX_R   = 3.0f;
+
+    ImVec2 scr_anchor{ ws_anchor.x * m_zoom + it.origin.x,
+                       ws_anchor.y * m_zoom + it.origin.y };
+
+    ImVec2 scr_handle{ ws_mouse.x  * m_zoom + it.origin.x,
+                       ws_mouse.y  * m_zoom + it.origin.y };
+
+    dl->AddLine(scr_anchor, scr_handle, COL, THICK);
+    dl->AddRectFilled( ImVec2(scr_handle.x - BOX_R,   scr_handle.y - BOX_R),
+                       ImVec2(scr_handle.x + BOX_R,   scr_handle.y + BOX_R), COL );
+    
+    //  dl->AddRectFilled(scr_handle - ImVec2(BOX_R,BOX_R),
+    //                    scr_handle + ImVec2(BOX_R,BOX_R), COL);
+
+    // stop on release
+    if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        m_pen.dragging_handle = false;
+*/
 }
 
 
@@ -112,7 +197,7 @@ void Editor::_pen_begin_path_if_click_empty(const Interaction & it)
 
     ImVec2 w{ it.canvas.x / m_zoom, it.canvas.y / m_zoom };
     uint32_t vid = _add_vertex(w);
-    m_points.push_back({ vid, { PEN_ANCHOR_COL, PEN_ANCHOR_RADIUS, true } });
+    m_points.push_back({ vid, { PEN_ANCHOR_COLOR, PEN_ANCHOR_RADIUS, true } });
 
     Path p; p.verts = { vid }; p.closed = false;
     m_paths.push_back(std::move(p));
