@@ -220,6 +220,8 @@ void App::run_IMPL(void)
         ImGui::SetWindowFocus(this->S.m_windows[Window::CCounterApp].uuid.c_str());
     # elif defined(__CBAPP_BUILD_FDTD_APP__)
         ImGui::SetWindowFocus(this->S.m_windows[Window::GraphApp].uuid.c_str());
+    # elif defined(__CBAPP_BUILD_EDITOR_APP__)
+        ImGui::SetWindowFocus(this->S.m_windows[Window::EditorApp].uuid.c_str());
     # else
         ImGui::SetWindowFocus(this->S.m_windows[Window::MainApp].uuid.c_str());
     #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
@@ -484,11 +486,13 @@ void App::RebuildDockLayout(void)
     
     //  4.  RETURN FOCUS TO MAIN APPLICATION...
     #if defined(__CBAPP_BUILD_CCOUNTER_APP__)
-        ImGui::SetWindowFocus(this->S.m_windows[Window::CCounterApp].uuid.c_str());
+        ImGui::SetWindowFocus( this->S.m_windows[Window::CCounterApp].uuid.c_str() );
     # elif defined(__CBAPP_BUILD_FDTD_APP__)
-        ImGui::SetWindowFocus(this->S.m_windows[Window::GraphApp].uuid.c_str());
+        ImGui::SetWindowFocus( this->S.m_windows[Window::GraphApp].uuid.c_str() );
+    # elif defined(__CBAPP_BUILD_EDITOR_APP__)
+        ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() );
     # else
-        ImGui::SetWindowFocus(this->S.m_windows[Window::MainApp].uuid.c_str());
+        ImGui::SetWindowFocus( this->S.m_windows[Window::MainApp].uuid.c_str() );
     #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
 
     return;

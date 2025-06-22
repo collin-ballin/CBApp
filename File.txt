@@ -1,1 +1,0 @@
-Similarly to the tab-bar mechanics that we have with docked windows together, we also have the explicit tab bar widgets that we can use to create multiple tabs inside of an existing window (not necessarily creating the tabs by docking each window but rather creating a nested tab bar inside of an existing window).  We can do this by the following:

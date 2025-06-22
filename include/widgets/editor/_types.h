@@ -157,30 +157,37 @@ constexpr std::array<const char*, static_cast<size_t>(Mode::Count)>
 
 //  "Capability"
 //      Global capability flags (extensible)
+//      Camera / editor feature toggles, ImGui-style
 //
-enum Capability : uint8_t
-{
-    Cap_Select      = 1 << 0,   // enables click/drag selection logic
-    Cap_CursorHint  = 1 << 1    // enables hand / resize cursor hints
+enum CBCapabilityFlags_ : uint8_t {
+    CBCapabilityFlags_None              = 0,            // no special behaviour
+//
+    CBCapabilityFlags_Pan               = 1 << 0,       // Space + drag navigation
+    CBCapabilityFlags_Zoom              = 1 << 1,       // mouse-wheel magnification
+    CBCapabilityFlags_Select            = 1 << 2,       // click / lasso / move-drag
+    CBCapabilityFlags_CursorHint        = 1 << 3,       // hand or resize cursor
+//
+    CBCapabilityFlags_Navigation        = CBCapabilityFlags_Pan | CBCapabilityFlags_Zoom,
+//
+    CBCapabilityFlags_Count                             // helper: number of bits
 };
 //
-// Per‑mode capability mask
+//
+//
+using   CBCapabilityFlags     = CBCapabilityFlags_;
+//
+//  Per‑mode capability mask
 static constexpr std::array<uint8_t, static_cast<size_t>(Mode::Count)>
-    MODE_CAPS               = {
-        Cap_Select | Cap_CursorHint,        //      Default
-        Cap_CursorHint,                     //      Line           (no selection)
-        Cap_Select | Cap_CursorHint,        //      Point
-        Cap_CursorHint,                     //      Pen            (selection off)
-        0,                                  //      Scissor
-        0,                                  //      AddAnchor      (no hint, no select)
-        0,                                  //      RemoveAnchor
-        Cap_CursorHint                      //      EditAnchor     (hint yes, selection no)
-    };
-
-
-
-
-
+MODE_CAPS               = {
+/*  Default         */      CBCapabilityFlags_Navigation | CBCapabilityFlags_Select | CBCapabilityFlags_CursorHint,
+/*  Line            */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
+/*  Point           */      CBCapabilityFlags_Navigation | CBCapabilityFlags_Select | CBCapabilityFlags_CursorHint,
+/*  Pen             */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
+/*  Scissor         */      CBCapabilityFlags_Navigation | CBCapabilityFlags_None,
+/*  AddAnchor       */      CBCapabilityFlags_None,
+/*  RemoveAnchor    */      CBCapabilityFlags_None,
+/*  EditAnchor      */      CBCapabilityFlags_Navigation
+};
 
 
 
@@ -306,15 +313,6 @@ struct Interaction {
     ImDrawList *    dl{};
 };
 
-//  "MoveDrag"
-//
-struct MoveDrag {
-    bool                  active   = false;
-    ImVec2                anchor_ws;
-    std::vector<uint32_t> v_ids;
-    std::vector<ImVec2>   v_orig;
-};
-
 
 //  "Selection"
 //
@@ -358,6 +356,18 @@ struct PenState {
 };
 
 
+//  "MoveDrag"
+//
+struct MoveDrag {
+    bool                        active          = false;
+    ImVec2                      anchor_ws       {0,0};   // top-left of selection at mouse-press
+    ImVec2                      press_ws        {0,0};
+    ImVec2                      cum_delta       {0,0};   // accumulated world-space translation
+    std::vector<uint32_t>       v_ids;               // selected vertex IDs
+    std::vector<ImVec2>         v_orig;              // original positions (same order)
+};
+
+
 //  "BoxDrag" struct (add fields for handle_ws0, orig_w, orig_h after mouse_ws0)
 struct BoxDrag {
     bool                    active          = false;
@@ -379,6 +389,24 @@ struct BoxDrag {
 //
 struct Bounds {
     float min_x{0}, min_y{0}, max_x{0}, max_y{0};
+};
+
+
+//  "Camera"
+//
+struct Camera {
+    ImVec2  pan             {0,0};      // world coords of viewport top-left
+    float   zoom_mag        = 1.0f;     // 1 = fit, >1 zooms in, <1 zooms out
+
+    // helpers --------------------------------------------------------
+    inline float pixels_per_world(const ImVec2& view_sz, const Bounds& world) const {
+        float w = world.max_x - world.min_x;
+        float h = world.max_y - world.min_y;
+        if (w <= 0) w = 1;              // avoid div-by-zero
+        if (h <= 0) h = 1;
+        float fit = std::min(view_sz.x / w, view_sz.y / h);
+        return fit * zoom_mag;
+    }
 };
   
   

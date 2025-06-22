@@ -168,10 +168,8 @@ protected:
     
     //                  9.  APPLICATION SUB-CLASSES...
     CCounterApp         m_counter_app;
-#ifndef __CBAPP_DISABLE_FDTD__
     EditorApp           m_editor_app;
     GraphApp            m_graph_app;
-#endif  //  __CBAPP_DISABLE_FDTD__  //
 #ifdef CBAPP_ENABLE_CB_DEMO
     CBDemo              m_cb_demo                       = CBDemo();
 #endif  //  CBAPP_ENABLE_CB_DEMO  //

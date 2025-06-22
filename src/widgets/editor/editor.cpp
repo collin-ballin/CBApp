@@ -59,11 +59,157 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::Begin(const char * id)
 {
+    //  1.      DRAW CANVAS RECTANGLE...
+    m_avail             = ImGui::GetContentRegionAvail();
+    m_avail.x           = std::max(m_avail.x, 50.f);
+    m_avail.y           = std::max(m_avail.y, 50.f);
+    m_p0                = ImGui::GetCursorScreenPos();
+    m_p1                = { m_p0.x + m_avail.x, m_p0.y + m_avail.y };
+
+
+    // current pixels-per-world-unit (cached for rest of frame)
+    m_ppw               = m_cam.pixels_per_world(m_avail, m_world_bounds);
+
+
+    ImDrawList *    dl  = ImGui::GetWindowDrawList();
+    ImGuiIO &       io  = ImGui::GetIO();
+
+
+
+    dl->AddRectFilled(m_p0, m_p1, IM_COL32(50, 50, 50, 255));
+    dl->AddRect      (m_p0, m_p1, IM_COL32(255, 255, 255, 255));
+
+    // ───────────────────────────────────────────────────── input capture zone
+    ImGui::InvisibleButton(id, m_avail,
+                           ImGuiButtonFlags_MouseButtonLeft |
+                           ImGuiButtonFlags_MouseButtonRight);
+
+
+
+    //  3.      MODE SWITCH BEHAVIORS...
+    const bool      hovered         = ImGui::IsItemHovered();
+    const bool      active          = ImGui::IsItemActive();
+    const bool      space           = ImGui::IsKeyDown(ImGuiKey_Space);
+    const bool      wheel           = (io.MouseWheel != 0.0f);
+    bool            camera_update   = false;
+    //
+    if (hovered) {
+        const bool shift  = io.KeyShift;
+        const bool ctrl   = io.KeyCtrl;
+        const bool alt    = io.KeyAlt;
+        const bool super  = io.KeySuper;
+        const bool no_mod = !ctrl && !shift && !alt && !super;
+
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_V) )           m_mode = Mode::Default;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_N) )           m_mode = Mode::Point;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_P) )           m_mode = Mode::Pen;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_C) )           m_mode = Mode::Scissor;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_Equal) )       m_mode = Mode::AddAnchor;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_Minus) )       m_mode = Mode::RemoveAnchor;
+        if (!ctrl &&  shift && !alt && !super &&
+            ImGui::IsKeyPressed(ImGuiKey_C) )                      m_mode = Mode::EditAnchor;
+    }
+    if ( m_mode != Mode::Pen )    m_pen = {};     // leaving Pen resets its state
+
+
+    //  4.      INTERACTION SNAPSHOTS...
+    ImVec2          origin_scr      { m_p0.x - m_cam.pan.x * m_ppw,     m_p0.y - m_cam.pan.y * m_ppw };     // world (0,0) in px
+    ImVec2          mouse_canvas    { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
+    Interaction     it              { hovered, active, space, mouse_canvas, origin_scr, m_p0, dl };
+
+
+    //  5.      CURSOR HINTS AND SHORTCUTS...
+    if ( !space && hovered && _mode_has(CBCapabilityFlags_CursorHint) )     { _update_cursor_select(it); }
+    
+    
+    //  6.      LOCAMOTION  | PANNING AND ZOOMING...
+    //
+    //          6A.     ZOOM IN/OUT.
+    if ( !space && wheel && _mode_has(CBCapabilityFlags_Zoom) )         { _apply_wheel_zoom(it); }       // mouse wheel
+    //
+    //          6B.     PANNING.
+    if ( space && hovered && _mode_has(CBCapabilityFlags_Pan) )
+    {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+        if ( ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f) )
+        {
+            //  float ppw = m_cam.pixels_per_world(m_avail, m_world_bounds);
+            m_cam.pan.x        += io.MouseDelta.x / m_ppw;
+            m_cam.pan.y        += io.MouseDelta.y / m_ppw;
+            _clamp_scroll();
+            camera_update       = true;
+        }
+    }
+    //
+    //          6C.     REFRESH ORIGIN AND CANVAS AFTER NAVIGATION...
+    if (camera_update) {            //  Refresh origin & snapshot fields for downstream handlers
+        origin_scr      = { m_p0.x - m_cam.pan.x * m_ppw, m_p0.y - m_cam.pan.y * m_ppw };
+        it.origin       = origin_scr;
+        it.canvas       = { io.MousePos.x - origin_scr.x, io.MousePos.y - origin_scr.y };
+    }
+
+
+
+    //  7.      GLOBAL SELECTION BEHAVIOR...
+    if  ( !space && _mode_has(CBCapabilityFlags_Select) ) {
+        _process_selection(it);
+        
+        if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )    //  JOINING CLOSED PATHS...
+        { _join_selected_open_path(); }
+    }
+
+
+    //  8.      MODE/STATE/TOOL DISPATCHER...
+    if ( !(space && ImGui::IsMouseDown(ImGuiMouseButton_Left)) ) {
+        switch (m_mode) {
+            case Mode::Default:      _handle_default        (it); break;
+            case Mode::Line:         _handle_line           (it); break;
+            case Mode::Point:        _handle_point          (it); break;
+            case Mode::Pen:          _handle_pen            (it); break;
+            case Mode::Scissor:      _handle_scissor        (it); break;
+            case Mode::AddAnchor:    _handle_add_anchor     (it); break;
+            case Mode::RemoveAnchor: _handle_remove_anchor  (it); break;
+            case Mode::EditAnchor:   _handle_edit_anchor    (it); break;
+            default: break;
+        }
+    }
+    
+    
+    
+                
+                    
+                    
+
+    //  9.     RENDERING LOOP...
+    dl->PushClipRect(m_p0, m_p1, true);
+
+    _grid_handle_shortcuts();        // adjust world_step via hot-keys
+    _grid_draw(dl, m_p0, m_avail);
+
+    _draw_lines           (dl, origin_scr);
+    _draw_paths           (dl, origin_scr);
+    _draw_points          (dl, origin_scr);
+    _draw_selection_overlay(dl, origin_scr);
+
+    _handle_overlay(it);
+    dl->PopClipRect();
+    
+    return;
+}
+
+
+
+
+
+
+
+/*{
     m_avail                         = ImGui::GetContentRegionAvail();
     m_avail.x                       = std::max(m_avail.x,   50.f);
     m_avail.y                       = std::max(m_avail.y,   50.f);
     m_p0                            = ImGui::GetCursorScreenPos();
     m_p1                            = { m_p0.x + m_avail.x,     m_p0.y + m_avail.y };
+    m_ppw                           = m_cam.pixels_per_world( m_avail, m_world_bounds );  // cache for frame
 
     ImDrawList  * dl                = ImGui::GetWindowDrawList();
     ImGuiIO     & io                = ImGui::GetIO();
@@ -73,7 +219,7 @@ void Editor::Begin(const char * id)
     dl->AddRect      (m_p0, m_p1,  IM_COL32(255,255,255,255));
 
     // ── 1.  Refresh world bounds → clamp scroll BEFORE anything uses it -------------------
-    _update_world_extent();         // new helper – tracks min/max of all vertices
+    //_update_world_extent();         // new helper – tracks min/max of all vertices
     _clamp_scroll();                // symmetric clamp (allows ± scroll)
 
     // ── 2.  Input capture zone ------------------------------------------------------------
@@ -103,19 +249,23 @@ void Editor::Begin(const char * id)
 
 
     // ── 4.  Interaction snapshot ------------------------------------------
-    ImVec2 origin    { m_p0.x + m_scroll.x, m_p0.y + m_scroll.y };
+    ImVec2 origin    { m_p0.x + m_cam.pan.x, m_p0.y + m_cam.pan.y };
     ImVec2 mouse_can { io.MousePos.x - origin.x, io.MousePos.y - origin.y };
     Interaction it   { hovered, active, space, mouse_can, origin, m_p0, dl };
 
 
     // ── 5.  Cursor hints & join shortcut -----------------------------------
-    if (!space && _mode_has(Cap_CursorHint))
+    if (!space && _mode_has(CBCapabilityFlags_CursorHint))
         _update_cursor_select(it);
 
 
     if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J))
         _join_selected_open_path();
 
+
+
+
+    _apply_wheel_zoom(it);
 
     // ── 6.  Space-bar pan UI feedback --------------------------------------
     if (space && hovered) ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
@@ -124,19 +274,29 @@ void Editor::Begin(const char * id)
     // ── 7.  Space-drag panning ---------------------------------------------
     if (space && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f))
     {
-        m_scroll.x += io.MouseDelta.x;
-        m_scroll.y += io.MouseDelta.y;
-        _clamp_scroll();
+        float    ppw = m_ppw;
+        m_cam.pan.x += io.MouseDelta.x; // / ppw;
+        m_cam.pan.y += io.MouseDelta.y; // / ppw;
+        
+            //_clamp_pan(m_avail);
+        
+        //_clamp_scroll();
 
-        // refresh origin & snapshot fields for downstream handlers
-        origin        = { m_p0.x + m_scroll.x, m_p0.y + m_scroll.y };
-        it.origin     = origin;
-        it.canvas     = { io.MousePos.x - origin.x, io.MousePos.y - origin.y };
+
+        //  OLD:
+        //
+        //          m_cam.pan.x += io.MouseDelta.x;
+        //          m_cam.pan.y += io.MouseDelta.y;
+        //
+        //          //  refresh origin & snapshot fields for downstream handlers
+        //          origin        = { m_p0.x + m_cam.pan.x, m_p0.y + m_cam.pan.y };
+        //          it.origin     = origin;
+        //          it.canvas     = { io.MousePos.x - origin.x, io.MousePos.y - origin.y };
     }
 
 
     // ── 8.  Global selection / drag ----------------------------------------
-    if (!space && _mode_has(Cap_Select))
+    if (!space && _mode_has(CBCapabilityFlags_Select))
         _process_selection(it);
 
 
@@ -156,6 +316,8 @@ void Editor::Begin(const char * id)
             default: break;
         }
     }
+    
+    
 
 
     // ── 10.  Draw pass ------------------------------------------------------
@@ -171,7 +333,14 @@ void Editor::Begin(const char * id)
 
     _handle_overlay(it);
     dl->PopClipRect();
-}
+    
+    return;
+}*/
+
+
+
+
+
 
 
 
@@ -187,7 +356,7 @@ void Editor::Begin(const char * id)
 //
 void Editor::_handle_default(const Interaction& it)
 {
-    ImGuiIO &   io          = ImGui::GetIO();
+    [[maybe_unused]]    ImGuiIO &   io          = ImGui::GetIO();
     
     if (_try_begin_handle_drag(it)) {
         _pen_update_handle_drag(it);   // keep guide visible the very first frame
@@ -216,7 +385,7 @@ void Editor::_handle_default(const Interaction& it)
 
     // 5. LASSO START — begin only when selection is enabled and the mouse
     //    isn’t captured by another UI widget.
-    if ( _mode_has(Cap_Select)                      // ← NEW capability check
+    if ( _mode_has(CBCapabilityFlags_Select)                      // ← NEW capability check
          && !m_lasso_active
          && it.hovered
          && ImGui::IsMouseClicked(ImGuiMouseButton_Left)
@@ -225,29 +394,20 @@ void Editor::_handle_default(const Interaction& it)
         _start_lasso_tool();
     }
     
-    
     //  6.  LASSO UPDATE...
     if (m_lasso_active)                             { this->_update_lasso(it); return; }        // Skip zoom handling while dragging lasso
         
-
     //  7.   ZOOM (mouse wheel) – only when not lassoing...
-    if (it.hovered && io.MouseWheel != 0.0f)        { this->_zoom_canvas(it); }
-        
+    //if (it.hovered && io.MouseWheel != 0.0f)        { this->_zoom_canvas(it); }
+    //
+    // _apply_wheel_zoom(it);
         
     //  8.   EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
     //  if (m_pen.dragging_handle)                      { _pen_update_handle_drag(it); return; }    // continue an active handle drag
     //  if ( _pen_try_begin_handle_drag(it) )           { return; }                                 // Alt-click started a new drag
     
-    
-    
     return;
 }
-
-
-
-
-
-
 
 
 //  "_handle_line"
@@ -256,7 +416,7 @@ void Editor::_handle_line(const Interaction& it)
 {
     if (it.space) return; // ignore while panning
 
-    ImVec2 w = { it.canvas.x / m_zoom, it.canvas.y / m_zoom };
+    ImVec2 w = { it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
 
     // 1) Begin a brand‑new line/path on LMB press
     if (it.hovered && !m_drawing && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
@@ -332,7 +492,7 @@ void Editor::_handle_point(const Interaction& it)
         }
 
         // (C) Otherwise start a brand-new path
-        ImVec2 ws{ it.canvas.x / m_zoom, it.canvas.y / m_zoom };
+        ImVec2 ws{ it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
         uint32_t vid = _add_vertex(ws);
         _add_point_glyph(vid);
 
@@ -457,7 +617,7 @@ void Editor::_handle_pen(const Interaction & it)
         }
 
         // C) start new path
-        ImVec2   ws  { it.canvas.x / m_zoom, it.canvas.y / m_zoom };
+        ImVec2   ws  { it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
         uint32_t vid = _add_vertex(ws);
         _add_point_glyph(vid);
 
@@ -475,12 +635,8 @@ void Editor::_handle_pen(const Interaction & it)
             m_pen.pending_vid    = vid;
         }
     }
-
-    //----------------------------------------------------------------
-    // E. Zoom wheel -------------------------------------------------
-    //----------------------------------------------------------------
-    if (it.hovered && io.MouseWheel != 0.0f)
-        _zoom_canvas(it);
+    
+    return;
 }
 
 
@@ -567,8 +723,13 @@ void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
     }
 
     // 4. zoom wheel still active
-    if (it.hovered && io.MouseWheel != 0.0f)
-        _zoom_canvas(it);
+    //   if (it.hovered && io.MouseWheel != 0.0f)
+    //       _zoom_canvas(it);
+    //  _apply_pan(it);          // Space + LMB drag (uses new Camera math)
+    _apply_wheel_zoom(it);   // mouse wheel zoom, always uses m_cam
+    
+    
+    return;
 }
 
 

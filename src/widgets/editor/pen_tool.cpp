@@ -121,7 +121,7 @@ void Editor::_pen_update_handle_drag(const Interaction & it)
     if (!v) { m_dragging_handle = false; m_pen.dragging_handle = false; return; }
 
     ImVec2 ws_anchor{ v->x, v->y };
-    ImVec2 ws_mouse { it.canvas.x / m_zoom, it.canvas.y / m_zoom };
+    ImVec2 ws_mouse { it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
 
     // ── NEW: apply grid snap whenever snap_on is true
     if ( this->want_snap() )
@@ -145,47 +145,6 @@ void Editor::_pen_update_handle_drag(const Interaction & it)
         m_dragging_handle     = false;
         m_pen.dragging_handle = false;
     }
-
-      
-
-/*
-    Vertex* v = find_vertex_mut(m_vertices, m_pen.handle_vid);
-    if (!v) { m_pen.dragging_handle = false; return; }
-
-    ImVec2 ws_anchor{ v->x, v->y };
-    ImVec2 ws_mouse { it.canvas.x / m_zoom, it.canvas.y / m_zoom };
-    ImVec2 offset   { ws_mouse.x - ws_anchor.x, ws_mouse.y - ws_anchor.y };
-
-    if (m_pen.dragging_out)
-        v->out_handle = offset;
-    else
-        v->in_handle  = offset;
-
-    mirror_handles(*v, m_pen.dragging_out);
-
-    // ── NEW: live visual (gold) ────────────────────────────────────────
-    ImDrawList* dl = ImGui::GetForegroundDrawList();
-    constexpr ImU32 COL     = IM_COL32(255,215,0,255);   // gold
-    constexpr float THICK   = 1.0f;
-    constexpr float BOX_R   = 3.0f;
-
-    ImVec2 scr_anchor{ ws_anchor.x * m_zoom + it.origin.x,
-                       ws_anchor.y * m_zoom + it.origin.y };
-
-    ImVec2 scr_handle{ ws_mouse.x  * m_zoom + it.origin.x,
-                       ws_mouse.y  * m_zoom + it.origin.y };
-
-    dl->AddLine(scr_anchor, scr_handle, COL, THICK);
-    dl->AddRectFilled( ImVec2(scr_handle.x - BOX_R,   scr_handle.y - BOX_R),
-                       ImVec2(scr_handle.x + BOX_R,   scr_handle.y + BOX_R), COL );
-    
-    //  dl->AddRectFilled(scr_handle - ImVec2(BOX_R,BOX_R),
-    //                    scr_handle + ImVec2(BOX_R,BOX_R), COL);
-
-    // stop on release
-    if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
-        m_pen.dragging_handle = false;
-*/
 }
 
 
@@ -195,7 +154,7 @@ void Editor::_pen_begin_path_if_click_empty(const Interaction & it)
 {
     if (_hit_any(it)) return;                       // clicked on an object
 
-    ImVec2 w{ it.canvas.x / m_zoom, it.canvas.y / m_zoom };
+    ImVec2 w{ it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
     uint32_t vid = _add_vertex(w);
     m_points.push_back({ vid, { PEN_ANCHOR_COLOR, PEN_ANCHOR_RADIUS, true } });
 
@@ -241,8 +200,8 @@ void Editor::_pen_append_or_close_live_path(const Interaction & it)
     
 
     //  2.  Fallback: distance test (unchanged)
-    const float thresh = HIT_THRESH_SQ / (m_zoom * m_zoom);
-    ImVec2 w{ it.canvas.x / m_zoom, it.canvas.y / m_zoom };
+    const float thresh = HIT_THRESH_SQ / (m_cam.zoom_mag * m_cam.zoom_mag);
+    ImVec2 w{ it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
     if (!p.verts.empty()) {
         const Pos* first = find_vertex(m_vertices, p.verts.front());
         if (first) {

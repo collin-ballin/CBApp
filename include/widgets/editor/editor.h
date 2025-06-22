@@ -260,10 +260,10 @@ private:
     bool                        _pen_try_begin_handle_drag      (const Interaction & );
     void                        _pen_update_handle_drag         ([[maybe_unused]] const Interaction & );
     void                        _pen_begin_path_if_click_empty  (const Interaction & );
-    inline bool                 _pen_click_hits_first_vertex    (const Interaction &, const Path &) const;
     void                        _pen_append_or_close_live_path  (const Interaction & );
     //
     std::optional<size_t>       _path_idx_if_last_vertex        (uint32_t vid) const;
+    inline bool                 _pen_click_hits_first_vertex    (const Interaction &, const Path &) const;
     inline bool                 _can_join_selected_path         (void) const;
     void                        _join_selected_open_path        (void);
     void                        _draw_pen_cursor                (const ImVec2 &, ImU32);
@@ -352,9 +352,8 @@ private:
     void                        _update_lasso                   (const Interaction & );
     //
     //                      LOCAMOTION UTILITIES:
-    inline ImVec2               _world_from_screen              (ImVec2 scr) const  { return { (scr.x + m_scroll.x) / m_zoom, (scr.y + m_scroll.y) / m_zoom }; }
     void                        _update_world_extent            (void);
-    void                        _zoom_canvas                    (const Interaction & );
+    //void                        _zoom_canvas                    (const Interaction & );
     void                        _clamp_scroll                   (void);
     void                        _clamp_zoom                     (float & );
     //
@@ -372,24 +371,36 @@ private:
     // *************************************************************************** //
     // *************************************************************************** //
     
-    //  "_mode_has"
-    inline bool                 _mode_has                       (Capability cap) const
-    { return MODE_CAPS[static_cast<size_t>(m_mode)] & cap; }
-    
+    //  "screen_from_world"
+    inline ImVec2 screen_from_world(ImVec2 w) const {
+        return { (w.x - m_cam.pan.x) * m_ppw,
+                 (w.y - m_cam.pan.y) * m_ppw };
+    }
+
+    //  "world_from_screen"
+    inline ImVec2 world_from_screen(ImVec2 s) const {
+        return { s.x / m_ppw + m_cam.pan.x,
+                 s.y / m_ppw + m_cam.pan.y };
+    }
     
     //  "maybe_snap"
     inline ImVec2               maybe_snap                      (ImVec2 w) const
     { return m_grid.snap_on ? _grid_snap(w) : w; }
         
-        
     //  "want_snap"
     inline bool                 want_snap                       (void) const
     { return m_grid.snap_on || ImGui::GetIO().KeyShift; }
         
-        
     //  "_grid_step_px"
     inline float                _grid_step_px                   (void) const
-    { return m_grid.world_step * m_zoom; }
+    { return m_grid.world_step * m_ppw; }
+    
+    
+    
+    //  "_mode_has"
+    inline bool _mode_has(CBCapabilityFlags flag) const
+    { return (MODE_CAPS[static_cast<size_t>(m_mode)] & flag) != 0; }
+    
     
     
     //
@@ -458,12 +469,7 @@ private:
     // *************************************************************************** //
     //      OBJECTS...
     // *************************************************************************** //
-    Bounds                      m_world_bounds                  = {
-        /*min_x=*/0.0f,         /*min_y=*/0.0f,
-        /*max_x=*/1000.0f,      /*max_y=*/1000.0f
-    };
     PenState                    m_pen;
-    GridSettings                m_grid                          = { 100.0f,  true,  false };
     OverlayState                m_overlay;
     //
     std::optional<Hit>          m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
@@ -471,20 +477,46 @@ private:
     mutable BoxDrag             m_boxdrag;
     MoveDrag                    m_movedrag;
     // *************************************************************************** //
+    //                      OLD GRID / CANVAS:
+    //float                       m_zoom                          = 1.0f;
+    //ImVec2                      m_scroll                        = ImVec2( 0.0f,     0.0f    );
+    //
+    //
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      CAMERA SYSTEM...
+    // *************************************************************************** //
+    Camera                      m_cam;
+    GridSettings                m_grid                          = { 100.0f,  true,  false };
+    float                       m_ppw                           = 1.0f;
+    ImVec2                      m_world_extent                  = ImVec2( 1000.f,   1000.f  );
+    Bounds                      m_world_bounds                  = {
+        /*min_x=*/0.0f,         /*min_y=*/0.0f,
+        /*max_x=*/1000.0f,      /*max_y=*/1000.0f
+    };
+    //
+    //
+    static constexpr float      CAM_ZOOM_MIN                    = 1.0f;   // 1× = fit whole canvas
+    static constexpr float      CAM_ZOOM_MAX                    = 64.0f;  // arbitrary upper bound
+    static constexpr float      ms_GRID_STEP_MIN                = 2.0f;   // world-units
+    static constexpr float      ms_GRID_LABEL_PAD               = 2.0f;
+    //
+    //                      FUNCTIONS:
+    void                        _apply_wheel_zoom               (const Interaction & it);
+    void                        _apply_pan                      (const Interaction & it);
+    void                        _clamp_pan                      (const ImVec2& view_sz);
+    //
+    //
+    // *************************************************************************** //
     //
     //
     //
     // *************************************************************************** //
     //      VARIABLES FOR SPECIFIC MECHANICS...
     // *************************************************************************** //
-    //                      GRID / CANVAS:
-    float                       m_zoom                          = 1.0f;
-    ImVec2                      m_scroll                        = ImVec2( 0.0f,     0.0f    );
-    ImVec2                      m_world_extent                  = ImVec2( 1000.f,   1000.f  );
-    //
-    static constexpr float      ms_GRID_STEP_MIN                = 2.0f;   // world-units
-    static constexpr float      ms_GRID_LABEL_PAD               = 2.0f;
-    //
     //                      LASSO TOOL / SELECTION:
     ImVec2                      m_lasso_start                   = ImVec2(0.f, 0.f);
     ImVec2                      m_lasso_end                     = ImVec2(0.f, 0.f);

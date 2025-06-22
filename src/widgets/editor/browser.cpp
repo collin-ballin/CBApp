@@ -270,7 +270,7 @@ void Editor::_draw_vertex_inspector_subcolumn(Path & path)
     ImGui::Separator();
     //
     //      1.1.    Constants:
-    const float     grid        = GRID_STEP / m_zoom;
+    const float     grid        = GRID_STEP / m_cam.zoom_mag;
     const float     speed       = 0.1f * grid;
     auto            snap        = [grid](float f){ return std::round(f / grid) * grid; };
     bool            dirty       = false;

@@ -166,16 +166,25 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 #if defined(__CBAPP_BUILD_CCOUNTER_APP__)       //  CASE A :    COINCIDENCE COUNTER BUILD...
         inline constexpr bool   DEF_CCOUNTER_APP_VIS            = true;
         inline constexpr bool   DEF_FDTD_APP_VIS                = false;
+        inline constexpr bool   DEF_EDITOR_APP_VIS              = false;
 //
 //
 # elif defined (__CBAPP_BUILD_FDTD_APP__)       //  CASE B :    FDTD APP BUILD...
         inline constexpr bool   DEF_CCOUNTER_APP_VIS            = false;
         inline constexpr bool   DEF_FDTD_APP_VIS                = true;
+        inline constexpr bool   DEF_EDITOR_APP_VIS              = false;
 //
 //
-# else                                          //  CASE C :    NO BUILD IS SPECIFIED...
+# elif defined (__CBAPP_BUILD_EDITOR_APP__)     //  CASE C :    EDITOR / "ILLUSTRATOR" APP BUILD...
         inline constexpr bool   DEF_CCOUNTER_APP_VIS            = false;
         inline constexpr bool   DEF_FDTD_APP_VIS                = false;
+        inline constexpr bool   DEF_EDITOR_APP_VIS              = true;
+//
+//
+# else                                          //  CASE D :    NO BUILD IS SPECIFIED...
+        inline constexpr bool   DEF_CCOUNTER_APP_VIS            = false;
+        inline constexpr bool   DEF_FDTD_APP_VIS                = false;
+        inline constexpr bool   DEF_EDITOR_APP_VIS              = false;
 //
 //
 #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
@@ -209,7 +218,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
     X(CCounterApp,          "Coincidence Counter",          DEF_CCOUNTER_APP_VIS,   _CBAPP_CORE_WINDOW_FLAGS                                )       \
 /*                                                                                                                                          */      \
 /*          EDITOR APP...                                                                                                                   */      \
-    X(EditorApp,            "Editor App",                   true,                   _CBAPP_EDITOR_WINDOW_FLAGS                              )       \
+    X(EditorApp,            "Editor App",                   DEF_EDITOR_APP_VIS,     _CBAPP_EDITOR_WINDOW_FLAGS                              )       \
 /*                                                                                                                                          */      \
 /*          FDTD APP...                                                                                                                     */      \
     X(GraphApp,             "Graph App",                    DEF_FDTD_APP_VIS,       _CBAPP_CORE_WINDOW_FLAGS                                )       \
@@ -227,7 +236,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 /*                                                                                                                                          */      \
 /*  4.  CUSTOM TOOLS, ETC...                                                                                                                */      \
     X(ColorTool,            "Color Tool",                   false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(CustomRendering,      "Custom Rendering",             true,                   _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(CustomRendering,      "Custom Rendering",             false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
 /*                                                                                                                                          */      \
 /*                                                                                                                                          */      \
 /*  5.  DEMO WINDOWS...                                                                                                                     */      \

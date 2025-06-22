@@ -52,38 +52,6 @@ std::optional<Editor::EndpointInfo> Editor::_endpoint_if_open(uint32_t vid) cons
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // *************************************************************************** //
 //
 //
@@ -306,10 +274,10 @@ void Editor::_update_lasso(const Interaction & it)
                        std::max(m_lasso_start.y, m_lasso_end.y) };
 
         // Convert to world space (inverse pan + zoom)
-        ImVec2 tl_w{ (tl_scr.x - it.origin.x) / m_zoom,
-                     (tl_scr.y - it.origin.y) / m_zoom };
-        ImVec2 br_w{ (br_scr.x - it.origin.x) / m_zoom,
-                     (br_scr.y - it.origin.y) / m_zoom };
+        ImVec2 tl_w{ (tl_scr.x - it.origin.x) / m_cam.zoom_mag,
+                     (tl_scr.y - it.origin.y) / m_cam.zoom_mag };
+        ImVec2 br_w{ (br_scr.x - it.origin.x) / m_cam.zoom_mag,
+                     (br_scr.y - it.origin.y) / m_cam.zoom_mag };
 
         bool additive = io.KeyShift || io.KeyCtrl;
         if (!additive)                       // fresh selection if no modifier
@@ -417,14 +385,11 @@ void Editor::_update_lasso(const Interaction & it)
     
     
     
-    
-    
-
 // *************************************************************************** //
 //
 //
 //
-//      LOCAMOTION UTILITY FUNCTIONS...
+//      **OLD**     LOCAMOTION UTILITY FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -456,7 +421,7 @@ void Editor::_update_world_extent()
 
 
 //  "_zoom_canvas"
-//
+/*
 void Editor::_zoom_canvas(const Interaction& it)
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -466,19 +431,19 @@ void Editor::_zoom_canvas(const Interaction& it)
                                    : ImVec2(m_avail.x * 0.5f, m_avail.y * 0.5f);
 
     ImVec2 world_anchor{
-        (scr_anchor.x + m_scroll.x) / m_zoom,
-        (scr_anchor.y + m_scroll.y) / m_zoom
+        (scr_anchor.x + m_cam.pan.x) / m_cam.zoom_mag,
+        (scr_anchor.y + m_cam.pan.y) / m_cam.zoom_mag
     };
 
-    float new_zoom = m_zoom * (1.f + io.MouseWheel * 0.10f);
+    float new_zoom = m_cam.zoom_mag * (1.f + io.MouseWheel * 0.10f);
     _clamp_zoom(new_zoom);                 // respects min/max zoom
 
-    m_scroll.x = world_anchor.x * new_zoom - scr_anchor.x;
-    m_scroll.y = world_anchor.y * new_zoom - scr_anchor.y;
+    m_cam.pan.x = world_anchor.x * new_zoom - scr_anchor.x;
+    m_cam.pan.y = world_anchor.y * new_zoom - scr_anchor.y;
 
     _clamp_scroll();                       // apply symmetric limits
-    m_zoom = new_zoom;
-}
+    m_cam.zoom_mag = new_zoom;
+}*/
 
 
 //  "_clamp_scroll"
@@ -488,10 +453,10 @@ void Editor::_clamp_scroll(void)
     const float pad_x  =  m_avail.x * 0.5f;        // half‑viewport slack
     const float pad_y  =  m_avail.y * 0.5f;
 
-    const float wl_px  =  m_world_bounds.min_x * m_zoom;   // world‑left  in px
-    const float wr_px  =  m_world_bounds.max_x * m_zoom;   // world‑right in px
-    const float wt_px  =  m_world_bounds.min_y * m_zoom;   // world‑top   in px
-    const float wb_px  =  m_world_bounds.max_y * m_zoom;   // world‑bot   in px
+    const float wl_px  =  m_world_bounds.min_x * m_cam.zoom_mag;   // world‑left  in px
+    const float wr_px  =  m_world_bounds.max_x * m_cam.zoom_mag;   // world‑right in px
+    const float wt_px  =  m_world_bounds.min_y * m_cam.zoom_mag;   // world‑top   in px
+    const float wb_px  =  m_world_bounds.max_y * m_cam.zoom_mag;   // world‑bot   in px
 
     // X‑axis limits
     float min_scroll_x = wl_px - pad_x;
@@ -511,8 +476,8 @@ void Editor::_clamp_scroll(void)
         max_scroll_y = centre + pad_y;
     }
 
-    m_scroll.x   = std::clamp(m_scroll.x, min_scroll_x, max_scroll_x);
-    m_scroll.y   = std::clamp(m_scroll.y, min_scroll_y, max_scroll_y);
+    m_cam.pan.x   = std::clamp(m_cam.pan.x, min_scroll_x, max_scroll_x);
+    m_cam.pan.y   = std::clamp(m_cam.pan.y, min_scroll_y, max_scroll_y);
 }
 
 

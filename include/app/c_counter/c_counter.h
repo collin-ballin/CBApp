@@ -291,6 +291,8 @@ protected:
     ImPlotColormap                                      m_cmap                          = ImPlotColormap_Cool;
     std::vector<ImVec4>                                 m_plot_colors                   = std::vector<ImVec4>(ms_NUM);
     static constexpr std::array<const char *, 2>        ms_mst_axis_labels              = { "Time  [sec]",      "Counts  [Arb.]" };
+    Param<float>                                        m_AVG_OPACITY                   = { 0.50f,      {0.0f,   1.00f}     };
+    Param<float>                                        m_AVG_LINEWIDTH                 = { 10.0f,      {1.0f,   20.00f}    };
     
     
     //                                              7.  DELAGATOR CLASSES...

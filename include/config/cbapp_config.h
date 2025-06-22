@@ -59,14 +59,16 @@
 //#define         __CBAPP_DEBUG__                             1                 //  Enable delay before starting int main (bug-fix for X-Code IDE issue).
 //  #define         __CBAPP_BUILD_CCOUNTER_APP__                    1               //  BUILD FOR COINCIDENCE COUNTER...
 //  #define         __CBAPP_BUILD_FDTD_APP__                        1               //  BUILD FOR FDTD APP...
-
-
-//#define         __CBAPP_DISABLE_FDTD__                          1           //  BUILD FOR COINCIDENCE COUNTER...
+#define         __CBAPP_BUILD_EDITOR_APP__                  1                   //  BUILD FOR EDITOR / "ILLUSTRATOR" APP...
 
 
 //  ENFORCE THAT THERE ARE NOT MULTIPLE BUILDS ARE #DEFINED...
-#if defined(__CBAPP_BUILD_CCOUNTER_APP__) && defined(__CBAPP_BUILD_FDTD_APP__)
-    static_assert(false, "Cannot build with more than one __CBAPP_BUILD_APP__ defined (look in \"_config.h\").");
+//
+#if (  defined(__CBAPP_BUILD_CCOUNTER_APP__)    \
+     + defined(__CBAPP_BUILD_FDTD_APP__)        \
+     + defined(__CBAPP_BUILD_EDITOR_APP__)      \
+    ) > 1
+#   error "Cannot build with more than one __CBAPP_BUILD_APP__ defined (look in \"_config.h\")."
 #endif
 
 
@@ -74,7 +76,6 @@
 //      2.2     W-I-P APPLICATION OPTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-//#define     CBAPP_ETCH_A_SKETCH                             1           //  DELETE THIS LATER...
 
 
 //      2.3     DEBUGGING UTILITIES...
@@ -89,14 +90,16 @@
 //      2.4     APP SETTINGS...
 // *************************************************************************** //
 // *************************************************************************** //
-//  #define     CBAPP_ENABLE_MOVE_AND_RESIZE                        1           //  Allow user to moving / resizing core windows.
+#define     CBAPP_ENABLE_MOVE_AND_RESIZE                        1           //  Allow user to moving / resizing core windows.
 //  #define     CBAPP_DISABLE_SAVE_WINDOW_SIZE                      1           //  Prevent windows from saving/loading from "ini".     //  ImGuiWindowFlags_NoSavedSettings
 #define     CBAPP_USE_FONTSCALE_DPI                         1           //  Use "S.m_dpi_fontscale" SEPERATE FROM "S.m_dpi_scale".
 
-//  #define     CBAPP_DISABLE_INI                                   1           //  Prevent use of ".ini" file to save/recall data.
+//#define     CBAPP_DISABLE_INI                               1           //  Prevent use of ".ini" file to save/recall data.
 #define     CBAPP_LOAD_STYLE_FILE                           1           //  Prevent use of ".json" file to save/recall "ImGui" style data.
-#define     CBAPP_DISABLE_TERMINAL_COLORS                   1
 
+#if !( defined(_WIN32) || defined(MINGW) )
+    # define     CBAPP_DISABLE_TERMINAL_COLORS              1           //  DISABLE ANSI Colors for LOGGER OUTPUT.
+#endif      //  _WIN32 || MINGW
 
 
 

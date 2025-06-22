@@ -171,7 +171,7 @@ void CCounterApp::ShowCCPlots(void)
     
                 //  2.  PLOT AVERAGE COUNTER VALUES...
                 ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
-                ImPlot::SetNextLineStyle( ImVec4( m_plot_colors[k].x, m_plot_colors[k].y, m_plot_colors[k].z, 0.35f ),   10.0f);
+                ImPlot::SetNextLineStyle( ImVec4( m_plot_colors[k].x, m_plot_colors[k].y, m_plot_colors[k].z, m_AVG_OPACITY.value ),   m_AVG_LINEWIDTH.value);
                 ImPlot::SetNextFillStyle(m_plot_colors[k], 0.0f);
                 if (!channel.vis.average)   ImPlot::HideNextItem( true, ImGuiCond_Always );
                 else                        ImPlot::HideNextItem( false, ImGuiCond_Always );
@@ -644,7 +644,6 @@ void CCounterApp::init_ctrl_rows(void)
             {// BEGIN.
             
                 ImGui::Checkbox("Use Mutex Counts", &m_use_mutex_count);
-                
                 ImGui::SameLine();
                 
                 if ( ImGui::Button("Reset Averages") ) {
@@ -657,9 +656,7 @@ void CCounterApp::init_ctrl_rows(void)
                 if ( ImGui::Button("Reset Max") )
                     std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.f);
                 
-                
                 ImGui::SameLine();
-                
                 ImGui::Checkbox("Plot Crawling", &m_smooth_scroll);
                 
                 
@@ -672,6 +669,23 @@ void CCounterApp::init_ctrl_rows(void)
     
 
     ms_APPEARANCE_ROWS  = {
+    //
+        {"Average Appearance",                          [this]
+            {// BEGIN.
+                ImGui::SetNextItemWidth( 0.5 * ImGui::GetColumnWidth() );
+                ImGui::SliderScalar("##AvgOpacity",                     ImGuiDataType_Float,            &m_AVG_OPACITY.value,
+                                    &m_AVG_OPACITY.limits.min,          &m_AVG_OPACITY.limits.max,      "Opacity: %.1f %%", SLIDER_FLAGS);
+                ImGui::SameLine(0.0f, pad);
+                
+                
+                
+                ImGui::SetNextItemWidth( -1 );
+                ImGui::SliderScalar("##AvgLineWidth",                   ImGuiDataType_Float,            &m_AVG_LINEWIDTH.value,
+                                    &m_AVG_LINEWIDTH.limits.min,        &m_AVG_LINEWIDTH.limits.max,    "Linewidth: %.1f pt", SLIDER_FLAGS);
+                
+                ImGui::Dummy( ImVec2(pad, 0.0f) );
+            }// END.
+        },
     //
         {"Individual Plot Height",                      []
             {
