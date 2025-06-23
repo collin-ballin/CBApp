@@ -29,7 +29,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-CCounterApp::CCounterApp(app::AppState & src)
+CCounterApp::CCounterApp(app::AppState & src) noexcept
     : S(src)
 {
     //  1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...

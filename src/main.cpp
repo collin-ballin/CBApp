@@ -28,6 +28,27 @@
 
 
 
+//  WINDOWS ENTRY POINT (Compile only on Windows GUI build)...
+// *************************************************************************** //
+//
+#ifdef _WIN32
+#include <windows.h>
+
+extern "C" int main(int, char ** );   //    Forward declaration *real* main.
+
+
+//  "WinMain"
+//
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+{
+    return main(__argc, __argv);   // __argc/argv supplied by CRT
+}
+//
+// *************************************************************************** //
+#endif  //  _WIN32  //
+
+
+
 //  "main"
 //
 int main(int argc, char ** argv)
@@ -40,10 +61,9 @@ int main(int argc, char ** argv)
 
 
 
+
 // *************************************************************************** //
-// *************************************************************************** //
-//
-//  END.
+// *************************************************************************** //  END.
 
 
 

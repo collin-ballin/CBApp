@@ -30,15 +30,39 @@ AppState::AppState(void)
 {
     size_t      i       = size_t(0);
 
-    // 1.   INITIALIZE WINDOW INFOS...
+    //  1.      INITIALIZE WINDOW INFOS...
     for (i = 0; i < static_cast<size_t>(Window_t::Count); ++i) {
         m_windows.data[i] = APPLICATION_WINDOW_INFOS[i];
     }
 
-    // 2.   INITIALIZE APPLICATION FONTS...
+    //  2.      INITIALIZE APPLICATION FONTS...
     for (i = 0; i < static_cast<size_t>(Font::Count); ++i) {
         m_fonts.data[i] = nullptr;  // load later in your init()
     }
+       
+       
+    //  3A.     INITIALIZE APPLICATION'S APPLETS...
+    this->m_applets     = {
+        std::addressof( m_windows[ Window::MainApp      ].uuid      ),
+        std::addressof( m_windows[ Window::CCounterApp  ].uuid      ),
+        std::addressof( m_windows[ Window::EditorApp    ].uuid      ),
+        std::addressof( m_windows[ Window::GraphApp     ].uuid      )
+    };
+    //
+    //  3B.     END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
+    #if defined(__CBAPP_BUILD_CCOUNTER_APP__)
+        m_current_task      = Applet::CCounterApp;
+    # elif defined(__CBAPP_BUILD_EDITOR_APP__)
+        m_current_task      = Applet::EditorApp; 
+    # elif defined(__CBAPP_BUILD_FDTD_APP__)
+        m_current_task      = Applet::GraphApp;
+    # else
+        m_current_task      = Applet::MainApp; 
+    #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
+    
+    //m_current_task
+
+
 }
 
 
@@ -343,6 +367,16 @@ void AppState::PopFont(void) {
 
 
 
+// *************************************************************************** //
+//
+//
+//      HELPERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//
+//  ...
+//
 
 
 

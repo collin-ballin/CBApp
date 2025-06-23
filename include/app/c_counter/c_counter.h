@@ -108,7 +108,7 @@ public:
     //  1.               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     //  1.1             Default Constructor, Destructor, etc...
-    explicit            CCounterApp                     (app::AppState & );                                 //  Def. Constructor.
+    explicit            CCounterApp                     (app::AppState & ) noexcept;                        //  Def. Constructor.
                         ~CCounterApp                    (void);                                             //  Def. Destructor.
                         
     //  1.2             Public Member Functions...
@@ -118,14 +118,12 @@ public:
     void                close                           (void);
     void                Begin                           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ToggleAllPlots                  (const char * title_id);
-    //                      Data & Interaction.
-
 
     //  1.3             Deleted Operators, Functions, etc...
-    //                     App                     (const App & src)               = delete;   //  Copy. Constructor.
-    //                     App                     (App && src)                    = delete;   //  Move Constructor.
-    // App &               operator =              (const App & src)               = delete;   //  Assgn. Operator.
-    // App &               operator =              (App && src)                    = delete;   //  Move-Assgn. Operator.
+                        CCounterApp                     (const CCounterApp &    )       = delete;   //  Copy. Constructor.
+                        CCounterApp                     (CCounterApp &&         )       = delete;   //  Move Constructor.
+    CCounterApp &       operator =                      (const CCounterApp &    )       = delete;   //  Assgn. Operator.
+    CCounterApp &       operator =                      (CCounterApp &&         )       = delete;   //  Move-Assgn. Operator.
 
 
 
@@ -296,7 +294,7 @@ protected:
     
     
     //                                              7.  DELAGATOR CLASSES...
-    app::AppState                                       CBAPP_STATE_NAME;
+    app::AppState &                                     CBAPP_STATE_NAME;
     
         
     

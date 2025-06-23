@@ -47,7 +47,23 @@
 
 
 
-//  0.      UTILITY FUNCTIONS [NON-MEMBER FUNCTIONS]...
+//  0.      STATIC FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//
+//  ...
+//
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  1.      UTILITY FUNCTIONS [NON-MEMBER FUNCTIONS]...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -68,7 +84,7 @@ int cb::run_application([[maybe_unused]] int argc, [[maybe_unused]] char ** argv
 #endif
 
     try {   //  1.     CREATE APPLICATION INSTANCE...
-        App my_app;
+        App &   my_app      = App::instance();
         
         try {   //  2.     ENTER APPLICATION MAIN-LOOP...
             my_app.run();
@@ -100,7 +116,7 @@ int cb::run_application([[maybe_unused]] int argc, [[maybe_unused]] char ** argv
 // *************************************************************************** //
 //
 //
-//  1.      APPLICATION SIGNAL HANDLERS...
+//  2.      APPLICATION SIGNAL HANDLERS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -108,21 +124,102 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+static void        on_shutdown              ([[maybe_unused]] int sig);
+static void        on_reload                ([[maybe_unused]] int sig);
+static void        on_new_handler           ([[maybe_unused]] int sig);
+
+
+
 //  "install_signal_handlers"
 //
 void App::install_signal_handlers(void) {
     // new‐failure handler
     //  std::set_new_handler(on_memory_exhausted);
 
-    //  // POSIX signals
-    //  std::signal(SIGINT,  on_shutdown);   // Ctrl+C
-    //  std::signal(SIGTERM, on_shutdown);   // kill
-    //  std::signal(SIGHUP,  on_reload);     // reload config
-    //  std::signal(SIGABRT, on_shutdown);   // abort()
-    //  std::signal(SIGPIPE, SIG_IGN);       // ignore broken‐pipe errors
+
+//  CASE 1 :    POSIX SIGNALS...
+// *************************************************************************** //
+#ifndef _WIN32
+
+    std::signal(        SIGINT,         on_shutdown     );      //  Ctrl+C
+    std::signal(        SIGTERM,        on_shutdown     );      //  Kill
+    std::signal(        SIGQUIT,        on_shutdown     );      //  Quit
+    std::signal(        SIGHUP,         on_reload       );      //  Reload config.
+    std::signal(        SIGABRT,        on_shutdown     );      //  abort()
+    std::signal(        SIGPIPE,        SIG_IGN         );      //  Ignore broken‐pipe errors
+    //  std::signal(    SIGINT,         on_shutdown     );
+    //  std::signal(    SIGTERM,        on_shutdown     );
+    //  std::signal(    SIGQUIT,        on_shutdown     );
+    //  std::signal(    SIGHUP,         on_reload       );
+    //  std::signal(    SIGPIPE,        SIG_IGN         );
+    
     // …add SIGUSR1/SIGUSR2 as custom hooks if desired…
+  
+// *************************************************************************** //
+// *************************************************************************** //
+//
+//
+//
+//  CASE 2 :    WINDOWS SIGNALS...
+// *************************************************************************** //
+# else
+    
+    //
+    //  ...
+    //
+    
+    
+// *************************************************************************** //
+// *************************************************************************** //
+#endif  //  _WIN32  //
+    
+    
+//       std::set_new_handler(on_new_handler);
+//
+//   #ifndef _WIN32
+//       std::signal(SIGINT,  on_shutdown);
+//       std::signal(SIGTERM, on_shutdown);
+//       std::signal(SIGQUIT, on_shutdown);
+//       std::signal(SIGHUP,  on_reload);
+//       std::signal(SIGPIPE, SIG_IGN);
+//   #else
+//       SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
+//   #endif
+    
+    
+    
+    
+    
 }
 
+
+
+// *************************************************************************** //
+//
+//
+//  HANDLER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "on_shutdown"
+//
+void on_shutdown([[maybe_unused]] int sig) {
+    return;
+}
+
+
+//  "on_reload"
+//
+void on_reload([[maybe_unused]] int sig) {
+    return;
+}
+
+
+//  "on_new_handler"
+//
+void on_new_handler([[maybe_unused]] int sig) {
+    return;
+}
 
 
 

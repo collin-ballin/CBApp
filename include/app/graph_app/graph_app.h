@@ -264,7 +264,7 @@ public:
     //
     //
     SketchWidget                                    m_editor                        = SketchWidget( editor_cfg, std::move(m_channels) );//m_channels);
-    app::AppState                                   CBAPP_STATE_NAME;
+    app::AppState &                                 CBAPP_STATE_NAME;
     
         
     // *************************************************************************** //

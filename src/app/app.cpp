@@ -74,7 +74,7 @@ void App::run(void)
     io.IniFilename = nullptr;   //  For an Emscripten build, we are disabling file-system access.  So let's not attempt an
     EMSCRIPTEN_MAINLOOP_BEGIN   //  "fopen()" of the "imgui.ini" file.  You may manually call LoadIniSettingsFromMemory() to load settings from your own storage.
 #else
-    while ( !glfwWindowShouldClose(this->S.m_glfw_window) && this->S.m_running )
+    while ( !glfwWindowShouldClose(this->S.m_glfw_window) && S.m_running.load(std::memory_order_relaxed) )
 #endif  //  __EMSCRIPTEN__  //
     {
         //  1.1     SET A POLL AND HANDLE EVENTS (inputs, window resize, etc.)...
@@ -205,7 +205,6 @@ void App::run_IMPL(void)
     for (idx = WINDOWS_BEGIN; idx < WINDOWS_END; ++idx)
     {
         winfo           = S.m_windows[ static_cast<Window>(idx) ];
-        
         if (winfo.open) {
             winfo.render_fn( winfo.uuid.c_str(), &winfo.open, winfo.flags );
         }
@@ -216,15 +215,7 @@ void App::run_IMPL(void)
     //  1.      END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
     if (first_frame) [[unlikely]] {
         first_frame = false;
-    #if defined(__CBAPP_BUILD_CCOUNTER_APP__)
-        ImGui::SetWindowFocus(this->S.m_windows[Window::CCounterApp].uuid.c_str());
-    # elif defined(__CBAPP_BUILD_FDTD_APP__)
-        ImGui::SetWindowFocus(this->S.m_windows[Window::GraphApp].uuid.c_str());
-    # elif defined(__CBAPP_BUILD_EDITOR_APP__)
-        ImGui::SetWindowFocus(this->S.m_windows[Window::EditorApp].uuid.c_str());
-    # else
-        ImGui::SetWindowFocus(this->S.m_windows[Window::MainApp].uuid.c_str());
-    #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
+        ImGui::SetWindowFocus( this->S.m_applets[ static_cast<size_t>( this->S.m_current_task) ]->c_str() );
     }
     
     return;
@@ -518,24 +509,35 @@ void App::RebuildDockLayout(void)
 void App::KeyboardShortcutHandler(void)
 {
     static ImGuiInputFlags          browser_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
-    static const ImGuiKeyChord      BROWSER_KEY             = ImGuiKey_GraveAccent;
     static ImGuiInputFlags          detview_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
+    static ImGuiInputFlags          save_key_flags          = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
+    static ImGuiInputFlags          undo_key_flags          = ImGuiInputFlags_None;
+    static ImGuiInputFlags          redo_key_flags          = ImGuiInputFlags_None;
+    static const ImGuiKeyChord      BROWSER_KEY             = ImGuiKey_GraveAccent;
     static const ImGuiKeyChord      DETVIEW_KEY             = ImGuiMod_Shift | ImGuiKey_GraveAccent; //ImGuiMod_Shift | ImGuiKey_Apostrophe;
+    static const ImGuiKeyChord      SAVE_KEY                = ImGuiMod_Ctrl | ImGuiKey_S;
+    static const ImGuiKeyChord      UNDO_KEY                = ImGuiMod_Ctrl | ImGuiKey_Z;
+    static const ImGuiKeyChord      REDO_KEY                = ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z;
+    //
+    [[maybe_unused]] ImGuiIO &      io                      = ImGui::GetIO();
     
 
     //  1.  HOTKEY TO OPEN/CLOSE BROWSER...
-    if ( ImGui::IsKeyChordPressed(BROWSER_KEY, browser_key_flags) ) {
-        //this->S.m_show_browser_window = !this->S.m_show_browser_window;
-        this->m_controlbar.toggle_sidebar();
-    }
+    if ( ImGui::IsKeyChordPressed(BROWSER_KEY, browser_key_flags) )         { this->m_controlbar.toggle_sidebar(); }
     
     //  2.  HOTKEY TO OPEN/CLOSE DETAIL VIEW...
-    if ( ImGui::IsKeyChordPressed(DETVIEW_KEY, detview_key_flags) ) {
+    if ( ImGui::IsKeyChordPressed(DETVIEW_KEY, detview_key_flags) )         { this->m_detview.toggle(); }
     
-        this->m_detview.toggle();
-    }
-    
-    this->SaveHandler();
+    //  3.  SAVE HANDLER...
+    if ( ImGui::IsKeyChordPressed(SAVE_KEY, save_key_flags) )               { this->SaveHandler(); }
+
+    //  4.  UNDO HANDLER...
+    if ( ImGui::IsKeyChordPressed(UNDO_KEY, undo_key_flags) )               { this->UndoHandler(); }
+
+    //  5.  REDO HANDLER...
+    if ( ImGui::IsKeyChordPressed(REDO_KEY, redo_key_flags) )               { this->RedoHandler(); }
+
+
 
     return;
 }
@@ -548,17 +550,11 @@ void App::SaveHandler(void)
 {
     static constexpr const char *   save_popup_id       = "S A V E   P R O G R A M  .  .  .";
     static auto                     now                 = ImGui::GetTime();
-    static ImGuiInputFlags          save_key_flags      = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
-    static const ImGuiKeyChord      SAVE_KEY            = ImGuiMod_Ctrl | ImGuiKey_S;
             
 
-    if ( ImGui::IsKeyChordPressed(SAVE_KEY, save_key_flags) )
-    {
         now = ImGui::GetTime();
-        std::cout << "SAVED AT \"" << now << "\".\n";
         
         ImGui::OpenPopup(save_popup_id);
-    }
     
     
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
@@ -566,6 +562,25 @@ void App::SaveHandler(void)
     utl::Popup_Save(save_popup_id);
     
     //ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags  | ImGuiInputFlags_Tooltip);
+
+    return;
+}
+
+
+
+//  "UndoHandler"
+//
+void App::UndoHandler(void)
+{
+    return;
+}
+
+
+
+//  "RedoHandler"
+//
+void App::RedoHandler(void)
+{
 
     return;
 }

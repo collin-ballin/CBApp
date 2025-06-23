@@ -113,11 +113,11 @@ protected:
     
     //                                          3.  DOCKING SPACE...
     //                                              Main Dockspace:
-    ImGuiWindowClass                                m_window_class; 
+    ImGuiWindowClass                                m_window_class;
     
     //                                          4.  IMPORTANT DATA...
     cb::Editor                                      m_editor;
-    app::AppState                                   CBAPP_STATE_NAME;
+    app::AppState &                                 CBAPP_STATE_NAME;
         
     
     //  2.B             PROTECTED MEMBER FUNCTIONS...

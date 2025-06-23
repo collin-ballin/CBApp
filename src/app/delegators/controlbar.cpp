@@ -179,8 +179,6 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
                 S.m_windows[ Window::Browser ].open     = !S.m_windows[ Window::Browser ].open;
         }
         
-
-        
         //      2.      OPEN / CLOSE DETAIL VIEW WINDOW...
         ImGui::SameLine(0, ms_SMALL_ITEM_PAD);
         if ( ImGui::ArrowButtonEx("##ControlBar_ToggleDetailView",  (this->S.m_show_detview_window) ? ImGuiDir_Down : ImGuiDir_Up,
@@ -189,39 +187,49 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
             this->S.m_show_detview_window = !this->S.m_show_detview_window;
         }
         
-
-        
         //      3.      TOGGLE SYSTEM PREFERENCES...
         ImGui::SameLine(0, ms_BIG_ITEM_PAD);
         if ( ImGui::Button( (this->S.m_show_system_preferences)
                             ? "Browser##ControlBar" : "Preferences##ControlBar", ImVec2(120, BUTTON_SIZE.y)) ) {
             this->S.m_show_system_preferences = !this->S.m_show_system_preferences;
         }
-    
-        
         
         //      99.     PERFORMANCE...
         {
-            constexpr const char *      io_time_fmt     = "%.2f ms  ";      //  FORMAT STRINGS.
-            constexpr const char *      fps_fmt         = "%.1f FPS  ";     //  FORMAT STRINGS.
+            constexpr const char *      task_fmt        = "00000000000000000000";       //  FORMAT STRINGS.
+            constexpr const char *      io_time_fmt     = "%.2f ms  ";                  //  FORMAT STRINGS.
+            constexpr const char *      fps_fmt         = "%.1f FPS  ";                 //  FORMAT STRINGS.
             //
+            const char *                task            = S.current_task();
             const float                 delta_t         = 1000 * io.DeltaTime;
             const float                 fps_ct          = io.Framerate;
-            const ImVec2                ts              = ImVec2( ImGui::CalcTextSize(io_time_fmt).x + ImGui::CalcTextSize(fps_fmt).x, 0.0f);
-            const ImVec2                text_size       = ImVec2( 1.2f * ts.x, ts.y );
+            const ImVec2                task_size       = ImGui::CalcTextSize(task);
+            const ImVec2                max_task_size   = ImGui::CalcTextSize(task_fmt);
+            
+            const ImVec2                ts              = ImVec2( max_task_size.x + ImGui::CalcTextSize(io_time_fmt).x + ImGui::CalcTextSize(fps_fmt).x, 0.0f);
+            const ImVec2                TOTAL_SIZE      = ImVec2( 1.2f * ts.x, ts.y );
             
             
-            //  S.PushFont(Font::FootNote);
-                ImGui::SameLine();                      utl::RightHandJustify(text_size);
-                //
-                //
-                ImGui::AlignTextToFramePadding();
-                ImGui::Text(io_time_fmt,    delta_t);
+            ImGui::SameLine();                          utl::RightHandJustify(TOTAL_SIZE);
+            //
+            //
+            //  TASK.
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextColored( app::DEF_APPLE_BLUE, "%20s", task );
+            ImGui::SameLine(0, ms_SMALL_ITEM_PAD);      ImGui::Dummy(ImVec2( 0.65f * (max_task_size.x - task_size.x), 0));
+            ImGui::SameLine(0, ms_SMALL_ITEM_PAD);
+            //
+            //
+            //  UPDATE TIME.
+            ImGui::AlignTextToFramePadding();           ImGui::SameLine();
+            ImGui::Text(io_time_fmt,    delta_t);
+            ImGui::SameLine(0, ms_SMALL_ITEM_PAD);      ImGui::AlignTextToFramePadding();
+            //
+            //
+            //  FPS.
+            ImGui::Text(fps_fmt,        fps_ct);
+            ImGui::SameLine(0, ms_SMALL_ITEM_PAD);      ImGui::AlignTextToFramePadding();
                 
-                ImGui::SameLine(0, ms_SMALL_ITEM_PAD);  ImGui::AlignTextToFramePadding();
-                
-                ImGui::Text(fps_fmt,        fps_ct);
-            //  S.PopFont();
         }
         
         

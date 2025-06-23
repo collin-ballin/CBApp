@@ -132,20 +132,34 @@ class App
 // *************************************************************************** //
 // *************************************************************************** //
 public:
-    //  1               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
-    //  1.1             Default Constructor, Destructor, etc...
-                        App                         (void);                                     //  Def. Constructor.
-                        ~App                        (void);                                     //  Def. Destructor.
+    //  1.1             INLINE PUBLIC MEMBER FUNCTIONS...
+    // *************************************************************************** //
     
-    //  1.2             Public Member Functions...
+    //  "instance"
+    static inline App & instance                    (void) {
+        static App      my_app      = App();     //  Meyers-Style Singleton  | Created on first call, once...
+        return my_app;
+    }
+    
+    //  "enqueue_signal"
+    inline void         enqueue_signal              (CBSignalFlags f) noexcept        // called only by async handlers (thread / signal safe)
+    { S.m_pending.fetch_or(f, std::memory_order_relaxed); }
+    
+    
+
+    // *************************************************************************** //
+    //  1.2             PUBLIC API...
+    // *************************************************************************** //
     void                run                         (void);
+
 
     //  1.3             Deleted Operators, Functions, etc...
                         App                         (const App & src)               = delete;   //  Copy. Constructor.
                         App                         (App && src)                    = delete;   //  Move Constructor.
     App &               operator =                  (const App & src)               = delete;   //  Assgn. Operator.
     App &               operator =                  (App && src)                    = delete;   //  Move-Assgn. Operator.
+    
     
     
 // *************************************************************************** //
@@ -181,26 +195,29 @@ protected:
     //  2.B             PROTECTED MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //  2B.1            Class Initializations.              [init.cpp]...
-    //              1A.
+    //                  Class Initializations.              [init.cpp]...
+    //          1A.     Default Constructor, Destructor, etc...
+                        App                         (void);                     //  Def. Constructor.
+                        ~App                        (void);                     //  Def. Destructor.
+    //
     void                init                        (void);                     //  [init.cpp].
     void                CreateContext               (void);                     //  [init.cpp].
     void                destroy                     (void);                     //  [init.cpp].
-    //              1B.
+    //          1B.
     void                init_appstate               (void);                     //  [init.cpp].
     void                dispatch_window_function    (const Window & uuid);      //  [init.cpp].
-    //              1C.
+    //          1C.
     void                load                        (void);                     //  [init.cpp].
     bool                init_asserts                (void);                     //  [init.cpp].
     static void         install_signal_handlers     (void);                     //  [handler.cpp].
     
     
-    //  2C.1            Main GUI Functions.                 [app.cpp]...
+    //          2C.1    Main GUI Functions.                 [app.cpp]...
     void                ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     //
-    //  2C.2            Utilities for Main GUI Functions.   [app.cpp]...
+    //          2C.2    Utilities for Main GUI Functions.   [app.cpp]...
     void                run_IMPL                    (void);
     void                pre_run                     (void);
     void                get_build_info              (void) const;
@@ -216,6 +233,9 @@ protected:
     //  2D.2            Utility Functions.                  [main_application.cpp]...
     void                KeyboardShortcutHandler     (void);
     void                SaveHandler                 (void);
+    void                UndoHandler                 (void);
+    void                RedoHandler                 (void);
+    //
     void                InitDockspace               (void);
     void                RebuildDockLayout           (void);
     

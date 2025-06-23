@@ -319,7 +319,10 @@
 //
 #define                 _CBAPP_APPSTATE_ALIAS_API                                                               \
 public:                                                                                                         \
+    using               CBSignalFlags                   = std::uint32_t;                                        \
+                                                                                                                \
     using               Window                          = app::Window_t;                                        \
+    using               Applet                          = app::Applet_t;                                        \
     using               Font                            = app::Font_t;                                          \
     using               Cmap                            = app::Colormap_t;                                      \
     using               Timestamp_t                     = std::chrono::time_point<std::chrono::system_clock>;   \
