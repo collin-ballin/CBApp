@@ -69,7 +69,7 @@ void Editor::Begin(const char * id)
 
     // current pixels-per-world-unit (cached for rest of frame)
     m_ppw               = m_cam.pixels_per_world(m_avail, m_world_bounds);
-
+    //_clamp_scroll();                // symmetric clamp (allows ± scroll)
 
     ImDrawList *    dl  = ImGui::GetWindowDrawList();
     ImGuiIO &       io  = ImGui::GetIO();
@@ -91,7 +91,6 @@ void Editor::Begin(const char * id)
     const bool      active          = ImGui::IsItemActive();
     const bool      space           = ImGui::IsKeyDown(ImGuiKey_Space);
     const bool      wheel           = (io.MouseWheel != 0.0f);
-    bool            camera_update   = false;
     //
     if (hovered) {
         const bool shift  = io.KeyShift;
@@ -113,19 +112,20 @@ void Editor::Begin(const char * id)
 
 
     //  4.      INTERACTION SNAPSHOTS...
-    ImVec2          origin_scr      { m_p0.x - m_cam.pan.x * m_ppw,     m_p0.y - m_cam.pan.y * m_ppw };     // world (0,0) in px
+    ImVec2          origin_scr      { m_p0.x + m_cam.pan.x,             m_p0.y + m_cam.pan.y };     // world (0,0) in px
     ImVec2          mouse_canvas    { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
     Interaction     it              { hovered, active, space, mouse_canvas, origin_scr, m_p0, dl };
-
+    
 
     //  5.      CURSOR HINTS AND SHORTCUTS...
-    if ( !space && hovered && _mode_has(CBCapabilityFlags_CursorHint) )     { _update_cursor_select(it); }
+    if ( !space && hovered && _mode_has(CBCapabilityFlags_CursorHint) )         { _update_cursor_select(it); }
     
     
     //  6.      LOCAMOTION  | PANNING AND ZOOMING...
     //
     //          6A.     ZOOM IN/OUT.
-    if ( !space && wheel && _mode_has(CBCapabilityFlags_Zoom) )         { _apply_wheel_zoom(it); }       // mouse wheel
+    //_apply_wheel_zoom(it);
+    if ( !space && hovered && wheel && _mode_has(CBCapabilityFlags_Zoom) )      { _apply_wheel_zoom(it); }       // mouse wheel
     //
     //          6B.     PANNING.
     if ( space && hovered && _mode_has(CBCapabilityFlags_Pan) )
@@ -133,27 +133,16 @@ void Editor::Begin(const char * id)
         ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
         if ( ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f) )
         {
-            //  float ppw = m_cam.pixels_per_world(m_avail, m_world_bounds);
-            m_cam.pan.x        += io.MouseDelta.x / m_ppw;
-            m_cam.pan.y        += io.MouseDelta.y / m_ppw;
-            _clamp_scroll();
-            camera_update       = true;
+            m_cam.pan.x        += io.MouseDelta.x; // / m_ppw;
+            m_cam.pan.y        += io.MouseDelta.y; // / m_ppw;
+            //_clamp_scroll();
         }
     }
-    //
-    //          6C.     REFRESH ORIGIN AND CANVAS AFTER NAVIGATION...
-    if (camera_update) {            //  Refresh origin & snapshot fields for downstream handlers
-        origin_scr      = { m_p0.x - m_cam.pan.x * m_ppw, m_p0.y - m_cam.pan.y * m_ppw };
-        it.origin       = origin_scr;
-        it.canvas       = { io.MousePos.x - origin_scr.x, io.MousePos.y - origin_scr.y };
-    }
-
 
 
     //  7.      GLOBAL SELECTION BEHAVIOR...
     if  ( !space && _mode_has(CBCapabilityFlags_Select) ) {
         _process_selection(it);
-        
         if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )    //  JOINING CLOSED PATHS...
         { _join_selected_open_path(); }
     }

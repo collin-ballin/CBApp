@@ -118,6 +118,12 @@ void App::run(void)
         glfwSwapBuffers(this->S.m_glfw_window);
         
         
+        
+        //  6.  LASTLY, QUERY EACH SIGNAL HANDLER...
+        this->QuerySignalStates();
+        
+        
+        
     }// END OF MAIN-LOOP...
 
 
@@ -261,9 +267,8 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
     
         //this->Test_Browser();
         
-        
         ImGui::NewLine();
-    
+        
         //  4.  TESTING COLUMNS...
         //  {
         //      this->Test_Editor();
@@ -521,6 +526,10 @@ void App::KeyboardShortcutHandler(void)
     //
     [[maybe_unused]] ImGuiIO &      io                      = ImGui::GetIO();
     
+    
+    //  0.  UPDATE CURRENT APPLICATION STATE (NEEDED BEFORE WE SAVE/UNDO/REDO/ETC)...
+    S.update_current_task();
+
 
     //  1.  HOTKEY TO OPEN/CLOSE BROWSER...
     if ( ImGui::IsKeyChordPressed(BROWSER_KEY, browser_key_flags) )         { this->m_controlbar.toggle_sidebar(); }
@@ -586,6 +595,62 @@ void App::RedoHandler(void)
 }
 
 
+
+
+
+//  "QuerySignalStates"
+//
+inline void App::QuerySignalStates(void)
+{
+    using namespace     app;
+    CBSignalFlags       bits        = S.m_pending.exchange(CBSignalFlags_None, std::memory_order_acquire);
+    CBSignalFlags       bit         = bits & static_cast<CBSignalFlags>(-(int)bits);      //  Isolate LSB.
+    
+    
+    while ( bits != CBSignalFlags_None )
+    {
+        switch (bit)
+        {
+            //  1.  SIGINT / SIGTERM / CTRL_C_EVENT.
+            case CBSignalFlags_Shutdown :       {
+                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_Shutdown>.");
+                
+                S.m_running.store(false, std::memory_order_relaxed);
+                break;
+            }
+
+            //  2.  SIGHUP.
+            case CBSignalFlags_ReloadCfg :      {
+                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_ReloadCfg>.");
+                //  reload_config();
+                break;
+            }
+
+            //  3.  [OPERATOR NEW] / MALLOC FAILURE.
+            case CBSignalFlags_NewFailure :      {
+                CB_LOG(LogLevel::Critical, "Program recieved <CBSignalFlags_NewFailure>.");
+                S.m_running.store(false, std::memory_order_relaxed);
+                break;
+            }
+
+            //  3.  CUSTOM SIGNAL #1 [NOT IMPLEMENTED].
+            case CBSignalFlags_Custom1 :        {
+                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_Custom1> (How did you do this? This isn't even implemented yet?)");
+                break;
+            }
+
+            //  ?.  DEFAULT.
+            default:                            {
+                break;
+            }
+        }
+        bits &= ~bit;         // clear processed flag
+    }
+
+
+
+    return;
+}
 
 
 

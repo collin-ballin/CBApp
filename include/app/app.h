@@ -136,14 +136,13 @@ public:
     //  1.1             INLINE PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //  "instance"
-    static inline App & instance                    (void) {
-        static App      my_app      = App();     //  Meyers-Style Singleton  | Created on first call, once...
-        return my_app;
-    }
+    //  "instance"              | Meyers-Style Singleton.       Created on first call, once.
+    static inline App &         instance                    (void)
+    { static App   single = App();     return single; }
     
-    //  "enqueue_signal"
-    inline void         enqueue_signal              (CBSignalFlags f) noexcept        // called only by async handlers (thread / signal safe)
+    
+    //  "enqueue_signal"        | Called only by async handlers (thread / signal safe)
+    inline void                 enqueue_signal              (CBSignalFlags f) noexcept
     { S.m_pending.fetch_or(f, std::memory_order_relaxed); }
     
     
@@ -151,107 +150,108 @@ public:
     // *************************************************************************** //
     //  1.2             PUBLIC API...
     // *************************************************************************** //
-    void                run                         (void);
+    void                        run                         (void);
 
 
-    //  1.3             Deleted Operators, Functions, etc...
-                        App                         (const App & src)               = delete;   //  Copy. Constructor.
-                        App                         (App && src)                    = delete;   //  Move Constructor.
-    App &               operator =                  (const App & src)               = delete;   //  Assgn. Operator.
-    App &               operator =                  (App && src)                    = delete;   //  Move-Assgn. Operator.
+    //  1.3                     Deleted Operators, Functions, etc...
+                                App                         (const App &    )               = delete;   //  Copy. Constructor.
+                                App                         (App &&         )               = delete;   //  Move Constructor.
+    App &                       operator =                  (const App &    )               = delete;   //  Assgn. Operator.
+    App &                       operator =                  (App &&         )               = delete;   //  Move-Assgn. Operator.
     
     
     
 // *************************************************************************** //
 // *************************************************************************** //
 protected:
-    //  2.A             PROTECTED DATA-MEMBERS...
+    //  2.A                     PROTECTED DATA-MEMBERS...
     // *************************************************************************** //
-    //                  1.  BOOLEANS...
-    //                  2.  APPEARANCE...
-    //                  4.  MISC INFORMATION...
-    //                  5.  IMPORTANT VARIABLES...
+    //                          1.  BOOLEANS...
+    //                          2.  APPEARANCE...
+    //                          4.  MISC INFORMATION...
+    //                          5.  IMPORTANT VARIABLES...
     
-    //                  6.  DELAGATOR CLASSES...
-    app::AppState       CBAPP_STATE_NAME                = app::AppState();
-    MenuBar             m_menubar;
-    ControlBar          m_controlbar;
-    Browser             m_browser;
-    DetailView          m_detview;
+    //                          6.  DELAGATOR CLASSES...
+    app::AppState &             CBAPP_STATE_NAME                = app::AppState::instance(); //app::AppState();
+    MenuBar                     m_menubar;
+    ControlBar                  m_controlbar;
+    Browser                     m_browser;
+    DetailView                  m_detview;
     
     
-    //                  9.  APPLICATION SUB-CLASSES...
-    CCounterApp         m_counter_app;
-    EditorApp           m_editor_app;
-    GraphApp            m_graph_app;
+    //                          9.  APPLICATION SUB-CLASSES...
+    CCounterApp                 m_counter_app;
+    EditorApp                   m_editor_app;
+    GraphApp                    m_graph_app;
 #ifdef CBAPP_ENABLE_CB_DEMO
-    CBDemo              m_cb_demo                       = CBDemo();
+    CBDemo                      m_cb_demo                       = CBDemo();
 #endif  //  CBAPP_ENABLE_CB_DEMO  //
     //
     //
-    cb::Editor          m_editor;
+    cb::Editor                  m_editor;
     
     
     //  2.B             PROTECTED MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //                  Class Initializations.              [init.cpp]...
-    //          1A.     Default Constructor, Destructor, etc...
-                        App                         (void);                     //  Def. Constructor.
-                        ~App                        (void);                     //  Def. Destructor.
+    //                          Class Initializations.              [init.cpp]...
+    //                  1A.     Default Constructor, Destructor, etc...
+                                App                         (void);                     //  Def. Constructor.
+                                ~App                        (void);                     //  Def. Destructor.
     //
-    void                init                        (void);                     //  [init.cpp].
-    void                CreateContext               (void);                     //  [init.cpp].
-    void                destroy                     (void);                     //  [init.cpp].
-    //          1B.
-    void                init_appstate               (void);                     //  [init.cpp].
-    void                dispatch_window_function    (const Window & uuid);      //  [init.cpp].
-    //          1C.
-    void                load                        (void);                     //  [init.cpp].
-    bool                init_asserts                (void);                     //  [init.cpp].
-    static void         install_signal_handlers     (void);                     //  [handler.cpp].
+    void                        init                        (void);                     //  [init.cpp].
+    void                        CreateContext               (void);                     //  [init.cpp].
+    void                        destroy                     (void);                     //  [init.cpp].
+    //                  1B.
+    void                        init_appstate               (void);                     //  [init.cpp].
+    void                        dispatch_window_function    (const Window & uuid);      //  [init.cpp].
+    //                  1C.
+    void                        load                        (void);                     //  [init.cpp].
+    bool                        init_asserts                (void);                     //  [init.cpp].
+    static void                 install_signal_handlers     (void);                     //  [handler.cpp].
     
     
-    //          2C.1    Main GUI Functions.                 [app.cpp]...
-    void                ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    //                  2C.1    Main GUI Functions.                 [app.cpp]...
+    void                        ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     //
-    //          2C.2    Utilities for Main GUI Functions.   [app.cpp]...
-    void                run_IMPL                    (void);
-    void                pre_run                     (void);
-    void                get_build_info              (void) const;
-    void                get_info1                   (void) const;
-    void                get_info2                   (void) const;
+    //                  2C.2    Utilities for Main GUI Functions.   [app.cpp]...
+    void                        run_IMPL                    (void);
+    void                        pre_run                     (void);
+    void                        get_build_info              (void) const;
+    void                        get_info1                   (void) const;
+    void                        get_info2                   (void) const;
     
     
-    //  2D.1            Additional Tools / Applications.    [tools.cpp]...                                //  [main_application.cpp].
-    void                ShowColorTool               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                ColorShaderTool             (void);
-    void                ColorMapCreatorTool         (void);
+    //                  2D.1    Additional Tools / Applications.    [tools.cpp]...                                //  [main_application.cpp].
+    void                        ShowColorTool               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ColorShaderTool             (void);
+    void                        ColorMapCreatorTool         (void);
     //
-    //  2D.2            Utility Functions.                  [main_application.cpp]...
-    void                KeyboardShortcutHandler     (void);
-    void                SaveHandler                 (void);
-    void                UndoHandler                 (void);
-    void                RedoHandler                 (void);
+    //                  2D.2    Utility Functions.                  [main_application.cpp]...
+    void                        KeyboardShortcutHandler     (void);
+    void                        SaveHandler                 (void);
+    void                        UndoHandler                 (void);
+    void                        RedoHandler                 (void);
+    void                        QuerySignalStates           (void);
     //
-    void                InitDockspace               (void);
-    void                RebuildDockLayout           (void);
+    void                        InitDockspace               (void);
+    void                        RebuildDockLayout           (void);
     
     
-    //  2E.1            Testing / Temporary Functions.
-    void                PyStreamTest                (void);
-    void                TestTabBar                  (void);
+    //                  2E.1    Testing / Temporary Functions.
+    void                        PyStreamTest                (void);
+    void                        TestTabBar                  (void);
     //
     //
-    void                ShowImGuiMetricsWindow      ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                ShowImGuiStyleEditor        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImGuiMetricsWindow      ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImGuiStyleEditor        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     //
-    void                ShowImPlotStyleEditor       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                ShowImPlotMetricsWindow     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImPlotStyleEditor       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImPlotMetricsWindow     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     
     
     
@@ -261,14 +261,14 @@ private:
     //  3.              PRIVATE MEMBER FUNCTIONS...
     // *************************************************************************** //
     
-    //  3.1             Primary GUI Functions.      [main_application.cpp]...
-    void                ImPlot_Testing0             (void);
-    void                ImPlot_Testing0ALT          (void);
-    void                Test_Browser                (void);
-    void                Test_Editor                 (void);
+    //                  3.1     Primary GUI Functions.      [main_application.cpp]...
+    void                        ImPlot_Testing0             (void);
+    void                        ImPlot_Testing0ALT          (void);
+    void                        Test_Browser                (void);
+    void                        Test_Editor                 (void);
     
-    //  3.2             Misc. GUI Functions.        [temp.cpp]...
-    //                      ...
+    //                  3.2     Misc. GUI Functions.        [temp.cpp]...
+    //                                  ...
 
 
 

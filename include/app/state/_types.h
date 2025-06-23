@@ -138,10 +138,11 @@ enum class Applet_t : int {
 enum CBSignalFlags_ {
     CBSignalFlags_None          = 0,
 //
-    CBSignalFlags_Shutdown      = 1u << 0,      // SIGINT / SIGTERM / CTRL_C_EVENT
-    CBSignalFlags_ReloadCfg     = 1u << 1,      // SIGHUP
+    CBSignalFlags_Shutdown      = 1u << 0,      // SIGINT / SIGTERM / CTRL_C_EVENT.
+    CBSignalFlags_ReloadCfg     = 1u << 1,      // SIGHUP.
+    CBSignalFlags_NewFailure    = 1u << 2,      // [OPERATOR NEW] / MALLOC FAILURE.
 //
-    CBSignalFlags_ReopenLog     = 1u << 2,      // SIGUSR1 demo
+    CBSignalFlags_Custom1       = 1u << 3,      // SIGUSR1 demo.
 //
     CBSignalFlags_COUNT
 };

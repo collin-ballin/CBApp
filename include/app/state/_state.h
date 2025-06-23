@@ -76,17 +76,19 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 //      PLAIN-OLD-DATA (POD) ABSTRACTION/CONTAINER TO
 //      FACILITATE MANUAL DEPENDENCY INJECTION DESIGN PATTERN...
 //
-struct AppState
+class AppState
 {
     _CBAPP_APPSTATE_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 // *************************************************************************** //
 // *************************************************************************** //
+public:
+    // *************************************************************************** //
+    //  1.1             PUBLIC API...
+    // *************************************************************************** //
     
-    // *************************************************************************** //
-    //  1.1     STRUCT INITIALIZATION FUNCTIONS...
-    // *************************************************************************** //
-                                        AppState                    (void);                 //  Default Constructor.
-                                        ~AppState                   (void);                 //  Default Destructor.
+    //  "instance"                      | Meyers-Style Singleton.       Created on first call, once.
+    static inline AppState &            instance                    (void)
+    { static AppState   single = AppState();     return single; }
                                         
     //  1.2             Deleted Operators, Functions, etc...
                                         AppState                    (const AppState &   )       = delete;   //  Copy. Constructor.
@@ -95,6 +97,22 @@ struct AppState
     AppState &                          operator =                  (AppState &&        )       = delete;   //  Move-Assgn. Operator.
     
     
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+// *************************************************************************** //
+//  1.2     PRIVATE STRUCT INITIALIZATION FUNCTIONS...
+// *************************************************************************** //
+                                        AppState                    (void);                 //  Default Constructor.
+                                        ~AppState                   (void);                 //  Default Destructor.
+    
+    
+// *************************************************************************** //
+// *************************************************************************** //
+//
+//
+//
+public:
     // *************************************************************************** //
     //  1.3     STRUCT UTILITY FUNCTIONS...
     // *************************************************************************** //
@@ -116,9 +134,36 @@ struct AppState
     // *************************************************************************** //
 
     //  "current_task"
-    inline const char * current_task(void) const  {  return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str();  }
+    inline const char *                 current_task                (void) const
+    {  return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str();  }
 
-
+    //  "GetDockNodeVisText"
+    inline const char *                 GetDockNodeVisText          (const ImGuiDockNode * node)
+    {
+        // Same expression used inside DebugNodeDockNode()
+        return (node && node->VisibleWindow) ? node->VisibleWindow->Name : "NULL";
+    }
+    
+    //  "update_current_task"
+    inline void                         update_current_task         (void)
+    {
+        const char *    vis         = this->GetDockNodeVisText( this->m_main_node );
+        const char *    name        = this->current_task();
+        bool            match       = false;
+        
+        if ( strncmp(name, vis, 16) == 0 ) [[likely]] return; //  Bail out early if same applet is in use.
+        
+        
+        for (size_t i = 0; !match && i < static_cast<size_t>(Applet::Count); ++i) {
+            name    = m_applets[ static_cast<size_t>( i ) ]->c_str();
+            match   = ( strncmp(name, vis, 16) == 0 );
+            if (match)      this->m_current_task = static_cast<Applet>( i );
+        }
+        if (!match)     this->m_current_task = Applet::MainApp;
+        
+        return;
+    }
+    
 
     // *************************************************************************** //
     //  2.               CLASS DATA MEMBERS...
@@ -209,9 +254,8 @@ struct AppState
     
     //  6.      BOOLEANS...
     //
-    //bool                                m_running                   = true;
-    std::atomic<bool>                   m_running                   = { true };
     std::atomic<CBSignalFlags>          m_pending                   = { CBSignalFlags_None };
+    std::atomic<bool>                   m_running                   = { true };
     bool                                m_rebuild_dockspace         = false;
     //
     bool                                m_show_controlbar_window    = true;

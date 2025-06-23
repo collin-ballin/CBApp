@@ -14,7 +14,7 @@
 #           -DCMAKE_BUILD_TYPE=Release
 #     cmake --build win64/build -j N
 ########################################################################
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.10)
 
 
 
@@ -59,6 +59,7 @@ target_compile_options(cb_warnings INTERFACE
 #
     -Wno-unused-but-set-variable
     -Wno-unused-variable
+    -Wno-unused-function
 #
     -Wno-deprecated-enum-enum-conversion
     -Wno-misleading-indentation

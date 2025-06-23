@@ -36,14 +36,18 @@
 #include CBAPP_USER_CONFIG
 
 #include <iostream>   // std::cout
+#include <cstdlib>    // std::exit
 #include <csignal>    // std::signal, SIGINT, SIGTERM, SIGHUP, SIGABRT, SIGPIPE
 #include <new>        // std::set_new_handler, std::bad_alloc
-#include <cstdlib>    // std::exit
 
 #ifdef __CBAPP_DEBUG__              //  <======|  Fix for issue wherein multiple instances of application
 # include <thread>                  //            are launched when DEBUG build is run inside Xcode IDE...
 # include <chrono>
 #endif     //  __CBAPP_DEBUG__  //
+
+#ifdef _WIN32
+# include "windows.h"
+#endif  //  _WIN32  //
 
 
 
@@ -68,7 +72,7 @@
 // *************************************************************************** //
 
 //  "run_application"
-//  Client-code interface to creating and running the application...
+//      Client-code interface to creating and running the application...
 //
 int cb::run_application([[maybe_unused]] int argc, [[maybe_unused]] char ** argv)
 {
@@ -124,36 +128,37 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-static void        on_shutdown              ([[maybe_unused]] int sig);
-static void        on_reload                ([[maybe_unused]] int sig);
-static void        on_new_handler           ([[maybe_unused]] int sig);
+static void         on_new_handler          ( void );
+static void         on_shutdown             ( [[maybe_unused]] int sig );
+static void         on_reload               ( [[maybe_unused]] int sig );
+#ifdef _WIN32
+    BOOL WINAPI     console_ctrl_handler    ( DWORD type );
+#endif  //  _WIN32  //
 
 
 
 //  "install_signal_handlers"
 //
-void App::install_signal_handlers(void) {
-    // new‐failure handler
-    //  std::set_new_handler(on_memory_exhausted);
+void App::install_signal_handlers(void)
+{
+
+    std::set_new_handler(                       on_new_handler          );      //  Handle for "New" Failure...
 
 
 //  CASE 1 :    POSIX SIGNALS...
 // *************************************************************************** //
 #ifndef _WIN32
 
-    std::signal(        SIGINT,         on_shutdown     );      //  Ctrl+C
-    std::signal(        SIGTERM,        on_shutdown     );      //  Kill
-    std::signal(        SIGQUIT,        on_shutdown     );      //  Quit
-    std::signal(        SIGHUP,         on_reload       );      //  Reload config.
-    std::signal(        SIGABRT,        on_shutdown     );      //  abort()
-    std::signal(        SIGPIPE,        SIG_IGN         );      //  Ignore broken‐pipe errors
-    //  std::signal(    SIGINT,         on_shutdown     );
-    //  std::signal(    SIGTERM,        on_shutdown     );
-    //  std::signal(    SIGQUIT,        on_shutdown     );
-    //  std::signal(    SIGHUP,         on_reload       );
-    //  std::signal(    SIGPIPE,        SIG_IGN         );
+    std::signal(                SIGINT,                 on_shutdown             );      //  Ctrl+C
+    std::signal(                SIGTERM,                on_shutdown             );      //  Kill
+    std::signal(                SIGQUIT,                on_shutdown             );      //  Quit
+    std::signal(                SIGABRT,                on_shutdown             );      //  abort()
+    std::signal(                SIGHUP,                 on_reload               );      //  Reload config.
+    std::signal(                SIGPIPE,                SIG_IGN                 );      //  Ignore broken‐pipe errors
     
-    // …add SIGUSR1/SIGUSR2 as custom hooks if desired…
+    
+    
+    //  …add SIGUSR1/SIGUSR2 as custom hooks if desired…
   
 // *************************************************************************** //
 // *************************************************************************** //
@@ -164,32 +169,14 @@ void App::install_signal_handlers(void) {
 // *************************************************************************** //
 # else
     
-    //
-    //  ...
-    //
-    
+    SetConsoleCtrlHandler(      console_ctrl_handler,   TRUE                    );
     
 // *************************************************************************** //
 // *************************************************************************** //
 #endif  //  _WIN32  //
     
     
-//       std::set_new_handler(on_new_handler);
-//
-//   #ifndef _WIN32
-//       std::signal(SIGINT,  on_shutdown);
-//       std::signal(SIGTERM, on_shutdown);
-//       std::signal(SIGQUIT, on_shutdown);
-//       std::signal(SIGHUP,  on_reload);
-//       std::signal(SIGPIPE, SIG_IGN);
-//   #else
-//       SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
-//   #endif
-    
-    
-    
-    
-    
+    return;
 }
 
 
@@ -200,6 +187,29 @@ void App::install_signal_handlers(void) {
 //  HANDLER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//{ App::instance().enqueue_signal(CBSignalFlags_Shutdown); }
+
+
+//  "on_new_handler"
+//
+void on_new_handler(void)
+{
+    //  1.  Report the signal handler Tell the user / CI what happened (async-signal-safe: fputs)
+    std::fputs( "invoked signal handler <on_new_handler()>:\n\t"
+                "fatal error has occured during call to [operator new].\n\t"
+                "requesting application shutdown.\n", stderr );
+
+    //  2.  Request application to terminate at the next frame boundary.
+    App::instance().enqueue_signal( app::CBSignalFlags_NewFailure );
+
+    //  Returning lets "operator new" throw std::bad_alloc.  We can either...
+    //
+    //      (1)     Catch it in a high-level try/catch around App::run().
+    //      (2)     OR, simply call  std::abort()  for an immediate abort.
+    //
+}
+
 
 //  "on_shutdown"
 //
@@ -215,15 +225,49 @@ void on_reload([[maybe_unused]] int sig) {
 }
 
 
-//  "on_new_handler"
-//
-void on_new_handler([[maybe_unused]] int sig) {
-    return;
+
+#ifdef _WIN32
+// *************************************************************************** //
+// *************************************************************************** //
+
+/// @fn         BOOL WINAPI console_ctrl_handler(DWORD type);
+///
+/// @brief      Posix equivalent for handling console signals on Windows builds.
+/// @param      type        ???
+/// @return                 TRUE: Tell Windows that WE handled the error.  FALSE: Allow default handler to run
+///
+BOOL WINAPI console_ctrl_handler(DWORD type)
+{
+    BOOL    value       = FALSE;
+    
+    switch (type)
+    {
+        case CTRL_C_EVENT :         {               //  Ctrl-C
+            value = FALSE;      break;
+        }
+        case CTRL_BREAK_EVENT :     {               //  Ctrl-Break
+            value = FALSE;      break;
+        }
+        case CTRL_CLOSE_EVENT :     {               //  Console window close button.
+            value = FALSE;      break;
+        }
+        case CTRL_SHUTDOWN_EVENT :  {               //  System is shutting down.
+            // g_should_quit.store(true, std::memory_order_relaxed);
+            value = TRUE;       break;
+        }
+        default :                   {
+            value = FALSE;      break;
+        }
+    }
+    
+    
+    return value;                   // let default handler run
 }
 
 
-
-
+// *************************************************************************** //
+// *************************************************************************** //
+#endif  //  _WIN32  //
 
 
 
