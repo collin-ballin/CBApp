@@ -31,42 +31,13 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "pre_run"
-//
-void App::pre_run(void)
-{
-    IM_ASSERT( S.m_notes.size() == 1 && "\"S.m_notes\" should have 1 timestamp at this point");
-    
-    //utl::get_glsl_version();
-    
-    Timestamp_t         start_time      = cblib::utl::get_timestamp();
-    auto                dt              = cblib::utl::format_elapsed_timestamp(start_time - S.m_notes[0].first);
-    auto                startup_log     = std::format("PROGRAM BOOT INFO...\n"
-        "Spawn          : {}\n"
-        "Initialized    : {}\n"
-        "Load Time      : {}\n",
-        S.m_notes[0].first,
-        start_time,
-        dt
-    );
-    
-    S.m_notes.push_back( std::make_pair(start_time, "Program started ({})") );
-    
-    
-    S.m_logger.notify( "PROGRAM BOOTED SUCCESSFULLY" );
-    CB_LOG( LogLevel::Info, startup_log );
-    
-    return;
-}
-
-
 //  "run"
 //
 void App::run(void)
 {
     [[maybe_unused]] ImGuiIO &          io          = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiContext *     g           = ImGui::GetCurrentContext();
-    this->pre_run();
+    this->S.log_startup_info();
 
 
     //  1.  MAIN PROGRAM LOOP...
@@ -90,12 +61,18 @@ void App::run(void)
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
-
+        //
+        //
+        // *************************************************************************** //
+        
+        
         //  3.  DRAW MAIN "UI" ELEMENTS...
         this->run_IMPL();
 
 
+        // *************************************************************************** //
+        //
+        //
         //  4.  RENDERING...
         ImGui::Render();
         glfwGetFramebufferSize(this->S.m_glfw_window,  &this->S.m_window_w,  &this->S.m_window_h); // int display_w, display_h;     // glfwGetFramebufferSize(this->S.m_glfw_window, &display_w, &display_h);
@@ -119,17 +96,15 @@ void App::run(void)
         
         
         
-        //  6.  LASTLY, QUERY EACH SIGNAL HANDLER...
-        this->QuerySignalStates();
-        
-        
-        
     }// END OF MAIN-LOOP...
 
 
     #ifdef __EMSCRIPTEN__
         EMSCRIPTEN_MAINLOOP_END;
     #endif  //  __EMSCRIPTEN__  //
+
+
+    S.log_shutdown_info();
 
 
     return;
@@ -189,13 +164,10 @@ void App::run_IMPL(void)
     }// END OF "first_frame"...
     
 #endif  //  CBAPP_NEW_DOCKSPACE  //
-    
 
-    //  1.      HANDLE ANY KEYBOARD SHORTCUTS...
-    this->KeyboardShortcutHandler();
-    
-    
-    //  2.      HANDLE ANY CALLS WHICH REQUIRED RE-DRAW OF DOCKING SPACE...
+
+
+    //  1.      HANDLE ANY CALLS WHICH REQUIRED RE-DRAW OF DOCKING SPACE...
     if (S.m_rebuild_dockspace) [[unlikely]] {
         this->RebuildDockLayout();
         S.m_rebuild_dockspace = false;
@@ -203,7 +175,7 @@ void App::run_IMPL(void)
 
 
 
-    //  3.      DRAW APPLICATION WINDOWS...
+    //  2.      DRAW APPLICATION WINDOWS...
     //
     //          POLICY:     **DO NOT** check if the " winfo.render_fn" pointer is NULL...
     //                          - We assert that these must ALL be valid in the "init_asserts()".
@@ -217,12 +189,22 @@ void App::run_IMPL(void)
     }
     
     
-    
     //  1.      END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
     if (first_frame) [[unlikely]] {
         first_frame = false;
-        ImGui::SetWindowFocus( this->S.m_applets[ static_cast<size_t>( this->S.m_current_task) ]->c_str() );
+        ImGui::SetWindowFocus( S.current_task() );
     }
+    
+
+    //  3.      HANDLE ANY KEYBOARD SHORTCUTS...
+    this->KeyboardShortcutHandler();
+    
+    
+        
+    //  4.      LASTLY, QUERY EACH SIGNAL HANDLER...
+    this->QuerySignalStates();
+    
+    
     
     return;
 }

@@ -218,7 +218,6 @@ protected:
     //
     //                  2C.2    Utilities for Main GUI Functions.   [app.cpp]...
     void                        run_IMPL                    (void);
-    void                        pre_run                     (void);
     void                        get_build_info              (void) const;
     void                        get_info1                   (void) const;
     void                        get_info2                   (void) const;

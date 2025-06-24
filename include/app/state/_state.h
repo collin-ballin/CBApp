@@ -116,17 +116,24 @@ public:
     // *************************************************************************** //
     //  1.3     STRUCT UTILITY FUNCTIONS...
     // *************************************************************************** //
+    //
+    //                      1.3A    APPEARANCE HELPER FUNCTIONS:
     void                                SetDarkMode                 (void);
     void                                SetLightMode                (void);
     void                                LoadCustomColorMaps         (void);
-    
-    
+    //
+    //                      1.3B    APPLICATION OPERATION HELPER FUNCTIONS:
     void                                DockAtHome                  (const Window &);
     void                                DockAtHome                  (const char *);
     void                                DockAtDetView               (const Window &);
     void                                DockAtDetView               (const char *);
     void                                PushFont                    ([[maybe_unused]] const Font & );
     void                                PopFont                     (void);
+    //
+    //                      1.3C    MISC. HELPER FUNCTIONS:
+    void                                log_startup_info            (void) noexcept;
+    void                                log_shutdown_info           (void) noexcept;
+    
     
     
     // *************************************************************************** //
@@ -176,6 +183,8 @@ public:
     ImFonts                             m_fonts;                                                    //  3.      APPLICATION FONTS...
     std::vector< std::pair<Timestamp_t, std::string> >
                                         m_notes                     = {};
+    Timestamp_t                         m_timestamp_spawn;
+    Timestamp_t                         m_timestamp_start;
     //
     std::array< std::string *, static_cast<size_t>(Applet_t::Count) >
                                         m_applets;

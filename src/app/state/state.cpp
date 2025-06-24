@@ -72,10 +72,13 @@ AppState::~AppState(void) = default;
 
 
 
+
+
+
 // *************************************************************************** //
 //
 //
-//  1.2     STRUCT UTILITY FUNCTIONS...
+//      1.3A    APPEARANCE HELPER FUNCTIONS:
 // *************************************************************************** //
 // *************************************************************************** //
     
@@ -319,10 +322,11 @@ void AppState::LoadCustomColorMaps(void) {
 }
 
 
+
 // *************************************************************************** //
 //
 //
-//
+//      1.3B    APPLICATION OPERATION HELPER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -334,7 +338,7 @@ void AppState::DockAtHome(const Window & idx) {
     return;
 }
 //
-void AppState::DockAtHome(const char * uuid)        { ImGui::DockBuilderDockWindow( uuid, m_main_dock_id ); }
+void AppState::DockAtHome(const char * uuid)                    { ImGui::DockBuilderDockWindow( uuid, m_main_dock_id ); }
 
 
 //  "DockAtDetView"
@@ -345,38 +349,60 @@ void AppState::DockAtDetView(const Window & idx) {
     return;
 }
 //
-void AppState::DockAtDetView(const char * uuid)     { ImGui::DockBuilderDockWindow( uuid, m_detview_dockspace_id ); }
+void AppState::DockAtDetView(const char * uuid)                 { ImGui::DockBuilderDockWindow( uuid, m_detview_dockspace_id ); }
     
     
     
     
 //  "PushFont"
 //
-void AppState::PushFont( [[maybe_unused]] const Font & which) {
-    ImGui::PushFont( this->m_fonts[which] );
-    return;
-}
+void AppState::PushFont( [[maybe_unused]] const Font & which)   { ImGui::PushFont( this->m_fonts[which] ); return; }
 
 
 //  "PopFont"
 //
-void AppState::PopFont(void) {
-    ImGui::PopFont();
+void AppState::PopFont(void)                                    { ImGui::PopFont(); return; }
+
+
+
+// *************************************************************************** //
+//
+//
+//      1.3C    MISC. HELPER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "log_startup_info"
+//
+void AppState::log_startup_info(void) noexcept
+{
+    IM_ASSERT( m_notes.size() == 1 && "\"S.m_notes\" should have 1 timestamp at this point");
+
+    Timestamp_t         start_time      = cblib::utl::get_timestamp();
+    auto                dt              = cblib::utl::format_elapsed_timestamp(start_time - m_notes[0].first);
+    auto                startup_log     = std::format("PROGRAM BOOT INFO...\n"
+        "Spawn          : {}\n"
+        "Initialized    : {}\n"
+        "Load Time      : {}\n",
+        m_notes[0].first,
+        start_time,
+        dt
+    );
+    
+    this->m_notes.push_back( std::make_pair(start_time, "Program started ({})") );
+    this->m_logger.notify( "PROGRAM BOOTED SUCCESSFULLY" );
+    CB_LOG( LogLevel::Info, startup_log );
+
     return;
 }
 
 
-
-// *************************************************************************** //
+//  "log_shutdown_info"
 //
-//
-//      HELPERS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//
-//  ...
-//
+void AppState::log_shutdown_info(void) noexcept
+{
+    return;
+}
 
 
 

@@ -59,6 +59,139 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::Begin(const char * id)
 {
+    // ─────────────────────────────────────── 1. DRAW CANVAS RECTANGLE
+    m_avail             = ImGui::GetContentRegionAvail();
+    m_avail.x           = std::max(m_avail.x, 50.f);
+    m_avail.y           = std::max(m_avail.y, 50.f);
+    m_p0                = ImGui::GetCursorScreenPos();
+    m_p1                = { m_p0.x + m_avail.x, m_p0.y + m_avail.y };
+
+    // current pixels-per-world-unit (cached for rest of frame)
+    m_ppw               = m_cam.pixels_per_world(m_avail, m_world_bounds);
+
+    ImDrawList* dl      = ImGui::GetWindowDrawList();
+    ImGuiIO&     io     = ImGui::GetIO();
+
+    dl->AddRectFilled(m_p0, m_p1, IM_COL32(50,50,50,255));
+    dl->AddRect      (m_p0, m_p1, IM_COL32(255,255,255,255));
+
+    // ───────────────────────────────────────────────────── input capture zone
+    ImGui::InvisibleButton(id, m_avail,
+                           ImGuiButtonFlags_MouseButtonLeft |
+                           ImGuiButtonFlags_MouseButtonRight);
+
+    // ─────────────────── 3. MODE SWITCH (unchanged) … <snip> …
+    const bool hovered  = ImGui::IsItemHovered();
+    const bool active   = ImGui::IsItemActive();
+    const bool space    = ImGui::IsKeyDown(ImGuiKey_Space);
+    const bool wheel    = (io.MouseWheel != 0.0f);
+    // … existing hot-key block remains exactly as before …
+
+
+
+    //  4.      INTERACTION SNAPSHOTS...
+    ImVec2          origin_scr      { m_p0.x + m_cam.pan.x,             m_p0.y + m_cam.pan.y };     // world (0,0) in px
+    ImVec2          mouse_canvas    { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
+    Interaction     it              { hovered, active, space, mouse_canvas, origin_scr, m_p0, dl };
+    
+
+    //  5.      CURSOR HINTS AND SHORTCUTS...
+    if ( !space && hovered && _mode_has(CBCapabilityFlags_CursorHint) )         { _update_cursor_select(it); }
+    
+    
+    //  6.      LOCAMOTION  | PANNING AND ZOOMING...
+    //
+    //          6A.     ZOOM IN/OUT.
+    //_apply_wheel_zoom(it);
+    if ( !space && hovered && wheel && _mode_has(CBCapabilityFlags_Zoom) )      { _apply_wheel_zoom(it); }       // mouse wheel
+    //
+    //          6B.     PANNING.
+    if ( space && hovered && _mode_has(CBCapabilityFlags_Pan) )
+    {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+        if ( ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f) )
+        {
+            m_cam.pan.x        += io.MouseDelta.x; // / m_ppw;
+            m_cam.pan.y        += io.MouseDelta.y; // / m_ppw;
+            //_clamp_scroll();
+        }
+    }
+
+
+    //  7.      GLOBAL SELECTION BEHAVIOR...
+    if  ( !space && _mode_has(CBCapabilityFlags_Select) ) {
+        _process_selection(it);
+        if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )    //  JOINING CLOSED PATHS...
+        { _join_selected_open_path(); }
+    }
+
+
+    //  8.      MODE/STATE/TOOL DISPATCHER...
+    if ( !(space && ImGui::IsMouseDown(ImGuiMouseButton_Left)) ) {
+        switch (m_mode) {
+            case Mode::Default:      _handle_default        (it); break;
+            case Mode::Line:         _handle_line           (it); break;
+            case Mode::Point:        _handle_point          (it); break;
+            case Mode::Pen:          _handle_pen            (it); break;
+            case Mode::Scissor:      _handle_scissor        (it); break;
+            case Mode::AddAnchor:    _handle_add_anchor     (it); break;
+            case Mode::RemoveAnchor: _handle_remove_anchor  (it); break;
+            case Mode::EditAnchor:   _handle_edit_anchor    (it); break;
+            default: break;
+        }
+    }
+    
+    
+    
+                
+       
+       
+       
+       
+
+    // ─────────────────── 9. RENDERING LOOP  ──⇢ MOD
+    // The old ImDrawList clip-rect has been replaced by an ImPlot plot.
+    if (ImPlot::BeginPlot("##Canvas",
+                          ImVec2(m_avail.x, m_avail.y),
+                          ImPlotFlags_NoFrame | ImPlotFlags_NoMenus |
+                          ImPlotFlags_NoLegend | ImPlotFlags_Equal))
+    {
+        ImPlot::PushPlotClipRect();
+
+        dl = ImPlot::GetPlotDrawList();           // draw inside plot
+
+        // NEW ── pixel extents of the plot area
+        ImVec2 plot_pos   = ImPlot::GetPlotPos();   // top-left corner (screen px)
+        ImVec2 plot_size  = ImPlot::GetPlotSize();  // width/height  (screen px)
+
+        // NEW ── shift origin so world (0,0) is relative to plot, not window
+        ImVec2 origin_scr = { plot_pos.x + m_cam.pan.x,
+                              plot_pos.y + m_cam.pan.y };
+
+
+
+        // ── grid & geometry draw calls use the updated anchors
+        //  _grid_handle_shortcuts();
+        //  _grid_draw           (dl, plot_pos, plot_size);   // NEW arguments
+        //  _draw_lines          (dl, origin_scr);
+        //  _draw_paths          (dl, origin_scr);
+        //  _draw_points         (dl, origin_scr);
+        //  _draw_selection_overlay(dl, origin_scr);
+
+        //_handle_overlay(it);
+
+
+
+        ImPlot::PopPlotClipRect();
+        ImPlot::EndPlot();
+    }
+    
+    return;
+}
+
+
+
+/*{
     //  1.      DRAW CANVAS RECTANGLE...
     m_avail             = ImGui::GetContentRegionAvail();
     m_avail.x           = std::max(m_avail.x, 50.f);
@@ -184,7 +317,7 @@ void Editor::Begin(const char * id)
     dl->PopClipRect();
     
     return;
-}
+}*/
 
 
 
