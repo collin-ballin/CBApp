@@ -72,13 +72,13 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 
 //  "AppInfo"
 //
-struct AppInfo {
-    std::vector< std::pair<Timestamp_t, std::string> >
-                                        m_notes                     = {};
-    Timestamp_t                         m_timestamp_spawn;
-    Timestamp_t                         m_timestamp_start;
-    
-};
+// struct AppInfo {
+//     std::vector< std::pair<Timestamp_t, std::string> >
+//                                         m_notes                     = {};
+//     Timestamp_t                         m_timestamp_spawn;
+//     Timestamp_t                         m_timestamp_start;
+// 
+// };
 
 
 
