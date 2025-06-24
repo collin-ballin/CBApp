@@ -661,25 +661,31 @@ void Editor::_rebuild_vertex_selection()
 // *************************************************************************** //
 // *************************************************************************** //
 
+// -----------------------------------------------------------------------------
 //  "_draw_selection_overlay"
-//
-void Editor::_draw_selection_overlay(ImDrawList* dl, const ImVec2& origin) const
+//      Draw outlines for selected primitives plus bbox/handles.
+// -----------------------------------------------------------------------------
+void Editor::_draw_selection_overlay(ImDrawList * dl) const
 {
     const ImU32 col = COL_SELECTION_OUT;
 
-    // Highlight selected points
+    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
+
+    // ───── Highlight selected points
     for (size_t idx : m_sel.points)
     {
         if (idx >= m_points.size()) continue;
         const Point& pt = m_points[idx];
         if (const Pos* v = find_vertex(m_vertices, pt.v))
-            dl->AddCircle({ origin.x + v->x * m_cam.zoom_mag,
-                            origin.y + v->y * m_cam.zoom_mag },
-                          pt.sty.radius + 2.f,   // small outset
-                          col, 0, 2.f);          // thickness 2 px
+        {
+            ImVec2 scr = ws2px({ v->x, v->y });
+            dl->AddCircle(scr,
+                          pt.sty.radius + 2.f,        // small outset
+                          col, 0, 2.f);               // thickness 2 px
+        }
     }
 
-    // Highlight selected lines
+    // ───── Highlight selected standalone lines
     for (size_t idx : m_sel.lines)
     {
         if (idx >= m_lines.size()) continue;
@@ -687,12 +693,12 @@ void Editor::_draw_selection_overlay(ImDrawList* dl, const ImVec2& origin) const
         const Pos* a = find_vertex(m_vertices, ln.a);
         const Pos* b = find_vertex(m_vertices, ln.b);
         if (a && b)
-            dl->AddLine({ origin.x + a->x * m_cam.zoom_mag, origin.y + a->y * m_cam.zoom_mag },
-                        { origin.x + b->x * m_cam.zoom_mag, origin.y + b->y * m_cam.zoom_mag },
-                        col, ln.thickness + 2.f); // 2 px thicker than original
+            dl->AddLine(ws2px({ a->x, a->y }),
+                        ws2px({ b->x, b->y }),
+                        col, ln.thickness + 2.f);
     }
-    
-    // Highlight selected paths (now for curved segments too)
+
+    // ───── Highlight selected paths
     for (size_t idx : m_sel.paths)
     {
         if (idx >= m_paths.size()) continue;
@@ -701,21 +707,19 @@ void Editor::_draw_selection_overlay(ImDrawList* dl, const ImVec2& origin) const
         if (N < 2) continue;
 
         auto draw_seg = [&](const Pos* a, const Pos* b){
-            const float w = p.style.stroke_width + 2.0f;   // outline = 2 px thicker
+            const float w = p.style.stroke_width + 2.0f;
             if (is_curved(a,b))
             {
-                ImVec2 P0{ origin.x + a->x * m_cam.zoom_mag,                   origin.y + a->y * m_cam.zoom_mag };
-                ImVec2 P1{ origin.x + (a->x + a->out_handle.x) * m_cam.zoom_mag,
-                           origin.y + (a->y + a->out_handle.y) * m_cam.zoom_mag };
-                ImVec2 P2{ origin.x + (b->x + b->in_handle.x)  * m_cam.zoom_mag,
-                           origin.y + (b->y + b->in_handle.y)  * m_cam.zoom_mag };
-                ImVec2 P3{ origin.x + b->x * m_cam.zoom_mag,                   origin.y + b->y * m_cam.zoom_mag };
-                dl->AddBezierCubic(P0,P1,P2,P3, col, w, ms_BEZIER_SEGMENTS);
+                ImVec2 P0 = ws2px({ a->x,                         a->y });
+                ImVec2 P1 = ws2px({ a->x + a->out_handle.x,       a->y + a->out_handle.y });
+                ImVec2 P2 = ws2px({ b->x + b->in_handle.x,        b->y + b->in_handle.y  });
+                ImVec2 P3 = ws2px({ b->x,                         b->y });
+                dl->AddBezierCubic(P0, P1, P2, P3, col, w, ms_BEZIER_SEGMENTS);
             }
             else
             {
-                dl->AddLine({ origin.x + a->x * m_cam.zoom_mag, origin.y + a->y * m_cam.zoom_mag },
-                            { origin.x + b->x * m_cam.zoom_mag, origin.y + b->y * m_cam.zoom_mag },
+                dl->AddLine(ws2px({ a->x, a->y }),
+                            ws2px({ b->x, b->y }),
                             col, w);
             }
         };
@@ -730,12 +734,9 @@ void Editor::_draw_selection_overlay(ImDrawList* dl, const ImVec2& origin) const
                 if (const Pos* b = find_vertex(m_vertices, p.verts.front()))
                     draw_seg(a, b);
     }
-    
-    this->_draw_selected_handles(dl, origin);
-    this->_draw_selection_bbox(dl, origin);
-    
-    return;
-    
+
+    _draw_selected_handles(dl);
+    _draw_selection_bbox(dl);
 }
 
 
@@ -770,29 +771,28 @@ bool Editor::_selection_bounds(ImVec2& tl, ImVec2& br) const
 }
 
 
-//  "_draw_selection_bbox"
-//
-void Editor::_draw_selection_bbox(ImDrawList* dl, const ImVec2& origin) const
+// -----------------------------------------------------------------------------
+// "_draw_selection_bbox"
+// -----------------------------------------------------------------------------
+void Editor::_draw_selection_bbox(ImDrawList* dl) const
 {
-    //  Skip when the selection is a single vertex/point only
-    const bool      has_paths_or_lines = !m_sel.paths.empty() || !m_sel.lines.empty();
-    const bool      single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
-    if (single_vertex_only)                 return;
-
+    const bool has_paths_or_lines = !m_sel.paths.empty() || !m_sel.lines.empty();
+    const bool single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
+    if (single_vertex_only) return;
 
     ImVec2 tl, br;
-    if ( !_selection_bounds(tl, br) )       { m_hover_handle = -1; return; }
+    if (!_selection_bounds(tl, br)) { m_hover_handle = -1; return; }
 
-    //  world → screen
-    ImVec2 p0{ origin.x + tl.x * m_cam.zoom_mag, origin.y + tl.y * m_cam.zoom_mag };
-    ImVec2 p1{ origin.x + br.x * m_cam.zoom_mag, origin.y + br.y * m_cam.zoom_mag };
+    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
 
-    //  draw rectangle
+    ImVec2 p0 = ws2px(tl);
+    ImVec2 p1 = ws2px(br);
+
     dl->AddRect(p0, p1, SELECTION_BBOX_COL, 0.0f,
                 ImDrawFlags_None, SELECTION_BBOX_TH);
 
-    //  build 8 handle positions (world then screen)
-    ImVec2 hw = { (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };      // centre
+    // handle positions
+    ImVec2 hw{ (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
     const ImVec2 ws[8] = {
         tl,
         { hw.x, tl.y },
@@ -804,14 +804,12 @@ void Editor::_draw_selection_bbox(ImDrawList* dl, const ImVec2& origin) const
         { tl.x, hw.y }
     };
 
-    // detect hover & draw
     m_hover_handle = -1;
     for (int i = 0; i < 8; ++i)
     {
-        ImVec2 s = { origin.x + ws[i].x * m_cam.zoom_mag,
-                     origin.y + ws[i].y * m_cam.zoom_mag };
-        ImVec2 min = { s.x - HANDLE_BOX_SIZE, s.y - HANDLE_BOX_SIZE };
-        ImVec2 max = { s.x + HANDLE_BOX_SIZE, s.y + HANDLE_BOX_SIZE };
+        ImVec2 s = ws2px(ws[i]);
+        ImVec2 min{ s.x - HANDLE_BOX_SIZE, s.y - HANDLE_BOX_SIZE };
+        ImVec2 max{ s.x + HANDLE_BOX_SIZE, s.y + HANDLE_BOX_SIZE };
 
         bool hovered = ImGui::IsMouseHoveringRect(min, max);
         if (hovered) m_hover_handle = i;
@@ -822,23 +820,24 @@ void Editor::_draw_selection_bbox(ImDrawList* dl, const ImVec2& origin) const
 }
 
 
-//  "_draw_selected_handles"
-//
-void Editor::_draw_selected_handles(ImDrawList* dl, const ImVec2& origin) const
+// -----------------------------------------------------------------------------
+// "_draw_selected_handles"
+// -----------------------------------------------------------------------------
+void Editor::_draw_selected_handles(ImDrawList* dl) const
 {
+    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
+
     for (size_t pi : m_sel.points)
     {
         if (pi >= m_points.size()) continue;
         const Vertex* v = find_vertex(m_vertices, m_points[pi].v);
         if (!v) continue;
 
-        ImVec2 a{ origin.x + v->x * m_cam.zoom_mag,
-                  origin.y + v->y * m_cam.zoom_mag };
+        ImVec2 a = ws2px({ v->x, v->y });
 
         auto draw_handle = [&](const ImVec2& off){
             if (off.x == 0.f && off.y == 0.f) return;
-            ImVec2 h{ origin.x + (v->x + off.x) * m_cam.zoom_mag,
-                      origin.y + (v->y + off.y) * m_cam.zoom_mag };
+            ImVec2 h = ws2px({ v->x + off.x, v->y + off.y });
             dl->AddLine(a, h, ms_HANDLE_COLOR, 1.0f);
             dl->AddRectFilled({ h.x - ms_HANDLE_SIZE, h.y - ms_HANDLE_SIZE },
                               { h.x + ms_HANDLE_SIZE, h.y + ms_HANDLE_SIZE },

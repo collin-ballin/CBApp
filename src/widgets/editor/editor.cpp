@@ -81,6 +81,10 @@ void Editor::Begin(const char* /*id*/)
         ImPlot::GetInputMap() = backup;
         return;
     }
+    
+    ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,       //  3.  CONFIGURE THE PLOT APPEARANCE...
+                      m_axes[0].flags,          m_axes[1].flags);
+    
 
     // ───────── 2A. Auto-fit axes *before* any other ImPlot call
     if (!m_vertices.empty()) {
@@ -157,7 +161,7 @@ void Editor::Begin(const char* /*id*/)
     _draw_points(dl);            // already ported
     // _draw_lines(dl);          // enable once ported
     _draw_paths(dl);          // enable once ported
-    //_draw_selection_overlay(dl);
+    _draw_selection_overlay(dl);
     ImPlot::PopPlotClipRect();
 
     ImPlot::EndPlot();

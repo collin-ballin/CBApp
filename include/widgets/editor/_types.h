@@ -26,6 +26,11 @@
 //          if ( Vertex * v = find_vertex_mut(m_vertices, m_pen.pending_vid) )
 //              v->in_handle = ImVec2(0,0);              // make handle visible
 //
+// Updated declarations for selection overlay functions (no origin argument)
+// void _draw_selection_overlay(ImDrawList* dl) const;
+// void _draw_selection_bbox(ImDrawList* dl) const;
+// void _draw_selected_handles(ImDrawList* dl) const;
+
 //
 //          m_pen.pending_handle = false;                // hand-off to drag logic
 //          m_pen.pending_time   = 0.0f;

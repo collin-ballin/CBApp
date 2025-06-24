@@ -302,11 +302,11 @@ private:
     void                        _update_cursor_select           (const Interaction & ) const;
     void                        _rebuild_vertex_selection       (void);   // decl
     //
-    void                        _draw_selection_overlay         (ImDrawList *, const ImVec2 & ) const;
+    void                        _draw_selection_overlay         (ImDrawList *) const;
     //
     bool                        _selection_bounds               (ImVec2 & tl, ImVec2 & br) const;
-    void                        _draw_selected_handles          (ImDrawList *, const ImVec2 & ) const;
-    void                        _draw_selection_bbox            (ImDrawList *, const ImVec2 & ) const;
+    void                        _draw_selected_handles          (ImDrawList *) const;
+    void                        _draw_selection_bbox            (ImDrawList *) const;
     //
     //                      BOUNDING BOX MECHANICS:
     void                        _start_bbox_drag                (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
@@ -507,7 +507,16 @@ private:
     // *************************************************************************** //
     //      CAMERA SYSTEM...
     // *************************************************************************** //
-    ImPlotFlags                 m_plot_flags                    = ImPlotFlags_NoFrame | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_Equal;
+    //ImPlotFlags                 m_plot_flags                    = /* | ImPlotFlags_Equal | ImPlotFlags_NoBoxSelect */ ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
+    ImPlotFlags                 m_plot_flags                    = ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
+    utl::AxisCFG                m_axes [2]                      = {
+        {"##x-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit | ImPlotAxisFlags_Opposite },
+        {"##y-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit }
+    };
+    utl::LegendCFG              m_legend                        = { ImPlotLocation_NorthWest, ImPlotLegendFlags_None };
+    //
+    //
+    //
     Camera                      m_cam;
     GridSettings                m_grid                          = { 100.0f,  true,  false };
     float                       m_ppw                           = 1.0f;
