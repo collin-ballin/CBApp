@@ -274,15 +274,13 @@ private:
     // *************************************************************************** //
     //
     //                      GRID:
-    void                        _draw_grid                      (ImDrawList *, const ImVec2 &, const ImVec2 &) const;
     ImVec2                      _grid_snap                      (ImVec2 ) const;
-    void                        _grid_draw                      (ImDrawList *, const ImVec2 &, const ImVec2 & ) const;
     void                        _grid_handle_shortcuts          (void);
     //
     //                      RENDERING INTERACTIBLES:
-    void                        _draw_paths                     (ImDrawList *,   const ImVec2 & ) const;
+    void                        _draw_paths                     (ImDrawList* dl) const;
     void                        _draw_lines                     (ImDrawList *,   const ImVec2 & ) const;
-    void                        _draw_points                    (ImDrawList *,   const ImVec2 & ) const;
+    void                        _draw_points                    (ImDrawList *) const;
     //
     //
     // *************************************************************************** //
@@ -353,9 +351,6 @@ private:
     //
     //                      LOCAMOTION UTILITIES:
     void                        _update_world_extent            (void);
-    //void                        _zoom_canvas                    (const Interaction & );
-    void                        _clamp_scroll                   (void);
-    void                        _clamp_zoom                     (float & );
     //
     //                      MISC. UTILITIES:
     void                        _draw_controls                  (void);
@@ -370,18 +365,41 @@ private:
     //  2.C             INLINE FUNCTIONS...
     // *************************************************************************** //
     // *************************************************************************** //
+
+    
+    //  "_world_from_screen"
+    inline ImVec2               _world_from_screen              (ImVec2 scr) const { return pixels_to_world(scr); }
+
+    
+    //  "world_to_pixels"
+    //      ImPlot works in double precision; promote, convert back to float ImVec2
+    inline ImVec2               world_to_pixels                 (ImVec2 w) const {
+        ImPlotPoint p = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));
+        return { static_cast<float>(p.x), static_cast<float>(p.y) };
+    }
+    
+    //  "pixels_to_world"
+    inline ImVec2               pixels_to_world                 (ImVec2 scr) const {
+        ImPlotPoint p = ImPlot::PixelsToPlot(scr);// ImPlot uses double; convert back to float for our structs
+        return { static_cast<float>(p.x), static_cast<float>(p.y) };
+    }
+    
+    // *************************************************************************** //
     
     //  "screen_from_world"
-    inline ImVec2 screen_from_world(ImVec2 w) const {
+    inline ImVec2               screen_from_world               (ImVec2 w) const {
         return { (w.x - m_cam.pan.x) * m_ppw,
                  (w.y - m_cam.pan.y) * m_ppw };
     }
 
     //  "world_from_screen"
-    inline ImVec2 world_from_screen(ImVec2 s) const {
+    inline ImVec2               world_from_screen               (ImVec2 s) const {
         return { s.x / m_ppw + m_cam.pan.x,
                  s.y / m_ppw + m_cam.pan.y };
     }
+    
+
+
     
     //  "maybe_snap"
     inline ImVec2               maybe_snap                      (ImVec2 w) const
@@ -489,10 +507,10 @@ private:
     // *************************************************************************** //
     //      CAMERA SYSTEM...
     // *************************************************************************** //
+    ImPlotFlags                 m_plot_flags                    = ImPlotFlags_NoFrame | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_Equal;
     Camera                      m_cam;
     GridSettings                m_grid                          = { 100.0f,  true,  false };
     float                       m_ppw                           = 1.0f;
-    ImVec2                      m_world_extent                  = ImVec2( 1000.f,   1000.f  );
     Bounds                      m_world_bounds                  = {
         /*min_x=*/0.0f,         /*min_y=*/0.0f,
         /*max_x=*/1000.0f,      /*max_y=*/1000.0f
@@ -505,9 +523,6 @@ private:
     static constexpr float      ms_GRID_LABEL_PAD               = 2.0f;
     //
     //                      FUNCTIONS:
-    void                        _apply_wheel_zoom               (const Interaction & it);
-    void                        _apply_pan                      (const Interaction & it);
-    void                        _clamp_pan                      (const ImVec2& view_sz);
     //
     //
     // *************************************************************************** //

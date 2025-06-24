@@ -309,29 +309,41 @@ namespace error { //     BEGINNING NAMESPACE "error"...
 
 //  1.      GLFW ERRORS...
 inline constexpr const char *       GLFW_INIT_ERROR                             =
-    "A fatal error has occured during program initialization:\n\t"
-    "Call to \"glfwInit()\" returned NULL.\n"
-    "This may occur if your machine does not have the necessary graphics drivers for OpenGL installed.\n"
+    "fatal error during program initialization:\n\t"
+    "Call to \"glfwInit()\" returned NULL.\n\t"
+    "This may occur if your machine does not have the necessary graphics drivers for OpenGL installed.\n\t"
     "Ensure that your system is using the designated GPU / Graphics Card and NOT the on-board "
-    "graphics that are build into the motherboard.";
+    "graphics that are build into the motherboard.\n";
     
 inline constexpr const char *       GLFW_WINDOW_INIT_ERROR                      =
-    "A fatal error has occured during program initialization:\n\t"
+    "fatal error during program initialization:\n\t"
     "Call to \"glfwCreateWindow()\" returned NULL.\n";
 //
 //
 //
 //  2.      ASSERT STATEMENT ERRORS...
+inline constexpr const char *       ASSERT_32BIT_IMDRAWIDX                      =
+    "Assert failed during initialization:\n\t"
+    "sizeof( IMGUI_USE_WCHAR32 ) < 4 BYTES.  We require this to plot large graphical meshes.\n"
+    "(#define ImDrawIdx unsigned int // inside <my_imconfig.h>)\n";
+    
+inline constexpr const char *       ASSERT_32BIT_WCHAR                          =
+    "Assert failed during initialization:\n\t"
+    "sizeof( IMGUI_USE_WCHAR32 ) != 4 BYTES.  We require this to typeset mathematical symbols.\n\t"
+    "(#define IMGUI_USE_WCHAR32 // inside <my_imconfig.h>)\n";
+    
+    
+    
 inline constexpr const char *       ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS      =
-    "Assert statement failure during initialization:\n\t"
+    "Assert failed initialization:\n\t"
     "One or more window render functions is NULL (app::WinInfo.render_fn).\n"
     "CHECK:\n"
     "\t(1.) \t \"dispatch_window_function()\" in \"src/app/init.cpp\".\n"
     "\t(2.) \t \"#define _CBAPP_WINDOW_LIST(X)\" in \"include/app/state/_state.h\".\n";
     
 inline constexpr const char *       ASSERT_INVALID_PRIMARY_WINDOWS              =
-    "Assert statement failure during initialization:\n\t"
-    "\"Sidebar\" window cannot be an item inside \"this->m_primary_windows!\" variable.";
+    "Assert failed during initialization:\n\t"
+    "\"Sidebar\" window cannot be an item inside \"this->m_primary_windows!\" variable.\n";
 
 
 

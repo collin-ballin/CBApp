@@ -443,15 +443,22 @@ bool App::init_asserts(void)
     const size_t                    N_WINDOWS           = static_cast<size_t>(Window::Count);
     
 
-    //  1.  ASSERT THAT ALL FONTS ARE VALID...
+    //  1.  ASSERT THAT  #define ImDrawIdx unsigned int  IS CORRECTLY USED IN ALL TRANSLATION UNITS...
+    IM_ASSERT( sizeof(ImDrawIdx) >= 4               && error::ASSERT_32BIT_IMDRAWIDX );
+    
+    //  2.  ASSERT THAT  #define IMGUI_USE_WCHAR32  IS CORRECTLY USED IN ALL TRANSLATION UNITS...
+    IM_ASSERT( sizeof(ImWchar) == 4                 && error::ASSERT_32BIT_WCHAR );
+    
+    
+    
+    //  3.  ASSERT THAT ALL FONTS ARE VALID...
     for (int i = 0; i < static_cast<int>(Font::Count); ++i)
         IM_ASSERT( m_fonts[static_cast<Font>(i)] );
 
-
-    //  2.  ASSERT THAT ALL WINDOW CALLBACK FUNCTIONS ARE VALID...
+    //  4.  ASSERT THAT ALL WINDOW CALLBACK FUNCTIONS ARE VALID...
     for (size_t idx = 0; idx < N_WINDOWS; ++idx) {
         const app::WinInfo & winfo      = S.m_windows[ static_cast<Window>(idx) ];
-        IM_ASSERT( winfo.render_fn != nullptr && error::ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS );
+        IM_ASSERT( winfo.render_fn != nullptr       && error::ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS );
     }
 
     return true;

@@ -27,16 +27,22 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //
 int Editor::_hit_point(const Interaction& it) const
 {
+{
+    const ImVec2 ms = ImGui::GetIO().MousePos;          // mouse in px
+
     for (size_t i = 0; i < m_points.size(); ++i)
     {
         const Pos* v = find_vertex(m_vertices, m_points[i].v);
         if (!v) continue;
-        ImVec2 scr{ it.origin.x + v->x * m_cam.zoom_mag, it.origin.y + v->y * m_cam.zoom_mag };
-        float dx = scr.x - ImGui::GetIO().MousePos.x;
-        float dy = scr.y - ImGui::GetIO().MousePos.y;
-        if (dx*dx + dy*dy <= HIT_THRESH_SQ) return static_cast<int>(i);
+
+        ImVec2 scr = world_to_pixels({ v->x, v->y });   // NEW
+        float dx = scr.x - ms.x;
+        float dy = scr.y - ms.y;
+        if (dx*dx + dy*dy <= HIT_THRESH_SQ)
+            return static_cast<int>(i);
     }
     return -1;
+}
 }
 
 
@@ -44,9 +50,15 @@ int Editor::_hit_point(const Interaction& it) const
 //
 std::optional<Hit> Editor::_hit_any(const Interaction& it) const
 {
-    constexpr float PAD  = 4.0f;                        // pick box grow
+    // mouse position in screen‑pixel coordinates
+    const ImVec2 ms = ImGui::GetIO().MousePos;
+
+    // handy lambda: convert world‑space ⇒ screen‑pixel
+    auto ws2px = [&](const ImVec2& w) { return world_to_pixels(w); };
+
+    // ───────────────────────────────────────────────────────────── 1. handles
+    constexpr float PAD  = 4.0f;                       // pick‑box grow
     const float     half = HANDLE_BOX_SIZE * 0.5f + PAD;
-    const ImVec2    ms   = ImGui::GetIO().MousePos;
 
     auto overlap = [&](ImVec2 s)
     {
@@ -54,76 +66,63 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
                fabsf(ms.y - s.y) <= half;
     };
 
-    // ------------------------------------------------------------------
-    // 1. handles (only on already-selected vertices)
-    // ------------------------------------------------------------------
     for (const Vertex& v : m_vertices)
     {
-        if (!m_sel.vertices.count(v.id)) continue;
+        if (!m_sel.vertices.count(v.id)) continue;     // show handles only on selected
 
-        ImVec2 scr_anchor{ v.x * m_cam.zoom_mag + it.origin.x,
-                           v.y * m_cam.zoom_mag + it.origin.y };
+        ImVec2 scr_anchor = ws2px({ v.x, v.y });
 
-        if (v.out_handle.x || v.out_handle.y)
-        {
-            ImVec2 scr{ scr_anchor.x + v.out_handle.x * m_cam.zoom_mag,
-                        scr_anchor.y + v.out_handle.y * m_cam.zoom_mag };
+        if (v.out_handle.x || v.out_handle.y) {
+            ImVec2 scr = ws2px({ v.x + v.out_handle.x,
+                                 v.y + v.out_handle.y });
             if (overlap(scr))
                 return Hit{ Hit::Type::Handle,
                             static_cast<size_t>(v.id), true };
         }
-        if (v.in_handle.x || v.in_handle.y)
-        {
-            ImVec2 scr{ scr_anchor.x + v.in_handle.x * m_cam.zoom_mag,
-                        scr_anchor.y + v.in_handle.y * m_cam.zoom_mag };
+        if (v.in_handle.x || v.in_handle.y) {
+            ImVec2 scr = ws2px({ v.x + v.in_handle.x,
+                                 v.y + v.in_handle.y });
             if (overlap(scr))
                 return Hit{ Hit::Type::Handle,
                             static_cast<size_t>(v.id), false };
         }
     }
 
-    // ------------------------------------------------------------------
-    // 2. point glyphs
-    // ------------------------------------------------------------------
-    int pi = _hit_point(it);              // −1 when nothing
+    // ───────────────────────────────────────────────────────────── 2. point glyphs
+    int pi = _hit_point(it);                    // (_hit_point will be refactored next)
     if (pi >= 0 && static_cast<size_t>(pi) < m_points.size())
         return Hit{ Hit::Type::Point, static_cast<size_t>(pi) };
 
-    // ------------------------------------------------------------------
-    // 3. standalone straight lines
-    // ------------------------------------------------------------------
-    ImVec2  w{ it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
-    float   thresh_sq = HIT_THRESH_SQ / (m_cam.zoom_mag * m_cam.zoom_mag);
-
+    // ───────────────────────────────────────────────────────────── 3. standalone lines
     for (size_t i = 0; i < m_lines.size(); ++i)
     {
         const Pos* a = find_vertex(m_vertices, m_lines[i].a);
         const Pos* b = find_vertex(m_vertices, m_lines[i].b);
         if (!a || !b) continue;
 
-        ImVec2 ab{ b->x - a->x, b->y - a->y };
-        ImVec2 ap{ w.x - a->x,  w.y - a->y };
-        float  ab_len_sq = ab.x*ab.x + ab.y*ab.y;
-        float  t = (ab_len_sq > 0.f)
-                 ? (ap.x*ab.x + ap.y*ab.y) / ab_len_sq : 0.f;
+        ImVec2 A = ws2px({ a->x, a->y });
+        ImVec2 B = ws2px({ b->x, b->y });
+
+        ImVec2 AB{ B.x - A.x, B.y - A.y };
+        ImVec2 AP{ ms.x - A.x, ms.y - A.y };
+        float  len_sq = AB.x*AB.x + AB.y*AB.y;
+        float  t = (len_sq > 0.f) ? (AP.x*AB.x + AP.y*AB.y) / len_sq : 0.f;
         t = std::clamp(t, 0.f, 1.f);
 
-        ImVec2 c{ a->x + ab.x*t, a->y + ab.y*t };
-        float  dx = w.x - c.x,  dy = w.y - c.y;
-        if (dx*dx + dy*dy <= thresh_sq)
+        ImVec2 C{ A.x + AB.x*t, A.y + AB.y*t };
+        float  dx = ms.x - C.x, dy = ms.y - C.y;
+        if (dx*dx + dy*dy <= HIT_THRESH_SQ)
             return Hit{ Hit::Type::Line, i };
     }
 
-    // ------------------------------------------------------------------
-    // 4. path segments (straight and Bézier) + interior for closed paths
-    // ------------------------------------------------------------------
+    // ───────────────────────────────────────────────────────────── 4. paths
     for (size_t pi_path = 0; pi_path < m_paths.size(); ++pi_path)
     {
         const Path& p = m_paths[pi_path];
         size_t N = p.verts.size();
         if (N < 2) continue;
 
-        // 4a. edge hit-test
+        // edge hit‑test
         for (size_t si = 0; si < N - 1 + (p.closed ? 1u : 0u); ++si)
         {
             const Pos* a = find_vertex(m_vertices, p.verts[si]);
@@ -132,44 +131,47 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
 
             if (!is_curved(a, b))
             {
-                ImVec2 ab{ b->x - a->x, b->y - a->y };
-                ImVec2 ap{ w.x - a->x,  w.y - a->y };
-                float  len_sq = ab.x*ab.x + ab.y*ab.y;
-                float  t = (len_sq > 0.f)
-                         ? (ap.x*ab.x + ap.y*ab.y) / len_sq : 0.f;
+                ImVec2 A = ws2px({ a->x, a->y });
+                ImVec2 B = ws2px({ b->x, b->y });
+                ImVec2 AB{ B.x - A.x, B.y - A.y };
+                ImVec2 AP{ ms.x - A.x, ms.y - A.y };
+                float len_sq = AB.x*AB.x + AB.y*AB.y;
+                float t = (len_sq > 0.f) ? (AP.x*AB.x + AP.y*AB.y) / len_sq : 0.f;
                 t = std::clamp(t, 0.f, 1.f);
 
-                ImVec2 c{ a->x + ab.x*t, a->y + ab.y*t };
-                float  dx = w.x - c.x,  dy = w.y - c.y;
-                if (dx*dx + dy*dy <= thresh_sq)
+                ImVec2 C{ A.x + AB.x*t, A.y + AB.y*t };
+                float  dx = ms.x - C.x, dy = ms.y - C.y;
+                if (dx*dx + dy*dy <= HIT_THRESH_SQ)
                     return Hit{ Hit::Type::Path, pi_path };
             }
             else
             {
-                ImVec2 prev{ a->x, a->y };
+                ImVec2 prev_ws{ a->x, a->y };
+                ImVec2 prev_px = ws2px(prev_ws);
+
                 for (int k = 1; k <= ms_BEZIER_HIT_STEPS; ++k)
                 {
-                    float  t = static_cast<float>(k) / ms_BEZIER_HIT_STEPS;
-                    ImVec2 curr = cubic_eval(a, b, t);
+                    float  t  = static_cast<float>(k) / ms_BEZIER_HIT_STEPS;
+                    ImVec2  cur_ws = cubic_eval(a, b, t);
+                    ImVec2  cur_px = ws2px(cur_ws);
 
-                    ImVec2 seg{ curr.x - prev.x, curr.y - prev.y };
-                    ImVec2 to_pt{ w.x - prev.x,  w.y - prev.y };
+                    ImVec2 seg{ cur_px.x - prev_px.x, cur_px.y - prev_px.y };
+                    ImVec2 to_pt{ ms.x - prev_px.x,  ms.y - prev_px.y };
                     float  len_sq = seg.x*seg.x + seg.y*seg.y;
-                    float  u = (len_sq > 0.f)
-                             ? (to_pt.x*seg.x + to_pt.y*seg.y) / len_sq : 0.f;
+                    float  u = (len_sq > 0.f) ? (to_pt.x*seg.x + to_pt.y*seg.y) / len_sq : 0.f;
                     u = std::clamp(u, 0.f, 1.f);
 
-                    ImVec2 c{ prev.x + seg.x*u, prev.y + seg.y*u };
-                    float  dx = w.x - c.x,  dy = w.y - c.y;
-                    if (dx*dx + dy*dy <= thresh_sq)
+                    ImVec2 C{ prev_px.x + seg.x*u, prev_px.y + seg.y*u };
+                    float  dx = ms.x - C.x, dy = ms.y - C.y;
+                    if (dx*dx + dy*dy <= HIT_THRESH_SQ)
                         return Hit{ Hit::Type::Path, pi_path };
 
-                    prev = curr;
+                    prev_px = cur_px;
                 }
             }
         }
 
-        // 4b. interior point-in-polygon for closed paths
+        // interior point‑in‑polygon (use pixel coords)
         if (p.closed)
         {
             std::vector<ImVec2> poly;
@@ -183,19 +185,19 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
 
                 if (!is_curved(a, b))
                 {
-                    poly.push_back({ a->x, a->y });
+                    poly.push_back(ws2px({ a->x, a->y }));
                 }
                 else
                 {
                     for (int k = 0; k <= ms_BEZIER_HIT_STEPS; ++k)
                     {
-                        float  t = static_cast<float>(k) / ms_BEZIER_HIT_STEPS;
+                        float  t   = static_cast<float>(k) / ms_BEZIER_HIT_STEPS;
                         ImVec2 wpt = cubic_eval(a, b, t);
-                        poly.push_back({ wpt.x, wpt.y });
+                        poly.push_back(ws2px(wpt));
                     }
                 }
             }
-            if (!poly.empty() && point_in_polygon(poly, w))
+            if (!poly.empty() && point_in_polygon(poly, ms))
                 return Hit{ Hit::Type::Path, pi_path };
         }
     }
@@ -384,11 +386,11 @@ void Editor::update_move_drag_state(const Interaction & it)
     const bool dragging_now =
     ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, 0.0f);
 
-    ImVec2 w_mouse{ it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
+    ImVec2 w_mouse = pixels_to_world(io.MousePos);      // NEW
 
     // remember exact press-position once ----------------------------------
     static ImVec2 press_ws{};
-    if (lmb_click) press_ws = w_mouse;
+    if (lmb_click) press_ws = pixels_to_world(io.MousePos);   // NEW
 
     // --------------------------------------------------------------------
     // 0. NEW: start drag immediately on a fresh hit
@@ -898,9 +900,7 @@ void Editor::_start_bbox_drag(uint8_t hidx, const ImVec2& tl, const ImVec2& br)
         }
 
     /* store mouse position in world coords AFTER reset */
-    ImVec2 m_scr = ImGui::GetIO().MousePos;
-    m_boxdrag.mouse_ws0 = { (m_scr.x - m_origin_scr.x) / m_cam.zoom_mag,
-                            (m_scr.y - m_origin_scr.y) / m_cam.zoom_mag };
+    m_boxdrag.mouse_ws0 = pixels_to_world(ImGui::GetIO().MousePos);   // NEW
 
     /* reset first-frame flag for update routine */
     m_boxdrag.first_frame = true;
@@ -931,8 +931,7 @@ void Editor::_update_bbox()
     }
 
     /* current mouse in world coords */
-    ImVec2 cur_ws{ (ImGui::GetIO().MousePos.x - m_origin_scr.x) / m_cam.zoom_mag,
-                   (ImGui::GetIO().MousePos.y - m_origin_scr.y) / m_cam.zoom_mag };
+    ImVec2 cur_ws = pixels_to_world(ImGui::GetIO().MousePos);   // NEW
 
     /* reference point for scaling */
     ImVec2 ref_ws = m_boxdrag.first_frame ? m_boxdrag.mouse_ws0 : cur_ws;

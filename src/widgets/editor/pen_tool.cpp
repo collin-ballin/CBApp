@@ -115,19 +115,20 @@ bool Editor::_pen_try_begin_handle_drag(const Interaction & it)
 
 //  "_pen_update_handle_drag"
 //
-void Editor::_pen_update_handle_drag(const Interaction & it)
+void Editor::_pen_update_handle_drag(const Interaction& /*it*/)
 {
-    Vertex * v = find_vertex_mut(m_vertices, m_drag_vid);
+    ImGuiIO& io = ImGui::GetIO();
+    Vertex* v   = find_vertex_mut(m_vertices, m_drag_vid);
     if (!v) { m_dragging_handle = false; m_pen.dragging_handle = false; return; }
 
     ImVec2 ws_anchor{ v->x, v->y };
-    ImVec2 ws_mouse { it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
+    ImVec2 ws_mouse  = pixels_to_world(io.MousePos);          // NEW
 
-    // ── NEW: apply grid snap whenever snap_on is true
-    if ( this->want_snap() )
+    // Apply grid‑snap if desired
+    if (want_snap())
         ws_mouse = _grid_snap(ws_mouse);
 
-    // optional inversion for Pen in-handle
+    // Optional inversion for in‑handle while using Pen tool
     if (m_mode == Mode::Pen && !m_dragging_out) {
         ws_mouse.x = ws_anchor.x - (ws_mouse.x - ws_anchor.x);
         ws_mouse.y = ws_anchor.y - (ws_mouse.y - ws_anchor.y);
@@ -136,13 +137,13 @@ void Editor::_pen_update_handle_drag(const Interaction & it)
     ImVec2 offset{ ws_mouse.x - ws_anchor.x,
                    ws_mouse.y - ws_anchor.y };
 
-    if (m_dragging_out)  v->out_handle = offset;
-    else                 v->in_handle  = offset;
+    if (m_dragging_out) v->out_handle = offset;
+    else                v->in_handle  = offset;
 
     mirror_handles(*v, m_dragging_out);
 
-    if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-        m_dragging_handle     = false;
+    if (!io.MouseDown[ImGuiMouseButton_Left]) {
+        m_dragging_handle = false;
         m_pen.dragging_handle = false;
     }
 }
@@ -150,12 +151,12 @@ void Editor::_pen_update_handle_drag(const Interaction & it)
 
 //  "_pen_begin_path_if_click_empty"
 //
-void Editor::_pen_begin_path_if_click_empty(const Interaction & it)
+void Editor::_pen_begin_path_if_click_empty(const Interaction& it)
 {
     if (_hit_any(it)) return;                       // clicked on an object
 
-    ImVec2 w{ it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
-    uint32_t vid = _add_vertex(w);
+    ImVec2 ws = pixels_to_world(ImGui::GetIO().MousePos);   // NEW
+    uint32_t vid = _add_vertex(ws);
     m_points.push_back({ vid, { PEN_ANCHOR_COLOR, PEN_ANCHOR_RADIUS, true } });
 
     Path p; p.verts = { vid }; p.closed = false;
@@ -178,35 +179,31 @@ inline bool Editor::_pen_click_hits_first_vertex(const Interaction& it,
 
 //  "_pen_append_or_close_live_path"
 //
-void Editor::_pen_append_or_close_live_path(const Interaction & it)
+void Editor::_pen_append_or_close_live_path(const Interaction& it)
 {
-    Path &  p   = m_paths[m_pen.path_index];
+    Path& p = m_paths[m_pen.path_index];
 
-    //  1.  Did we click the starting anchor?  (new fast test)
-    if ( _pen_click_hits_first_vertex(it, p) )
-    {
-        p.closed    = true;
-        if (p.closed && (p.style.fill_color & 0xFF000000) == 0)
-        {
+    // 1. Click on first vertex closes path
+    if (_pen_click_hits_first_vertex(it, p)) {
+        p.closed = true;
+        if (p.closed && (p.style.fill_color & 0xFF000000) == 0) {
             ImVec4 stroke_f = ImGui::ColorConvertU32ToFloat4(p.style.stroke_color);
-            stroke_f.w = 0.4f;                                      // 40 % opacity
+            stroke_f.w = 0.4f;
             p.style.fill_color = ImGui::ColorConvertFloat4ToU32(stroke_f);
         }
-
-        m_pen       = {};
-        m_mode      = Mode::Default;
+        m_pen = {};
+        m_mode = Mode::Default;
         return;
     }
-    
 
-    //  2.  Fallback: distance test (unchanged)
-    const float thresh = HIT_THRESH_SQ / (m_cam.zoom_mag * m_cam.zoom_mag);
-    ImVec2 w{ it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
+    // 2. Fallback: pixel‑distance to first vertex
+    ImVec2 ms = ImGui::GetIO().MousePos;
     if (!p.verts.empty()) {
         const Pos* first = find_vertex(m_vertices, p.verts.front());
         if (first) {
-            float dx = first->x - w.x, dy = first->y - w.y;
-            if (dx*dx + dy*dy <= thresh) {
+            ImVec2 first_px = world_to_pixels({ first->x, first->y });
+            float dx = first_px.x - ms.x, dy = first_px.y - ms.y;
+            if (dx*dx + dy*dy <= HIT_THRESH_SQ) {
                 p.closed = true;
                 m_pen = {};
                 m_mode = Mode::Default;
@@ -215,24 +212,17 @@ void Editor::_pen_append_or_close_live_path(const Interaction & it)
         }
     }
 
-    // 3. add a new vertex (as before)
-    //  uint32_t vid = _add_vertex(w);
-    //  m_points.push_back({ vid, { PEN_ANCHOR_COL, PEN_ANCHOR_RADIUS, true } });
-    //  p.verts.push_back(vid);
-    //  m_pen.last_vid = vid;
-    
-    //  3.   NEW ADDING VERTEX POLICY...
-    uint32_t new_vid = _add_vertex(w);
+    // 3. Add a new vertex at mouse position
+    ImVec2 ws = pixels_to_world(ms);           // NEW
+    uint32_t new_vid = _add_vertex(ws);
     _add_point_glyph(new_vid);
 
     if (m_pen.prepend)
-        p.verts.insert(p.verts.begin(), new_vid);  // add to front
+        p.verts.insert(p.verts.begin(), new_vid);
     else
-        p.verts.push_back(new_vid);                // add to back
+        p.verts.push_back(new_vid);
 
     m_pen.last_vid = new_vid;
-    
-    return;
 }
 
 

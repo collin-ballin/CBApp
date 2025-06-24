@@ -273,11 +273,9 @@ void Editor::_update_lasso(const Interaction & it)
         ImVec2 br_scr{ std::max(m_lasso_start.x, m_lasso_end.x),
                        std::max(m_lasso_start.y, m_lasso_end.y) };
 
-        // Convert to world space (inverse pan + zoom)
-        ImVec2 tl_w{ (tl_scr.x - it.origin.x) / m_cam.zoom_mag,
-                     (tl_scr.y - it.origin.y) / m_cam.zoom_mag };
-        ImVec2 br_w{ (br_scr.x - it.origin.x) / m_cam.zoom_mag,
-                     (br_scr.y - it.origin.y) / m_cam.zoom_mag };
+        // Convert to world space via ImPlot helper
+        ImVec2 tl_w = pixels_to_world(tl_scr);     // NEW
+        ImVec2 br_w = pixels_to_world(br_scr);     // NEW
 
         bool additive = io.KeyShift || io.KeyCtrl;
         if (!additive)                       // fresh selection if no modifier
@@ -420,80 +418,6 @@ void Editor::_update_world_extent()
 }
 
 
-//  "_zoom_canvas"
-/*
-void Editor::_zoom_canvas(const Interaction& it)
-{
-    ImGuiIO& io = ImGui::GetIO();
-    if (io.MouseWheel == 0.0f || ImGui::IsMouseDown(ImGuiMouseButton_Left) ) return;
-
-    ImVec2 scr_anchor = it.hovered ? it.canvas
-                                   : ImVec2(m_avail.x * 0.5f, m_avail.y * 0.5f);
-
-    ImVec2 world_anchor{
-        (scr_anchor.x + m_cam.pan.x) / m_cam.zoom_mag,
-        (scr_anchor.y + m_cam.pan.y) / m_cam.zoom_mag
-    };
-
-    float new_zoom = m_cam.zoom_mag * (1.f + io.MouseWheel * 0.10f);
-    _clamp_zoom(new_zoom);                 // respects min/max zoom
-
-    m_cam.pan.x = world_anchor.x * new_zoom - scr_anchor.x;
-    m_cam.pan.y = world_anchor.y * new_zoom - scr_anchor.y;
-
-    _clamp_scroll();                       // apply symmetric limits
-    m_cam.zoom_mag = new_zoom;
-}*/
-
-
-//  "_clamp_scroll"
-//
-void Editor::_clamp_scroll(void)
-{
-    const float pad_x  =  m_avail.x * 0.5f;        // half‑viewport slack
-    const float pad_y  =  m_avail.y * 0.5f;
-
-    const float wl_px  =  m_world_bounds.min_x * m_cam.zoom_mag;   // world‑left  in px
-    const float wr_px  =  m_world_bounds.max_x * m_cam.zoom_mag;   // world‑right in px
-    const float wt_px  =  m_world_bounds.min_y * m_cam.zoom_mag;   // world‑top   in px
-    const float wb_px  =  m_world_bounds.max_y * m_cam.zoom_mag;   // world‑bot   in px
-
-    // X‑axis limits
-    float min_scroll_x = wl_px - pad_x;
-    float max_scroll_x = wr_px - m_avail.x + pad_x;
-    if ((wr_px - wl_px) <= m_avail.x) {                       // world narrower than view
-        const float centre = (wl_px + wr_px - m_avail.x) * 0.5f;
-        min_scroll_x = centre - pad_x;
-        max_scroll_x = centre + pad_x;
-    }
-
-    // Y‑axis limits
-    float min_scroll_y = wt_px - pad_y;
-    float max_scroll_y = wb_px - m_avail.y + pad_y;
-    if ((wb_px - wt_px) <= m_avail.y) {                       // world shorter than view
-        const float centre = (wt_px + wb_px - m_avail.y) * 0.5f;
-        min_scroll_y = centre - pad_y;
-        max_scroll_y = centre + pad_y;
-    }
-
-    m_cam.pan.x   = std::clamp(m_cam.pan.x, min_scroll_x, max_scroll_x);
-    m_cam.pan.y   = std::clamp(m_cam.pan.y, min_scroll_y, max_scroll_y);
-}
-
-
-//  "_clamp_zoom"
-//
-void Editor::_clamp_zoom(float& target_zoom)
-{
-    const float viewFitX = m_avail.x / m_world_extent.x;
-    const float viewFitY = m_avail.y / m_world_extent.y;
-    const float min_zoom = std::max(viewFitX, viewFitY) * 0.25f;   // let user shrink to 25 % of “fit”
-    const float max_zoom = 32.0f;                                  // arbitrary upper bound
-    target_zoom = std::clamp(target_zoom, min_zoom, max_zoom);
-}
-
-
-
 
 
 
@@ -633,8 +557,8 @@ void Editor::_display_canvas_settings(void)
 {
     ImGui::NewLine();
     
-    ImGui::DragFloat2("World extent", &m_world_extent.x,
-                  10.0f, 100.0f, 5000.0f, "%.0f");
+    // ImGui::DragFloat2("World extent", &m_world_extent.x,
+    //               10.0f, 100.0f, 5000.0f, "%.0f");
                   
     ImGui::NewLine();
                 
