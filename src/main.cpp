@@ -36,7 +36,6 @@
 
 extern "C" int main(int, char ** );   //    Forward declaration *real* main.
 
-
 //  "WinMain"
 //
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
