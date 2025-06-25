@@ -126,7 +126,7 @@ void Editor::_pen_update_handle_drag(const Interaction& /*it*/)
 
     // Apply grid‑snap if desired
     if (want_snap())
-        ws_mouse = _grid_snap(ws_mouse);
+        ws_mouse = snap_to_grid(ws_mouse);
 
     // Optional inversion for in‑handle while using Pen tool
     if (m_mode == Mode::Pen && !m_dragging_out) {

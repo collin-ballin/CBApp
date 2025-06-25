@@ -348,7 +348,7 @@ void Editor::_overlay_display_extra_content([[maybe_unused]] const Interaction& 
     overlay_text(COL_INFO, "Zoom: %.2f", m_cam.zoom_mag);
     overlay_text(COL_INFO, "Scroll: (%.1f, %.1f)", m_cam.pan.x, m_cam.pan.y);
     overlay_text(COL_INFO, "Grid step: %.2f    Snap: %s",
-                 m_grid.world_step, m_grid.snap_on ? "on" : "off");
+                 m_grid.snap_step, m_grid.snap_on ? "on" : "off");
 
     ImGuiIO& io = ImGui::GetIO();
     char mods[32] = "none";

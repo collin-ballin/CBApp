@@ -43,7 +43,63 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
+// *************************************************************************** //
+//
+//
+//
+//  2.  "BEGIN" HELPERS...
+// *************************************************************************** //
+// *************************************************************************** //
 
+//  "_mode_switch_hotkeys"
+//
+inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it)
+{
+    ImGuiIO &       io              = ImGui::GetIO();
+    const bool      shift           = io.KeyShift,  ctrl    = io.KeyCtrl,
+                    alt             = io.KeyAlt,    super   = io.KeySuper,
+                    no_mod          = !ctrl && !shift && !alt && !super;
+
+    if ( it.space || !it.hovered )  return;   // early-out if Space held or cursor not on plot
+
+    //  3.      MODE SWITCH BEHAVIORS...
+    //if ( !it.space && it.hovered ) {
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_V)                              )       m_mode = Mode::Default;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_N)                              )       m_mode = Mode::Point;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_P)                              )       m_mode = Mode::Pen;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_C)                              )       m_mode = Mode::Scissor;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_S)                              )       m_mode = Mode::Shape;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_Equal)                          )       m_mode = Mode::AddAnchor;
+        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_Minus)                          )       m_mode = Mode::RemoveAnchor;
+        if ( !ctrl && shift && !alt && !super && ImGui::IsKeyPressed(ImGuiKey_C)    )       m_mode = Mode::EditAnchor;
+    //}
+    if ( m_mode != Mode::Pen )    m_pen = {};     // Leaving the Pen-Tool resets current path appending.
+    
+    return;
+}
+
+
+//  "_dispatch_mode_handler"
+//
+inline void Editor::_dispatch_mode_handler([[maybe_unused]] const Interaction & it)
+{
+    if ( !(it.space && ImGui::IsMouseDown(ImGuiMouseButton_Left)) ) {
+        switch (m_mode) {
+            case Mode::Default:         _handle_default(it);           break;
+            case Mode::Line:            _handle_line(it);              break;
+            case Mode::Point:           _handle_point(it);             break;
+            case Mode::Pen:             _handle_pen(it);               break;
+            case Mode::Scissor:         _handle_scissor(it);           break;
+            case Mode::Shape:           _handle_shape(it);             break;
+            case Mode::AddAnchor:       _handle_add_anchor(it);        break;
+            case Mode::RemoveAnchor:    _handle_remove_anchor(it);     break;
+            case Mode::EditAnchor:      _handle_edit_anchor(it);       break;
+            default: break;
+        }
+    }
+        
+    return;
+}
 
 
 
@@ -59,114 +115,236 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::Begin(const char* /*id*/)
 {
-    // ───────────────────────── 1. Canvas size & plot flags
-    m_avail = ImGui::GetContentRegionAvail();
-    m_avail.x = std::max(m_avail.x, 50.f);
-    m_avail.y = std::max(m_avail.y, 50.f);
+    bool                    space           = ImGui::IsKeyDown(ImGuiKey_Space);
+    bool                    zoom_enabled    = _mode_has(CBCapabilityFlags_Zoom);
 
-    bool space_down   = ImGui::IsKeyDown(ImGuiKey_Space);
-    bool zoom_enabled = _mode_has(CBCapabilityFlags_Zoom);
+
+
+    // ───────────────────────── 1. Canvas size & plot flags
+    m_avail                                 = ImGui::GetContentRegionAvail();
+    m_avail.x                               = std::max(m_avail.x, 50.f);
+    m_avail.y                               = std::max(m_avail.y, 50.f);
+
 
     // ------- Adjust ImPlot input map (backup, edit, restore at end)
-    ImPlotInputMap backup = ImPlot::GetInputMap();
-    ImPlotInputMap& map   = ImPlot::GetInputMap();
+    ImPlotInputMap          backup          = ImPlot::GetInputMap();
+    ImPlotInputMap &        map             = ImPlot::GetInputMap();
+    map.Pan                                 = ImGuiMouseButton_Left;
+    map.PanMod                              = space ? 0 : ImGuiMod_Ctrl;   // disable pan unless Space
+    map.ZoomMod                             = zoom_enabled ? 0 : ImGuiMod_Ctrl; // disable zoom unless mode allows
+    map.ZoomRate                            = 0.10f;
 
-    map.Pan      = ImGuiMouseButton_Left;
-    map.PanMod   = space_down ? 0 : ImGuiMod_Ctrl;   // disable pan unless Space
-    map.ZoomMod  = zoom_enabled ? 0 : ImGuiMod_Ctrl; // disable zoom unless mode allows
-    map.ZoomRate = 0.10f;
 
-    // ───────────────────────── 2. Begin plot
-    if (!ImPlot::BeginPlot("##EditorCanvas", ImVec2(m_avail.x, m_avail.y), m_plot_flags)) {
+    //  2.  CREATING THE CANVAS/GRID...
+    //
+    //          CASE 2A     : FAILURE TO CREATE CANVAS.
+    if ( !ImPlot::BeginPlot("##EditorCanvas", ImVec2(m_avail.x, m_avail.y), m_plot_flags) ) {
         ImPlot::GetInputMap() = backup;
         return;
     }
+    //
+    //          CASE 2B     : SUCCESSFULLY CREATED THE "IMPLOT" PLOT...
+    {
+        //      3.0     CREATE VARIABLES FOR THIS FRAME CONTEXT...
     
-    ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,       //  3.  CONFIGURE THE PLOT APPEARANCE...
-                      m_axes[0].flags,          m_axes[1].flags);
     
+    
+        //      4.  CONFIGURE THE "IMPLOT" APPEARANCE...
+        //
+        ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  4A.     Axis Names & Flags.
+                          m_axes[0].flags,          m_axes[1].flags);
+        //
+        ImPlot::SetupAxesLimits( m_world_bounds.min_x, m_world_bounds.max_x,    //  4B.     Auto-fit axes *before* any other ImPlot call.
+                                 m_world_bounds.min_y, m_world_bounds.max_y, ImPlotCond_Once );
+        //
+        this->_update_grid_info();                                              //  4C.     Fetch Grid-Quantization Info.
+        
+        
+        // ───────────────────────── 3. Per-frame context
+        ImDrawList *    dl              = ImPlot::GetPlotDrawList();
+        ImVec2          plotTL          = ImPlot::GetPlotPos();
+        ImGuiIO &       io              = ImGui::GetIO();
+        bool            hovered         = ImPlot::IsPlotHovered();
+        bool            active          = ImPlot::IsPlotSelected();
 
-    // ───────── 2A. Auto-fit axes *before* any other ImPlot call
-    if (!m_vertices.empty()) {
-        float min_x =  FLT_MAX, min_y =  FLT_MAX;
-        float max_x = -FLT_MAX, max_y = -FLT_MAX;
-        for (const Pos& v : m_vertices) {
-            min_x = std::min(min_x, v.x);
-            min_y = std::min(min_y, v.y);
-            max_x = std::max(max_x, v.x);
-            max_y = std::max(max_y, v.y);
+        ImVec2          origin_scr      = plotTL;
+        ImVec2          mouse_canvas    { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
+        Interaction     it              { hovered, active, space, mouse_canvas, origin_scr, plotTL, dl };
+
+
+        //  5.      MODE SWITCH BEHAVIORS...
+        this->_mode_switch_hotkeys(it);
+
+
+        //  6.      CURSOR HINTS AND SHORTCUTS...
+        //
+        if ( space && _mode_has(CBCapabilityFlags_Pan) )
+            { ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); }
+        //
+        else if ( !space && hovered && _mode_has(CBCapabilityFlags_CursorHint) )
+            { _update_cursor_select(it); }
+
+
+
+        //  7.      GLOBAL SELECTION BEHAVIOR...
+        if  ( !space && _mode_has(CBCapabilityFlags_Select) ) {
+            _process_selection(it);
+            if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )    //  JOINING CLOSED PATHS...
+            { _join_selected_open_path(); }
         }
-        // Fit only first time or when geometry expanded; ImPlotCond_Once is fine here
-        ImPlot::SetupAxesLimits(min_x, max_x, min_y, max_y, ImPlotCond_Once);
-    }
+        
+    
+        //  8.      MODE/STATE/TOOL DISPATCHER...
+        this->_dispatch_mode_handler(it);
 
-    // ───────────────────────── 3. Per-frame context
-    ImDrawList* dl      = ImPlot::GetPlotDrawList();
-    ImVec2       plotTL = ImPlot::GetPlotPos();
 
-    ImGuiIO& io  = ImGui::GetIO();
-    bool hovered = ImPlot::IsPlotHovered();
-    bool active  = ImPlot::IsPlotSelected();
+        //  9.     RENDERING LOOP...
+        ImPlot::PushPlotClipRect();
+        //
+        //
+            _draw_points(dl);           //  Already ported
+            // _draw_lines(dl);         //  Enable once ported
+            _draw_paths(dl);            //  Enable once ported
+            _draw_selection_overlay(dl);
+        //
+        //
+        ImPlot::PopPlotClipRect();
 
-    ImVec2 origin_scr   = plotTL;
-    ImVec2 mouse_canvas { io.MousePos.x - origin_scr.x,
-                          io.MousePos.y - origin_scr.y };
+        this->_clamp_plot_axes();
 
-    Interaction it{ hovered, active, space_down, mouse_canvas, origin_scr, plotTL, dl };
 
-    // ───────────────────────── 4. Hot-keys (unchanged)
-    if (hovered) {
-        bool shift  = io.KeyShift, ctrl = io.KeyCtrl,
-             alt    = io.KeyAlt,  super = io.KeySuper,
-             no_mod = !ctrl && !shift && !alt && !super;
 
-        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_V) )           m_mode = Mode::Default;
-        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_N) )           m_mode = Mode::Point;
-        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_P) )           m_mode = Mode::Pen;
-        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_C) )           m_mode = Mode::Scissor;
-        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_Equal) )       m_mode = Mode::AddAnchor;
-        if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_Minus) )       m_mode = Mode::RemoveAnchor;
-        if (!ctrl && shift && !alt && !super &&
-            ImGui::IsKeyPressed(ImGuiKey_C) )                      m_mode = Mode::EditAnchor;
-    }
-    if (m_mode != Mode::Pen) m_pen = {};
-
-    // ───────────────────────── 5. Cursor hints & selection
-    if (!space_down && hovered && _mode_has(CBCapabilityFlags_CursorHint))
-        _update_cursor_select(it);
-
-    if (!space_down && _mode_has(CBCapabilityFlags_Select)) {
-        _process_selection(it);
-        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J))
-            _join_selected_open_path();
-    }
-
-    // ───────────────────────── 6. Tool dispatcher
-    if (!(space_down && ImGui::IsMouseDown(ImGuiMouseButton_Left))) {
-        switch (m_mode) {
-            case Mode::Default:      _handle_default(it);        break;
-            case Mode::Line:         _handle_line(it);           break;
-            case Mode::Point:        _handle_point(it);          break;
-            case Mode::Pen:          _handle_pen(it);            break;
-            case Mode::Scissor:      _handle_scissor(it);        break;
-            case Mode::AddAnchor:    _handle_add_anchor(it);     break;
-            case Mode::RemoveAnchor: _handle_remove_anchor(it);  break;
-            case Mode::EditAnchor:   _handle_edit_anchor(it);    break;
-            default: break;
-        }
-    }
-
-    // ───────────────────────── 7. Draw geometry
-    ImPlot::PushPlotClipRect();
-    _draw_points(dl);            // already ported
-    // _draw_lines(dl);          // enable once ported
-    _draw_paths(dl);          // enable once ported
-    _draw_selection_overlay(dl);
-    ImPlot::PopPlotClipRect();
-
+    }// END "IMPLOT".
+    //
     ImPlot::EndPlot();
     ImPlot::GetInputMap() = backup;   // restore map
+    
+    return;
 }
+
+
+
+/*void Editor::Begin(const char* )
+{
+    bool                    space           = ImGui::IsKeyDown(ImGuiKey_Space);
+    bool                    zoom_enabled    = _mode_has(CBCapabilityFlags_Zoom);
+
+
+
+    // ───────────────────────── 1. Canvas size & plot flags
+    m_avail                                 = ImGui::GetContentRegionAvail();
+    m_avail.x                               = std::max(m_avail.x, 50.f);
+    m_avail.y                               = std::max(m_avail.y, 50.f);
+
+
+    // ------- Adjust ImPlot input map (backup, edit, restore at end)
+    ImPlotInputMap          backup          = ImPlot::GetInputMap();
+    ImPlotInputMap &        map             = ImPlot::GetInputMap();
+    map.Pan                                 = ImGuiMouseButton_Left;
+    map.PanMod                              = space ? 0 : ImGuiMod_Ctrl;   // disable pan unless Space
+    map.ZoomMod                             = zoom_enabled ? 0 : ImGuiMod_Ctrl; // disable zoom unless mode allows
+    map.ZoomRate                            = 0.10f;
+
+
+    //  2.  CREATING THE CANVAS/GRID...
+    //
+    //          CASE 2A     : FAILURE TO CREATE CANVAS.
+    if ( !ImPlot::BeginPlot("##EditorCanvas", ImVec2(m_avail.x, m_avail.y), m_plot_flags) ) {
+        ImPlot::GetInputMap() = backup;
+        return;
+    }
+    //
+    //          CASE 2B     : SUCCESSFULLY CREATED THE "IMPLOT" PLOT...
+    {
+        //      3.  CONFIGURE THE "IMPLOT" APPEARANCE...
+        ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  3A.     Axis Names & Flags.
+                          m_axes[0].flags,          m_axes[1].flags);
+        //
+        ImPlot::SetupAxesLimits( m_world_bounds.min_x, m_world_bounds.max_x,    //  3B.     Auto-fit axes *before* any other ImPlot call.
+                                 m_world_bounds.min_y, m_world_bounds.max_y, ImPlotCond_Once );
+        //
+        this->_update_grid_info();                                              //  3C.     Fetch Grid-Quantization Info.
+        
+        
+        // ───────────────────────── 3. Per-frame context
+        ImDrawList *    dl              = ImPlot::GetPlotDrawList();
+        ImVec2          plotTL          = ImPlot::GetPlotPos();
+        ImGuiIO &       io              = ImGui::GetIO();
+        bool            hovered         = ImPlot::IsPlotHovered();
+        bool            active          = ImPlot::IsPlotSelected();
+
+        ImVec2          origin_scr      = plotTL;
+        ImVec2          mouse_canvas    { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
+        Interaction     it              { hovered, active, space, mouse_canvas, origin_scr, plotTL, dl };
+
+        //  3.      MODE SWITCH BEHAVIORS...
+        //          For the next step (1/2), I want to put this into a function :   this->_mode_hotkeys(it)
+        if ( !it.space && it.hovered ) {
+            if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_V)                              )       m_mode = Mode::Default;
+            if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_N)                              )       m_mode = Mode::Point;
+            if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_P)                              )       m_mode = Mode::Pen;
+            if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_C)                              )       m_mode = Mode::Scissor;
+            if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_S)                              )       m_mode = Mode::Shape;
+            if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_Equal)                          )       m_mode = Mode::AddAnchor;
+            if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_Minus)                          )       m_mode = Mode::RemoveAnchor;
+            if ( !ctrl && shift && !alt && !super && ImGui::IsKeyPressed(ImGuiKey_C)    )       m_mode = Mode::EditAnchor;
+        //}
+        if ( m_mode != Mode::Pen )    m_pen = {};     // Leaving the Pen-Tool resets current path appending.
+        
+        
+        //  5.      CURSOR HINTS AND SHORTCUTS...
+        if ( !space && hovered && _mode_has(CBCapabilityFlags_CursorHint) )         { _update_cursor_select(it); }
+
+
+        //  7.      GLOBAL SELECTION BEHAVIOR...
+        if  ( !space && _mode_has(CBCapabilityFlags_Select) ) {
+            _process_selection(it);
+            if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )    //  JOINING CLOSED PATHS...
+            { _join_selected_open_path(); }
+        }
+        
+        //  8.      MODE/STATE/TOOL DISPATCHER...
+        //          For the next step (2/2), I want to put this into a function :   this->_mode_hotkeys(it);
+        //
+        if ( !(space && ImGui::IsMouseDown(ImGuiMouseButton_Left)) ) {
+            switch (m_mode) {
+                case Mode::Default:         _handle_default(it);           break;
+                case Mode::Line:            _handle_line(it);              break;
+                case Mode::Point:           _handle_point(it);             break;
+                case Mode::Pen:             _handle_pen(it);               break;
+                case Mode::Scissor:         _handle_scissor(it);           break;
+                case Mode::Shape:           _handle_shape(it);             break;
+                case Mode::AddAnchor:       _handle_add_anchor(it);        break;
+                case Mode::RemoveAnchor:    _handle_remove_anchor(it);     break;
+                case Mode::EditAnchor:      _handle_edit_anchor(it);       break;
+                default: break;
+            }
+        }
+
+        //  9.     RENDERING LOOP...
+        ImPlot::PushPlotClipRect();
+        //
+        //
+            _draw_points(dl);           //  Already ported
+            // _draw_lines(dl);         //  Enable once ported
+            _draw_paths(dl);
+            _draw_selection_overlay(dl);
+        //
+        //
+        ImPlot::PopPlotClipRect();
+        //  this->_clamp_plot_axes();   //  non-functional right now.
+
+    }// END "IMPLOT".
+    //
+    ImPlot::EndPlot();
+    
+    
+    
+    ImPlot::GetInputMap() = backup;   // restore map
+    
+    return;
+}*/
+
 
 
 
@@ -498,15 +676,6 @@ void Editor::_handle_default(const Interaction& it)
     //  6.  LASSO UPDATE...
     if (m_lasso_active)                             { this->_update_lasso(it); return; }        // Skip zoom handling while dragging lasso
         
-    //  7.   ZOOM (mouse wheel) – only when not lassoing...
-    //if (it.hovered && io.MouseWheel != 0.0f)        { this->_zoom_canvas(it); }
-    //
-    // _apply_wheel_zoom(it);
-        
-    //  8.   EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
-    //  if (m_pen.dragging_handle)                      { _pen_update_handle_drag(it); return; }    // continue an active handle drag
-    //  if ( _pen_try_begin_handle_drag(it) )           { return; }                                 // Alt-click started a new drag
-    
     return;
 }
 
@@ -754,6 +923,14 @@ void Editor::_handle_scissor(const Interaction & it)
     if (hit && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         _scissor_cut(*hit);
         
+    return;
+}
+
+
+//  "_handle_shape"
+//
+void Editor::_handle_shape([[maybe_unused]] const Interaction & it)
+{
     return;
 }
 

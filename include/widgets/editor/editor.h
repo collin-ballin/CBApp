@@ -225,19 +225,25 @@ private:
     // *************************************************************************** //
     // *************************************************************************** //
     
+    // *************************************************************************** //
+    //      "Begin" HELPERS.                |   "editor.cpp" ...
+    // *************************************************************************** //
+    inline void                 _mode_switch_hotkeys                ([[maybe_unused]] const Interaction & );
+    inline void                 _dispatch_mode_handler              ([[maybe_unused]] const Interaction & );
     
 
     // *************************************************************************** //
     //      PRIMARY STATE HANDLERS.         |   "editor.cpp" ...
     // *************************************************************************** //
-    void                        _handle_default                 (const Interaction & );
-    void                        _handle_line                    (const Interaction & );
-    void                        _handle_point                   (const Interaction & );
-    void                        _handle_pen                     (const Interaction & );
-    void                        _handle_scissor                 (const Interaction & );
-    void                        _handle_add_anchor              ([[maybe_unused]] const Interaction & );
-    void                        _handle_remove_anchor           ([[maybe_unused]] const Interaction & );
-    void                        _handle_edit_anchor             ([[maybe_unused]] const Interaction & );
+    void                        _handle_default                     (const Interaction & );
+    void                        _handle_line                        (const Interaction & );
+    void                        _handle_point                       (const Interaction & );
+    void                        _handle_pen                         (const Interaction & );
+    void                        _handle_scissor                     (const Interaction & );
+    void                        _handle_shape                       ([[maybe_unused]] const Interaction & );
+    void                        _handle_add_anchor                  ([[maybe_unused]] const Interaction & );
+    void                        _handle_remove_anchor               ([[maybe_unused]] const Interaction & );
+    void                        _handle_edit_anchor                 ([[maybe_unused]] const Interaction & );
     //
     //
     // *************************************************************************** //
@@ -255,18 +261,18 @@ private:
     // *************************************************************************** //
     //      PEN-TOOL STUFF.                 |   "pen_tool.cpp" ...
     // *************************************************************************** //
-    bool                        _pen_cancel_if_escape           ([[maybe_unused]] const Interaction & );
-    void                        _pen_begin_handle_drag          (uint32_t vid, bool out_handle, const bool force_select=false);
-    bool                        _pen_try_begin_handle_drag      (const Interaction & );
-    void                        _pen_update_handle_drag         ([[maybe_unused]] const Interaction & );
-    void                        _pen_begin_path_if_click_empty  (const Interaction & );
-    void                        _pen_append_or_close_live_path  (const Interaction & );
+    bool                        _pen_cancel_if_escape               ([[maybe_unused]] const Interaction & );
+    void                        _pen_begin_handle_drag              (uint32_t vid, bool out_handle, const bool force_select=false);
+    bool                        _pen_try_begin_handle_drag          (const Interaction & );
+    void                        _pen_update_handle_drag             ([[maybe_unused]] const Interaction & );
+    void                        _pen_begin_path_if_click_empty      (const Interaction & );
+    void                        _pen_append_or_close_live_path      (const Interaction & );
     //
-    std::optional<size_t>       _path_idx_if_last_vertex        (uint32_t vid) const;
-    inline bool                 _pen_click_hits_first_vertex    (const Interaction &, const Path &) const;
-    inline bool                 _can_join_selected_path         (void) const;
-    void                        _join_selected_open_path        (void);
-    void                        _draw_pen_cursor                (const ImVec2 &, ImU32);
+    std::optional<size_t>       _path_idx_if_last_vertex            (uint32_t vid) const;
+    inline bool                 _pen_click_hits_first_vertex        (const Interaction &, const Path &) const;
+    inline bool                 _can_join_selected_path             (void) const;
+    void                        _join_selected_open_path            (void);
+    void                        _draw_pen_cursor                    (const ImVec2 &, ImU32);
     //
     //
     // *************************************************************************** //
@@ -274,88 +280,87 @@ private:
     // *************************************************************************** //
     //
     //                      GRID:
-    ImVec2                      _grid_snap                      (ImVec2 ) const;
-    void                        _grid_handle_shortcuts          (void);
+    void                        _grid_handle_shortcuts              (void);
     //
     //                      RENDERING INTERACTIBLES:
-    void                        _draw_paths                     (ImDrawList* dl) const;
-    void                        _draw_lines                     (ImDrawList *,   const ImVec2 & ) const;
-    void                        _draw_points                    (ImDrawList *) const;
+    void                        _draw_paths                         (ImDrawList* dl) const;
+    void                        _draw_lines                         (ImDrawList *,   const ImVec2 & ) const;
+    void                        _draw_points                        (ImDrawList *) const;
     //
     //
     // *************************************************************************** //
     //      SELECTION MECHANICS.            |   "selection.cpp" ...
     // *************************************************************************** //
-    int                         _hit_point                      (const Interaction & ) const;
-    std::optional<Hit>          _hit_any                        (const Interaction & ) const;
-    std::optional<PathHit>      _hit_path_segment               (const Interaction & ) const;
+    int                         _hit_point                          (const Interaction & ) const;
+    std::optional<Hit>          _hit_any                            (const Interaction & ) const;
+    std::optional<PathHit>      _hit_path_segment                   (const Interaction & ) const;
     //
-    void                        _process_selection              (const Interaction & );
+    void                        _process_selection                  (const Interaction & );
     //
-    void                        show_selection_context_menu     (const Interaction & it);
-    void                        resolve_pending_selection       (const Interaction & it);
-    void                        update_move_drag_state          (const Interaction & it);
-    void                        start_move_drag                 (const ImVec2 & anchor_ws);
-    void                        add_hit_to_selection            (const Hit & hit);
+    void                        show_selection_context_menu         (const Interaction & it);
+    void                        resolve_pending_selection           (const Interaction & it);
+    void                        update_move_drag_state              (const Interaction & it);
+    void                        start_move_drag                     (const ImVec2 & anchor_ws);
+    void                        add_hit_to_selection                (const Hit & hit);
     //
     //
-    void                        _update_cursor_select           (const Interaction & ) const;
-    void                        _rebuild_vertex_selection       (void);   // decl
+    void                        _update_cursor_select               (const Interaction & ) const;
+    void                        _rebuild_vertex_selection           (void);   // decl
     //
-    void                        _draw_selection_overlay         (ImDrawList *) const;
+    void                        _draw_selection_overlay             (ImDrawList *) const;
     //
-    bool                        _selection_bounds               (ImVec2 & tl, ImVec2 & br) const;
-    void                        _draw_selected_handles          (ImDrawList *) const;
-    void                        _draw_selection_bbox            (ImDrawList *) const;
+    bool                        _selection_bounds                   (ImVec2 & tl, ImVec2 & br) const;
+    void                        _draw_selected_handles              (ImDrawList *) const;
+    void                        _draw_selection_bbox                (ImDrawList *) const;
     //
     //                      BOUNDING BOX MECHANICS:
-    void                        _start_bbox_drag                (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
-    void                        _update_bbox                    (void);
+    void                        _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
+    void                        _update_bbox                        (void);
     //
     //
     // *************************************************************************** //
     //      OVERLAY.                        |   "tools.cpp" ...
     // *************************************************************************** //
-    void                        _handle_overlay                 ([[maybe_unused]] const Interaction & );
-    bool                        _overlay_begin_window           (void);
-    void                        _overlay_end_window             (void);
+    void                        _handle_overlay                     ([[maybe_unused]] const Interaction & );
+    bool                        _overlay_begin_window               (void);
+    void                        _overlay_end_window                 (void);
     //
-    void                        _overlay_draw_context_menu      (void);
-    void                        _overlay_update_position        (void);
-    void                        overlay_log                     (std::string msg, float secs = 2.0f);
+    void                        _overlay_draw_context_menu          (void);
+    void                        _overlay_update_position            (void);
+    void                        overlay_log                         (std::string msg, float secs = 2.0f);
     //
-    void                        _overlay_draw_content           ([[maybe_unused]]const Interaction &);
-    void                        _overlay_display_main_content   ([[maybe_unused]]const Interaction &);
-    void                        _overlay_display_extra_content  ([[maybe_unused]]const Interaction &);
+    void                        _overlay_draw_content               ([[maybe_unused]]const Interaction &);
+    void                        _overlay_display_main_content       ([[maybe_unused]]const Interaction &);
+    void                        _overlay_display_extra_content      ([[maybe_unused]]const Interaction &);
     //
     //
     // *************************************************************************** //
     //      UTILITIES.                      |   "utility.cpp" ...
     // *************************************************************************** //
-    Pos *                       find_vertex                     (std::vector<Pos> & , uint32_t);
-    const Pos *                 find_vertex                     (const std::vector<Pos> & , uint32_t) const;
-    std::optional<EndpointInfo> _endpoint_if_open               (uint32_t vid) const;
+    Pos *                       find_vertex                         (std::vector<Pos> & , uint32_t);
+    const Pos *                 find_vertex                         (const std::vector<Pos> & , uint32_t) const;
+    std::optional<EndpointInfo> _endpoint_if_open                   (uint32_t vid) const;
     //
     //                      DATA MODIFIER UTILITIES:
-    void                        _add_point_glyph                (uint32_t vid);
-    uint32_t                    _add_vertex                     (ImVec2 w);
-    void                        _add_point                      (ImVec2 w);
-    void                        _erase_vertex_and_fix_paths     (uint32_t vid);
-    void                        _erase_path_and_orphans         (size_t vid);
+    void                        _add_point_glyph                    (uint32_t vid);
+    uint32_t                    _add_vertex                         (ImVec2 w);
+    void                        _add_point                          (ImVec2 w);
+    void                        _erase_vertex_and_fix_paths         (uint32_t vid);
+    void                        _erase_path_and_orphans             (size_t vid);
     //
     //                      APP UTILITY OPERATIONS:
-    bool                        _try_begin_handle_drag          (const Interaction & );
-    void                        _scissor_cut                    (const PathHit & );
-    void                        _start_lasso_tool               (void);
-    void                        _update_lasso                   (const Interaction & );
+    bool                        _try_begin_handle_drag              (const Interaction & );
+    void                        _scissor_cut                        (const PathHit & );
+    void                        _start_lasso_tool                   (void);
+    void                        _update_lasso                       (const Interaction & );
     //
     //                      LOCAMOTION UTILITIES:
-    void                        _update_world_extent            (void);
+    void                        _update_world_extent                (void);
     //
     //                      MISC. UTILITIES:
-    void                        _draw_controls                  (void);
-    void                        _display_canvas_settings        (void);
-    void                        _clear_all                      (void);
+    void                        _draw_controls                      (void);
+    void                        _display_canvas_settings            (void);
+    void                        _clear_all                          (void);
 
 
 
@@ -368,55 +373,98 @@ private:
 
     
     //  "_world_from_screen"
-    inline ImVec2               _world_from_screen              (ImVec2 scr) const { return pixels_to_world(scr); }
+    //inline ImVec2               _world_from_screen                  (ImVec2 scr) const { return pixels_to_world(scr); }
 
     
     //  "world_to_pixels"
     //      ImPlot works in double precision; promote, convert back to float ImVec2
-    inline ImVec2               world_to_pixels                 (ImVec2 w) const {
+    inline ImVec2               world_to_pixels                     (ImVec2 w) const {
         ImPlotPoint p = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));
         return { static_cast<float>(p.x), static_cast<float>(p.y) };
     }
     
     //  "pixels_to_world"
-    inline ImVec2               pixels_to_world                 (ImVec2 scr) const {
+    inline ImVec2               pixels_to_world                     (ImVec2 scr) const {
         ImPlotPoint p = ImPlot::PixelsToPlot(scr);// ImPlot uses double; convert back to float for our structs
         return { static_cast<float>(p.x), static_cast<float>(p.y) };
     }
     
-    // *************************************************************************** //
-    
-    //  "screen_from_world"
-    inline ImVec2               screen_from_world               (ImVec2 w) const {
-        return { (w.x - m_cam.pan.x) * m_ppw,
-                 (w.y - m_cam.pan.y) * m_ppw };
+    //  "snap_to_grid"
+    inline ImVec2               snap_to_grid                        (ImVec2 ws) const
+    {
+        if ( this->want_snap() ) {
+            float s = m_grid.snap_step;
+            if (s <= 0.0f) return ws;                     // safety
+            const float inv = 1.0f / s;
+            ws.x = std::round(ws.x * inv) * s;
+            ws.y = std::round(ws.y * inv) * s;
+        }
+        return ws;
     }
-
-    //  "world_from_screen"
-    inline ImVec2               world_from_screen               (ImVec2 s) const {
-        return { s.x / m_ppw + m_cam.pan.x,
-                 s.y / m_ppw + m_cam.pan.y };
-    }
     
-
-
-    
-    //  "maybe_snap"
-    inline ImVec2               maybe_snap                      (ImVec2 w) const
-    { return m_grid.snap_on ? _grid_snap(w) : w; }
-        
     //  "want_snap"
-    inline bool                 want_snap                       (void) const
+    inline bool                 want_snap                           (void) const
     { return m_grid.snap_on || ImGui::GetIO().KeyShift; }
-        
-    //  "_grid_step_px"
-    inline float                _grid_step_px                   (void) const
-    { return m_grid.world_step * m_ppw; }
+       
+       
+    //  "_update_grid"
+    inline void                 _update_grid_info                   (void)
+    {
+        ImPlotRect lim      = ImPlot::GetPlotLimits();          // world extent
+        ImVec2     size     = ImPlot::GetPlotSize();           // in pixels
+
+        float range_x = static_cast<float>(lim.X.Max - lim.X.Min);
+        float ppw     = size.x / range_x;                  // pixels‑per‑world‑unit
+
+        const float TARGET_PX = 20.0f;                     // desired screen grid pitch
+        float raw_step = TARGET_PX / ppw;                  // world units per 20 px
+
+        // Quantise to 1·10^n, 2·10^n, or 5·10^n
+        float exp10  = std::pow(10.0f, std::floor(std::log10(raw_step)));
+        float mant   = raw_step / exp10;
+        if      (mant < 1.5f) mant = 1.0f;
+        else if (mant < 3.5f) mant = 2.0f;
+        else if (mant < 7.5f) mant = 5.0f;
+        else                  { mant = 1.0f; exp10 *= 10.0f; }
+
+        m_grid.snap_step = mant * exp10;                        // store for the frame
+        return;
+    }
+       
+       
+    //  "_clamp_plot_axes"
+    inline void                 _clamp_plot_axes                    (void) const
+    { /*
+        // Query the current visible rect (world units)
+        ImPlotRect lim = ImPlot::GetPlotLimits(IMPLOT_AUTO);
+
+        double x_min = std::clamp(lim.X.Min, (double)m_world_bounds.min_x,
+                                               (double)m_world_bounds.max_x);
+        double x_max = std::clamp(lim.X.Max, (double)m_world_bounds.min_x,
+                                               (double)m_world_bounds.max_x);
+        double y_min = std::clamp(lim.Y.Min, (double)m_world_bounds.min_y,
+                                               (double)m_world_bounds.max_y);
+        double y_max = std::clamp(lim.Y.Max, (double)m_world_bounds.min_y,
+                                               (double)m_world_bounds.max_y);
+
+        // Only re-apply if something changed
+        if (x_min != lim.X.Min || x_max != lim.X.Max ||
+            y_min != lim.Y.Min || y_max != lim.Y.Max)
+        {
+            ImPlot::SetupAxesLimits(x_min, x_max, y_min, y_max, ImPlotCond_Always);
+        }
+        return; */
+    }
     
     
+    // *************************************************************************** //
+
+    //  "maybe_snap"
+    inline ImVec2               maybe_snap                          (ImVec2 w) const
+    { return m_grid.snap_on ? snap_to_grid(w) : w; }
     
     //  "_mode_has"
-    inline bool _mode_has(CBCapabilityFlags flag) const
+    inline bool                 _mode_has                           (CBCapabilityFlags flag) const
     { return (MODE_CAPS[static_cast<size_t>(m_mode)] & flag) != 0; }
     
     
@@ -526,8 +574,6 @@ private:
     };
     //
     //
-    static constexpr float      CAM_ZOOM_MIN                    = 1.0f;   // 1× = fit whole canvas
-    static constexpr float      CAM_ZOOM_MAX                    = 64.0f;  // arbitrary upper bound
     static constexpr float      ms_GRID_STEP_MIN                = 2.0f;   // world-units
     static constexpr float      ms_GRID_LABEL_PAD               = 2.0f;
     //

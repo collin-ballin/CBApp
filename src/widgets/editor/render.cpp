@@ -53,16 +53,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // -----------------------------------------------------------------------------
 // GRID HELPERS
 // -----------------------------------------------------------------------------
-ImVec2 Editor::_grid_snap(ImVec2 w) const
-{
-    if ( !this->want_snap() ) return w;
-    
-    const float s = m_grid.world_step;
-    w.x = std::round(w.x / s) * s;
-    w.y = std::round(w.y / s) * s;
-    return w;
-}
-
 
 //  "_grid_handle_shortcuts"
 //
@@ -86,11 +76,11 @@ void Editor::_grid_handle_shortcuts(void)
 
     //  2.  INCREASE GRID SPACING.          [ CTRL + ]
     if ( ImGui::IsKeyPressed(ImGuiKey_Equal) )
-    { m_grid.world_step = std::max(ms_GRID_STEP_MIN,  m_grid.world_step * 0.5f); return; }
+    { m_grid.snap_step = std::max(ms_GRID_STEP_MIN,  m_grid.snap_step * 0.5f); return; }
        
     //  3.  DECREASE GRID SPACING.          [ CTRL – ]
     if ( ImGui::IsKeyPressed(ImGuiKey_Minus) )
-    { m_grid.world_step *= 2.f; return; }
+    { m_grid.snap_step *= 2.f; return; }
         
     return;
 }

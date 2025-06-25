@@ -144,6 +144,7 @@ enum class Mode : int {
     Point,              //  "Point"                 (KEY: "N").
     Pen,                //  "Pen"                   (KEY: "P").
     Scissor,            //  "Scissors"              (KEY: "C").
+    Shape,              //  "Scissors"              (KEY: "C").
     AddAnchor,          //  "Add Anchor"            (KEY: "+").
     RemoveAnchor,       //  "Remove Anchor"         (KEY: "-").
     EditAnchor,         //  "Edit Anchor"           (KEY: "SHIFT" + "C").
@@ -155,7 +156,8 @@ enum class Mode : int {
 constexpr std::array<const char*, static_cast<size_t>(Mode::Count)>
     DEF_EDITOR_STATE_NAMES  = { {
     "Default",              "Line",                     "Point",                    "Pen",
-    "Scissor",              "Add Anchor Point",         "Remove Anchor Point",      "Edit Anchor"
+    "Shape",                "Scissor",                  "Add Anchor Point",         "Remove Anchor Point",
+    "Edit Anchor"
 } };
 
 
@@ -189,6 +191,7 @@ MODE_CAPS               = {
 /*  Point           */      CBCapabilityFlags_Navigation | CBCapabilityFlags_Select | CBCapabilityFlags_CursorHint,
 /*  Pen             */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
 /*  Scissor         */      CBCapabilityFlags_Navigation | CBCapabilityFlags_None,
+/*  Shape           */      CBCapabilityFlags_Navigation | CBCapabilityFlags_None,
 /*  AddAnchor       */      CBCapabilityFlags_None,
 /*  RemoveAnchor    */      CBCapabilityFlags_None,
 /*  EditAnchor      */      CBCapabilityFlags_Navigation
@@ -304,9 +307,9 @@ struct PathHit {
 //  "GridSettings"
 //
 struct GridSettings {
-    float   world_step   = 20.0f;   // grid pitch in world units
-    bool    visible      = true;
-    bool    snap_on      = false;
+    float   snap_step       = 20.0f;   // quantize condition for grid-snapping.
+    bool    visible         = true;
+    bool    snap_on         = false;
 };
 
 

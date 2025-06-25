@@ -71,7 +71,7 @@ void Editor::_add_point_glyph(uint32_t vid)
 //  "_add_vertex"
 //
 uint32_t Editor::_add_vertex(ImVec2 w) {
-    w = _grid_snap(w);                       // <- snap if enabled
+    w = snap_to_grid(w);                       // <- snap if enabled
     m_vertices.push_back({ m_next_id++, w.x, w.y });
     return m_vertices.back().id;
 }
@@ -412,7 +412,7 @@ void Editor::_update_world_extent()
         max_y   = std::max(max_y, v.y);
     }
 
-    const float margin =  m_grid.world_step * 4.0f;     // breathing room
+    const float margin =  m_grid.snap_step * 4.0f;     // breathing room
     m_world_bounds     = { min_x - margin,  min_y - margin,
                            max_x + margin,  max_y + margin };
 }
@@ -494,7 +494,7 @@ void Editor::_draw_controls(void)
         if ( ImGui::ArrowButtonEx("##Editor_Controls_GridDensityDown",      ImGuiDir_Down,
                           BUTTON_SIZE,                                      BUTTON_FLAGS) )
         {
-            m_grid.world_step *= 2.f;
+            m_grid.snap_step *= 2.f;
         }
         //
         ImGui::SameLine(0.0f, 0.0f);
@@ -502,12 +502,12 @@ void Editor::_draw_controls(void)
         if ( ImGui::ArrowButtonEx("##Editor_Controls_GridDensityUp",        ImGuiDir_Up,
                           BUTTON_SIZE,                                      BUTTON_FLAGS) )
         {
-            m_grid.world_step = std::max(ms_GRID_STEP_MIN, m_grid.world_step * 0.5f);
+            m_grid.snap_step = std::max(ms_GRID_STEP_MIN, m_grid.snap_step * 0.5f);
         }
         //
         ImGui::SameLine();
         //
-        ImGui::Text("(%.1f)", m_grid.world_step);
+        ImGui::Text("(%.1f)", m_grid.snap_step);
 
 
 

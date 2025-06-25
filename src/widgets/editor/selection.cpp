@@ -211,19 +211,20 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
 //      Segment-precision hit-test (straight + Bézier).
 //      Returns nearest segment within a 6-px pick radius (early-out on miss).
 //
-std::optional<PathHit> Editor::_hit_path_segment(const Interaction& it) const
+std::optional<PathHit> Editor::_hit_path_segment(const Interaction & /*it*/) const
 {
     constexpr float PICK_PX   = 6.0f;
-    const float     thresh_sq = (PICK_PX * PICK_PX) / (m_cam.zoom_mag * m_cam.zoom_mag);
+    const float     thresh_sq = PICK_PX * PICK_PX;
 
-    // mouse position in world space
-    const float mx = it.canvas.x / m_cam.zoom_mag;
-    const float my = it.canvas.y / m_cam.zoom_mag;
+    // mouse position in pixel space
+    ImVec2 ms = ImGui::GetIO().MousePos;
 
     std::optional<PathHit> best;
     float best_d2 = thresh_sq;
 
-    auto is_zero = [](const ImVec2& v){ return v.x == 0.0f && v.y == 0.0f; };
+    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
+    auto lerp   = [](float a, float b, float t){ return a + (b - a) * t; };
+    auto is_zero = [](const ImVec2& v){ return v.x == 0.f && v.y == 0.f; };
 
     for (size_t pi = 0; pi < m_paths.size(); ++pi)
     {
@@ -236,55 +237,75 @@ std::optional<PathHit> Editor::_hit_path_segment(const Interaction& it) const
 
         for (size_t si = 0; si < seg_count; ++si)
         {
-            uint32_t id0 = p.verts[si];
-            uint32_t id1 = p.verts[(si + 1) % N];
-
-            const Pos* a = find_vertex(m_vertices, id0);
-            const Pos* b = find_vertex(m_vertices, id1);
-            if (!a || !b) continue;          // dangling ID safety
+            const Pos* a = find_vertex(m_vertices, p.verts[si]);
+            const Pos* b = find_vertex(m_vertices, p.verts[(si + 1) % N]);
+            if (!a || !b) continue;
 
             bool curved = !is_zero(a->out_handle) || !is_zero(b->in_handle);
 
             if (!curved)
             {
-                // ------ straight-segment distance ------
-                float ax = a->x, ay = a->y;
-                float bx = b->x, by = b->y;
+                // ---- straight line in pixel space ----
+                ImVec2 A = ws2px({ a->x, a->y });
+                ImVec2 B = ws2px({ b->x, b->y });
 
-                float abx = bx - ax, aby = by - ay;
-                float ab_len_sq = abx * abx + aby * aby;
-                if (ab_len_sq == 0.0f) continue;
+                ImVec2 AB{ B.x - A.x, B.y - A.y };
+                ImVec2 AM{ ms.x - A.x, ms.y - A.y };
 
-                float apx = mx - ax, apy = my - ay;
-                float t   = std::clamp((apx * abx + apy * aby) / ab_len_sq, 0.0f, 1.0f);
+                float len_sq = AB.x*AB.x + AB.y*AB.y;
+                if (len_sq == 0.f) continue;
 
-                float cx = ax + abx * t;
-                float cy = ay + aby * t;
+                float t = std::clamp((AM.x*AB.x + AM.y*AB.y) / len_sq, 0.f, 1.f);
+                ImVec2 C{ A.x + AB.x*t, A.y + AB.y*t };
 
-                float dx = mx - cx, dy = my - cy;
-                float d2 = dx * dx + dy * dy;
+                float dx = ms.x - C.x, dy = ms.y - C.y;
+                float d2 = dx*dx + dy*dy;
 
                 if (d2 < best_d2) {
                     best_d2 = d2;
-                    best    = PathHit{ pi, si, t, ImVec2(cx, cy) };
+
+                    float cx_ws = lerp(a->x, b->x, t);
+                    float cy_ws = lerp(a->y, b->y, t);
+
+                    best = PathHit{ pi, si, t, ImVec2(cx_ws, cy_ws) };
                 }
             }
             else
             {
-                // ------ Bézier segment: sample ------
+                // ---- cubic Bézier: sample STEPS sub‑segments ----
                 const int STEPS = ms_BEZIER_HIT_STEPS;
+                ImVec2 prev_px = ws2px({ a->x, a->y });
+                ImVec2 prev_ws{ a->x, a->y };
+
                 for (int k = 1; k <= STEPS; ++k)
                 {
-                    float  t     = static_cast<float>(k) / STEPS;
-                    ImVec2 p_ws  = cubic_eval(a, b, t);   // your existing helper
+                    float  t  = static_cast<float>(k) / STEPS;
+                    ImVec2 cur_ws = cubic_eval(a, b, t);
+                    ImVec2 cur_px = ws2px(cur_ws);
 
-                    float dx = mx - p_ws.x, dy = my - p_ws.y;
-                    float d2 = dx * dx + dy * dy;
+                    // distance mouse → segment [prev,cur]
+                    ImVec2 AB{ cur_px.x - prev_px.x, cur_px.y - prev_px.y };
+                    ImVec2 AM{ ms.x - prev_px.x,     ms.y - prev_px.y     };
+
+                    float len_sq = AB.x*AB.x + AB.y*AB.y;
+                    float u = (len_sq > 0.f) ? (AM.x*AB.x + AM.y*AB.y) / len_sq : 0.f;
+                    u = std::clamp(u, 0.f, 1.f);
+
+                    ImVec2 C{ prev_px.x + AB.x*u, prev_px.y + AB.y*u };
+                    float dx = ms.x - C.x, dy = ms.y - C.y;
+                    float d2 = dx*dx + dy*dy;
 
                     if (d2 < best_d2) {
                         best_d2 = d2;
-                        best    = PathHit{ pi, si, t, p_ws };
+
+                        ImVec2 pos_ws{
+                            prev_ws.x + (cur_ws.x - prev_ws.x) * u,
+                            prev_ws.y + (cur_ws.y - prev_ws.y) * u
+                        };
+                        best = PathHit{ pi, si, t, pos_ws };
                     }
+                    prev_px = cur_px;
+                    prev_ws = cur_ws;
                 }
             }
         }
@@ -445,14 +466,10 @@ void Editor::update_move_drag_state(const Interaction & it)
             w_mouse.y - m_movedrag.press_ws.y
         };
 
-        if (want_snap())
-        {
-            ImVec2 snapped =
-                _grid_snap({ m_movedrag.anchor_ws.x + delta.x,
-                             m_movedrag.anchor_ws.y + delta.y });
-
-            delta.x = snapped.x - m_movedrag.anchor_ws.x;
-            delta.y = snapped.y - m_movedrag.anchor_ws.y;
+        if (want_snap()) {
+            ImVec2 snapped  = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,    m_movedrag.anchor_ws.y + delta.y });
+            delta.x         = snapped.x - m_movedrag.anchor_ws.x;
+            delta.y         = snapped.y - m_movedrag.anchor_ws.y;
         }
 
         for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i)
@@ -480,12 +497,10 @@ void Editor::update_move_drag_state(const Interaction & it)
         // snap the delta **once**, via the bbox anchor
         if ( this->want_snap() )
         {
-            ImVec2 snapped_anchor =
-                _grid_snap({ m_movedrag.anchor_ws.x + delta.x,
-                             m_movedrag.anchor_ws.y + delta.y });
+            ImVec2 snapped_anchor   = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,    m_movedrag.anchor_ws.y + delta.y });
 
-            delta.x = snapped_anchor.x - m_movedrag.anchor_ws.x;
-            delta.y = snapped_anchor.y - m_movedrag.anchor_ws.y;
+            delta.x                 = snapped_anchor.x - m_movedrag.anchor_ws.x;
+            delta.y                 = snapped_anchor.y - m_movedrag.anchor_ws.y;
         }
 
         // apply the same delta to every vertex

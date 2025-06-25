@@ -286,7 +286,7 @@ void Editor::_draw_vertex_inspector_subcolumn(Path & path)
     //
     if ( dirty && /*!ImGui::IsItemActive() && */ this->want_snap() ) {
         dirty       = false;
-        ImVec2 s    = _grid_snap({v->x, v->y});
+        ImVec2 s    = snap_to_grid({v->x, v->y});
         v->x        = s.x;
         v->y        = s.y;
     }
@@ -513,6 +513,13 @@ void Editor::_draw_single_path_inspector(void)
 }
 
 
+
+// *************************************************************************** //
+//
+//
+//      NEW STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
 
 
 
