@@ -140,7 +140,7 @@ void Editor::_pen_update_handle_drag(const Interaction& /*it*/)
     if (m_dragging_out) v->out_handle = offset;
     else                v->in_handle  = offset;
 
-    mirror_handles(*v, m_dragging_out);
+    mirror_handles<VertexID>(*v, m_dragging_out);
 
     if (!io.MouseDown[ImGuiMouseButton_Left]) {
         m_dragging_handle = false;
@@ -199,7 +199,7 @@ void Editor::_pen_append_or_close_live_path(const Interaction& it)
     // 2. Fallback: pixel‑distance to first vertex
     ImVec2 ms = ImGui::GetIO().MousePos;
     if (!p.verts.empty()) {
-        const Pos* first = find_vertex(m_vertices, p.verts.front());
+        const Vertex* first = find_vertex(m_vertices, p.verts.front());
         if (first) {
             ImVec2 first_px = world_to_pixels({ first->x, first->y });
             float dx = first_px.x - ms.x, dy = first_px.y - ms.y;

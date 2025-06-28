@@ -113,6 +113,60 @@ static constexpr float      HANDLE_BOX_SIZE             = 4.f;
 
 
 
+// *************************************************************************** //
+//
+//
+//
+//  0.  OVERLAY UTILITY CLASS STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
+
+enum class OverlayAnchor : uint8_t {
+    World,      // anchor_ws interpreted in world-space → converts via world_to_pixels()
+    Screen,     // anchor_ws is absolute screen coords (pixels)
+    Cursor      // anchor_ws is Δ offset from current cursor (pixels)
+};
+
+
+enum class OverlayPlacement : uint8_t {
+    ScreenXY,           // anchor_px    = screen position (px)
+    Cursor,             // anchor_px    = offset  (px)
+    World,              // anchor_ws    = world‑space point
+    CanvasTL,           // anchor_padpx = inset from top‑left  corner
+    CanvasTR,           // anchor_padpx = inset from top‑right corner
+    CanvasBL,           // anchor_padpx = inset from bot‑left  corner
+    CanvasBR            // anchor_padpx = inset from bot‑right corner
+};
+
+
+struct OverlayCFG {
+    OverlayPlacement            placement      {OverlayPlacement::ScreenXY};
+    ImVec2                      anchor_px      {0,0};       // ScreenXY / Cursor / padding
+    ImVec2                      anchor_ws      {0,0};       // for World
+    float                       alpha          {0.65f};
+    std::function<void()>       draw_fn;                    // widgets callback
+};
+
+
+//  "Overlay_t"
+//
+template<typename T = uint32_t>
+struct Overlay_t {
+    //static_assert(std::is_integral_v<T>, "Template type parameter, <T>, must be an integer type");
+    using                       OverlayID       = T;
+//
+    OverlayID                   id              = 0;
+    bool                        visible         = true;                 // owner sets false to retire
+    ImGuiWindowFlags            flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    OverlayCFG                  cfg{};
+};
+
+
+
+
+
+
+
 
 // *************************************************************************** //
 //
@@ -213,13 +267,14 @@ MODE_CAPS               = {
 //      2.1.    VERTEX.
 // *************************************************************************** //
 
-//  "Vertex" / "Pos" / "Anchor Point"
+//  "Vertex_t" / "Pos" / "Anchor Point"
 //
 //      A pure geometry node. `in_handle` and `out_handle` are offsets from
 //      `pos`; when they are both zero the segment attached to this vertex is
 //      straight. Handles live in world‑space units.
 //
-struct Vertex {
+template<typename VID>
+struct Vertex_t {
     uint32_t    id              = 0;
     float       x               = 0.0f,
                 y               = 0.0f;
@@ -230,8 +285,25 @@ struct Vertex {
 };
 
 struct PointStyle   { ImU32 color = IM_COL32(0,255,0,255); float radius = 4.0f; bool visible = true; };
-struct Point        { uint32_t v; PointStyle sty{}; };
-struct Line         { uint32_t a, b; ImU32 color = IM_COL32(255,255,0,255); float thickness = 2.f; };
+
+
+//  "Point_t"
+//
+template <typename PtID>
+struct Point_t        {
+    uint32_t        v;
+    PointStyle      sty{};
+};
+
+
+//  "Line_t"
+//
+template <typename LID>
+struct Line_t         {
+    uint32_t    a, b;
+    ImU32       color       = IM_COL32(255,255,0,255);
+    float       thickness   = 2.f;
+};
 
 
 
@@ -255,9 +327,10 @@ struct PathStyle {
 };
 
 
-//  "Path"
+//  "Path_t"
 //
-struct Path {
+template<typename PID, typename VID>
+struct Path_t {
     inline bool is_area(void) const noexcept
     { return this->closed && this->verts.size() >= 3; }
 //
@@ -280,18 +353,20 @@ struct EndpointInfo { size_t path_idx; bool prepend; };   // prepend==true ↔ f
 //      2.3.    HIT.
 // *************************************************************************** //
 
-//  "Hit"
+//  "Hit_t"
 //
-struct Hit {
+template <typename HID>
+struct Hit_t {
     enum class Type { Point, Line, Path, Handle };
     Type     type     = Type::Point;
     size_t   index    = 0;     // Point/Line/Path: original meaning
     bool     out      = false; // valid only when type == Handle
 };
 
-//  "PathHit"
+//  "PathHit_t"
 //
-struct PathHit {
+template <typename PID, typename VID>
+struct PathHit_t {
     size_t  path_idx   = 0;   // which Path in m_paths
     size_t  seg_idx    = 0;   // segment i   (verts[i] → verts[i+1])
     float   t          = 0.f; // param along that segment
@@ -322,9 +397,10 @@ struct Interaction {
 };
 
 
-//  "Selection"
+//  "Selection_t"
 //
-struct Selection {
+template<typename VID, typename PtID, typename LID, typename PID>
+struct Selection_t {
     std::unordered_set<uint32_t>    vertices;
     std::unordered_set<size_t>      points;
     std::unordered_set<size_t>      lines;
@@ -364,6 +440,36 @@ struct PenState {
 };
 
 
+
+
+enum class ShapeKind : uint8_t { Rectangle, Ellipse /*, Polygon, Star, …*/ };
+
+
+//  "ShapeState_t"
+//
+template<typename OID>
+struct ShapeState_t {
+    bool        active          = false;            // true while user is click-dragging a preview
+    OID         overlay_id      = OID(0);           // contextual UI (0 ⇒ none)
+    ShapeKind   kind            = ShapeKind::Rectangle;
+    float       radius          = 25.0f;            // corner- or major-radius (placeholder)
+    //
+    // live-preview drag info (world-space)
+    bool        dragging        = false;
+    ImVec2      press_ws{};                  // anchor at mouse-down
+    ImVec2      cur_ws{};                    // current mouse pos each frame
+};
+
+
+
+
+
+
+    
+// *************************************************************************** //
+//      2.6.    OTHER STATE STRUCTURES.
+// *************************************************************************** //
+
 //  "MoveDrag"
 //
 struct MoveDrag {
@@ -376,7 +482,8 @@ struct MoveDrag {
 };
 
 
-//  "BoxDrag" struct (add fields for handle_ws0, orig_w, orig_h after mouse_ws0)
+//  "BoxDrag"
+//      struct (add fields for handle_ws0, orig_w, orig_h after mouse_ws0)
 struct BoxDrag {
     bool                    active          = false;
     uint8_t                 handle_idx      = 0;
@@ -464,4 +571,3 @@ struct OverlayState
 // *************************************************************************** //
 //
 //  END.
-

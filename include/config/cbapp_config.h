@@ -382,3 +382,19 @@ public:                                                                         
 // *************************************************************************** //
 //
 //  END.
+
+
+
+
+
+
+
+
+ //       using                   Vertex                          = Vertex_t      <VertexID>                              ;
+ //       using                   Point                           = Point_t       <PointID>                               ;
+ //       using                   Line                            = Line_t        <LineID>                                ;
+ //       using                   Path                            = Path_t        <PathID, VertexID>                      ;
+ //       using                   Overlay                         = Overlay_t     <OverlayID>                             ;
+ //       using                   Hit                             = Hit_t         <HitID>                                 ;
+ //       using                   PathHit                         = PathHit_t     <PathID, VertexID>                      ;
+ //       using                   Selection                       = Selection_t   <VertexID, PointID, LineID, PathID>     ;

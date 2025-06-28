@@ -204,7 +204,7 @@ protected:
     std::array< const char *, 2 >                       m_win_uuids                     = { "Visuals", "Controls" };
     ImGuiWindowFlags                                    m_docked_win_flags[2]           = {
         ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus,    // ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground,
-        ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus     //  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground
+        ImGuiWindowFlags_None | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoScrollbar     //  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground
     };
     
     
@@ -255,6 +255,7 @@ protected:
     std::vector<Tab_t>                                  ms_CTRL_TABS                    = { };
     std::vector<utl::WidgetRow>                         ms_CTRL_ROWS                    = { };
     std::vector<utl::WidgetRow>                         ms_APPEARANCE_ROWS              = { };
+    utl::PyStream                                       m_python                        = utl::PyStream(app::PYTHON_DUMMY_FPGA_FILEPATH);
     
     
     //                                              5.  WIDGET VARIABLES...
@@ -315,6 +316,7 @@ protected:
     void                init_ctrl_rows                  (void);
     void                display_plots                   (void);
     void                display_controls                (void);
+    void                _draw_control_bar               (void);
     //
     void                DefaultPlotTabRenderFunc        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                DefaultCtrlTabRenderFunc        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);

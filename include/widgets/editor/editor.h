@@ -30,6 +30,7 @@
 #include "app/state/_state.h"
 #include "utility/utility.h"
 #include "widgets/editor/_types.h"
+#include "widgets/editor/_overlays.h"
 
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
@@ -68,113 +69,36 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-//  0.  STATIC INLINE FUNCTIONS...
+
 // *************************************************************************** //
-// *************************************************************************** //
-
-static inline bool is_curved(const Vertex* a, const Vertex* b)
-{
-    return (a->out_handle.x || a->out_handle.y ||
-            b->in_handle.x  || b->in_handle.y);
-}
-
-static inline ImVec2 cubic_eval(const Vertex * a, const Vertex* b, float t)
-{
-    const float u  = 1.0f - t;
-    const float w0 = u*u*u;
-    const float w1 = 3*u*u*t;
-    const float w2 = 3*u*t*t;
-    const float w3 = t*t*t;
-
-    ImVec2 P0{ a->x, a->y };
-    ImVec2 P1{ a->x + a->out_handle.x, a->y + a->out_handle.y };
-    ImVec2 P2{ b->x + b->in_handle.x,  b->y + b->in_handle.y  };
-    ImVec2 P3{ b->x, b->y };
-
-    return { w0*P0.x + w1*P1.x + w2*P2.x + w3*P3.x,
-             w0*P0.y + w1*P1.y + w2*P2.y + w3*P3.y };
-}
-
-static bool point_in_polygon(const std::vector<ImVec2>& poly, ImVec2 p)
-{
-    bool inside = false;
-    const size_t n = poly.size();
-    for (size_t i = 0, j = n - 1; i < n; j = i++)
-    {
-        bool intersect = ((poly[i].y > p.y) != (poly[j].y > p.y)) &&
-                         (p.x < (poly[j].x - poly[i].x) * (p.y - poly[i].y) /
-                                 (poly[j].y - poly[i].y + 1e-6f) + poly[i].x);
-        if (intersect) inside = !inside;
-    }
-    return inside;
-}
-
-static inline ImVec4 u32_to_f4(ImU32 c)     { return ImGui::ColorConvertU32ToFloat4(c); }
-
-static inline ImU32  f4_to_u32(ImVec4 f)    { return ImGui::ColorConvertFloat4ToU32(f); }
-
-//  Returns length of a 2-D vector
-static inline float vec_len(const ImVec2& v) { return sqrtf(v.x*v.x + v.y*v.y); }
-
-//  Normalises `v` unless zero; returns {0,0} if zero
-static inline ImVec2 vec_norm(const ImVec2& v)
-{
-    float l = vec_len(v);
-    return (l > 0.f) ? ImVec2{ v.x / l, v.y / l } : ImVec2{0,0};
-}
-
-//  Mirrors the opposite handle according to anchor kind
-static inline void mirror_handles(Vertex& v, bool dragged_out_handle)
-{
-    ImVec2& h_dragged = dragged_out_handle ? v.out_handle : v.in_handle;
-    ImVec2& h_other   = dragged_out_handle ? v.in_handle  : v.out_handle;
-
-    switch (v.kind)
-    {
-        case AnchorType::Corner:
-            /* no coupling */ break;
-
-        case AnchorType::Smooth: {
-            float len = vec_len(h_other);           // keep original length
-            ImVec2 dir = vec_norm(h_dragged);
-            h_other = ImVec2{ -dir.x * len, -dir.y * len };
-            break;
-        }
-        case AnchorType::Symmetric:
-            h_other = ImVec2{ -h_dragged.x, -h_dragged.y };
-            break;
-    }
-}
-
-
-//  "find_vertex_mut"
 //
-static inline Vertex* find_vertex_mut(std::vector<Vertex>& arr, uint32_t id)
-{
-    for (Vertex& v : arr)
-        if (v.id == id) return &v;
-    return nullptr;
-}
+//
+//      NEW STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  static std::optional<size_t>
+//  point_index_from_vid(const std::vector<Point>& points, uint32_t vid) {
+//      for (size_t i = 0; i < points.size(); ++i)
+//          if (points[i].v == vid)
+//              return i;
+//      return std::nullopt;
+//  }
+//
+//  static std::optional<PathVertexPos>
+//  find_vertex_in_paths(const std::vector<Path>& paths, uint32_t vid)
+//  {
+//      for (size_t pi = 0; pi < paths.size(); ++pi)
+//          for (size_t vi = 0; vi < paths[pi].verts.size(); ++vi)
+//              if (paths[pi].verts[vi] == vid)
+//                  return PathVertexPos{pi, vi};
+//      return std::nullopt;
+//  }
 
 
-static inline bool alt_down()
-{
-    ImGuiIO& io = ImGui::GetIO();
-#if defined(ImGuiMod_Alt)          // 1.90+
-    if (io.KeyMods & ImGuiMod_Alt) return true;
-#endif
-#if defined(ImGuiKey_ModAlt)       // some back-ends set this explicitly
-    if (ImGui::IsKeyDown(ImGuiKey_ModAlt)) return true;
-#endif
-    if (io.KeyAlt)                 // 1.89 back-ends set this bool
-        return true;
-#if defined(ImGuiKey_LeftAlt)
-    if (ImGui::IsKeyDown(ImGuiKey_LeftAlt)  ||
-        ImGui::IsKeyDown(ImGuiKey_RightAlt))
-        return true;
-#endif
-    return false;
-}
+
+
+
 
 
 
@@ -185,13 +109,44 @@ static inline bool alt_down()
 // *************************************************************************** //
 // *************************************************************************** //
        
+struct      Vertex_Tag          {};
+struct      Point_Tag           {};
+struct      Line_Tag            {};
+struct      Path_Tag            {};
+struct      Overlay_Tag         {};
+struct      Hit_Tag             {};
+       
+       
 //  "Editor"
 //
 class Editor {
 public:
         friend class            App;
-        using                   Pos                             = Vertex;
         using                   EndpointInfo                    = EndpointInfo;
+    //
+    //                      ID / INDEX TYPES:
+        template<typename T, typename Tag>
+        using                   ID                              = cblib::utl::IDType<T, Tag>;
+    //
+        using                   VertexID                        = uint32_t;     //    ID<std::uint32_t, Vertex_Tag>         ;
+        using                   PointID                         = uint32_t;     //    ID<std::uint32_t, Point_Tag>          ;
+        using                   LineID                          = uint32_t;     //    ID<std::uint32_t, Line_Tag>           ;
+        using                   PathID                          = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
+        using                   OverlayID                       = OverlayManager::OverlayID;     //    ID<std::uint32_t, Overlay_Tag>        ;
+        using                   HitID                           = uint32_t;     //    ID<std::uint32_t, Hit_Tag>            ;
+    //
+    //                      TYPENAME ALIASES (BASED ON INDEX TYPES):
+        using                   Vertex                          = Vertex_t      <VertexID>                              ;
+        using                   Point                           = Point_t       <PointID>                               ;
+        using                   Line                            = Line_t        <LineID>                                ;
+        using                   Path                            = Path_t        <PathID, VertexID>                      ;
+        using                   Overlay                         = Overlay_t     <OverlayID>                             ;
+        using                   Hit                             = Hit_t         <HitID>                                 ;
+        using                   PathHit                         = PathHit_t     <PathID, VertexID>                      ;
+        using                   Selection                       = Selection_t   <VertexID, PointID, LineID, PathID>     ;
+        //
+        using                   ShapeState                      = ShapeState_t  <OverlayID>;
+//
 //      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 //
 //
@@ -244,6 +199,7 @@ private:
     void                        _handle_add_anchor                  ([[maybe_unused]] const Interaction & );
     void                        _handle_remove_anchor               ([[maybe_unused]] const Interaction & );
     void                        _handle_edit_anchor                 ([[maybe_unused]] const Interaction & );
+    void                        _handle_overlays                    ([[maybe_unused]] const Interaction & );
     //
     //
     // *************************************************************************** //
@@ -273,6 +229,31 @@ private:
     inline bool                 _can_join_selected_path             (void) const;
     void                        _join_selected_open_path            (void);
     void                        _draw_pen_cursor                    (const ImVec2 &, ImU32);
+    //
+    //
+    // *************************************************************************** //
+    //      SHAPE TOOL STUFF.               |   "tools.cpp" ...
+    // *************************************************************************** //
+    void                        _draw_shape_controls                (void);
+    //
+    //
+    // *************************************************************************** //
+    //      OVERLAY TOOL STUFF.             |   "tools.cpp" ...
+    // *************************************************************************** //
+    void                        _handle_overlay                     ([[maybe_unused]] const Interaction & );
+    bool                        _overlay_begin_window               (void);
+    void                        _overlay_end_window                 (void);
+    //
+    void                        _overlay_draw_context_menu          (void);
+    void                        _overlay_update_position            (void);
+    void                        overlay_log                         (std::string msg, float secs = 2.0f);
+    //
+    void                        _overlay_draw_content               ([[maybe_unused]]const Interaction &);
+    void                        _overlay_display_main_content       ([[maybe_unused]]const Interaction &);
+    void                        _overlay_display_extra_content      ([[maybe_unused]]const Interaction &);
+    //
+    // *************************************************************************** //
+    //
     //
     //
     // *************************************************************************** //
@@ -319,26 +300,10 @@ private:
     //
     //
     // *************************************************************************** //
-    //      OVERLAY.                        |   "tools.cpp" ...
-    // *************************************************************************** //
-    void                        _handle_overlay                     ([[maybe_unused]] const Interaction & );
-    bool                        _overlay_begin_window               (void);
-    void                        _overlay_end_window                 (void);
-    //
-    void                        _overlay_draw_context_menu          (void);
-    void                        _overlay_update_position            (void);
-    void                        overlay_log                         (std::string msg, float secs = 2.0f);
-    //
-    void                        _overlay_draw_content               ([[maybe_unused]]const Interaction &);
-    void                        _overlay_display_main_content       ([[maybe_unused]]const Interaction &);
-    void                        _overlay_display_extra_content      ([[maybe_unused]]const Interaction &);
-    //
-    //
-    // *************************************************************************** //
     //      UTILITIES.                      |   "utility.cpp" ...
     // *************************************************************************** //
-    Pos *                       find_vertex                         (std::vector<Pos> & , uint32_t);
-    const Pos *                 find_vertex                         (const std::vector<Pos> & , uint32_t) const;
+    Vertex *                    find_vertex                         (std::vector<Vertex> & , uint32_t);
+    const Vertex *              find_vertex                         (const std::vector<Vertex> & , uint32_t) const;
     std::optional<EndpointInfo> _endpoint_if_open                   (uint32_t vid) const;
     //
     //                      DATA MODIFIER UTILITIES:
@@ -370,11 +335,11 @@ private:
     //  2.C             INLINE FUNCTIONS...
     // *************************************************************************** //
     // *************************************************************************** //
-
     
-    //  "_world_from_screen"
-    //inline ImVec2               _world_from_screen                  (ImVec2 scr) const { return pixels_to_world(scr); }
 
+
+    // *************************************************************************** //
+    // *************************************************************************** //
     
     //  "world_to_pixels"
     //      ImPlot works in double precision; promote, convert back to float ImVec2
@@ -488,10 +453,11 @@ private:
     // *************************************************************************** //
     //      IMPORTANT DATA...
     // *************************************************************************** //
-    std::vector<Pos>            m_vertices;
+    std::vector<Vertex>         m_vertices;
     std::vector<Point>          m_points;
     std::vector<Line>           m_lines;
     std::vector<Path>           m_paths;                       // new path container
+    OverlayManager              m_overlays;
     // *************************************************************************** //
     //
     //
@@ -535,9 +501,13 @@ private:
     // *************************************************************************** //
     //      OBJECTS...
     // *************************************************************************** //
+    //
+    //                      TOOL STATES:
     PenState                    m_pen;
+    ShapeState                  m_shape;
     OverlayState                m_overlay;
     //
+    //                      OTHER FACILITIES:
     std::optional<Hit>          m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
     Selection                   m_sel;
     mutable BoxDrag             m_boxdrag;
@@ -698,6 +668,166 @@ static inline const char * mode_label(Mode m)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+//  0.  STATIC INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "is_curved"
+//
+template< std::integral ID, typename Vertex = Vertex_t<ID> >
+[[maybe_unused]] inline bool is_curved(const Vertex* a, const Vertex* b) noexcept
+{
+    return (a->out_handle.x || a->out_handle.y ||
+            b->in_handle.x  || b->in_handle.y);
+}
+
+
+//  "cubic_eval"
+//
+template< std::integral ID, typename Vertex = Vertex_t<ID> >
+[[maybe_unused]] static inline ImVec2 cubic_eval(const Vertex * a, const Vertex* b, float t)
+{
+    const float u  = 1.0f - t;
+    const float w0 = u*u*u;
+    const float w1 = 3*u*u*t;
+    const float w2 = 3*u*t*t;
+    const float w3 = t*t*t;
+
+    ImVec2 P0{ a->x, a->y };
+    ImVec2 P1{ a->x + a->out_handle.x, a->y + a->out_handle.y };
+    ImVec2 P2{ b->x + b->in_handle.x,  b->y + b->in_handle.y  };
+    ImVec2 P3{ b->x, b->y };
+
+    return { w0*P0.x + w1*P1.x + w2*P2.x + w3*P3.x,
+             w0*P0.y + w1*P1.y + w2*P2.y + w3*P3.y };
+}
+
+
+//  "point_in_polygon"
+//
+[[maybe_unused]]
+static bool point_in_polygon(const std::vector<ImVec2>& poly, ImVec2 p)
+{
+    bool inside = false;
+    const size_t n = poly.size();
+    for (size_t i = 0, j = n - 1; i < n; j = i++)
+    {
+        bool intersect = ((poly[i].y > p.y) != (poly[j].y > p.y)) &&
+                         (p.x < (poly[j].x - poly[i].x) * (p.y - poly[i].y) /
+                                 (poly[j].y - poly[i].y + 1e-6f) + poly[i].x);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+
+//  "u32_to_f4"
+//
+[[maybe_unused]] static inline ImVec4 u32_to_f4(ImU32 c)        { return ImGui::ColorConvertU32ToFloat4(c); }
+
+
+//  "f4_to_u32"
+//
+[[maybe_unused]] static inline ImU32  f4_to_u32(ImVec4 f)       { return ImGui::ColorConvertFloat4ToU32(f); }
+
+
+//  Returns length of a 2-D vector
+static inline float vec_len(const ImVec2& v) { return sqrtf(v.x*v.x + v.y*v.y); }
+
+
+//  Normalises `v` unless zero; returns {0,0} if zero
+static inline ImVec2 vec_norm(const ImVec2& v)
+{
+    float l = vec_len(v);
+    return (l > 0.f) ? ImVec2{ v.x / l, v.y / l } : ImVec2{0,0};
+}
+
+
+//  Mirrors the opposite handle according to anchor kind
+template< typename ID, typename Vertex = Vertex_t<ID> >
+inline void mirror_handles(Vertex & v, bool dragged_out_handle) noexcept
+{
+    ImVec2 &    h_dragged   = dragged_out_handle ? v.out_handle : v.in_handle;
+    ImVec2 &    h_other     = dragged_out_handle ? v.in_handle  : v.out_handle;
+
+    switch (v.kind)
+    {
+        case AnchorType::Corner:
+            /* no coupling */ break;
+
+        case AnchorType::Smooth: {
+            const float  len = vec_len(h_other);          // preserve length
+            const ImVec2 dir = vec_norm(h_dragged);
+            h_other = ImVec2{ -dir.x * len, -dir.y * len };
+            break;
+        }
+
+        case AnchorType::Symmetric:
+            h_other = ImVec2{ -h_dragged.x, -h_dragged.y };
+            break;
+    }
+}
+
+
+//  "find_vertex_mut"
+//
+template< typename ID, typename Vertex = Vertex_t<ID> >
+inline Vertex * find_vertex_mut( std::vector< Vertex > & arr, ID id ) noexcept {
+    for (Vertex & v : arr)
+        if (v.id == id) return &v;
+        
+    return nullptr;
+}
+
+
+static inline bool alt_down()
+{
+    ImGuiIO& io = ImGui::GetIO();
+#if defined(ImGuiMod_Alt)          // 1.90+
+    if (io.KeyMods & ImGuiMod_Alt) return true;
+#endif
+#if defined(ImGuiKey_ModAlt)       // some back-ends set this explicitly
+    if (ImGui::IsKeyDown(ImGuiKey_ModAlt)) return true;
+#endif
+    if (io.KeyAlt)                 // 1.89 back-ends set this bool
+        return true;
+#if defined(ImGuiKey_LeftAlt)
+    if (ImGui::IsKeyDown(ImGuiKey_LeftAlt)  ||
+        ImGui::IsKeyDown(ImGuiKey_RightAlt))
+        return true;
+#endif
+    return false;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
@@ -716,4 +846,3 @@ static inline const char * mode_label(Mode m)
 // *************************************************************************** //
 //
 //  END.
-

@@ -73,7 +73,14 @@ inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it
         if ( no_mod && ImGui::IsKeyPressed(ImGuiKey_Minus)                          )       m_mode = Mode::RemoveAnchor;
         if ( !ctrl && shift && !alt && !super && ImGui::IsKeyPressed(ImGuiKey_C)    )       m_mode = Mode::EditAnchor;
     //}
-    if ( m_mode != Mode::Pen )    m_pen = {};     // Leaving the Pen-Tool resets current path appending.
+    if ( m_mode != Mode::Pen )    m_pen = {};                   // Leaving the Pen-Tool resets current path appending.
+    
+    if ( m_mode != Mode::Shape && m_shape.overlay_id != 0 ) {     // Leaving the Shape-Tool closes the overlay window.
+        m_overlays.destroy_overlay(m_shape.overlay_id);
+        m_shape = {};                // reset whole POD
+    }
+    
+    
     
     return;
 }
@@ -211,6 +218,7 @@ void Editor::Begin(const char* /*id*/)
         ImPlot::PopPlotClipRect();
 
         this->_clamp_plot_axes();
+        this->_handle_overlays(it);
 
 
 
@@ -716,7 +724,7 @@ void Editor::_handle_line(const Interaction& it)
         Path& last_path = m_paths.back();
         if (last_path.verts.size() >= 2)
         {
-            if (Pos* v = find_vertex(m_vertices, last_path.verts[1]))
+            if (Vertex* v = find_vertex(m_vertices, last_path.verts[1]))
             {
                 v->x = w.x; v->y = w.y;
             }
@@ -931,6 +939,26 @@ void Editor::_handle_scissor(const Interaction & it)
 //
 void Editor::_handle_shape([[maybe_unused]] const Interaction & it)
 {
+
+    // ── 0. Spawn overlay the first frame Shape mode is active ───────────
+    if (m_shape.overlay_id == 0)
+    {
+        OverlayCFG  cfg;
+        cfg.placement  = OverlayPlacement::CanvasBR;        // bottom-right of plot
+        cfg.anchor_px  = { -20.0f, -20.0f };                  // 12-px inward offset
+        cfg.alpha      = 0.25f;
+        cfg.draw_fn    = [this]() { _draw_shape_controls(); };
+
+        m_shape.overlay_id = m_overlays.create_overlay(cfg);
+    }
+
+    //----------------------------------------------------------------------
+    // 1.  (To-do) live-preview, click-drag, and commit logic
+    //     – will convert cursor to world, draw ghost shape, then create path
+    //----------------------------------------------------------------------
+    
+ 
+ 
     return;
 }
 
@@ -1003,6 +1031,32 @@ void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
 
 
 
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_handle_overlays"
+//
+void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
+{
+    [[maybe_unused]] ImGuiIO & io = ImGui::GetIO();
+    
+    ImVec2 tl = it.origin;                       // top-left in screen px
+    ImVec2 br = { tl.x + m_avail.x,
+                  tl.y + m_avail.y };            // bottom-right of canvas
+
+    m_overlays.Begin(
+        /* world→pixel lambda */ [this](ImVec2 ws){ return world_to_pixels(ws); },
+        /* cursor position   */ ImGui::GetIO().MousePos,
+        /* canvas rectangle  */ ImRect(tl, br));
+
+
+    return;
+}
 
 
 

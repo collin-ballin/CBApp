@@ -74,7 +74,7 @@ void CCounterApp::ShowCCPlots(void)
     // ------------------------------------------------------------
     // 1.  Poll child process and push new points
     // ------------------------------------------------------------
-    while (proc.try_receive(raw))
+    while (m_python.try_receive(raw))
     {
         got_packet = true;
         if (auto pkt = utl::parse_packet(raw, m_use_mutex_count))
@@ -464,7 +464,7 @@ void CCounterApp::init_ctrl_rows(void)
                         enter = false;
                     }
                     else {
-                        proc.set_filepath(m_filepath);
+                        m_python.set_filepath(m_filepath);
                     }
                 }
                 //
@@ -477,7 +477,7 @@ void CCounterApp::init_ctrl_rows(void)
                     {
                         if (ImGui::Button("Start Process", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) )
                         {
-                            m_process_running         = proc.start();
+                            m_process_running         = m_python.start();
                             if (!m_process_running) {
                                 ImGui::OpenPopup("launch_error");
                             }
@@ -493,7 +493,7 @@ void CCounterApp::init_ctrl_rows(void)
                         ImGui::PushStyleColor(ImGuiCol_Button,          ImVec4(0.800f, 0.216f, 0.180f, 1.00f) );
                         ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   app::DEF_APPLE_RED );
                         if (ImGui::Button("Stop Process", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
-                            proc.stop();
+                            m_python.stop();
                             m_process_running = false;
                         }
                         ImGui::PopStyleColor(2);
@@ -513,7 +513,7 @@ void CCounterApp::init_ctrl_rows(void)
                 if (m_process_running)    {
                     char cmd[ms_BUFFER_SIZE];
                     std::snprintf(cmd, ms_BUFFER_SIZE, "integration_window %.3f\n", m_integration_window.value);
-                    proc.send(cmd);
+                    m_python.send(cmd);
                 }
             //
             //
@@ -531,14 +531,14 @@ void CCounterApp::init_ctrl_rows(void)
                     if (m_process_running)    {
                     char cmd[ms_BUFFER_SIZE];
                         std::snprintf(cmd, ms_BUFFER_SIZE, "integration_window %.3f\n", delay_s);
-                        proc.send(cmd);
+                        m_python.send(cmd);
                     }
                 }
                 ImGui::SameLine(0.0f, pad);
                 if ( ImGui::Button("Send", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) || ImGui::IsItemDeactivatedAfterEdit() )
                 {
                     if (m_process_running && line_buf[0]) {
-                        proc.send(line_buf);        // passthrough; must include \n if desired
+                        m_python.send(line_buf);        // passthrough; must include \n if desired
                         line_buf[0]     = '\0';
                     }
                 }
@@ -563,7 +563,7 @@ void CCounterApp::init_ctrl_rows(void)
                     if (m_process_running)    {
                         char cmd[ms_BUFFER_SIZE];
                         std::snprintf(cmd, ms_BUFFER_SIZE, "coincidence_window %llu\n", m_coincidence_window.value);
-                        proc.send(cmd);
+                        m_python.send(cmd);
                     }
                 }
             }// END.
@@ -577,14 +577,14 @@ void CCounterApp::init_ctrl_rows(void)
                     if (m_process_running) {
                         char cmd[ms_BUFFER_SIZE];
                         std::snprintf(cmd, ms_BUFFER_SIZE, "integration_window %.3f\n", m_integration_window.value);
-                        proc.send(cmd);
+                        m_python.send(cmd);
                     }
                 }
                 ImGui::SameLine(0.0f, pad);
                 if (ImGui::Button("Apply", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
                     char cmd[ms_BUFFER_SIZE];
                     std::snprintf(cmd, ms_BUFFER_SIZE, "integration_window %.3f\n", delay_s);
-                    proc.send(cmd);
+                    m_python.send(cmd);
                 }
                 ImGui::Dummy( ImVec2(pad, 0.0f) );
             }// END.

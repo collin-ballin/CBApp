@@ -221,7 +221,7 @@ void App::run_IMPL(void)
 //
 //
 //
-//  3.2     MAIN APPLICATION GUI FUNCTIONS...    | PRIVATE.
+//  3.2     MAIN APPLICATION GUI FUNCTIONS...       | PRIVATE.
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -330,7 +330,166 @@ void App::ShowDockspace([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 
 
 
+
+
+
 // *************************************************************************** //
+//
+//
+//
+//  3.3     APPLICATION HANDLER FUNCTIONS...        | PRIVATE.
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "KeyboardShortcutHandler"
+//
+void App::KeyboardShortcutHandler(void)
+{
+    static ImGuiInputFlags          browser_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
+    static ImGuiInputFlags          detview_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
+    static ImGuiInputFlags          save_key_flags          = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
+    static ImGuiInputFlags          undo_key_flags          = ImGuiInputFlags_None;
+    static ImGuiInputFlags          redo_key_flags          = ImGuiInputFlags_None;
+    static const ImGuiKeyChord      BROWSER_KEY             = ImGuiKey_GraveAccent;
+    static const ImGuiKeyChord      DETVIEW_KEY             = ImGuiMod_Shift | ImGuiKey_GraveAccent; //ImGuiMod_Shift | ImGuiKey_Apostrophe;
+    static const ImGuiKeyChord      SAVE_KEY                = ImGuiMod_Ctrl | ImGuiKey_S;
+    static const ImGuiKeyChord      UNDO_KEY                = ImGuiMod_Ctrl | ImGuiKey_Z;
+    static const ImGuiKeyChord      REDO_KEY                = ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z;
+    //
+    [[maybe_unused]] ImGuiIO &      io                      = ImGui::GetIO();
+    
+    
+    //  0.  UPDATE CURRENT APPLICATION STATE (NEEDED BEFORE WE SAVE/UNDO/REDO/ETC)...
+    S.update_current_task();
+
+
+    //  1.  HOTKEY TO OPEN/CLOSE BROWSER...
+    if ( ImGui::IsKeyChordPressed(BROWSER_KEY, browser_key_flags) )         { this->m_controlbar.toggle_sidebar(); }
+    
+    //  2.  HOTKEY TO OPEN/CLOSE DETAIL VIEW...
+    if ( ImGui::IsKeyChordPressed(DETVIEW_KEY, detview_key_flags) )         { this->m_detview.toggle(); }
+    
+    //  3.  SAVE HANDLER...
+    if ( ImGui::IsKeyChordPressed(SAVE_KEY, save_key_flags) )               { this->SaveHandler(); }
+
+    //  4.  UNDO HANDLER...
+    if ( ImGui::IsKeyChordPressed(UNDO_KEY, undo_key_flags) )               { this->UndoHandler(); }
+
+    //  5.  REDO HANDLER...
+    if ( ImGui::IsKeyChordPressed(REDO_KEY, redo_key_flags) )               { this->RedoHandler(); }
+
+
+
+    return;
+}
+
+
+
+//  "SaveHandler"
+//
+void App::SaveHandler(void)
+{
+    static constexpr const char *   save_popup_id       = "S A V E   P R O G R A M  .  .  .";
+    static auto                     now                 = ImGui::GetTime();
+            
+
+        now = ImGui::GetTime();
+        
+        ImGui::OpenPopup(save_popup_id);
+    
+    
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    utl::Popup_Save(save_popup_id);
+    
+    //ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags  | ImGuiInputFlags_Tooltip);
+
+    return;
+}
+
+
+
+//  "UndoHandler"
+//
+void App::UndoHandler(void)
+{
+    return;
+}
+
+
+
+//  "RedoHandler"
+//
+void App::RedoHandler(void)
+{
+
+    return;
+}
+
+
+
+
+
+//  "QuerySignalStates"
+//
+inline void App::QuerySignalStates(void)
+{
+    using namespace     app;
+    CBSignalFlags       bits        = S.m_pending.exchange(CBSignalFlags_None, std::memory_order_acquire);
+    CBSignalFlags       bit         = bits & static_cast<CBSignalFlags>(-(int)bits);      //  Isolate LSB.
+    
+    
+    while ( bits != CBSignalFlags_None )
+    {
+        switch (bit)
+        {
+            //  1.  SIGINT / SIGTERM / CTRL_C_EVENT.
+            case CBSignalFlags_Shutdown :       {
+                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_Shutdown>.");
+                
+                S.m_running.store(false, std::memory_order_relaxed);
+                break;
+            }
+
+            //  2.  SIGHUP.
+            case CBSignalFlags_ReloadCfg :      {
+                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_ReloadCfg>.");
+                //  reload_config();
+                break;
+            }
+
+            //  3.  [OPERATOR NEW] / MALLOC FAILURE.
+            case CBSignalFlags_NewFailure :      {
+                CB_LOG(LogLevel::Critical, "Program recieved <CBSignalFlags_NewFailure>.");
+                S.m_running.store(false, std::memory_order_relaxed);
+                break;
+            }
+
+            //  3.  CUSTOM SIGNAL #1 [NOT IMPLEMENTED].
+            case CBSignalFlags_Custom1 :        {
+                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_Custom1> (How did you do this? This isn't even implemented yet?)");
+                break;
+            }
+
+            //  ?.  DEFAULT.
+            default:                            {
+                break;
+            }
+        }
+        bits &= ~bit;         // clear processed flag
+    }
+
+
+
+    return;
+}
+
+
+
+
+
+// *************************************************************************** //
+//
 //
 //
 //  3.4     ADDITIONAL APP FUNCTIONS...    | PRIVATE.
@@ -476,103 +635,28 @@ void App::RebuildDockLayout(void)
     return;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//  "KeyboardShortcutHandler"
+//  "OnDpiScaleChanged"
 //
-void App::KeyboardShortcutHandler(void)
+void App::OnDpiScaleChanged([[maybe_unused]] float xs, [[maybe_unused]] float ys)
 {
-    static ImGuiInputFlags          browser_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
-    static ImGuiInputFlags          detview_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
-    static ImGuiInputFlags          save_key_flags          = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
-    static ImGuiInputFlags          undo_key_flags          = ImGuiInputFlags_None;
-    static ImGuiInputFlags          redo_key_flags          = ImGuiInputFlags_None;
-    static const ImGuiKeyChord      BROWSER_KEY             = ImGuiKey_GraveAccent;
-    static const ImGuiKeyChord      DETVIEW_KEY             = ImGuiMod_Shift | ImGuiKey_GraveAccent; //ImGuiMod_Shift | ImGuiKey_Apostrophe;
-    static const ImGuiKeyChord      SAVE_KEY                = ImGuiMod_Ctrl | ImGuiKey_S;
-    static const ImGuiKeyChord      UNDO_KEY                = ImGuiMod_Ctrl | ImGuiKey_Z;
-    static const ImGuiKeyChord      REDO_KEY                = ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z;
-    //
-    [[maybe_unused]] ImGuiIO &      io                      = ImGui::GetIO();
+    [[maybe_unused]] ImGuiIO &          io          = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &       style       = ImGui::GetStyle();
+    float                               new_scale   = std::max(xs, ys);
     
-    
-    //  0.  UPDATE CURRENT APPLICATION STATE (NEEDED BEFORE WE SAVE/UNDO/REDO/ETC)...
-    S.update_current_task();
+    if ( std::fabs(new_scale - this->S.m_dpi_scale) < 0.01f )   return;     // Ignore noise / tiny changes
 
 
-    //  1.  HOTKEY TO OPEN/CLOSE BROWSER...
-    if ( ImGui::IsKeyChordPressed(BROWSER_KEY, browser_key_flags) )         { this->m_controlbar.toggle_sidebar(); }
-    
-    //  2.  HOTKEY TO OPEN/CLOSE DETAIL VIEW...
-    if ( ImGui::IsKeyChordPressed(DETVIEW_KEY, detview_key_flags) )         { this->m_detview.toggle(); }
-    
-    //  3.  SAVE HANDLER...
-    if ( ImGui::IsKeyChordPressed(SAVE_KEY, save_key_flags) )               { this->SaveHandler(); }
+    //  1.  Rescale all style metrics.
+    style.ScaleAllSizes(new_scale / this->S.m_dpi_scale);
 
-    //  4.  UNDO HANDLER...
-    if ( ImGui::IsKeyChordPressed(UNDO_KEY, undo_key_flags) )               { this->UndoHandler(); }
+    //  2.  Rebuild fonts.
+    //  io.Fonts->Clear();
+    //  io.Fonts->AddFontFromFileTTF("assets/Inter-Medium.ttf", 16.0f * new_scale);
 
-    //  5.  REDO HANDLER...
-    if ( ImGui::IsKeyChordPressed(REDO_KEY, redo_key_flags) )               { this->RedoHandler(); }
+    //  ImGui_ImplOpenGL3_DestroyFontsTexture();
+    //  ImGui_ImplOpenGL3_CreateFontsTexture();
 
-
-
-    return;
-}
-
-
-
-//  "SaveHandler"
-//
-void App::SaveHandler(void)
-{
-    static constexpr const char *   save_popup_id       = "S A V E   P R O G R A M  .  .  .";
-    static auto                     now                 = ImGui::GetTime();
-            
-
-        now = ImGui::GetTime();
-        
-        ImGui::OpenPopup(save_popup_id);
-    
-    
-    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    utl::Popup_Save(save_popup_id);
-    
-    //ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags  | ImGuiInputFlags_Tooltip);
-
-    return;
-}
-
-
-
-//  "UndoHandler"
-//
-void App::UndoHandler(void)
-{
-    return;
-}
-
-
-
-//  "RedoHandler"
-//
-void App::RedoHandler(void)
-{
-
+    this->S.m_dpi_scale = new_scale;             // store for next comparison
     return;
 }
 
@@ -580,59 +664,10 @@ void App::RedoHandler(void)
 
 
 
-//  "QuerySignalStates"
-//
-inline void App::QuerySignalStates(void)
-{
-    using namespace     app;
-    CBSignalFlags       bits        = S.m_pending.exchange(CBSignalFlags_None, std::memory_order_acquire);
-    CBSignalFlags       bit         = bits & static_cast<CBSignalFlags>(-(int)bits);      //  Isolate LSB.
-    
-    
-    while ( bits != CBSignalFlags_None )
-    {
-        switch (bit)
-        {
-            //  1.  SIGINT / SIGTERM / CTRL_C_EVENT.
-            case CBSignalFlags_Shutdown :       {
-                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_Shutdown>.");
-                
-                S.m_running.store(false, std::memory_order_relaxed);
-                break;
-            }
-
-            //  2.  SIGHUP.
-            case CBSignalFlags_ReloadCfg :      {
-                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_ReloadCfg>.");
-                //  reload_config();
-                break;
-            }
-
-            //  3.  [OPERATOR NEW] / MALLOC FAILURE.
-            case CBSignalFlags_NewFailure :      {
-                CB_LOG(LogLevel::Critical, "Program recieved <CBSignalFlags_NewFailure>.");
-                S.m_running.store(false, std::memory_order_relaxed);
-                break;
-            }
-
-            //  3.  CUSTOM SIGNAL #1 [NOT IMPLEMENTED].
-            case CBSignalFlags_Custom1 :        {
-                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_Custom1> (How did you do this? This isn't even implemented yet?)");
-                break;
-            }
-
-            //  ?.  DEFAULT.
-            default:                            {
-                break;
-            }
-        }
-        bits &= ~bit;         // clear processed flag
-    }
 
 
 
-    return;
-}
+
 
 
 

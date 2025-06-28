@@ -71,49 +71,80 @@
 // *************************************************************************** //
 // *************************************************************************** //
 
+/// @def        _CBAPP_MAIN_XCP_HEADER(HEADER, TYPE, DESC, TRACEBACK)
+/// @brief      Helper for consistent error messages with location info for usage in main function only.
+/// @note       USAGE:          XCP_HEADER(type, phase, details)
+///             EXPANDS TO:     "<HEADER><TYPE><DESC>[func: ; in file: , line ] Traceback: <TRACEBACK>"
+///
+#define _CBAPP_MAIN_XCP_HEADER(HEADER, TYPE, DESC, TRACEBACK)                                                                       \
+    do {                                                                                                                            \
+        std::cerr << HEADER << ":\n"                                                                                                \
+                  << "\tcaught "        << TYPE         << " exception "    << DESC        << ".\n"                                 \
+                  << "\t[ func: "       << __func__     << "; in file: "    << __FILE__    << ", line " << __LINE__ << " ]\n"       \
+                  << "traceback:\n\t"   << TRACEBACK    << '\n';                                                                    \
+    } while (false);
+    
+    
 //  "run_application"
 //      Client-code interface to creating and running the application...
 //
 int cb::run_application([[maybe_unused]] int argc, [[maybe_unused]] char ** argv)
 {
-    constexpr const char *  xcp_header              = "MAIN | ";
-    constexpr const char *  xcp_type_runtime        = "Caught std::runtime_error exception";
-    constexpr const char *  xcp_type_unknown        = "Caught std::runtime_error exception";
-    constexpr const char *  xcp_at_start            = "while initializing the application.\n";
-    constexpr const char *  xcp_at_runtime          = "during program runtime.\n";
+    constexpr const char *  XCP_HEADER              = "fatal error";
+    constexpr const char *  XCP_TYPE_RUNTIME        = "std::runtime_error";
+    constexpr const char *  XCP_TYPE_UNKNOWN        = "unknown-type";
+    constexpr const char *  XCP_AT_START            = "while initializing the application";
+    constexpr const char *  XCP_AT_RUNTIME          = "during program runtime";
+    constexpr const char *  XCP_UNKNOWN_TRACEBACK   = "<traceback unavailable>";
     int                     status                  = EXIT_SUCCESS;
     
-#ifdef __CBAPP_DEBUG__    //  WORK-AROUND / PATCH FOR XCODE ISSUE...
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+#ifdef __CBAPP_DEBUG__    //  WORK-AROUND/PATCH FOR ISSUE WHEN RUNNING THE PROGRAM INSIDE XCODE...
+    std::this_thread::sleep_for( std::chrono::seconds(1) );
 #endif
 
-    try {   //  1.     CREATE APPLICATION INSTANCE...
+    //  1.     CREATE APPLICATION INSTANCE...
+    try {
         App &   my_app      = App::instance();
         
-        try {   //  2.     ENTER APPLICATION MAIN-LOOP...
+        
+        
+        //  2.     ENTER APPLICATION MAIN-LOOP...
+        try {
             my_app.run();
         }
-        catch (const std::runtime_error & e) {      //  2.1     CATCH RUNTIME ERROR (PROGRAM WAS INITIALIZED CORRECTLY)...
-            std::cerr << xcp_header << xcp_type_runtime << xcp_at_runtime << "Traceback: " << e.what() << "\n";
+        //
+        //  2.1     CATCH RUNTIME ERROR (PROGRAM WAS INITIALIZED CORRECTLY)...
+        catch (const std::runtime_error & e) {
+            _CBAPP_MAIN_XCP_HEADER(XCP_HEADER, XCP_TYPE_RUNTIME, XCP_AT_RUNTIME, e.what())
             status = EXIT_FAILURE;
         }
-        catch (...) {                               //  2.2     CATCH OTHER EXCEPTIONS AND EXIT...
-            std::cerr << xcp_header << xcp_type_unknown << xcp_at_runtime;
+        //
+        //  2.2     CATCH OTHER EXCEPTIONS AND EXIT...
+        catch (...) {
+            _CBAPP_MAIN_XCP_HEADER(XCP_HEADER, XCP_TYPE_UNKNOWN, XCP_AT_RUNTIME, XCP_UNKNOWN_TRACEBACK)
             status = EXIT_FAILURE;
         }
     }
-    catch (const std::runtime_error & e) {      //  1.1     CATCH INITIALIZATION-TIME ERROR (DURING "DEAR IMGUI" INITIALIZATION)...
-        std::cerr << xcp_header << xcp_type_runtime << xcp_at_start << "Traceback: " << e.what() << "\n";
+    //
+    //
+    //
+    //  1.1     CATCH INITIALIZATION-TIME ERROR (DURING "DEAR IMGUI" INITIALIZATION)...
+    catch (const std::runtime_error & e) {
+        _CBAPP_MAIN_XCP_HEADER(XCP_HEADER, XCP_TYPE_RUNTIME, XCP_AT_START, e.what())
         status = EXIT_FAILURE;
     }
-    catch (...) {                               //  1.2.    CATCH OTHER EXCEPTIONS AND EXIT...
-        std::cerr << xcp_header << xcp_type_unknown << xcp_at_start;
+    //
+    //  1.2.    CATCH OTHER EXCEPTIONS AND EXIT...
+    catch (...) {
+        _CBAPP_MAIN_XCP_HEADER(XCP_HEADER, XCP_TYPE_UNKNOWN, XCP_AT_START, XCP_UNKNOWN_TRACEBACK)
         status = EXIT_FAILURE;
     }
+    
+    
     
     return status;
 }
-
+#undef _CBAPP_MAIN_XCP_HEADER
 
 
 

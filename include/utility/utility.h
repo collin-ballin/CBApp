@@ -153,7 +153,7 @@ std::tuple<int,int>             GetMonitorDimensions        (GLFWwindow * window
 
 [[nodiscard]]
 GLFWmonitor *                   get_current_monitor         (GLFWwindow * window);
-void                            set_window_scale            (GLFWwindow * window, const float scale);
+void                            SetGLFWWindowSize           (GLFWwindow * window, const float scale);
 void                            set_next_window_geometry    (GLFWwindow * glfw_window, float pos_x_frac, float pos_y_frac,
                                                                                        float width_frac, float height_frac);
 

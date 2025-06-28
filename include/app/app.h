@@ -151,35 +151,152 @@ public:
     //  1.2             PUBLIC API...
     // *************************************************************************** //
     void                        run                         (void);
-
-
-    //  1.3                     Deleted Operators, Functions, etc...
+    //
+    //                      DELETED OPERATORS AND FUNCTIONS:
                                 App                         (const App &    )               = delete;   //  Copy. Constructor.
                                 App                         (App &&         )               = delete;   //  Move Constructor.
     App &                       operator =                  (const App &    )               = delete;   //  Assgn. Operator.
     App &                       operator =                  (App &&         )               = delete;   //  Move-Assgn. Operator.
+    // *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END PUBLIC API.
     
+
     
+// *************************************************************************** //
+//
+//
+//      2.A             PROTECTED MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+//
+    // *************************************************************************** //
+    //      CLASS INITIALIZATIONS.          |   "init.cpp" ...
+    // *************************************************************************** //
+    //                      DEFAULT CTOR, DTOR, ETC:
+                                App                         (void);                     //  Def. Constructor.
+                                ~App                        (void);                     //  Def. Destructor.
+    //
+    //                      ADDITIONAL INIT. FUNCTIONS:
+    void                        init                        (void);                     //  [init.cpp].
+    void                        CreateContext               (void);                     //  [init.cpp].
+    void                        destroy                     (void);                     //  [init.cpp].
+    //
+    //                      SUB-CLASS INIT. FUNCTIONS:
+    void                        init_appstate               (void);                     //  [init.cpp].
+    void                        dispatch_window_function    (const Window & uuid);      //  [init.cpp].
+    //
+    //                      RUNTIME INIT. FUNCTIONS:
+    void                        load                        (void);                     //  [init.cpp].
+    bool                        init_asserts                (void);                     //  [init.cpp].
+    static void                 install_signal_handlers     (void);                     //  [handler.cpp].
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      MAIN GUI FUNCTIONS.             |   "app.cpp" ...
+    // *************************************************************************** //
+    //                      MAIN GUI FUNCTIONS:
+    void                        ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    //
+    //                      UTILITIES FOR MAIN GUI FUNCTIONS:
+    void                        run_IMPL                    (void);
+    void                        get_build_info              (void) const;
+    void                        get_info1                   (void) const;
+    void                        get_info2                   (void) const;
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      TOOLS / EXTRA APPLICATIONS.     |   "tools.cpp" ...
+    // *************************************************************************** //                           //  [main_application.cpp].
+    void                        ShowColorTool               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ColorShaderTool             (void);
+    void                        ColorMapCreatorTool         (void);
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      UTILITY FUNCTIONS.              |   "main_application.cpp" ...
+    // *************************************************************************** //
+    //                      APPLICATION SIGNAL & HOTKEY HANDLERS:
+    void                        KeyboardShortcutHandler     (void);
+    void                        SaveHandler                 (void);
+    void                        UndoHandler                 (void);
+    void                        RedoHandler                 (void);
+    void                        QuerySignalStates           (void);
+    //
+    //                      MISC. GUI FUNCTIONS:
+    void                        InitDockspace               (void);
+    void                        RebuildDockLayout           (void);
+    void                        OnDpiScaleChanged           ([[maybe_unused]] float xs, [[maybe_unused]] float ys);
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      TEMPORARY / TESTING FUNCTIONS.  |   "main_application.cpp" ...
+    // *************************************************************************** //
+    void                        PyStreamTest                (void);
+    void                        TestTabBar                  (void);
+    //
+    void                        ShowImGuiMetricsWindow      ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImGuiStyleEditor        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    //
+    void                        ShowImPlotStyleEditor       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImPlotMetricsWindow     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      PRIVATE MEMBER FUNCTIONS.       |   "main_application.cpp" ...
+    // *************************************************************************** //
+private:
+    void                        ImPlot_Testing0             (void);
+    void                        ImPlot_Testing0ALT          (void);
+    void                        Test_Browser                (void);
+    void                        Test_Editor                 (void);
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END MEMBER FUNCTIONS.
+
+
     
+// *************************************************************************** //
+//
+//
+//  2.A                     PROTECTED DATA-MEMBERS...
 // *************************************************************************** //
 // *************************************************************************** //
 protected:
-    //  2.A                     PROTECTED DATA-MEMBERS...
     // *************************************************************************** //
-    //                          1.  BOOLEANS...
-    //                          2.  APPEARANCE...
-    //                          4.  MISC INFORMATION...
-    //                          5.  IMPORTANT VARIABLES...
-    
-    //                          6.  DELAGATOR CLASSES...
+    //      DELAGATOR CLASSES.              |
+    // *************************************************************************** //
     app::AppState &             CBAPP_STATE_NAME                = app::AppState::instance(); //app::AppState();
     MenuBar                     m_menubar;
     ControlBar                  m_controlbar;
     Browser                     m_browser;
     DetailView                  m_detview;
-    
-    
-    //                          9.  APPLICATION SUB-CLASSES...
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      APPLICATION SUB-CLASSES.        |
+    // *************************************************************************** //
     CCounterApp                 m_counter_app;
     EditorApp                   m_editor_app;
     GraphApp                    m_graph_app;
@@ -189,85 +306,14 @@ protected:
     //
     //
     cb::Editor                  m_editor;
-    
-    
-    //  2.B             PROTECTED MEMBER FUNCTIONS...
-    // *************************************************************************** //
-    
-    //                          Class Initializations.              [init.cpp]...
-    //                  1A.     Default Constructor, Destructor, etc...
-                                App                         (void);                     //  Def. Constructor.
-                                ~App                        (void);                     //  Def. Destructor.
-    //
-    void                        init                        (void);                     //  [init.cpp].
-    void                        CreateContext               (void);                     //  [init.cpp].
-    void                        destroy                     (void);                     //  [init.cpp].
-    //                  1B.
-    void                        init_appstate               (void);                     //  [init.cpp].
-    void                        dispatch_window_function    (const Window & uuid);      //  [init.cpp].
-    //                  1C.
-    void                        load                        (void);                     //  [init.cpp].
-    bool                        init_asserts                (void);                     //  [init.cpp].
-    static void                 install_signal_handlers     (void);                     //  [handler.cpp].
-    
-    
-    //                  2C.1    Main GUI Functions.                 [app.cpp]...
-    void                        ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                        ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                        ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    //
-    //                  2C.2    Utilities for Main GUI Functions.   [app.cpp]...
-    void                        run_IMPL                    (void);
-    void                        get_build_info              (void) const;
-    void                        get_info1                   (void) const;
-    void                        get_info2                   (void) const;
-    
-    
-    //                  2D.1    Additional Tools / Applications.    [tools.cpp]...                                //  [main_application.cpp].
-    void                        ShowColorTool               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                        ColorShaderTool             (void);
-    void                        ColorMapCreatorTool         (void);
-    //
-    //                  2D.2    Utility Functions.                  [main_application.cpp]...
-    void                        KeyboardShortcutHandler     (void);
-    void                        SaveHandler                 (void);
-    void                        UndoHandler                 (void);
-    void                        RedoHandler                 (void);
-    void                        QuerySignalStates           (void);
-    //
-    void                        InitDockspace               (void);
-    void                        RebuildDockLayout           (void);
-    
-    
-    //                  2E.1    Testing / Temporary Functions.
-    void                        PyStreamTest                (void);
-    void                        TestTabBar                  (void);
-    //
-    //
-    void                        ShowImGuiMetricsWindow      ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                        ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                        ShowImGuiStyleEditor        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    //
-    void                        ShowImPlotStyleEditor       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                        ShowImPlotMetricsWindow     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                        ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    
-    
-    
+//
+//
+//
 // *************************************************************************** //
-// *************************************************************************** //
-private:
-    //  3.              PRIVATE MEMBER FUNCTIONS...
-    // *************************************************************************** //
-    
-    //                  3.1     Primary GUI Functions.      [main_application.cpp]...
-    void                        ImPlot_Testing0             (void);
-    void                        ImPlot_Testing0ALT          (void);
-    void                        Test_Browser                (void);
-    void                        Test_Editor                 (void);
-    
-    //                  3.2     Misc. GUI Functions.        [temp.cpp]...
-    //                                  ...
+// *************************************************************************** //   END DATA-MEMBERS
+
+
+
 
 
 

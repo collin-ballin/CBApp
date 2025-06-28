@@ -82,60 +82,76 @@ class AppState
 // *************************************************************************** //
 // *************************************************************************** //
 public:
+// *************************************************************************** //
+//
+//
+//      1.  PUBLIC MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+//
     // *************************************************************************** //
-    //  1.1             PUBLIC API...
+    //      CLASS INITIALIZATIONS.          |   "init.cpp" ...
     // *************************************************************************** //
     
-    //  "instance"                      | Meyers-Style Singleton.       Created on first call, once.
+    //  "instance"                          | Meyers-Style Singleton.       Created on first call, once.
     static inline AppState &            instance                    (void)
     { static AppState   single = AppState();     return single; }
-                                        
-    //  1.2             Deleted Operators, Functions, etc...
+    //
+    //                      DELETED OPERATORS AND FUNCTIONS:
                                         AppState                    (const AppState &   )       = delete;   //  Copy. Constructor.
                                         AppState                    (AppState &&        )       = delete;   //  Move Constructor.
     AppState &                          operator =                  (const AppState &   )       = delete;   //  Assgn. Operator.
     AppState &                          operator =                  (AppState &&        )       = delete;   //  Move-Assgn. Operator.
     
-    
-// *************************************************************************** //
-// *************************************************************************** //
-protected:
-// *************************************************************************** //
-//  1.2     PRIVATE STRUCT INITIALIZATION FUNCTIONS...
-// *************************************************************************** //
-                                        AppState                    (void);                 //  Default Constructor.
-                                        ~AppState                   (void);                 //  Default Destructor.
-    
-    
-// *************************************************************************** //
-// *************************************************************************** //
-//
-//
-//
-public:
-    // *************************************************************************** //
-    //  1.3     STRUCT UTILITY FUNCTIONS...
     // *************************************************************************** //
     //
-    //                      1.3A    APPEARANCE HELPER FUNCTIONS:
+    //
+    //
+    // *************************************************************************** //
+    //  1.2     PRIVATE STRUCT INITIALIZATION FUNCTIONS...
+    // *************************************************************************** //
+protected:
+                                        AppState                    (void);                 //  Default Constructor.
+                                        ~AppState                   (void);                 //  Default Destructor.
+public:
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //  1.3A    APPEARANCE HELPER FUNCTIONS...
+    // *************************************************************************** //
+    void                                SetAppColorStyle            (const AppColorStyle_t);
+    void                                SetPlotColorStyle           (const PlotColorStyle_t);
     void                                SetDarkMode                 (void);
     void                                SetLightMode                (void);
     void                                LoadCustomColorMaps         (void);
+    // *************************************************************************** //
     //
-    //                      1.3B    APPLICATION OPERATION HELPER FUNCTIONS:
+    //
+    //
+    // *************************************************************************** //
+    //  1.3B    APPLICATION OPERATION HELPER FUNCTIONS...
+    // *************************************************************************** //
     void                                DockAtHome                  (const Window &);
     void                                DockAtHome                  (const char *);
     void                                DockAtDetView               (const Window &);
     void                                DockAtDetView               (const char *);
     void                                PushFont                    ([[maybe_unused]] const Font & );
     void                                PopFont                     (void);
+    // *************************************************************************** //
     //
-    //                      1.3C    MISC. HELPER FUNCTIONS:
+    //
+    //
+    // *************************************************************************** //
+    //  1.3C    MISC. HELPER FUNCTIONS...
+    // *************************************************************************** //
     void                                log_startup_info            (void) noexcept;
     void                                log_shutdown_info           (void) noexcept;
-    
-    
-    
+    // *************************************************************************** //
+    //
+    //
+    //
     // *************************************************************************** //
     //  1.4     INLINE HELPER FUNCTIONS...
     // *************************************************************************** //
@@ -170,13 +186,21 @@ public:
         
         return;
     }
-    
+//
+//
+//
+// *************************************************************************** //
+//
+//
+//      2.  CLASS DATA-MEMBER...
+// *************************************************************************** //
+// *************************************************************************** //
 
     // *************************************************************************** //
-    //  2.               CLASS DATA MEMBERS...
+    //  2.1             CLASS DATA MEMBERS...
     // *************************************************************************** //
-    
-    //  0.      GROUPS / SUB-CLASSES OF "APPSTATE"...
+    //
+    //                      GROUPS / SUB-CLASSES OF "APPSTATE":
     utl::Logger &                       m_logger;                                                   //  1.      LOGGER...
     ImWindows                           m_windows;                                                  //  2.      APPLICATION WINDOW STATE...
     std::vector<WinInfo *>              m_detview_windows           = {};                           //  2.1     WINDOWS INSIDE DETAIL VIEW...
@@ -185,84 +209,110 @@ public:
                                         m_notes                     = {};
     Timestamp_t                         m_timestamp_spawn;
     Timestamp_t                         m_timestamp_start;
+    // *************************************************************************** //
     //
-    std::array< std::string *, static_cast<size_t>(Applet_t::Count) >
-                                        m_applets;
+    //
+    //
+    // *************************************************************************** //
+    //  2.2             SUB-STATE INFORMATION...
+    // *************************************************************************** //
     Applet                              m_current_task;
+    AppColorStyle_t                     m_current_app_color_style       = AppColorStyle_t::Default;
+    PlotColorStyle_t                    m_current_plot_color_style      = PlotColorStyle_t::Default;
     
-    
-    
-    //  1.      STATIC AND CONSTEXPR VARIABLES...
+    // *************************************************************************** //
     //
-    //          1.  Window Variables:
-    //              1.1     ALL Windows.
+    //
+    //
+    // *************************************************************************** //
+    //  2.3             REFERENCE TO CONSTEXPR GLOBAL ARRAYS...
+    // *************************************************************************** //
+    std::array< std::string *, static_cast<size_t>(Applet_t::Count) >       //  No CONSTEXPR arr for this bc I want it to copy the
+                                        m_applets                       = {};   //  window names EXACTLY in case we ever rename them.
+    static constexpr auto &             m_app_color_style_names         = APPLICATION_COLOR_STYLE_NAMES;
+    static constexpr auto &             m_plot_color_style_names        = APPLICATION_PLOT_COLOR_STYLE_NAMES;
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //  2.4             STATIC AND CONSTEXPR VARIABLES...
+    // *************************************************************************** //
+    //                      1.      Window Variables:
+    //                      1.1         ALL Windows.
     static constexpr size_t             ms_WINDOWS_BEGIN            = static_cast<size_t>(Window::Dockspace);
     static constexpr size_t             ms_RHS_WINDOWS_BEGIN        = static_cast<size_t>(Window::MainApp);
     static constexpr size_t             ms_WINDOWS_END              = static_cast<size_t>(Window::Count);
     //
-    //              1.2     Main Application Windows.
+    //                      1.2         Main Application Windows.
     static constexpr size_t             ms_APP_WINDOWS_BEGIN        = static_cast<size_t>(Window::CCounterApp);
     static constexpr size_t             ms_APP_WINDOWS_END          = static_cast<size_t>(Window::ImGuiStyleEditor);
     //
-    //              1.3     Basic Tool Windows.
+    //                      1.3         Basic Tool Windows.
     static constexpr size_t             ms_TOOL_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiStyleEditor);
     static constexpr size_t             ms_TOOL_WINDOWS_END         = static_cast<size_t>(Window::ColorTool);
     //
-    //              1.4     "MY Tools" / Custom Tools Windows.
+    //                      1.4         "MY Tools" / Custom Tools Windows.
     static constexpr size_t             ms_MY_TOOLS_WINDOWS_BEGIN   = static_cast<size_t>(Window::ColorTool);
     static constexpr size_t             ms_MY_TOOLS_WINDOWS_END     = static_cast<size_t>(Window::ImGuiDemo);
     //
-    //              1.5     Demo Windows.
+    //                      1.5         Demo Windows.
     static constexpr size_t             ms_DEMO_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiDemo);
     static constexpr size_t             ms_DEMO_WINDOWS_END         = static_cast<size_t>(Window::Count);
     
-    
-    //  2.      MISC. INFORMATION...
-    bool                                m_enable_vsync              = true;
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //  2.5             MISC. INFORMATION...
+    // *************************************************************************** //
     const char *                        m_glsl_version              = nullptr;
     LogLevel                            m_LogLevel                  = LogLevel::Debug;
-    
-    
-    
-    //  3.      GLFW AND HOST WINDOW STUFF...
+    //
+    //                      GLFW AND HOST WINDOW STUFF:
     ImGuiConfigFlags                    m_io_flags                  = ImGuiConfigFlags_None | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
     ImGuiViewport *                     m_main_viewport             = nullptr;
     GLFWwindow *                        m_glfw_window               = nullptr;
-    
-    
-    //  4.      COLORS...
+    int                                 m_glfw_interval             = 1;    //  Use 1 for VSYNC ENABLED.
+    //
+    //                      COLORS:
     ImVec4                              m_glfw_bg                   = cb::app::DEF_ROOT_WIN_BG;
     ImVec4                              m_dock_bg                   = cb::app::DEF_INVISIBLE_COLOR;
     ImVec4                              m_main_bg                   = cb::app::DEF_MAIN_WIN_BG;
     //
     ImVec4                              m_controlbar_bg             = cb::app::DEF_CONTROLBAR_WIN_BG;
     //
-    //                              Browser Colors:
+    //                      BROWSER COLORS:
     ImVec4                              m_browser_bg                = cb::app::DEF_BROWSER_WIN_BG;
     ImVec4                              m_browser_left_bg           = ImVec4(0.142f,    0.142f,     0.142f,     1.000f);//  #242424     (5% shade of browser bg)
     ImVec4                              m_browser_right_bg          = ImVec4(0.242f,    0.242f,     0.242f,     1.000f);//  ##3E3E3E    (5% tint of browser bg)
     float                               m_browser_child_rounding    = 8.0f;
     //
-    //                              DetailView Colors:
+    //                      DETAILVIEW COLORS:
     ImVec4                              m_detview_bg                = cb::app::DEF_DETVIEW_WIN_BG;
     
-    
-    //  5.      DIMENSIONS...
+    // *************************************************************************** //
     //
-    //              6.1     System.
+    //
+    //
+    // *************************************************************************** //
+    //  2.6             DIMENSIONS...
+    // *************************************************************************** //
+    //
+    //                      SYSTEM:
     int                                 m_system_w                  = -1;       //  Sys. Display Dims.
     int                                 m_system_h                  = -1;
     float                               m_dpi_scale                 = 1.0f;
     float                               m_dpi_fontscale             = 1.0f;
     //
-    //              6.2     Main UI.
-    //                              Main Window Dims.
+    //                      MAIN UI:
     int                                 m_window_w                  = 1280;
     int                                 m_window_h                  = 720;
-    
-    
-    //  6.      BOOLEANS...
     //
+    //                      BOOLEANS:
     std::atomic<CBSignalFlags>          m_pending                   = { CBSignalFlags_None };
     std::atomic<bool>                   m_running                   = { true };
     bool                                m_rebuild_dockspace         = false;
@@ -273,10 +323,15 @@ public:
     //
     bool                                m_show_system_preferences   = false;
     
-    
-    //  7.      SPECIFICS...
+    // *************************************************************************** //
     //
-    //              8.1     Main Dockingspace.
+    //
+    //
+    // *************************************************************************** //
+    //  2.7             SPECIFICS...
+    // *************************************************************************** //
+    //
+    //                      MAIN DOCKINGSPACE:
     const char *                        m_dock_name                 = "##RootDockspace";
     ImGuiID                             m_dockspace_id              = 0;
     //
@@ -284,29 +339,28 @@ public:
     ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_CentralNode | ImGuiDockNodeFlags_NoCloseButton; //ImGuiDockNodeFlags_NoDocking; ImGuiDockNodeFlags_NoDockingOverMe
     ImGuiDockNode *                     m_main_node                 = nullptr;
     //
-    //              8.2     ControlBar.
+    //                      CONTROL BAR:
     ImGuiID                             m_controlbar_dock_id        = 0;
     ImGuiDockNodeFlags                  m_controlbar_node_flags     = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_HiddenTabBar | ImGuiDockNodeFlags_NoResize; //ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
     ImGuiDockNode *                     m_controlbar_node           = nullptr;
     //
     float                               m_controlbar_ratio          = 0.02;
     //
-    //              8.3     Sidebar.
+    //                      BROWSER / SIDEBAR:
     ImGuiID                             m_browser_dock_id           = 0;
     ImGuiDockNodeFlags                  m_browser_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
     ImGuiDockNode *                     m_browser_node              = nullptr;
     //
     float                               m_browser_ratio             = app::DEF_BROWSER_RATIO;
     //
-    //              8.4     DetView.
+    //                      DETAIL VIEW:
     ImGuiID                             m_detview_dock_id           = 0;
     ImGuiDockNodeFlags                  m_detview_node_flags        = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
     ImGuiDockNode *                     m_detview_node              = nullptr;
     //
     float                               m_detview_ratio             = 0.45f;
     //
-    //
-    //              9.1     DETVIEW DOCKSPACE.
+    //                      DETAIL VIEW DOCKSPACE:
     static constexpr const char *       m_detview_dockspace_uuid    = "##DetailViewDockspace";
     ImGuiID                             m_detview_dockspace_id      = 0;
     ImGuiDockNodeFlags                  m_detview_dockspace_flags   = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoCloseButton;// | ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_NoSplit

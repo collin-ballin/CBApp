@@ -25,14 +25,14 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 //  "find_vertex"
 //
-Editor::Pos * Editor::find_vertex(std::vector<Pos>& verts, uint32_t id) {
+Editor::Vertex * Editor::find_vertex(std::vector<Vertex>& verts, uint32_t id) {
     for (auto & v : verts) if (v.id == id) return &v; return nullptr;
 }
 
 
 //  "find_vertex"
 //
-const Editor::Pos * Editor::find_vertex(const std::vector<Pos>& verts, uint32_t id) const {
+const Editor::Vertex * Editor::find_vertex(const std::vector<Vertex>& verts, uint32_t id) const {
     for (auto & v : verts) if (v.id == id) return &v; return nullptr;
 }
 
@@ -92,7 +92,7 @@ void Editor::_erase_vertex_and_fix_paths(uint32_t vid)
 {
     /* a) erase vertex record ------------------------------------------- */
     m_vertices.erase(std::remove_if(m_vertices.begin(), m_vertices.end(),
-                   [vid](const Pos& v){ return v.id == vid; }),
+                   [vid](const Vertex& v){ return v.id == vid; }),
                    m_vertices.end());
 
     /* b) remove this ID from every path; drop paths < 2 verts ---------- */
@@ -284,7 +284,7 @@ void Editor::_update_lasso(const Interaction & it)
         /* ---------- Points ---------- */
         for (size_t i = 0; i < m_points.size(); ++i)
         {
-            const Pos * v = find_vertex(m_vertices, m_points[i].v);
+            const Vertex * v = find_vertex(m_vertices, m_points[i].v);
             if (!v) continue;
             bool inside = (v->x >= tl_w.x && v->x <= br_w.x &&
                            v->y >= tl_w.y && v->y <= br_w.y);
@@ -328,8 +328,8 @@ void Editor::_update_lasso(const Interaction & it)
         
         for (size_t i = 0; i < m_lines.size(); ++i)
         {
-            const Pos* a = find_vertex(m_vertices, m_lines[i].a);
-            const Pos* b = find_vertex(m_vertices, m_lines[i].b);
+            const Vertex* a = find_vertex(m_vertices, m_lines[i].a);
+            const Vertex* b = find_vertex(m_vertices, m_lines[i].b);
             if (!a || !b) continue;
 
             if (!seg_rect_intersect({a->x,a->y}, {b->x,b->y}, tl_w, br_w))
@@ -354,8 +354,8 @@ void Editor::_update_lasso(const Interaction & it)
             bool intersects = false;
             for (size_t si = 0; si < N - 1 + (p.closed ? 1 : 0); ++si)
             {
-                const Pos* a = find_vertex(m_vertices, p.verts[si]);
-                const Pos* b = find_vertex(m_vertices, p.verts[(si+1)%N]);
+                const Vertex* a = find_vertex(m_vertices, p.verts[si]);
+                const Vertex* b = find_vertex(m_vertices, p.verts[(si+1)%N]);
                 if (!a || !b) continue;
                 if (seg_rect_intersect({a->x,a->y}, {b->x,b->y}, tl_w, br_w))
                 { intersects = true; break; }

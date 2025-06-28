@@ -134,7 +134,10 @@ void CCounterApp::display_plots(void)
 void CCounterApp::display_controls(void)
 {
     //  DEFINE MISC. VARIABLES...
-    static  ImGuiTabItemFlags       SPACING_FLAGS   = ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoTooltip | ImGuiTabItemFlags_NoReorder;
+    const ImGuiWindowFlags          CHILD_FLAGS     = ImGuiWindowFlags_AlwaysVerticalScrollbar;
+    
+    
+    this->_draw_control_bar();
     
     
     //  BEGIN THE TAB BAR...
@@ -143,21 +146,21 @@ void CCounterApp::display_controls(void)
         //      2.3     DRAW EACH OF THE TAB ITEMS...
         for (auto & tab : this->ms_CTRL_TABS)
         {
-            //  PLACE TAB-BAR ITEM SPACING...
-            ImGui::PushID("##CtrlTabbarSpacing");
-            ImGui::TabItemSpacing("##CtrlTabbarSpacing", SPACING_FLAGS, ms_SPACING);
-            ImGui::PopID();
         
             //  PLACING EACH TAB...
             if ( ImGui::BeginTabItem( tab.get_uuid(), (tab.no_close) ? nullptr : &tab.open, tab.flags ) )
             {
-                if (tab.render_fn) {
-                    tab.render_fn( tab.get_uuid(), &tab.open, tab.flags );
-                }
-                else {
-                    this->DefaultCtrlTabRenderFunc(tab.get_uuid(), &tab.open, tab.flags);
-                }
+                ImGui::BeginChild("##Control_TabBar_ChildWindow", ImVec2(0,0), /*border=*/false, CHILD_FLAGS);
+            
+                    if (tab.render_fn) {
+                        tab.render_fn( tab.get_uuid(), &tab.open, tab.flags );
+                    }
+                    else {
+                        this->DefaultCtrlTabRenderFunc(tab.get_uuid(), &tab.open, tab.flags);
+                    }
                 
+                
+            ImGui::EndChild();          // <- scrollable
             ImGui::EndTabItem();
             }// END "BeginTabItem".
         
@@ -169,6 +172,214 @@ void CCounterApp::display_controls(void)
 
     return;
 }
+
+
+
+
+// *************************************************************************** //
+//
+//
+//  ?.      NEW...
+// *************************************************************************** //
+// *************************************************************************** //
+
+void CCounterApp::_draw_control_bar(void)
+{
+    static constexpr const char *   uuid            = "##Editor_Controls_Columns";
+    static constexpr int            NC              = 8;
+    static ImGuiOldColumnFlags      COLUMN_FLAGS    = ImGuiOldColumnFlags_None;
+    static ImVec2                   WIDGET_SIZE     = ImVec2( -1,  32 );
+    static ImVec2                   BUTTON_SIZE     = ImVec2( 32,   WIDGET_SIZE.y );
+    //
+    constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
+    //int                             mode_i          = static_cast<int>(m_mode);
+    
+    
+    const auto                      Label           = [this](const char * text)
+    { S.PushFont(Font::Small); ImGui::TextUnformatted(text); S.PopFont(); };
+
+   
+   
+    //  BEGIN COLUMNS...
+    //
+    ImGui::Columns(NC, uuid, COLUMN_FLAGS);
+    //
+    //
+    //
+        //  1.  BEGIN PYTHON SCRIPT...
+        if (!m_process_running)
+        {
+            if ( ImGui::Button("Start Process") ) {
+                m_process_running         = m_python.start();
+                if ( !m_process_running )       { ImGui::OpenPopup("launch_error"); }
+                else                            { m_max_counts[0] = 0.f; } // reset stats
+            }
+        }
+        //  CASE 2 :    SCRIPT  **IS**  RUNNING...
+        else
+        {
+            ImGui::PushStyleColor(ImGuiCol_Button,          ImVec4(0.800f, 0.216f, 0.180f, 1.00f) );
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   app::DEF_APPLE_RED );
+            if ( ImGui::Button("Stop Process") ) {
+                m_python.stop();
+                m_process_running = false;
+            }
+            ImGui::PopStyleColor(2);
+        }
+        
+        
+        
+        
+        //  2.  Plot Crawling.
+        ImGui::NextColumn();    Label("Plot Crawling:");
+        ImGui::Checkbox("##CCounterControls_PlotCrawling",              &m_smooth_scroll);
+    
+    
+    
+        
+        //  3.  Mutex Counts.
+        ImGui::NextColumn();    Label("Use Mutex Counts:");
+        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::Checkbox("##CCounterControls_UseMutexCounts",           &m_use_mutex_count);
+            
+                
+        
+        
+        //  4.  Reset Averages.
+        ImGui::NextColumn();
+        if ( ImGui::Button("Reset Averages") ) {
+            for (auto & vec : m_avg_counts)
+                vec.clear(); //b.Erase();
+        }
+        
+        
+        
+        //  5.  Clear Plot.
+        ImGui::NextColumn();
+        if ( ImGui::Button("Clear Plot") ) {
+            for (auto & b : m_buffers) {
+                b.clear(); //b.Erase();
+            }
+            std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.f);
+        }
+    
+    
+
+    //
+    //
+    //if ( ImGui::Button("Reset Averages") ) {
+    //    for (auto & vec : m_avg_counts)
+    //        vec.clear(); //b.Erase();
+    //}
+    //
+    //ImGui::SameLine();
+    //
+    //if ( ImGui::Button("Reset Max") )
+    //    std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.f);
+    //
+    //ImGui::SameLine();
+    //ImGui::Checkbox("Plot Crawling", &m_smooth_scroll);
+                
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+/*
+        //  2.  GRID VISIBILITY...
+        ImGui::NextColumn();
+        ImGui::Text("Show Grid:");
+        //
+        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::Checkbox("##Editor_Controls_ShowGrid",           &m_grid.visible);
+
+
+
+        //  3.  SNAP-TO-GRID...
+        ImGui::NextColumn();
+        ImGui::Text("Snap-To-Grid:");
+        //
+        ImGui::Checkbox("##Editor_Controls_SnapToGrid",         &m_grid.snap_on);
+        
+        
+        
+        //  4.  GRID-LINE DENSITY...
+        ImGui::NextColumn();
+        ImGui::Text("Grid Density:");
+        //
+        //
+        //
+        if ( ImGui::ArrowButtonEx("##Editor_Controls_GridDensityDown",      ImGuiDir_Down,
+                          BUTTON_SIZE,                                      BUTTON_FLAGS) )
+        {
+            m_grid.snap_step *= 2.f;
+        }
+        //
+        ImGui::SameLine(0.0f, 0.0f);
+        //
+        if ( ImGui::ArrowButtonEx("##Editor_Controls_GridDensityUp",        ImGuiDir_Up,
+                          BUTTON_SIZE,                                      BUTTON_FLAGS) )
+        {
+            m_grid.snap_step = std::max(ms_GRID_STEP_MIN, m_grid.snap_step * 0.5f);
+        }
+        //
+        ImGui::SameLine();
+        //
+        ImGui::Text("(%.1f)", m_grid.snap_step);
+
+
+
+        //  5.  CANVAS SETTINGS...
+        ImGui::NextColumn();
+        //ImGui::Text("##Editor_Controls_CanvasSettings");
+        ImGui::Text("");
+        //
+        //
+        if ( ImGui::Button("Canvas Settings", WIDGET_SIZE) ) {
+            ImGui::OpenPopup("Editor_CanvasSettingsPopup");
+        }
+        if ( ImGui::BeginPopup("Editor_CanvasSettingsPopup") ) {
+            this->_display_canvas_settings();
+            ImGui::EndPopup();
+        }
+
+
+        
+        //  6.  EMPTY SPACES FOR LATER...
+        for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
+            ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
+        }
+
+
+
+        //  X.  CLEAR ALL...
+        //ImGui::NextColumn();
+        //ImGui::TextUnformatted("##Editor_Controls_ClearCanvas");
+        ImGui::Text("");
+        if ( ImGui::Button("Clear", WIDGET_SIZE) ) {
+            _clear_all();
+        }
+    */
+    //
+    //
+    //
+    ImGui::Columns(1);      //  END COLUMNS...
+    
+    
+    return;
+}
+
+
 
 
 

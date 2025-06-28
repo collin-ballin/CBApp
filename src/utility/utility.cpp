@@ -155,9 +155,9 @@ void glfw_error_callback(int error, const char * description)
 }
 
 
-//  "set_window_scale"
+//  "SetGLFWWindowSize"
 //
-void set_window_scale(GLFWwindow * window, const float scale)
+void SetGLFWWindowSize(GLFWwindow * window, const float scale)
 {
     GLFWmonitor *           monitor         = get_current_monitor(window);
     const GLFWvidmode *     mode            = glfwGetVideoMode(monitor);

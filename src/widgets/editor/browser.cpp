@@ -27,24 +27,24 @@ namespace {  //     BEGINNING NAMESPACE "cb"...
 
 
 // Return true if a line already connects point indices a and b (order‑agnostic).
-static bool line_exists(const std::vector<Line>& lines, size_t a, size_t b)
+static bool line_exists(const std::vector<Editor::Line>& lines, size_t a, size_t b)
 {
-    for (const Line& ln : lines)
+    for (const Editor::Line& ln : lines)
         if ((ln.a == a && ln.b == b) || (ln.a == b && ln.b == a))
             return true;
     return false;
 }
 
 // Disconnect every edge that references the given point index.
-static void detach_point(std::vector<Line>& lines, size_t pi)
+static void detach_point(std::vector<Editor::Line>& lines, size_t pi)
 {
     lines.erase(std::remove_if(lines.begin(), lines.end(),
-                 [pi](const Line& ln){ return ln.a == pi || ln.b == pi; }),
+                               [pi](const Editor::Line& ln){ return ln.a == pi || ln.b == pi; }),
                  lines.end());
 }
 
 // Return index into m_points for a given vertex‑id (or -1 if not found)
-static int point_index_from_vid(const std::vector<Point>& pts, uint32_t vid)
+static int point_index_from_vid(const std::vector<Editor::Point>& pts, uint32_t vid)
 {
     for (int i = 0; i < static_cast<int>(pts.size()); ++i)
         if (pts[i].v == vid) return i;
@@ -316,7 +316,7 @@ void Editor::_draw_vertex_inspector_subcolumn(Path & path)
     {
         v->out_handle.x     = snap(v->out_handle.x);
         v->out_handle.y     = snap(v->out_handle.y);
-        mirror_handles(*v, /*dragging_out=*/true);  // keep smooth/symmetric rule
+        mirror_handles<VertexID>(*v, /*dragging_out=*/true);  // keep smooth/symmetric rule
         dirty               = false;
     }
     //
@@ -328,7 +328,7 @@ void Editor::_draw_vertex_inspector_subcolumn(Path & path)
     if ( dirty && !ImGui::IsItemActive() ) {
         v->in_handle.x      = snap(v->in_handle.x);
         v->in_handle.y      = snap(v->in_handle.y);
-        mirror_handles(*v, /*dragging_out=*/false);
+        mirror_handles<VertexID>(*v, /*dragging_out=*/false);
         dirty               = false;
     }
 

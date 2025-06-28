@@ -100,37 +100,55 @@ void App::init(void)
 //
 void App::CreateContext(void)
 {
-    //  1.  CREATE A WINDOW WITH GRAPHICS CONTEXT...
-    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER,    GLFW_TRUE);
+    //  0.1     SET GLFW WINDOW SETTINGS... [PRE].
+    glfwWindowHint(     GLFW_SCALE_TO_MONITOR,              GLFW_TRUE);       // Honor per‑monitor content scaling.
+    glfwWindowHint(     GLFW_TRANSPARENT_FRAMEBUFFER,       GLFW_TRUE);
     //glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER,   GLFW_TRUE);
     
-    //  this->S.m_glfw_window = glfwCreateWindow(cb::app::DEF_ROOT_WIN_WIDTH, cb::app::DEF_ROOT_WIN_HEIGHT, cb::app::DEF_ROOT_WIN_TITLE, nullptr, nullptr);
-    this->S.m_glfw_window = utl::CreateGLFWWindow(this->S.m_window_w, this->S.m_window_h, this->S.m_windows[Window::Host].uuid.c_str(), nullptr, nullptr);
     
-    if (!this->S.m_glfw_window) {
-        throw std::runtime_error(cb::error::GLFW_WINDOW_INIT_ERROR);
-    }
+    //  0.2     CREATE A WINDOW WITH GRAPHICS CONTEXT...
+    this->S.m_glfw_window = utl::CreateGLFWWindow(this->S.m_window_w, this->S.m_window_h, this->S.m_windows[Window::Host].uuid.c_str(), nullptr, nullptr);
+    //
+    //      CASE 1  : FAILURE TO CREATE GLFW WINDOW...
+    if (!this->S.m_glfw_window)     { throw std::runtime_error(cb::error::GLFW_WINDOW_INIT_ERROR); }
+        
+    
+    
+    //  0.3     SET GLFW WINDOW SETTINGS... [POST].
+    glfwSetWindowUserPointer(this->S.m_glfw_window, this);          //    Allow callbacks to reach this App instance.
+    glfwSetWindowContentScaleCallback(this->S.m_glfw_window,        //    Set callback for system DPI change.
+        [](GLFWwindow * win, float xs, float ys)
+        {
+            if ( auto * self = static_cast<App*>(glfwGetWindowUserPointer(win)) )
+                self->OnDpiScaleChanged(xs, ys);    // treat xs==ys; ignore ys
+        }
+    );
+        
+        
         
     //utl::SetGLFWWindowLocation(this->S.m_glfw_window, utl::WindowLocation::Center, cb::app::DEF_ROOT_WINDOW_SCALE);
-    utl::set_window_scale(this->S.m_glfw_window, cb::app::DEF_ROOT_WINDOW_SCALE);
+    utl::SetGLFWWindowSize(this->S.m_glfw_window, cb::app::DEF_ROOT_WINDOW_SCALE);
+    
     
     glfwMakeContextCurrent(this->S.m_glfw_window);
-    glfwSwapInterval(1);        // Enable vsync
+    glfwSwapInterval(this->S.m_glfw_interval);        // Enable vsync
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
-    //  2.  SETUP "Dear ImGui" CONTEXT...
+
+    //  2.  SETUP "Dear ImGui", "ImPlot", etc, CONTEXTS...
     IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImPlot::CreateContext();
+    if ( !ImGui::CreateContext()    )       { throw std::runtime_error(cb::error::IMGUI_CONTEXT_CREATION_ERROR); }
+    if ( !ImPlot::CreateContext()   )       { throw std::runtime_error(cb::error::IMPLOT_CONTEXT_CREATION_ERROR); }
+        
+    
+    
     [[maybe_unused]] ImGuiIO &      io          = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style       = ImGui::GetStyle();
 
-
     style.Colors[ImGuiCol_WindowBg].w           = 0.0f;     // host window background
     style.Colors[ImGuiCol_DockingEmptyBg].w     = 0.0f;     // the “empty” parts of your dockspace
-    
     
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)      //  When viewports are enabled we tweak WindowRounding/WindowBg
     {                                                           //  so platform windows can look identical to regular ones.
@@ -141,7 +159,7 @@ void App::CreateContext(void)
     
     
     //      3.2     Setup Platform/Renderer backends.
-    ImGui_ImplGlfw_InitForOpenGL(this->S.m_glfw_window, true);
+    ImGui_ImplGlfw_InitForOpenGL(this->S.m_glfw_window,     /*install_callbacks=*/true);
 #ifdef __EMSCRIPTEN__
     ImGui_ImplGlfw_InstallEmscriptenCallbacks(window, "#canvas");
 #endif      //  __EMSCRIPTEN__  //
@@ -172,20 +190,20 @@ void App::init_appstate(void)
     bool                            good_fonts      = true;
 
     
+    
+    //  1.  ADJUST APPLICATION DIMENSIONS TO SUIT MONITOR'S DPI...
     S.m_dpi_scale                                   = utl::GetDPIScaling(this->S.m_glfw_window);
-    S.m_dpi_fontscale                               = S.m_dpi_scale;
+    S.m_dpi_fontscale                               = 1.0f;     //    S.m_dpi_scale;
 #ifdef CBAPP_USE_FONTSCALE_DPI
     S.m_dpi_fontscale                               = cblib::math::round_to<3>( utl::GetDPIFontScaling(this->S.m_glfw_window) );
 #endif  //  CBAPP_USE_FONTSCALE_DPI  //
-
+    style.ScaleAllSizes(this->S.m_dpi_scale);                   //      Apply initial scale to the style *once*.
+    
     CB_LOG(LogLevel::Debug, "System DPI Scale: {}.  System DPI Fontscale: {}",        S.m_dpi_scale, S.m_dpi_fontscale );
-    //S.m_logger.debug( std::format("System DPI Scale: {}.  System DPI Fontscale: {}",        S.m_dpi_scale, S.m_dpi_fontscale) );
 
 
     //  1.  LOAD MISC. APPLICATION SETTINGS...
-    //
-    // io.MouseWheel                      *= app::DEF_MOUSEWHEEL_SCROLL_SPEED;
-    // io.MouseWheelH                     *= app::DEF_MOUSEWHEEL_SCROLL_SPEED;
+    //          ...
 
 
     //  2.  LOAD APPLICATION WINDOW RENDER CALLBACK FUNCTIONS...

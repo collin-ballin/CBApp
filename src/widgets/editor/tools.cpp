@@ -20,6 +20,47 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 
 
 
+// *************************************************************************** //
+//
+//
+//
+//  2.  SHAPE TOOLL...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_draw_shape_controls"
+//
+void Editor::_draw_shape_controls(void)
+{
+    static const char* SHAPES[] = { "Rectangle", "Ellipse" };
+
+    int kind_idx = static_cast<int>(m_shape.kind);
+
+    ImGui::TextUnformatted("Shape Tool");
+    ImGui::Separator();
+
+    if (ImGui::Combo("##shape_kind",
+                     &kind_idx,
+                     SHAPES,
+                     IM_ARRAYSIZE(SHAPES)))
+        m_shape.kind = static_cast<ShapeKind>(kind_idx);
+
+    ImGui::SliderFloat("Radius",
+                       &m_shape.radius,
+                       0.0f, 100.0f, "%.1f");
+           
+           
+           
+    return;
+}
+
+
+
+
+
+
+
+
 
 
 

@@ -32,7 +32,7 @@ int Editor::_hit_point(const Interaction& it) const
 
     for (size_t i = 0; i < m_points.size(); ++i)
     {
-        const Pos* v = find_vertex(m_vertices, m_points[i].v);
+        const Vertex* v = find_vertex(m_vertices, m_points[i].v);
         if (!v) continue;
 
         ImVec2 scr = world_to_pixels({ v->x, v->y });   // NEW
@@ -48,7 +48,7 @@ int Editor::_hit_point(const Interaction& it) const
 
 //  "_hit_any"
 //
-std::optional<Hit> Editor::_hit_any(const Interaction& it) const
+std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
 {
     // mouse position in screen‑pixel coordinates
     const ImVec2 ms = ImGui::GetIO().MousePos;
@@ -96,8 +96,8 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
     // ───────────────────────────────────────────────────────────── 3. standalone lines
     for (size_t i = 0; i < m_lines.size(); ++i)
     {
-        const Pos* a = find_vertex(m_vertices, m_lines[i].a);
-        const Pos* b = find_vertex(m_vertices, m_lines[i].b);
+        const Vertex* a = find_vertex(m_vertices, m_lines[i].a);
+        const Vertex* b = find_vertex(m_vertices, m_lines[i].b);
         if (!a || !b) continue;
 
         ImVec2 A = ws2px({ a->x, a->y });
@@ -125,11 +125,11 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
         // edge hit‑test
         for (size_t si = 0; si < N - 1 + (p.closed ? 1u : 0u); ++si)
         {
-            const Pos* a = find_vertex(m_vertices, p.verts[si]);
-            const Pos* b = find_vertex(m_vertices, p.verts[(si + 1) % N]);
+            const Vertex* a = find_vertex(m_vertices, p.verts[si]);
+            const Vertex* b = find_vertex(m_vertices, p.verts[(si + 1) % N]);
             if (!a || !b) continue;
 
-            if (!is_curved(a, b))
+            if (!is_curved<VertexID>(a, b))
             {
                 ImVec2 A = ws2px({ a->x, a->y });
                 ImVec2 B = ws2px({ b->x, b->y });
@@ -152,7 +152,7 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
                 for (int k = 1; k <= ms_BEZIER_HIT_STEPS; ++k)
                 {
                     float  t  = static_cast<float>(k) / ms_BEZIER_HIT_STEPS;
-                    ImVec2  cur_ws = cubic_eval(a, b, t);
+                    ImVec2  cur_ws = cubic_eval<VertexID>(a, b, t);
                     ImVec2  cur_px = ws2px(cur_ws);
 
                     ImVec2 seg{ cur_px.x - prev_px.x, cur_px.y - prev_px.y };
@@ -179,11 +179,11 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
 
             for (size_t vi = 0; vi < N; ++vi)
             {
-                const Pos* a = find_vertex(m_vertices, p.verts[vi]);
-                const Pos* b = find_vertex(m_vertices, p.verts[(vi + 1) % N]);
+                const Vertex* a = find_vertex(m_vertices, p.verts[vi]);
+                const Vertex* b = find_vertex(m_vertices, p.verts[(vi + 1) % N]);
                 if (!a || !b) continue;
 
-                if (!is_curved(a, b))
+                if (!is_curved<VertexID>(a, b))
                 {
                     poly.push_back(ws2px({ a->x, a->y }));
                 }
@@ -192,7 +192,7 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
                     for (int k = 0; k <= ms_BEZIER_HIT_STEPS; ++k)
                     {
                         float  t   = static_cast<float>(k) / ms_BEZIER_HIT_STEPS;
-                        ImVec2 wpt = cubic_eval(a, b, t);
+                        ImVec2 wpt = cubic_eval<VertexID>(a, b, t);
                         poly.push_back(ws2px(wpt));
                     }
                 }
@@ -211,7 +211,7 @@ std::optional<Hit> Editor::_hit_any(const Interaction& it) const
 //      Segment-precision hit-test (straight + Bézier).
 //      Returns nearest segment within a 6-px pick radius (early-out on miss).
 //
-std::optional<PathHit> Editor::_hit_path_segment(const Interaction & /*it*/) const
+std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*it*/) const
 {
     constexpr float PICK_PX   = 6.0f;
     const float     thresh_sq = PICK_PX * PICK_PX;
@@ -237,8 +237,8 @@ std::optional<PathHit> Editor::_hit_path_segment(const Interaction & /*it*/) con
 
         for (size_t si = 0; si < seg_count; ++si)
         {
-            const Pos* a = find_vertex(m_vertices, p.verts[si]);
-            const Pos* b = find_vertex(m_vertices, p.verts[(si + 1) % N]);
+            const Vertex* a = find_vertex(m_vertices, p.verts[si]);
+            const Vertex* b = find_vertex(m_vertices, p.verts[(si + 1) % N]);
             if (!a || !b) continue;
 
             bool curved = !is_zero(a->out_handle) || !is_zero(b->in_handle);
@@ -280,7 +280,7 @@ std::optional<PathHit> Editor::_hit_path_segment(const Interaction & /*it*/) con
                 for (int k = 1; k <= STEPS; ++k)
                 {
                     float  t  = static_cast<float>(k) / STEPS;
-                    ImVec2 cur_ws = cubic_eval(a, b, t);
+                    ImVec2 cur_ws = cubic_eval<VertexID>(a, b, t);
                     ImVec2 cur_px = ws2px(cur_ws);
 
                     // distance mouse → segment [prev,cur]
@@ -388,7 +388,7 @@ void Editor::start_move_drag(const ImVec2 & press_ws)
     m_movedrag.v_orig.reserve(m_sel.vertices.size());
 
     for (uint32_t vid : m_sel.vertices)
-        if (const Pos * v = find_vertex(m_vertices, vid)) {
+        if (const Vertex * v = find_vertex(m_vertices, vid)) {
             m_movedrag.v_ids .push_back(vid);
             m_movedrag.v_orig.push_back({v->x, v->y});
         }
@@ -473,7 +473,7 @@ void Editor::update_move_drag_state(const Interaction & it)
         }
 
         for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i)
-            if (Pos* v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i]))
+            if (Vertex* v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i]))
             {
                 const ImVec2& orig = m_movedrag.v_orig[i];
                 v->x = orig.x + delta.x;
@@ -505,7 +505,7 @@ void Editor::update_move_drag_state(const Interaction & it)
 
         // apply the same delta to every vertex
         for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i)
-            if (Pos * v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i])) {
+            if (Vertex * v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i])) {
                 const ImVec2 & orig = m_movedrag.v_orig[i];
                 v->x = orig.x + delta.x;
                 v->y = orig.y + delta.y;
@@ -691,7 +691,7 @@ void Editor::_draw_selection_overlay(ImDrawList * dl) const
     {
         if (idx >= m_points.size()) continue;
         const Point& pt = m_points[idx];
-        if (const Pos* v = find_vertex(m_vertices, pt.v))
+        if (const Vertex* v = find_vertex(m_vertices, pt.v))
         {
             ImVec2 scr = ws2px({ v->x, v->y });
             dl->AddCircle(scr,
@@ -705,8 +705,8 @@ void Editor::_draw_selection_overlay(ImDrawList * dl) const
     {
         if (idx >= m_lines.size()) continue;
         const Line& ln = m_lines[idx];
-        const Pos* a = find_vertex(m_vertices, ln.a);
-        const Pos* b = find_vertex(m_vertices, ln.b);
+        const Vertex* a = find_vertex(m_vertices, ln.a);
+        const Vertex* b = find_vertex(m_vertices, ln.b);
         if (a && b)
             dl->AddLine(ws2px({ a->x, a->y }),
                         ws2px({ b->x, b->y }),
@@ -721,9 +721,9 @@ void Editor::_draw_selection_overlay(ImDrawList * dl) const
         const size_t N = p.verts.size();
         if (N < 2) continue;
 
-        auto draw_seg = [&](const Pos* a, const Pos* b){
+        auto draw_seg = [&](const Vertex* a, const Vertex* b){
             const float w = p.style.stroke_width + 2.0f;
-            if (is_curved(a,b))
+            if ( is_curved<VertexID>(a,b) )
             {
                 ImVec2 P0 = ws2px({ a->x,                         a->y });
                 ImVec2 P1 = ws2px({ a->x + a->out_handle.x,       a->y + a->out_handle.y });
@@ -740,13 +740,13 @@ void Editor::_draw_selection_overlay(ImDrawList * dl) const
         };
 
         for (size_t i = 0; i < N - 1; ++i)
-            if (const Pos* a = find_vertex(m_vertices, p.verts[i]))
-                if (const Pos* b = find_vertex(m_vertices, p.verts[i+1]))
+            if (const Vertex* a = find_vertex(m_vertices, p.verts[i]))
+                if (const Vertex* b = find_vertex(m_vertices, p.verts[i+1]))
                     draw_seg(a, b);
 
         if (p.closed)
-            if (const Pos* a = find_vertex(m_vertices, p.verts.back()))
-                if (const Pos* b = find_vertex(m_vertices, p.verts.front()))
+            if (const Vertex* a = find_vertex(m_vertices, p.verts.back()))
+                if (const Vertex* b = find_vertex(m_vertices, p.verts.front()))
                     draw_seg(a, b);
     }
 
@@ -773,7 +773,7 @@ bool Editor::_selection_bounds(ImVec2& tl, ImVec2& br) const
     if (m_sel.vertices.empty()) return false;
     bool first = true;
     for (uint32_t vid : m_sel.vertices)
-        if (const Pos* v = find_vertex(m_vertices, vid))
+        if (const Vertex* v = find_vertex(m_vertices, vid))
         {
             ImVec2 p{ v->x, v->y };
             if (first) { tl = br = p; first = false; }
@@ -907,7 +907,7 @@ void Editor::_start_bbox_drag(uint8_t hidx, const ImVec2& tl, const ImVec2& br)
 
     /* snapshot affected vertices */
     for (uint32_t vid : m_sel.vertices)
-        if (const Pos* v = find_vertex(m_vertices, vid))
+        if (const Vertex* v = find_vertex(m_vertices, vid))
         {
             m_boxdrag.v_ids.push_back(vid);
             m_boxdrag.v_orig.push_back({ v->x, v->y });
@@ -1002,7 +1002,7 @@ void Editor::_update_bbox()
     /* apply to vertices */
     for (size_t i = 0; i < m_boxdrag.v_ids.size(); ++i)
     {
-        Pos* v = find_vertex(m_vertices, m_boxdrag.v_ids[i]);
+        Vertex* v = find_vertex(m_vertices, m_boxdrag.v_ids[i]);
         const ImVec2& o = m_boxdrag.v_orig[i];
         if (v)
         {

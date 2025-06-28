@@ -186,11 +186,36 @@ void Browser::disp_appearance_mode(void)
     [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
 
-    static bool                     init            = true;
-    ImGuiStyle *                    ref             = nullptr;
-    static ImGuiStyle               ref_saved_style;
+    //  static bool                     init            = true;
+    //  ImGuiStyle *                    ref             = nullptr;
+    //  static ImGuiStyle               ref_saved_style;
     
+    int     app_idx         = static_cast<int>(S.m_current_app_color_style);
+    int     plot_idx        = static_cast<int>(S.m_current_plot_color_style);
+
+
+    //  1.  COMBO-BOX FOR APP COLOR STYLE.
+    if (ImGui::Combo( "##Browser_SetAppColorStyle",
+                      &app_idx,
+                      S.m_app_color_style_names.data(),                         //  Names table
+                      static_cast<int>(app::AppColorStyle_t::Count)) )          //  Item count
+    {
+        S.SetAppColorStyle( static_cast<app::AppColorStyle_t>(app_idx) );
+    }
+
+
+    //  2.  COMBO-BOX FOR PLOT COLOR STYLE.
+    if (ImGui::Combo( "##Browser_SetPlotColorStyle",
+                      &plot_idx,
+                      S.m_plot_color_style_names.data(),                        //  Names table
+                      static_cast<int>(app::PlotColorStyle_t::Count)) )         //  Item count
+    {
+        S.SetPlotColorStyle( static_cast<app::PlotColorStyle_t>(plot_idx) );
+    }
+
+
     
+    /*
     //  Style Mode Slider...
     if (ImGui::ShowStyleSelector("Appearance##Selector"))
         ref_saved_style = style;
@@ -201,7 +226,7 @@ void Browser::disp_appearance_mode(void)
     init = false;
     if (ref == NULL)
         ref = &ref_saved_style;
-
+    */
 
 
     return;

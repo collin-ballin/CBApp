@@ -70,6 +70,53 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "AppColorStyle_t"
+//
+enum class AppColorStyle_t : uint8_t {
+    Default = 0,
+    LightMode,
+    DarkMode,
+//
+    Laser_410NM,
+//
+    ImGuiLight,
+    ImGuiDark,
+    ImGuiClassic,
+//
+    Count
+};
+//
+//  "APPLICATION_COLOR_STYLE_NAMES"
+//      COMPILE-TIME ARRAY CONTAINING THE NAME OF ALL STYLES.
+inline static const std::array<const char *, static_cast<size_t>(AppColorStyle_t::Count)>
+APPLICATION_COLOR_STYLE_NAMES           = {{
+    "Default",                      "Light Mode",                   "Dark Mode",
+    "410 nm",
+//
+    "ImGui Light Mode",             "ImGui Dark Mode",              "ImGui Classic"
+}};
+
+
+
+//  "PlotColorStyle_t"
+//
+enum class PlotColorStyle_t : uint8_t {
+    Default = 0,
+    LightMode,
+    DarkMode,
+//
+    Count
+};
+//
+//  "APPLICATION_PLOT_COLOR_STYLE_NAMES"
+//      COMPILE-TIME ARRAY CONTAINING THE NAME OF ALL STYLES.
+inline static const std::array<const char *, static_cast<size_t>(PlotColorStyle_t::Count)>
+APPLICATION_PLOT_COLOR_STYLE_NAMES      = {{
+    "Default",                      "Light Mode",                   "Dark Mode"
+}};
+
+
+
 //  "AppInfo"
 //
 // struct AppInfo {
@@ -79,6 +126,7 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 //     Timestamp_t                         m_timestamp_start;
 // 
 // };
+
 
 
 
@@ -134,7 +182,7 @@ APPLICATION_WINDOW_INFOS            = {{
 // *************************************************************************** //
 
 //  "Applet_t"
-enum class Applet_t : int {
+enum class Applet_t : uint8_t {
     MainApp,
     CCounterApp,
     EditorApp,

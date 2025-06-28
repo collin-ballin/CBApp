@@ -107,8 +107,8 @@ void Editor::_draw_lines(ImDrawList* dl, const ImVec2& origin) const
 #ifdef LEGACY_LINES
     for (const auto& ln : m_lines)
     {
-        const Pos* a = find_vertex(m_vertices, ln.a);
-        const Pos* b = find_vertex(m_vertices, ln.b);
+        const Vertex * a = find_vertex(m_vertices, ln.a);
+        const Vertex * b = find_vertex(m_vertices, ln.b);
         if (!a || !b) continue;
         dl->AddLine({ origin.x + a->x * m_cam.zoom_mag, origin.y + a->y * m_cam.zoom_mag },
                     { origin.x + b->x * m_cam.zoom_mag, origin.y + b->y * m_cam.zoom_mag },
@@ -137,18 +137,18 @@ void Editor::_draw_paths(ImDrawList* dl) const
 
             for (size_t i = 0; i < N; ++i)
             {
-                const Pos* a = find_vertex(m_vertices, p.verts[i]);
-                const Pos* b = find_vertex(m_vertices, p.verts[(i + 1) % N]);
+                const Vertex* a = find_vertex(m_vertices, p.verts[i]);
+                const Vertex* b = find_vertex(m_vertices, p.verts[(i + 1) % N]);
                 if (!a || !b) continue;
 
-                if (!is_curved(a, b)) {
+                if (!is_curved<VertexID>(a, b)) {
                     ImVec2 pa = world_to_pixels({ a->x, a->y });
                     dl->PathLineTo(pa);
                 }
                 else {
                     for (int step = 0; step <= ms_BEZIER_FILL_STEPS; ++step) {
                         float  t  = static_cast<float>(step) / ms_BEZIER_FILL_STEPS;
-                        ImVec2 wp = cubic_eval(a, b, t);
+                        ImVec2 wp = cubic_eval<VertexID>(a, b, t);
                         dl->PathLineTo(world_to_pixels(wp));
                     }
                 }
@@ -157,9 +157,9 @@ void Editor::_draw_paths(ImDrawList* dl) const
         }
 
         // ───── Lambda to draw one segment (straight or cubic)
-        auto draw_seg = [&](const Pos* a, const Pos* b)
+        auto draw_seg = [&](const Vertex* a, const Vertex* b)
         {
-            const bool curved = is_curved(a, b);
+            const bool curved = is_curved<VertexID>(a, b);
 
             if (!curved) {
                 dl->AddLine(world_to_pixels({ a->x, a->y }),
@@ -182,14 +182,14 @@ void Editor::_draw_paths(ImDrawList* dl) const
 
         // ───── Stroke all contiguous segments
         for (size_t i = 0; i < N - 1; ++i)
-            if (const Pos* a = find_vertex(m_vertices, p.verts[i]))
-                if (const Pos* b = find_vertex(m_vertices, p.verts[i + 1]))
+            if (const Vertex* a = find_vertex(m_vertices, p.verts[i]))
+                if (const Vertex* b = find_vertex(m_vertices, p.verts[i + 1]))
                     draw_seg(a, b);
 
         // Close the loop if required
         if (p.closed)
-            if (const Pos* a = find_vertex(m_vertices, p.verts.back()))
-                if (const Pos* b = find_vertex(m_vertices, p.verts.front()))
+            if (const Vertex* a = find_vertex(m_vertices, p.verts.back()))
+                if (const Vertex* b = find_vertex(m_vertices, p.verts.front()))
                     draw_seg(a, b);
     }
 }
@@ -204,7 +204,7 @@ void Editor::_draw_points(ImDrawList* dl) const
         const Point& pt = m_points[i];
         if (!pt.sty.visible) continue;
 
-        const Pos* v = find_vertex(m_vertices, pt.v);
+        const Vertex* v = find_vertex(m_vertices, pt.v);
         if (!v) continue;
 
         ImU32 col = (m_dragging && m_sel.points.count(i))
