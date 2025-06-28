@@ -77,7 +77,47 @@ static int point_index_from_vid(const std::vector<Editor::Point>& pts, uint32_t 
 //
 Editor::Editor(void) {
     this->m_window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_HiddenTabBar;
+    
+    
+    //  INITIALIZE EACH RESIDENT OVERLAY-WINDOW...
+    for (size_t i = 0; i < static_cast<size_t>( Resident::Count ); ++i)
+    {
+        Resident idx = static_cast<Resident>(i);
+        this->_dispatch_resident_draw_fn( idx );
+    }
+
+    
+    return;
 }
+
+
+void Editor::_dispatch_resident_draw_fn(Resident idx)
+{
+    ResidentEntry& entry = m_residents[idx];
+
+    // attach the correct draw callback BEFORE registering the overlay
+    switch (idx) {
+        case Resident::Shape:
+            entry.cfg.draw_fn = [this]{ _draw_shape_resident(); };
+            break;
+        case Resident::Selection:
+            entry.cfg.draw_fn = [this]{ _draw_selection_resident(); };
+            break;
+        default:
+            IM_ASSERT(false && "Unknown resident index");
+    }
+
+    // register once, then cache the pointer
+    entry.id  = m_overlays.add_resident(entry.cfg);
+    entry.ptr = m_overlays.get_resident(entry.id);   // now safe
+}
+
+
+
+
+
+
+
 
 //  Destructor.
 //
@@ -85,7 +125,6 @@ Editor::~Editor(void)
 {
     this->_clear_all();
 }
-
 
 
 

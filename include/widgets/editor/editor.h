@@ -115,8 +115,15 @@ struct      Line_Tag            {};
 struct      Path_Tag            {};
 struct      Overlay_Tag         {};
 struct      Hit_Tag             {};
-       
-       
+  
+  
+//  "Resident"
+//
+enum Resident: uint8_t {
+    Shape, Selection, Count
+};
+
+
 //  "Editor"
 //
 class Editor {
@@ -163,11 +170,55 @@ public:
     // *************************************************************************** //
                                 Editor                          (void);
                                 ~Editor                         (void);
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                      RESIDENT OVERLAY FUNCTIONS:
+    void                        _dispatch_resident_draw_fn      (Resident idx);
+    //
+    //
+    //                      RESIDENT OVERLAY DATA:
+    struct ResidentEntry {
+        OverlayID                   id;         //  runtime ID (filled in ctor)
+        Overlay *                   ptr;        //  Reference.
+        OverlayCFG                  cfg;        //  compile-time defaults
+    };
+    //
+    std::array<ResidentEntry, Resident::Count>      m_residents { {
+        //
+        //  Shape:
+        {   0,                                  //  ID.
+            nullptr,                            //  Reference.
+            { OverlayPlacement::CanvasBR,       //  CFG.
+                ImVec2{12,12},                              // px inset
+                ImVec2{0,0},                                // ws anchor unused here
+                0.65f,
+                OffscreenPolicy::Clamp,
+                {}                                          // draw_fn patched in ctor
+        }},
+        //
+        //  Selection:
+        {   0,                                  //  ID.
+            nullptr,                            //  Reference.
+            { OverlayPlacement::CanvasPoint,    //  CFG.
+                ImVec2{0,8},                                // nudge below bbox
+                ImVec2{0,0},                                // ws anchor filled each frame
+                0.65f,
+                OffscreenPolicy::Hide,
+                {}                                          // draw_fn patched in ctor
+            }
+        }
+    } };
+    //
+    // *************************************************************************** //
+    // *************************************************************************** //
+
 
 
     //  2.              PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
-    void                        Begin                           (const char* id = "##EditorCanvas");
+    void                        Begin                           (const char * id = "##EditorCanvas");
     void                        DrawBrowser                     (void);
 
 
@@ -234,7 +285,35 @@ private:
     // *************************************************************************** //
     //      SHAPE TOOL STUFF.               |   "tools.cpp" ...
     // *************************************************************************** //
-    void                        _draw_shape_controls                (void);
+    //                      MAIN SHAPE-TOOL FUNCTIONS:
+    void                        _shape_begin_anchor                 ([[maybe_unused]] const Interaction& it);
+    void                        _shape_update_radius                ([[maybe_unused]] const Interaction& it);
+    //
+    uint32_t                    _shape_add_vertex                   (const ImVec2& ws);
+    void                        _shape_commit                       (void);
+    void                        _shape_reset                        (void);
+    //
+    //                      SPECIFIC SHAPE FUNCTIONS:
+    size_t                      _shape_build_rectangle              (const ImVec2& cen, float r);
+    size_t                      _shape_build_ellipse                (const ImVec2& cen, float r);
+    //
+    //                      UTILITIES:
+    //                          ...
+    //
+    //                      DEPRECATED:
+    void                        _shape_preview_draw                 (ImDrawList* dl) const;
+    void                        _draw_shape_cursor                  (const Interaction &) const;
+    //
+    //
+    // *************************************************************************** //
+    //      RESIDENT STUFF.                 |   "utility.cpp" ...
+    // *************************************************************************** //
+    void                        _draw_shape_resident                (void);
+    void                        _draw_shape_resident_custom         (void);
+    void                        _draw_shape_resident_multi          (void);
+    void                        _draw_shape_resident_default        (void);
+    //
+    void                        _draw_selection_resident            (void);
     //
     //
     // *************************************************************************** //
@@ -288,11 +367,15 @@ private:
     void                        _update_cursor_select               (const Interaction & ) const;
     void                        _rebuild_vertex_selection           (void);   // decl
     //
-    void                        _draw_selection_overlay             (ImDrawList *) const;
+    void                        _draw_selection_highlight           (ImDrawList *) const;
     //
     bool                        _selection_bounds                   (ImVec2 & tl, ImVec2 & br) const;
     void                        _draw_selected_handles              (ImDrawList *) const;
     void                        _draw_selection_bbox                (ImDrawList *) const;
+    //
+    //                      LASSO TOOL MECHANICS:
+    void                        _start_lasso_tool                   (void);
+    void                        _update_lasso                       (const Interaction & );
     //
     //                      BOUNDING BOX MECHANICS:
     void                        _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
@@ -316,8 +399,6 @@ private:
     //                      APP UTILITY OPERATIONS:
     bool                        _try_begin_handle_drag              (const Interaction & );
     void                        _scissor_cut                        (const PathHit & );
-    void                        _start_lasso_tool                   (void);
-    void                        _update_lasso                       (const Interaction & );
     //
     //                      LOCAMOTION UTILITIES:
     void                        _update_world_extent                (void);
@@ -525,8 +606,7 @@ private:
     // *************************************************************************** //
     //      CAMERA SYSTEM...
     // *************************************************************************** //
-    //ImPlotFlags                 m_plot_flags                    = /* | ImPlotFlags_Equal | ImPlotFlags_NoBoxSelect */ ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
-    ImPlotFlags                 m_plot_flags                    = ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
+    ImPlotFlags                 m_plot_flags                    = ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
     utl::AxisCFG                m_axes [2]                      = {
         {"##x-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit | ImPlotAxisFlags_Opposite },
         {"##y-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit }
@@ -540,7 +620,7 @@ private:
     float                       m_ppw                           = 1.0f;
     Bounds                      m_world_bounds                  = {
         /*min_x=*/0.0f,         /*min_y=*/0.0f,
-        /*max_x=*/1000.0f,      /*max_y=*/1000.0f
+        /*max_x=*/500.0f,      /*max_y=*/500.0f
     };
     //
     //
@@ -617,7 +697,6 @@ private:
     //
     //                      UTILITY:
     // *************************************************************************** //
-    //
     //                      RENDERING CONSTANTS:
     static constexpr int        ms_BEZIER_SEGMENTS              = 0;
     static constexpr int        ms_BEZIER_HIT_STEPS             = 20;
@@ -638,6 +717,14 @@ private:
     static constexpr float      ms_CHILD_BORDER2                = 1.0f;
     static constexpr float      ms_CHILD_ROUND1                 = 8.0f;
     static constexpr float      ms_CHILD_ROUND2                 = 4.0f;
+    //
+    //
+    //
+    //                      ARRAYS:
+    // *************************************************************************** //
+    static constexpr auto &     ms_SHAPE_NAMES                  = EDITOR_SHAPE_NAMES;
+
+
 
 
 

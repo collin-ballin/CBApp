@@ -27,7 +27,7 @@
 //              v->in_handle = ImVec2(0,0);              // make handle visible
 //
 // Updated declarations for selection overlay functions (no origin argument)
-// void _draw_selection_overlay(ImDrawList* dl) const;
+// void _draw_selection_highlight(ImDrawList* dl) const;
 // void _draw_selection_bbox(ImDrawList* dl) const;
 // void _draw_selected_handles(ImDrawList* dl) const;
 
@@ -113,60 +113,6 @@ static constexpr float      HANDLE_BOX_SIZE             = 4.f;
 
 
 
-// *************************************************************************** //
-//
-//
-//
-//  0.  OVERLAY UTILITY CLASS STUFF...
-// *************************************************************************** //
-// *************************************************************************** //
-
-enum class OverlayAnchor : uint8_t {
-    World,      // anchor_ws interpreted in world-space → converts via world_to_pixels()
-    Screen,     // anchor_ws is absolute screen coords (pixels)
-    Cursor      // anchor_ws is Δ offset from current cursor (pixels)
-};
-
-
-enum class OverlayPlacement : uint8_t {
-    ScreenXY,           // anchor_px    = screen position (px)
-    Cursor,             // anchor_px    = offset  (px)
-    World,              // anchor_ws    = world‑space point
-    CanvasTL,           // anchor_padpx = inset from top‑left  corner
-    CanvasTR,           // anchor_padpx = inset from top‑right corner
-    CanvasBL,           // anchor_padpx = inset from bot‑left  corner
-    CanvasBR            // anchor_padpx = inset from bot‑right corner
-};
-
-
-struct OverlayCFG {
-    OverlayPlacement            placement      {OverlayPlacement::ScreenXY};
-    ImVec2                      anchor_px      {0,0};       // ScreenXY / Cursor / padding
-    ImVec2                      anchor_ws      {0,0};       // for World
-    float                       alpha          {0.65f};
-    std::function<void()>       draw_fn;                    // widgets callback
-};
-
-
-//  "Overlay_t"
-//
-template<typename T = uint32_t>
-struct Overlay_t {
-    //static_assert(std::is_integral_v<T>, "Template type parameter, <T>, must be an integer type");
-    using                       OverlayID       = T;
-//
-    OverlayID                   id              = 0;
-    bool                        visible         = true;                 // owner sets false to retire
-    ImGuiWindowFlags            flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-    OverlayCFG                  cfg{};
-};
-
-
-
-
-
-
-
 
 // *************************************************************************** //
 //
@@ -210,7 +156,7 @@ enum class Mode : int {
 constexpr std::array<const char*, static_cast<size_t>(Mode::Count)>
     DEF_EDITOR_STATE_NAMES  = { {
     "Default",              "Line",                     "Point",                    "Pen",
-    "Shape",                "Scissor",                  "Add Anchor Point",         "Remove Anchor Point",
+    "Scissor",              "Shape",                    "Add Anchor Point",         "Remove Anchor Point",
     "Edit Anchor"
 } };
 
@@ -441,23 +387,42 @@ struct PenState {
 
 
 
+//  "ShapeKind"
+//
+enum class ShapeKind : uint32_t {
+    Square,             Rectangle,
+    Circle,             Oval,               Ellipse, /*, Polygon, Star, …*/
+//
+    Count
+};
+//
+//  "APPLICATION_PLOT_COLOR_STYLE_NAMES"
+//      COMPILE-TIME ARRAY CONTAINING THE NAME OF ALL STYLES.
+inline static const std::array<const char *, static_cast<size_t>(ShapeKind::Count)>
+EDITOR_SHAPE_NAMES = {{
+    "Square",           "Rectangle",
+    "Circle",           "Oval",             "Ellipse"
+}};
 
-enum class ShapeKind : uint8_t { Rectangle, Ellipse /*, Polygon, Star, …*/ };
 
 
 //  "ShapeState_t"
 //
 template<typename OID>
 struct ShapeState_t {
-    bool        active          = false;            // true while user is click-dragging a preview
-    OID         overlay_id      = OID(0);           // contextual UI (0 ⇒ none)
-    ShapeKind   kind            = ShapeKind::Rectangle;
-    float       radius          = 25.0f;            // corner- or major-radius (placeholder)
+    bool                active                  = false;            // true while user is click-dragging a preview
+    OID                 overlay_id              = OID(0);           // contextual UI (0 ⇒ none)
+    ShapeKind           kind                    = ShapeKind::Square;
+    float               radius                  = 25.0f;            // corner- or major-radius (placeholder)
+    float               params[5]               = {0.0f};           // Array to hold multiple geometric descriptors for more complex shapes.
     //
-    // live-preview drag info (world-space)
-    bool        dragging        = false;
-    ImVec2      press_ws{};                  // anchor at mouse-down
-    ImVec2      cur_ws{};                    // current mouse pos each frame
+    //
+    //  Live-preview drag info (world-space)
+    bool                dragging                = false;
+    ImVec2              press_ws{};                  // anchor at mouse-down
+    ImVec2              cur_ws{};                    // current mouse pos each frame
+    float               start_y                 = 0.0f;
+    float               start_rad               = 0.0f;
 };
 
 
@@ -541,6 +506,77 @@ struct OverlayState
 //
     std::string         log_msg;                            // last message (≤40 words)
     float               log_timer           = 0.0f;         // seconds until it disappears
+};
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  0.  OVERLAY UTILITY CLASS STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "BBoxAnchor"
+//      Defiled in the order of unit circle angles (0deg = +x-axis) and DEFAULT = 0 = CENTER.
+//
+enum class BBoxAnchor : uint8_t {
+    Center, East, NorthEast, North, NorthWest, West, SouthWest, South, SouthEast
+};
+
+
+enum class OverlayAnchor : uint8_t {
+    World,      // anchor_ws interpreted in world-space → converts via world_to_pixels()
+    Screen,     // anchor_ws is absolute screen coords (pixels)
+    Cursor      // anchor_ws is Δ offset from current cursor (pixels)
+};
+
+enum class OffscreenPolicy : uint8_t {
+    Hide,                // overlay vanishes when anchor is outside canvas
+    Clamp                // overlay clamps to nearest edge (old behaviour)
+};
+
+
+
+enum class OverlayPlacement : uint8_t {
+    ScreenXY,           // anchor_px    = screen position (px)
+    Cursor,             // anchor_px    = offset  (px)
+    World,              // anchor_ws    = world‑space point
+    CanvasTL,           // anchor_padpx = inset from top‑left  corner
+    CanvasTR,           // anchor_padpx = inset from top‑right corner
+    CanvasBL,           // anchor_padpx = inset from bot‑left  corner
+    CanvasBR,           // anchor_padpx = inset from bot‑right corner
+//
+    CanvasPoint
+};
+
+
+struct OverlayCFG {
+    OverlayPlacement            placement       {OverlayPlacement::ScreenXY};
+    ImVec2                      anchor_px       {0,0};     // pixel inset / offset
+    ImVec2                      anchor_ws       {0,0};     // world-space anchor
+    float                       alpha           {0.65f};
+    OffscreenPolicy             offscreen       {OffscreenPolicy::Clamp}; // NEW
+//
+    std::function<void()>       draw_fn         {};                    // widgets callback
+};
+
+
+//  "Overlay_t"
+//
+template<typename T = uint32_t>
+struct Overlay_t {
+    //static_assert(std::is_integral_v<T>, "Template type parameter, <T>, must be an integer type");
+    using                       OverlayID       = T;
+//
+    OverlayID                   id              = 0;
+    bool                        visible         = false;                 // owner sets false to retire
+    ImGuiWindowFlags            flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    OverlayCFG                  cfg{};
 };
 
 

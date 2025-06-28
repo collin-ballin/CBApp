@@ -97,10 +97,65 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //
 public:
+    void                    Begin                   (const std::function<ImVec2(ImVec2)> & world_to_px, ImVec2 cursor_px, const ImRect& plot_rect);
+    //
+    //
+    //
     OverlayID               create_overlay          (const OverlayCFG & cfg);
     void                    destroy_overlay         (OverlayID );
     //
-    void                    Begin                   (const std::function<ImVec2(ImVec2)> & world_to_px, ImVec2 cursor_px, const ImRect& canvas_rect);
+    Overlay *               resident                (OverlayID id);
+    OverlayID               add_resident            (const OverlayCFG& cfg);
+    
+    
+
+    // *************************************************************************** //
+    //
+    //
+    //      INLINE FUNCTIONS...
+    // *************************************************************************** //
+    // *************************************************************************** //
+    
+    //  "lookup"
+    Overlay *               lookup                  (OverlayID id) {
+        for (auto& ov : m_windows)
+            if (ov.id == id)
+                return &ov;
+        return nullptr;                               // not found
+    }
+    
+    //  "lookup_resident"
+    Overlay *               lookup_resident         (OverlayID id) {
+        for (auto& ov : m_residents)
+            if (ov.id == id)
+                return &ov;
+        return nullptr;                               // not found
+    }
+
+    //  "lookup"
+    //const Overlay *         lookup                  (OverlayID id) const {
+    //    for (const auto & ov : m_windows)
+    //        if (ov.id == id)
+    //            return &ov;
+    //    return nullptr;
+    //}
+    
+    
+    //  "get_resident"
+    inline Overlay *        get_resident            (OverlayID id)
+    {
+        for (auto & ov : m_residents)
+            if (ov.id == id) return std::addressof( ov );
+            
+        IM_ASSERT(false && "get_resident: id not found");           // debug-time catch
+        return std::addressof( m_residents.front() );                // fallback (never hit in release)
+    }
+
+
+    //
+    //
+    // *************************************************************************** //
+    // *************************************************************************** //
 
 
 // *************************************************************************** //
@@ -112,6 +167,9 @@ public:
 protected:
     void                    _render_overlay         (Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
                                                      ImVec2 cursor_px, const ImRect & );
+    void                    _draw_context_menu      (Overlay & );
+    //
+    //
     [[nodiscard]] std::pair<ImVec2, ImVec2>
                             _anchor_to_pos          (Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
                                                      ImVec2 cursor_px, const ImRect & );
@@ -126,7 +184,10 @@ protected:
 // *************************************************************************** //
 private:
     OverlayID                   m_next_id           {1};
-    std::vector<Overlay>        m_windows;
+    //
+    std::vector<Overlay>        m_windows;                  // dynamic overlays (current m_windows)
+    std::vector<Overlay>        m_residents;                 // resident overlays never erased; their `visible` flag is toggled
+
 
 
 
