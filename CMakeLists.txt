@@ -29,7 +29,7 @@ cmake_minimum_required(VERSION 3.10)
 ########################################################################
 ########################################################################
 #   Bump the semantic version here when you cut a *feature* release.
-project(CBApp VERSION 0.3.0 LANGUAGES CXX)
+project(CBApp VERSION 0.4.0 LANGUAGES CXX)
 
 #   Derive a monotonically increasing build number (Git commit count).
 #   Fallback to 1 if Git is unavailable (e.g. first CI checkout).

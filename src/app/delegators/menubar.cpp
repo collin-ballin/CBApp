@@ -150,7 +150,7 @@ void MenuBar::disp_file_menubar(void)
     
     //  2.  "Open" SUB-MENU...
     ImGui::Separator();
-    if (ImGui::MenuItem("Open...",          "CTRL+O"))      { }
+    if (ImGui::MenuItem("Open...",                  "CTRL+O"))      { }
     if (ImGui::BeginMenu("Open Recent"))
     {
         //  ...
@@ -160,7 +160,10 @@ void MenuBar::disp_file_menubar(void)
     
     //  3.  "Save" SUB-MENU...
     ImGui::Separator();
-    if (ImGui::MenuItem("Save",                     "CTRL+S"))      { }
+    if (ImGui::MenuItem("Save",                     "CTRL+S")) {
+        io.AddKeyEvent(ImGuiMod_Ctrl,   true);
+        io.AddKeyEvent(ImGuiKey_S,      true);
+    }
     if (ImGui::MenuItem("Save As...",               nullptr))       { }
     
     
@@ -177,7 +180,7 @@ void MenuBar::disp_file_menubar(void)
     
     //  4.  "Quit"...
     ImGui::Separator();
-    if (ImGui::MenuItem("Quit",             "CTRL+Q"))      { }
+    if (ImGui::MenuItem("Quit",                     "CTRL+Q"))      { }
     
     
     return;
@@ -188,9 +191,11 @@ void MenuBar::disp_file_menubar(void)
 //
 void MenuBar::disp_edit_menubar(void)
 {
+    ImGuiIO& io = ImGui::GetIO();
+    
     //  1.  "Paste" SUB-MENU...
-    if (ImGui::MenuItem("Undo",             "CTRL+Z"))          { }
-    if (ImGui::MenuItem("Redo",             "CTRL+Y"))          { }
+    if (ImGui::MenuItem("Undo",             "CTRL+Z"))          { io.AddKeyEvent(ImGuiKey_LeftCtrl,true); io.AddKeyEvent(ImGuiKey_Z,true); }
+    if (ImGui::MenuItem("Redo",             "CTRL+SHIFT+Z"))    { }
     
     
     //  2.  "Paste" SUB-MENU...
@@ -556,6 +561,7 @@ void MenuBar::disp_imgui_submenu(void)
         //      4.1X-2      Overwrite/Save default ".ini" file.
         if (ImGui::MenuItem("Save Current Settings As Default",       nullptr)) {
             ImGui::SaveIniSettingsToDisk(cb::app::INI_FILEPATH);
+            CB_LOG(LogLevel::Info, "Default ImGui \".ini\" settings overwritten (\"{}\")", cb::app::INI_FILEPATH);
         }
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort | ImGuiHoveredFlags_NoSharedDelay))
             ImGui::SetTooltip("Overwrite the default settings with the current ones (stored at \"%s\").", app::INI_FILEPATH);

@@ -91,6 +91,10 @@ public:
                         
     //  1.2             Public Member Functions...
     void                initialize                  (void);
+    void                save                        (void);
+    void                undo                        (void);
+    void                redo                        (void);
+    //
     void                Begin                       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 
 

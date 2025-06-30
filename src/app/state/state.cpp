@@ -159,6 +159,17 @@ void AppState::log_startup_info(void) noexcept
 //
 void AppState::log_shutdown_info(void) noexcept
 {
+    Timestamp_t         end_time        = cblib::utl::get_timestamp();
+    auto                dt              = cblib::utl::format_elapsed_timestamp(end_time - m_notes[0].first);
+    auto                ending_log      = std::format("PROGRAM TERMINATION INFO...\n"
+        "Total Runtime Time     : {}\n",
+        "Exit Code              : [NOT IMPLEMENTED]\n",
+        dt
+    );
+    
+    this->m_logger.notify( "PROGRAM TERMINATING" );
+    CB_LOG( LogLevel::Info, ending_log );
+
     return;
 }
 

@@ -230,9 +230,18 @@ public:
     //                      APPLICATION SIGNAL & HOTKEY HANDLERS:
     void                        KeyboardShortcutHandler     (void);
     void                        SaveHandler                 (void);
+    void                        CopyHandler                 (void);
+    void                        PasteHandler                (void);
     void                        UndoHandler                 (void);
     void                        RedoHandler                 (void);
     void                        QuerySignalStates           (void);
+    //
+    //                      PLACEHOLDERS:
+    void                        SaveHandler_Default         (void);
+    void                        CopyHandler_Default         (void);
+    void                        PasteHandler_Default        (void);
+    void                        UndoHandler_Default         (void);
+    void                        RedoHandler_Default         (void);
     //
     //                      MISC. GUI FUNCTIONS:
     void                        InitDockspace               (void);

@@ -113,9 +113,10 @@ public:
                         
     //  1.2             Public Member Functions...
     void                initialize                      (void);
-    void                toggle                          (void);
-    void                open                            (void);
-    void                close                           (void);
+    void                save                            (void);
+    void                undo                            (void);
+    void                redo                            (void);
+    //
     void                Begin                           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                ToggleAllPlots                  (const char * title_id);
 

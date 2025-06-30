@@ -48,6 +48,7 @@
 #include CBAPP_USER_CONFIG
 #include "cblib.h"
 #include "utility/utility.h"
+#include "widgets/editor/_constants.h"
 
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
@@ -82,32 +83,6 @@
 namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
-
-
-
-
-
-//  1.  STATIC / CONSTEXPR / CONSTANTS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-// Inserted constants after GRID_STEP and HIT_THRESH_SQ
-static constexpr float      GRID_STEP                   = 64.0f;
-static constexpr float      HIT_THRESH_SQ               = 6.0f * 6.0f;
-
-
-// ---- standardized style -----------------------------------------------
-static constexpr ImU32      COL_POINT_DEFAULT           = IM_COL32(0,255,0,255);   // idle green
-static constexpr ImU32      COL_POINT_HELD              = IM_COL32(255,100,0,255); // while dragging
-static constexpr ImU32      COL_SELECTION_OUT           = IM_COL32(255,215,0,255); // gold outline
-static constexpr float      DEFAULT_POINT_RADIUS        = 12.0f;                  // px
-
-static constexpr ImU32      COL_LASSO_OUT               = IM_COL32(255,215,0,255); // gold outline
-static constexpr ImU32      COL_LASSO_FILL              = IM_COL32(255,215,0,40);  // translucent fill
-
-
-//  APPEARANCE FOR SELECTION STUFF...
-static constexpr float      HANDLE_BOX_SIZE             = 4.f;
 
 
 
@@ -275,14 +250,19 @@ struct PathStyle {
 
 //  "Path_t"
 //
-template<typename PID, typename VID>
+template<typename PID, typename VID, typename ZID>
 struct Path_t {
     inline bool is_area(void) const noexcept
     { return this->closed && this->verts.size() >= 3; }
 //
-    std::vector<uint32_t>   verts;   // ordered anchor IDs
+    std::vector<VID>        verts;   // ordered anchor IDs
     bool                    closed      = false;
     PathStyle               style       = PathStyle();
+//
+// ─────────── NEW ───────────
+    uint32_t                z_index     = Z_FLOOR_USER;
+    bool                    locked      = false;
+    bool                    visible     = true;
 };
 
 

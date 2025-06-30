@@ -29,6 +29,7 @@
 #include "app/_init.h"
 #include "app/state/_state.h"
 #include "utility/utility.h"
+#include "widgets/editor/_constants.h"
 #include "widgets/editor/_types.h"
 #include "widgets/editor/_overlays.h"
 
@@ -129,7 +130,8 @@ enum Resident: uint8_t {
 class Editor {
 public:
         friend class                    App;
-        using                           EndpointInfo                    = EndpointInfo;
+        using                           Logger                          = utl::Logger;
+        using                           LogLevel                        = utl::LogLevel;
     //
     //                      ID / INDEX TYPES:
         template<typename T, typename Tag>
@@ -139,6 +141,7 @@ public:
         using                           PointID                         = uint32_t;     //    ID<std::uint32_t, Point_Tag>          ;
         using                           LineID                          = uint32_t;     //    ID<std::uint32_t, Line_Tag>           ;
         using                           PathID                          = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
+        using                           ZID                             = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
         using                           OverlayID                       = OverlayManager::OverlayID;     //    ID<std::uint32_t, Overlay_Tag>        ;
         using                           HitID                           = uint32_t;     //    ID<std::uint32_t, Hit_Tag>            ;
     //
@@ -146,12 +149,13 @@ public:
         using                           Vertex                          = Vertex_t      <VertexID>                              ;
         using                           Point                           = Point_t       <PointID>                               ;
         using                           Line                            = Line_t        <LineID>                                ;
-        using                           Path                            = Path_t        <PathID, VertexID>                      ;
+        using                           Path                            = Path_t        <PathID, VertexID, ZID>                 ;
         using                           Overlay                         = Overlay_t     <OverlayID>                             ;
         using                           Hit                             = Hit_t         <HitID>                                 ;
         using                           PathHit                         = PathHit_t     <PathID, VertexID>                      ;
         using                           Selection                       = Selection_t   <VertexID, PointID, LineID, PathID>     ;
         //
+        using                           EndpointInfo                    = EndpointInfo;
         using                           PenState                        = PenState_t    <VertexID>;
         using                           ShapeState                      = ShapeState_t  <OverlayID>;
         using                           Clipboard                       = Clipboard_t   <Vertex, Point, Line, Path>;
@@ -220,8 +224,12 @@ public:
 
     //  2.              PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
-    void                                Begin                           (const char * id = "##EditorCanvas");
-    void                                DrawBrowser                     (void);
+    void                                save                                (void);
+    void                                undo                                (void);
+    void                                redo                                (void);
+    //
+    void                                Begin                               (const char * id = "##EditorCanvas");
+    void                                DrawBrowser                         (void);
 
 
 
@@ -528,6 +536,41 @@ private:
     //  "_mode_has"
     inline bool                         _mode_has                           (CBCapabilityFlags flag) const
     { return (MODE_CAPS[static_cast<size_t>(m_mode)] & flag) != 0; }
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      NEW UTILITY FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "next_z_index"
+    inline ZID                          next_z_index                        (void)
+    {
+        ZID max_z = Z_FLOOR_USER;       // find current maximum among user objects
+        for (const Path& p : m_paths)
+            if (p.z_index > max_z) max_z = p.z_index;
+
+        if (max_z >= Z_CEIL_USER - 1)   // bump; renormalise if we’re at the ceiling
+            renormalise_z();
+
+        return std::min(max_z + 1, Z_CEIL_USER - 1);
+    }
+
+    //  "renormalise_z"
+    void                                renormalise_z                       (void)
+    {
+        std::vector<Path*> items;// collect visible+hidden paths in stable draw order
+        items.reserve(m_paths.size());
+        for (Path& p : m_paths) items.push_back(&p);
+
+        std::stable_sort(items.begin(), items.end(),
+            [](const Path* a, const Path* b){ return a->z_index < b->z_index; });
+
+        ZID     z   = Z_FLOOR_USER;
+        for (Path* p : items) p->z_index = z++;
+        return;
+    }
+
     //
     //
     //

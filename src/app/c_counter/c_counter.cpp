@@ -19,16 +19,45 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
+//  1A.     PUBLIC API...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "save"
+//
+void CCounterApp::save(void) {
+    CB_LOG( LogLevel::Info, "CCounter--save" );
+    return;
+}
+
+
+//  "undo"
+//
+void CCounterApp::undo(void) {
+    S.m_logger.info("CCounter--undo");
+    return;
+}
+
+
+//  "redo"
+//
+void CCounterApp::redo(void) {
+    S.m_logger.info("CCounter--redo");
+    return;
+}
+
+
+
+
+    
+
+// *************************************************************************** //
+//
+//
+//
 //  1B.     PUBLIC MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-
-void CCounterApp::toggle(void)     { this->m_child_open[1] = !m_child_open[1]; }
-
-void CCounterApp::open(void)       { this->m_child_open[1] = true; }
-
-void CCounterApp::close(void)      { this->m_child_open[1] = false; }
-
 
 //  "Begin"
 //

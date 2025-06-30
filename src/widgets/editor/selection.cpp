@@ -66,11 +66,10 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
                fabsf(ms.y - s.y) <= half;
     };
 
-    for (const Vertex& v : m_vertices)
-    {
-        if (!m_sel.vertices.count(v.id)) continue;     // show handles only on selected
 
-        ImVec2 scr_anchor = ws2px({ v.x, v.y });
+    for ( const Vertex & v : m_vertices )
+    {
+        if ( !m_sel.vertices.count(v.id) ) continue;     // show handles only on selected
 
         if (v.out_handle.x || v.out_handle.y) {
             ImVec2 scr = ws2px({ v.x + v.out_handle.x,
@@ -569,7 +568,7 @@ void Editor::resolve_pending_selection(const Interaction & it)
     {
         if (m_pending_hit || !m_pending_clear)
         {
-            if (m_pending_clear) m_sel.clear();
+            if (m_pending_clear) this->reset_selection(); // m_sel.clear();
 
             if (m_pending_hit)
             {

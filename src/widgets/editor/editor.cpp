@@ -146,8 +146,8 @@ inline void Editor::_dispatch_mode_handler([[maybe_unused]] const Interaction & 
 //
 void Editor::Begin(const char * /*id*/)
 {
-    bool                    space           = ImGui::IsKeyDown(ImGuiKey_Space);
-    bool                    zoom_enabled    = _mode_has(CBCapabilityFlags_Zoom);
+    const bool              space           = ImGui::IsKeyDown(ImGuiKey_Space);
+    const bool              zoom_enabled    = _mode_has(CBCapabilityFlags_Zoom);
 
 
 
@@ -169,7 +169,7 @@ void Editor::Begin(const char * /*id*/)
     //  2.  CREATING THE CANVAS/GRID...
     //
     //          CASE 2A     : FAILURE TO CREATE CANVAS.
-    if ( !ImPlot::BeginPlot("##EditorCanvas", ImVec2(m_avail.x, m_avail.y), m_plot_flags) ) {
+    if ( !ImPlot::BeginPlot("##Editor_CanvasGrid", ImVec2(m_avail.x, m_avail.y), m_plot_flags) ) {
         ImPlot::GetInputMap() = backup;
         return;
     }
@@ -192,15 +192,15 @@ void Editor::Begin(const char * /*id*/)
         
         
         // ───────────────────────── 3. Per-frame context
-        ImDrawList *    dl              = ImPlot::GetPlotDrawList();
-        ImVec2          plotTL          = ImPlot::GetPlotPos();
-        ImGuiIO &       io              = ImGui::GetIO();
-        bool            hovered         = ImPlot::IsPlotHovered();
-        bool            active          = ImPlot::IsPlotSelected();
+        ImDrawList *        dl              = ImPlot::GetPlotDrawList();
+        ImVec2              plotTL          = ImPlot::GetPlotPos();
+        ImGuiIO &           io              = ImGui::GetIO();
+        bool                hovered         = ImPlot::IsPlotHovered();
+        bool                active          = ImPlot::IsPlotSelected();
 
-        ImVec2          origin_scr      = plotTL;
-        ImVec2          mouse_canvas    { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
-        Interaction     it              { hovered, active, space, mouse_canvas, origin_scr, plotTL, dl };
+        ImVec2              origin_scr      = plotTL;
+        ImVec2              mouse_canvas    { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
+        Interaction         it              { hovered, active, space, mouse_canvas, origin_scr, plotTL, dl };
 
 
         //  5.      MODE SWITCH BEHAVIORS...
@@ -224,9 +224,11 @@ void Editor::Begin(const char * /*id*/)
         {
             _process_selection(it);
             
-            if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )    { _join_selected_open_path(); }     //  JOINING CLOSED PATHS...
+            if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )        { _join_selected_open_path(); }     //  JOINING CLOSED PATHS...
             
-            if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )             { this->reset_selection(); }        //  [Esc]   CANCEL SELECTION...
+            if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )                 { this->reset_selection(); }        //  [Esc]       CANCEL SELECTION...
+            
+            if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) )        { this->copy_to_clipboard(); }      //  [CTRL+C]    COPY SELECTION...
         }
         
     

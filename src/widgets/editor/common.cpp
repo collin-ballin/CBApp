@@ -19,6 +19,34 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 
 
 
+//  1A.     PUBLIC API...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "save"
+//
+void Editor::save(void) {
+    CB_LOG( LogLevel::Info, "Editor--save" );
+    return;
+}
+
+
+//  "undo"
+//
+void Editor::undo(void) {
+    CB_LOG( LogLevel::Info, "Editor--undo" );
+    return;
+}
+
+
+//  "redo"
+//
+void Editor::redo(void) {
+    CB_LOG( LogLevel::Info, "Editor--redo" );
+    return;
+}
+
+
 
 
 

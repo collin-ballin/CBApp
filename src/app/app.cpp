@@ -389,45 +389,45 @@ void App::KeyboardShortcutHandler(void)
 //
 void App::SaveHandler(void)
 {
-    static constexpr const char *   save_popup_id       = "S A V E   P R O G R A M  .  .  .";
-    static auto                     now                 = ImGui::GetTime();
-            
-
-        now = ImGui::GetTime();
-        
-        ImGui::OpenPopup(save_popup_id);
+    switch (S.m_current_task) {
+        case Applet::CCounterApp        : { this->m_counter_app.save();     break; }
+        case Applet::EditorApp          : { this->m_editor_app.save();      break; }
+        case Applet::GraphApp           : { this->m_graph_app.save();       break; }
+        default                         : { this->SaveHandler_Default();    break; }
+    }
     
-    
-    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    utl::Popup_Save(save_popup_id);
-    
-    //ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags  | ImGuiInputFlags_Tooltip);
-
     return;
 }
-
 
 
 //  "UndoHandler"
 //
 void App::UndoHandler(void)
 {
+    switch (S.m_current_task) {
+        case Applet::CCounterApp        : { this->m_counter_app.undo();     break; }
+        case Applet::EditorApp          : { this->m_editor_app.undo();      break; }
+        case Applet::GraphApp           : { this->m_graph_app.undo();       break; }
+        default                         : { this->UndoHandler_Default();    break; }
+    }
+    
     return;
 }
-
 
 
 //  "RedoHandler"
 //
 void App::RedoHandler(void)
 {
-
+    switch (S.m_current_task) {
+        case Applet::CCounterApp        : { this->m_counter_app.redo();     break; }
+        case Applet::EditorApp          : { this->m_editor_app.redo();      break; }
+        case Applet::GraphApp           : { this->m_graph_app.redo();       break; }
+        default                         : { this->RedoHandler_Default();    break; }
+    }
+    
     return;
 }
-
-
-
 
 
 //  "QuerySignalStates"
@@ -483,6 +483,72 @@ inline void App::QuerySignalStates(void)
 
     return;
 }
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  3.4     PLACEHOLDER HANDLERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "SaveHandler_Default"
+//
+void App::SaveHandler_Default(void)
+{
+    static constexpr const char *   save_popup_id       = "S A V E   P R O G R A M  .  .  .";
+            
+
+    ImGui::OpenPopup(save_popup_id);
+    
+    
+    ImVec2                          center              = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    utl::Popup_Save(save_popup_id);
+    
+    //ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags  | ImGuiInputFlags_Tooltip);
+
+    CB_LOG( LogLevel::Info, "Applet::MainApp--save" );
+    return;
+}
+
+
+//  "CopyHandler_Default"
+//
+void App::CopyHandler_Default(void)
+{
+    return;
+}
+
+
+//  "PasteHandler_Default"
+//
+void App::PasteHandler_Default(void)
+{
+    return;
+}
+
+
+//  "UndoHandler_Default"
+//
+void App::UndoHandler_Default(void) {
+    S.m_logger.info( "Applet::MainApp--undo" );
+    return;
+}
+
+
+//  "RedoHandler_Default"
+//
+void App::RedoHandler_Default(void) {
+    S.m_logger.info( "Applet::MainApp--undo" );
+    return;
+}
+
 
 
 

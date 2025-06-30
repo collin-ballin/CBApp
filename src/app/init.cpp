@@ -509,14 +509,14 @@ App::~App(void)
 //
 void App::destroy(void)
 {
-    CB_LOG(LogLevel::Notify, "Application terminating");
-    //CB_LOG(LogLevel::Notify, "Application terminating",        S.m_dpi_scale, S.m_dpi_fontscale );
+    S.log_shutdown_info();
 
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
+
 
     if (this->S.m_glfw_window) {
         glfwDestroyWindow(this->S.m_glfw_window);

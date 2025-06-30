@@ -21,7 +21,7 @@ cmake_minimum_required(VERSION 3.10)
 # ---------------------------------------------------------------------
 # 0.  PROJECT + VERSION (single source of truth)
 # ---------------------------------------------------------------------
-project(CBApp_Win64 VERSION 0.3.0 LANGUAGES CXX)
+project(CBApp_Win64 VERSION 0.4.0 LANGUAGES CXX)
 
 # Auto build number = total Git commits (fallback 1 when Git unavailable)
 set(PROJECT_ROOT ${CMAKE_CURRENT_LIST_DIR}/..)
