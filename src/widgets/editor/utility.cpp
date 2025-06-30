@@ -406,48 +406,6 @@ void Editor::_display_canvas_settings(void)
 
 
 
-
-
-// *************************************************************************** //
-//
-//
-//  OTHER MISC...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "_clear_all"
-//
-void Editor::_clear_all(void)
-{
-    const size_t    N       = this->m_paths.size();
-    
-    
-    //  1.  CLEAR ALL EDITOR DATA...
-    for (size_t idx = 0; idx < N; ++idx) {
-        _erase_path_and_orphans(idx);  // ← replaces direct m_paths.erase()
-    }
-
-    m_vertices.clear();
-    m_points.clear();
-    m_lines.clear();
-    m_sel.clear();
-    
-    
-    //  2.  RESET EDITOR STATE...
-    m_lasso_active  = false;
-    m_dragging      = false;
-    m_drawing       = false;
-    m_next_id       = 1;
-    m_pen           = {};
-    
-    return;
-}
-
-
-
-
-
-
 // *************************************************************************** //
 //
 //

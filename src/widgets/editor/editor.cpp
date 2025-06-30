@@ -60,19 +60,21 @@ inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it
                         alt                 = io.KeyAlt,            super   = io.KeySuper;
     const bool          no_mod              = !ctrl && !shift && !alt && !super;
     const bool          only_shift          = !ctrl &&  shift && !alt && !super;
+    const bool          lmb_held            = ImGui::IsMouseDown(ImGuiMouseButton_Left);
     //
     static auto &       shape_entry         = m_residents[Resident::Shape];
     static Overlay &    shape_resident      = *m_overlays.lookup_resident(shape_entry.id);
+    //
     //  static auto &       selection_entry     = m_residents[Resident::Selection];
     //  static Overlay *    selection_resident  = m_overlays.lookup_resident(shape_entry.id);
 
 
-    if ( it.space || !it.hovered )  return;   // early-out if Space held or cursor not on plot
-
+    if ( it.space || !it.hovered || lmb_held )  return;   // Early-out if [SPACE], [NOT HOVERING OVER CANVAS], or [LMB IS HELD DOWN]...
+    
 
 
     //  3.      MODE SWITCH BEHAVIORS   [NO KEY MODS]...
-    if (no_mod)
+    if ( no_mod )
     {
         if ( ImGui::IsKeyPressed(ImGuiKey_V)                            )                   m_mode = Mode::Default;
         if ( ImGui::IsKeyPressed(ImGuiKey_N)                            )                   m_mode = Mode::Point;
@@ -91,11 +93,18 @@ inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it
     
     
     //  4.      CLEAR LINGERING STATE BEHAVIORS...
-    if ( m_mode != Mode::Pen )    m_pen = {};                           //  Leaving the Pen-Tool resets current path appending.
-    shape_resident.visible          = ( m_mode == Mode::Shape );        //  Leaving the Shape-Tool closes the overlay window.
+    if ( m_mode != Mode::Pen )    { this->reset_pen(); } // m_pen = {};     //  Leaving the Pen-Tool resets current path appending.
+    shape_resident.visible          = ( m_mode == Mode::Shape );            //  Leaving the Shape-Tool closes the overlay window.
     
     
+    //  5.      INVOKE GRID SHORTCUT BEHAVIORS...
+    this->_grid_handle_shortcuts();
     
+    //  bool lmbHeld = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+    //  bool lmbHeldRaw = io.MouseDown[0];          // 0 == left button
+    //  float heldFor   = io.MouseDownDuration[0];
+
+
     return;
 }
 
@@ -104,16 +113,15 @@ inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it
 //
 inline void Editor::_dispatch_mode_handler([[maybe_unused]] const Interaction & it)
 {
-    if ( !(it.space && ImGui::IsMouseDown(ImGuiMouseButton_Left)) ) {
+    if ( !(it.space && ImGui::IsMouseDown(ImGuiMouseButton_Left)) )
+    {
         switch (m_mode) {
             case Mode::Default:         _handle_default(it);           break;
             case Mode::Line:            _handle_line(it);              break;
             case Mode::Point:           _handle_point(it);             break;
             case Mode::Pen:             _handle_pen(it);               break;
-            case Mode::Scissor:
-                _handle_scissor(it);           break;
-            case Mode::Shape:
-                _handle_shape(it);             break;
+            case Mode::Scissor:         _handle_scissor(it);           break;
+            case Mode::Shape:           _handle_shape(it);             break;
             case Mode::AddAnchor:       _handle_add_anchor(it);        break;
             case Mode::RemoveAnchor:    _handle_remove_anchor(it);     break;
             case Mode::EditAnchor:      _handle_edit_anchor(it);       break;
@@ -136,7 +144,7 @@ inline void Editor::_dispatch_mode_handler([[maybe_unused]] const Interaction & 
 
 //  "Begin"
 //
-void Editor::Begin(const char* /*id*/)
+void Editor::Begin(const char * /*id*/)
 {
     bool                    space           = ImGui::IsKeyDown(ImGuiKey_Space);
     bool                    zoom_enabled    = _mode_has(CBCapabilityFlags_Zoom);
@@ -196,6 +204,7 @@ void Editor::Begin(const char* /*id*/)
 
 
         //  5.      MODE SWITCH BEHAVIORS...
+        //
         this->_mode_switch_hotkeys(it);
 
 
@@ -210,12 +219,18 @@ void Editor::Begin(const char* /*id*/)
 
 
         //  7.      GLOBAL SELECTION BEHAVIOR...
-        if  ( !space && _mode_has(CBCapabilityFlags_Select) ) {
+        //
+        if  ( !space && _mode_has(CBCapabilityFlags_Select) )
+        {
             _process_selection(it);
-            if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )    //  JOINING CLOSED PATHS...
-            { _join_selected_open_path(); }
+            
+            if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )    { _join_selected_open_path(); }     //  JOINING CLOSED PATHS...
+            
+            if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )             { this->reset_selection(); }        //  [Esc]   CANCEL SELECTION...
         }
         
+    
+    
     
         //  8.      MODE/STATE/TOOL DISPATCHER...
         this->_dispatch_mode_handler(it);
@@ -225,10 +240,10 @@ void Editor::Begin(const char* /*id*/)
         ImPlot::PushPlotClipRect();
         //
         //
-            _draw_points(dl);           //  Already ported
-            // _draw_lines(dl);         //  Enable once ported
-            _draw_paths(dl);            //  Enable once ported
-            _draw_selection_highlight(dl);
+            _render_points(dl);           //  Already ported
+            // _render_lines(dl);         //  Enable once ported
+            _render_paths(dl);            //  Enable once ported
+            _render_selection_highlight(dl);
         //
         //
         ImPlot::PopPlotClipRect();
@@ -412,10 +427,12 @@ void Editor::_handle_pen(const Interaction& it)
     ImGuiIO& io = ImGui::GetIO();
 
     // ───── 0.  [Esc] aborts live path
-    if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-        m_pen = {};
-        return;
-    }
+    //  if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+    //      this->reset_pen(); // m_pen = {};
+    //      return;
+    //  }
+    
+    
 
     // ───── A. Handle‑drag already in progress
     if (m_pen.dragging_handle) {
@@ -582,7 +599,7 @@ void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
         m_sel.clear();
         m_sel.vertices.insert(vid);
 
-        // also select matching Point glyph so _draw_selected_handles() knows which one
+        // also select matching Point glyph so _render_selected_handles() knows which one
         for (size_t i = 0; i < m_points.size(); ++i)
             if (m_points[i].v == vid) { m_sel.points.insert(i); break; }
     };

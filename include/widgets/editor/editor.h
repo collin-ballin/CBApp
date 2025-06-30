@@ -128,31 +128,33 @@ enum Resident: uint8_t {
 //
 class Editor {
 public:
-        friend class            App;
-        using                   EndpointInfo                    = EndpointInfo;
+        friend class                    App;
+        using                           EndpointInfo                    = EndpointInfo;
     //
     //                      ID / INDEX TYPES:
         template<typename T, typename Tag>
-        using                   ID                              = cblib::utl::IDType<T, Tag>;
+        using                           ID                              = cblib::utl::IDType<T, Tag>;
     //
-        using                   VertexID                        = uint32_t;     //    ID<std::uint32_t, Vertex_Tag>         ;
-        using                   PointID                         = uint32_t;     //    ID<std::uint32_t, Point_Tag>          ;
-        using                   LineID                          = uint32_t;     //    ID<std::uint32_t, Line_Tag>           ;
-        using                   PathID                          = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
-        using                   OverlayID                       = OverlayManager::OverlayID;     //    ID<std::uint32_t, Overlay_Tag>        ;
-        using                   HitID                           = uint32_t;     //    ID<std::uint32_t, Hit_Tag>            ;
+        using                           VertexID                        = uint32_t;     //    ID<std::uint32_t, Vertex_Tag>         ;
+        using                           PointID                         = uint32_t;     //    ID<std::uint32_t, Point_Tag>          ;
+        using                           LineID                          = uint32_t;     //    ID<std::uint32_t, Line_Tag>           ;
+        using                           PathID                          = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
+        using                           OverlayID                       = OverlayManager::OverlayID;     //    ID<std::uint32_t, Overlay_Tag>        ;
+        using                           HitID                           = uint32_t;     //    ID<std::uint32_t, Hit_Tag>            ;
     //
-    //                      TYPENAME ALIASES (BASED ON INDEX TYPES):
-        using                   Vertex                          = Vertex_t      <VertexID>                              ;
-        using                   Point                           = Point_t       <PointID>                               ;
-        using                   Line                            = Line_t        <LineID>                                ;
-        using                   Path                            = Path_t        <PathID, VertexID>                      ;
-        using                   Overlay                         = Overlay_t     <OverlayID>                             ;
-        using                   Hit                             = Hit_t         <HitID>                                 ;
-        using                   PathHit                         = PathHit_t     <PathID, VertexID>                      ;
-        using                   Selection                       = Selection_t   <VertexID, PointID, LineID, PathID>     ;
+    //                              TYPENAME ALIASES (BASED ON INDEX TYPES):
+        using                           Vertex                          = Vertex_t      <VertexID>                              ;
+        using                           Point                           = Point_t       <PointID>                               ;
+        using                           Line                            = Line_t        <LineID>                                ;
+        using                           Path                            = Path_t        <PathID, VertexID>                      ;
+        using                           Overlay                         = Overlay_t     <OverlayID>                             ;
+        using                           Hit                             = Hit_t         <HitID>                                 ;
+        using                           PathHit                         = PathHit_t     <PathID, VertexID>                      ;
+        using                           Selection                       = Selection_t   <VertexID, PointID, LineID, PathID>     ;
         //
-        using                   ShapeState                      = ShapeState_t  <OverlayID>;
+        using                           PenState                        = PenState_t    <VertexID>;
+        using                           ShapeState                      = ShapeState_t  <OverlayID>;
+        using                           Clipboard                       = Clipboard_t   <Vertex, Point, Line, Path>;
 //
 //      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 //
@@ -160,25 +162,25 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //
     static constexpr std::array<const char*, static_cast<size_t>(Mode::Count)>
-                                ms_MODE_LABELS                  = DEF_EDITOR_STATE_NAMES;
-    static constexpr float      ms_LIST_COLUMN_WIDTH            = 240.0f;   // px width of point‑list column
+                                        ms_MODE_LABELS                  = DEF_EDITOR_STATE_NAMES;
+    static constexpr float              ms_LIST_COLUMN_WIDTH            = 240.0f;   // px width of point‑list column
 
 
 
 public:
     //  1.              INITIALIZATION METHODS...
     // *************************************************************************** //
-                                Editor                          (void);
-                                ~Editor                         (void);
+                                        Editor                          (void);
+                                        ~Editor                         (void);
     //
     //
     //
     // *************************************************************************** //
-    //                      RESIDENT OVERLAY FUNCTIONS:
-    void                        _dispatch_resident_draw_fn      (Resident idx);
+    //                              RESIDENT OVERLAY FUNCTIONS:
+    void                                _dispatch_resident_draw_fn      (Resident idx);
     //
     //
-    //                      RESIDENT OVERLAY DATA:
+    //                              RESIDENT OVERLAY DATA:
     struct ResidentEntry {
         OverlayID                   id;         //  runtime ID (filled in ctor)
         Overlay *                   ptr;        //  Reference.
@@ -218,8 +220,8 @@ public:
 
     //  2.              PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
-    void                        Begin                           (const char * id = "##EditorCanvas");
-    void                        DrawBrowser                     (void);
+    void                                Begin                           (const char * id = "##EditorCanvas");
+    void                                DrawBrowser                     (void);
 
 
 
@@ -234,102 +236,101 @@ private:
     // *************************************************************************** //
     //      "Begin" HELPERS.                |   "editor.cpp" ...
     // *************************************************************************** //
-    inline void                 _mode_switch_hotkeys                ([[maybe_unused]] const Interaction & );
-    inline void                 _dispatch_mode_handler              ([[maybe_unused]] const Interaction & );
+    inline void                         _mode_switch_hotkeys                ([[maybe_unused]] const Interaction & );
+    inline void                         _dispatch_mode_handler              ([[maybe_unused]] const Interaction & );
     
 
     // *************************************************************************** //
     //      PRIMARY STATE HANDLERS.         |   "editor.cpp" ...
     // *************************************************************************** //
-    void                        _handle_default                     (const Interaction & );
-    void                        _handle_line                        (const Interaction & );
-    void                        _handle_point                       (const Interaction & );
-    void                        _handle_pen                         (const Interaction & );
-    void                        _handle_scissor                     (const Interaction & );
-    void                        _handle_shape                       ([[maybe_unused]] const Interaction & );
-    void                        _handle_add_anchor                  ([[maybe_unused]] const Interaction & );
-    void                        _handle_remove_anchor               ([[maybe_unused]] const Interaction & );
-    void                        _handle_edit_anchor                 ([[maybe_unused]] const Interaction & );
-    void                        _handle_overlays                    ([[maybe_unused]] const Interaction & );
+    void                                _handle_default                     (const Interaction & );
+    void                                _handle_line                        (const Interaction & );
+    void                                _handle_point                       (const Interaction & );
+    void                                _handle_pen                         (const Interaction & );
+    void                                _handle_scissor                     (const Interaction & );
+    void                                _handle_shape                       ([[maybe_unused]] const Interaction & );
+    void                                _handle_add_anchor                  ([[maybe_unused]] const Interaction & );
+    void                                _handle_remove_anchor               ([[maybe_unused]] const Interaction & );
+    void                                _handle_edit_anchor                 ([[maybe_unused]] const Interaction & );
+    void                                _handle_overlays                    ([[maybe_unused]] const Interaction & );
     //
     //
     // *************************************************************************** //
     //      BROWSER STUFF.                  |   "browser.cpp" ...
     // *************************************************************************** //
-    void                        _draw_path_inspector_column         (void);
-    void                        _draw_path_list_column              (void);
-    void                        _draw_vertex_list_subcolumn         (Path & );          // left part
-    void                        _draw_vertex_inspector_subcolumn    (Path & );
+    void                                _draw_path_inspector_column         (void);
+    void                                _draw_path_list_column              (void);
+    void                                _draw_vertex_list_subcolumn         (Path & );          // left part
+    void                                _draw_vertex_inspector_subcolumn    (Path & );
     //
-    void                        _draw_multi_path_inspector          (void);
-    void                        _draw_single_path_inspector         (void);
+    void                                _draw_multi_path_inspector          (void);
+    void                                _draw_single_path_inspector         (void);
     //
     //
     // *************************************************************************** //
     //      PEN-TOOL STUFF.                 |   "pen_tool.cpp" ...
     // *************************************************************************** //
-    bool                        _pen_cancel_if_escape               ([[maybe_unused]] const Interaction & );
-    void                        _pen_begin_handle_drag              (uint32_t vid, bool out_handle, const bool force_select=false);
-    bool                        _pen_try_begin_handle_drag          (const Interaction & );
-    void                        _pen_update_handle_drag             ([[maybe_unused]] const Interaction & );
-    void                        _pen_begin_path_if_click_empty      (const Interaction & );
-    void                        _pen_append_or_close_live_path      (const Interaction & );
+    void                                _pen_begin_handle_drag              (uint32_t vid, bool out_handle, const bool force_select=false);
+    //bool                                _pen_try_begin_handle_drag          (const Interaction & );
+    void                                _pen_update_handle_drag             ([[maybe_unused]] const Interaction & );
+    void                                _pen_begin_path_if_click_empty      (const Interaction & );
+    void                                _pen_append_or_close_live_path      (const Interaction & );
     //
-    std::optional<size_t>       _path_idx_if_last_vertex            (uint32_t vid) const;
-    inline bool                 _pen_click_hits_first_vertex        (const Interaction &, const Path &) const;
-    inline bool                 _can_join_selected_path             (void) const;
-    void                        _join_selected_open_path            (void);
-    void                        _draw_pen_cursor                    (const ImVec2 &, ImU32);
+    std::optional<size_t>               _path_idx_if_last_vertex            (uint32_t vid) const;
+    inline bool                         _pen_click_hits_first_vertex        (const Interaction &, const Path &) const;
+    inline bool                         _can_join_selected_path             (void) const;
+    void                                _join_selected_open_path            (void);
+    void                                _draw_pen_cursor                    (const ImVec2 &, ImU32);
     //
     //
     // *************************************************************************** //
     //      SHAPE TOOL STUFF.               |   "tools.cpp" ...
     // *************************************************************************** //
-    //                      MAIN SHAPE-TOOL FUNCTIONS:
-    void                        _shape_begin_anchor                 ([[maybe_unused]] const Interaction& it);
-    void                        _shape_update_radius                ([[maybe_unused]] const Interaction& it);
+    //                              MAIN SHAPE-TOOL FUNCTIONS:
+    void                                _shape_begin_anchor                 ([[maybe_unused]] const Interaction& it);
+    void                                _shape_update_radius                ([[maybe_unused]] const Interaction& it);
     //
-    uint32_t                    _shape_add_vertex                   (const ImVec2& ws);
-    void                        _shape_commit                       (void);
-    void                        _shape_reset                        (void);
+    uint32_t                            _shape_add_vertex                   (const ImVec2& ws);
+    void                                _shape_commit                       (void);
+    void                                _shape_reset                        (void);
     //
-    //                      SPECIFIC SHAPE FUNCTIONS:
-    size_t                      _shape_build_rectangle              (const ImVec2& cen, float r);
-    size_t                      _shape_build_ellipse                (const ImVec2& cen, float r);
+    //                              SPECIFIC SHAPE FUNCTIONS:
+    size_t                              _shape_build_rectangle              (const ImVec2& cen, float r);
+    size_t                              _shape_build_ellipse                (const ImVec2& cen, float r);
     //
-    //                      UTILITIES:
-    //                          ...
+    //                              UTILITIES:
+    //                                  ...
     //
-    //                      DEPRECATED:
-    void                        _shape_preview_draw                 (ImDrawList* dl) const;
-    void                        _draw_shape_cursor                  (const Interaction &) const;
+    //                              DEPRECATED:
+    void                                _shape_preview_draw                 (ImDrawList* dl) const;
+    void                                _draw_shape_cursor                  (const Interaction &) const;
     //
     //
     // *************************************************************************** //
     //      RESIDENT STUFF.                 |   "utility.cpp" ...
     // *************************************************************************** //
-    void                        _draw_shape_resident                (void);
-    void                        _draw_shape_resident_custom         (void);
-    void                        _draw_shape_resident_multi          (void);
-    void                        _draw_shape_resident_default        (void);
+    void                                _draw_shape_resident                (void);
+    void                                _draw_shape_resident_custom         (void);
+    void                                _draw_shape_resident_multi          (void);
+    void                                _draw_shape_resident_default        (void);
     //
-    void                        _draw_selection_resident            (void);
+    void                                _draw_selection_resident            (void);
     //
     //
     // *************************************************************************** //
     //      OVERLAY TOOL STUFF.             |   "tools.cpp" ...
     // *************************************************************************** //
-    void                        _handle_overlay                     ([[maybe_unused]] const Interaction & );
-    bool                        _overlay_begin_window               (void);
-    void                        _overlay_end_window                 (void);
+    void                                _handle_overlay                     ([[maybe_unused]] const Interaction & );
+    bool                                _overlay_begin_window               (void);
+    void                                _overlay_end_window                 (void);
     //
-    void                        _overlay_draw_context_menu          (void);
-    void                        _overlay_update_position            (void);
-    void                        overlay_log                         (std::string msg, float secs = 2.0f);
+    void                                _overlay_draw_context_menu          (void);
+    void                                _overlay_update_position            (void);
+    void                                overlay_log                         (std::string msg, float secs = 2.0f);
     //
-    void                        _overlay_draw_content               ([[maybe_unused]]const Interaction &);
-    void                        _overlay_display_main_content       ([[maybe_unused]]const Interaction &);
-    void                        _overlay_display_extra_content      ([[maybe_unused]]const Interaction &);
+    void                                _overlay_draw_content               ([[maybe_unused]]const Interaction &);
+    void                                _overlay_display_main_content       ([[maybe_unused]]const Interaction &);
+    void                                _overlay_display_extra_content      ([[maybe_unused]]const Interaction &);
     //
     // *************************************************************************** //
     //
@@ -339,74 +340,99 @@ private:
     //      RENDERING FUNCTIONS.            |   "render.cpp" ...
     // *************************************************************************** //
     //
-    //                      GRID:
-    void                        _grid_handle_shortcuts              (void);
+    //                              GRID:
+    void                                _grid_handle_shortcuts              (void);
     //
-    //                      RENDERING INTERACTIBLES:
-    void                        _draw_paths                         (ImDrawList* dl) const;
-    void                        _draw_lines                         (ImDrawList *,   const ImVec2 & ) const;
-    void                        _draw_points                        (ImDrawList *) const;
+    //                              PRIMARY RENDERING:
+    void                                _render_paths                       (ImDrawList* dl) const;
+    void                                _render_lines                       (ImDrawList *, const ImVec2 & ) const;
+    void                                _render_points                      (ImDrawList *) const;
+    //
+    //                              ADDITIONAL RENDERING:
+    void                                _render_selection_highlight         (ImDrawList *) const;
+    inline void                         _render_selected_handles            (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
+    inline void                         _render_selection_bbox              (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
     //
     //
     // *************************************************************************** //
     //      SELECTION MECHANICS.            |   "selection.cpp" ...
     // *************************************************************************** //
-    int                         _hit_point                          (const Interaction & ) const;
-    std::optional<Hit>          _hit_any                            (const Interaction & ) const;
-    std::optional<PathHit>      _hit_path_segment                   (const Interaction & ) const;
+    int                                 _hit_point                          ([[maybe_unused]] const Interaction & ) const;
+    std::optional<Hit>                  _hit_any                            ([[maybe_unused]] const Interaction & ) const;
+    std::optional<PathHit>              _hit_path_segment                   ([[maybe_unused]] const Interaction & ) const;
     //
-    void                        _process_selection                  (const Interaction & );
+    //                              PRIMARY SELECTION OPERATION:
+    void                                _process_selection                  (const Interaction & );
     //
-    void                        show_selection_context_menu         (const Interaction & it);
-    void                        resolve_pending_selection           (const Interaction & it);
-    void                        update_move_drag_state              (const Interaction & it);
-    void                        start_move_drag                     (const ImVec2 & anchor_ws);
-    void                        add_hit_to_selection                (const Hit & hit);
+    void                                resolve_pending_selection           (const Interaction & it);
+    void                                update_move_drag_state              (const Interaction & it);
+    void                                start_move_drag                     (const ImVec2 & anchor_ws);
+    void                                add_hit_to_selection                (const Hit & hit);
+    void                                _rebuild_vertex_selection           (void);   // decl
     //
+    //                              SELECTION HIGHLIGHT / USER-INTERACTION / APPEARANCE:
+    void                                _update_cursor_select               (const Interaction & ) const;
+    //void                                _render_selection_highlight         (ImDrawList *) const;
+    bool                                _selection_bounds                   (ImVec2 & tl, ImVec2 & br) const;
     //
-    void                        _update_cursor_select               (const Interaction & ) const;
-    void                        _rebuild_vertex_selection           (void);   // decl
+    //                              LASSO TOOL MECHANICS:
+    void                                _start_lasso_tool                   (void);
+    void                                _update_lasso                       (const Interaction & );
     //
-    void                        _draw_selection_highlight           (ImDrawList *) const;
+    //                              BOUNDING BOX MECHANICS:
+    void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
+    void                                _update_bbox                        (void);
     //
-    bool                        _selection_bounds                   (ImVec2 & tl, ImVec2 & br) const;
-    void                        _draw_selected_handles              (ImDrawList *) const;
-    void                        _draw_selection_bbox                (ImDrawList *) const;
+    //                              SELECTION BEHAVIOR STUFF:
+    void                                _selection_handle_shortcuts         ([[maybe_unused]] const Interaction & );
     //
-    //                      LASSO TOOL MECHANICS:
-    void                        _start_lasso_tool                   (void);
-    void                        _update_lasso                       (const Interaction & );
+    //                              SELECTION CONTEXT MENU STUFF:
+    void                                dispatch_selection_context_menus    ([[maybe_unused]] const Interaction & it);
+    inline void                         _show_selection_context_menu        ([[maybe_unused]] const Interaction & it, const char * );
+    inline void                         _show_canvas_context_menu           ([[maybe_unused]] const Interaction & it, const char * );
     //
-    //                      BOUNDING BOX MECHANICS:
-    void                        _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
-    void                        _update_bbox                        (void);
+    inline void                         _selection_context_default          ([[maybe_unused]] const Interaction & );
+    inline void                         _selection_context_single           ([[maybe_unused]] const Interaction & );
+    inline void                         _selection_context_multi            ([[maybe_unused]] const Interaction & );
     //
     //
     // *************************************************************************** //
     //      UTILITIES.                      |   "utility.cpp" ...
     // *************************************************************************** //
-    Vertex *                    find_vertex                         (std::vector<Vertex> & , uint32_t);
-    const Vertex *              find_vertex                         (const std::vector<Vertex> & , uint32_t) const;
-    std::optional<EndpointInfo> _endpoint_if_open                   (uint32_t vid) const;
+    Vertex *                            find_vertex                         (std::vector<Vertex> & , uint32_t);
+    const Vertex *                      find_vertex                         (const std::vector<Vertex> & , uint32_t) const;
+    std::optional<EndpointInfo>         _endpoint_if_open                   (uint32_t vid) const;
     //
-    //                      DATA MODIFIER UTILITIES:
-    void                        _add_point_glyph                    (uint32_t vid);
-    uint32_t                    _add_vertex                         (ImVec2 w);
-    void                        _add_point                          (ImVec2 w);
-    void                        _erase_vertex_and_fix_paths         (uint32_t vid);
-    void                        _erase_path_and_orphans             (size_t vid);
+    //                              DATA MODIFIER UTILITIES:
+    void                                _add_point_glyph                    (uint32_t vid);
+    uint32_t                            _add_vertex                         (ImVec2 w);
+    void                                _add_point                          (ImVec2 w);
+    void                                _erase_vertex_and_fix_paths         (uint32_t vid);
+    void                                _erase_path_and_orphans             (size_t vid);
     //
-    //                      APP UTILITY OPERATIONS:
-    bool                        _try_begin_handle_drag              (const Interaction & );
-    void                        _scissor_cut                        (const PathHit & );
+    //                              APP UTILITY OPERATIONS:
+    bool                                _try_begin_handle_drag              (const Interaction & );
+    void                                _scissor_cut                        (const PathHit & );
     //
-    //                      LOCAMOTION UTILITIES:
-    void                        _update_world_extent                (void);
+    //                              LOCAMOTION UTILITIES:
+    void                                _update_world_extent                (void);
     //
-    //                      MISC. UTILITIES:
-    void                        _draw_controls                      (void);
-    void                        _display_canvas_settings            (void);
-    void                        _clear_all                          (void);
+    //                              MISC. UTILITIES:
+    void                                _draw_controls                      (void);
+    void                                _display_canvas_settings            (void);
+    //
+    //
+    // *************************************************************************** //
+    //      COMMON.                         |   "common.cpp" ...
+    // *************************************************************************** //
+    //                              SELECTION FUNCTIONS:
+    void                                move_selection                      (const float dx, const float dy);
+    void                                copy_to_clipboard                   (void);
+    void                                paste_from_clipboard                (ImVec2);
+    void                                delete_selection                    (void);
+    //
+    //                              GLOBAL OPERATIONS:
+    void                                _clear_all                          (void);
 
 
 
@@ -421,22 +447,28 @@ private:
 
     // *************************************************************************** //
     // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      INLINE GRID/WORLD FUNCTIONS...
+    // *************************************************************************** //
     
     //  "world_to_pixels"
     //      ImPlot works in double precision; promote, convert back to float ImVec2
-    inline ImVec2               world_to_pixels                     (ImVec2 w) const {
+    inline ImVec2                       world_to_pixels                     (ImVec2 w) const {
         ImPlotPoint p = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));
         return { static_cast<float>(p.x), static_cast<float>(p.y) };
     }
     
     //  "pixels_to_world"
-    inline ImVec2               pixels_to_world                     (ImVec2 scr) const {
+    inline ImVec2                       pixels_to_world                     (ImVec2 scr) const {
         ImPlotPoint p = ImPlot::PixelsToPlot(scr);// ImPlot uses double; convert back to float for our structs
         return { static_cast<float>(p.x), static_cast<float>(p.y) };
     }
     
     //  "snap_to_grid"
-    inline ImVec2               snap_to_grid                        (ImVec2 ws) const
+    inline ImVec2                       snap_to_grid                        (ImVec2 ws) const
     {
         if ( this->want_snap() ) {
             float s = m_grid.snap_step;
@@ -449,12 +481,12 @@ private:
     }
     
     //  "want_snap"
-    inline bool                 want_snap                           (void) const
+    inline bool                         want_snap                           (void) const
     { return m_grid.snap_on || ImGui::GetIO().KeyShift; }
        
        
     //  "_update_grid"
-    inline void                 _update_grid_info                   (void)
+    inline void                         _update_grid_info                   (void)
     {
         ImPlotRect lim      = ImPlot::GetPlotLimits();          // world extent
         ImVec2     size     = ImPlot::GetPlotSize();           // in pixels
@@ -465,7 +497,7 @@ private:
         const float TARGET_PX = 20.0f;                     // desired screen grid pitch
         float raw_step = TARGET_PX / ppw;                  // world units per 20 px
 
-        // Quantise to 1·10^n, 2·10^n, or 5·10^n
+        //  Quantize to     1·10^n, 2·10^n, or 5·10^n
         float exp10  = std::pow(10.0f, std::floor(std::log10(raw_step)));
         float mant   = raw_step / exp10;
         if      (mant < 1.5f) mant = 1.0f;
@@ -477,41 +509,45 @@ private:
         return;
     }
        
-       
     //  "_clamp_plot_axes"
-    inline void                 _clamp_plot_axes                    (void) const
-    { /*
-        // Query the current visible rect (world units)
-        ImPlotRect lim = ImPlot::GetPlotLimits(IMPLOT_AUTO);
-
-        double x_min = std::clamp(lim.X.Min, (double)m_world_bounds.min_x,
-                                               (double)m_world_bounds.max_x);
-        double x_max = std::clamp(lim.X.Max, (double)m_world_bounds.min_x,
-                                               (double)m_world_bounds.max_x);
-        double y_min = std::clamp(lim.Y.Min, (double)m_world_bounds.min_y,
-                                               (double)m_world_bounds.max_y);
-        double y_max = std::clamp(lim.Y.Max, (double)m_world_bounds.min_y,
-                                               (double)m_world_bounds.max_y);
-
-        // Only re-apply if something changed
-        if (x_min != lim.X.Min || x_max != lim.X.Max ||
-            y_min != lim.Y.Min || y_max != lim.Y.Max)
-        {
-            ImPlot::SetupAxesLimits(x_min, x_max, y_min, y_max, ImPlotCond_Always);
-        }
-        return; */
+    inline void                         _clamp_plot_axes                    (void) const
+    {
+        return;
     }
-    
-    
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      INLINE MISC. FUNCTIONS...
     // *************************************************************************** //
 
     //  "maybe_snap"
-    inline ImVec2               maybe_snap                          (ImVec2 w) const
+    inline ImVec2                       maybe_snap                          (ImVec2 w) const
     { return m_grid.snap_on ? snap_to_grid(w) : w; }
     
     //  "_mode_has"
-    inline bool                 _mode_has                           (CBCapabilityFlags flag) const
+    inline bool                         _mode_has                           (CBCapabilityFlags flag) const
     { return (MODE_CAPS[static_cast<size_t>(m_mode)] & flag) != 0; }
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      INLINE FOR TOOLS...
+    // *************************************************************************** //
+    
+    //  "reset_pen"
+    inline void                         reset_pen                           (void) {
+        this->m_show_handles.erase( m_pen.handle_vid );
+        this->m_sel.vertices.erase( m_pen.last_vid );
+        m_pen = {};
+        return;
+    }
+    
+    //  "reset_selection"
+    inline void                         reset_selection                     (void) {
+        this->m_sel.clear(); this->m_show_handles.clear();
+        return;
+    }
     
     
     
@@ -534,11 +570,13 @@ private:
     // *************************************************************************** //
     //      IMPORTANT DATA...
     // *************************************************************************** //
-    std::vector<Vertex>         m_vertices;
-    std::vector<Point>          m_points;
-    std::vector<Line>           m_lines;
-    std::vector<Path>           m_paths;                       // new path container
-    OverlayManager              m_overlays;
+    std::vector<Vertex>                 m_vertices;
+    std::vector<Point>                  m_points;
+    std::vector<Line>                   m_lines;
+    std::vector<Path>                   m_paths;                //  New path container
+    std::unordered_set<uint32_t>        m_show_handles;         //  List of which glyphs we WANT to display Bezier points for.
+    //
+    OverlayManager                      m_overlays;
     // *************************************************************************** //
     //
     //
@@ -546,14 +584,14 @@ private:
     // *************************************************************************** //
     //      BROWSER STUFF...
     // *************************************************************************** //
-    std::string                 WinInfo_uuid                    = "Editor Browser";
-    ImGuiWindowFlags            WinInfo_flags                   = ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY;
-    bool                        WinInfo_open                    = true;
-    ImGuiWindowClass            m_window_class;
+    std::string                         WinInfo_uuid                    = "Editor Browser";
+    ImGuiWindowFlags                    WinInfo_flags                   = ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY;
+    bool                                WinInfo_open                    = true;
+    ImGuiWindowClass                    m_window_class;
     //
-    ImGuiTextFilter             m_browser_filter;                           // search box text filter
-    int                         m_browser_anchor                = -1;       // anchor index for Shift‑range select
-    int                         m_inspector_vertex_idx          = -1;       // anchor index for Shift‑range select
+    ImGuiTextFilter                     m_browser_filter;                           // search box text filter
+    int                                 m_browser_anchor                = -1;       // anchor index for Shift‑range select
+    int                                 m_inspector_vertex_idx          = -1;       // anchor index for Shift‑range select
     // *************************************************************************** //
     //
     //
@@ -561,20 +599,20 @@ private:
     // *************************************************************************** //
     //      APPLICATION STATE...
     // *************************************************************************** //
-    //                      OVERALL STATE:
-    Mode                        m_mode                          = Mode::Default;
-    bool                        m_show_grid                     = true;
+    //                              OVERALL STATE:
+    Mode                                m_mode                          = Mode::Default;
+    bool                                m_show_grid                     = true;
     //
-    //                      MISC. STATE:
-    bool                        m_dragging                      = false;
-    bool                        m_lasso_active                  = false;
-    bool                        m_pending_clear                 = false;    //  pending click selection state ---
+    //                              MISC. STATE:
+    bool                                m_dragging                      = false;
+    bool                                m_lasso_active                  = false;
+    bool                                m_pending_clear                 = false;    //  pending click selection state ---
     //
-    //                      PEN-TOOL STATE:
-    bool                        m_drawing                       = false;
-    bool                        m_dragging_handle               = false;
-    bool                        m_dragging_out                  = true;
-    uint32_t                    m_drag_vid                      = 0;
+    //                              PEN-TOOL STATE:
+    bool                                m_drawing                       = false;
+    bool                                m_dragging_handle               = false;
+    bool                                m_dragging_out                  = true;
+    uint32_t                            m_drag_vid                      = 0;
     // *************************************************************************** //
     //
     //
@@ -583,16 +621,17 @@ private:
     //      OBJECTS...
     // *************************************************************************** //
     //
-    //                      TOOL STATES:
-    PenState                    m_pen;
-    ShapeState                  m_shape;
-    OverlayState                m_overlay;
+    //                              TOOL STATES:
+    PenState                            m_pen;
+    ShapeState                          m_shape;
+    OverlayState                        m_overlay;
     //
-    //                      OTHER FACILITIES:
-    std::optional<Hit>          m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
-    Selection                   m_sel;
-    mutable BoxDrag             m_boxdrag;
-    MoveDrag                    m_movedrag;
+    //                              OTHER FACILITIES:
+    std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
+    Selection                           m_sel;
+    mutable BoxDrag                     m_boxdrag;
+    MoveDrag                            m_movedrag;
+    Clipboard                           m_clipboard;
     // *************************************************************************** //
     //                      OLD GRID / CANVAS:
     //float                       m_zoom                          = 1.0f;
@@ -606,28 +645,28 @@ private:
     // *************************************************************************** //
     //      CAMERA SYSTEM...
     // *************************************************************************** //
-    ImPlotFlags                 m_plot_flags                    = ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
-    utl::AxisCFG                m_axes [2]                      = {
+    ImPlotFlags                         m_plot_flags                    = ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
+    utl::AxisCFG                        m_axes [2]                      = {
         {"##x-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit | ImPlotAxisFlags_Opposite },
         {"##y-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit }
     };
-    utl::LegendCFG              m_legend                        = { ImPlotLocation_NorthWest, ImPlotLegendFlags_None };
+    utl::LegendCFG                      m_legend                        = { ImPlotLocation_NorthWest, ImPlotLegendFlags_None };
     //
     //
     //
-    Camera                      m_cam;
-    GridSettings                m_grid                          = { 100.0f,  true,  false };
-    float                       m_ppw                           = 1.0f;
-    Bounds                      m_world_bounds                  = {
+    Camera                              m_cam;
+    GridSettings                        m_grid                          = { 100.0f,  true,  false };
+    float                               m_ppw                           = 1.0f;
+    Bounds                              m_world_bounds                  = {
         /*min_x=*/0.0f,         /*min_y=*/0.0f,
         /*max_x=*/500.0f,      /*max_y=*/500.0f
     };
     //
     //
-    static constexpr float      ms_GRID_STEP_MIN                = 2.0f;   // world-units
-    static constexpr float      ms_GRID_LABEL_PAD               = 2.0f;
+    static constexpr float              ms_GRID_STEP_MIN                = 2.0f;   // world-units
+    static constexpr float              ms_GRID_LABEL_PAD               = 2.0f;
     //
-    //                      FUNCTIONS:
+    //                              FUNCTIONS:
     //
     //
     // *************************************************************************** //
@@ -637,20 +676,20 @@ private:
     // *************************************************************************** //
     //      VARIABLES FOR SPECIFIC MECHANICS...
     // *************************************************************************** //
-    //                      LASSO TOOL / SELECTION:
-    ImVec2                      m_lasso_start                   = ImVec2(0.f, 0.f);
-    ImVec2                      m_lasso_end                     = ImVec2(0.f, 0.f);
-    uint32_t                    m_next_id                       = 1;
+    //                              LASSO TOOL / SELECTION:
+    ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
+    ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
+    uint32_t                            m_next_id                       = 1;
     //
-    //                      BBOX SCALING:
-    mutable int                 m_hover_handle                  = -1;
-    mutable ImVec2              m_origin_scr                    = {0.f, 0.f};   // screen-space canvas origin                       //  -1 = none, 0-7 otherwise (corners+edges)
+    //                              BBOX SCALING:
+    mutable int                         m_hover_handle                  = -1;
+    mutable ImVec2                      m_origin_scr                    = {0.f, 0.f};   // screen-space canvas origin                       //  -1 = none, 0-7 otherwise (corners+edges)
     //
-    //                      UTILITY:
-    float                       m_bar_h                         = 0.0f;
-    ImVec2                      m_avail                         = ImVec2(0.0f, 0.0f);
-    ImVec2                      m_p0                            = ImVec2(0.0f, 0.0f);
-    ImVec2                      m_p1                            = ImVec2(0.0f, 0.0f);
+    //                              UTILITY:
+    float                               m_bar_h                         = 0.0f;
+    ImVec2                              m_avail                         = ImVec2(0.0f, 0.0f);
+    ImVec2                              m_p0                            = ImVec2(0.0f, 0.0f);
+    ImVec2                              m_p1                            = ImVec2(0.0f, 0.0f);
     // *************************************************************************** //
 
 
@@ -662,67 +701,67 @@ private:
     //      STATIC / CONSTANTS...
     // *************************************************************************** //
     //
-    //                      INTERACTION / RESPONSIVENESS CONSTANTS:
-    static constexpr int        PEN_DRAG_TIME_THRESHOLD         = 0.05;     // seconds.
-    static constexpr float      PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;     // px  (was 2)
+    //                              INTERACTION / RESPONSIVENESS CONSTANTS:
+    static constexpr int                PEN_DRAG_TIME_THRESHOLD         = 0.05;     // seconds.
+    static constexpr float              PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;     // px  (was 2)
     //
     //
-    //                      USER INTERFACE CONSTANTS:
-    //                          Handles.
-    static constexpr ImU32      ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);   //  gold
-    static constexpr float      ms_HANDLE_SIZE                  = 3.0f;                         //  px half-side
-    static constexpr ImU32      ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);   //  yellow
+    //                              USER INTERFACE CONSTANTS:
+    //                                  Handles.
+    static constexpr ImU32              ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);   //  gold
+    static constexpr float              ms_HANDLE_SIZE                  = 3.0f;                         //  px half-side
+    static constexpr ImU32              ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);   //  yellow
     //
-    //                          Pen-Tool Anchors.
-    static constexpr ImU32      PEN_ANCHOR_COLOR                = IM_COL32(255, 200, 0, 255);
-    static constexpr float      PEN_ANCHOR_RADIUS               = 5.0f;
+    //                                  Pen-Tool Anchors.
+    static constexpr ImU32              PEN_ANCHOR_COLOR                = IM_COL32(255, 200, 0, 255);
+    static constexpr float              PEN_ANCHOR_RADIUS               = 5.0f;
     //
-    //                          Lasso.
-    //                          //  ...
+    //                                  Lasso.
+    //                                  //  ...
     //
-    //                          Bounding Box.
-    static constexpr ImU32      SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 255);   //  cyan-blue
-    static constexpr float      SELECTION_BBOX_TH               = 1.5f;
+    //                                  Bounding Box.
+    static constexpr ImU32              SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 255);   //  cyan-blue
+    static constexpr float              SELECTION_BBOX_TH               = 1.5f;
     //
     //
-    //                      CURSOR CONSTANTS:
-    //                          Pen-Tool Cursor Stuff.
-    static constexpr float      PEN_RING_RADIUS                 = 6.0f;                         // px
-    static constexpr float      PEN_RING_THICK                  = 1.5f;                         // px
-    static constexpr float      PEN_DOT_RADIUS                  = 2.0f;                         // px
-    static constexpr ImU32      PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);      // yellow
-    static constexpr ImU32      PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);      // green
+    //                              CURSOR CONSTANTS:
+    //                                  Pen-Tool Cursor Stuff.
+    static constexpr float              PEN_RING_RADIUS                 = 6.0f;                         // px
+    static constexpr float              PEN_RING_THICK                  = 1.5f;                         // px
+    static constexpr float              PEN_DOT_RADIUS                  = 2.0f;                         // px
+    static constexpr ImU32              PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);      // yellow
+    static constexpr ImU32              PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);      // green
     //
     //
     //
     //                      UTILITY:
     // *************************************************************************** //
-    //                      RENDERING CONSTANTS:
-    static constexpr int        ms_BEZIER_SEGMENTS              = 0;
-    static constexpr int        ms_BEZIER_HIT_STEPS             = 20;
-    static constexpr int        ms_BEZIER_FILL_STEPS            = 24;
+    //                              RENDERING CONSTANTS:
+    static constexpr int                ms_BEZIER_SEGMENTS              = 0;
+    static constexpr int                ms_BEZIER_HIT_STEPS             = 20;
+    static constexpr int                ms_BEZIER_FILL_STEPS            = 24;
     //
-    //                      APPEARANCE / WIDGETS / UI CONSTANTS:
-    static constexpr float      ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;
-    static constexpr ImVec4     ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//  BASE = #343944
-    static constexpr ImVec4     ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//  #17191E
-    static constexpr ImVec4     ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//  #21242B
+    //                              APPEARANCE / WIDGETS / UI CONSTANTS:
+    static constexpr float              ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;
+    static constexpr ImVec4             ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//  BASE = #343944
+    static constexpr ImVec4             ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//  #17191E
+    static constexpr ImVec4             ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//  #21242B
     
-    static constexpr ImVec4     ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//  BASE = #52596B
-    static constexpr ImVec4     ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//  ##353A46
-    static constexpr ImVec4     ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//  #5B6377
+    static constexpr ImVec4             ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//  BASE = #52596B
+    static constexpr ImVec4             ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//  ##353A46
+    static constexpr ImVec4             ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//  #5B6377
     //
-    //                          Browser Child-Window Sizes.
-    static constexpr float      ms_CHILD_BORDER1                = 2.0f;
-    static constexpr float      ms_CHILD_BORDER2                = 1.0f;
-    static constexpr float      ms_CHILD_ROUND1                 = 8.0f;
-    static constexpr float      ms_CHILD_ROUND2                 = 4.0f;
+    //                                  Browser Child-Window Sizes.
+    static constexpr float              ms_CHILD_BORDER1                = 2.0f;
+    static constexpr float              ms_CHILD_BORDER2                = 1.0f;
+    static constexpr float              ms_CHILD_ROUND1                 = 8.0f;
+    static constexpr float              ms_CHILD_ROUND2                 = 4.0f;
     //
     //
     //
     //                      ARRAYS:
     // *************************************************************************** //
-    static constexpr auto &     ms_SHAPE_NAMES                  = EDITOR_SHAPE_NAMES;
+    static constexpr auto &             ms_SHAPE_NAMES                  = EDITOR_SHAPE_NAMES;
 
 
 

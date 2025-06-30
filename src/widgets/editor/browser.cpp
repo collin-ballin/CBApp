@@ -216,14 +216,21 @@ void Editor::_draw_path_list_column(void)
                 const bool shift = ImGui::GetIO().KeyShift;
 
                 if (!ctrl && !shift)
-                {   m_sel.clear();  m_sel.paths.insert(i);  m_browser_anchor = i; }
+                {   this->reset_selection(); //m_sel.clear();
+                    m_sel.paths.insert(i);  m_browser_anchor = i;
+                }
                 else if (shift && m_browser_anchor >= 0)
-                {   int lo = std::min(m_browser_anchor, i), hi = std::max(m_browser_anchor, i);
-                    if (!ctrl) m_sel.clear();
-                    for (int k = lo; k <= hi; ++k) m_sel.paths.insert(k);
+                {
+                    int lo = std::min(m_browser_anchor, i), hi = std::max(m_browser_anchor, i);
+                    if (!ctrl) {
+                        this->reset_selection(); //m_sel.clear();
+                    }
+                    for (int k = lo; k <= hi; ++k)      { m_sel.paths.insert(k); }
                 }
                 else if (ctrl)
-                {   if (!m_sel.paths.erase(i)) { m_sel.paths.insert(i); m_browser_anchor = i; } }
+                {
+                    if ( !m_sel.paths.erase(i) )        { m_sel.paths.insert(i); m_browser_anchor = i; }
+                }
 
                 _rebuild_vertex_selection();   // keep vertices in sync
             }
@@ -418,7 +425,7 @@ void Editor::_draw_multi_path_inspector(void)
             if (i < m_paths.size())
                 m_paths.erase(m_paths.begin() + static_cast<long>(i));
 
-        m_sel.clear();
+        this->reset_selection();    // m_sel.clear();
         m_inspector_vertex_idx = -1;
     }
 }

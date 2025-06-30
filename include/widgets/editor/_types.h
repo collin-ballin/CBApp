@@ -352,13 +352,13 @@ struct Selection_t {
     std::unordered_set<size_t>      lines;
     std::unordered_set<size_t>      paths;     // ← NEW
 //
-    void clear(void) {
+    inline void clear(void) {
         vertices.clear();
         points.clear();
         lines.clear();
         paths.clear();        // new
     }
-    bool empty() const { return vertices.empty() && points.empty() && lines.empty(); }
+    inline bool empty() const { return vertices.empty() && points.empty() && lines.empty(); }
 };
     
     
@@ -367,20 +367,21 @@ struct Selection_t {
 //      2.5.    APPLICATION TOOL STATE.
 // *************************************************************************** //
 
-//  "PenState"
+//  "PenState_t"
 //
-struct PenState {
+template<typename VID>
+struct PenState_t {
     bool        active          = false;
     size_t      path_index      = static_cast<size_t>(-1);
-    uint32_t    last_vid        = 0;
+    VID         last_vid        = 0;
 
     bool        dragging_handle = false;
     bool        dragging_out    = true;     // NEW: true → out_handle, false → in_handle
-    uint32_t    handle_vid      = 0;
+    VID         handle_vid      = 0;
 
     bool        prepend         = false;
     bool        pending_handle  = false;        // waiting to see if user drags
-    uint32_t    pending_vid     = 0;            // vertex that may get a handle
+    VID         pending_vid     = 0;            // vertex that may get a handle
     float       pending_time    = 0.0f;
     //int         pending_frames  = 0;        // NEW – counts frames since click
 };
@@ -434,6 +435,20 @@ struct ShapeState_t {
 // *************************************************************************** //
 //      2.6.    OTHER STATE STRUCTURES.
 // *************************************************************************** //
+
+//  "Clipboard_t"
+//
+template<typename Vertex, typename Point, typename Line, typename Path>
+struct Clipboard_t {
+    inline bool             empty() const   { return vertices.empty() && points.empty() && lines.empty() && paths.empty(); }
+//
+    ImVec2                  ref_ws      {};     // reference origin (top-left of bbox)
+    std::vector<Vertex>     vertices;           // geometry snapshots (id-field unused)
+    std::vector<Point>      points;
+    std::vector<Line>       lines;
+    std::vector<Path>       paths;              // verts[] hold vertex indices into vertices[]
+};
+
 
 //  "MoveDrag"
 //

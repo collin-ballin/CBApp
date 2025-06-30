@@ -25,7 +25,7 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 
 //  "_hit_point"
 //
-int Editor::_hit_point(const Interaction& it) const
+int Editor::_hit_point([[maybe_unused]] const Interaction& it) const
 {
 {
     const ImVec2 ms = ImGui::GetIO().MousePos;          // mouse in px
@@ -321,18 +321,26 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
 // *************************************************************************** //
 //
 //
+//
 //      SELECTION IMPLEMENTATIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
 //  "_process_selection"
-//      global selection / drag ─────────────────────────
+//      THIS IS WHERE "SELECTION" STARTS...
+//      ---This functon is called by "Begin()" to handle ALL sunsequent selection operations.
 //
 void Editor::_process_selection(const Interaction& it)
 {
-    update_move_drag_state(it);             // helpers (2-4 merged)
-    resolve_pending_selection(it);          // helper (5)
-    show_selection_context_menu(it);        // helper (6)
+    update_move_drag_state              (it);             // helpers (2-4 merged)
+    resolve_pending_selection           (it);          // helper (5)
+    dispatch_selection_context_menus    (it);
+    //show_selection_context_menu(it);        // helper (6)
+
+    // NEW: selection-aware hot-keys
+    _selection_handle_shortcuts         (it);
+    
+    return;
 }
 
 //////////////////////////////////////////////////////////////
@@ -344,22 +352,52 @@ void Editor::_process_selection(const Interaction& it)
 //
 void Editor::add_hit_to_selection(const Hit & hit)
 {
+    //  0.  CLICKED ON HANDLE.
     if (hit.type == Hit::Type::Handle) return;
 
-    if (hit.type == Hit::Type::Point) {
+
+    //  1.  CLICKED ON POINT.
+    if (hit.type == Hit::Type::Point)
+    {
         size_t    idx  = hit.index;
         uint32_t  vid  = m_points[idx].v;
         m_sel.points.insert(idx);
         m_sel.vertices.insert(vid);
+        //  NEW.
+        m_show_handles.insert(vid);
     }
-    else if (hit.type == Hit::Type::Path) {
+    //
+    //  else if (hit.type == Hit::Type::Path) {
+    //      size_t idx = hit.index;
+    //      const Path & p = m_paths[idx];
+    //      m_sel.paths.insert(idx);
+    //      for (uint32_t vid : p.verts)
+    //          m_sel.vertices.insert(vid);
+    //  }
+    //
+    //
+    //  2.  CLICKED ON PATH.
+    else if (hit.type == Hit::Type::Path)
+    {
         size_t idx = hit.index;
-        const Path & p = m_paths[idx];
+        const Path& p = m_paths[idx];
+
         m_sel.paths.insert(idx);
+
+        // include every vertex + its glyph index
         for (uint32_t vid : p.verts)
+        {
             m_sel.vertices.insert(vid);
+
+            for (size_t gi = 0; gi < m_points.size(); ++gi)
+                if (m_points[gi].v == vid)
+                    m_sel.points.insert(gi);
+        }
     }
-    else { // Line
+    //
+    //  3.  CLICKED ON LINE.
+    else
+    {
         size_t    idx = hit.index;
         uint32_t  va  = m_lines[idx].a,
                   vb  = m_lines[idx].b;
@@ -367,6 +405,8 @@ void Editor::add_hit_to_selection(const Hit & hit)
         m_sel.vertices.insert(va);
         m_sel.vertices.insert(vb);
     }
+    
+    return;
 }
 
 
@@ -433,6 +473,7 @@ void Editor::update_move_drag_state(const Interaction & it)
         }
         // if no hit, normal lasso logic continues below
     }
+    
 
     // --------------------------------------------------------------------
     // 1. drag inside an already-selected region (threshold kept)
@@ -570,45 +611,51 @@ void Editor::resolve_pending_selection(const Interaction & it)
 }
 
 
-//  "show_selection_context_menu"
-//
-void Editor::show_selection_context_menu(const Interaction & it)
-{
-    // Only when cursor is over the canvas and something is selected
-    if (!it.hovered || m_sel.empty())
-        return;
 
-    // Open & render popup on RMB anywhere in the plot window
-    if (ImGui::BeginPopupContextWindow("SelectionCtx",
-                                       ImGuiPopupFlags_MouseButtonRight))
-    {
-        if (ImGui::MenuItem("Delete"))
-        {
-            // Gather indices then erase back-to-front
-            std::vector<size_t> pts(m_sel.points.begin(),  m_sel.points.end());
-            std::vector<size_t> lns(m_sel.lines.begin(),   m_sel.lines.end());
-            std::vector<size_t> pth(m_sel.paths.begin(),   m_sel.paths.end());
-
-            std::sort(pts.rbegin(), pts.rend());
-            std::sort(lns.rbegin(), lns.rend());
-            std::sort(pth.rbegin(), pth.rend());
-
-            for (size_t i : pts) m_points.erase(m_points.begin() + static_cast<long>(i));
-            for (size_t i : lns) m_lines.erase (m_lines.begin()  + static_cast<long>(i));
-            for (size_t i : pth) m_paths.erase(m_paths.begin()   + static_cast<long>(i));
-
-            m_sel.clear();
-        }
-        ImGui::EndPopup();
-    }
-}
 
 
 
 // *************************************************************************** //
 //
 //
-//      SELECTION IMPLEMENTATIONS...
+//
+//      SELECTION UTILITIES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_rebuild_vertex_selection"
+//
+void Editor::_rebuild_vertex_selection()
+{
+    m_sel.vertices.clear();
+    for (size_t pi : m_sel.points)
+        if (pi < m_points.size())
+            m_sel.vertices.insert(m_points[pi].v);
+
+    for (size_t li : m_sel.lines)
+        if (li < m_lines.size()) {
+            m_sel.vertices.insert(m_lines[li].a);
+            m_sel.vertices.insert(m_lines[li].b);
+        }
+
+    // Include vertices from any selected paths
+    for (size_t pi : m_sel.paths)
+        if (pi < m_paths.size())
+            for (uint32_t vid : m_paths[pi].verts)
+                m_sel.vertices.insert(vid);
+}
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      SELECTION HIGHLIGHT / USER-INTERACTION / APPEARANCE...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -643,120 +690,6 @@ void Editor::_update_cursor_select(const Interaction& it) const
 }
 
 
-//  "_rebuild_vertex_selection"
-//
-void Editor::_rebuild_vertex_selection()
-{
-    m_sel.vertices.clear();
-    for (size_t pi : m_sel.points)
-        if (pi < m_points.size())
-            m_sel.vertices.insert(m_points[pi].v);
-
-    for (size_t li : m_sel.lines)
-        if (li < m_lines.size()) {
-            m_sel.vertices.insert(m_lines[li].a);
-            m_sel.vertices.insert(m_lines[li].b);
-        }
-
-    // Include vertices from any selected paths
-    for (size_t pi : m_sel.paths)
-        if (pi < m_paths.size())
-            for (uint32_t vid : m_paths[pi].verts)
-                m_sel.vertices.insert(vid);
-}
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//      SELECTION HIGHLIGHT / APPEARANCE...
-// *************************************************************************** //
-// *************************************************************************** //
-
-// -----------------------------------------------------------------------------
-//  "_draw_selection_highlight"
-//      Draw outlines for selected primitives plus bbox/handles.
-// -----------------------------------------------------------------------------
-void Editor::_draw_selection_highlight(ImDrawList * dl) const
-{
-    const ImU32 col = COL_SELECTION_OUT;
-
-    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
-
-    // ───── Highlight selected points
-    for (size_t idx : m_sel.points)
-    {
-        if (idx >= m_points.size()) continue;
-        const Point& pt = m_points[idx];
-        if (const Vertex* v = find_vertex(m_vertices, pt.v))
-        {
-            ImVec2 scr = ws2px({ v->x, v->y });
-            dl->AddCircle(scr,
-                          pt.sty.radius + 2.f,        // small outset
-                          col, 0, 2.f);               // thickness 2 px
-        }
-    }
-
-    // ───── Highlight selected standalone lines
-    for (size_t idx : m_sel.lines)
-    {
-        if (idx >= m_lines.size()) continue;
-        const Line& ln = m_lines[idx];
-        const Vertex* a = find_vertex(m_vertices, ln.a);
-        const Vertex* b = find_vertex(m_vertices, ln.b);
-        if (a && b)
-            dl->AddLine(ws2px({ a->x, a->y }),
-                        ws2px({ b->x, b->y }),
-                        col, ln.thickness + 2.f);
-    }
-
-    // ───── Highlight selected paths
-    for (size_t idx : m_sel.paths)
-    {
-        if (idx >= m_paths.size()) continue;
-        const Path& p = m_paths[idx];
-        const size_t N = p.verts.size();
-        if (N < 2) continue;
-
-        auto draw_seg = [&](const Vertex* a, const Vertex* b){
-            const float w = p.style.stroke_width + 2.0f;
-            if ( is_curved<VertexID>(a,b) )
-            {
-                ImVec2 P0 = ws2px({ a->x,                         a->y });
-                ImVec2 P1 = ws2px({ a->x + a->out_handle.x,       a->y + a->out_handle.y });
-                ImVec2 P2 = ws2px({ b->x + b->in_handle.x,        b->y + b->in_handle.y  });
-                ImVec2 P3 = ws2px({ b->x,                         b->y });
-                dl->AddBezierCubic(P0, P1, P2, P3, col, w, ms_BEZIER_SEGMENTS);
-            }
-            else
-            {
-                dl->AddLine(ws2px({ a->x, a->y }),
-                            ws2px({ b->x, b->y }),
-                            col, w);
-            }
-        };
-
-        for (size_t i = 0; i < N - 1; ++i)
-            if (const Vertex* a = find_vertex(m_vertices, p.verts[i]))
-                if (const Vertex* b = find_vertex(m_vertices, p.verts[i+1]))
-                    draw_seg(a, b);
-
-        if (p.closed)
-            if (const Vertex* a = find_vertex(m_vertices, p.verts.back()))
-                if (const Vertex* b = find_vertex(m_vertices, p.verts.front()))
-                    draw_seg(a, b);
-    }
-
-    _draw_selected_handles(dl);
-    _draw_selection_bbox(dl);
-}
-
-
 
 
 
@@ -785,85 +718,6 @@ bool Editor::_selection_bounds(ImVec2& tl, ImVec2& br) const
             }
         }
     return !first;
-}
-
-
-// -----------------------------------------------------------------------------
-// "_draw_selection_bbox"
-// -----------------------------------------------------------------------------
-void Editor::_draw_selection_bbox(ImDrawList* dl) const
-{
-    const bool has_paths_or_lines = !m_sel.paths.empty() || !m_sel.lines.empty();
-    const bool single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
-    if (single_vertex_only) return;
-
-    ImVec2 tl, br;
-    if (!_selection_bounds(tl, br)) { m_hover_handle = -1; return; }
-
-    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
-
-    ImVec2 p0 = ws2px(tl);
-    ImVec2 p1 = ws2px(br);
-
-    dl->AddRect(p0, p1, SELECTION_BBOX_COL, 0.0f,
-                ImDrawFlags_None, SELECTION_BBOX_TH);
-
-    // handle positions
-    ImVec2 hw{ (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
-    const ImVec2 ws[8] = {
-        tl,
-        { hw.x, tl.y },
-        { br.x, tl.y },
-        { br.x, hw.y },
-        br,
-        { hw.x, br.y },
-        { tl.x, br.y },
-        { tl.x, hw.y }
-    };
-
-    m_hover_handle = -1;
-    for (int i = 0; i < 8; ++i)
-    {
-        ImVec2 s = ws2px(ws[i]);
-        ImVec2 min{ s.x - HANDLE_BOX_SIZE, s.y - HANDLE_BOX_SIZE };
-        ImVec2 max{ s.x + HANDLE_BOX_SIZE, s.y + HANDLE_BOX_SIZE };
-
-        bool hovered = ImGui::IsMouseHoveringRect(min, max);
-        if (hovered) m_hover_handle = i;
-
-        dl->AddRectFilled(min, max, hovered ? ms_HANDLE_HOVER_COLOR
-                                            : ms_HANDLE_COLOR);
-    }
-}
-
-
-// -----------------------------------------------------------------------------
-// "_draw_selected_handles"
-// -----------------------------------------------------------------------------
-void Editor::_draw_selected_handles(ImDrawList* dl) const
-{
-    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
-
-    for (size_t pi : m_sel.points)
-    {
-        if (pi >= m_points.size()) continue;
-        const Vertex* v = find_vertex(m_vertices, m_points[pi].v);
-        if (!v) continue;
-
-        ImVec2 a = ws2px({ v->x, v->y });
-
-        auto draw_handle = [&](const ImVec2& off){
-            if (off.x == 0.f && off.y == 0.f) return;
-            ImVec2 h = ws2px({ v->x + off.x, v->y + off.y });
-            dl->AddLine(a, h, ms_HANDLE_COLOR, 1.0f);
-            dl->AddRectFilled({ h.x - ms_HANDLE_SIZE, h.y - ms_HANDLE_SIZE },
-                              { h.x + ms_HANDLE_SIZE, h.y + ms_HANDLE_SIZE },
-                              ms_HANDLE_COLOR);
-        };
-
-        draw_handle(v->out_handle);
-        draw_handle(v->in_handle);
-    }
 }
 
 
@@ -1181,6 +1035,301 @@ void Editor::_update_bbox()
         }
     }
 }
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      SELECTION BEHAVIORS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_selection_handle_shortcuts"
+//
+void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it)
+{
+    ImGuiIO &       io      = ImGui::GetIO();
+    const float     step    = m_grid.snap_step * ( (io.KeyShift) ? 10.0f : 1.0f );         //  Always one “grid unit”.
+    
+    
+    if ( m_sel.empty() )    return;                     //  Nothing selected → nothing to do.
+
+
+
+    //  1.  ARROW KEYS.
+    if ( ImGui::IsKeyPressed(ImGuiKey_LeftArrow,  true) )    { this->move_selection(-step,  0.0f); }
+    if ( ImGui::IsKeyPressed(ImGuiKey_RightArrow, true) )    { this->move_selection( step,  0.0f); }
+    if ( ImGui::IsKeyPressed(ImGuiKey_UpArrow,    true) )    { this->move_selection( 0.0f,  step); }
+    if ( ImGui::IsKeyPressed(ImGuiKey_DownArrow,  true) )    { this->move_selection( 0.0f, -step); }
+
+
+
+    //  2.  DELETE KEY.
+    if ( ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace) )
+        { delete_selection(); return; }                    // selection cleared, bail
+
+
+
+
+
+
+    //  3.  COPY    [ CTRL + C ].
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C))
+    {
+        // TODO: copy_to_clipboard() or duplicate_selection();
+    }
+
+
+    //  4.  CREATE GROUP        [ CTRL + G ].
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_G) &&
+        (m_sel.points.size() + m_sel.lines.size() + m_sel.paths.size()) > 1)
+    {
+        // TODO: group_selection();
+    }
+
+
+    return;
+}
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      CONTEXT MENUS FOR SELECTION...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "dispatch_selection_context_menus"
+//
+void Editor::dispatch_selection_context_menus([[maybe_unused]] const Interaction & it)
+{
+    constexpr const char* selection_popup_id = "Editor_Selection_ContextMenu";
+    constexpr const char* canvas_popup_id    = "Editor_Canvas_ContextMenu";
+
+    const bool rmb_click = it.hovered &&
+                           ImGui::IsMouseClicked(ImGuiMouseButton_Right);
+
+    // 1. Handle the click (selection update + OpenPopup)
+    if (rmb_click)
+    {
+        if (m_sel.empty())
+        {
+            if (auto h = _hit_any(it)) {        // pick under cursor
+                m_sel.clear();
+                add_hit_to_selection(*h);
+            }
+        }
+
+        // Decide which popup to open based on current selection state
+        if (m_sel.empty())
+            ImGui::OpenPopup(canvas_popup_id);      // empty → canvas menu
+        else
+            ImGui::OpenPopup(selection_popup_id);   // non-empty → selection menu
+    }
+
+    // 2. Render both popups every frame; BeginPopup() returns false if not open
+    _show_selection_context_menu(it, selection_popup_id);
+    _show_canvas_context_menu(it,    canvas_popup_id);
+}
+
+
+
+//      Specific Context Menus for each case.
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_show_canvas_context_menu"
+//      When user RIGHT-CLICKS on an EMPTY POINT ON THE CANVAS (Allows them to PASTE at this location).
+//
+inline void Editor::_show_canvas_context_menu([[maybe_unused]] const Interaction & it, const char * popup_id)
+{
+    const bool              can_paste       = !m_clipboard.empty();
+        
+        
+    //  Jump-out early if NO POPUP WINDOW...
+    if ( !ImGui::BeginPopup(popup_id) ) return;
+    
+        //  0.  TEMPORARY LABEL...
+        ImGui::TextDisabled("Canvas Context Menu");
+        ImGui::Separator();
+        
+    
+        //  1.  PASTE BUTTON...
+        ImGui::BeginDisabled( !can_paste );
+        //
+            if ( ImGui::MenuItem("Paste", nullptr, false, can_paste) )
+            { paste_from_clipboard( pixels_to_world(ImGui::GetIO().MousePos) ); }
+        //
+        ImGui::EndDisabled();
+    
+    
+        //if ( ImGui::MenuItem("Paste", nullptr, false, can_paste) )
+        //{ paste_from_clipboard(pixels_to_world(ImGui::GetIO().MousePos)); }
+
+
+
+    ImGui::EndPopup();
+    return;
+}
+
+
+//  "_show_selection_context_menu"
+//      Main manager for selection context menu---When user RIGHT-CLICKS on a selection.
+//
+inline void Editor::_show_selection_context_menu([[maybe_unused]] const Interaction & it, const char * popup_id)
+{
+    const size_t    total_items     = m_sel.points.size() + m_sel.lines.size() + m_sel.paths.size();
+
+
+    //  Jump-out early if NO POPUP WINDOW...
+    if ( !ImGui::BeginPopup(popup_id) ) return;
+    
+    
+
+    //  1.  CONTEXT MENU FOR SPECIALIZED SELECTIONS (Single vs. Multi.)...
+    if (total_items == 1) {
+        ImGui::TextDisabled("Single");
+        _selection_context_single(it);
+    }
+    else {
+        ImGui::TextDisabled("Multi.");
+        _selection_context_multi(it);
+    }
+
+
+
+    //  2.  DEFAULT FUNCTIONS ENABLED FOR *ALL* SELECTIONS...
+    ImGui::Separator();
+    ImGui::TextDisabled("Primative");
+    _selection_context_default(it);
+
+
+
+    ImGui::EndPopup();
+    return;
+}
+
+
+//  "_selection_context_default"
+//      Functions that can operate on ANY set of selected items.
+//
+inline void Editor::_selection_context_default([[maybe_unused]] const Interaction & it)
+{
+    
+    //  1.  REORDER Z-ORDER OF OBJECTS ON CANVAS...
+    if ( ImGui::BeginMenu("Move") ) {
+        //
+        if ( ImGui::MenuItem("Bring to Front")  )       { /*  TODO: implement Z-order for objects on canvas  */     }
+        if ( ImGui::MenuItem("Bring Forward")   )       { /*  TODO: implement Z-order for objects on canvas  */     }
+        ImGui::Separator();
+        if ( ImGui::MenuItem("Send Backwards")  )       { /*  TODO: implement Z-order for objects on canvas  */     }
+        if ( ImGui::MenuItem("Send to Back")    )       { /*  TODO: implement Z-order for objects on canvas  */     }
+        //
+        ImGui::EndMenu();
+    }
+    
+    
+    
+    
+    ImGui::Separator();
+    
+    
+    
+
+
+    //  2.  COPY SELECTION...
+    if ( ImGui::MenuItem("Cut") )
+    {
+        // TODO: implement copy/duplicate behaviour
+        this->copy_to_clipboard();
+    }
+
+
+    //  3.  COPY SELECTION...
+    if ( ImGui::MenuItem("Copy") )          { this->copy_to_clipboard(); }
+
+
+    //  4.  DELETE SELECTION...
+    if ( ImGui::MenuItem("Delete") )        { this->delete_selection(); }
+
+
+    
+    return;
+}
+
+
+//  "_selection_context_single"
+//      Functions that operate ONLY ON SINGLE-ITEM SELECTIONS.
+//
+inline void Editor::_selection_context_single([[maybe_unused]] const Interaction & it)
+{
+
+
+    //  1.  TRANSFORM...
+    if ( ImGui::BeginMenu("Transform") ) {
+        //
+        if ( ImGui::MenuItem("Move")            )       { /*  TODO:  */     }
+        if ( ImGui::MenuItem("Scale")           )       { /*  TODO:  */     }
+        if ( ImGui::MenuItem("Rotate")          )       { /*  TODO:  */     }
+        //
+        ImGui::EndMenu();
+    }
+    
+    
+    // Example: Rename path, convert to outline, etc.
+    if (ImGui::MenuItem("Reverse Path Direction"))
+    {
+        // TODO: implement
+    }
+    
+    
+    
+    return;
+}
+
+
+//  "_selection_context_multi"
+//      Functions that operate ONLY WHEN MULTIPLE ITEMS ARE SELECTED.
+//
+inline void Editor::_selection_context_multi([[maybe_unused]] const Interaction & it)
+{
+
+
+    if (ImGui::MenuItem("Group Selection"))
+    {
+        // TODO: implement grouping
+    }
+    if (ImGui::MenuItem("Align Vertices"))
+    {
+        // TODO: implement alignment helpers
+    }
+    
+    
+    
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

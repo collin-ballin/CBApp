@@ -96,13 +96,13 @@ void Editor::_grid_handle_shortcuts(void)
 //
 //
 //
-//  2.  RENDERING THE INTERACTIBLE OBJECTS...
+//  2.  PRIMARY RENDERING OPERATIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_draw_lines"
+//  "_render_lines"
 //
-void Editor::_draw_lines(ImDrawList* dl, const ImVec2& origin) const
+void Editor::_render_lines(ImDrawList* dl, const ImVec2& origin) const
 {
 #ifdef LEGACY_LINES
     for (const auto& ln : m_lines)
@@ -120,10 +120,10 @@ void Editor::_draw_lines(ImDrawList* dl, const ImVec2& origin) const
 }
 
 
-//  "_draw_paths"
+//  "_render_paths"
 //
 //void Editor::_draw_paths(ImDrawList* dl, const ImVec2& origin) const
-void Editor::_draw_paths(ImDrawList* dl) const
+void Editor::_render_paths(ImDrawList* dl) const
 {
     for (const Path& p : m_paths)
     {
@@ -195,9 +195,9 @@ void Editor::_draw_paths(ImDrawList* dl) const
 }
 
 
-//  "_draw_points"
+//  "_render_points"
 //
-void Editor::_draw_points(ImDrawList* dl) const
+void Editor::_render_points(ImDrawList* dl) const
 {
     for (size_t i = 0; i < m_points.size(); ++i)
     {
@@ -213,6 +213,174 @@ void Editor::_draw_points(ImDrawList* dl) const
 
         ImVec2 pix = world_to_pixels({ v->x, v->y });   // NEW transform
         dl->AddCircleFilled(pix, pt.sty.radius, col, 12);
+    }
+}
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  3.  ADDITIONAL RENDERING / INTERACTIBLES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_render_selection_highlight"
+//      Draw outlines for selected primitives plus bbox/handles.
+//
+void Editor::_render_selection_highlight(ImDrawList * dl) const
+{
+    const ImU32 col = COL_SELECTION_OUT;
+
+    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
+
+    // ───── Highlight selected points
+    for (size_t idx : m_sel.points)
+    {
+        if (idx >= m_points.size()) continue;
+        const Point& pt = m_points[idx];
+        if (const Vertex* v = find_vertex(m_vertices, pt.v))
+        {
+            ImVec2 scr = ws2px({ v->x, v->y });
+            dl->AddCircle(scr,
+                          pt.sty.radius + 2.f,        // small outset
+                          col, 0, 2.f);               // thickness 2 px
+        }
+    }
+
+    // ───── Highlight selected standalone lines
+    for (size_t idx : m_sel.lines)
+    {
+        if (idx >= m_lines.size()) continue;
+        const Line& ln = m_lines[idx];
+        const Vertex* a = find_vertex(m_vertices, ln.a);
+        const Vertex* b = find_vertex(m_vertices, ln.b);
+        if (a && b)
+            dl->AddLine(ws2px({ a->x, a->y }),
+                        ws2px({ b->x, b->y }),
+                        col, ln.thickness + 2.f);
+    }
+
+    // ───── Highlight selected paths
+    for (size_t idx : m_sel.paths)
+    {
+        if (idx >= m_paths.size()) continue;
+        const Path& p = m_paths[idx];
+        const size_t N = p.verts.size();
+        if (N < 2) continue;
+
+        auto draw_seg = [&](const Vertex* a, const Vertex* b){
+            const float w = p.style.stroke_width + 2.0f;
+            if ( is_curved<VertexID>(a,b) )
+            {
+                ImVec2 P0 = ws2px({ a->x,                         a->y });
+                ImVec2 P1 = ws2px({ a->x + a->out_handle.x,       a->y + a->out_handle.y });
+                ImVec2 P2 = ws2px({ b->x + b->in_handle.x,        b->y + b->in_handle.y  });
+                ImVec2 P3 = ws2px({ b->x,                         b->y });
+                dl->AddBezierCubic(P0, P1, P2, P3, col, w, ms_BEZIER_SEGMENTS);
+            }
+            else
+            {
+                dl->AddLine(ws2px({ a->x, a->y }),
+                            ws2px({ b->x, b->y }),
+                            col, w);
+            }
+        };
+
+        for (size_t i = 0; i < N - 1; ++i)
+            if (const Vertex* a = find_vertex(m_vertices, p.verts[i]))
+                if (const Vertex* b = find_vertex(m_vertices, p.verts[i+1]))
+                    draw_seg(a, b);
+
+        if (p.closed)
+            if (const Vertex* a = find_vertex(m_vertices, p.verts.back()))
+                if (const Vertex* b = find_vertex(m_vertices, p.verts.front()))
+                    draw_seg(a, b);
+    }
+
+    _render_selected_handles(dl);
+    _render_selection_bbox(dl);
+}
+
+
+//  "_render_selected_handles"
+//
+inline void Editor::_render_selected_handles(ImDrawList* dl) const
+{
+    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
+
+    for (const Vertex& v : m_vertices)
+    {
+        if (!m_show_handles.count(v.id))           // ← NEW visibility mask
+            continue;
+
+        ImVec2 a = ws2px({ v.x, v.y });
+
+        auto draw_handle = [&](const ImVec2& off){
+            if (off.x == 0.f && off.y == 0.f) return;
+            ImVec2 h = ws2px({ v.x + off.x, v.y + off.y });
+            dl->AddLine(a, h, ms_HANDLE_COLOR, 1.0f);
+            dl->AddRectFilled({ h.x - ms_HANDLE_SIZE, h.y - ms_HANDLE_SIZE },
+                              { h.x + ms_HANDLE_SIZE, h.y + ms_HANDLE_SIZE },
+                              ms_HANDLE_COLOR);
+        };
+
+        draw_handle(v.out_handle);
+        draw_handle(v.in_handle);
+    }
+}
+
+
+//  "_render_selection_bbox"
+//
+inline void Editor::_render_selection_bbox(ImDrawList* dl) const
+{
+    const bool has_paths_or_lines = !m_sel.paths.empty() || !m_sel.lines.empty();
+    const bool single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
+    if (single_vertex_only) return;
+
+    ImVec2 tl, br;
+    if (!_selection_bounds(tl, br)) { m_hover_handle = -1; return; }
+
+    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
+
+    ImVec2 p0 = ws2px(tl);
+    ImVec2 p1 = ws2px(br);
+
+    dl->AddRect(p0, p1, SELECTION_BBOX_COL, 0.0f,
+                ImDrawFlags_None, SELECTION_BBOX_TH);
+
+    // handle positions
+    ImVec2 hw{ (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
+    const ImVec2 ws[8] = {
+        tl,
+        { hw.x, tl.y },
+        { br.x, tl.y },
+        { br.x, hw.y },
+        br,
+        { hw.x, br.y },
+        { tl.x, br.y },
+        { tl.x, hw.y }
+    };
+
+    m_hover_handle = -1;
+    for (int i = 0; i < 8; ++i)
+    {
+        ImVec2 s = ws2px(ws[i]);
+        ImVec2 min{ s.x - HANDLE_BOX_SIZE, s.y - HANDLE_BOX_SIZE };
+        ImVec2 max{ s.x + HANDLE_BOX_SIZE, s.y + HANDLE_BOX_SIZE };
+
+        bool hovered = ImGui::IsMouseHoveringRect(min, max);
+        if (hovered) m_hover_handle = i;
+
+        dl->AddRectFilled(min, max, hovered ? ms_HANDLE_HOVER_COLOR
+                                            : ms_HANDLE_COLOR);
     }
 }
 

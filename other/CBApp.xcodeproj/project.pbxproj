@@ -9,20 +9,20 @@
 /* Begin PBXAggregateTarget section */
 		DA5209DC66FD1DCE9BC35E70 /* ALL_BUILD */ = {
 			isa = PBXAggregateTarget;
-			buildConfigurationList = 66386F82E566463380E1E99D /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */;
+			buildConfigurationList = 02DE20D18EA7449C891FFD12 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */;
 			buildPhases = (
 				DFAAC5000CC9E04BAB0A991A /* Generate CMakeFiles/ALL_BUILD */,
 			);
 			dependencies = (
-				F8ED34E96C55493D956AE394 /* PBXTargetDependency */,
-				F2137CEA33A24D9EB6EE9118 /* PBXTargetDependency */,
+				E451DD7EA8674F7FBB5F58AF /* PBXTargetDependency */,
+				C8071831CFC04B04AD9EB282 /* PBXTargetDependency */,
 			);
 			name = ALL_BUILD;
 			productName = ALL_BUILD;
 		};
 		F5E66F8D6F42497933872978 /* ZERO_CHECK */ = {
 			isa = PBXAggregateTarget;
-			buildConfigurationList = C91239F9A36C4581ACCE8E43 /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */;
+			buildConfigurationList = 2CC156A7E11D4B1C9E0EE31D /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */;
 			buildPhases = (
 				A2D856F60DB5604EC24CE930 /* Generate CMakeFiles/ZERO_CHECK */,
 			);
@@ -34,254 +34,256 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
-		00084FBDCD714A51A55B333D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_config.h */ = {isa = PBXBuildFile; fileRef = 12E189D4AF8349ECAD7FC5F1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_config.h */; };
-		024B61A2A1AE40B19AF2773C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/_init.h */ = {isa = PBXBuildFile; fileRef = 5A8695E49D84432D9F451D15 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/_init.h */; };
-		0407FF3EF88F425CA442EC41 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/browser.cpp */ = {isa = PBXBuildFile; fileRef = BACA110F3AC341FEA990318F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/browser.cpp */; };
-		04FF5305359742F2B6B73DAF /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_demo.cpp */ = {isa = PBXBuildFile; fileRef = 2F26F09C7C404A029DE51FFE /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_demo.cpp */; };
-		087CD5B5439C460EBB3451FD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/state.cpp */ = {isa = PBXBuildFile; fileRef = 84E1965549EA4A3780AC940F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/state.cpp */; };
-		0B5E6466F7614371900CB793 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/_editor.h */ = {isa = PBXBuildFile; fileRef = E1F46BB608FC415CA4C620A0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/_editor.h */; };
-		0D607EBC4B44452BB8FF83A2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser_impl.cpp */ = {isa = PBXBuildFile; fileRef = A1425FA45D2C40C2B99F7A65 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser_impl.cpp */; };
-		1588331461BC4EE086BA6408 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/handler.cpp */ = {isa = PBXBuildFile; fileRef = C00F3883FD4D4E2E84D594A7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/handler.cpp */; };
-		15BA831CCD86402F8698A920 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_draw.cpp */ = {isa = PBXBuildFile; fileRef = 25EB9B89C2FD4AD5AEA487F5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_draw.cpp */; };
-		1838D254C50F42B5BC80FA17 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/pen_tool.cpp */ = {isa = PBXBuildFile; fileRef = 14815C59AEA942559F8AF70C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/pen_tool.cpp */; };
-		1B90FEEA9F6249E683E7A305 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/cbapp_config.h */ = {isa = PBXBuildFile; fileRef = 7483BCF15DCD43EFAA17F566 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/cbapp_config.h */; };
-		1D9EE979C7C14D3F9705D985 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/logger.cpp */ = {isa = PBXBuildFile; fileRef = EB0984A183E24F9EB380E962 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/logger.cpp */; };
-		1EBC76C8FDA0483693946C59 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_cb_demo.h */ = {isa = PBXBuildFile; fileRef = 079E997714F94D109FD9A27D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_cb_demo.h */; };
-		21334303E6074C98AC3316B3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_mode.cpp */ = {isa = PBXBuildFile; fileRef = A7DA69A7B1024CC5A818C621 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_mode.cpp */; };
-		24209C46330047909DB9F974 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/temp.cpp */ = {isa = PBXBuildFile; fileRef = A519E6D770004AC1BC215A11 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/temp.cpp */; };
-		24EAE0BB80C24C47B1A29DC6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_overlays.h */ = {isa = PBXBuildFile; fileRef = 1B916E2F5FB545328D3FE919 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_overlays.h */; };
-		270DDD4894A94B828D91289E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/resource_loader.cpp */ = {isa = PBXBuildFile; fileRef = 0013654928E94435AE5E4704 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/resource_loader.cpp */; };
-		2AC3F22A00694572B6590239 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_impl.h */ = {isa = PBXBuildFile; fileRef = 9A6E9691121E43A8BAEB2C64 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_impl.h */; };
-		2AC49E8A3E3E4D578548956F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser.cpp */ = {isa = PBXBuildFile; fileRef = 4260DEC1E3A24F0E942D7369 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser.cpp */; };
-		2AE2F5252E024BFD9E721A6D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/graph_app.h */ = {isa = PBXBuildFile; fileRef = 253EF716CC5F47D8B8549A51 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/graph_app.h */; };
-		2B45E5AACF784888982435F2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_browser.h */ = {isa = PBXBuildFile; fileRef = 195E8F75D2A94C1686017F78 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_browser.h */; };
-		2D2224FB36F14BD2BF91082B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/app.h */ = {isa = PBXBuildFile; fileRef = 55E2BA9340EC48AFAD574B23 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/app.h */; };
-		2DBD9244A5884BE59D9CFB6E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_heatmap.h */ = {isa = PBXBuildFile; fileRef = 4DEC17AAB584434B90C97900 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_heatmap.h */; };
-		2DC6B8A2B29E4C7991F8D687 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_types.h */ = {isa = PBXBuildFile; fileRef = 65EE46DB08504036B4D83221 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_types.h */; };
-		2E4E456CFFA7498598970F26 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/main_application.cpp */ = {isa = PBXBuildFile; fileRef = A736F00E91D94D6CB5ED451D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/main_application.cpp */; };
-		423365FB53474DD9A7ECC415 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_glfw.cpp */ = {isa = PBXBuildFile; fileRef = 63D5D54DCFA94BACA48FB0D3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_glfw.cpp */; };
-		42731F825B2241F6A69F0CA7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/c_counter.cpp */ = {isa = PBXBuildFile; fileRef = 507F0A08C8EC461DAB637448 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/c_counter.cpp */; };
-		47F175E51AFB49A19A620195 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/init.cpp */ = {isa = PBXBuildFile; fileRef = 3906D5008242427BBF824F49 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/init.cpp */; };
-		482498CF471844339D2EEEE3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = DBD7480C4444431C9F90F933 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */; };
-		4C500DE200B849598E0D3B06 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_logger.h */ = {isa = PBXBuildFile; fileRef = 19CA895484C44C3AA80093A0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_logger.h */; };
-		4DB62604317749E1A395C7A6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/pystream/pystream.cpp */ = {isa = PBXBuildFile; fileRef = 9C9A9064FCC04EFEBCD5F83A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/pystream/pystream.cpp */; };
-		50567EFDE6604DD2BC77089C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_1d.cpp */ = {isa = PBXBuildFile; fileRef = 832B40AB144741F4A5A0270D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_1d.cpp */; };
-		551A7CCCCD3240E3B9D069D4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp/imgui_stdlib.cpp */ = {isa = PBXBuildFile; fileRef = 94F91CEFEE08430CABCC0819 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp/imgui_stdlib.cpp */; };
-		55547A172FAF4A1483F13EF6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/editor.cpp */ = {isa = PBXBuildFile; fileRef = 946F7EDB303C4D489E2BF326 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/editor.cpp */; };
-		5B3D98A0F2614C989AFF7BAB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_widgets.cpp */ = {isa = PBXBuildFile; fileRef = F2270BADEA8E4267A6C40C4C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_widgets.cpp */; };
-		5B8E13948D99483AAA79E6BF /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_impl.cpp */ = {isa = PBXBuildFile; fileRef = C8F335F49E88461592165C00 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_impl.cpp */; };
-		5D0A6D4343CF4C708B09BDC9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/utility.cpp */ = {isa = PBXBuildFile; fileRef = D339638203514B3FB489874F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/utility.cpp */; };
-		5D3705B8A57F4E4D9AF4818A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/main.cpp */ = {isa = PBXBuildFile; fileRef = 193A068CECC241AEBAB7D798 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/main.cpp */; };
-		6099137CE9EC402BBC61AA64 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_detail_view.h */ = {isa = PBXBuildFile; fileRef = 993FFF2A34214482AD866C97 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_detail_view.h */; };
-		63D217DD0B1E4349A0E32B52 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/tools.cpp */ = {isa = PBXBuildFile; fileRef = 67ABBBB103BA4CD18FD5056A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/tools.cpp */; };
-		658AD379051746EDAFA43437 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_templates.h */ = {isa = PBXBuildFile; fileRef = 41067C572C1B47A588C2640A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_templates.h */; };
-		676EBE56C97345C9BDDD3664 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_state.h */ = {isa = PBXBuildFile; fileRef = 9D71C9A56C4745BEB4B71D9A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_state.h */; };
-		6F49AA0C841E4C9A9D2E9921 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/editor_app/editor_app.cpp */ = {isa = PBXBuildFile; fileRef = 7E809E934D1A4481B5F49642 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/editor_app/editor_app.cpp */; };
-		701A8661E98842BC97CF9DC4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/graph_app.cpp */ = {isa = PBXBuildFile; fileRef = 7D609AD06F1D4A7199AA353C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/graph_app.cpp */; };
-		725119F7E8C6488B9B461004 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_browser.cpp */ = {isa = PBXBuildFile; fileRef = E53F8ACD6CA4470DB7F482B6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_browser.cpp */; };
-		7373AAC5D42748C98B34C8ED /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/tools.cpp */ = {isa = PBXBuildFile; fileRef = 160E25DCE4BC4221AF50FBF1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/tools.cpp */; };
-		73B4317785E84AB3B9728DFD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/plots.cpp */ = {isa = PBXBuildFile; fileRef = 8265E1DC001C44378C51E86B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/plots.cpp */; };
-		7A9B5626AE0A4840A381BF20 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_types.h */ = {isa = PBXBuildFile; fileRef = DA0BB9CFD78E4CB8913FD958 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_types.h */; };
-		7B5FC2670F694A10AE9E8174 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_opengl3.cpp */ = {isa = PBXBuildFile; fileRef = 65B17D509E204C568E298DEC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_opengl3.cpp */; };
-		80DF3E27200C4F61A5B829C4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/tools.cpp */ = {isa = PBXBuildFile; fileRef = B63A6302AC594BC68657963E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/tools.cpp */; };
-		8366DAE264FF4D5C9ACD49E3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/rows.cpp */ = {isa = PBXBuildFile; fileRef = D5B10FED6C9A4F51AE6FCB5B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/rows.cpp */; };
-		83855C0F33C243418B136291 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/pystream/pystream.h */ = {isa = PBXBuildFile; fileRef = 4E2DE66AA7504513BF198F37 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/pystream/pystream.h */; };
-		8A67368452EC47EE8B394756 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/my_imconfig.h */ = {isa = PBXBuildFile; fileRef = 275669532DF74625B031CB2D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/my_imconfig.h */; };
-		9426CD71183044279D8EFEF2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/editor.h */ = {isa = PBXBuildFile; fileRef = D22EDCFFFAB14CBBB8B06BD9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/editor.h */; };
-		96C031E2E74643938A752381 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/main.h */ = {isa = PBXBuildFile; fileRef = 6E8515E51D1F46BE8D25B03F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/main.h */; };
-		9AA861CF1F5B4C7085F3042B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/menubar.cpp */ = {isa = PBXBuildFile; fileRef = A5EDB892A4234A419E445E92 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/menubar.cpp */; };
-		9D3A8CA797164AEF98647399 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/c_counter/c_counter.h */ = {isa = PBXBuildFile; fileRef = 8C0EE847F4B74CCE97F90626 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/c_counter/c_counter.h */; };
-		9DF7C58809254605999BADDB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot.cpp */ = {isa = PBXBuildFile; fileRef = 9D54B218C376480E8BA48767 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot.cpp */; };
-		AE531A166B6744158D62F38C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/appearance.cpp */ = {isa = PBXBuildFile; fileRef = F0D26DD3FBB0442C872C371E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/appearance.cpp */; };
-		AF68DBF3CC9544BF8138FA1B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/utility.cpp */ = {isa = PBXBuildFile; fileRef = 00693AE597D2415AB828A50D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/utility.cpp */; };
-		B20F19F74839472383015310 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_types.h */ = {isa = PBXBuildFile; fileRef = DDE28E9B3F5B4AF48E6632D7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_types.h */; };
-		B22A5C72D45B4DD7A712D609 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_types.h */ = {isa = PBXBuildFile; fileRef = E8CEAF926FFB4C98A36F172D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_types.h */; };
-		B727E47B064843E38A8F57CB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/selection.cpp */ = {isa = PBXBuildFile; fileRef = 475EB053F9D84582AA62E942 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/selection.cpp */; };
-		B8039E27006540CBBB35EC71 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_controlbar.h */ = {isa = PBXBuildFile; fileRef = 33BA279C07FD4D69B3AC9109 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_controlbar.h */; };
-		B881822299F7459AA31D196C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/widgets.h */ = {isa = PBXBuildFile; fileRef = 88B56937DB274B1A8B389B46 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/widgets.h */; };
-		BAA9D44DA06D4A69BA5A4243 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/init.cpp */ = {isa = PBXBuildFile; fileRef = 9D0C3AB94050460C8DBC817C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/init.cpp */; };
-		BADF37D7C24040F5928A2EF0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_menubar.h */ = {isa = PBXBuildFile; fileRef = D47ACC3ACB924A4F891BFD5A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_menubar.h */; };
-		BBAEF905DDA648B299305695 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/editor_app/editor_app.h */ = {isa = PBXBuildFile; fileRef = 9F8D6E9881164A7D9C83D8EC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/editor_app/editor_app.h */; };
-		BC144AF935EC491B9D29BAE5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/detail_view.cpp */ = {isa = PBXBuildFile; fileRef = 3D4689A76AB24927BB4872EA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/detail_view.cpp */; };
-		BD8B9DA42E874B0EB4AB25DC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd.cpp */ = {isa = PBXBuildFile; fileRef = A4D7C5F9C9D8461D86A1462C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd.cpp */; };
-		BFEF2C1A8D884BDBA4439DF3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/tools.cpp */ = {isa = PBXBuildFile; fileRef = 0E63D7F29AE342BDA04E736A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/tools.cpp */; };
-		C331090F472947998277C7A4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/editor.cpp */ = {isa = PBXBuildFile; fileRef = BABB9E25DB544D83917B1D22 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/editor.cpp */; };
-		C485D5C4B4F34E9DB6081145 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/widgets.cpp */ = {isa = PBXBuildFile; fileRef = 7522FEEE647C4A158F3C2EC3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/widgets.cpp */; };
-		CD1B70F5F4C74104B549DE02 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/cb_demo.cpp */ = {isa = PBXBuildFile; fileRef = 409ADA3E7FDF4F1EB8709104 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/cb_demo.cpp */; };
-		CD670C83F1404D2EADFB0DA3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_1d.h */ = {isa = PBXBuildFile; fileRef = E840015E36734FDA8B5CB9FC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_1d.h */; };
-		CE9EA46135C047CDB5AB9AAD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/controlbar.cpp */ = {isa = PBXBuildFile; fileRef = 7A879BA0E1FF4DC3BD20028A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/controlbar.cpp */; };
-		D34966EF5DD349DCA0E40481 /* /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/OpenGL.framework */ = {isa = PBXBuildFile; fileRef = D7168DC853EF410DB1A2FEA1 /* /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/OpenGL.framework */; };
-		D3CBF4F779E8435A99DC26E1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/init.cpp */ = {isa = PBXBuildFile; fileRef = FAA30A8D734B404FB5AB9D55 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/init.cpp */; };
-		DA21127860E64775A78D278E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_demo.cpp */ = {isa = PBXBuildFile; fileRef = A03A2A1FECF94FB98EFFAB76 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_demo.cpp */; };
-		DDC564B58BB14A6FBA7A2A13 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_constants.h */ = {isa = PBXBuildFile; fileRef = 5A3042CCB75F450B98C8BFC6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_constants.h */; };
-		DE2193534CA640B19150727A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/fdtd.h */ = {isa = PBXBuildFile; fileRef = F76C67AB408F479FA8FA1F8D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/fdtd.h */; };
-		DECA881B4DF8426DB817B900 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/resource_loader.h */ = {isa = PBXBuildFile; fileRef = C3ECC83259BA43D7AF85B8E0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/resource_loader.h */; };
-		E4C7BC04E5884C15ADF9DAF2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui.cpp */ = {isa = PBXBuildFile; fileRef = A83FDF5B499D4CFF9BDF98EF /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui.cpp */; };
-		EE8DE2E5286F45A093A09510 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/fdtd.h */ = {isa = PBXBuildFile; fileRef = B6699D8496AA497D83A5BCAD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/fdtd.h */; };
-		F0B521B4637642D795FE9AFC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/fdtd.cpp */ = {isa = PBXBuildFile; fileRef = 0AC3339332A54214989A4B7D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/fdtd.cpp */; };
-		F60A4F393E804C758F37F6BC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/overlays.cpp */ = {isa = PBXBuildFile; fileRef = 928D368305EC4BE1A61183C1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/overlays.cpp */; };
-		F77DEF7A6E8D46929BC32C12 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_tables.cpp */ = {isa = PBXBuildFile; fileRef = F1279A34BB1544BCA30942B9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_tables.cpp */; };
-		F7BB21388C9142F9A9D46C19 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/HeatMap.cpp */ = {isa = PBXBuildFile; fileRef = 7DDD70A9E00A42149B86C3DF /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/HeatMap.cpp */; };
-		FACE937D0DC54BB89832D461 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/app.cpp */ = {isa = PBXBuildFile; fileRef = 5006A2D8BE7D4F55A6FABF67 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/app.cpp */; };
-		FB97A80879BD43A19ACA140F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/render.cpp */ = {isa = PBXBuildFile; fileRef = 734325025C6C4D5781DF15D9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/render.cpp */; };
-		FD53E5C263DE4FCD87B467F3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_items.cpp */ = {isa = PBXBuildFile; fileRef = 289FA13BDDF54D60B0CCAFD3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_items.cpp */; };
-		FE968A7056F14E9C8E1A7583 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/utility.h */ = {isa = PBXBuildFile; fileRef = 22D094139FED43B79A593F76 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/utility.h */; };
+		023FC810B2E043B5B4EEB83E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/app.cpp */ = {isa = PBXBuildFile; fileRef = AF5450BB7D6345CFBC184EB9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/app.cpp */; };
+		02675183954C4984AC33157C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_impl.cpp */ = {isa = PBXBuildFile; fileRef = 3667DD1B1F4841B083230AF7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_impl.cpp */; };
+		0375AC0AF5D44ACD83DA71F3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_detail_view.h */ = {isa = PBXBuildFile; fileRef = 4818DE8067C54585BEE4427E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_detail_view.h */; };
+		0535878EBC194348B7F9ED6C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/temp.cpp */ = {isa = PBXBuildFile; fileRef = 0B75D08A3A0C4C9180FFF0F2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/temp.cpp */; };
+		054F5B0DE01A4416A7F0160E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/fdtd.cpp */ = {isa = PBXBuildFile; fileRef = BD4D0F790891496E8D2632C0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/fdtd.cpp */; };
+		0921EA5A75BD4EED9A7053BD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/_editor.h */ = {isa = PBXBuildFile; fileRef = 184F2020DC61462E9E711505 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/_editor.h */; };
+		0C888903549B4C74AE98EC13 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/editor_app/editor_app.cpp */ = {isa = PBXBuildFile; fileRef = 639F0E4BCB454092BCEE3A0B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/editor_app/editor_app.cpp */; };
+		0D262A4032354061838A7D90 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_types.h */ = {isa = PBXBuildFile; fileRef = E84CEF801A79407087D1CA4A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_types.h */; };
+		0DC0CED668F5428ABB88C344 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/fdtd.h */ = {isa = PBXBuildFile; fileRef = 1101DE2EE46E4FEFBCC23CE7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/fdtd.h */; };
+		0E6A22FC8C564F5D9E33AC14 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/_init.h */ = {isa = PBXBuildFile; fileRef = E2E6A82166184075B16D0DA5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/_init.h */; };
+		0F4D901EAD7E411DAD06A577 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_types.h */ = {isa = PBXBuildFile; fileRef = 1FD0C20EB24A49CB88147076 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_types.h */; };
+		1171AD11AA6C48F6BA5BAE65 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_controlbar.h */ = {isa = PBXBuildFile; fileRef = 3DEFE0E3D4A74E8FB0F9CEA7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_controlbar.h */; };
+		1900C65D902A4F1CA8B4501B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_opengl3.cpp */ = {isa = PBXBuildFile; fileRef = CDE83F05B0944CAEA3B898C6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_opengl3.cpp */; };
+		206830B11835494B97043895 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/logger.cpp */ = {isa = PBXBuildFile; fileRef = 5859289412104E0EB47F186C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/logger.cpp */; };
+		20EB913F1BF04B66B6FB4978 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/menubar.cpp */ = {isa = PBXBuildFile; fileRef = 119EA3E3B6EC4698988888B6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/menubar.cpp */; };
+		21846027551B4F42BB66FB99 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_demo.cpp */ = {isa = PBXBuildFile; fileRef = 2205CD0A99F0421EBC2499D9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_demo.cpp */; };
+		21E34FAEA20E43E0AC91AC01 /* /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/OpenGL.framework */ = {isa = PBXBuildFile; fileRef = CA6A5E640F0543F3AC4DFBEF /* /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/OpenGL.framework */; };
+		24CCCD18F1FE4350B0119AD8 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_menubar.h */ = {isa = PBXBuildFile; fileRef = 68C750FEBD2F46828C110E78 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_menubar.h */; };
+		253BD3E5117B4E4D8B561878 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/tools.cpp */ = {isa = PBXBuildFile; fileRef = B60EA20C934D4C12A451B758 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/tools.cpp */; };
+		269860F23847419E86150458 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_browser.h */ = {isa = PBXBuildFile; fileRef = D87BC70F9FBE4D39B5D9E23C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_browser.h */; };
+		2783FD8ED11E4074A4D5F410 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_templates.h */ = {isa = PBXBuildFile; fileRef = E0E69F5C055D48EF9114864C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_templates.h */; };
+		2B9471D1BA0C427DBA0E99B3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/editor.cpp */ = {isa = PBXBuildFile; fileRef = A2CAA117D11D4693B0C3C180 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/editor.cpp */; };
+		2BD00307996845BDA525DD83 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/overlays.cpp */ = {isa = PBXBuildFile; fileRef = 75740188EF3348DF94DC8952 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/overlays.cpp */; };
+		2C1718B1D6B542A1B8341AA9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/tools.cpp */ = {isa = PBXBuildFile; fileRef = 3376BE4DFA7646A2811DA4A9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/tools.cpp */; };
+		2E923AA22C1F4430B41919B3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/c_counter/c_counter.h */ = {isa = PBXBuildFile; fileRef = 4C1BDFA919794833913F390A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/c_counter/c_counter.h */; };
+		2FBB59C526F44AC490290079 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_cb_demo.h */ = {isa = PBXBuildFile; fileRef = 3CB716A366FD4156878F70E1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_cb_demo.h */; };
+		3509D06F15AB45169C0C0ADA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/main.cpp */ = {isa = PBXBuildFile; fileRef = DD90BA7EBF8B4C8DB693F6C1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/main.cpp */; };
+		352CC9178D4145C684EAE154 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui.cpp */ = {isa = PBXBuildFile; fileRef = BA554793C18343CB8A31F528 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui.cpp */; };
+		3F26E6855FAF4C939D8FD456 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/plots.cpp */ = {isa = PBXBuildFile; fileRef = B663AA14F59D43768EA6A1B7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/plots.cpp */; };
+		42CF97A775FC45268FAF9693 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/my_imconfig.h */ = {isa = PBXBuildFile; fileRef = 718ED0F5D8D040C98FF30C2F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/my_imconfig.h */; };
+		442F9EA9A5D94C3AAF6D2A45 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/render.cpp */ = {isa = PBXBuildFile; fileRef = 93E239E57E134801A9EE5249 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/render.cpp */; };
+		44A169DDB6E94613A14B58EE /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_mode.cpp */ = {isa = PBXBuildFile; fileRef = 1E9B2C9E150D486489A642C0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_mode.cpp */; };
+		44E0A2C4EAFB4690930E34DB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/cb_demo.cpp */ = {isa = PBXBuildFile; fileRef = E66FEA9A427C4B38848233B5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/cb_demo.cpp */; };
+		47F5EC6C49534B3F940C1BC0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/editor_app/editor_app.h */ = {isa = PBXBuildFile; fileRef = 83744B5AE2FB41029FDECB0F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/editor_app/editor_app.h */; };
+		49A10D7C4A084F1EB23D67F8 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/cbapp_config.h */ = {isa = PBXBuildFile; fileRef = B152B2EB51CD4A77A4CA87AB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/cbapp_config.h */; };
+		4B5EA2F9E3F54BFBB5BE3A84 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_types.h */ = {isa = PBXBuildFile; fileRef = 54BD5388F3444FC487E79DB6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_types.h */; };
+		4E6A167346584519AAAAFA09 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/state.cpp */ = {isa = PBXBuildFile; fileRef = D6B762B9DA5045D2914EFABC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/state.cpp */; };
+		4F8EBC59DB574614B77C87CD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/c_counter.cpp */ = {isa = PBXBuildFile; fileRef = 73430B90B9A74108931B8BD4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/c_counter.cpp */; };
+		53C7EC062C3944A584AB7F56 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser.cpp */ = {isa = PBXBuildFile; fileRef = 620A13DCF800424A80F6F8F2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser.cpp */; };
+		54BEBB3F634D4E919717DB6F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_draw.cpp */ = {isa = PBXBuildFile; fileRef = 065C719010F74D9FBECABDC4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_draw.cpp */; };
+		551E8360D7D94E32BD6C925E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/utility.cpp */ = {isa = PBXBuildFile; fileRef = 1D78F96F59FA4A099B2AB8F9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/utility.cpp */; };
+		5531D58DF12A4EC49278B83A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/common.cpp */ = {isa = PBXBuildFile; fileRef = 729B3AD082144490A234BAFA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/common.cpp */; };
+		59FA87347BF14C41A9CBD037 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_config.h */ = {isa = PBXBuildFile; fileRef = A9400916091E457CA818A96E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_config.h */; };
+		5C3C5D9463C146B3853341E8 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/utility.h */ = {isa = PBXBuildFile; fileRef = 7812EB202D59427C979CA300 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/utility.h */; };
+		5CAA24A7014C412384ED0848 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/pystream/pystream.h */ = {isa = PBXBuildFile; fileRef = 3F979FBD02A5442C968F9F4C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/pystream/pystream.h */; };
+		5CC7CF214C9244469861A191 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_widgets.cpp */ = {isa = PBXBuildFile; fileRef = 07712E001CB04F5E8C464F0F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_widgets.cpp */; };
+		6EC63E2DBCE245C79DC9E37F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/init.cpp */ = {isa = PBXBuildFile; fileRef = 9094543F50334FB08D2F3213 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/init.cpp */; };
+		6F9CF8EF43C849C7859F167F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/appearance.cpp */ = {isa = PBXBuildFile; fileRef = 037748E4A0D1434E8D3D89BA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/appearance.cpp */; };
+		7172606C5FAD463EAAFB3E7D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_impl.h */ = {isa = PBXBuildFile; fileRef = B6BF74F1AD624970A81BD014 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_impl.h */; };
+		71FB99E7B2D8474CB296F734 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_1d.cpp */ = {isa = PBXBuildFile; fileRef = BABDD12411194C4299CD51B2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_1d.cpp */; };
+		79ED1CE22E294EAEBE5AB04D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/editor.cpp */ = {isa = PBXBuildFile; fileRef = 992DD8FC4B1E410D88940120 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/editor.cpp */; };
+		7C2AC1456E1E414CB7EF8272 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp/imgui_stdlib.cpp */ = {isa = PBXBuildFile; fileRef = F87043EDE20F469CA4A545C2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp/imgui_stdlib.cpp */; };
+		7CDF8638CFAD4C1CABC614B5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_demo.cpp */ = {isa = PBXBuildFile; fileRef = 49BB206F112C4B6E8467947F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_demo.cpp */; };
+		81F17F1B8F9D489EACC18154 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/handler.cpp */ = {isa = PBXBuildFile; fileRef = D1FB9B2F838B4E6A8B9EBA88 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/handler.cpp */; };
+		84417610BB14453AA9C4C13A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd.cpp */ = {isa = PBXBuildFile; fileRef = EC64EEE2AC22449983C723B3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd.cpp */; };
+		85F4539711194B928BF9E928 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/widgets.cpp */ = {isa = PBXBuildFile; fileRef = D8CE660E42C841A894071932 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/widgets.cpp */; };
+		8BC3B2EF18324C15B0594EBA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/resource_loader.h */ = {isa = PBXBuildFile; fileRef = BC030072C59E4339856F67DD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/resource_loader.h */; };
+		8EB9B204AE17493DB0453F9F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_heatmap.h */ = {isa = PBXBuildFile; fileRef = 9C0F198BF379404B8433F772 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_heatmap.h */; };
+		929DD53896594F468FC68523 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/app.h */ = {isa = PBXBuildFile; fileRef = 65A84C890F514E9B9D705EDC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/app.h */; };
+		92C1A6A4CEB94846B5F2BD17 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/init.cpp */ = {isa = PBXBuildFile; fileRef = B7E6832E981440C78FA4FD94 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/init.cpp */; };
+		961C4A6D58B545F0AD862776 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/editor.h */ = {isa = PBXBuildFile; fileRef = 52AA312E760A4E2DBB12D4B4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/editor.h */; };
+		975794B23C9448B49A395637 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/detail_view.cpp */ = {isa = PBXBuildFile; fileRef = 6D53C5991C81480681C57A09 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/detail_view.cpp */; };
+		9DF7684EA8B145C9A182292C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_glfw.cpp */ = {isa = PBXBuildFile; fileRef = 3953C29518564EA5890EA885 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_glfw.cpp */; };
+		9FA8CBA911334DC7A30E4A17 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_logger.h */ = {isa = PBXBuildFile; fileRef = 566C130BD0DC4672A89997F3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_logger.h */; };
+		A452F6AB1AE14E11A1F9C9AE /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/selection.cpp */ = {isa = PBXBuildFile; fileRef = F1AA3A155C434B88ABEB152B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/selection.cpp */; };
+		A52BDC3710364857BDB40A21 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = D13E6FD7FA46496DBFE2EC98 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */; };
+		AB486DC46157453E995075FA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/browser.cpp */ = {isa = PBXBuildFile; fileRef = A0BD4BF190E74D44A1A80916 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/browser.cpp */; };
+		ACCA727535724A5EA6296B86 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_browser.cpp */ = {isa = PBXBuildFile; fileRef = 3400ECF005414B5A857DEFF4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_browser.cpp */; };
+		B27B64282AF64803A7675C31 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/rows.cpp */ = {isa = PBXBuildFile; fileRef = BA4CBAD504FD4C838C31805A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/rows.cpp */; };
+		B2D5BE11BC7B48C4B48A7468 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/widgets.h */ = {isa = PBXBuildFile; fileRef = 1D437DFAC17A41528F847585 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/widgets.h */; };
+		B4531590E633423E8E6E23A1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_constants.h */ = {isa = PBXBuildFile; fileRef = 80B338F99793422A873E61AA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_constants.h */; };
+		B9E08AD041524702944065AC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/main_application.cpp */ = {isa = PBXBuildFile; fileRef = D044583906FA4DA493022DD4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/main_application.cpp */; };
+		BCC43489A5C2420C9A87D3B6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/graph_app.cpp */ = {isa = PBXBuildFile; fileRef = F223D61B64D04FAB8DB02591 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/graph_app.cpp */; };
+		C0C6DFDC56764F0CB113DC88 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/utility.cpp */ = {isa = PBXBuildFile; fileRef = E146CBA00FC04BB9BB22C41D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/utility.cpp */; };
+		C27864E3034C4F3D8A8496BE /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/pystream/pystream.cpp */ = {isa = PBXBuildFile; fileRef = 2A894777C7BC44568D1DE1E4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/pystream/pystream.cpp */; };
+		C94D007154A7446C87BE528C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_items.cpp */ = {isa = PBXBuildFile; fileRef = 01C1B93F9C30424183977BCC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_items.cpp */; };
+		CCC17A45EE5248D2AEB021A8 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/controlbar.cpp */ = {isa = PBXBuildFile; fileRef = 706BBE79E52E43F482684F90 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/controlbar.cpp */; };
+		D00089AF3B8C4119A2F9E92E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/tools.cpp */ = {isa = PBXBuildFile; fileRef = B64949F37C9243F38D4D19CC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/tools.cpp */; };
+		D589BCAD732B421AB7774F6D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/HeatMap.cpp */ = {isa = PBXBuildFile; fileRef = 9FAC66E4CDA9451E9E9EE09E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/HeatMap.cpp */; };
+		D6701C4A8A6D4FD19C14C928 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/init.cpp */ = {isa = PBXBuildFile; fileRef = DAB7166FA6424C889AE61520 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/init.cpp */; };
+		D6C36677E4234B2E9A9EFCC2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_overlays.h */ = {isa = PBXBuildFile; fileRef = 2CA4618E759D4A7BA7A8DBF2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_overlays.h */; };
+		D82D80CF9B47489DBA2E411C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot.cpp */ = {isa = PBXBuildFile; fileRef = 341CBA44FB46468698C58A1D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot.cpp */; };
+		DC7FAE6787544307916500DE /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/resource_loader.cpp */ = {isa = PBXBuildFile; fileRef = 5D6FBBE9F15D460085C2249D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/resource_loader.cpp */; };
+		E37A20BEACF542CAA081CD9E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/graph_app.h */ = {isa = PBXBuildFile; fileRef = FC81919D8CF2492B8D5EAD72 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/graph_app.h */; };
+		E7E853F274764BA48EC3D5FB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_types.h */ = {isa = PBXBuildFile; fileRef = A089960403B14C8390EE1CC2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_types.h */; };
+		EF10ABFBDC98493AA28BC8EC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_1d.h */ = {isa = PBXBuildFile; fileRef = 75EC03ED279B423086DEBE51 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_1d.h */; };
+		EF6C553BEC624E748F490F66 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_state.h */ = {isa = PBXBuildFile; fileRef = F86BF5B7C7B345CA885B2B61 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_state.h */; };
+		F1CC636A798442358A9B9CC8 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_tables.cpp */ = {isa = PBXBuildFile; fileRef = C6C7080D238641998DDD9725 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_tables.cpp */; };
+		F465BD32E5714A6D97A78812 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/main.h */ = {isa = PBXBuildFile; fileRef = C58992E20F0D42B385104A66 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/main.h */; };
+		F4814C4A60B34E02BC9623B2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/pen_tool.cpp */ = {isa = PBXBuildFile; fileRef = 77ADBDE0A0EC490B92187384 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/pen_tool.cpp */; };
+		F6FFB85F116949CA95D5B6C6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/fdtd.h */ = {isa = PBXBuildFile; fileRef = 65FA9805D14342F2AD9FEBBA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/fdtd.h */; };
+		F8C77CCC96E942DEB732C17D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser_impl.cpp */ = {isa = PBXBuildFile; fileRef = 5F58FD18958146E1A5A08378 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser_impl.cpp */; };
+		FBC654A68C6F42F396F7B319 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/tools.cpp */ = {isa = PBXBuildFile; fileRef = 4E5963CB28C04BD9AA794AC9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/tools.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildStyle section */
-		6B5AAA2F47F9441FB553F0AC /* Debug */ = {
+		1F926D5381C040D48599E41D /* Debug */ = {
 			isa = PBXBuildStyle;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 			};
 			name = Debug;
 		};
-		881F7C3CC4F94A0784BADEE7 /* RelWithDebInfo */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-			};
-			name = RelWithDebInfo;
-		};
-		909C57CB11DE4B879D0C82DA /* Release */ = {
+		49B65435E2064DC5A62105BB /* Release */ = {
 			isa = PBXBuildStyle;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 			};
 			name = Release;
 		};
-		AB7DFEC28A4541E5B4815E1D /* MinSizeRel */ = {
+		557587C45FAE4AC3865693D2 /* MinSizeRel */ = {
 			isa = PBXBuildStyle;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 			};
 			name = MinSizeRel;
 		};
+		81691C1834D54045A066BF70 /* RelWithDebInfo */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = RelWithDebInfo;
+		};
 /* End PBXBuildStyle section */
 
 /* Begin PBXContainerItemProxy section */
-		2D771B270821400182BC6BDB /* PBXContainerItemProxy */ = {
+		1D7588F820CC451186F9830A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E004FF9E5F5448778E456BDF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F5E66F8D6F42497933872978;
+			remoteInfo = ZERO_CHECK;
+		};
+		3A0C911C3C8C49D2A69F0F39 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E004FF9E5F5448778E456BDF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F5E66F8D6F42497933872978;
+			remoteInfo = ZERO_CHECK;
+		};
+		881A1F8643CF48F4A7082B93 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = E004FF9E5F5448778E456BDF /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 1B47E4E1C8500FC6A3BEF5A4;
 			remoteInfo = CBApp;
 		};
-		4DFF9F8992054478B6114204 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E004FF9E5F5448778E456BDF /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = F5E66F8D6F42497933872978;
-			remoteInfo = ZERO_CHECK;
-		};
-		D1E834E4439C4DA3BB0EC9CF /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E004FF9E5F5448778E456BDF /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = F5E66F8D6F42497933872978;
-			remoteInfo = ZERO_CHECK;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0013654928E94435AE5E4704 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/resource_loader.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = resource_loader.cpp; path = src/utility/resource_loader.cpp; sourceTree = SOURCE_ROOT; };
-		00693AE597D2415AB828A50D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/utility.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = utility.cpp; path = src/utility/utility.cpp; sourceTree = SOURCE_ROOT; };
-		079E997714F94D109FD9A27D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_cb_demo.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _cb_demo.h; path = include/widgets/_cb_demo.h; sourceTree = SOURCE_ROOT; };
-		0AC3339332A54214989A4B7D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/fdtd.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = fdtd.cpp; path = src/app/graph_app/fdtd.cpp; sourceTree = SOURCE_ROOT; };
-		0E63D7F29AE342BDA04E736A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/tools.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = tools.cpp; path = src/app/graph_app/tools.cpp; sourceTree = SOURCE_ROOT; };
-		12E189D4AF8349ECAD7FC5F1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_config.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _config.h; path = include/app/state/_config.h; sourceTree = SOURCE_ROOT; };
-		14815C59AEA942559F8AF70C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/pen_tool.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = pen_tool.cpp; path = src/widgets/editor/pen_tool.cpp; sourceTree = SOURCE_ROOT; };
-		160E25DCE4BC4221AF50FBF1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/tools.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = tools.cpp; path = src/widgets/editor/tools.cpp; sourceTree = SOURCE_ROOT; };
-		193A068CECC241AEBAB7D798 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/main.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = main.cpp; path = src/main.cpp; sourceTree = SOURCE_ROOT; };
-		195E8F75D2A94C1686017F78 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_browser.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _browser.h; path = include/app/delegators/_browser.h; sourceTree = SOURCE_ROOT; };
-		19CA895484C44C3AA80093A0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_logger.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _logger.h; path = include/utility/_logger.h; sourceTree = SOURCE_ROOT; };
-		1B916E2F5FB545328D3FE919 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_overlays.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _overlays.h; path = include/widgets/editor/_overlays.h; sourceTree = SOURCE_ROOT; };
-		22D094139FED43B79A593F76 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/utility.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = utility.h; path = include/utility/utility.h; sourceTree = SOURCE_ROOT; };
-		243B9F34C18C4608A0E84742 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
-		253EF716CC5F47D8B8549A51 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/graph_app.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = graph_app.h; path = include/app/graph_app/graph_app.h; sourceTree = SOURCE_ROOT; };
-		25EB9B89C2FD4AD5AEA487F5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_draw.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_draw.cpp; path = imgui/imgui_draw.cpp; sourceTree = SOURCE_ROOT; };
-		275669532DF74625B031CB2D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/my_imconfig.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = my_imconfig.h; path = include/config/my_imconfig.h; sourceTree = SOURCE_ROOT; };
-		289FA13BDDF54D60B0CCAFD3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_items.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = implot_items.cpp; path = imgui/implot_items.cpp; sourceTree = SOURCE_ROOT; };
-		2F26F09C7C404A029DE51FFE /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_demo.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = implot_demo.cpp; path = imgui/implot_demo.cpp; sourceTree = SOURCE_ROOT; };
-		33BA279C07FD4D69B3AC9109 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_controlbar.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _controlbar.h; path = include/app/delegators/_controlbar.h; sourceTree = SOURCE_ROOT; };
-		3906D5008242427BBF824F49 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/init.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = init.cpp; path = src/app/init.cpp; sourceTree = SOURCE_ROOT; };
-		3D4689A76AB24927BB4872EA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/detail_view.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = detail_view.cpp; path = src/app/delegators/detail_view.cpp; sourceTree = SOURCE_ROOT; };
-		409ADA3E7FDF4F1EB8709104 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/cb_demo.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = cb_demo.cpp; path = src/widgets/cb_demo.cpp; sourceTree = SOURCE_ROOT; };
-		41067C572C1B47A588C2640A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_templates.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _templates.h; path = include/utility/_templates.h; sourceTree = SOURCE_ROOT; };
-		4260DEC1E3A24F0E942D7369 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = browser.cpp; path = src/app/delegators/browser.cpp; sourceTree = SOURCE_ROOT; };
-		475EB053F9D84582AA62E942 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/selection.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = selection.cpp; path = src/widgets/editor/selection.cpp; sourceTree = SOURCE_ROOT; };
-		4DEC17AAB584434B90C97900 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_heatmap.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _heatmap.h; path = include/widgets/_heatmap.h; sourceTree = SOURCE_ROOT; };
-		4E2DE66AA7504513BF198F37 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/pystream/pystream.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = pystream.h; path = include/utility/pystream/pystream.h; sourceTree = SOURCE_ROOT; };
-		5006A2D8BE7D4F55A6FABF67 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/app.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = app.cpp; path = src/app/app.cpp; sourceTree = SOURCE_ROOT; };
-		507F0A08C8EC461DAB637448 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/c_counter.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = c_counter.cpp; path = src/app/c_counter/c_counter.cpp; sourceTree = SOURCE_ROOT; };
-		55E2BA9340EC48AFAD574B23 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/app.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = app.h; path = include/app/app.h; sourceTree = SOURCE_ROOT; };
-		5A3042CCB75F450B98C8BFC6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_constants.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _constants.h; path = include/utility/_constants.h; sourceTree = SOURCE_ROOT; };
-		5A8695E49D84432D9F451D15 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/_init.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _init.h; path = include/app/_init.h; sourceTree = SOURCE_ROOT; };
-		63D5D54DCFA94BACA48FB0D3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_glfw.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_impl_glfw.cpp; path = imgui/backends/imgui_impl_glfw.cpp; sourceTree = SOURCE_ROOT; };
-		65B17D509E204C568E298DEC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_opengl3.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_impl_opengl3.cpp; path = imgui/backends/imgui_impl_opengl3.cpp; sourceTree = SOURCE_ROOT; };
-		65EE46DB08504036B4D83221 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_types.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _types.h; path = include/utility/_types.h; sourceTree = SOURCE_ROOT; };
-		67ABBBB103BA4CD18FD5056A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/tools.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = tools.cpp; path = src/app/tools.cpp; sourceTree = SOURCE_ROOT; };
-		6E8515E51D1F46BE8D25B03F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/main.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = main.h; path = include/main.h; sourceTree = SOURCE_ROOT; };
-		734325025C6C4D5781DF15D9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/render.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = render.cpp; path = src/widgets/editor/render.cpp; sourceTree = SOURCE_ROOT; };
-		7483BCF15DCD43EFAA17F566 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/cbapp_config.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = cbapp_config.h; path = include/config/cbapp_config.h; sourceTree = SOURCE_ROOT; };
-		7522FEEE647C4A158F3C2EC3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/widgets.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = widgets.cpp; path = src/widgets/widgets.cpp; sourceTree = SOURCE_ROOT; };
-		7A879BA0E1FF4DC3BD20028A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/controlbar.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = controlbar.cpp; path = src/app/delegators/controlbar.cpp; sourceTree = SOURCE_ROOT; };
-		7D609AD06F1D4A7199AA353C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/graph_app.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = graph_app.cpp; path = src/app/graph_app/graph_app.cpp; sourceTree = SOURCE_ROOT; };
-		7DDD70A9E00A42149B86C3DF /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/HeatMap.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = HeatMap.cpp; path = src/widgets/HeatMap.cpp; sourceTree = SOURCE_ROOT; };
-		7E809E934D1A4481B5F49642 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/editor_app/editor_app.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = editor_app.cpp; path = src/app/editor_app/editor_app.cpp; sourceTree = SOURCE_ROOT; };
-		8265E1DC001C44378C51E86B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/plots.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = plots.cpp; path = src/utility/plots.cpp; sourceTree = SOURCE_ROOT; };
-		832B40AB144741F4A5A0270D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_1d.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = fdtd_1d.cpp; path = src/fdtd/fdtd_1d.cpp; sourceTree = SOURCE_ROOT; };
-		84E1965549EA4A3780AC940F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/state.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = state.cpp; path = src/app/state/state.cpp; sourceTree = SOURCE_ROOT; };
-		88B56937DB274B1A8B389B46 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/widgets.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = widgets.h; path = include/widgets/widgets.h; sourceTree = SOURCE_ROOT; };
-		8C0EE847F4B74CCE97F90626 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/c_counter/c_counter.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = c_counter.h; path = include/app/c_counter/c_counter.h; sourceTree = SOURCE_ROOT; };
-		928D368305EC4BE1A61183C1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/overlays.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = overlays.cpp; path = src/widgets/editor/overlays.cpp; sourceTree = SOURCE_ROOT; };
-		92B056B572F2404290582A59 /* CBApp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = CBApp; sourceTree = BUILT_PRODUCTS_DIR; };
-		946F7EDB303C4D489E2BF326 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/editor.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = editor.cpp; path = src/app/graph_app/editor.cpp; sourceTree = SOURCE_ROOT; };
-		94F91CEFEE08430CABCC0819 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp/imgui_stdlib.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_stdlib.cpp; path = misc/cpp/imgui_stdlib.cpp; sourceTree = SOURCE_ROOT; };
-		993FFF2A34214482AD866C97 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_detail_view.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _detail_view.h; path = include/app/delegators/_detail_view.h; sourceTree = SOURCE_ROOT; };
-		9A6E9691121E43A8BAEB2C64 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_impl.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _fdtd_impl.h; path = include/fdtd/_fdtd_impl.h; sourceTree = SOURCE_ROOT; };
-		9C9A9064FCC04EFEBCD5F83A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/pystream/pystream.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = pystream.cpp; path = src/utility/pystream/pystream.cpp; sourceTree = SOURCE_ROOT; };
-		9D0C3AB94050460C8DBC817C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/init.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = init.cpp; path = src/app/graph_app/init.cpp; sourceTree = SOURCE_ROOT; };
-		9D54B218C376480E8BA48767 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = implot.cpp; path = imgui/implot.cpp; sourceTree = SOURCE_ROOT; };
-		9D71C9A56C4745BEB4B71D9A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_state.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _state.h; path = include/app/state/_state.h; sourceTree = SOURCE_ROOT; };
-		9F8D6E9881164A7D9C83D8EC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/editor_app/editor_app.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = editor_app.h; path = include/app/editor_app/editor_app.h; sourceTree = SOURCE_ROOT; };
-		A03A2A1FECF94FB98EFFAB76 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_demo.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_demo.cpp; path = imgui/imgui_demo.cpp; sourceTree = SOURCE_ROOT; };
-		A1425FA45D2C40C2B99F7A65 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser_impl.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = browser_impl.cpp; path = src/app/delegators/browser_impl.cpp; sourceTree = SOURCE_ROOT; };
-		A4D7C5F9C9D8461D86A1462C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = fdtd.cpp; path = src/fdtd/fdtd.cpp; sourceTree = SOURCE_ROOT; };
-		A519E6D770004AC1BC215A11 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/temp.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = temp.cpp; path = src/app/temp.cpp; sourceTree = SOURCE_ROOT; };
-		A5EDB892A4234A419E445E92 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/menubar.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = menubar.cpp; path = src/app/delegators/menubar.cpp; sourceTree = SOURCE_ROOT; };
-		A736F00E91D94D6CB5ED451D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/main_application.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = main_application.cpp; path = src/app/main_application.cpp; sourceTree = SOURCE_ROOT; };
-		A7DA69A7B1024CC5A818C621 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_mode.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = build_mode.cpp; path = src/app/graph_app/build_mode.cpp; sourceTree = SOURCE_ROOT; };
-		A83FDF5B499D4CFF9BDF98EF /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui.cpp; path = imgui/imgui.cpp; sourceTree = SOURCE_ROOT; };
-		B63A6302AC594BC68657963E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/tools.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = tools.cpp; path = src/app/c_counter/tools.cpp; sourceTree = SOURCE_ROOT; };
-		B6699D8496AA497D83A5BCAD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/fdtd.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = fdtd.h; path = include/fdtd/fdtd.h; sourceTree = SOURCE_ROOT; };
-		BABB9E25DB544D83917B1D22 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/editor.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = editor.cpp; path = src/widgets/editor/editor.cpp; sourceTree = SOURCE_ROOT; };
-		BACA110F3AC341FEA990318F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/browser.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = browser.cpp; path = src/widgets/editor/browser.cpp; sourceTree = SOURCE_ROOT; };
-		C00F3883FD4D4E2E84D594A7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/handler.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = handler.cpp; path = src/app/handler.cpp; sourceTree = SOURCE_ROOT; };
-		C3ECC83259BA43D7AF85B8E0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/resource_loader.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = resource_loader.h; path = include/utility/resource_loader.h; sourceTree = SOURCE_ROOT; };
-		C8F335F49E88461592165C00 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_impl.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = fdtd_impl.cpp; path = src/fdtd/fdtd_impl.cpp; sourceTree = SOURCE_ROOT; };
-		D22EDCFFFAB14CBBB8B06BD9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/editor.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = editor.h; path = include/widgets/editor/editor.h; sourceTree = SOURCE_ROOT; };
-		D339638203514B3FB489874F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/utility.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = utility.cpp; path = src/widgets/editor/utility.cpp; sourceTree = SOURCE_ROOT; };
-		D47ACC3ACB924A4F891BFD5A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_menubar.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _menubar.h; path = include/app/delegators/_menubar.h; sourceTree = SOURCE_ROOT; };
-		D5B10FED6C9A4F51AE6FCB5B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/rows.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = rows.cpp; path = src/app/graph_app/rows.cpp; sourceTree = SOURCE_ROOT; };
-		D7168DC853EF410DB1A2FEA1 /* /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/OpenGL.framework */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
-		DA0BB9CFD78E4CB8913FD958 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_types.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _types.h; path = include/fdtd/_types.h; sourceTree = SOURCE_ROOT; };
-		DBD7480C4444431C9F90F933 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
-		DDE28E9B3F5B4AF48E6632D7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_types.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _types.h; path = include/app/state/_types.h; sourceTree = SOURCE_ROOT; };
-		E1F46BB608FC415CA4C620A0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/_editor.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _editor.h; path = include/app/graph_app/_editor.h; sourceTree = SOURCE_ROOT; };
-		E53F8ACD6CA4470DB7F482B6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_browser.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = build_browser.cpp; path = src/app/graph_app/build_browser.cpp; sourceTree = SOURCE_ROOT; };
-		E840015E36734FDA8B5CB9FC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_1d.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _fdtd_1d.h; path = include/fdtd/_fdtd_1d.h; sourceTree = SOURCE_ROOT; };
-		E8CEAF926FFB4C98A36F172D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_types.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _types.h; path = include/widgets/editor/_types.h; sourceTree = SOURCE_ROOT; };
-		EB0984A183E24F9EB380E962 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/logger.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = logger.cpp; path = src/utility/logger.cpp; sourceTree = SOURCE_ROOT; };
-		F0D26DD3FBB0442C872C371E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/appearance.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = appearance.cpp; path = src/app/state/appearance.cpp; sourceTree = SOURCE_ROOT; };
-		F1279A34BB1544BCA30942B9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_tables.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_tables.cpp; path = imgui/imgui_tables.cpp; sourceTree = SOURCE_ROOT; };
-		F2270BADEA8E4267A6C40C4C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_widgets.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_widgets.cpp; path = imgui/imgui_widgets.cpp; sourceTree = SOURCE_ROOT; };
-		F76C67AB408F479FA8FA1F8D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/fdtd.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = fdtd.h; path = include/app/graph_app/fdtd.h; sourceTree = SOURCE_ROOT; };
-		FAA30A8D734B404FB5AB9D55 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/init.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = init.cpp; path = src/app/c_counter/init.cpp; sourceTree = SOURCE_ROOT; };
+		01C1B93F9C30424183977BCC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_items.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = implot_items.cpp; path = imgui/implot_items.cpp; sourceTree = SOURCE_ROOT; };
+		037748E4A0D1434E8D3D89BA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/appearance.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = appearance.cpp; path = src/app/state/appearance.cpp; sourceTree = SOURCE_ROOT; };
+		065C719010F74D9FBECABDC4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_draw.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_draw.cpp; path = imgui/imgui_draw.cpp; sourceTree = SOURCE_ROOT; };
+		065E743806CA4A9E96A842B9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		07712E001CB04F5E8C464F0F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_widgets.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_widgets.cpp; path = imgui/imgui_widgets.cpp; sourceTree = SOURCE_ROOT; };
+		0B75D08A3A0C4C9180FFF0F2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/temp.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = temp.cpp; path = src/app/temp.cpp; sourceTree = SOURCE_ROOT; };
+		1101DE2EE46E4FEFBCC23CE7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/fdtd.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = fdtd.h; path = include/fdtd/fdtd.h; sourceTree = SOURCE_ROOT; };
+		119EA3E3B6EC4698988888B6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/menubar.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = menubar.cpp; path = src/app/delegators/menubar.cpp; sourceTree = SOURCE_ROOT; };
+		184F2020DC61462E9E711505 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/_editor.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _editor.h; path = include/app/graph_app/_editor.h; sourceTree = SOURCE_ROOT; };
+		1D437DFAC17A41528F847585 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/widgets.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = widgets.h; path = include/widgets/widgets.h; sourceTree = SOURCE_ROOT; };
+		1D78F96F59FA4A099B2AB8F9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/utility.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = utility.cpp; path = src/utility/utility.cpp; sourceTree = SOURCE_ROOT; };
+		1E9B2C9E150D486489A642C0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_mode.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = build_mode.cpp; path = src/app/graph_app/build_mode.cpp; sourceTree = SOURCE_ROOT; };
+		1FD0C20EB24A49CB88147076 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_types.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _types.h; path = include/app/state/_types.h; sourceTree = SOURCE_ROOT; };
+		2205CD0A99F0421EBC2499D9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_demo.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_demo.cpp; path = imgui/imgui_demo.cpp; sourceTree = SOURCE_ROOT; };
+		2A894777C7BC44568D1DE1E4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/pystream/pystream.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = pystream.cpp; path = src/utility/pystream/pystream.cpp; sourceTree = SOURCE_ROOT; };
+		2CA4618E759D4A7BA7A8DBF2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_overlays.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _overlays.h; path = include/widgets/editor/_overlays.h; sourceTree = SOURCE_ROOT; };
+		3376BE4DFA7646A2811DA4A9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/tools.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = tools.cpp; path = src/app/tools.cpp; sourceTree = SOURCE_ROOT; };
+		3400ECF005414B5A857DEFF4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_browser.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = build_browser.cpp; path = src/app/graph_app/build_browser.cpp; sourceTree = SOURCE_ROOT; };
+		341CBA44FB46468698C58A1D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = implot.cpp; path = imgui/implot.cpp; sourceTree = SOURCE_ROOT; };
+		3667DD1B1F4841B083230AF7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_impl.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = fdtd_impl.cpp; path = src/fdtd/fdtd_impl.cpp; sourceTree = SOURCE_ROOT; };
+		3953C29518564EA5890EA885 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_glfw.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_impl_glfw.cpp; path = imgui/backends/imgui_impl_glfw.cpp; sourceTree = SOURCE_ROOT; };
+		3CB716A366FD4156878F70E1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_cb_demo.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _cb_demo.h; path = include/widgets/_cb_demo.h; sourceTree = SOURCE_ROOT; };
+		3DEFE0E3D4A74E8FB0F9CEA7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_controlbar.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _controlbar.h; path = include/app/delegators/_controlbar.h; sourceTree = SOURCE_ROOT; };
+		3F979FBD02A5442C968F9F4C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/pystream/pystream.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = pystream.h; path = include/utility/pystream/pystream.h; sourceTree = SOURCE_ROOT; };
+		4818DE8067C54585BEE4427E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_detail_view.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _detail_view.h; path = include/app/delegators/_detail_view.h; sourceTree = SOURCE_ROOT; };
+		49BB206F112C4B6E8467947F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_demo.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = implot_demo.cpp; path = imgui/implot_demo.cpp; sourceTree = SOURCE_ROOT; };
+		4C1BDFA919794833913F390A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/c_counter/c_counter.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = c_counter.h; path = include/app/c_counter/c_counter.h; sourceTree = SOURCE_ROOT; };
+		4E5963CB28C04BD9AA794AC9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/tools.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = tools.cpp; path = src/app/c_counter/tools.cpp; sourceTree = SOURCE_ROOT; };
+		52AA312E760A4E2DBB12D4B4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/editor.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = editor.h; path = include/widgets/editor/editor.h; sourceTree = SOURCE_ROOT; };
+		54BD5388F3444FC487E79DB6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_types.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _types.h; path = include/widgets/editor/_types.h; sourceTree = SOURCE_ROOT; };
+		566C130BD0DC4672A89997F3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_logger.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _logger.h; path = include/utility/_logger.h; sourceTree = SOURCE_ROOT; };
+		5859289412104E0EB47F186C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/logger.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = logger.cpp; path = src/utility/logger.cpp; sourceTree = SOURCE_ROOT; };
+		5D6FBBE9F15D460085C2249D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/resource_loader.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = resource_loader.cpp; path = src/utility/resource_loader.cpp; sourceTree = SOURCE_ROOT; };
+		5F58FD18958146E1A5A08378 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser_impl.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = browser_impl.cpp; path = src/app/delegators/browser_impl.cpp; sourceTree = SOURCE_ROOT; };
+		60D9C2304C7D4D00ABE1FC3E /* CBApp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = CBApp; sourceTree = BUILT_PRODUCTS_DIR; };
+		620A13DCF800424A80F6F8F2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = browser.cpp; path = src/app/delegators/browser.cpp; sourceTree = SOURCE_ROOT; };
+		639F0E4BCB454092BCEE3A0B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/editor_app/editor_app.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = editor_app.cpp; path = src/app/editor_app/editor_app.cpp; sourceTree = SOURCE_ROOT; };
+		65A84C890F514E9B9D705EDC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/app.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = app.h; path = include/app/app.h; sourceTree = SOURCE_ROOT; };
+		65FA9805D14342F2AD9FEBBA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/fdtd.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = fdtd.h; path = include/app/graph_app/fdtd.h; sourceTree = SOURCE_ROOT; };
+		68C750FEBD2F46828C110E78 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_menubar.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _menubar.h; path = include/app/delegators/_menubar.h; sourceTree = SOURCE_ROOT; };
+		6D53C5991C81480681C57A09 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/detail_view.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = detail_view.cpp; path = src/app/delegators/detail_view.cpp; sourceTree = SOURCE_ROOT; };
+		706BBE79E52E43F482684F90 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/controlbar.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = controlbar.cpp; path = src/app/delegators/controlbar.cpp; sourceTree = SOURCE_ROOT; };
+		718ED0F5D8D040C98FF30C2F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/my_imconfig.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = my_imconfig.h; path = include/config/my_imconfig.h; sourceTree = SOURCE_ROOT; };
+		729B3AD082144490A234BAFA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/common.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = common.cpp; path = src/widgets/editor/common.cpp; sourceTree = SOURCE_ROOT; };
+		73430B90B9A74108931B8BD4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/c_counter.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = c_counter.cpp; path = src/app/c_counter/c_counter.cpp; sourceTree = SOURCE_ROOT; };
+		75740188EF3348DF94DC8952 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/overlays.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = overlays.cpp; path = src/widgets/editor/overlays.cpp; sourceTree = SOURCE_ROOT; };
+		75EC03ED279B423086DEBE51 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_1d.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _fdtd_1d.h; path = include/fdtd/_fdtd_1d.h; sourceTree = SOURCE_ROOT; };
+		77ADBDE0A0EC490B92187384 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/pen_tool.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = pen_tool.cpp; path = src/widgets/editor/pen_tool.cpp; sourceTree = SOURCE_ROOT; };
+		7812EB202D59427C979CA300 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/utility.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = utility.h; path = include/utility/utility.h; sourceTree = SOURCE_ROOT; };
+		80B338F99793422A873E61AA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_constants.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _constants.h; path = include/utility/_constants.h; sourceTree = SOURCE_ROOT; };
+		83744B5AE2FB41029FDECB0F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/editor_app/editor_app.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = editor_app.h; path = include/app/editor_app/editor_app.h; sourceTree = SOURCE_ROOT; };
+		9094543F50334FB08D2F3213 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/init.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = init.cpp; path = src/app/c_counter/init.cpp; sourceTree = SOURCE_ROOT; };
+		93E239E57E134801A9EE5249 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/render.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = render.cpp; path = src/widgets/editor/render.cpp; sourceTree = SOURCE_ROOT; };
+		992DD8FC4B1E410D88940120 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/editor.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = editor.cpp; path = src/widgets/editor/editor.cpp; sourceTree = SOURCE_ROOT; };
+		9C0F198BF379404B8433F772 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_heatmap.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _heatmap.h; path = include/widgets/_heatmap.h; sourceTree = SOURCE_ROOT; };
+		9FAC66E4CDA9451E9E9EE09E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/HeatMap.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = HeatMap.cpp; path = src/widgets/HeatMap.cpp; sourceTree = SOURCE_ROOT; };
+		A089960403B14C8390EE1CC2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_types.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _types.h; path = include/fdtd/_types.h; sourceTree = SOURCE_ROOT; };
+		A0BD4BF190E74D44A1A80916 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/browser.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = browser.cpp; path = src/widgets/editor/browser.cpp; sourceTree = SOURCE_ROOT; };
+		A2CAA117D11D4693B0C3C180 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/editor.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = editor.cpp; path = src/app/graph_app/editor.cpp; sourceTree = SOURCE_ROOT; };
+		A9400916091E457CA818A96E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_config.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _config.h; path = include/app/state/_config.h; sourceTree = SOURCE_ROOT; };
+		AF5450BB7D6345CFBC184EB9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/app.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = app.cpp; path = src/app/app.cpp; sourceTree = SOURCE_ROOT; };
+		B152B2EB51CD4A77A4CA87AB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/cbapp_config.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = cbapp_config.h; path = include/config/cbapp_config.h; sourceTree = SOURCE_ROOT; };
+		B60EA20C934D4C12A451B758 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/tools.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = tools.cpp; path = src/widgets/editor/tools.cpp; sourceTree = SOURCE_ROOT; };
+		B64949F37C9243F38D4D19CC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/tools.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = tools.cpp; path = src/app/graph_app/tools.cpp; sourceTree = SOURCE_ROOT; };
+		B663AA14F59D43768EA6A1B7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/plots.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = plots.cpp; path = src/utility/plots.cpp; sourceTree = SOURCE_ROOT; };
+		B6BF74F1AD624970A81BD014 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_impl.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _fdtd_impl.h; path = include/fdtd/_fdtd_impl.h; sourceTree = SOURCE_ROOT; };
+		B7E6832E981440C78FA4FD94 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/init.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = init.cpp; path = src/app/init.cpp; sourceTree = SOURCE_ROOT; };
+		BA4CBAD504FD4C838C31805A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/rows.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = rows.cpp; path = src/app/graph_app/rows.cpp; sourceTree = SOURCE_ROOT; };
+		BA554793C18343CB8A31F528 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui.cpp; path = imgui/imgui.cpp; sourceTree = SOURCE_ROOT; };
+		BABDD12411194C4299CD51B2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_1d.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = fdtd_1d.cpp; path = src/fdtd/fdtd_1d.cpp; sourceTree = SOURCE_ROOT; };
+		BC030072C59E4339856F67DD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/resource_loader.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = resource_loader.h; path = include/utility/resource_loader.h; sourceTree = SOURCE_ROOT; };
+		BD4D0F790891496E8D2632C0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/fdtd.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = fdtd.cpp; path = src/app/graph_app/fdtd.cpp; sourceTree = SOURCE_ROOT; };
+		C58992E20F0D42B385104A66 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/main.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = main.h; path = include/main.h; sourceTree = SOURCE_ROOT; };
+		C6C7080D238641998DDD9725 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_tables.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_tables.cpp; path = imgui/imgui_tables.cpp; sourceTree = SOURCE_ROOT; };
+		CA6A5E640F0543F3AC4DFBEF /* /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/OpenGL.framework */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
+		CDE83F05B0944CAEA3B898C6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_opengl3.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_impl_opengl3.cpp; path = imgui/backends/imgui_impl_opengl3.cpp; sourceTree = SOURCE_ROOT; };
+		D044583906FA4DA493022DD4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/main_application.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = main_application.cpp; path = src/app/main_application.cpp; sourceTree = SOURCE_ROOT; };
+		D13E6FD7FA46496DBFE2EC98 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		D1FB9B2F838B4E6A8B9EBA88 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/handler.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = handler.cpp; path = src/app/handler.cpp; sourceTree = SOURCE_ROOT; };
+		D6B762B9DA5045D2914EFABC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/state.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = state.cpp; path = src/app/state/state.cpp; sourceTree = SOURCE_ROOT; };
+		D87BC70F9FBE4D39B5D9E23C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_browser.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _browser.h; path = include/app/delegators/_browser.h; sourceTree = SOURCE_ROOT; };
+		D8CE660E42C841A894071932 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/widgets.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = widgets.cpp; path = src/widgets/widgets.cpp; sourceTree = SOURCE_ROOT; };
+		DAB7166FA6424C889AE61520 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/init.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = init.cpp; path = src/app/graph_app/init.cpp; sourceTree = SOURCE_ROOT; };
+		DD90BA7EBF8B4C8DB693F6C1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/main.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = main.cpp; path = src/main.cpp; sourceTree = SOURCE_ROOT; };
+		E0E69F5C055D48EF9114864C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_templates.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _templates.h; path = include/utility/_templates.h; sourceTree = SOURCE_ROOT; };
+		E146CBA00FC04BB9BB22C41D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/utility.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = utility.cpp; path = src/widgets/editor/utility.cpp; sourceTree = SOURCE_ROOT; };
+		E2E6A82166184075B16D0DA5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/_init.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _init.h; path = include/app/_init.h; sourceTree = SOURCE_ROOT; };
+		E66FEA9A427C4B38848233B5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/cb_demo.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = cb_demo.cpp; path = src/widgets/cb_demo.cpp; sourceTree = SOURCE_ROOT; };
+		E84CEF801A79407087D1CA4A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_types.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _types.h; path = include/utility/_types.h; sourceTree = SOURCE_ROOT; };
+		EC64EEE2AC22449983C723B3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = fdtd.cpp; path = src/fdtd/fdtd.cpp; sourceTree = SOURCE_ROOT; };
+		F1AA3A155C434B88ABEB152B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/selection.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = selection.cpp; path = src/widgets/editor/selection.cpp; sourceTree = SOURCE_ROOT; };
+		F223D61B64D04FAB8DB02591 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/graph_app.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = graph_app.cpp; path = src/app/graph_app/graph_app.cpp; sourceTree = SOURCE_ROOT; };
+		F86BF5B7C7B345CA885B2B61 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_state.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = _state.h; path = include/app/state/_state.h; sourceTree = SOURCE_ROOT; };
+		F87043EDE20F469CA4A545C2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp/imgui_stdlib.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = imgui_stdlib.cpp; path = misc/cpp/imgui_stdlib.cpp; sourceTree = SOURCE_ROOT; };
+		FC81919D8CF2492B8D5EAD72 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/graph_app.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = graph_app.h; path = include/app/graph_app/graph_app.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		40F5C62CEE1444948C24E7E1 /* Frameworks */ = {
+		3A3B4D36F2944C7998A572B8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -291,384 +293,385 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		00A5DD8260F64E0887FCB5BC /* Products */ = {
+		005F7DAF2B2B41109838D5D5 /* ALL_BUILD */ = {
 			isa = PBXGroup;
 			children = (
-				92B056B572F2404290582A59 /* CBApp */,
+				0CDF3D0C6E8B4FC7A7180016 /* CMake Rules */,
+				065E743806CA4A9E96A842B9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */,
 			);
-			name = Products;
+			name = ALL_BUILD;
 			sourceTree = "<group>";
 		};
-		087EBDD0797A4087AAEB0F21 /* Frameworks */ = {
+		00960679268143C2B478AA08 /* backends */ = {
 			isa = PBXGroup;
 			children = (
-				D7168DC853EF410DB1A2FEA1 /* /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/OpenGL.framework */,
+				3953C29518564EA5890EA885 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_glfw.cpp */,
+				CDE83F05B0944CAEA3B898C6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_opengl3.cpp */,
 			);
-			name = Frameworks;
+			name = backends;
 			sourceTree = "<group>";
 		};
-		09983D7EC69D42D8BB3D8219 /* graph_app */ = {
+		04AD1142A8924F2FBDAD9351 /* utility */ = {
 			isa = PBXGroup;
 			children = (
-				E1F46BB608FC415CA4C620A0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/_editor.h */,
-				F76C67AB408F479FA8FA1F8D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/fdtd.h */,
-				253EF716CC5F47D8B8549A51 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/graph_app.h */,
-			);
-			name = graph_app;
-			sourceTree = "<group>";
-		};
-		09ACA2271F5B480895EABF34 /* editor_app */ = {
-			isa = PBXGroup;
-			children = (
-				9F8D6E9881164A7D9C83D8EC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/editor_app/editor_app.h */,
-			);
-			name = editor_app;
-			sourceTree = "<group>";
-		};
-		1B80C30D9C7740D9AAB7E3C1 /* app */ = {
-			isa = PBXGroup;
-			children = (
-				4FEB8F071B6E471DBC4FC5D4 /* c_counter */,
-				41E1DF67DF584F9A855F8FE5 /* delegators */,
-				09ACA2271F5B480895EABF34 /* editor_app */,
-				09983D7EC69D42D8BB3D8219 /* graph_app */,
-				90A2D2E3CD6045888AE89146 /* state */,
-				5A8695E49D84432D9F451D15 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/_init.h */,
-				55E2BA9340EC48AFAD574B23 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/app.h */,
-			);
-			name = app;
-			sourceTree = "<group>";
-		};
-		1F949C4E09A04D06ACE08009 /* utility */ = {
-			isa = PBXGroup;
-			children = (
-				76FD190D347847CE8C5974C1 /* pystream */,
-				EB0984A183E24F9EB380E962 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/logger.cpp */,
-				8265E1DC001C44378C51E86B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/plots.cpp */,
-				0013654928E94435AE5E4704 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/resource_loader.cpp */,
-				00693AE597D2415AB828A50D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/utility.cpp */,
+				310B016C11C14A0EB8AEEBFA /* pystream */,
+				80B338F99793422A873E61AA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_constants.h */,
+				566C130BD0DC4672A89997F3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_logger.h */,
+				E0E69F5C055D48EF9114864C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_templates.h */,
+				E84CEF801A79407087D1CA4A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_types.h */,
+				BC030072C59E4339856F67DD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/resource_loader.h */,
+				7812EB202D59427C979CA300 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/utility.h */,
 			);
 			name = utility;
 			sourceTree = "<group>";
 		};
-		26333529F66B4598AAA01838 /* Resources */ = {
+		0C4A8B5332374E059389B228 /* editor_app */ = {
 			isa = PBXGroup;
 			children = (
+				639F0E4BCB454092BCEE3A0B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/editor_app/editor_app.cpp */,
 			);
-			name = Resources;
+			name = editor_app;
 			sourceTree = "<group>";
 		};
-		313CA45773EB4437810A32E4 /* CMake Rules */ = {
+		0CDF3D0C6E8B4FC7A7180016 /* CMake Rules */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			name = "CMake Rules";
 			sourceTree = "<group>";
 		};
-		374AD2532CC44E159E05C7D7 /* misc */ = {
+		10DB2DBC83444AA7A6ABC7F6 /* pystream */ = {
 			isa = PBXGroup;
 			children = (
-				C9FA1CCF729642A480B0ECE2 /* cpp */,
+				2A894777C7BC44568D1DE1E4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/pystream/pystream.cpp */,
 			);
-			name = misc;
+			name = pystream;
 			sourceTree = "<group>";
 		};
-		4118E0A587F24D5DAA8C5847 /* state */ = {
+		10F38159E9074C519DE75CF6 /* editor */ = {
 			isa = PBXGroup;
 			children = (
-				F0D26DD3FBB0442C872C371E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/appearance.cpp */,
-				84E1965549EA4A3780AC940F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/state.cpp */,
+				A0BD4BF190E74D44A1A80916 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/browser.cpp */,
+				729B3AD082144490A234BAFA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/common.cpp */,
+				992DD8FC4B1E410D88940120 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/editor.cpp */,
+				75740188EF3348DF94DC8952 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/overlays.cpp */,
+				77ADBDE0A0EC490B92187384 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/pen_tool.cpp */,
+				93E239E57E134801A9EE5249 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/render.cpp */,
+				F1AA3A155C434B88ABEB152B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/selection.cpp */,
+				B60EA20C934D4C12A451B758 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/tools.cpp */,
+				E146CBA00FC04BB9BB22C41D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/utility.cpp */,
 			);
-			name = state;
+			name = editor;
 			sourceTree = "<group>";
 		};
-		41E1DF67DF584F9A855F8FE5 /* delegators */ = {
+		12E81E3857834D7BA02A9454 /* editor_app */ = {
 			isa = PBXGroup;
 			children = (
-				195E8F75D2A94C1686017F78 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_browser.h */,
-				33BA279C07FD4D69B3AC9109 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_controlbar.h */,
-				993FFF2A34214482AD866C97 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_detail_view.h */,
-				D47ACC3ACB924A4F891BFD5A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_menubar.h */,
-			);
-			name = delegators;
-			sourceTree = "<group>";
-		};
-		4335036D6ABB44509BD7C5A4 = {
-			isa = PBXGroup;
-			children = (
-				D5701C7DEFA74E5F9547E4D4 /* CBApp */,
-				AAD87083865E4B55AB3EEF88 /* ALL_BUILD */,
-				00A5DD8260F64E0887FCB5BC /* Products */,
-				087EBDD0797A4087AAEB0F21 /* Frameworks */,
-				26333529F66B4598AAA01838 /* Resources */,
-			);
-			sourceTree = "<group>";
-		};
-		4A27C5CE2A8B4FD5896D250D /* graph_app */ = {
-			isa = PBXGroup;
-			children = (
-				E53F8ACD6CA4470DB7F482B6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_browser.cpp */,
-				A7DA69A7B1024CC5A818C621 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_mode.cpp */,
-				946F7EDB303C4D489E2BF326 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/editor.cpp */,
-				0AC3339332A54214989A4B7D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/fdtd.cpp */,
-				7D609AD06F1D4A7199AA353C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/graph_app.cpp */,
-				9D0C3AB94050460C8DBC817C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/init.cpp */,
-				D5B10FED6C9A4F51AE6FCB5B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/rows.cpp */,
-				0E63D7F29AE342BDA04E736A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/tools.cpp */,
-			);
-			name = graph_app;
-			sourceTree = "<group>";
-		};
-		4DA0958276F0468EA4EEB041 /* include */ = {
-			isa = PBXGroup;
-			children = (
-				1B80C30D9C7740D9AAB7E3C1 /* app */,
-				4FF7C5B51F38470AA3AEE89E /* config */,
-				F219CFC11B0E4A47B8A3F1BE /* fdtd */,
-				C79FE7B502DA4B54846EA50E /* utility */,
-				89415ABEA84A440A85FFD530 /* widgets */,
-				6E8515E51D1F46BE8D25B03F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/main.h */,
-			);
-			name = include;
-			sourceTree = "<group>";
-		};
-		4FEB8F071B6E471DBC4FC5D4 /* c_counter */ = {
-			isa = PBXGroup;
-			children = (
-				8C0EE847F4B74CCE97F90626 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/c_counter/c_counter.h */,
-			);
-			name = c_counter;
-			sourceTree = "<group>";
-		};
-		4FF7C5B51F38470AA3AEE89E /* config */ = {
-			isa = PBXGroup;
-			children = (
-				7483BCF15DCD43EFAA17F566 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/cbapp_config.h */,
-				275669532DF74625B031CB2D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/my_imconfig.h */,
-			);
-			name = config;
-			sourceTree = "<group>";
-		};
-		5526AFCB4980437CAA198263 /* editor_app */ = {
-			isa = PBXGroup;
-			children = (
-				7E809E934D1A4481B5F49642 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/editor_app/editor_app.cpp */,
+				83744B5AE2FB41029FDECB0F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/editor_app/editor_app.h */,
 			);
 			name = editor_app;
 			sourceTree = "<group>";
 		};
-		76FD190D347847CE8C5974C1 /* pystream */ = {
+		1773D8E8CA54427594C6953A /* config */ = {
 			isa = PBXGroup;
 			children = (
-				9C9A9064FCC04EFEBCD5F83A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/pystream/pystream.cpp */,
+				B152B2EB51CD4A77A4CA87AB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/cbapp_config.h */,
+				718ED0F5D8D040C98FF30C2F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config/my_imconfig.h */,
 			);
-			name = pystream;
+			name = config;
 			sourceTree = "<group>";
 		};
-		7E872A6A91AB434CB025604D /* app */ = {
+		17EABB8D9F604F5088BFB630 /* c_counter */ = {
 			isa = PBXGroup;
 			children = (
-				9AB88B556CCA4CC987237D64 /* c_counter */,
-				A5B5370BDBF4423A8928547A /* delegators */,
-				5526AFCB4980437CAA198263 /* editor_app */,
-				4A27C5CE2A8B4FD5896D250D /* graph_app */,
-				4118E0A587F24D5DAA8C5847 /* state */,
-				5006A2D8BE7D4F55A6FABF67 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/app.cpp */,
-				C00F3883FD4D4E2E84D594A7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/handler.cpp */,
-				3906D5008242427BBF824F49 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/init.cpp */,
-				A736F00E91D94D6CB5ED451D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/main_application.cpp */,
-				A519E6D770004AC1BC215A11 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/temp.cpp */,
-				67ABBBB103BA4CD18FD5056A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/tools.cpp */,
-			);
-			name = app;
-			sourceTree = "<group>";
-		};
-		89415ABEA84A440A85FFD530 /* widgets */ = {
-			isa = PBXGroup;
-			children = (
-				D4CCD5D4187A458A94566A8A /* editor */,
-				079E997714F94D109FD9A27D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_cb_demo.h */,
-				4DEC17AAB584434B90C97900 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_heatmap.h */,
-				88B56937DB274B1A8B389B46 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/widgets.h */,
-			);
-			name = widgets;
-			sourceTree = "<group>";
-		};
-		8A790D4A6F37467FA8FDF929 /* pystream */ = {
-			isa = PBXGroup;
-			children = (
-				4E2DE66AA7504513BF198F37 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/pystream/pystream.h */,
-			);
-			name = pystream;
-			sourceTree = "<group>";
-		};
-		90A2D2E3CD6045888AE89146 /* state */ = {
-			isa = PBXGroup;
-			children = (
-				12E189D4AF8349ECAD7FC5F1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_config.h */,
-				9D71C9A56C4745BEB4B71D9A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_state.h */,
-				DDE28E9B3F5B4AF48E6632D7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_types.h */,
-			);
-			name = state;
-			sourceTree = "<group>";
-		};
-		9AB88B556CCA4CC987237D64 /* c_counter */ = {
-			isa = PBXGroup;
-			children = (
-				507F0A08C8EC461DAB637448 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/c_counter.cpp */,
-				FAA30A8D734B404FB5AB9D55 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/init.cpp */,
-				B63A6302AC594BC68657963E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/tools.cpp */,
+				4C1BDFA919794833913F390A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/c_counter/c_counter.h */,
 			);
 			name = c_counter;
 			sourceTree = "<group>";
 		};
-		A5B5370BDBF4423A8928547A /* delegators */ = {
+		190048D95C314D52A56F803B /* app */ = {
 			isa = PBXGroup;
 			children = (
-				4260DEC1E3A24F0E942D7369 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser.cpp */,
-				A1425FA45D2C40C2B99F7A65 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser_impl.cpp */,
-				7A879BA0E1FF4DC3BD20028A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/controlbar.cpp */,
-				3D4689A76AB24927BB4872EA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/detail_view.cpp */,
-				A5EDB892A4234A419E445E92 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/menubar.cpp */,
+				475559F56E3A4774839D5BCA /* c_counter */,
+				8CA9D670CCFE4010B5E4BCD2 /* delegators */,
+				0C4A8B5332374E059389B228 /* editor_app */,
+				64961B7AE0234BDB873ECA9B /* graph_app */,
+				7416EC9EEA5D43C49C7E35A5 /* state */,
+				AF5450BB7D6345CFBC184EB9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/app.cpp */,
+				D1FB9B2F838B4E6A8B9EBA88 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/handler.cpp */,
+				B7E6832E981440C78FA4FD94 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/init.cpp */,
+				D044583906FA4DA493022DD4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/main_application.cpp */,
+				0B75D08A3A0C4C9180FFF0F2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/temp.cpp */,
+				3376BE4DFA7646A2811DA4A9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/tools.cpp */,
 			);
-			name = delegators;
+			name = app;
 			sourceTree = "<group>";
 		};
-		A7D5F01E0AA1407CBB914B7A /* imgui */ = {
+		310B016C11C14A0EB8AEEBFA /* pystream */ = {
 			isa = PBXGroup;
 			children = (
-				374AD2532CC44E159E05C7D7 /* misc */,
-				EDFD24361C734581BCB705B4 /* backends */,
-				A83FDF5B499D4CFF9BDF98EF /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui.cpp */,
-				A03A2A1FECF94FB98EFFAB76 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_demo.cpp */,
-				25EB9B89C2FD4AD5AEA487F5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_draw.cpp */,
-				F1279A34BB1544BCA30942B9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_tables.cpp */,
-				F2270BADEA8E4267A6C40C4C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_widgets.cpp */,
-				9D54B218C376480E8BA48767 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot.cpp */,
-				2F26F09C7C404A029DE51FFE /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_demo.cpp */,
-				289FA13BDDF54D60B0CCAFD3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_items.cpp */,
+				3F979FBD02A5442C968F9F4C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/pystream/pystream.h */,
 			);
-			name = imgui;
+			name = pystream;
 			sourceTree = "<group>";
 		};
-		AAD87083865E4B55AB3EEF88 /* ALL_BUILD */ = {
+		3E29F53B11A9465FA51B095C /* fdtd */ = {
 			isa = PBXGroup;
 			children = (
-				313CA45773EB4437810A32E4 /* CMake Rules */,
-				243B9F34C18C4608A0E84742 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */,
-			);
-			name = ALL_BUILD;
-			sourceTree = "<group>";
-		};
-		C589C144239348A6BBB11421 /* fdtd */ = {
-			isa = PBXGroup;
-			children = (
-				A4D7C5F9C9D8461D86A1462C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd.cpp */,
-				832B40AB144741F4A5A0270D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_1d.cpp */,
-				C8F335F49E88461592165C00 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_impl.cpp */,
+				EC64EEE2AC22449983C723B3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd.cpp */,
+				BABDD12411194C4299CD51B2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_1d.cpp */,
+				3667DD1B1F4841B083230AF7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_impl.cpp */,
 			);
 			name = fdtd;
 			sourceTree = "<group>";
 		};
-		C79FE7B502DA4B54846EA50E /* utility */ = {
+		40B4F07A44C449459C650DB6 /* graph_app */ = {
 			isa = PBXGroup;
 			children = (
-				8A790D4A6F37467FA8FDF929 /* pystream */,
-				5A3042CCB75F450B98C8BFC6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_constants.h */,
-				19CA895484C44C3AA80093A0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_logger.h */,
-				41067C572C1B47A588C2640A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_templates.h */,
-				65EE46DB08504036B4D83221 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/_types.h */,
-				C3ECC83259BA43D7AF85B8E0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/resource_loader.h */,
-				22D094139FED43B79A593F76 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/utility/utility.h */,
+				184F2020DC61462E9E711505 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/_editor.h */,
+				65FA9805D14342F2AD9FEBBA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/fdtd.h */,
+				FC81919D8CF2492B8D5EAD72 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/graph_app/graph_app.h */,
 			);
-			name = utility;
+			name = graph_app;
 			sourceTree = "<group>";
 		};
-		C99C0EBA78AD4144ABF42D9B /* editor */ = {
+		475559F56E3A4774839D5BCA /* c_counter */ = {
 			isa = PBXGroup;
 			children = (
-				BACA110F3AC341FEA990318F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/browser.cpp */,
-				BABB9E25DB544D83917B1D22 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/editor.cpp */,
-				928D368305EC4BE1A61183C1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/overlays.cpp */,
-				14815C59AEA942559F8AF70C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/pen_tool.cpp */,
-				734325025C6C4D5781DF15D9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/render.cpp */,
-				475EB053F9D84582AA62E942 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/selection.cpp */,
-				160E25DCE4BC4221AF50FBF1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/tools.cpp */,
-				D339638203514B3FB489874F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/utility.cpp */,
+				73430B90B9A74108931B8BD4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/c_counter.cpp */,
+				9094543F50334FB08D2F3213 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/init.cpp */,
+				4E5963CB28C04BD9AA794AC9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/tools.cpp */,
+			);
+			name = c_counter;
+			sourceTree = "<group>";
+		};
+		578B183FB45149189E58F260 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				60D9C2304C7D4D00ABE1FC3E /* CBApp */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		64961B7AE0234BDB873ECA9B /* graph_app */ = {
+			isa = PBXGroup;
+			children = (
+				3400ECF005414B5A857DEFF4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_browser.cpp */,
+				1E9B2C9E150D486489A642C0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_mode.cpp */,
+				A2CAA117D11D4693B0C3C180 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/editor.cpp */,
+				BD4D0F790891496E8D2632C0 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/fdtd.cpp */,
+				F223D61B64D04FAB8DB02591 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/graph_app.cpp */,
+				DAB7166FA6424C889AE61520 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/init.cpp */,
+				BA4CBAD504FD4C838C31805A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/rows.cpp */,
+				B64949F37C9243F38D4D19CC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/tools.cpp */,
+			);
+			name = graph_app;
+			sourceTree = "<group>";
+		};
+		7168879AA1DE423B9C5B72B7 /* editor */ = {
+			isa = PBXGroup;
+			children = (
+				2CA4618E759D4A7BA7A8DBF2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_overlays.h */,
+				54BD5388F3444FC487E79DB6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_types.h */,
+				52AA312E760A4E2DBB12D4B4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/editor.h */,
 			);
 			name = editor;
 			sourceTree = "<group>";
 		};
-		C9FA1CCF729642A480B0ECE2 /* cpp */ = {
+		7416EC9EEA5D43C49C7E35A5 /* state */ = {
 			isa = PBXGroup;
 			children = (
-				94F91CEFEE08430CABCC0819 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp/imgui_stdlib.cpp */,
+				037748E4A0D1434E8D3D89BA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/appearance.cpp */,
+				D6B762B9DA5045D2914EFABC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/state.cpp */,
+			);
+			name = state;
+			sourceTree = "<group>";
+		};
+		7DD1E349AC994DF9B2477AC1 /* cpp */ = {
+			isa = PBXGroup;
+			children = (
+				F87043EDE20F469CA4A545C2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp/imgui_stdlib.cpp */,
 			);
 			name = cpp;
 			sourceTree = "<group>";
 		};
-		D2AE31590D614FD19FB74121 /* widgets */ = {
+		86F9C28D4F6B45EEB07C0813 /* CBApp */ = {
 			isa = PBXGroup;
 			children = (
-				C99C0EBA78AD4144ABF42D9B /* editor */,
-				7DDD70A9E00A42149B86C3DF /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/HeatMap.cpp */,
-				409ADA3E7FDF4F1EB8709104 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/cb_demo.cpp */,
-				7522FEEE647C4A158F3C2EC3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/widgets.cpp */,
-			);
-			name = widgets;
-			sourceTree = "<group>";
-		};
-		D4CCD5D4187A458A94566A8A /* editor */ = {
-			isa = PBXGroup;
-			children = (
-				1B916E2F5FB545328D3FE919 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_overlays.h */,
-				E8CEAF926FFB4C98A36F172D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/_types.h */,
-				D22EDCFFFAB14CBBB8B06BD9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/editor/editor.h */,
-			);
-			name = editor;
-			sourceTree = "<group>";
-		};
-		D5701C7DEFA74E5F9547E4D4 /* CBApp */ = {
-			isa = PBXGroup;
-			children = (
-				E1DB33BCBDE641B9BA9476C0 /* src */,
-				A7D5F01E0AA1407CBB914B7A /* imgui */,
-				4DA0958276F0468EA4EEB041 /* include */,
-				DBD7480C4444431C9F90F933 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */,
+				D34178C5115641D3A5A76B86 /* src */,
+				C056FDB0492249F3879DC36F /* imgui */,
+				FD8AFB848AF045CCB5CE8787 /* include */,
+				D13E6FD7FA46496DBFE2EC98 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt */,
 			);
 			name = CBApp;
 			sourceTree = "<group>";
 		};
-		E1DB33BCBDE641B9BA9476C0 /* src */ = {
+		89492DC4F8384DC796468AD4 /* widgets */ = {
 			isa = PBXGroup;
 			children = (
-				7E872A6A91AB434CB025604D /* app */,
-				C589C144239348A6BBB11421 /* fdtd */,
-				1F949C4E09A04D06ACE08009 /* utility */,
-				D2AE31590D614FD19FB74121 /* widgets */,
-				193A068CECC241AEBAB7D798 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/main.cpp */,
+				10F38159E9074C519DE75CF6 /* editor */,
+				9FAC66E4CDA9451E9E9EE09E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/HeatMap.cpp */,
+				E66FEA9A427C4B38848233B5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/cb_demo.cpp */,
+				D8CE660E42C841A894071932 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/widgets.cpp */,
+			);
+			name = widgets;
+			sourceTree = "<group>";
+		};
+		8CA9D670CCFE4010B5E4BCD2 /* delegators */ = {
+			isa = PBXGroup;
+			children = (
+				620A13DCF800424A80F6F8F2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser.cpp */,
+				5F58FD18958146E1A5A08378 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser_impl.cpp */,
+				706BBE79E52E43F482684F90 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/controlbar.cpp */,
+				6D53C5991C81480681C57A09 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/detail_view.cpp */,
+				119EA3E3B6EC4698988888B6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/menubar.cpp */,
+			);
+			name = delegators;
+			sourceTree = "<group>";
+		};
+		8CC74322CDE341DA836EA645 /* utility */ = {
+			isa = PBXGroup;
+			children = (
+				10DB2DBC83444AA7A6ABC7F6 /* pystream */,
+				5859289412104E0EB47F186C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/logger.cpp */,
+				B663AA14F59D43768EA6A1B7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/plots.cpp */,
+				5D6FBBE9F15D460085C2249D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/resource_loader.cpp */,
+				1D78F96F59FA4A099B2AB8F9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/utility.cpp */,
+			);
+			name = utility;
+			sourceTree = "<group>";
+		};
+		94728A3E0C6B48C79F30CBA7 /* widgets */ = {
+			isa = PBXGroup;
+			children = (
+				7168879AA1DE423B9C5B72B7 /* editor */,
+				3CB716A366FD4156878F70E1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_cb_demo.h */,
+				9C0F198BF379404B8433F772 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/_heatmap.h */,
+				1D437DFAC17A41528F847585 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/widgets/widgets.h */,
+			);
+			name = widgets;
+			sourceTree = "<group>";
+		};
+		9BA19987C314468487C1129C = {
+			isa = PBXGroup;
+			children = (
+				86F9C28D4F6B45EEB07C0813 /* CBApp */,
+				005F7DAF2B2B41109838D5D5 /* ALL_BUILD */,
+				578B183FB45149189E58F260 /* Products */,
+				D895F704E8C94FAABCF644EA /* Frameworks */,
+				B344D4341B0D426AB79031A5 /* Resources */,
+			);
+			sourceTree = "<group>";
+		};
+		B344D4341B0D426AB79031A5 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		C056FDB0492249F3879DC36F /* imgui */ = {
+			isa = PBXGroup;
+			children = (
+				EC963D757A8643C5A08E8980 /* misc */,
+				00960679268143C2B478AA08 /* backends */,
+				BA554793C18343CB8A31F528 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui.cpp */,
+				2205CD0A99F0421EBC2499D9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_demo.cpp */,
+				065C719010F74D9FBECABDC4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_draw.cpp */,
+				C6C7080D238641998DDD9725 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_tables.cpp */,
+				07712E001CB04F5E8C464F0F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_widgets.cpp */,
+				341CBA44FB46468698C58A1D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot.cpp */,
+				49BB206F112C4B6E8467947F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_demo.cpp */,
+				01C1B93F9C30424183977BCC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_items.cpp */,
+			);
+			name = imgui;
+			sourceTree = "<group>";
+		};
+		D34178C5115641D3A5A76B86 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				190048D95C314D52A56F803B /* app */,
+				3E29F53B11A9465FA51B095C /* fdtd */,
+				8CC74322CDE341DA836EA645 /* utility */,
+				89492DC4F8384DC796468AD4 /* widgets */,
+				DD90BA7EBF8B4C8DB693F6C1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/main.cpp */,
 			);
 			name = src;
 			sourceTree = "<group>";
 		};
-		EDFD24361C734581BCB705B4 /* backends */ = {
+		D5834425A154499FAB6FAA30 /* delegators */ = {
 			isa = PBXGroup;
 			children = (
-				63D5D54DCFA94BACA48FB0D3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_glfw.cpp */,
-				65B17D509E204C568E298DEC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_opengl3.cpp */,
+				D87BC70F9FBE4D39B5D9E23C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_browser.h */,
+				3DEFE0E3D4A74E8FB0F9CEA7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_controlbar.h */,
+				4818DE8067C54585BEE4427E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_detail_view.h */,
+				68C750FEBD2F46828C110E78 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/delegators/_menubar.h */,
 			);
-			name = backends;
+			name = delegators;
 			sourceTree = "<group>";
 		};
-		F219CFC11B0E4A47B8A3F1BE /* fdtd */ = {
+		D63089218AA54534B3DF53F4 /* app */ = {
 			isa = PBXGroup;
 			children = (
-				E840015E36734FDA8B5CB9FC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_1d.h */,
-				9A6E9691121E43A8BAEB2C64 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_impl.h */,
-				DA0BB9CFD78E4CB8913FD958 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_types.h */,
-				B6699D8496AA497D83A5BCAD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/fdtd.h */,
+				17EABB8D9F604F5088BFB630 /* c_counter */,
+				D5834425A154499FAB6FAA30 /* delegators */,
+				12E81E3857834D7BA02A9454 /* editor_app */,
+				40B4F07A44C449459C650DB6 /* graph_app */,
+				F8B2B603A6D546E2AF9C7368 /* state */,
+				E2E6A82166184075B16D0DA5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/_init.h */,
+				65A84C890F514E9B9D705EDC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/app.h */,
+			);
+			name = app;
+			sourceTree = "<group>";
+		};
+		D895F704E8C94FAABCF644EA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CA6A5E640F0543F3AC4DFBEF /* /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/OpenGL.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		EC963D757A8643C5A08E8980 /* misc */ = {
+			isa = PBXGroup;
+			children = (
+				7DD1E349AC994DF9B2477AC1 /* cpp */,
+			);
+			name = misc;
+			sourceTree = "<group>";
+		};
+		ED8C5C8A23DD417B8F0AD7B6 /* fdtd */ = {
+			isa = PBXGroup;
+			children = (
+				75EC03ED279B423086DEBE51 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_1d.h */,
+				B6BF74F1AD624970A81BD014 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_fdtd_impl.h */,
+				A089960403B14C8390EE1CC2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/_types.h */,
+				1101DE2EE46E4FEFBCC23CE7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/fdtd/fdtd.h */,
 			);
 			name = fdtd;
+			sourceTree = "<group>";
+		};
+		F8B2B603A6D546E2AF9C7368 /* state */ = {
+			isa = PBXGroup;
+			children = (
+				A9400916091E457CA818A96E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_config.h */,
+				F86BF5B7C7B345CA885B2B61 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_state.h */,
+				1FD0C20EB24A49CB88147076 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app/state/_types.h */,
+			);
+			name = state;
+			sourceTree = "<group>";
+		};
+		FD8AFB848AF045CCB5CE8787 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				D63089218AA54534B3DF53F4 /* app */,
+				1773D8E8CA54427594C6953A /* config */,
+				ED8C5C8A23DD417B8F0AD7B6 /* fdtd */,
+				04AD1142A8924F2FBDAD9351 /* utility */,
+				94728A3E0C6B48C79F30CBA7 /* widgets */,
+				C58992E20F0D42B385104A66 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/main.h */,
+			);
+			name = include;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -676,19 +679,19 @@
 /* Begin PBXNativeTarget section */
 		1B47E4E1C8500FC6A3BEF5A4 /* CBApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 0E6295BDE0A1406181C5F521 /* Build configuration list for PBXNativeTarget "CBApp" */;
+			buildConfigurationList = B3B7B26A86BE4DF8BDBDCA66 /* Build configuration list for PBXNativeTarget "CBApp" */;
 			buildPhases = (
-				0B3E5E814F2C4CFD82FC2C6D /* Sources */,
-				40F5C62CEE1444948C24E7E1 /* Frameworks */,
+				18E648EF4B1D4206B28CE7D7 /* Sources */,
+				3A3B4D36F2944C7998A572B8 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				ED7E14C83AA44C4F9805F346 /* PBXTargetDependency */,
+				C9A45237438F445795A08D42 /* PBXTargetDependency */,
 			);
 			name = CBApp;
 			productName = CBApp;
-			productReference = 92B056B572F2404290582A59 /* CBApp */;
+			productReference = 60D9C2304C7D4D00ABE1FC3E /* CBApp */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -700,18 +703,18 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1620;
 			};
-			buildConfigurationList = 4E86F1F6230F47DD8E75B331 /* Build configuration list for PBXProject "CBApp" */;
+			buildConfigurationList = 9C00AAA27237415A8F4D97DE /* Build configuration list for PBXProject "CBApp" */;
 			buildSettings = {
 			};
 			buildStyles = (
-				6B5AAA2F47F9441FB553F0AC /* Debug */,
-				909C57CB11DE4B879D0C82DA /* Release */,
-				AB7DFEC28A4541E5B4815E1D /* MinSizeRel */,
-				881F7C3CC4F94A0784BADEE7 /* RelWithDebInfo */,
+				1F926D5381C040D48599E41D /* Debug */,
+				49B65435E2064DC5A62105BB /* Release */,
+				557587C45FAE4AC3865693D2 /* MinSizeRel */,
+				81691C1834D54045A066BF70 /* RelWithDebInfo */,
 			);
 			compatibilityVersion = "Xcode 3.2";
 			hasScannedForEncodings = 0;
-			mainGroup = 4335036D6ABB44509BD7C5A4;
+			mainGroup = 9BA19987C314468487C1129C;
 			projectDirPath = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp;
 			projectRoot = "";
 			targets = (
@@ -822,373 +825,92 @@ fi
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		0B3E5E814F2C4CFD82FC2C6D /* Sources */ = {
+		18E648EF4B1D4206B28CE7D7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				423365FB53474DD9A7ECC415 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_glfw.cpp */,
-				7B5FC2670F694A10AE9E8174 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_opengl3.cpp */,
-				E4C7BC04E5884C15ADF9DAF2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui.cpp */,
-				DA21127860E64775A78D278E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_demo.cpp */,
-				15BA831CCD86402F8698A920 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_draw.cpp */,
-				F77DEF7A6E8D46929BC32C12 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_tables.cpp */,
-				5B3D98A0F2614C989AFF7BAB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_widgets.cpp */,
-				9DF7C58809254605999BADDB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot.cpp */,
-				04FF5305359742F2B6B73DAF /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_demo.cpp */,
-				FD53E5C263DE4FCD87B467F3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_items.cpp */,
-				551A7CCCCD3240E3B9D069D4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp/imgui_stdlib.cpp */,
-				FACE937D0DC54BB89832D461 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/app.cpp */,
-				42731F825B2241F6A69F0CA7 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/c_counter.cpp */,
-				D3CBF4F779E8435A99DC26E1 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/init.cpp */,
-				80DF3E27200C4F61A5B829C4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/tools.cpp */,
-				2AC49E8A3E3E4D578548956F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser.cpp */,
-				0D607EBC4B44452BB8FF83A2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser_impl.cpp */,
-				CE9EA46135C047CDB5AB9AAD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/controlbar.cpp */,
-				BC144AF935EC491B9D29BAE5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/detail_view.cpp */,
-				9AA861CF1F5B4C7085F3042B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/menubar.cpp */,
-				6F49AA0C841E4C9A9D2E9921 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/editor_app/editor_app.cpp */,
-				725119F7E8C6488B9B461004 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_browser.cpp */,
-				21334303E6074C98AC3316B3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_mode.cpp */,
-				55547A172FAF4A1483F13EF6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/editor.cpp */,
-				F0B521B4637642D795FE9AFC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/fdtd.cpp */,
-				701A8661E98842BC97CF9DC4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/graph_app.cpp */,
-				BAA9D44DA06D4A69BA5A4243 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/init.cpp */,
-				8366DAE264FF4D5C9ACD49E3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/rows.cpp */,
-				BFEF2C1A8D884BDBA4439DF3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/tools.cpp */,
-				1588331461BC4EE086BA6408 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/handler.cpp */,
-				47F175E51AFB49A19A620195 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/init.cpp */,
-				2E4E456CFFA7498598970F26 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/main_application.cpp */,
-				AE531A166B6744158D62F38C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/appearance.cpp */,
-				087CD5B5439C460EBB3451FD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/state.cpp */,
-				24209C46330047909DB9F974 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/temp.cpp */,
-				63D217DD0B1E4349A0E32B52 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/tools.cpp */,
-				BD8B9DA42E874B0EB4AB25DC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd.cpp */,
-				50567EFDE6604DD2BC77089C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_1d.cpp */,
-				5B8E13948D99483AAA79E6BF /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_impl.cpp */,
-				5D3705B8A57F4E4D9AF4818A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/main.cpp */,
-				1D9EE979C7C14D3F9705D985 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/logger.cpp */,
-				73B4317785E84AB3B9728DFD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/plots.cpp */,
-				4DB62604317749E1A395C7A6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/pystream/pystream.cpp */,
-				270DDD4894A94B828D91289E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/resource_loader.cpp */,
-				AF68DBF3CC9544BF8138FA1B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/utility.cpp */,
-				F7BB21388C9142F9A9D46C19 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/HeatMap.cpp */,
-				CD1B70F5F4C74104B549DE02 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/cb_demo.cpp */,
-				0407FF3EF88F425CA442EC41 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/browser.cpp */,
-				C331090F472947998277C7A4 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/editor.cpp */,
-				F60A4F393E804C758F37F6BC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/overlays.cpp */,
-				1838D254C50F42B5BC80FA17 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/pen_tool.cpp */,
-				FB97A80879BD43A19ACA140F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/render.cpp */,
-				B727E47B064843E38A8F57CB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/selection.cpp */,
-				7373AAC5D42748C98B34C8ED /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/tools.cpp */,
-				5D0A6D4343CF4C708B09BDC9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/utility.cpp */,
-				C485D5C4B4F34E9DB6081145 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/widgets.cpp */,
+				9DF7684EA8B145C9A182292C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_glfw.cpp */,
+				1900C65D902A4F1CA8B4501B /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends/imgui_impl_opengl3.cpp */,
+				352CC9178D4145C684EAE154 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui.cpp */,
+				21846027551B4F42BB66FB99 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_demo.cpp */,
+				54BEBB3F634D4E919717DB6F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_draw.cpp */,
+				F1CC636A798442358A9B9CC8 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_tables.cpp */,
+				5CC7CF214C9244469861A191 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/imgui_widgets.cpp */,
+				D82D80CF9B47489DBA2E411C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot.cpp */,
+				7CDF8638CFAD4C1CABC614B5 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_demo.cpp */,
+				C94D007154A7446C87BE528C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/implot_items.cpp */,
+				7C2AC1456E1E414CB7EF8272 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp/imgui_stdlib.cpp */,
+				023FC810B2E043B5B4EEB83E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/app.cpp */,
+				4F8EBC59DB574614B77C87CD /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/c_counter.cpp */,
+				6EC63E2DBCE245C79DC9E37F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/init.cpp */,
+				FBC654A68C6F42F396F7B319 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/c_counter/tools.cpp */,
+				53C7EC062C3944A584AB7F56 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser.cpp */,
+				F8C77CCC96E942DEB732C17D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/browser_impl.cpp */,
+				CCC17A45EE5248D2AEB021A8 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/controlbar.cpp */,
+				975794B23C9448B49A395637 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/detail_view.cpp */,
+				20EB913F1BF04B66B6FB4978 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/delegators/menubar.cpp */,
+				0C888903549B4C74AE98EC13 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/editor_app/editor_app.cpp */,
+				ACCA727535724A5EA6296B86 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_browser.cpp */,
+				44A169DDB6E94613A14B58EE /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/build_mode.cpp */,
+				2B9471D1BA0C427DBA0E99B3 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/editor.cpp */,
+				054F5B0DE01A4416A7F0160E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/fdtd.cpp */,
+				BCC43489A5C2420C9A87D3B6 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/graph_app.cpp */,
+				D6701C4A8A6D4FD19C14C928 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/init.cpp */,
+				B27B64282AF64803A7675C31 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/rows.cpp */,
+				D00089AF3B8C4119A2F9E92E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/graph_app/tools.cpp */,
+				81F17F1B8F9D489EACC18154 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/handler.cpp */,
+				92C1A6A4CEB94846B5F2BD17 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/init.cpp */,
+				B9E08AD041524702944065AC /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/main_application.cpp */,
+				6F9CF8EF43C849C7859F167F /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/appearance.cpp */,
+				4E6A167346584519AAAAFA09 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/state/state.cpp */,
+				0535878EBC194348B7F9ED6C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/temp.cpp */,
+				2C1718B1D6B542A1B8341AA9 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/app/tools.cpp */,
+				84417610BB14453AA9C4C13A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd.cpp */,
+				71FB99E7B2D8474CB296F734 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_1d.cpp */,
+				02675183954C4984AC33157C /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/fdtd/fdtd_impl.cpp */,
+				3509D06F15AB45169C0C0ADA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/main.cpp */,
+				206830B11835494B97043895 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/logger.cpp */,
+				3F26E6855FAF4C939D8FD456 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/plots.cpp */,
+				C27864E3034C4F3D8A8496BE /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/pystream/pystream.cpp */,
+				DC7FAE6787544307916500DE /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/resource_loader.cpp */,
+				551E8360D7D94E32BD6C925E /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/utility/utility.cpp */,
+				D589BCAD732B421AB7774F6D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/HeatMap.cpp */,
+				44E0A2C4EAFB4690930E34DB /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/cb_demo.cpp */,
+				AB486DC46157453E995075FA /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/browser.cpp */,
+				5531D58DF12A4EC49278B83A /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/common.cpp */,
+				79ED1CE22E294EAEBE5AB04D /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/editor.cpp */,
+				2BD00307996845BDA525DD83 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/overlays.cpp */,
+				F4814C4A60B34E02BC9623B2 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/pen_tool.cpp */,
+				442F9EA9A5D94C3AAF6D2A45 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/render.cpp */,
+				A452F6AB1AE14E11A1F9C9AE /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/selection.cpp */,
+				253BD3E5117B4E4D8B561878 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/tools.cpp */,
+				C0C6DFDC56764F0CB113DC88 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/editor/utility.cpp */,
+				85F4539711194B928BF9E928 /* /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/src/widgets/widgets.cpp */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		ED7E14C83AA44C4F9805F346 /* PBXTargetDependency */ = {
+		C8071831CFC04B04AD9EB282 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F5E66F8D6F42497933872978 /* ZERO_CHECK */;
-			targetProxy = D1E834E4439C4DA3BB0EC9CF /* PBXContainerItemProxy */;
+			targetProxy = 1D7588F820CC451186F9830A /* PBXContainerItemProxy */;
 		};
-		F2137CEA33A24D9EB6EE9118 /* PBXTargetDependency */ = {
+		C9A45237438F445795A08D42 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F5E66F8D6F42497933872978 /* ZERO_CHECK */;
+			targetProxy = 3A0C911C3C8C49D2A69F0F39 /* PBXContainerItemProxy */;
+		};
+		E451DD7EA8674F7FBB5F58AF /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 1B47E4E1C8500FC6A3BEF5A4 /* CBApp */;
-			targetProxy = 2D771B270821400182BC6BDB /* PBXContainerItemProxy */;
-		};
-		F8ED34E96C55493D956AE394 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = F5E66F8D6F42497933872978 /* ZERO_CHECK */;
-			targetProxy = 4DFF9F8992054478B6114204 /* PBXContainerItemProxy */;
+			targetProxy = 881A1F8643CF48F4A7082B93 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		097ADC821B604E18A8A438C3 /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				SDKROOT = "";
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SYMROOT = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build;
-			};
-			name = MinSizeRel;
-		};
-		0E52397443F743A4B7CC29C3 /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = MinSizeRel;
-		};
-		1BFD01BC9D144737987153D7 /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = x86_64;
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/RelWithDebInfo;
-				CURRENT_PROJECT_VERSION = 55;
-				ENABLE_HARDENED_RUNTIME = NO;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				FRAMEWORK_SEARCH_PATHS = (/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks,"$(inherited)");
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 2;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","'IMGUI_USER_CONFIG=\"my_imconfig.h\"'","'CBAPP_USER_CONFIG=\"cbapp_config.h\"'",_CBLIB_LOG,__CBLIB_RELEASE_WITH_DEBUG_INFO__,"$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = (/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/imgui_extensions,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/cblib/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/nlohmann/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/generated,"$(inherited)");
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = (/usr/local/lib,"$(inherited)");
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				MARKETING_VERSION = 0.3.0;
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_CPLUSPLUSFLAGS = "       -DNDEBUG '-std=gnu++20' -Wall -Wextra -Wpedantic -Wshadow -Wno-sign-compare ";
-				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","-framework OpenGL",/usr/local/lib/libglfw.3.4.dylib,"$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.cbapp;
-				PRODUCT_NAME = CBApp;
-				SECTORDER_FLAGS = "";
-				SYSTEM_HEADER_SEARCH_PATHS = (/usr/local/include,"$(inherited)");
-				TARGET_TEMP_DIR = "/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build/CBApp.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = RelWithDebInfo;
-		};
-		3E7C6543C2B34813BD5A1A2F /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				SDKROOT = "";
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SYMROOT = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build;
-			};
-			name = RelWithDebInfo;
-		};
-		464FC98783E34255B767CC07 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				SDKROOT = "";
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SYMROOT = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build;
-			};
-			name = Release;
-		};
-		524A68C256B240D6A2A8743C /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ALL_BUILD;
-				SECTORDER_FLAGS = "";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Release;
-		};
-		563CE331C26145469269B301 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = x86_64;
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/Debug;
-				CURRENT_PROJECT_VERSION = 55;
-				ENABLE_HARDENED_RUNTIME = NO;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				FRAMEWORK_SEARCH_PATHS = (/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks,"$(inherited)");
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","'IMGUI_USER_CONFIG=\"my_imconfig.h\"'","'CBAPP_USER_CONFIG=\"cbapp_config.h\"'",_CBLIB_LOG,__CBAPP_DEBUG__,_CBAPP_LOG,"$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = (/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/imgui_extensions,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/cblib/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/nlohmann/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/generated,"$(inherited)");
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = (/usr/local/lib,"$(inherited)");
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				MARKETING_VERSION = 0.3.0;
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_CPLUSPLUSFLAGS = "   '-std=gnu++20' -Wall -Wextra -Wpedantic -Wshadow -Wno-sign-compare ";
-				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","-framework OpenGL",/usr/local/lib/libglfw.3.4.dylib,"$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.cbapp;
-				PRODUCT_NAME = CBApp;
-				SECTORDER_FLAGS = "";
-				SYSTEM_HEADER_SEARCH_PATHS = (/usr/local/include,"$(inherited)");
-				TARGET_TEMP_DIR = "/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build/CBApp.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Debug;
-		};
-		636F3DBF4EC2499EAE0DFA5E /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Release;
-		};
-		6C493AD25F5248088E78FCCF /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				SDKROOT = "";
-				SYMROOT = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build;
-			};
-			name = Debug;
-		};
-		723A1A8EEC714AB49B68C9EB /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = RelWithDebInfo;
-		};
-		797437FFDC6A4E1FAAB38E12 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Debug;
-		};
-		A3A4308B98F84302B2D432FB /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = x86_64;
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/MinSizeRel;
-				CURRENT_PROJECT_VERSION = 55;
-				ENABLE_HARDENED_RUNTIME = NO;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				FRAMEWORK_SEARCH_PATHS = (/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks,"$(inherited)");
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = s;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","'IMGUI_USER_CONFIG=\"my_imconfig.h\"'","'CBAPP_USER_CONFIG=\"cbapp_config.h\"'",_CBLIB_LOG,__CBLIB_MIN_SIZE_RELEASE__,"$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = (/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/imgui_extensions,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/cblib/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/nlohmann/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/generated,"$(inherited)");
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = (/usr/local/lib,"$(inherited)");
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				MARKETING_VERSION = 0.3.0;
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_CPLUSPLUSFLAGS = "    -DNDEBUG '-std=gnu++20' -Wall -Wextra -Wpedantic -Wshadow -Wno-sign-compare ";
-				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","-framework OpenGL",/usr/local/lib/libglfw.3.4.dylib,"$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.cbapp;
-				PRODUCT_NAME = CBApp;
-				SECTORDER_FLAGS = "";
-				SYSTEM_HEADER_SEARCH_PATHS = (/usr/local/include,"$(inherited)");
-				TARGET_TEMP_DIR = "/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build/CBApp.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = MinSizeRel;
-		};
-		A9CB941BBFB746179790400A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ALL_BUILD;
-				SECTORDER_FLAGS = "";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Debug;
-		};
-		AC0C357CB76341E18D10EF0C /* Release */ = {
+		13DE802E2D2740CE97AEF602 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -1196,7 +918,7 @@ fi
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/Release;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 57;
 				ENABLE_HARDENED_RUNTIME = NO;
 				EXECUTABLE_PREFIX = "";
 				EXECUTABLE_SUFFIX = "";
@@ -1225,7 +947,230 @@ fi
 			};
 			name = Release;
 		};
-		FACFFD6F31584F11AC78A1ED /* RelWithDebInfo */ = {
+		1D03366AF468462D8365D5ED /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/Debug;
+				CURRENT_PROJECT_VERSION = 57;
+				ENABLE_HARDENED_RUNTIME = NO;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				FRAMEWORK_SEARCH_PATHS = (/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks,"$(inherited)");
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","'IMGUI_USER_CONFIG=\"my_imconfig.h\"'","'CBAPP_USER_CONFIG=\"cbapp_config.h\"'",_CBLIB_LOG,__CBAPP_DEBUG__,_CBAPP_LOG,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/imgui_extensions,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/cblib/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/nlohmann/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/generated,"$(inherited)");
+				INSTALL_PATH = "";
+				LD_RUNPATH_SEARCH_PATHS = (/usr/local/lib,"$(inherited)");
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MARKETING_VERSION = 0.3.0;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CPLUSPLUSFLAGS = "   '-std=gnu++20' -Wall -Wextra -Wpedantic -Wshadow -Wno-sign-compare ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","-framework OpenGL",/usr/local/lib/libglfw.3.4.dylib,"$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.cbapp;
+				PRODUCT_NAME = CBApp;
+				SECTORDER_FLAGS = "";
+				SYSTEM_HEADER_SEARCH_PATHS = (/usr/local/include,"$(inherited)");
+				TARGET_TEMP_DIR = "/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build/CBApp.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		1E94AD3DB1DD4D1A9D96FAE3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = x86_64;
+				SDKROOT = "";
+				SYMROOT = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build;
+			};
+			name = Debug;
+		};
+		4154EBED925F4EEE9A06C691 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		695EF399F44D44A48B02D069 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = x86_64;
+				SDKROOT = "";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build;
+			};
+			name = MinSizeRel;
+		};
+		72455BB7FA7A448CBE7C2619 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/MinSizeRel;
+				CURRENT_PROJECT_VERSION = 57;
+				ENABLE_HARDENED_RUNTIME = NO;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				FRAMEWORK_SEARCH_PATHS = (/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks,"$(inherited)");
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","'IMGUI_USER_CONFIG=\"my_imconfig.h\"'","'CBAPP_USER_CONFIG=\"cbapp_config.h\"'",_CBLIB_LOG,__CBLIB_MIN_SIZE_RELEASE__,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/imgui_extensions,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/cblib/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/nlohmann/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/generated,"$(inherited)");
+				INSTALL_PATH = "";
+				LD_RUNPATH_SEARCH_PATHS = (/usr/local/lib,"$(inherited)");
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MARKETING_VERSION = 0.3.0;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CPLUSPLUSFLAGS = "    -DNDEBUG '-std=gnu++20' -Wall -Wextra -Wpedantic -Wshadow -Wno-sign-compare ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","-framework OpenGL",/usr/local/lib/libglfw.3.4.dylib,"$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.cbapp;
+				PRODUCT_NAME = CBApp;
+				SECTORDER_FLAGS = "";
+				SYSTEM_HEADER_SEARCH_PATHS = (/usr/local/include,"$(inherited)");
+				TARGET_TEMP_DIR = "/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build/CBApp.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		7FF4EE0243794ECC8A5EA41D /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		9F642CB55A324971940A27C3 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = x86_64;
+				SDKROOT = "";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build;
+			};
+			name = RelWithDebInfo;
+		};
+		9FCDA3D15BFE46BAB1865B4E /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		BB1561E6F9D645C585A923DA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		D718BD9F269C42D7B131AE75 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		E9D2ABFF2C474232B5816BE5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = x86_64;
+				SDKROOT = "";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build;
+			};
+			name = Release;
+		};
+		EE7A737D3C9E4F3596116F5E /* RelWithDebInfo */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -1247,7 +1192,44 @@ fi
 			};
 			name = RelWithDebInfo;
 		};
-		FE8FA8E58375497F8C3CEC62 /* MinSizeRel */ = {
+		F05D4F381A65457AB15BA9A1 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/RelWithDebInfo;
+				CURRENT_PROJECT_VERSION = 57;
+				ENABLE_HARDENED_RUNTIME = NO;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				FRAMEWORK_SEARCH_PATHS = (/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks,"$(inherited)");
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","'IMGUI_USER_CONFIG=\"my_imconfig.h\"'","'CBAPP_USER_CONFIG=\"cbapp_config.h\"'",_CBLIB_LOG,__CBLIB_RELEASE_WITH_DEBUG_INFO__,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/config,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/app,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/include/imgui_extensions,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/imgui/backends,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/misc/cpp,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/cblib/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/libs/nlohmann/include,/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/generated,"$(inherited)");
+				INSTALL_PATH = "";
+				LD_RUNPATH_SEARCH_PATHS = (/usr/local/lib,"$(inherited)");
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MARKETING_VERSION = 0.3.0;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CPLUSPLUSFLAGS = "       -DNDEBUG '-std=gnu++20' -Wall -Wextra -Wpedantic -Wshadow -Wno-sign-compare ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","-framework OpenGL",/usr/local/lib/libglfw.3.4.dylib,"$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.cbapp;
+				PRODUCT_NAME = CBApp;
+				SECTORDER_FLAGS = "";
+				SYSTEM_HEADER_SEARCH_PATHS = (/usr/local/include,"$(inherited)");
+				TARGET_TEMP_DIR = "/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/build/CBApp.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		F9F2817627BA47C3B33BFA20 /* MinSizeRel */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -1269,49 +1251,71 @@ fi
 			};
 			name = MinSizeRel;
 		};
+		FEC254FAA7B647FEA216DCF6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		0E6295BDE0A1406181C5F521 /* Build configuration list for PBXNativeTarget "CBApp" */ = {
+		02DE20D18EA7449C891FFD12 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				563CE331C26145469269B301 /* Debug */,
-				AC0C357CB76341E18D10EF0C /* Release */,
-				A3A4308B98F84302B2D432FB /* MinSizeRel */,
-				1BFD01BC9D144737987153D7 /* RelWithDebInfo */,
+				FEC254FAA7B647FEA216DCF6 /* Debug */,
+				D718BD9F269C42D7B131AE75 /* Release */,
+				F9F2817627BA47C3B33BFA20 /* MinSizeRel */,
+				EE7A737D3C9E4F3596116F5E /* RelWithDebInfo */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		4E86F1F6230F47DD8E75B331 /* Build configuration list for PBXProject "CBApp" */ = {
+		2CC156A7E11D4B1C9E0EE31D /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				6C493AD25F5248088E78FCCF /* Debug */,
-				464FC98783E34255B767CC07 /* Release */,
-				097ADC821B604E18A8A438C3 /* MinSizeRel */,
-				3E7C6543C2B34813BD5A1A2F /* RelWithDebInfo */,
+				4154EBED925F4EEE9A06C691 /* Debug */,
+				BB1561E6F9D645C585A923DA /* Release */,
+				7FF4EE0243794ECC8A5EA41D /* MinSizeRel */,
+				9FCDA3D15BFE46BAB1865B4E /* RelWithDebInfo */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		66386F82E566463380E1E99D /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */ = {
+		9C00AAA27237415A8F4D97DE /* Build configuration list for PBXProject "CBApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A9CB941BBFB746179790400A /* Debug */,
-				524A68C256B240D6A2A8743C /* Release */,
-				FE8FA8E58375497F8C3CEC62 /* MinSizeRel */,
-				FACFFD6F31584F11AC78A1ED /* RelWithDebInfo */,
+				1E94AD3DB1DD4D1A9D96FAE3 /* Debug */,
+				E9D2ABFF2C474232B5816BE5 /* Release */,
+				695EF399F44D44A48B02D069 /* MinSizeRel */,
+				9F642CB55A324971940A27C3 /* RelWithDebInfo */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		C91239F9A36C4581ACCE8E43 /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */ = {
+		B3B7B26A86BE4DF8BDBDCA66 /* Build configuration list for PBXNativeTarget "CBApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				797437FFDC6A4E1FAAB38E12 /* Debug */,
-				636F3DBF4EC2499EAE0DFA5E /* Release */,
-				0E52397443F743A4B7CC29C3 /* MinSizeRel */,
-				723A1A8EEC714AB49B68C9EB /* RelWithDebInfo */,
+				1D03366AF468462D8365D5ED /* Debug */,
+				13DE802E2D2740CE97AEF602 /* Release */,
+				72455BB7FA7A448CBE7C2619 /* MinSizeRel */,
+				F05D4F381A65457AB15BA9A1 /* RelWithDebInfo */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
