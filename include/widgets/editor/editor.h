@@ -30,6 +30,7 @@
 #include "app/state/_state.h"
 #include "utility/utility.h"
 #include "widgets/editor/_constants.h"
+#include "widgets/editor/_icon.h"
 #include "widgets/editor/_types.h"
 #include "widgets/editor/_overlays.h"
 
@@ -352,7 +353,7 @@ private:
     void                                _grid_handle_shortcuts              (void);
     //
     //                              PRIMARY RENDERING:
-    void                                _render_paths                       (ImDrawList* dl) const;
+    void                                _render_paths                       (ImDrawList * dl) const;
     void                                _render_lines                       (ImDrawList *, const ImVec2 & ) const;
     void                                _render_points                      (ImDrawList *) const;
     //
@@ -433,6 +434,13 @@ private:
     // *************************************************************************** //
     //      COMMON.                         |   "common.cpp" ...
     // *************************************************************************** //
+    //
+    //                              NEW SELECTION FUNCTIONS:
+    void                                bring_selection_to_front            (void);
+    void                                bring_selection_forward             (void);
+    void                                send_selection_backward             (void);
+    void                                send_selection_to_back              (void);
+    //
     //                              SELECTION FUNCTIONS:
     void                                move_selection                      (const float dx, const float dy);
     void                                copy_to_clipboard                   (void);
@@ -835,15 +843,9 @@ static inline const char * mode_label(Mode m)
 
 
 
-
-
-
-
-
-
-
-
-
+//  NEW STATIC HELPERS...
+// *************************************************************************** //
+// *************************************************************************** //
 
 
 

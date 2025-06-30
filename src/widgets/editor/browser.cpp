@@ -190,6 +190,98 @@ void Editor::DrawBrowser(void)
 //
 void Editor::_draw_path_list_column(void)
 {
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    if (ImGui::InputTextWithHint("##Editor_Browser_LeftFilter", "filter",
+                                 m_browser_filter.InputBuf,
+                                 IM_ARRAYSIZE(m_browser_filter.InputBuf)))
+        m_browser_filter.Build();
+    ImGui::Separator();
+
+    constexpr ImVec2 ICON_SZ{ 18.0f, 18.0f };
+    const ImU32 col_text  = ImGui::GetColorU32(ImGuiCol_Text);
+    const ImU32 col_dim   = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+    const ImU32 col_frame = ImGui::GetColorU32(ImGuiCol_FrameBg);
+
+    ImGuiListClipper clipper;
+    clipper.Begin(static_cast<int>(m_paths.size()), -1);
+
+    while (clipper.Step())
+        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+        {
+            char label[12]; std::snprintf(label, sizeof(label), "Path%02d", i);
+            if (!m_browser_filter.PassFilter(label)) continue;
+
+            Path& path = m_paths[i];
+            bool  selected = m_sel.paths.count(static_cast<size_t>(i));
+
+            ImGui::PushID(i);
+            ImGui::BeginGroup();
+
+            // ── Eye toggle
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImGui::InvisibleButton("##eye", ICON_SZ);
+            if (ImGui::IsItemClicked())
+                path.visible = !path.visible;
+
+            draw_icon_background(ImGui::GetWindowDrawList(),
+                                 pos, ICON_SZ, selected ? col_frame : 0);
+            if (path.visible)
+                draw_eye_icon(ImGui::GetWindowDrawList(), pos, ICON_SZ, col_text);
+            else
+                draw_eye_off_icon(ImGui::GetWindowDrawList(), pos, ICON_SZ, col_dim);
+
+            ImGui::SameLine(0, 0);
+
+            // ── Lock toggle
+            pos = ImGui::GetCursorScreenPos();
+            ImGui::InvisibleButton("##lock", ICON_SZ);
+            if (ImGui::IsItemClicked())
+                path.locked = !path.locked;
+
+            draw_icon_background(ImGui::GetWindowDrawList(),
+                                 pos, ICON_SZ, selected ? col_frame : 0);
+            if (path.locked)
+                draw_lock_icon(ImGui::GetWindowDrawList(), pos, ICON_SZ, col_text);
+            else
+                draw_unlock_icon(ImGui::GetWindowDrawList(), pos, ICON_SZ, col_dim);
+
+            ImGui::SameLine(0, 4.0f);
+
+            // ── Name selectable
+            ImGui::PushStyleColor(ImGuiCol_Text,
+                                  path.locked ? col_dim : col_text);
+            if (ImGui::Selectable(label, selected,
+                                  ImGuiSelectableFlags_SpanAllColumns))
+            {
+                const bool ctrl  = ImGui::GetIO().KeyCtrl;
+                const bool shift = ImGui::GetIO().KeyShift;
+
+                if (!ctrl && !shift) {
+                    this->reset_selection();
+                    m_sel.paths.insert(i);
+                    m_browser_anchor = i;
+                }
+                else if (shift && m_browser_anchor >= 0) {
+                    int lo = std::min(m_browser_anchor, i),
+                        hi = std::max(m_browser_anchor, i);
+                    if (!ctrl) this->reset_selection();
+                    for (int k = lo; k <= hi; ++k)  m_sel.paths.insert(k);
+                }
+                else if (ctrl) {
+                    if (!m_sel.paths.erase(i)) { m_sel.paths.insert(i);
+                                                 m_browser_anchor = i; }
+                }
+                _rebuild_vertex_selection();
+            }
+            ImGui::PopStyleColor();
+
+            ImGui::EndGroup();
+            ImGui::PopID();
+        }
+    clipper.End();
+}
+
+/* {
     // 1) filter input --------------------------------------------------
     ImGui::SetNextItemWidth(-FLT_MIN);
     if (ImGui::InputTextWithHint("##Editor_Browser_LeftFilter", "filter",
@@ -203,7 +295,9 @@ void Editor::_draw_path_list_column(void)
     ImGuiListClipper clipper;
     clipper.Begin(total, -1);
 
-    while (clipper.Step())
+
+    while ( clipper.Step() )
+    {
         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
         {
             char label[12]; std::snprintf(label, sizeof(label), "Path%02d", i);
@@ -235,8 +329,11 @@ void Editor::_draw_path_list_column(void)
                 _rebuild_vertex_selection();   // keep vertices in sync
             }
         }
+    }
+        
     clipper.End();
-}
+    return;
+}*/
 
 
 
@@ -405,6 +502,7 @@ void Editor::_draw_vertex_inspector_subcolumn(Path & path)
 // *************************************************************************** //
 //
 //
+//
 //  4.  INSPECTOR COLUMN DISPATCHER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -561,6 +659,7 @@ void Editor::_draw_single_path_inspector(void)
 
 
 // *************************************************************************** //
+//
 //
 //
 //      NEW STUFF...

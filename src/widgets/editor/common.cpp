@@ -54,7 +54,141 @@ void Editor::redo(void) {
 // *************************************************************************** //
 //
 //
-//      1.  DATA MANAGEMENT FUNCTIONS...
+//
+//      1.  NEW...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "bring_selection_to_front"
+//
+void Editor::bring_selection_to_front(void)
+{
+    if ( m_sel.paths.empty() ) return;
+
+    // 1. Build vector of pointers sorted by current z
+    std::vector<Path*> vec;
+    vec.reserve(m_paths.size());
+    for (Path & p : m_paths) vec.push_back(&p);
+    std::stable_sort(vec.begin(), vec.end(),
+        [](const Path* a, const Path* b){ return a->z_index < b->z_index; });
+
+    // 2. Re-order: unselected first, selected last (keep their internal order)
+    std::vector<Path*> reordered;
+    reordered.reserve(vec.size());
+    for (Path * p : vec) {
+        size_t idx = static_cast<size_t>(p - m_paths.data());
+        if (!m_sel.paths.count(idx)) reordered.push_back(p);
+    }
+    for (Path * p : vec) {
+        size_t idx = static_cast<size_t>(p - m_paths.data());
+        if (m_sel.paths.count(idx)) reordered.push_back(p);
+    }
+
+    // 3. Re-assign dense z-indices (background → foreground)
+    ZID z = Z_FLOOR_USER;
+    for (Path* p : reordered)
+        p->z_index = z++;
+        
+    return;
+}
+
+
+//  "bring_selection_forward"
+//
+void Editor::bring_selection_forward(void)
+{
+    if (m_sel.paths.empty()) return;
+
+    // 1. build vector of pointers sorted by z
+    std::vector<Path*> vec;
+    vec.reserve(m_paths.size());
+    for (Path& p : m_paths) vec.push_back(&p);
+    std::stable_sort(vec.begin(), vec.end(),
+        [](const Path* a, const Path* b){ return a->z_index < b->z_index; });
+
+    // 2. walk from back→front; swap with next higher neighbour when selected
+    for (int i = static_cast<int>(vec.size()) - 2; i >= 0; --i) {
+        Path* cur = vec[i];
+        Path* nxt = vec[i + 1];
+        size_t idx_cur = static_cast<size_t>(cur - m_paths.data());
+        size_t idx_nxt = static_cast<size_t>(nxt - m_paths.data());
+
+        if (m_sel.paths.count(idx_cur) && !m_sel.paths.count(idx_nxt))
+            std::swap(cur->z_index, nxt->z_index);
+    }
+    renormalise_z();
+    return;
+}
+
+
+//  "send_selection_backward"
+//
+void Editor::send_selection_backward(void)
+{
+    if ( m_sel.paths.empty() ) return;
+
+    // same idea, walk front→back
+    std::vector<Path*> vec;
+    vec.reserve(m_paths.size());
+    for (Path& p : m_paths) vec.push_back(&p);
+    std::stable_sort(vec.begin(), vec.end(),
+        [](const Path* a, const Path* b){ return a->z_index < b->z_index; });
+
+    for (size_t i = 1; i < vec.size(); ++i) {
+        Path* cur = vec[i];
+        Path* prev = vec[i - 1];
+        size_t idx_cur  = static_cast<size_t>(cur  - m_paths.data());
+        size_t idx_prev = static_cast<size_t>(prev - m_paths.data());
+
+        if (m_sel.paths.count(idx_cur) && !m_sel.paths.count(idx_prev))
+            std::swap(cur->z_index, prev->z_index);
+    }
+    renormalise_z();
+    return;
+}
+
+
+//  "send_selection_to_back"
+//
+void Editor::send_selection_to_back(void)
+{
+    if (m_sel.paths.empty()) return;
+
+    // 1. Build vector sorted by current z
+    std::vector<Path*> vec;
+    vec.reserve(m_paths.size());
+    for (Path & p : m_paths) vec.push_back(&p);
+    std::stable_sort(vec.begin(), vec.end(),
+        [](const Path* a, const Path* b){ return a->z_index < b->z_index; });
+
+    // 2. Re-order: selected first, unselected last
+    std::vector<Path*> reordered;
+    reordered.reserve(vec.size());
+    for (Path * p : vec) {
+        size_t idx = static_cast<size_t>(p - m_paths.data());
+        if (m_sel.paths.count(idx)) reordered.push_back(p);
+    }
+    for (Path * p : vec) {
+        size_t idx = static_cast<size_t>(p - m_paths.data());
+        if (!m_sel.paths.count(idx)) reordered.push_back(p);
+    }
+
+    // 3. Re-assign dense z-indices
+    ZID z = Z_FLOOR_USER;
+    for (Path* p : reordered)
+        p->z_index = z++;
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.  DATA MANAGEMENT FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -139,7 +273,7 @@ void Editor::copy_to_clipboard(void)
 //
 void Editor::paste_from_clipboard(ImVec2 target_ws)
 {
-    if (m_clipboard.empty()) return;
+    if ( m_clipboard.empty() ) return;
 
     const float dx = target_ws.x - m_clipboard.ref_ws.x;
     const float dy = target_ws.y - m_clipboard.ref_ws.y;
@@ -191,8 +325,8 @@ void Editor::paste_from_clipboard(ImVec2 target_ws)
         m_sel.paths.insert(m_paths.size() - 1);
         for (uint32_t vid : dup.verts) m_sel.vertices.insert(vid);
     }
+    return;
 }
-
 
 
 
@@ -228,6 +362,7 @@ void Editor::delete_selection(void)
 
     // finally
     this->reset_selection();    // m_sel.clear();
+    return;
 }
 
 

@@ -50,26 +50,34 @@ int Editor::_hit_point([[maybe_unused]] const Interaction& it) const
 //
 std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
 {
-    // mouse position in screen‑pixel coordinates
-    const ImVec2 ms = ImGui::GetIO().MousePos;
+    // ─── utilities ───────────────────────────────────────────────────────
+    const ImVec2 ms = ImGui::GetIO().MousePos;          // mouse in pixels
+    auto ws2px      = [&](const ImVec2& w){ return world_to_pixels(w); };
 
-    // handy lambda: convert world‑space ⇒ screen‑pixel
-    auto ws2px = [&](const ImVec2& w) { return world_to_pixels(w); };
-
-    // ───────────────────────────────────────────────────────────── 1. handles
-    constexpr float PAD  = 4.0f;                       // pick‑box grow
-    const float     half = HANDLE_BOX_SIZE * 0.5f + PAD;
-
-    auto overlap = [&](ImVec2 s)
+    // Helper: map vertex-id → parent Path*, or nullptr if none
+    auto parent_path_of_vertex = [&](uint32_t vid) -> const Path*
     {
-        return fabsf(ms.x - s.x) <= half &&
-               fabsf(ms.y - s.y) <= half;
+        for (const Path& p : m_paths)
+            for (uint32_t v : p.verts)
+                if (v == vid) return &p;
+        return nullptr;
     };
 
+    // ───────────────────────────────────────────── 1. Bézier handles
+    constexpr float PAD  = 4.0f;
+    const float     half = HANDLE_BOX_SIZE * 0.5f + PAD;
 
-    for ( const Vertex & v : m_vertices )
+    auto overlap = [&](ImVec2 scr)
     {
-        if ( !m_sel.vertices.count(v.id) ) continue;     // show handles only on selected
+        return fabsf(ms.x - scr.x) <= half &&
+               fabsf(ms.y - scr.y) <= half;
+    };
+
+    for (const Vertex& v : m_vertices)
+    {
+        if (!m_sel.vertices.count(v.id)) continue;  // handles only for selected verts
+        const Path* pp = parent_path_of_vertex(v.id);
+        if (!pp || pp->locked || !pp->visible) continue;
 
         if (v.out_handle.x || v.out_handle.y) {
             ImVec2 scr = ws2px({ v.x + v.out_handle.x,
@@ -87,12 +95,17 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
         }
     }
 
-    // ───────────────────────────────────────────────────────────── 2. point glyphs
-    int pi = _hit_point(it);                    // (_hit_point will be refactored next)
+    // ───────────────────────────────────────────── 2. point glyphs
+    int pi = _hit_point(it);
     if (pi >= 0 && static_cast<size_t>(pi) < m_points.size())
-        return Hit{ Hit::Type::Point, static_cast<size_t>(pi) };
+    {
+        uint32_t vid = m_points[pi].v;
+        const Path* pp = parent_path_of_vertex(vid);
+        if (pp && !pp->locked && pp->visible)
+            return Hit{ Hit::Type::Point, static_cast<size_t>(pi) };
+    }
 
-    // ───────────────────────────────────────────────────────────── 3. standalone lines
+    // ───────────────────────────────────────────── 3. standalone lines (unchanged)
     for (size_t i = 0; i < m_lines.size(); ++i)
     {
         const Vertex* a = find_vertex(m_vertices, m_lines[i].a);
@@ -114,14 +127,24 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
             return Hit{ Hit::Type::Line, i };
     }
 
-    // ───────────────────────────────────────────────────────────── 4. paths
-    for (size_t pi_path = 0; pi_path < m_paths.size(); ++pi_path)
+    // ───────────────────────────────────────────── 4. paths
+    // Build vector of unlocked+visible paths, sort by z (low→high), iterate reverse
+    std::vector<const Path*> vec;
+    vec.reserve(m_paths.size());
+    for (const Path& p : m_paths)
+        if (!p.locked && p.visible) vec.push_back(&p);
+
+    std::stable_sort(vec.begin(), vec.end(),
+        [](const Path* a, const Path* b){ return a->z_index < b->z_index; });
+
+    for (auto rit = vec.rbegin(); rit != vec.rend(); ++rit)
     {
-        const Path& p = m_paths[pi_path];
-        size_t N = p.verts.size();
+        const Path& p      = **rit;
+        const size_t N     = p.verts.size();
+        const size_t index = &p - m_paths.data();          // back to array idx
         if (N < 2) continue;
 
-        // edge hit‑test
+        // edge hit-test  (body identical to previous version)
         for (size_t si = 0; si < N - 1 + (p.closed ? 1u : 0u); ++si)
         {
             const Vertex* a = find_vertex(m_vertices, p.verts[si]);
@@ -141,7 +164,7 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
                 ImVec2 C{ A.x + AB.x*t, A.y + AB.y*t };
                 float  dx = ms.x - C.x, dy = ms.y - C.y;
                 if (dx*dx + dy*dy <= HIT_THRESH_SQ)
-                    return Hit{ Hit::Type::Path, pi_path };
+                    return Hit{ Hit::Type::Path, index };
             }
             else
             {
@@ -163,14 +186,14 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
                     ImVec2 C{ prev_px.x + seg.x*u, prev_px.y + seg.y*u };
                     float  dx = ms.x - C.x, dy = ms.y - C.y;
                     if (dx*dx + dy*dy <= HIT_THRESH_SQ)
-                        return Hit{ Hit::Type::Path, pi_path };
+                        return Hit{ Hit::Type::Path, index };
 
                     prev_px = cur_px;
                 }
             }
         }
 
-        // interior point‑in‑polygon (use pixel coords)
+        // interior point-in-polygon (same as before)
         if (p.closed)
         {
             std::vector<ImVec2> poly;
@@ -183,25 +206,20 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
                 if (!a || !b) continue;
 
                 if (!is_curved<VertexID>(a, b))
-                {
                     poly.push_back(ws2px({ a->x, a->y }));
-                }
                 else
-                {
-                    for (int k = 0; k <= ms_BEZIER_HIT_STEPS; ++k)
-                    {
+                    for (int k = 0; k <= ms_BEZIER_HIT_STEPS; ++k) {
                         float  t   = static_cast<float>(k) / ms_BEZIER_HIT_STEPS;
                         ImVec2 wpt = cubic_eval<VertexID>(a, b, t);
                         poly.push_back(ws2px(wpt));
                     }
-                }
             }
             if (!poly.empty() && point_in_polygon(poly, ms))
-                return Hit{ Hit::Type::Path, pi_path };
+                return Hit{ Hit::Type::Path, index };
         }
     }
 
-    return std::nullopt;    // nothing hit
+    return std::nullopt;   // nothing hit
 }
 
 
@@ -1120,16 +1138,16 @@ void Editor::dispatch_selection_context_menus([[maybe_unused]] const Interaction
     // 1. Handle the click (selection update + OpenPopup)
     if (rmb_click)
     {
-        if (m_sel.empty())
+        if ( m_sel.empty() )
         {
-            if (auto h = _hit_any(it)) {        // pick under cursor
+            if ( auto h = _hit_any(it) ) {        // pick under cursor
                 m_sel.clear();
                 add_hit_to_selection(*h);
             }
         }
 
         // Decide which popup to open based on current selection state
-        if (m_sel.empty())
+        if ( m_sel.empty() )
             ImGui::OpenPopup(canvas_popup_id);      // empty → canvas menu
         else
             ImGui::OpenPopup(selection_popup_id);   // non-empty → selection menu
@@ -1186,7 +1204,8 @@ inline void Editor::_show_canvas_context_menu([[maybe_unused]] const Interaction
 //
 inline void Editor::_show_selection_context_menu([[maybe_unused]] const Interaction & it, const char * popup_id)
 {
-    const size_t    total_items     = m_sel.points.size() + m_sel.lines.size() + m_sel.paths.size();
+    //const size_t    total_items     = m_sel.points.size() + m_sel.lines.size() + m_sel.paths.size();
+    const size_t    total_items     = m_sel.paths.size();
 
 
     //  Jump-out early if NO POPUP WINDOW...
@@ -1225,13 +1244,13 @@ inline void Editor::_selection_context_default([[maybe_unused]] const Interactio
 {
     
     //  1.  REORDER Z-ORDER OF OBJECTS ON CANVAS...
-    if ( ImGui::BeginMenu("Move") ) {
+    if ( ImGui::BeginMenu("Arrange") ) {
         //
-        if ( ImGui::MenuItem("Bring to Front")  )       { /*  TODO: implement Z-order for objects on canvas  */     }
-        if ( ImGui::MenuItem("Bring Forward")   )       { /*  TODO: implement Z-order for objects on canvas  */     }
+        if ( ImGui::MenuItem("Bring to Front")  )       { this->bring_selection_to_front();     }
+        if ( ImGui::MenuItem("Bring Forward")   )       { this->bring_selection_forward();      }
         ImGui::Separator();
-        if ( ImGui::MenuItem("Send Backwards")  )       { /*  TODO: implement Z-order for objects on canvas  */     }
-        if ( ImGui::MenuItem("Send to Back")    )       { /*  TODO: implement Z-order for objects on canvas  */     }
+        if ( ImGui::MenuItem("Send Backwards")  )       { this->send_selection_backward();      }
+        if ( ImGui::MenuItem("Send to Back")    )       { this->send_selection_to_back();       }
         //
         ImGui::EndMenu();
     }

@@ -120,9 +120,16 @@ inline static constexpr uint32_t        Z_FLOOR_USER                = 255;      
 inline static constexpr uint32_t        Z_EDITOR_FRONT              = UINT32_MAX - 2;           // overlays, guides
 inline static constexpr uint32_t        Z_CEIL_USER                 = Z_EDITOR_FRONT - 1;       // max allowed for user items
 inline static constexpr uint32_t        RENORM_THRESHOLD            = 10'000;                   // span triggering re-pack
+//
+//
+//
+//constexpr const char* ICON_EYE        = u8"\uf06e";
+//constexpr const char* ICON_EYE_SLASH  = u8"\uf070";
+//constexpr const char* ICON_LOCK       = u8"\uf023";
 
-
-
+//inline static constexpr ImWchar         FA_ICON_EYE                 = ICON_FA_EYE;        // \uf06e
+//inline static constexpr ImWchar         FA_ICON_EYE_SLASH           = ICON_FA_EYE_SLASH;  // \uf070
+//inline static constexpr ImWchar         FA_ICON_LOCK                = ICON_FA_LOCK;       // \uf023;
 
 
 
