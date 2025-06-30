@@ -260,6 +260,14 @@ void Editor::Begin(const char * /*id*/)
     ImPlot::EndPlot();
     ImPlot::GetInputMap() = backup;   // restore map
     
+    
+    //
+    //
+    //  show_icon_preview_window();
+    //
+    //
+    
+    
     return;
 }
 

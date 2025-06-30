@@ -190,6 +190,9 @@ void Editor::DrawBrowser(void)
 //
 void Editor::_draw_path_list_column(void)
 {
+    using namespace icon;                      // pull in CELL_SZ, etc.
+
+    // ─── filter box
     ImGui::SetNextItemWidth(-FLT_MIN);
     if (ImGui::InputTextWithHint("##Editor_Browser_LeftFilter", "filter",
                                  m_browser_filter.InputBuf,
@@ -197,7 +200,7 @@ void Editor::_draw_path_list_column(void)
         m_browser_filter.Build();
     ImGui::Separator();
 
-    constexpr ImVec2 ICON_SZ{ 18.0f, 18.0f };
+    // colours from current style (not icon constants)
     const ImU32 col_text  = ImGui::GetColorU32(ImGuiCol_Text);
     const ImU32 col_dim   = ImGui::GetColorU32(ImGuiCol_TextDisabled);
     const ImU32 col_frame = ImGui::GetColorU32(ImGuiCol_FrameBg);
@@ -217,37 +220,45 @@ void Editor::_draw_path_list_column(void)
             ImGui::PushID(i);
             ImGui::BeginGroup();
 
-            // ── Eye toggle
+            /*──────── Eye toggle ───────*/
             ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImGui::InvisibleButton("##eye", ICON_SZ);
+            ImGui::InvisibleButton("##eye", { CELL_SZ, CELL_SZ });
             if (ImGui::IsItemClicked())
                 path.visible = !path.visible;
 
             draw_icon_background(ImGui::GetWindowDrawList(),
-                                 pos, ICON_SZ, selected ? col_frame : 0);
+                                 pos, { CELL_SZ, CELL_SZ },
+                                 selected ? col_frame : 0);
+
             if (path.visible)
-                draw_eye_icon(ImGui::GetWindowDrawList(), pos, ICON_SZ, col_text);
+                draw_eye_icon(ImGui::GetWindowDrawList(),
+                              pos, { CELL_SZ, CELL_SZ }, col_text);
             else
-                draw_eye_off_icon(ImGui::GetWindowDrawList(), pos, ICON_SZ, col_dim);
+                draw_eye_off_icon(ImGui::GetWindowDrawList(),
+                                  pos, { CELL_SZ, CELL_SZ }, col_dim);
 
             ImGui::SameLine(0, 0);
 
-            // ── Lock toggle
+            /*──────── Lock toggle ──────*/
             pos = ImGui::GetCursorScreenPos();
-            ImGui::InvisibleButton("##lock", ICON_SZ);
+            ImGui::InvisibleButton("##lock", { CELL_SZ, CELL_SZ });
             if (ImGui::IsItemClicked())
                 path.locked = !path.locked;
 
             draw_icon_background(ImGui::GetWindowDrawList(),
-                                 pos, ICON_SZ, selected ? col_frame : 0);
+                                 pos, { CELL_SZ, CELL_SZ },
+                                 selected ? col_frame : 0);
+
             if (path.locked)
-                draw_lock_icon(ImGui::GetWindowDrawList(), pos, ICON_SZ, col_text);
+                draw_lock_icon(ImGui::GetWindowDrawList(),
+                               pos, { CELL_SZ, CELL_SZ }, col_text);
             else
-                draw_unlock_icon(ImGui::GetWindowDrawList(), pos, ICON_SZ, col_dim);
+                draw_unlock_icon(ImGui::GetWindowDrawList(),
+                                 pos, { CELL_SZ, CELL_SZ }, col_dim);
 
-            ImGui::SameLine(0, 4.0f);
+            ImGui::SameLine(0, 4.0f);  // spacing before name
 
-            // ── Name selectable
+            /*──────── Name selectable ─*/
             ImGui::PushStyleColor(ImGuiCol_Text,
                                   path.locked ? col_dim : col_text);
             if (ImGui::Selectable(label, selected,
@@ -265,11 +276,13 @@ void Editor::_draw_path_list_column(void)
                     int lo = std::min(m_browser_anchor, i),
                         hi = std::max(m_browser_anchor, i);
                     if (!ctrl) this->reset_selection();
-                    for (int k = lo; k <= hi; ++k)  m_sel.paths.insert(k);
+                    for (int k = lo; k <= hi; ++k) m_sel.paths.insert(k);
                 }
                 else if (ctrl) {
-                    if (!m_sel.paths.erase(i)) { m_sel.paths.insert(i);
-                                                 m_browser_anchor = i; }
+                    if (!m_sel.paths.erase(i)) {
+                        m_sel.paths.insert(i);
+                        m_browser_anchor = i;
+                    }
                 }
                 _rebuild_vertex_selection();
             }
