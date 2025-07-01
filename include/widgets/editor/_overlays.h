@@ -88,7 +88,6 @@ public:
         using                   OverlayID                       = uint32_t;
         using                   Overlay                         = Overlay_t<OverlayID>;
 //
-        using                   EndpointInfo                    = EndpointInfo;
 //      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 // *************************************************************************** //
 //

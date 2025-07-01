@@ -41,11 +41,15 @@ const Editor::Vertex * Editor::find_vertex(const std::vector<Vertex>& verts, uin
 //
 std::optional<Editor::EndpointInfo> Editor::_endpoint_if_open(uint32_t vid) const
 {
-    for (size_t i = 0; i < m_paths.size(); ++i) {
-        const Path& p = m_paths[i];
-        if (p.closed || p.verts.empty()) continue;
-        if (p.verts.front() == vid) return EndpointInfo{ i, /*prepend=*/true  };
-        if (p.verts.back () == vid) return EndpointInfo{ i, /*prepend=*/false };
+    const PathID    N   = static_cast<PathID>( m_paths.size() );
+    
+    for (PathID i = 0; i < N; ++i)
+    {
+        const Path &    p   = m_paths[i];
+        
+        if ( p.closed || p.verts.empty() )      { continue; }
+        if ( p.verts.front() == vid )           { return EndpointInfo{ i, /*prepend=*/true  };  }
+        if ( p.verts.back () == vid )           { return EndpointInfo{ i, /*prepend=*/false };  }
     }
     return std::nullopt;
 }
@@ -353,11 +357,12 @@ void Editor::_draw_controls(void)
         ImGui::Text("");
         //
         //
-        if ( ImGui::Button("Canvas Settings", WIDGET_SIZE) ) {
-            ImGui::OpenPopup("Editor_CanvasSettingsPopup");
-        }
-        if ( ImGui::BeginPopup("Editor_CanvasSettingsPopup") ) {
-            this->_display_canvas_settings();
+        if (ImGui::Button("Settings", WIDGET_SIZE))
+            ImGui::OpenPopup("Editor_Canvas_SettingsPopup");
+
+        if (ImGui::BeginPopup("Editor_Canvas_SettingsPopup"))
+        {
+            this->_draw_system_preferences();      // << new helper
             ImGui::EndPopup();
         }
 
@@ -387,17 +392,122 @@ void Editor::_draw_controls(void)
 }
 
 
-//  "_display_canvas_settings"
-//
-void Editor::_display_canvas_settings(void)
+
+struct FileDialogState {
+    std::filesystem::path cwd = std::filesystem::current_path();
+    std::string           name_buf;          // editable file name
+    int                   selected = -1;     // index in entries[]
+    std::vector<std::filesystem::directory_entry> entries;
+};
+
+/// Call inside a modal popup. Returns chosen path on OK, std::nullopt on cancel.
+inline std::optional<std::string>
+file_dialog(FileDialogState& st, bool save_mode)
 {
-    ImGui::NewLine();
+    // refresh listing if first time or cwd changed
+    if (st.entries.empty() || !std::filesystem::exists(st.cwd)) {
+        st.cwd = std::filesystem::current_path();
+    }
+    if (st.entries.empty()) {
+        st.entries.clear();
+        for (auto& e : std::filesystem::directory_iterator(st.cwd))
+            st.entries.push_back(e);
+        std::sort(st.entries.begin(), st.entries.end(),
+                  [](auto& a, auto& b){ return a.path().filename() < b.path().filename(); });
+    }
+
+    ImGui::TextUnformatted(st.cwd.string().c_str());
+    ImGui::Separator();
+
+    ImGui::BeginChild("##file_list", ImVec2(0, 200), true);
+    if (ImGui::Selectable("..", false))
+        st.cwd = st.cwd.parent_path(), st.entries.clear(), st.selected = -1;
+
+    for (int i = 0; i < (int)st.entries.size(); ++i) {
+        const auto& e = st.entries[i];
+        bool is_dir   = e.is_directory();
+        std::string label = is_dir ? "[D] " : "    ";
+        label += e.path().filename().string();
+
+        if (ImGui::Selectable(label.c_str(), st.selected == i)) {
+            st.selected = i;
+            if (!is_dir) st.name_buf = e.path().filename().string();
+        }
+        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0) && is_dir) {
+            st.cwd = e;
+            st.entries.clear();
+            st.selected = -1;
+        }
+    }
+    ImGui::EndChild();
+
+    // filename field
+    ImGui::InputText("File name", &st.name_buf);
+
+    // buttons
+    bool ok = false, cancel = false;
+    if (ImGui::Button(save_mode ? "Save" : "Open"))
+        ok = true;
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel"))
+        cancel = true;
+
+    if (ok && !st.name_buf.empty()) {
+        auto chosen = (st.cwd / st.name_buf).string();
+        st = {};                         // reset for next time
+        return chosen;
+    }
+    if (cancel) {
+        st = {};
+        return std::nullopt;
+    }
+    return std::nullopt;                // dialog still active
+}
+
+
+
+//  "_draw_system_preferences"
+//
+void Editor::_draw_system_preferences(void)
+{
+    static cb::FileDialog dlg{cb::FileDialog::Type::Save};
+    //static FileDialogState saveDlg, loadDlg;
+
+
+    if (ImGui::Button("Save…"))
+        dlg.open();                       // start at current directory
+
+    if (dlg.is_open())
+        if (dlg.draw("SaveDlg")) {        // returns true when finished
+            if (auto path = dlg.result())
+                save_async(*path);        // your own handler
+        }
+
+
+        //ImGui::SameLine(0,20);
+
+
+        //  // ------------------- LOAD -------------------
+        //  if (ImGui::Button("Load…"))
+        //      ImGui::OpenPopup("LoadDlg");
+
+        //  if (ImGui::BeginPopupModal("LoadDlg", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        //  {
+        //      if (auto res = file_dialog(loadDlg, /*save_mode=*/false)) {
+        //          if (res) load_async(*res);        // user clicked OK
+        //          ImGui::CloseCurrentPopup();
+        //      }
+        //      ImGui::EndPopup();
+        //  }
+
+
+
+        // status
+        if (!m_io_msg.empty())
+            ImGui::TextDisabled("%s", m_io_msg.c_str());
     
-    // ImGui::DragFloat2("World extent", &m_world_extent.x,
-    //               10.0f, 100.0f, 5000.0f, "%.0f");
-                  
-    ImGui::NewLine();
-                
+
+    // (existing Canvas/Grid prefs below …)
     return;
 }
 

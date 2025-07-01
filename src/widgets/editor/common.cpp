@@ -415,6 +415,193 @@ void Editor::_clear_all(void)
 
 
 
+
+// *************************************************************************** //
+//
+//
+//      SERIALIZATION...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "make_snapshot"
+//
+EditorSnapshot Editor::make_snapshot(void) const
+{
+    EditorSnapshot      s;
+    s.vertices          = m_vertices;        // shallow copies fine
+    s.paths             = m_paths;
+    s.points            = m_points;
+    s.lines             = m_lines;
+    s.selection         = m_sel;
+    //
+    //
+    //  TODO:   grid, view, mode …
+    return s;
+}
+
+
+//  "load_from_snapshot"
+//
+void Editor::load_from_snapshot(EditorSnapshot && snap)
+{
+    m_vertices  = std::move(snap.vertices);
+    m_paths     = std::move(snap.paths);
+    m_points    = std::move(snap.points);
+    m_lines     = std::move(snap.lines);
+    m_sel       = std::move(snap.selection);
+    //
+    //
+    //  TODO:   grid, view, mode …
+    return;
+}
+
+
+//  "pump_main_tasks"
+//
+void Editor::pump_main_tasks(void)
+{
+    std::vector<std::function<void()>> tasks;
+    {
+        std::lock_guard lk(m_task_mtx);
+        tasks.swap(m_main_tasks);
+    }
+    for (auto& fn : tasks) fn();
+}
+
+
+//  "save_async"
+//
+void Editor::save_async(const std::string& path)
+{
+    m_io_busy = true;
+    auto snap = make_snapshot();
+    std::thread([this, snap = std::move(snap), path]{
+        save_worker(snap, path);
+    }).detach();
+}
+
+
+//  "load_async"
+//
+void Editor::load_async(const std::string& path)
+{
+    m_io_busy = true;
+    std::thread([this, path]{ load_worker(path); }).detach();
+}
+
+
+//  "_draw_io_overlay"
+//
+void Editor::_draw_io_overlay(void)
+{
+    if (!m_io_busy && m_io_last == IoResult::Ok) return;   // nothing to show
+
+    const char* txt = m_io_busy ? "Working…" : m_io_msg.c_str();
+    ImVec2 pad{8,8};
+    ImVec2 size = ImGui::CalcTextSize(txt);
+    ImVec2 pos  = ImGui::GetMainViewport()->Pos;
+    pos.y += ImGui::GetMainViewport()->Size.y - size.y - pad.y*2;
+
+    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+    ImGui::SetNextWindowBgAlpha(0.6f);
+    ImGui::Begin("##io_overlay", nullptr,
+                 ImGuiWindowFlags_NoDecoration |
+                 ImGuiWindowFlags_NoInputs     |
+                 ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::TextUnformatted(txt);
+    ImGui::End();
+}
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "save_worker"
+//
+void Editor::save_worker(EditorSnapshot snap, std::string path)
+{
+    nlohmann::json      j;
+    j["version"]                    = kSaveFormatVersion;
+    j["state"]                      = snap;
+    std::ofstream       os(path, std::ios::binary);
+    IoResult            res         = os ? IoResult::Ok : IoResult::IoError;
+    if (res == IoResult::Ok) os << j.dump(2);
+    // enqueue completion notification
+    {
+        {
+            std::lock_guard lk(m_task_mtx);
+            m_main_tasks.push_back( [this,res,path] {
+                m_io_busy = false;
+                m_io_last = res;
+                m_io_msg  = (res == IoResult::Ok)
+                          ? "Saved to " + path
+                          : "Save failed";
+            } );
+        }
+    }
+    
+    return;
+}
+
+
+//  "load_worker"
+//
+void Editor::load_worker(std::string path)
+{
+    // ---------- read file -------------------------------------------------
+    nlohmann::json  j;
+    std::ifstream   is(path, std::ios::binary);
+    IoResult        res  = is ? IoResult::Ok : IoResult::IoError;
+    EditorSnapshot  snap;
+
+    if (res == IoResult::Ok)
+    {
+        try {
+            is >> j;
+            if (j.at("version").get<uint32_t>() != kSaveFormatVersion)
+                res = IoResult::VersionMismatch;
+            else
+                snap = j.at("state").get<EditorSnapshot>();
+        }
+        catch (...) { res = IoResult::ParseError; }
+    }
+
+    // ---------- enqueue GUI-thread callback -------------------------------
+    {
+        std::lock_guard lk(m_task_mtx);
+        m_main_tasks.push_back(
+            [this, res, snap = std::move(snap), path = std::move(path)]() mutable
+            {
+                m_io_busy = false;            // overlay flag
+
+                if (res == IoResult::Ok) {
+                    load_from_snapshot(std::move(snap));
+                    m_io_msg  = "Loaded \"" + path + "\"";
+                }
+                else {
+                    switch (res) {
+                        case IoResult::IoError:         m_io_msg = "Load I/O error";          break;
+                        case IoResult::ParseError:      m_io_msg = "Load parse error";        break;
+                        case IoResult::VersionMismatch: m_io_msg = "Save-file version mismatch"; break;
+                        default:                        m_io_msg = "Unknown load error";      break;
+                    }
+                }
+                m_io_last = res;
+            });
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //

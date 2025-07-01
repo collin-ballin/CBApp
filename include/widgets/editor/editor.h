@@ -57,6 +57,8 @@
 #include <math.h>
 
 //  0.3     "DEAR IMGUI" HEADERS...
+#include "json.hpp"
+//
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "imgui_internal.h"
@@ -111,6 +113,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
        
+struct      EditorSnapshot;
 struct      Vertex_Tag          {};
 struct      Point_Tag           {};
 struct      Line_Tag            {};
@@ -124,6 +127,14 @@ struct      Hit_Tag             {};
 enum Resident: uint8_t {
     Shape, Selection, Count
 };
+
+
+//  "IoResult"
+//
+enum class IoResult {
+    Ok, IoError, ParseError, VersionMismatch
+};
+
 
 
 //  "Editor"
@@ -143,23 +154,23 @@ public:
         using                           LineID                          = uint32_t;     //    ID<std::uint32_t, Line_Tag>           ;
         using                           PathID                          = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
         using                           ZID                             = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
-        using                           OverlayID                       = OverlayManager::OverlayID;     //    ID<std::uint32_t, Overlay_Tag>        ;
+        using                           OverlayID                       = OverlayManager::OverlayID;
         using                           HitID                           = uint32_t;     //    ID<std::uint32_t, Hit_Tag>            ;
     //
     //                              TYPENAME ALIASES (BASED ON INDEX TYPES):
-        using                           Vertex                          = Vertex_t      <VertexID>                              ;
-        using                           Point                           = Point_t       <PointID>                               ;
-        using                           Line                            = Line_t        <LineID>                                ;
-        using                           Path                            = Path_t        <PathID, VertexID, ZID>                 ;
-        using                           Overlay                         = Overlay_t     <OverlayID>                             ;
-        using                           Hit                             = Hit_t         <HitID>                                 ;
-        using                           PathHit                         = PathHit_t     <PathID, VertexID>                      ;
-        using                           Selection                       = Selection_t   <VertexID, PointID, LineID, PathID>     ;
+        using                           Vertex                          = Vertex_t          <VertexID>                              ;
+        using                           Point                           = Point_t           <PointID>                               ;
+        using                           Line                            = Line_t            <LineID>                                ;
+        using                           Path                            = Path_t            <PathID, VertexID, ZID>                 ;
+        using                           Overlay                         = Overlay_t         <OverlayID>                             ;
+        using                           Hit                             = Hit_t             <HitID>                                 ;
+        using                           PathHit                         = PathHit_t         <PathID, VertexID>                      ;
+        using                           Selection                       = Selection_t       <VertexID, PointID, LineID, PathID>     ;
         //
-        using                           EndpointInfo                    = EndpointInfo;
-        using                           PenState                        = PenState_t    <VertexID>;
-        using                           ShapeState                      = ShapeState_t  <OverlayID>;
-        using                           Clipboard                       = Clipboard_t   <Vertex, Point, Line, Path>;
+        using                           EndpointInfo                    = EndpointInfo_t    <PathID>                                ;
+        using                           PenState                        = PenState_t        <VertexID>                              ;
+        using                           ShapeState                      = ShapeState_t      <OverlayID>                             ;
+        using                           Clipboard                       = Clipboard_t       <Vertex, Point, Line, Path>             ;
 //
 //      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 //
@@ -228,6 +239,10 @@ public:
     void                                save                                (void);
     void                                undo                                (void);
     void                                redo                                (void);
+    //
+    void                                _draw_io_overlay                    (void);
+    void                                save_async                          (const std::string & );
+    void                                load_async                          (const std::string & );
     //
     void                                Begin                               (const char * id = "##EditorCanvas");
     void                                DrawBrowser                         (void);
@@ -429,6 +444,7 @@ private:
     //                              MISC. UTILITIES:
     void                                _draw_controls                      (void);
     void                                _display_canvas_settings            (void);
+    void                                _draw_system_preferences            (void);
     //
     //
     // *************************************************************************** //
@@ -449,6 +465,13 @@ private:
     //
     //                              GLOBAL OPERATIONS:
     void                                _clear_all                          (void);
+    //
+    //                              SERIALIZATION:
+    EditorSnapshot                      make_snapshot                       (void) const;
+    void                                load_from_snapshot                  (EditorSnapshot && );
+    void                                pump_main_tasks                     (void);
+    void                                save_worker                         (EditorSnapshot , std::string );
+    void                                load_worker                         (std::string );
 
 
 
@@ -633,6 +656,18 @@ private:
     //
     //
     // *************************************************************************** //
+    //      SERIALIZATION STUFF...
+    // *************************************************************************** //
+    std::mutex                          m_task_mtx;
+    std::vector<std::function<void()>>  m_main_tasks;
+    std::atomic<bool>                   m_io_busy                       {false};
+    IoResult                            m_io_last                       {IoResult::Ok};
+    std::string                         m_io_msg                        {  };
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
     //      BROWSER STUFF...
     // *************************************************************************** //
     std::string                         WinInfo_uuid                    = "Editor Browser";
@@ -671,7 +706,6 @@ private:
     // *************************************************************************** //
     //      OBJECTS...
     // *************************************************************************** //
-    //
     //                              TOOL STATES:
     PenState                            m_pen;
     ShapeState                          m_shape;
@@ -683,12 +717,6 @@ private:
     mutable BoxDrag                     m_boxdrag;
     MoveDrag                            m_movedrag;
     Clipboard                           m_clipboard;
-    // *************************************************************************** //
-    //                      OLD GRID / CANVAS:
-    //float                       m_zoom                          = 1.0f;
-    //ImVec2                      m_scroll                        = ImVec2( 0.0f,     0.0f    );
-    //
-    //
     // *************************************************************************** //
     //
     //
@@ -826,6 +854,93 @@ private:
 // *************************************************************************** //
 // *************************************************************************** //
 };//    END "EDITOR" CLASS DEFINITION.
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//      SERIALIZATION...
+// *************************************************************************** //
+// *************************************************************************** //
+
+inline static constexpr uint32_t    kSaveFormatVersion      = 1;
+
+
+//  "Vertex"
+//
+//  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( Editor::Vertex,
+//      id, x, y, in_handle, out_handle, kind)
+
+
+//  "Path"
+//
+//  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( Editor::Path,
+//      verts, closed, style,
+//      z_index, locked, visible)
+
+
+// Extend similarly for Point, Line, GridSettings, ViewState …
+//
+struct EditorSnapshot
+{
+    using                       Vertex          = Editor::Vertex        ;
+    using                       Point           = Editor::Point         ;
+    using                       Line            = Editor::Line          ;
+    using                       Path            = Editor::Path          ;
+    using                       Selection       = Editor::Selection     ;
+//
+    std::vector<Vertex>         vertices;
+    std::vector<Path>           paths;
+    std::vector<Point>          points;
+    std::vector<Line>           lines;
+    Selection                   selection;
+//
+    // add grid, view, mode, etc. as needed
+};
+//
+//  "to_json"
+inline void to_json(nlohmann::json& j, const EditorSnapshot& s)
+{
+    j = nlohmann::json{
+        { "vertices",  s.vertices  },
+        { "paths",     s.paths     },
+        { "points",    s.points    },
+        { "lines",     s.lines     },
+        { "selection", s.selection }
+        // add grid / view / mode when you serialize them
+    };
+}
+//
+//  "from_json"
+inline void from_json(const nlohmann::json& j, EditorSnapshot& s)
+{
+    j.at("vertices").get_to (s.vertices );
+    j.at("paths")   .get_to (s.paths    );
+    j.at("points")  .get_to (s.points   );
+    j.at("lines")   .get_to (s.lines    );
+    j.at("selection").get_to(s.selection);
+}
+
+
+//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( EditorSnapshot,
+//    vertices, paths, points, lines, selection)
+    
+    
+    
+
+
+
+
+
+
+
+
+
 
 
 

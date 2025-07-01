@@ -148,22 +148,20 @@ void Editor::Begin(const char * /*id*/)
 {
     const bool              space           = ImGui::IsKeyDown(ImGuiKey_Space);
     const bool              zoom_enabled    = _mode_has(CBCapabilityFlags_Zoom);
-
-
-
-    // ───────────────────────── 1. Canvas size & plot flags
-    m_avail                                 = ImGui::GetContentRegionAvail();
+    //
+    m_avail                                 = ImGui::GetContentRegionAvail();       //  1. Canvas size & plot flags
     m_avail.x                               = std::max(m_avail.x, 50.f);
     m_avail.y                               = std::max(m_avail.y, 50.f);
+    //
+    ImPlotInputMap          backup          = ImPlot::GetInputMap();                //  Adjust ImPlot input map (backup, edit, restore at end)
+    ImPlotInputMap &        map             = ImPlot::GetInputMap();                        //
+    map.Pan                                 = ImGuiMouseButton_Left;                        //
+    map.PanMod                              = space ? 0 : ImGuiMod_Ctrl;                    //  disable pan unless Space
+    map.ZoomMod                             = zoom_enabled ? 0 : ImGuiMod_Ctrl;             //  disable zoom unless mode allows
+    map.ZoomRate                            = 0.10f;                                        //
 
 
-    // ------- Adjust ImPlot input map (backup, edit, restore at end)
-    ImPlotInputMap          backup          = ImPlot::GetInputMap();
-    ImPlotInputMap &        map             = ImPlot::GetInputMap();
-    map.Pan                                 = ImGuiMouseButton_Left;
-    map.PanMod                              = space ? 0 : ImGuiMod_Ctrl;   // disable pan unless Space
-    map.ZoomMod                             = zoom_enabled ? 0 : ImGuiMod_Ctrl; // disable zoom unless mode allows
-    map.ZoomRate                            = 0.10f;
+    this->pump_main_tasks();
 
 
     //  2.  CREATING THE CANVAS/GRID...
@@ -261,6 +259,8 @@ void Editor::Begin(const char * /*id*/)
     ImPlot::GetInputMap() = backup;   // restore map
     
     
+    
+    this->_draw_io_overlay();
     //
     //
     //  show_icon_preview_window();

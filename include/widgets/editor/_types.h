@@ -72,6 +72,8 @@
 #include <math.h>
 
 //  0.3     "DEAR IMGUI" HEADERS...
+#include "json.hpp"
+//
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "imgui_internal.h"
@@ -204,17 +206,102 @@ struct Vertex_t {
     ImVec2      out_handle      = ImVec2(0.0f, 0.0f);   // outgoing Bézier handle (to next vertex)
     AnchorType  kind            = AnchorType::Corner;
 };
+//
+//  "to_json"
+template <typename IdT>
+inline void to_json(nlohmann::json& j, const Vertex_t<IdT>& v)
+{
+    j = {
+        { "id",          v.id },
+        { "x",           v.x  },
+        { "y",           v.y  },
+        { "in_handle",   { v.in_handle.x,  v.in_handle.y } },
+        { "out_handle",  { v.out_handle.x, v.out_handle.y } },
+        { "kind",        v.kind }
+    };
+}
+//
+//  "from_json"
+template <typename IdT>
+inline void from_json(const nlohmann::json& j, Vertex_t<IdT>& v)
+{
+    j.at("id")  .get_to(v.id);
+    j.at("x")   .get_to(v.x);
+    j.at("y")   .get_to(v.y);
+    auto ih = j.at("in_handle");  v.in_handle  = { ih[0], ih[1] };
+    auto oh = j.at("out_handle"); v.out_handle = { oh[0], oh[1] };
+    j.at("kind").get_to(v.kind);
+}
 
-struct PointStyle   { ImU32 color = IM_COL32(0,255,0,255); float radius = 4.0f; bool visible = true; };
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//      POINT:
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "PointStyle"
+//
+struct PointStyle   {
+    ImU32       color       = IM_COL32(0,255,0,255);
+    float       radius      = 4.0f;
+    bool        visible     = true;
+};
+//
+//  "to_json"
+inline void to_json(nlohmann::json& j, const PointStyle& s)
+{
+    j = nlohmann::json{
+        { "color",  s.color   },
+        { "radius", s.radius  },
+        { "visible",s.visible }
+    };
+}
+//
+//  "from_json"
+inline void from_json(const nlohmann::json& j, PointStyle& s)
+{
+    j.at("color" ).get_to(s.color );
+    j.at("radius").get_to(s.radius);
+    j.at("visible").get_to(s.visible);
+}
+
+
 
 
 //  "Point_t"
 //
 template <typename PtID>
 struct Point_t        {
-    uint32_t        v;
+    PtID            v;
     PointStyle      sty{};
 };
+//
+//  "to_json"
+template <typename PtID>
+inline void to_json(nlohmann::json& j, const Point_t<PtID>& p)
+{
+    j = { { "v", p.v },
+          { "sty", p.sty } };
+}
+//
+//  "from_json"
+template <typename PtID>
+inline void from_json(const nlohmann::json& j, Point_t<PtID>& p)
+{
+    j.at("v"  ).get_to(p.v  );
+    j.at("sty").get_to(p.sty);
+}
+
+
 
 
 //  "Line_t"
@@ -225,6 +312,29 @@ struct Line_t         {
     ImU32       color       = IM_COL32(255,255,0,255);
     float       thickness   = 2.f;
 };
+//
+//  "to_json"
+template <typename LID>
+inline void to_json(nlohmann::json& j, const Line_t<LID>& l)
+{
+    j = { { "a", l.a },
+          { "b", l.b },
+          { "color",     l.color },
+          { "thickness", l.thickness } };
+}
+//
+//  "from_json"
+template <typename LID>
+inline void from_json(const nlohmann::json& j, Line_t<LID>& l)
+{
+    j.at("a").get_to(l.a);
+    j.at("b").get_to(l.b);
+    j.at("color"    ).get_to(l.color);
+    j.at("thickness").get_to(l.thickness);
+}
+
+// *************************************************************************** //
+// *************************************************************************** //
 
 
 
@@ -233,6 +343,20 @@ struct Line_t         {
 
 // *************************************************************************** //
 //      2.2.    PATH.
+// *************************************************************************** //
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//      "Path":     -- (polyline / spline / area).
+// *************************************************************************** //
 // *************************************************************************** //
 
 //  "Path"  -- (polyline / spline / area).
@@ -246,6 +370,27 @@ struct PathStyle {
     ImU32 fill_color   = IM_COL32(255,255,255,0);   // default: transparent white
     float stroke_width = 2.0f;
 };
+//
+//  "to_json"
+inline void to_json(nlohmann::json& j, const PathStyle& s)
+{
+    j = nlohmann::json{
+        { "stroke_color", s.stroke_color },
+        { "fill_color",   s.fill_color   },
+        { "stroke_width", s.stroke_width }
+    };
+}
+//
+//  "from_json"
+inline void from_json(const nlohmann::json& j, PathStyle& s)
+{
+    j.at("stroke_color").get_to(s.stroke_color);
+    j.at("fill_color"  ).get_to(s.fill_color  );
+    j.at("stroke_width").get_to(s.stroke_width);
+}
+
+
+
 
 
 //  "Path_t"
@@ -260,15 +405,47 @@ struct Path_t {
     PathStyle               style       = PathStyle();
 //
 // ─────────── NEW ───────────
-    uint32_t                z_index     = Z_FLOOR_USER;
+    ZID                     z_index     = Z_FLOOR_USER;
     bool                    locked      = false;
     bool                    visible     = true;
 };
+//
+//  "to_json"
+template<typename PID, typename VID, typename ZID>
+inline void to_json(nlohmann::json & j, const Path_t<PID, VID, ZID> & p)
+{
+    j = { { "verts",   p.verts  },
+          { "closed",  p.closed },
+          { "style",   p.style  },
+          { "z_index", p.z_index },
+          { "locked",  p.locked },
+          { "visible", p.visible } };
+}
+//
+//  "from_json"
+template<typename PID, typename VID, typename ZID>
+inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
+{
+    j.at("verts"    ).get_to(p.verts );
+    j.at("closed"   ).get_to(p.closed);
+    j.at("style"    ).get_to(p.style );
+    j.at("z_index"  ).get_to(p.z_index);
+    j.at("locked"   ).get_to(p.locked);
+    j.at("visible"  ).get_to(p.visible);
+}
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+
+
 
 
 //  "EndpointInfo"
 //
-struct EndpointInfo { size_t path_idx; bool prepend; };   // prepend==true ↔ first vertex
+template<typename PID>
+struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ first vertex
   
 
 
@@ -322,6 +499,19 @@ struct Interaction {
     ImDrawList *    dl{};
 };
 
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//      SELECTION:
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "Selection_t"
 //
@@ -340,6 +530,45 @@ struct Selection_t {
     }
     inline bool empty() const { return vertices.empty() && points.empty() && lines.empty(); }
 };
+//
+//  "to_json"
+template<typename VID, typename PtID, typename LID, typename PID>
+inline void to_json(nlohmann::json& j,
+                    const Selection_t<VID,PtID,LID,PID>& s)
+{
+    j = { { "vertices",  std::vector<VID>  (s.vertices.begin(), s.vertices.end()) },
+          { "points",    std::vector<PtID> (s.points  .begin(), s.points  .end()) },
+          { "lines",     std::vector<LID>  (s.lines   .begin(), s.lines   .end()) },
+          { "paths",     std::vector<PID>  (s.paths   .begin(), s.paths   .end()) } };
+}
+//
+//  "from_json"
+template<typename VID, typename PtID, typename LID, typename PID>
+inline void from_json(const nlohmann::json& j,
+                      Selection_t<VID,PtID,LID,PID>& s)
+{
+    std::vector<VID >  vs;  j.at("vertices").get_to(vs);
+    std::vector<PtID>  ps;  j.at("points"  ).get_to(ps);
+    std::vector<LID >  ls;  j.at("lines"   ).get_to(ls);
+    std::vector<PID >  pa;  j.at("paths"   ).get_to(pa);
+
+    s.vertices.clear();  s.vertices.insert(vs.begin(), vs.end());
+    s.points  .clear();  s.points  .insert(ps.begin(), ps.end());
+    s.lines   .clear();  s.lines   .insert(ls.begin(), ls.end());
+    s.paths   .clear();  s.paths   .insert(pa.begin(), pa.end());
+}
+
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
@@ -565,7 +794,6 @@ struct OverlayCFG {
 //
 template<typename T = uint32_t>
 struct Overlay_t {
-    //static_assert(std::is_integral_v<T>, "Template type parameter, <T>, must be an integer type");
     using                       OverlayID       = T;
 //
     OverlayID                   id              = 0;
@@ -573,6 +801,12 @@ struct Overlay_t {
     ImGuiWindowFlags            flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
     OverlayCFG                  cfg{};
 };
+
+
+
+
+
+
 
 
 
