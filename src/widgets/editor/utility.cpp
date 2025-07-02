@@ -474,14 +474,18 @@ void Editor::_draw_system_preferences(void)
     //static FileDialogState saveDlg, loadDlg;
 
 
-    if (ImGui::Button("Save…"))
-        dlg.open();                       // start at current directory
+    if ( ImGui::Button("Save") ) {
+        dlg.open("./configs", "settings", ".json");
+        //dlg.open();                       // start at current directory
+    }
 
-    if (dlg.is_open())
-        if (dlg.draw("SaveDlg")) {        // returns true when finished
-            if (auto path = dlg.result())
-                save_async(*path);        // your own handler
+    if ( dlg.is_open() )
+    {
+        if ( dlg.draw("SaveDlg") ) {        // returns true when finished
+            if ( auto path = dlg.result() )
+                save_async( path->string() );        // your own handler
         }
+    }
 
 
         //ImGui::SameLine(0,20);
@@ -503,7 +507,7 @@ void Editor::_draw_system_preferences(void)
 
 
         // status
-        if (!m_io_msg.empty())
+        if ( !m_io_msg.empty() )
             ImGui::TextDisabled("%s", m_io_msg.c_str());
     
 

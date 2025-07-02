@@ -62,40 +62,50 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-inline constexpr float FILE_DIALOG_WIDTH_FRAC  = 0.6f;   // 60 % of viewport
-inline constexpr float FILE_DIALOG_HEIGHT_FRAC = 0.8f;   // 60 % of viewport
+inline static constexpr const char *    EMPTY_STRING                        = "--";
+inline static constexpr const char *    DIRECTORY_PREFIX                    = "";       //  "[D] "
+inline static constexpr const char *    FILENAME_PREFIX                     = "    ";   //  "    "
+inline static constexpr const char *    DIR_TITLE                           = "Folder";
+//
+inline static constexpr float           FILE_DIALOG_WIDTH_FRAC              = 0.5f;     // 60 % of viewport
+inline static constexpr float           FILE_DIALOG_HEIGHT_FRAC             = 0.5f;     // 60 % of viewport
+inline static constexpr int             FILE_DIALOG_BREADCRUMB_CHARS        = 15;       // NEW
 
 
 class FileDialog {
 public:
-    enum class Type { Open, Save };
-
-    explicit FileDialog(Type type = Type::Open) noexcept;
-    ~FileDialog();
-
-    void open(const std::filesystem::path& start_dir =
-              std::filesystem::current_path()) noexcept;
-
-    bool draw(const char* popup_id = "FileDialog");          // call every frame
-    [[nodiscard]] bool is_open() const noexcept;
-    [[nodiscard]] std::optional<std::filesystem::path> result() const noexcept;
-
-    void set_filters(std::vector<std::string> patterns) noexcept; // {"*.json", …}
+    enum class                      Type                        { Open, Save };
+    //
+    explicit                        FileDialog                  (Type type = Type::Open) noexcept;
+                                    ~FileDialog                 (void);
+    void                            open                        (
+        const std::filesystem::path &    start_dir       = std::filesystem::current_path(),
+        std::string_view                 default_name    = {},
+        std::string_view                 force_ext       = {}   ) noexcept;
+    //
+    bool                            draw                        (const char* popup_id = "FileDialog");          // call every frame
+    [[nodiscard]] bool              is_open                     (void) const noexcept;
+    [[nodiscard]] std::optional<std::filesystem::path>
+                                    result                      (void) const noexcept;
+    void                            set_filters                 (std::vector<std::string> patterns) noexcept; // {"*.json", …}
 
 private:
     struct state_t;
-
-    /* helpers defined in .cpp */
-    static void refresh_listing(state_t& s);
-    static void push_history(state_t& s, const std::filesystem::path& new_dir);
-    static void draw_breadcrumb_bar(state_t& s);
-    static void draw_nav_buttons(state_t& s);
-    static void handle_keyboard_nav(state_t& s);
-    static void draw_file_list(state_t& s, const char* list_id);
-    static void draw_file_table(state_t& s, const char* table_id);   // NEW
-
-    Type                         m_type;
-    std::unique_ptr<state_t>     m_state;
+    //
+    void                            on_accept                   (void);
+    void                            on_cancel                   (void);
+    //
+    //  Helpers defined in .cpp...
+    static void                     refresh_listing             (state_t & s);
+    static void                     push_history                (state_t & s, const std::filesystem::path & new_dir);
+    static void                     draw_breadcrumb_bar         (state_t & s);
+    static void                     draw_nav_buttons            (state_t & s);
+    static void                     handle_keyboard_nav         (state_t & s);
+    static void                     draw_file_list              (state_t & s, const char * list_id);
+    static void                     draw_file_table             (state_t & s, const char * table_id);   // NEW
+    //
+    Type                            m_type;
+    std::unique_ptr<state_t>        m_state;
 };
 
 
