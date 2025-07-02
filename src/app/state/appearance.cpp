@@ -22,7 +22,7 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 
 //  CUSTOM APP COLOR STYLES...
-static void             set_style_laser610nm            (void);
+static void             set_style_laser410nm            (void);
 //
 //  IMGUI APP COLOR STYLES...
 static void             ImGui_StyleColorsLight          (ImGuiStyle * dst = NULL);
@@ -59,7 +59,7 @@ void AppState::SetAppColorStyle(const AppColorStyle_t style)
     //
     //  EXTRA CUSTOM STYLES:
         case AppColorStyle_t::Laser_410NM :         {
-            set_style_laser610nm();
+            set_style_laser410nm();
             break;
         }
     //
@@ -394,9 +394,9 @@ void AppState::SetLightMode(void) {
 
 
 
-//  "set_style_laser610nm"
+//  "set_style_laser410nm"
 //
-static void set_style_laser610nm(void)
+static void set_style_laser410nm(void)
 {
     ImGuiStyle &style = ImGui::GetStyle();
     style.Alpha								= 1.0f;

@@ -70,26 +70,19 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "get_app_title"
+//  1.0     CREATE THE APPLICATION TITLE...
 //
-//  inline constexpr const std::string_view get_app_title(void) {
-//      constexpr std::string_view  title       = "CBApp (";
-//      constexpr std::string_view  version     = std::string_view(__CBAPP_VERSION__);
-//      constexpr std::string_view  build       = std::string_view(__CBAPP_BUILD__);
-//
-//      //cblib::utl::strcat_string_view_cx<title, version, build, >;
-//
-//      constexpr std::string_view  result      = cblib::utl::strcat_string_view_cx< title, version, build >;
-//      return result;
-//      //return std::string_view("CBApp (") + std::string_view(version) + " [" + std::string(build) + "])";
-//  }
+#ifdef __CBAPP_BUILD_CCOUNTER_APP__
+    # define __CBAPP_APP_TITLE__ "Single Photon Lab (" __CBAPP_VERSION__ " [" __CBAPP_BUILD__ "] WIP)"
+# else
+    # define __CBAPP_APP_TITLE__ "CBApp (" __CBAPP_VERSION__ " [" __CBAPP_BUILD__ "] WIP)"
+#endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
 
 
 
 //      1.0
-//  inline constexpr const char *           _CBAPP_APP_NAME []                  = __CBAPP_VERSION__ + __CBAPP_BUILD__;
-//  static inline constexpr std::string_view        _CBAPP_APP_TITLE_IMPL           =  get_app_title();
-inline constexpr const char *                   _CBAPP_APP_TITLE                =  "CBApp (V0.3.0 WIP)";    //std::string( _CBAPP_APP_TITLE_IMPL );
+inline constexpr const char *               _CBAPP_APP_TITLE                =  __CBAPP_APP_TITLE__;
+//inline constexpr const char *               _CBAPP_APP_TITLE                =  "CBApp (V0.4.0 WIP)";    //std::string( _CBAPP_APP_TITLE_IMPL );
 //
 //
 //      1.1

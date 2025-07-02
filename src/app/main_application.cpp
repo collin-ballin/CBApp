@@ -34,10 +34,6 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
                           [[maybe_unused]]   ImGuiWindowFlags    flags)
 {
     static bool                     show_config_info    = false;
-    static auto                     now                 = ImGui::GetTime();
-    static ImGuiInputFlags          save_key_flags      = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
-    static const ImGuiKeyChord      SAVE_KEY            = ImGuiMod_Ctrl | ImGuiKey_S;
-            
 
     ImGui::OpenPopup(uuid);
     
@@ -48,6 +44,8 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
     if (ImGui::BeginPopupModal(uuid, p_open, ImGuiWindowFlags_AlwaysAutoResize))
     {
 
+        //  1.  If [ESC], CLOSE WINDOW...
+        //if ( ImGui::IsKeyPressed( ImGuiKey_Escape ) )       { *p_open = false; }
         
         
         ImGui::Text("CBApp Version %s (%s)", __CBAPP_VERSION__, __CBAPP_BUILD__);
@@ -138,6 +136,7 @@ void App::get_build_info(void) const
         ImGui::LogToClipboard();
         ImGui::LogText("```\n");    //  Back quotes will make text appears without formatting when pasting on GitHub
     }
+    
     
         this->get_info1();
     

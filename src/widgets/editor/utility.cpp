@@ -470,26 +470,31 @@ file_dialog(FileDialogState& st, bool save_mode)
 //
 void Editor::_draw_system_preferences(void)
 {
-    static cb::FileDialog dlg{cb::FileDialog::Type::Save};
+    static cb::FileDialog       save_dialog     {cb::FileDialog::Type::Save};
+    
     //static FileDialogState saveDlg, loadDlg;
 
 
+    //  1.  SAVE DIALOGUE...
     if ( ImGui::Button("Save") ) {
-        dlg.open("./configs", "settings", ".json");
-        //dlg.open();                       // start at current directory
+        save_dialog.open("./configs", "settings", ".json");
     }
-
-    if ( dlg.is_open() )
+    //
+    if ( save_dialog.is_open() )
     {
-        if ( dlg.draw("SaveDlg") ) {        // returns true when finished
-            if ( auto path = dlg.result() )
+        if ( save_dialog.draw("Save Editor Session") ) {        // returns true when finished
+            if ( auto path = save_dialog.result() )
                 save_async( path->string() );        // your own handler
         }
     }
 
 
-        //ImGui::SameLine(0,20);
+    ImGui::SameLine(0,20);
 
+
+    //  2.  LOAD DIALOGUE...
+
+    
 
         //  // ------------------- LOAD -------------------
         //  if (ImGui::Button("Load…"))

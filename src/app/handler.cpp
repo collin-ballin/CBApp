@@ -187,9 +187,9 @@ void App::install_signal_handlers(void)
     std::signal(                SIGHUP,                 on_reload               );      //  Reload config.
     std::signal(                SIGPIPE,                SIG_IGN                 );      //  Ignore broken‐pipe errors
     
-    
-    
-    //  …add SIGUSR1/SIGUSR2 as custom hooks if desired…
+    //  ...add SIGUSR1/SIGUSR2 as custom hooks if desired, etc...
+  
+  
   
 // *************************************************************************** //
 // *************************************************************************** //
@@ -218,18 +218,36 @@ void App::install_signal_handlers(void)
 //  HANDLER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-
-//{ App::instance().enqueue_signal(CBSignalFlags_Shutdown); }
-
-
+    
+/// @def        _CBAPP_LOG_SIGNAL(WHAT, SIGNAL, ACTION, OSTREAM)
+/// @brief      Helper for consistent signal-handler error messages.
+/// @note       USAGE:          _CBAPP_HANDLER_LOG(what, signal, action, stream)
+///             EXPANDS TO:     "invoked handler <__func__()> caught signal SIGNAL:\n\tWHAT\n\tACTION\n"
+///
+#define _CBAPP_LOG_SIGNAL(SIGNAL, WHAT, ACTION, OSTREAM)                    \
+    std::fprintf( (OSTREAM),                                                \
+        "handler <%s()> invoked with signal %d:\n\t%s.\n\t%s.\n",           \
+        __func__, (SIGNAL), (WHAT), (ACTION) );
+        
+        
+/// @def        _CBAPP_LOG_HANDLER(WHAT, SIGNAL, ACTION, OSTREAM)
+/// @brief      ...
+/// @note       USAGE: ...
+///
+#define _CBAPP_LOG_HANDLER(WHAT, ACTION, OSTREAM)                           \
+    std::fputs(                                                             \
+        "invoked signal handler < __func__ ()>:\n\t"                        \
+        WHAT ".\n\t" ACTION ".\n", (OSTREAM)                                \
+    );
+    
+    
+    
 //  "on_new_handler"
 //
 void on_new_handler(void)
 {
     //  1.  Report the signal handler Tell the user / CI what happened (async-signal-safe: fputs)
-    std::fputs( "invoked signal handler <on_new_handler()>:\n\t"
-                "fatal error has occured during call to [operator new].\n\t"
-                "requesting application shutdown.\n", stderr );
+    _CBAPP_LOG_HANDLER("fatal error occured during call to [operator new]", "terminating application", stderr)
 
     //  2.  Request application to terminate at the next frame boundary.
     App::instance().enqueue_signal( app::CBSignalFlags_NewFailure );
@@ -239,12 +257,15 @@ void on_new_handler(void)
     //      (1)     Catch it in a high-level try/catch around App::run().
     //      (2)     OR, simply call  std::abort()  for an immediate abort.
     //
+    return;
 }
 
 
 //  "on_shutdown"
 //
 void on_shutdown([[maybe_unused]] int sig) {
+    _CBAPP_LOG_SIGNAL(sig, "unknown event has occured", "requesting application shutdown", stderr)
+    App::instance().enqueue_signal( app::CBSignalFlags_Shutdown );
     return;
 }
 
@@ -252,6 +273,8 @@ void on_shutdown([[maybe_unused]] int sig) {
 //  "on_reload"
 //
 void on_reload([[maybe_unused]] int sig) {
+    _CBAPP_LOG_SIGNAL(sig, "unknown event has occured", "requesting application reload", stdout)
+    App::instance().enqueue_signal( app::CBSignalFlags_ReloadCfg );
     return;
 }
 
@@ -299,6 +322,11 @@ BOOL WINAPI console_ctrl_handler(DWORD type)
 // *************************************************************************** //
 // *************************************************************************** //
 #endif  //  _WIN32  //
+//
+//
+//
+#undef _CBAPP_LOG_HANDLER
+#undef _CBAPP_LOG_SIGNAL
 
 
 

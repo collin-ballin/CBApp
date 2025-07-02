@@ -6,6 +6,7 @@ space:= $(empty) $(empty)
 spaceplus:= $(empty)\ $(empty)
 
 TARGETS += $(subst $(space),$(spaceplus),$(wildcard /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/CMakeLists.txt))
+TARGETS += $(subst $(space),$(spaceplus),$(wildcard /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/cmake/project_meta.cmake))
 TARGETS += $(subst $(space),$(spaceplus),$(wildcard /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/cmake/version.hpp.in))
 TARGETS += $(subst $(space),$(spaceplus),$(wildcard /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/CMakeFiles/4.0.1/CMakeCXXCompiler.cmake))
 TARGETS += $(subst $(space),$(spaceplus),$(wildcard /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/other/CMakeFiles/4.0.1/CMakeSystem.cmake))

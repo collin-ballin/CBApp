@@ -68,7 +68,7 @@
      + defined(__CBAPP_BUILD_FDTD_APP__)        \
      + defined(__CBAPP_BUILD_EDITOR_APP__)      \
     ) > 1
-#   error "Cannot build with more than one __CBAPP_BUILD_APP__ defined (look in \"_config.h\")."
+#   error "Cannot build with more than one __CBAPP_BUILD_APP__ macro defined (look in \"cbapp_config.h\")"
 #endif
 
 
@@ -99,7 +99,7 @@
 
 #if !( defined(_WIN32) || defined(MINGW) )
     # define     CBAPP_DISABLE_TERMINAL_COLORS              1           //  DISABLE ANSI Colors for LOGGER OUTPUT.
-#endif      //  _WIN32 || MINGW
+#endif      //  _WIN32 || MINGW  //
 
 
 

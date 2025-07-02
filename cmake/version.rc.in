@@ -23,7 +23,7 @@ VS_VERSION_INFO VERSIONINFO
          BEGIN
              VALUE "CompanyName",      "@COMPANY_NAME@"
              VALUE "ProductName",      "CBApp"
-             VALUE "FileDescription",  "Multi-purpose application. Electrodynamic simulator using the FDTD method"
+             VALUE "FileDescription",  "Multi-purpose, scientific application for use in computational physics simulation, laboratory work in the physical sciences, and more."
              VALUE "FileVersion",      "@PROJECT_VERSION@.@BUILD_NUMBER@"
              VALUE "ProductVersion",   "@PROJECT_VERSION@.@BUILD_NUMBER@"
              VALUE "InternalName",     "CBApp_Win64.exe"

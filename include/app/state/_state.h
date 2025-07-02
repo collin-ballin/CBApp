@@ -174,7 +174,7 @@ public:
         const char *    name        = this->current_task();
         bool            match       = false;
         
-        if ( strncmp(name, vis, 16) == 0 ) [[likely]] return; //  Bail out early if same applet is in use.
+        if ( strncmp(name, vis, 32) == 0 ) [[likely]] return; //  Bail out early if same applet is in use.
         
         
         for (size_t i = 0; !match && i < static_cast<size_t>(Applet::Count); ++i) {
@@ -270,7 +270,12 @@ public:
     //  2.5             MISC. INFORMATION...
     // *************************************************************************** //
     const char *                        m_glsl_version              = nullptr;
+//
+#if defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__) || defined(__CBAPP_DEBUG__)
     LogLevel                            m_LogLevel                  = LogLevel::Debug;
+# else
+    LogLevel                            m_LogLevel                  = LogLevel::Error;
+#endif  //  __CBLIB_RELEASE_WITH_DEBUG_INFO__ || __CBAPP_DEBUG__  //
     //
     //                      GLFW AND HOST WINDOW STUFF:
     ImGuiConfigFlags                    m_io_flags                  = ImGuiConfigFlags_None | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;

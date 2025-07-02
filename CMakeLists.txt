@@ -28,8 +28,17 @@ cmake_minimum_required(VERSION 3.10)
 #   0.  PROJECT + GLOBAL VERSION...
 ########################################################################
 ########################################################################
+
+#       0.1.    INCLUDE ADDITIONAL CMAKE RESOURCES...
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/project_meta.cmake)
+#include(${CMAKE_CURRENT_LIST_DIR}/../cmake/project_meta.cmake)
+
+
 #   Bump the semantic version here when you cut a *feature* release.
-project(CBApp VERSION 0.4.0 LANGUAGES CXX)
+project(CBApp VERSION ${CBAPP_VERSION} LANGUAGES CXX)
+#project(CBApp VERSION 0.4.0 LANGUAGES CXX)
+
+
 
 #   Derive a monotonically increasing build number (Git commit count).
 #   Fallback to 1 if Git is unavailable (e.g. first CI checkout).

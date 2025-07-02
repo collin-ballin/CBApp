@@ -161,8 +161,7 @@ void MenuBar::disp_file_menubar(void)
     //  3.  "Save" SUB-MENU...
     ImGui::Separator();
     if (ImGui::MenuItem("Save",                     "CTRL+S")) {
-        io.AddKeyEvent(ImGuiMod_Ctrl,   true);
-        io.AddKeyEvent(ImGuiKey_S,      true);
+        io.AddKeyEvent(ImGuiMod_Ctrl, true); io.AddKeyEvent(ImGuiKey_S, true);
     }
     if (ImGui::MenuItem("Save As...",               nullptr))       { }
     
@@ -193,23 +192,27 @@ void MenuBar::disp_edit_menubar(void)
 {
     ImGuiIO& io = ImGui::GetIO();
     
-    //  1.  "Paste" SUB-MENU...
-    if (ImGui::MenuItem("Undo",             "CTRL+Z"))          { io.AddKeyEvent(ImGuiKey_LeftCtrl,true); io.AddKeyEvent(ImGuiKey_Z,true); }
-    if (ImGui::MenuItem("Redo",             "CTRL+SHIFT+Z"))    { }
+    //  1.  UNDO / REDO...
+    if (ImGui::MenuItem("Undo",                             "CTRL+Z"))
+    { io.AddKeyEvent(ImGuiMod_Shift,true);   io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
+    
+    if (ImGui::MenuItem("Redo",                             "SHIFT+CTRL+Z"))
+    { io.AddKeyEvent(ImGuiMod_Shift,true);   io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
     
     
-    //  2.  "Paste" SUB-MENU...
+    
+    //  2.  CUT / COPY...
     ImGui::Separator();
-    if (ImGui::MenuItem("Cut",              nullptr))           { }
-    if (ImGui::MenuItem("Copy",             "CTRL+C"))          { }
+    if (ImGui::MenuItem("Cut",                              nullptr))           { }
+    if (ImGui::MenuItem("Copy",                             "CTRL+C"))          { }
+    
     
     
     //  3.  "Paste" SUB-MENU...
     if (ImGui::BeginMenu("Paste")) {
-        ImGui::MenuItem("Paste",            "CTRL+V",           nullptr);
-        ImGui::MenuItem("Paste Special",    "?+CTRL+V",         nullptr);
-        ImGui::MenuItem("Paste and Preserve Formatting",
-                                            "CTRL+ALT+V",       nullptr);
+        ImGui::MenuItem("Paste",                            "CTRL+V",           nullptr);
+        ImGui::MenuItem("Paste Special",                    "SHIFT+CTRL+V",     nullptr);
+        ImGui::MenuItem("Paste and Preserve Formatting",    "CTRL+ALT+V",       nullptr);
         ImGui::EndMenu();
     }
     
