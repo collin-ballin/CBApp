@@ -48,7 +48,7 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
         //if ( ImGui::IsKeyPressed( ImGuiKey_Escape ) )       { *p_open = false; }
         
         
-        ImGui::Text("CBApp Version %s (%s)", __CBAPP_VERSION__, __CBAPP_BUILD__);
+        ImGui::Text("CBApp Version v%s [%s] WIP", __CBAPP_VERSION__, __CBAPP_BUILD__);
         ImGui::Text("Developed by Collin Andrew Bond  (c)  2024-2025");
 
 

@@ -392,104 +392,60 @@ void Editor::_draw_controls(void)
 }
 
 
-
-struct FileDialogState {
-    std::filesystem::path cwd = std::filesystem::current_path();
-    std::string           name_buf;          // editable file name
-    int                   selected = -1;     // index in entries[]
-    std::vector<std::filesystem::directory_entry> entries;
-};
-
-/// Call inside a modal popup. Returns chosen path on OK, std::nullopt on cancel.
-inline std::optional<std::string>
-file_dialog(FileDialogState& st, bool save_mode)
-{
-    // refresh listing if first time or cwd changed
-    if (st.entries.empty() || !std::filesystem::exists(st.cwd)) {
-        st.cwd = std::filesystem::current_path();
-    }
-    if (st.entries.empty()) {
-        st.entries.clear();
-        for (auto& e : std::filesystem::directory_iterator(st.cwd))
-            st.entries.push_back(e);
-        std::sort(st.entries.begin(), st.entries.end(),
-                  [](auto& a, auto& b){ return a.path().filename() < b.path().filename(); });
-    }
-
-    ImGui::TextUnformatted(st.cwd.string().c_str());
-    ImGui::Separator();
-
-    ImGui::BeginChild("##file_list", ImVec2(0, 200), true);
-    if (ImGui::Selectable("..", false))
-        st.cwd = st.cwd.parent_path(), st.entries.clear(), st.selected = -1;
-
-    for (int i = 0; i < (int)st.entries.size(); ++i) {
-        const auto& e = st.entries[i];
-        bool is_dir   = e.is_directory();
-        std::string label = is_dir ? "[D] " : "    ";
-        label += e.path().filename().string();
-
-        if (ImGui::Selectable(label.c_str(), st.selected == i)) {
-            st.selected = i;
-            if (!is_dir) st.name_buf = e.path().filename().string();
-        }
-        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0) && is_dir) {
-            st.cwd = e;
-            st.entries.clear();
-            st.selected = -1;
-        }
-    }
-    ImGui::EndChild();
-
-    // filename field
-    ImGui::InputText("File name", &st.name_buf);
-
-    // buttons
-    bool ok = false, cancel = false;
-    if (ImGui::Button(save_mode ? "Save" : "Open"))
-        ok = true;
-    ImGui::SameLine();
-    if (ImGui::Button("Cancel"))
-        cancel = true;
-
-    if (ok && !st.name_buf.empty()) {
-        auto chosen = (st.cwd / st.name_buf).string();
-        st = {};                         // reset for next time
-        return chosen;
-    }
-    if (cancel) {
-        st = {};
-        return std::nullopt;
-    }
-    return std::nullopt;                // dialog still active
-}
-
-
-
 //  "_draw_system_preferences"
 //
 void Editor::_draw_system_preferences(void)
 {
-    static cb::FileDialog       save_dialog     {cb::FileDialog::Type::Save};
-    
-    //static FileDialogState saveDlg, loadDlg;
+    using                       Type            = cb::FileDialog::Type;
+    using                       Initializer     = cb::FileDialog::Initializer;
+    static Initializer          save_data       = {
+        /* starting_dir       = */  std::filesystem::current_path(),
+        /* default_filename   = */  "canvas settings",
+        /* required_extension = */  ".json",
+        /* valid_extensions   = */  {".json", ".txt"}
+    };
+    static Initializer          open_data       = {
+        /* starting_dir       = */  std::filesystem::current_path(),
+        /* default_filename   = */  "",
+        /* required_extension = */  "",
+        /* valid_extensions   = */  {".json", ".txt"}
+    };
+    static cb::FileDialog       dialog;
+
 
 
     //  1.  SAVE DIALOGUE...
     if ( ImGui::Button("Save") ) {
-        save_dialog.open("./configs", "settings", ".json");
+        dialog.initialize(Type::Save, save_data );
     }
     //
-    if ( save_dialog.is_open() )
+    if ( dialog.is_open() )
     {
-        if ( save_dialog.draw("Save Editor Session") ) {        // returns true when finished
-            if ( auto path = save_dialog.result() )
+        if ( dialog.Begin("Save Editor Session") ) {        // returns true when finished
+            if ( auto path = dialog.result() )
                 save_async( path->string() );        // your own handler
         }
     }
 
 
     ImGui::SameLine(0,20);
+    
+    
+    //  2.  LOAD DIALOGUE...
+    if ( ImGui::Button("Open") ) {
+        dialog.initialize(Type::Open, open_data );
+    }
+    //
+    if ( dialog.is_open() )
+    {
+        if ( dialog.Begin("Load session from file") ) {        // returns true when finished
+            if ( auto path = dialog.result() )
+                load_async( path->string() );        // your own handler
+        }
+    }
+
+
+
 
 
     //  2.  LOAD DIALOGUE...

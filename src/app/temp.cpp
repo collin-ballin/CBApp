@@ -1126,10 +1126,10 @@ void ShowCustomRendering([[maybe_unused]] const char *          uuid,
             draw_list->PushClipRect(canvas_p0, canvas_p1, true);
             if (opt_enable_grid)
             {
-                const float GRID_STEP = 64.0f;
-                for (float x = fmodf(scrolling.x, GRID_STEP); x < canvas_sz.x; x += GRID_STEP)
+                const float LOCAL_GRID_STEP = 64.0f;
+                for (float x = fmodf(scrolling.x, LOCAL_GRID_STEP); x < canvas_sz.x; x += LOCAL_GRID_STEP)
                     draw_list->AddLine(ImVec2(canvas_p0.x + x, canvas_p0.y), ImVec2(canvas_p0.x + x, canvas_p1.y), IM_COL32(200, 200, 200, 40));
-                for (float y = fmodf(scrolling.y, GRID_STEP); y < canvas_sz.y; y += GRID_STEP)
+                for (float y = fmodf(scrolling.y, LOCAL_GRID_STEP); y < canvas_sz.y; y += LOCAL_GRID_STEP)
                     draw_list->AddLine(ImVec2(canvas_p0.x, canvas_p0.y + y), ImVec2(canvas_p1.x, canvas_p0.y + y), IM_COL32(200, 200, 200, 40));
             }
             for (int n = 0; n < points.Size; n += 2)

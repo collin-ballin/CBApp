@@ -136,20 +136,34 @@ void AppState::log_startup_info(void) noexcept
 {
     IM_ASSERT( m_notes.size() == 1 && "\"S.m_notes\" should have 1 timestamp at this point");
 
-    Timestamp_t         start_time      = cblib::utl::get_timestamp();
-    auto                dt              = cblib::utl::format_elapsed_timestamp(start_time - m_notes[0].first);
-    auto                startup_log     = std::format("PROGRAM BOOT INFO...\n"
-        "Spawn          : {}\n"
-        "Initialized    : {}\n"
-        "Load Time      : {}\n",
+    Timestamp_t         start_time              = cblib::utl::get_timestamp();
+    auto                dt                      = cblib::utl::format_elapsed_timestamp(start_time - m_notes[0].first);
+    auto                startup_info_log        = std::format("PROGRAM BOOT INFO...\n"
+        "Spawn                      : {}\n"
+        "Initialized                : {}\n"
+        "Load Time                  : {}\n"
+        "Total Persistent Windows   : {}\n"
+        "Total Application Fonts    : {}",
         m_notes[0].first,
         start_time,
-        dt
+        dt,
+        this->m_windows.data.size(),
+        this->m_fonts.data.size()
+    );
+    this->m_notes.push_back( std::make_pair(start_time, "Program started ({})") );
+    auto                startup_debug_log       = std::format("PROGRAM BOOT DEBUG-INFO...\n"
+        "Start Task                 : {}\n"
+        "Start App Color Style      : {}\n"
+        "Start Plot Color Style     : {}",
+        this->current_task(),
+        current_app_color_style(),
+        current_plot_color_style()
     );
     
-    this->m_notes.push_back( std::make_pair(start_time, "Program started ({})") );
     this->m_logger.notify( "PROGRAM BOOTED SUCCESSFULLY" );
-    CB_LOG( LogLevel::Info, startup_log );
+    CB_LOG( LogLevel::Info,     startup_info_log    );
+    CB_LOG( LogLevel::Debug,    startup_debug_log   );
+    
 
     return;
 }

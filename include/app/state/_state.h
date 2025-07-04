@@ -160,6 +160,17 @@ public:
     inline const char *                 current_task                (void) const
     {  return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str();  }
 
+    //  "current_app_color_style"
+    inline const char *                 current_app_color_style     (void) const
+    {  return this->m_app_color_style_names[ static_cast<size_t>(this->m_current_app_color_style) ];  }
+
+    //  "current_plot_color_style"
+    inline const char *                 current_plot_color_style    (void) const
+    {  return this->m_plot_color_style_names[ static_cast<size_t>(this->m_current_plot_color_style) ];  }
+    
+
+
+
     //  "GetDockNodeVisText"
     inline const char *                 GetDockNodeVisText          (const ImGuiDockNode * node)
     {
@@ -217,7 +228,11 @@ public:
     //  2.2             SUB-STATE INFORMATION...
     // *************************************************************************** //
     Applet                              m_current_task;
+#ifndef __CBAPP_BUILD_CCOUNTER_APP__
     AppColorStyle_t                     m_current_app_color_style       = AppColorStyle_t::Default;
+# else
+    AppColorStyle_t                     m_current_app_color_style       = AppColorStyle_t::Laser_410NM;
+#endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
     PlotColorStyle_t                    m_current_plot_color_style      = PlotColorStyle_t::Default;
     
     // *************************************************************************** //
@@ -269,15 +284,16 @@ public:
     // *************************************************************************** //
     //  2.5             MISC. INFORMATION...
     // *************************************************************************** //
-    const char *                        m_glsl_version              = nullptr;
 //
 #if defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__) || defined(__CBAPP_DEBUG__)
     LogLevel                            m_LogLevel                  = LogLevel::Debug;
 # else
     LogLevel                            m_LogLevel                  = LogLevel::Error;
 #endif  //  __CBLIB_RELEASE_WITH_DEBUG_INFO__ || __CBAPP_DEBUG__  //
-    //
+
+
     //                      GLFW AND HOST WINDOW STUFF:
+    const char *                        m_glsl_version              = nullptr;
     ImGuiConfigFlags                    m_io_flags                  = ImGuiConfigFlags_None | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
     ImGuiViewport *                     m_main_viewport             = nullptr;
     GLFWwindow *                        m_glfw_window               = nullptr;

@@ -237,6 +237,7 @@ public:
     //  2.              PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
     void                                save                                (void);
+    void                                open                                (void);
     void                                undo                                (void);
     void                                redo                                (void);
     //
@@ -277,6 +278,8 @@ private:
     void                                _handle_remove_anchor               ([[maybe_unused]] const Interaction & );
     void                                _handle_edit_anchor                 ([[maybe_unused]] const Interaction & );
     void                                _handle_overlays                    ([[maybe_unused]] const Interaction & );
+    //
+    void                                _handle_io                          (void);
     //
     //
     // *************************************************************************** //
@@ -663,6 +666,27 @@ private:
     std::atomic<bool>                   m_io_busy                       {false};
     IoResult                            m_io_last                       {IoResult::Ok};
     std::string                         m_io_msg                        {  };
+    //
+    //
+    //
+    std::atomic<bool>                   m_sdialog_open                  = {false};
+    std::atomic<bool>                   m_odialog_open                  = {false};
+    //
+    cb::FileDialog::Initializer         m_SAVE_DIALOG_DATA              = {
+        /* starting_dir       = */  std::filesystem::current_path(),
+        /* default_filename   = */  "canvas settings",
+        /* required_extension = */  ".json",
+        /* valid_extensions   = */  {".json", ".txt"}
+    };
+    cb::FileDialog::Initializer         m_OPEN_DIALOG_DATA              = {
+        /* starting_dir       = */  std::filesystem::current_path(),
+        /* default_filename   = */  "",
+        /* required_extension = */  "",
+        /* valid_extensions   = */  {".json", ".txt"}
+    };
+    cb::FileDialog                      m_save_dialog;
+    cb::FileDialog                      m_open_dialog;
+    
     // *************************************************************************** //
     //
     //

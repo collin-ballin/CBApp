@@ -63,6 +63,7 @@ target_compile_options(cb_warnings INTERFACE
 #
     -Wno-deprecated-enum-enum-conversion
     -Wno-misleading-indentation
+    -Wno-format-zero-length
     -Wno-sign-compare)
 
 

@@ -27,6 +27,24 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::save(void) {
     CB_LOG( LogLevel::Info, "Editor--save" );
+
+
+    m_sdialog_open.store(true, std::memory_order_release);
+    
+    
+    return;
+}
+
+
+//  "open"
+//
+void Editor::open(void) {
+    CB_LOG( LogLevel::Info, "Editor--open" );
+
+
+    m_odialog_open.store(true, std::memory_order_release);
+    
+    
     return;
 }
 

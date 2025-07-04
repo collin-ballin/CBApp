@@ -81,7 +81,7 @@ void App::init(void)
     //  4.      PERFORM ALL RUNTIME ASSERTION STATEMENTS AND
     //          STATE VALIDATIONS BEFORE APPLICATION BEGINS...
     if ( this->init_asserts() ) {
-        S.m_logger.debug( std::format("Initial runtime assertions were passed") );
+        S.m_logger.debug( std::format("Initial runtime assertions:      PASSED") );
     }
 
     return;
@@ -103,7 +103,7 @@ void App::CreateContext(void)
     //  0.1     SET GLFW WINDOW SETTINGS... [PRE].
     glfwWindowHint(     GLFW_SCALE_TO_MONITOR,              GLFW_TRUE);       // Honor per‑monitor content scaling.
     glfwWindowHint(     GLFW_TRANSPARENT_FRAMEBUFFER,       GLFW_TRUE);
-    //glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER,   GLFW_TRUE);
+    //glfwWindowHint(   GLFW_COCOA_RETINA_FRAMEBUFFER,      GLFW_TRUE);
     
     
     //  0.2     CREATE A WINDOW WITH GRAPHICS CONTEXT...

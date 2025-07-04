@@ -261,6 +261,7 @@ void Editor::Begin(const char * /*id*/)
     
     
     this->_draw_io_overlay();
+    this->_handle_io();
     //
     //
     //  show_icon_preview_window();
@@ -686,6 +687,48 @@ void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
 }
 
 
+//  "_handle_io"
+//
+void Editor::_handle_io(void)
+{
+    using                       Type            = cb::FileDialog::Type;
+    using                       Initializer     = cb::FileDialog::Initializer;
+
+
+    //  1.  SAVE DIALOGUE...
+    if ( m_sdialog_open.load(std::memory_order_acquire) ) {
+        m_sdialog_open.store(false, std::memory_order_release);
+        this->m_save_dialog.initialize(Type::Save, this->m_SAVE_DIALOG_DATA );
+    }
+    //
+    if ( this->m_save_dialog.is_open() )
+    {
+        m_sdialog_open.store(false, std::memory_order_release);
+        if ( this->m_save_dialog.Begin("Save Editor Session") ) {        // returns true when finished
+            if ( auto path = this->m_save_dialog.result() )
+                save_async( path->string() );        // your own handler
+        }
+    }
+    
+    
+    //  2.  LOAD DIALOGUE...
+    if ( m_odialog_open.load(std::memory_order_acquire) ) {
+        m_odialog_open.store(false, std::memory_order_release);
+        this->m_open_dialog.initialize(Type::Open, m_OPEN_DIALOG_DATA );
+    }
+    //
+    if ( this->m_open_dialog.is_open() )
+    {
+        if ( this->m_open_dialog.Begin("Load session from file") ) {        // returns true when finished
+            if ( auto path = this->m_open_dialog.result() )
+                load_async( path->string() );        // your own handler
+        }
+    }
+
+
+
+    return;
+}
 
 
 
