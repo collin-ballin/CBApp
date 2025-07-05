@@ -348,11 +348,13 @@ void App::KeyboardShortcutHandler(void)
     static ImGuiInputFlags          browser_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
     static ImGuiInputFlags          detview_key_flags       = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
     static ImGuiInputFlags          save_key_flags          = ImGuiInputFlags_None; //   | ~ImGuiInputFlags_Repeat; // Merged flags
+    static ImGuiInputFlags          open_key_flags          = ImGuiInputFlags_None;
     static ImGuiInputFlags          undo_key_flags          = ImGuiInputFlags_None;
     static ImGuiInputFlags          redo_key_flags          = ImGuiInputFlags_None;
     static const ImGuiKeyChord      BROWSER_KEY             = ImGuiKey_GraveAccent;
     static const ImGuiKeyChord      DETVIEW_KEY             = ImGuiMod_Shift | ImGuiKey_GraveAccent; //ImGuiMod_Shift | ImGuiKey_Apostrophe;
     static const ImGuiKeyChord      SAVE_KEY                = ImGuiMod_Ctrl | ImGuiKey_S;
+    static const ImGuiKeyChord      OPEN_KEY                = ImGuiMod_Ctrl | ImGuiKey_O;
     static const ImGuiKeyChord      UNDO_KEY                = ImGuiMod_Ctrl | ImGuiKey_Z;
     static const ImGuiKeyChord      REDO_KEY                = ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z;
     //
@@ -369,13 +371,17 @@ void App::KeyboardShortcutHandler(void)
     //  2.  HOTKEY TO OPEN/CLOSE DETAIL VIEW...
     if ( ImGui::IsKeyChordPressed(DETVIEW_KEY, detview_key_flags) )         { this->m_detview.toggle(); }
     
+    
     //  3.  SAVE HANDLER...
     if ( ImGui::IsKeyChordPressed(SAVE_KEY, save_key_flags) )               { this->SaveHandler(); }
+    
+    //  4.  OPEN HANDLER...
+    if ( ImGui::IsKeyChordPressed(OPEN_KEY, open_key_flags) )               { this->OpenHandler(); }
 
-    //  4.  UNDO HANDLER...
+    //  5.  UNDO HANDLER...
     if ( ImGui::IsKeyChordPressed(UNDO_KEY, undo_key_flags) )               { this->UndoHandler(); }
 
-    //  5.  REDO HANDLER...
+    //  6.  REDO HANDLER...
     if ( ImGui::IsKeyChordPressed(REDO_KEY, redo_key_flags) )               { this->RedoHandler(); }
 
 
@@ -394,6 +400,21 @@ void App::SaveHandler(void)
         case Applet::EditorApp          : { this->m_editor_app.save();      break; }
         case Applet::GraphApp           : { this->m_graph_app.save();       break; }
         default                         : { this->SaveHandler_Default();    break; }
+    }
+    
+    return;
+}
+
+
+//  "OpenHandler"
+//
+void App::OpenHandler(void)
+{
+    switch (S.m_current_task) {
+        //case Applet::CCounterApp        : { this->m_counter_app.open();     break; }
+        case Applet::EditorApp          : { this->m_editor_app.open();      break; }
+        //case Applet::GraphApp           : { this->m_graph_app.open();       break; }
+        default                         : { /* this->OpenHandler_Default(); */    break; }
     }
     
     return;

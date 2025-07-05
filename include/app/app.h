@@ -230,6 +230,7 @@ public:
     //                      APPLICATION SIGNAL & HOTKEY HANDLERS:
     void                        KeyboardShortcutHandler     (void);
     void                        SaveHandler                 (void);
+    void                        OpenHandler                 (void);
     void                        CopyHandler                 (void);
     void                        PasteHandler                (void);
     void                        UndoHandler                 (void);

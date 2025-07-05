@@ -65,6 +65,15 @@ void EditorApp::save(void)
 }
 
 
+//  "open"
+//
+void EditorApp::open(void)
+{
+    m_editor.open();
+    return;
+}
+
+
 //  "undo"
 //
 void EditorApp::undo(void)

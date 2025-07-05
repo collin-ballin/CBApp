@@ -162,6 +162,7 @@ void Editor::Begin(const char * /*id*/)
 
 
     this->pump_main_tasks();
+    this->_handle_io();
 
 
     //  2.  CREATING THE CANVAS/GRID...
@@ -261,7 +262,6 @@ void Editor::Begin(const char * /*id*/)
     
     
     this->_draw_io_overlay();
-    this->_handle_io();
     //
     //
     //  show_icon_preview_window();
@@ -692,7 +692,7 @@ void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
 void Editor::_handle_io(void)
 {
     using                       Type            = cb::FileDialog::Type;
-    using                       Initializer     = cb::FileDialog::Initializer;
+    //using                       Initializer     = cb::FileDialog::Initializer;
 
 
     //  1.  SAVE DIALOGUE...
@@ -706,7 +706,7 @@ void Editor::_handle_io(void)
         m_sdialog_open.store(false, std::memory_order_release);
         if ( this->m_save_dialog.Begin("Save Editor Session") ) {        // returns true when finished
             if ( auto path = this->m_save_dialog.result() )
-                save_async( path->string() );        // your own handler
+                save_async( *path );        // your own handler
         }
     }
     
@@ -721,7 +721,7 @@ void Editor::_handle_io(void)
     {
         if ( this->m_open_dialog.Begin("Load session from file") ) {        // returns true when finished
             if ( auto path = this->m_open_dialog.result() )
-                load_async( path->string() );        // your own handler
+                load_async( *path );        // your own handler
         }
     }
 

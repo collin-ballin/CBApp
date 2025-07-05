@@ -489,10 +489,14 @@ void Editor::pump_main_tasks(void)
 
 //  "save_async"
 //
-void Editor::save_async(const std::string& path)
+void Editor::save_async(std::filesystem::path path)
 {
     m_io_busy = true;
     auto snap = make_snapshot();
+
+    // convert to absolute once, so worker sees a full path
+    path = std::filesystem::absolute(path);
+
     std::thread([this, snap = std::move(snap), path]{
         save_worker(snap, path);
     }).detach();
@@ -501,10 +505,14 @@ void Editor::save_async(const std::string& path)
 
 //  "load_async"
 //
-void Editor::load_async(const std::string& path)
+void Editor::load_async(std::filesystem::path path)
 {
     m_io_busy = true;
-    std::thread([this, path]{ load_worker(path); }).detach();
+    path = std::filesystem::absolute(path);
+
+    std::thread([this, path]{
+        load_worker(path);
+    }).detach();
 }
 
 
@@ -537,7 +545,7 @@ void Editor::_draw_io_overlay(void)
 
 //  "save_worker"
 //
-void Editor::save_worker(EditorSnapshot snap, std::string path)
+void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
 {
     nlohmann::json      j;
     j["version"]                    = kSaveFormatVersion;
@@ -553,7 +561,7 @@ void Editor::save_worker(EditorSnapshot snap, std::string path)
                 m_io_busy = false;
                 m_io_last = res;
                 m_io_msg  = (res == IoResult::Ok)
-                          ? "Saved to " + path
+                          ? "Saved to " + path.string()
                           : "Save failed";
             } );
         }
@@ -565,7 +573,7 @@ void Editor::save_worker(EditorSnapshot snap, std::string path)
 
 //  "load_worker"
 //
-void Editor::load_worker(std::string path)
+void Editor::load_worker(std::filesystem::path path)
 {
     // ---------- read file -------------------------------------------------
     nlohmann::json  j;
@@ -589,20 +597,19 @@ void Editor::load_worker(std::string path)
     {
         std::lock_guard lk(m_task_mtx);
         m_main_tasks.push_back(
-            [this, res, snap = std::move(snap), path = std::move(path)]() mutable
+            [this, res, snap = std::move(snap), path]() mutable
             {
-                m_io_busy = false;            // overlay flag
+                m_io_busy = false;
 
                 if (res == IoResult::Ok) {
                     load_from_snapshot(std::move(snap));
-                    m_io_msg  = "Loaded \"" + path + "\"";
-                }
-                else {
+                    m_io_msg = "Loaded \"" + path.filename().string() + "\"";
+                } else {
                     switch (res) {
-                        case IoResult::IoError:         m_io_msg = "Load I/O error";          break;
-                        case IoResult::ParseError:      m_io_msg = "Load parse error";        break;
-                        case IoResult::VersionMismatch: m_io_msg = "Save-file version mismatch"; break;
-                        default:                        m_io_msg = "Unknown load error";      break;
+                        case IoResult::IoError:         m_io_msg = "Load I/O error";                 break;
+                        case IoResult::ParseError:      m_io_msg = "Load parse error";               break;
+                        case IoResult::VersionMismatch: m_io_msg = "Save-file version mismatch";     break;
+                        default:                        m_io_msg = "Unknown load error";             break;
                     }
                 }
                 m_io_last = res;

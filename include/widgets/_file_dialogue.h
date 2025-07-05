@@ -74,7 +74,8 @@ inline static constexpr ImVec2              FILE_DIALOG_REL_WINDOW_SIZE         
 //
 inline static constexpr ImVec2              FILE_DIALOG_REL_WINDOW_POSITION     = ImVec2(0.5f,      2.0f/3.0f);     //  Pop-up Window Postion       [ Relative to main viewport ].
 //
-inline static constexpr float               BOTTOM_HEIGHT                       = 7.0f;                             //  RESERVED SPACE AT BOTTOM    [ multiples of row height ].
+inline static constexpr float               TOP_HEIGHT                          = 3.0f;                             //  RESERVED SPACE AT TOP       [ multiples of FRAME height ].
+inline static constexpr float               BOTTOM_HEIGHT                       = 6.0f;                             //  RESERVED SPACE AT BOTTOM    [ multiples of FRAME height ].
 //
 //
 //
@@ -122,6 +123,7 @@ struct Initializer_t {
 //  "FileDialogState_t"
 //
 struct FileDialogState_t {
+    using SortType  = FileDialogSortingCriterion;
 //
 //
 //  TARGET FILE DATA:
@@ -140,18 +142,20 @@ struct FileDialogState_t {
     int                                             hist_index              = -1;
     std::vector<std::filesystem::path>              history;
     std::vector<std::string>                        filters;
-    std::vector<std::string>                        valid_extensions;                   //  Which file extensions the user will be able to select.
-    int                                             sort_criterion          = 0;        //  0-Name,      1-Size,     2-Type,     3-Time
-    bool                                            sort_order              = true;     //  (T): Sort in ASCENDING Order.  (F): DESCENDING Order.
+    std::vector<std::string>                        valid_extensions;                               //  Which file extensions the user will be able to select.
+    SortType                                        sort_criterion          = SortType::Time;       //  0-Name,      1-Size,     2-Type,     3-Time
+    bool                                            sort_order              = false;                //  (T): Sort in ASCENDING Order.  (F): DESCENDING Order.
 //
 //
 //  CACHED DATA:
-    std::filesystem::path                           home_dir;                           //  Ref. to original default directory.
-    std::filesystem::path                           desktop_dir;                        //  Ref. to user's Desktop folder.
-    std::filesystem::file_time_type                 cwd_timestamp{};                    //  Track last modification of CWD to refresh if contents change while browsing.
+    std::filesystem::path                           home_dir;                                       //  Ref. to original default directory.
+    std::filesystem::path                           desktop_dir;                                    //  Ref. to user's Desktop folder.
+    std::filesystem::file_time_type                 cwd_timestamp{};                                //  Track last modification of CWD to refresh if contents change while browsing.
 //
 //
 //  MUTABLE OBJECT STATE / BEHAVIORS:
+    bool                                            sort_init_done          = false;             //
+    bool                                            sort_applied            = false;
 };
 
 
@@ -165,6 +169,7 @@ struct FileDialogState_t {
 class FileDialog {
 public:
     using                               Type                        = FileDialogType;
+    using                               SortCriterion               = FileDialogSortingCriterion;
     using                               Initializer                 = Initializer_t;
     using                               Sort                        = FileDialogSortingCriterion;
     using                               State                       = FileDialogState_t;

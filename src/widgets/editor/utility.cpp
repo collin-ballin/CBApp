@@ -410,20 +410,21 @@ void Editor::_draw_system_preferences(void)
         /* required_extension = */  "",
         /* valid_extensions   = */  {".json", ".txt"}
     };
-    static cb::FileDialog       dialog;
+    static cb::FileDialog       save_dialog;
+    static cb::FileDialog       open_dialog;
 
 
 
     //  1.  SAVE DIALOGUE...
     if ( ImGui::Button("Save") ) {
-        dialog.initialize(Type::Save, save_data );
+        save_dialog.initialize(Type::Save, save_data );
     }
     //
-    if ( dialog.is_open() )
+    if ( save_dialog.is_open() )
     {
-        if ( dialog.Begin("Save Editor Session") ) {        // returns true when finished
-            if ( auto path = dialog.result() )
-                save_async( path->string() );        // your own handler
+        if ( save_dialog.Begin("Save Editor Session") ) {        // returns true when finished
+            if ( auto path = save_dialog.result() )
+                save_async( *path );        // your own handler
         }
     }
 
@@ -433,14 +434,14 @@ void Editor::_draw_system_preferences(void)
     
     //  2.  LOAD DIALOGUE...
     if ( ImGui::Button("Open") ) {
-        dialog.initialize(Type::Open, open_data );
+        open_dialog.initialize(Type::Open, open_data );
     }
     //
-    if ( dialog.is_open() )
+    if ( open_dialog.is_open() )
     {
-        if ( dialog.Begin("Load session from file") ) {        // returns true when finished
-            if ( auto path = dialog.result() )
-                load_async( path->string() );        // your own handler
+        if ( open_dialog.Begin("Load session from file") ) {        // returns true when finished
+            if ( auto path = open_dialog.result() )
+                load_async( *path );        // your own handler
         }
     }
 

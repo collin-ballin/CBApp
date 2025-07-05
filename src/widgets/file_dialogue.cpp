@@ -108,6 +108,7 @@ void FileDialog::initialize(const Type mode, const Initializer & data) noexcept
     //  4.  PREPARE DIALOG MENU FOR OPENING...
     m_first_frame               = true;
     m_visible                   = true;
+    s.sort_init_done            = false;
 
     return;
 }
@@ -230,10 +231,11 @@ inline void FileDialog::draw_file_list(State & s, const char* list_id)
 //
 inline void FileDialog::draw_file_table(State & s, const char * table_id)
 {
-    const float                 row_h           = ImGui::GetFrameHeightWithSpacing();
-    const float                 bottom_h        = BOTTOM_HEIGHT * ( row_h ); // filename + buttons
-    float                       avail_h         = m_window_size.y - bottom_h; //ImGui::GetContentRegionAvail().y - bottom_h;
-    int                         row_idx         = 0;
+    static constexpr ImGuiTableColumnFlags      sort_col_flags  = ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_PreferSortDescending;
+    const float                                 row_h           = ImGui::GetFrameHeightWithSpacing();
+    const float                                 reserve_h       = (TOP_HEIGHT + BOTTOM_HEIGHT) * ( row_h ); // filename + buttons
+    float                                       avail_h         = m_window_size.y - reserve_h; //ImGui::GetContentRegionAvail().y - bottom_h;
+    int                                         row_idx         = 0;
     
     
     //  CASE 0 :    EARLY-OUT IF TABLE IS NOT CREATED...
@@ -241,45 +243,62 @@ inline void FileDialog::draw_file_table(State & s, const char * table_id)
 
 
     ImGui::TableSetupScrollFreeze(0, 1);          // header row always visible
-    ImGui::TableSetupColumn("Name",     ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_DefaultSort, 0.0f); //    , 0.55f);
+    ImGui::TableSetupColumn("Name",     ImGuiTableColumnFlags_WidthStretch,             0.0f); //    , 0.55f);
     ImGui::TableSetupColumn("Type",     ImGuiTableColumnFlags_WidthFixed);  // ImGuiTableColumnFlags_WidthStretch,                                     0.15f);
     ImGui::TableSetupColumn("Size",     ImGuiTableColumnFlags_WidthFixed);  // ImGuiTableColumnFlags_WidthStretch,                                     0.15f);
-    ImGui::TableSetupColumn("Modified", ImGuiTableColumnFlags_WidthFixed);  // ImGuiTableColumnFlags_WidthStretch,                                     0.15f);
+    ImGui::TableSetupColumn("Modified", sort_col_flags,                                 0.325f);
     ImGui::TableHeadersRow();
     
 
-    //  1.  UPDATE SORTING POLICY IF USER CLICKS ON HEADER ROW...
-    if ( ImGuiTableSortSpecs * specs = ImGui::TableGetSortSpecs() )
+    //  2.  UPDATE SORTING POLICY IF USER CLICKS ON HEADER ROW...
+    if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs())
     {
-        if ( specs->SpecsDirty && specs->SpecsCount == 1 ) {
-            s.sort_criterion       = specs->Specs[0].ColumnIndex;
-            s.sort_order          = specs->Specs[0].SortDirection == ImGuiSortDirection_Ascending;
-            specs->SpecsDirty   = false;
+        if (specs->SpecsCount == 1)
+        {
+            s.sort_criterion = static_cast<SortCriterion>(specs->Specs[0].ColumnIndex);
+            s.sort_order     = specs->Specs[0].SortDirection == ImGuiSortDirection_Ascending;
+            specs->SpecsDirty= false;
 
-            auto key = [&](const std::filesystem::directory_entry & e)
-            {
-                switch (s.sort_criterion)
-                {
-                    case 0:     { return e.path().filename().string(); }
-                    case 1:     { return std::to_string(e.is_directory() ? 0 : (uintmax_t)std::filesystem::file_size(e)); }
-                    case 2:     { return e.is_directory() ? std::string( DIR_TITLE ) : e.path().extension().string(); }
-                    default: {
-                        return std::to_string(e.is_directory() ? 0 :
-                                 (uintmax_t)std::chrono::duration_cast<std::chrono::seconds>(
-                                     std::filesystem::last_write_time(e).time_since_epoch()).count());
-                    }
-                }
-            };
             std::stable_sort(s.entries.begin(), s.entries.end(),
-                [&](auto& a, auto& b) {
-                    auto ka = key(a), kb = key(b);
-                    return s.sort_order ? ka < kb : ka > kb;
+                [&](const auto& a, const auto& b)
+                {
+                    switch (s.sort_criterion)
+                    {
+                        case SortCriterion::Name: {
+                            const auto& ka = a.path().filename();
+                            const auto& kb = b.path().filename();
+                            return s.sort_order ? ka < kb : ka > kb;
+                        }
+                        case SortCriterion::Size: {
+                            std::error_code ea, eb;
+                            std::uintmax_t sa = a.is_directory() ? 0 : std::filesystem::file_size(a, ea);
+                            std::uintmax_t sb = b.is_directory() ? 0 : std::filesystem::file_size(b, eb);
+                            return s.sort_order ? sa < sb : sa > sb;
+                        }
+                        case SortCriterion::Type: {
+                            std::string ta = a.is_directory() ? DIR_TITLE : a.path().extension().string();
+                            std::string tb = b.is_directory() ? DIR_TITLE : b.path().extension().string();
+                            return s.sort_order ? ta < tb : ta > tb;
+                        }
+                        case SortCriterion::Time:
+                        default: {
+                            auto secs = [](const auto& e){
+                                return std::chrono::duration_cast<std::chrono::seconds>(
+                                          std::filesystem::last_write_time(e)
+                                          .time_since_epoch()).count();
+                            };
+                            std::uintmax_t ta = a.is_directory() ? 0 : secs(a);
+                            std::uintmax_t tb = b.is_directory() ? 0 : secs(b);
+                            return s.sort_order ? ta < tb : ta > tb;
+                        }
+                    }
                 });
+            s.sort_applied = true;
         }
     }
     
     
-    //  2.  PRINTING EACH FILE IN THE NAVIGATOR...
+    //  3.  PRINTING EACH FILE IN THE NAVIGATOR...
     //
     //          2.1.    DISPLAY THE “..” PARENT DIRECTOR ACCESSOR.
     if ( s.cwd.has_parent_path() )
@@ -367,10 +386,15 @@ inline void FileDialog::draw_file_table(State & s, const char * table_id)
 //
 inline void FileDialog::draw_top_bar(State & s)
 {
+    const float     ROW_HEIGHT      = ImGui::GetFrameHeightWithSpacing();
+    
+    
     this->draw_breadcrumb_bar( s );
-    ImGui::NewLine();
-    this->draw_nav_buttons(s);
     ImGui::Separator();
+    
+    ImGui::Dummy( ImVec2(0.0f, ROW_HEIGHT) );
+    
+    this->draw_nav_buttons(s);
     
     return;
 }
@@ -503,10 +527,10 @@ inline void FileDialog::draw_bottom_bar(State & s)
     
     //  left-aligned label helper assumed to exist in your utils
     //
-    //ImGui::Dummy( ImGui::GetContentRegionAvail() * ImVec2(0.0f, 0.25f) );
-    ImGui::NewLine();
+    ImGui::Dummy( ImVec2( 0.0f, ROW_HEIGHT) );
     
     
+    ImGui::Indent();
     utl::LeftLabelSimple("Filename:");
     ImGui::SetNextItemWidth(-1.0f);
     ImGui::InputTextWithHint("##FileDialog_Filename", "filename", &s.default_filename);
@@ -533,24 +557,31 @@ inline void FileDialog::draw_bottom_bar(State & s)
 //
 inline void FileDialog::on_accept(void)
 {
-    auto &                  s           = *m_state;
-    std::filesystem::path   fname       = s.default_filename;
-    auto                    ieq         = [](std::string a, std::string b) {
-        std::transform(a.begin(), a.end(), a.begin(), ::tolower);
-        std::transform(b.begin(), b.end(), b.begin(), ::tolower);
-        return a == b;
-    };
+    auto&                 s    = *m_state;
+    std::filesystem::path fname = s.default_filename;   // what the user typed
 
-    if ( s.required_extension.empty() ) {
-        std::string     want        = s.required_extension;
-        std::string     ext         = fname.extension().string();
-        if ( ext.empty() || !ieq(ext, want) )    { fname.replace_extension(want); }
+    // 1) normalise required_extension → always begins with “.”
+    std::string want = s.required_extension;
+    if (!want.empty() && want.front() != '.')
+        want.insert(want.begin(), '.');                 // ".json"
+
+    // 2) apply / replace extension **only in Save mode**
+    if ( m_type == Type::Save && !want.empty() )
+    {
+        std::string ext = fname.extension().string();   // includes leading dot
+        auto ieq = [](std::string a, std::string b) {
+            std::transform(a.begin(), a.end(), a.begin(), ::tolower);
+            std::transform(b.begin(), b.end(), b.begin(), ::tolower);
+            return a == b;
+        };
+
+        if (ext.empty() || !ieq(ext, want))
+            fname.replace_extension(want);              // safe: want starts with '.'
     }
 
-    s.result    = s.cwd / fname;
-    m_visible   = false;
+    s.result  = s.cwd / fname;          // final absolute path for caller
+    m_visible = false;
     ImGui::CloseCurrentPopup();
-    return;
 }
 
 
@@ -581,6 +612,8 @@ inline void FileDialog::on_cancel(void)
 inline void FileDialog::refresh_listing(State & s)
 {
     s.entries.clear();
+    s.sort_init_done        = false;
+    s.sort_applied          = false;
     
     auto        accept      = [&](const std::filesystem::directory_entry & e) {
         const std::string name = e.path().filename().string();

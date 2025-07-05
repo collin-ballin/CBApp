@@ -242,8 +242,8 @@ public:
     void                                redo                                (void);
     //
     void                                _draw_io_overlay                    (void);
-    void                                save_async                          (const std::string & );
-    void                                load_async                          (const std::string & );
+    void                                save_async                          (std::filesystem::path path);
+    void                                load_async                          (std::filesystem::path path);
     //
     void                                Begin                               (const char * id = "##EditorCanvas");
     void                                DrawBrowser                         (void);
@@ -473,8 +473,8 @@ private:
     EditorSnapshot                      make_snapshot                       (void) const;
     void                                load_from_snapshot                  (EditorSnapshot && );
     void                                pump_main_tasks                     (void);
-    void                                save_worker                         (EditorSnapshot , std::string );
-    void                                load_worker                         (std::string );
+    void                                save_worker                         (EditorSnapshot snap, std::filesystem::path path);
+    void                                load_worker                         (std::filesystem::path );
 
 
 
@@ -530,18 +530,18 @@ private:
     //  "_update_grid"
     inline void                         _update_grid_info                   (void)
     {
-        ImPlotRect lim      = ImPlot::GetPlotLimits();          // world extent
-        ImVec2     size     = ImPlot::GetPlotSize();           // in pixels
+        ImPlotRect      lim      = ImPlot::GetPlotLimits();          // world extent
+        ImVec2          size     = ImPlot::GetPlotSize();           // in pixels
 
-        float range_x = static_cast<float>(lim.X.Max - lim.X.Min);
-        float ppw     = size.x / range_x;                  // pixels‑per‑world‑unit
-
-        const float TARGET_PX = 20.0f;                     // desired screen grid pitch
-        float raw_step = TARGET_PX / ppw;                  // world units per 20 px
+        float           range_x = static_cast<float>(lim.X.Max - lim.X.Min);
+        float           ppw     = size.x / range_x;                  // pixels‑per‑world‑unit
+    
+        const float     TARGET_PX = 20.0f;                     // desired screen grid pitch
+        float           raw_step = TARGET_PX / ppw;                  // world units per 20 px
 
         //  Quantize to     1·10^n, 2·10^n, or 5·10^n
-        float exp10  = std::pow(10.0f, std::floor(std::log10(raw_step)));
-        float mant   = raw_step / exp10;
+        float           exp10  = std::pow(10.0f, std::floor(std::log10(raw_step)));
+        float           mant   = raw_step / exp10;
         if      (mant < 1.5f) mant = 1.0f;
         else if (mant < 3.5f) mant = 2.0f;
         else if (mant < 7.5f) mant = 5.0f;
@@ -674,15 +674,15 @@ private:
     //
     cb::FileDialog::Initializer         m_SAVE_DIALOG_DATA              = {
         /* starting_dir       = */  std::filesystem::current_path(),
-        /* default_filename   = */  "canvas settings",
-        /* required_extension = */  ".json",
+        /* default_filename   = */  "canvas_settings.json",
+        /* required_extension = */  "json",
         /* valid_extensions   = */  {".json", ".txt"}
     };
     cb::FileDialog::Initializer         m_OPEN_DIALOG_DATA              = {
         /* starting_dir       = */  std::filesystem::current_path(),
         /* default_filename   = */  "",
         /* required_extension = */  "",
-        /* valid_extensions   = */  {".json", ".txt"}
+        /* valid_extensions   = */  {".json", ".cbjson", ".txt"}
     };
     cb::FileDialog                      m_save_dialog;
     cb::FileDialog                      m_open_dialog;

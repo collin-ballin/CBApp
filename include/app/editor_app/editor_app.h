@@ -92,6 +92,7 @@ public:
     //  1.2             Public Member Functions...
     void                initialize                  (void);
     void                save                        (void);
+    void                open                        (void);
     void                undo                        (void);
     void                redo                        (void);
     //
