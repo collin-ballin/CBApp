@@ -18,32 +18,15 @@
 
 
 
-#   1.      BUILD SYSTEM METADATA...
+#   1.      PLACE ALL APPLICATION METADATA IN ONE LOCATION...
 ####################################################################################
 ####################################################################################
-set(    CB_MINIMUM_CMAKE_VERSION        3.15)
-
-
-
-
-
-
-
-####################################################################################
-#
-#
-#
-#   2.      APPLICATION METADATA...
-####################################################################################
-####################################################################################
-set(    CBAPP_NAME                      "CBApp"                                 CACHE INTERNAL "")
-set(    CBAPP_VERSION                   "0.4.1"                                 CACHE INTERNAL "")
-set(    CBAPP_COMPANY                   "Acme Labs"                             CACHE INTERNAL "")
-set(    CBAPP_LEGAL_COPYRIGHT           "Collin Andrew Bond  (c)  2024-2025"    CACHE INTERNAL "")
+set(    CBAPP_NAME                  "CBApp"                                 CACHE INTERNAL "")
+set(    CBAPP_VERSION               "0.4.1"                                 CACHE INTERNAL "")
+set(    CBAPP_COMPANY               "Acme Labs"                             CACHE INTERNAL "")
+set(    CBAPP_LEGAL_COPYRIGHT       "Collin Andrew Bond  (c)  2024-2025"    CACHE INTERNAL "")
 
 # VALUE "FileDescription",  "Multi-purpose, scientific application for use in computational physics simulation, laboratory work in the physical sciences, and more."
-
-
 
 
 

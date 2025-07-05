@@ -108,7 +108,8 @@ ARCHIVE_NAME:=$(ARCHIVE_GROUP)/$(PROJECT_NAME)-ARCHIVE
 ###############################################################################
 # 3. ALL MAKEFILE RULES...
 ###############################################################################
-.PHONY: all xcode windows tree \
+.PHONY: all xcode windows \
+	tree quick_tree dir_tree \
 	opt clean cls \
 	tar zip save archive
 
@@ -159,6 +160,56 @@ windows:
 #
 tree:
 	tree -a -I 'build|.git|*.o|*.log|*.ttf' -o $(TREE_FILE)
+	
+	
+# "quick_tree"
+#
+quick_tree:
+	tree -a --dirsfirst \
+		 -I 'build|other|misc|libs|\.git|CMakeFiles|\.idea|\.vscode|bin|dist|external|third[_-]party|.*\.(o|obj|so|dll|dylib|exe|ttf|log|png|jpg|jpeg|gif|bmp|pdf|zip|tar|gz|7z)' \
+		 --noreport
+		 
+		 
+# "dir_tree"
+#
+#	ALL DIRECTORIES:
+# 		assets build build-mingw build-win64 cmake data docs example_glfw_opengl3 glfw imgui include libs macos misc other scripts src win64
+#
+#	         GENERAL EXCLUDES :		-I "docs|assets|libs|data"
+#									   "scripts | misc | other | build-mingw | example_glfw_opengl3"
+#
+#
+#|build-mingw|imgui|win64|cmake|glfw|example_glfw_opengl3"
+#
+#	FOR ONLY CORE DIRECTORIES :		-I "assets|build|build-mingw|build-win64|example_glfw_opengl3"
+#	     FOR ONLY BUILD STUFF : 	-I "src|include|assets|scripts|glfw|misc|other|libs|example_glfw_opengl3"
+#	    FOR ONLY SOURCE STUFF : 	-I "assets|scripts|glfw|misc|other|libs|example_glfw_opengl3"
+#
+dir_tree:
+	tree -d -A -C -t -L 2 -I "assets|build|build-mingw|build-win64|example_glfw_opengl3"
+	
+	
+# "source_tree"
+#
+source_tree:
+	tree -d -A -C -t -L 5 -I "docs|data|assets|scripts|build|build-win64|build-mingw|imgui|win64|cmake|glfw|misc|other|libs|example_glfw_opengl3"
+	
+	
+# "build_tree"
+#
+build_tree:
+	tree -d -A -C -t -L 2 -I "src|include|assets|scripts|glfw|misc|other|libs|example_glfw_opengl3"
+
+
+
+
+
+
+
+# "new_tree"
+#
+new_tree:
+	tree -A -C -t -L 2 -I "assets|build|build-mingw|build-win64"
 
 
 ###############################################################################

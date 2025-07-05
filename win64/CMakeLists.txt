@@ -14,7 +14,7 @@
 #           -DCMAKE_BUILD_TYPE=Release
 #     cmake --build win64/build -j N
 ########################################################################
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 
 
