@@ -31,6 +31,8 @@
 #include "widgets/widgets.h"
 #include "utility/utility.h"
 #include "utility/pystream/pystream.h"
+#include "app/c_counter/_utility.h"
+
 
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
@@ -62,23 +64,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "VisSpec"
-//      - Define the visibility of each COUNTER PLOT...
-struct VisSpec {
-    bool    master;         const char * master_ID;
-    bool    single;         const char * single_ID;
-    bool    average;        const char * average_ID;
-};
-
-
-//  "ChannelSpec"
-//      POD Struct to define each COUNTER PLOT for the COINCIDENCE COUNTER...
-struct ChannelSpec {
-    const size_t        idx;
-    const char *        name;
-    VisSpec             vis;
-};
-
 
 
 // *************************************************************************** //
@@ -88,96 +73,230 @@ struct ChannelSpec {
 // *************************************************************************** //
 // *************************************************************************** //
 
-namespace ccounter {
-    inline static constexpr size_t     BUFFER_SIZE          = 2000;
-}
-
 //  "CCounterApp"
 //
 class CCounterApp
 {
-    using               buffer_type                     = cblib::RingBuffer<ImVec2, ccounter::BUFFER_SIZE>;     // utl::ScrollingBuffer;     // cblib::RingBuffer<int, 2000>
-    friend class        App;
+public:
+    using                           buffer_type                     = cblib::RingBuffer<ImVec2, ccounter::BUFFER_SIZE>;     // utl::ScrollingBuffer;     // cblib::RingBuffer<int, 2000>
+    using                           AvgMode                         = AvgMode;
+    //
+    friend class                    App;
     CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //
 public:
-    //  0.               PUBLIC CLASS-NESTED ALIASES...
+    //  1.              INITIALIZATION METHODS...
     // *************************************************************************** //
-    
-    //  1.               PUBLIC MEMBER FUNCTIONS...
+
+
+
     // *************************************************************************** //
+    //  1.2             PUBLIC API...
+    // *************************************************************************** //
+    void                            run                             (void);
     //  1.1             Default Constructor, Destructor, etc...
-    explicit            CCounterApp                     (app::AppState & ) noexcept;                        //  Def. Constructor.
-                        ~CCounterApp                    (void);                                             //  Def. Destructor.
+    explicit                        CCounterApp                     (app::AppState & ) noexcept;                        //  Def. Constructor.
+                                    ~CCounterApp                    (void);                                             //  Def. Destructor.
                         
     //  1.2             Public Member Functions...
-    void                initialize                      (void);
-    void                save                            (void);
-    void                undo                            (void);
-    void                redo                            (void);
+    void                            initialize                      (void);
+    void                            save                            (void);
+    void                            undo                            (void);
+    void                            redo                            (void);
     //
-    void                Begin                           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                ToggleAllPlots                  (const char * title_id);
+    void                            Begin                           ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                            ToggleAllPlots                  (const char * title_id);
+    //
+    //                      DELETED OPERATORS AND FUNCTIONS:
+                                    CCounterApp                     (const CCounterApp &    )       = delete;   //  Copy. Constructor.
+                                    CCounterApp                     (CCounterApp &&         )       = delete;   //  Move Constructor.
+    CCounterApp &                   operator =                      (const CCounterApp &    )       = delete;   //  Assgn. Operator.
+    CCounterApp &                   operator =                      (CCounterApp &&         )       = delete;   //  Move-Assgn. Operator.
+    // *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END PUBLIC API.
+    
 
-    //  1.3             Deleted Operators, Functions, etc...
-                        CCounterApp                     (const CCounterApp &    )       = delete;   //  Copy. Constructor.
-                        CCounterApp                     (CCounterApp &&         )       = delete;   //  Move Constructor.
-    CCounterApp &       operator =                      (const CCounterApp &    )       = delete;   //  Assgn. Operator.
-    CCounterApp &       operator =                      (CCounterApp &&         )       = delete;   //  Move-Assgn. Operator.
-
-
-
+    
+// *************************************************************************** //
+//
+//
+//      2.A             PROTECTED MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 protected:
-    //  2.A             PROTECTED DATA-MEMBERS...
+//
+    // *************************************************************************** //
+    //      CLASS INITIALIZATIONS.          |   "init.cpp" ...
+    // *************************************************************************** //
+    void                            init                            (void);
+    void                            destroy                         (void);
+    void                            dispatch_plot_function          (const std::string & );
+    void                            dispatch_ctrl_function          (const std::string & );
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      OPERATION FUNCTIONS.            |   "tools.cpp" ...
+    // *************************************************************************** //
+    void                            ShowCCPlots                     (void);
+    void                            ShowCCControls                  (void);
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      UTILITY FUNCTIONS.              |   "main_application.cpp" ...
     // *************************************************************************** //
     
+    
+    
+    void                            init_ctrl_rows                  (void);
+    void                            display_plots                   (void);
+    void                            display_controls                (void);
+    void                            _draw_control_bar               (void);
+    //
+    void                            DefaultPlotTabRenderFunc        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                            DefaultCtrlTabRenderFunc        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    Tab_t *                         get_ctrl_tab                    (const std::string & , std::vector<Tab_t> & );
+    float                           ComputeAverage                  (const buffer_type &, AvgMode , ImU64 , double , float ) const;
+    void                            RebuildDockspace                (void);
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END PROTECTED FUNCTIONS.
+    
+
+    
+// *************************************************************************** //
+//
+//
+//      3.              PROTECTED DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+//
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR VARIABLES (USED FOR DEFINING CLASS MEMBERS)...
+    // *************************************************************************** //
+    static constexpr size_t                 ms_NUM                          = 15;
+    static constexpr size_t                 ms_BUFFER_SIZE                  = 256;
+    Param<ImU64>                            m_PLOT_LIMIT                    = { 0,     {0, ms_NUM-1}        };
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      APPLICATION STATE VARIABLES...
+    // *************************************************************************** //
+    
+    //
+    //  ...
+    //
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      IMPORTANT DATA...
+    // *************************************************************************** //
+    std::array<buffer_type, ms_NUM>         m_buffers                       = { };
+    std::array<buffer_type, ms_NUM>         m_avg_counts                    = { };
+    float                                   m_max_counts[ms_NUM]            = { 0.0f };
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      WIDGET VARIABLES...
+    // *************************************************************************** //
+    
+    //
+    //      ...
+    //
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      PLOTTING STUFF...
+    // *************************************************************************** //
+    
+    //
+    //      ...
+    //
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      GENERIC CONSTANTS...
+    // *************************************************************************** //
+    
+    //
+    //      ...
+    //
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      MISC / UNKNOWN...
+    // *************************************************************************** //
+
+
+
+
+    
     //  CONSTANTS.
-    std::array<const char *, 2>                         ms_PLOT_UUIDs                   = { "##CCounterMasterPlot",     "##CCounterIndividualPlot"};
-    std::array<const char *, 2>                         ms_TABLE_UUIDs                  = { "##IndividualPlotTable",    "##CCounterControlTable"};
-    float                                               m_mst_plot_slider_height        = 20.0f;
-    float                                               m_mst_plot_height               = 400.0f;
+    std::array<const char *, 2>                             ms_PLOT_UUIDs                   = { "##CCounterMasterPlot",     "##CCounterIndividualPlot"};
+    std::array<const char *, 2>                             ms_TABLE_UUIDs                  = { "##IndividualPlotTable",    "##CCounterControlTable"};
+    float                                                   m_mst_plot_slider_height        = 20.0f;
+    float                                                   m_mst_plot_height               = 400.0f;
     
     //  INDIVIDUAL PLOT STUFF...
-    ImGuiTableColumnFlags                               ms_i_plot_table_flags           = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible;
-    ImGuiTableColumnFlags                               ms_i_plot_column_flags          = ImGuiTableColumnFlags_WidthFixed;   //    ImGuiTableColumnFlags_WidthFixed;   ImGuiTableColumnFlags_None
-    ImGuiTableColumnFlags                               ms_i_plot_plot_flags            = ImGuiTableColumnFlags_WidthStretch;
-    float                                               ms_I_PLOT_COL_WIDTH             = 100.0f;
-    float                                               ms_I_PLOT_PLOT_WIDTH            = -1.0f;
+    ImGuiTableColumnFlags                                   ms_i_plot_table_flags           = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible;
+    ImGuiTableColumnFlags                                   ms_i_plot_column_flags          = ImGuiTableColumnFlags_WidthFixed;   //    ImGuiTableColumnFlags_WidthFixed;   ImGuiTableColumnFlags_None
+    ImGuiTableColumnFlags                                   ms_i_plot_plot_flags            = ImGuiTableColumnFlags_WidthStretch;
+    float                                                   ms_I_PLOT_COL_WIDTH             = 100.0f;
+    float                                                   ms_I_PLOT_PLOT_WIDTH            = -1.0f;
     
-    float                                               ms_CENTER                       = 0.95f;
+    float                                                   ms_CENTER                       = 0.95f;
     
     //  MISC APPLICATION STUFF...
-    bool                                                m_toggle_mst_plots              = false;
-    bool                                                m_initialized                   = false;
+    bool                                                    m_toggle_mst_plots              = false;
+    bool                                                    m_initialized                   = false;
     
     //  VARIOUS FLAGS...
-    ImPlotLineFlags                                     m_channel_flags                 = ImPlotLineFlags_None | ImPlotLineFlags_Shaded;
-    ImPlotAxisFlags                                     m_plot_flags                    = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
-    ImPlotFlags                                         m_mst_PLOT_flags                = ImPlotFlags_None | ImPlotFlags_NoTitle;
-    ImPlotAxisFlags                                     m_mst_plot_flags                = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoSideSwitch;
-    ImPlotAxisFlags                                     m_mst_xaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
-    ImPlotAxisFlags                                     m_mst_yaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
+    ImPlotLineFlags                                         m_channel_flags                 = ImPlotLineFlags_None | ImPlotLineFlags_Shaded;
+    ImPlotAxisFlags                                         m_plot_flags                    = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
+    ImPlotFlags                                             m_mst_PLOT_flags                = ImPlotFlags_None | ImPlotFlags_NoTitle;
+    ImPlotAxisFlags                                         m_mst_plot_flags                = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoSideSwitch;
+    ImPlotAxisFlags                                         m_mst_xaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
+    ImPlotAxisFlags                                         m_mst_yaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
     
-    ImPlotLocation                                      m_mst_legend_loc                = ImPlotLocation_NorthWest;                                                 // legend position.
-    ImPlotLegendFlags                                   m_mst_legend_flags              = ImPlotLegendFlags_None; //ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
+    ImPlotLocation                                          m_mst_legend_loc                = ImPlotLocation_NorthWest;                                                 // legend position.
+    ImPlotLegendFlags                                       m_mst_legend_flags              = ImPlotLegendFlags_None; //ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
 
 
-    //  *************************************************************************** //
-    //  ARRAY CONVENTIONS:
-    //      ARRAY INDEX [ 0 ]       =   PLOT WINDOW...
-    //      ARRAY INDEX [ 1 ]       =   CONTROL WINDOW...
-    //
-    //  *************************************************************************** //
     
     //                                              1.  APPEARANCE CONSTANTS...
     float                                               m_dockspace_ratio               = 0.8f;
     const float                                         m_child_corner_radius           = 5.0f;
     float                                               ms_SPACING                      = 50.0f;
     std::pair<int,int>                                  m_HEIGHT_LIMITS[2]              = { { 30, 30 }, { 30, 30 } };
-    static constexpr size_t                             ms_BUFFER_SIZE                  = 256;
     //
     //
     //                                              2.  CHILDREN PARAMETERS...
@@ -222,8 +341,6 @@ protected:
     
     
     //                                              4.  IMPORTANT DATA...
-    static constexpr size_t                             ms_NUM                          = 15;
-    Param<ImU64>                                        m_PLOT_LIMIT                    = { 0,     {0, ms_NUM-1}        };
     //
     ChannelSpec                                         ms_channels[ms_NUM]             = {
     //                  MASTER.                     SINGLE.                     AVERAGE.
@@ -246,9 +363,6 @@ protected:
     //
         {15,  "ABCD",   {false, "##MasterABCD",     false, "##SingleABCD",      false, "##AvgABCD"   }      }
     };
-    std::array<buffer_type, ms_NUM>                     m_buffers                       = { };
-    std::array<buffer_type, ms_NUM>                     m_avg_counts                    = { };
-    float                                               m_max_counts[ms_NUM]            = { 0.0f };
     
     
     //                                              4.  IMPORTANT DATA...
@@ -274,8 +388,7 @@ protected:
     float                                               m_freeze_now                    = 0.f;                              // reference time for sparklines when paused
     //
     //
-    enum class                                          AvgMode { Samples, Seconds };                                       //  Averaging mode selector
-    AvgMode                                             m_avg_mode = AvgMode::Samples;                                      //  Current mode (UI‑controlled)
+    AvgMode                                             m_avg_mode                      = AvgMode::Samples;                 //  Current mode (UI‑controlled)
     Param<ImU64>                                        m_avg_window_samp               = { 10,     {1, 100}        };      //  N samples (for AvgMode::Samples)
     Param<double>                                       m_avg_window_sec                = { 30.0f,  {5.0f,   90.0}  };      //  Window length in seconds (for AvgMode::Seconds)
 
@@ -300,33 +413,6 @@ protected:
     
         
     
-    
-    //  2.B             PROTECTED MEMBER FUNCTIONS...
-    // *************************************************************************** //
-    
-    //  2B.1            Class Initializations.          [CCounterApp.cpp]...
-    void                init                            (void);
-    void                destroy                         (void);
-    void                dispatch_plot_function          (const std::string & );
-    void                dispatch_ctrl_function          (const std::string & );
-    
-    //  2C.1            Operation Funcs.
-    void                ShowCCPlots                     (void);
-    void                ShowCCControls                  (void);
-    
-    void                init_ctrl_rows                  (void);
-    void                display_plots                   (void);
-    void                display_controls                (void);
-    void                _draw_control_bar               (void);
-    //
-    void                DefaultPlotTabRenderFunc        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                DefaultCtrlTabRenderFunc        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    Tab_t *             get_ctrl_tab                    (const std::string & , std::vector<Tab_t> & );
-    float               ComputeAverage                  (const buffer_type &, AvgMode , ImU64 , double , float ) const;
-    void                RebuildDockspace                (void);
-
-
-
 // *************************************************************************** //
 // *************************************************************************** //
 };//	END "CCounterApp" CLASS PROTOTYPE.

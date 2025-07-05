@@ -210,8 +210,8 @@ file(GLOB_RECURSE APP_SRCS
 #
 #       Optional:   add header globbing and grouping (for future use):
 file(GLOB_RECURSE APP_HEADERS
-    ${CMAKE_SOURCE_DIR}/include/*.h
-    ${CMAKE_SOURCE_DIR}/include/**/*.h
+    ${CB_INCLUDE_DIR}/include/*.h
+    ${CB_INCLUDE_DIR}/include/**/*.h
 )
 source_group(TREE ${CMAKE_SOURCE_DIR}/include PREFIX "include" FILES ${APP_HEADERS})
 
