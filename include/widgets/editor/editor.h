@@ -28,6 +28,7 @@
 #include "cblib.h"
 #include "app/_init.h"
 #include "app/state/_state.h"
+
 #include "utility/utility.h"
 #include "widgets/editor/_constants.h"
 #include "widgets/editor/_icon.h"
@@ -98,21 +99,13 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //                  return PathVertexPos{pi, vi};
 //      return std::nullopt;
 //  }
-
-
-
-
-
-
-
-
+     
+     
+ 
+//      UTILITY STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
-//                         Editor:
-//                 Editor Widget for Dear ImGui.
-// *************************************************************************** //
-// *************************************************************************** //
-       
+
 struct      EditorSnapshot;
 struct      Vertex_Tag          {};
 struct      Point_Tag           {};
@@ -136,6 +129,14 @@ enum class IoResult {
 };
 
 
+namespace app { class AppState; }
+
+// *************************************************************************** //
+// *************************************************************************** //
+//                         Editor:
+//                 Editor Widget for Dear ImGui.
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "Editor"
 //
@@ -187,8 +188,8 @@ public:
 
 public:
     //  1.              INITIALIZATION METHODS...
-    // *************************************************************************** //
-                                        Editor                          (void);
+    // *************************************************************************** //;
+                                        Editor                          (app::AppState & src);
                                         ~Editor                         (void);
     //
     //
@@ -265,8 +266,9 @@ private:
     // *************************************************************************** //
     inline void                         _mode_switch_hotkeys                ([[maybe_unused]] const Interaction & );
     inline void                         _dispatch_mode_handler              ([[maybe_unused]] const Interaction & );
-    
-
+    // *************************************************************************** //
+    //
+    //
     // *************************************************************************** //
     //      PRIMARY STATE HANDLERS.         |   "editor.cpp" ...
     // *************************************************************************** //
@@ -282,6 +284,7 @@ private:
     void                                _handle_overlays                    ([[maybe_unused]] const Interaction & );
     //
     void                                _handle_io                          (void);
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
@@ -294,6 +297,7 @@ private:
     //
     void                                _draw_multi_path_inspector          (void);
     void                                _draw_single_path_inspector         (void);
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
@@ -310,6 +314,7 @@ private:
     inline bool                         _can_join_selected_path             (void) const;
     void                                _join_selected_open_path            (void);
     void                                _draw_pen_cursor                    (const ImVec2 &, ImU32);
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
@@ -333,6 +338,7 @@ private:
     //                              DEPRECATED:
     void                                _shape_preview_draw                 (ImDrawList* dl) const;
     void                                _draw_shape_cursor                  (const Interaction &) const;
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
@@ -344,6 +350,7 @@ private:
     void                                _draw_shape_resident_default        (void);
     //
     void                                _draw_selection_resident            (void);
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
@@ -368,7 +375,6 @@ private:
     // *************************************************************************** //
     //      RENDERING FUNCTIONS.            |   "render.cpp" ...
     // *************************************************************************** //
-    //
     //                              GRID:
     void                                _grid_handle_shortcuts              (void);
     //
@@ -381,6 +387,7 @@ private:
     void                                _render_selection_highlight         (ImDrawList *) const;
     inline void                         _render_selected_handles            (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
     inline void                         _render_selection_bbox              (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
@@ -423,6 +430,7 @@ private:
     inline void                         _selection_context_default          ([[maybe_unused]] const Interaction & );
     inline void                         _selection_context_single           ([[maybe_unused]] const Interaction & );
     inline void                         _selection_context_multi            ([[maybe_unused]] const Interaction & );
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
@@ -450,12 +458,12 @@ private:
     void                                _draw_controls                      (void);
     void                                _display_canvas_settings            (void);
     void                                _draw_system_preferences            (void);
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
     //      COMMON.                         |   "common.cpp" ...
     // *************************************************************************** //
-    //
     //                              NEW SELECTION FUNCTIONS:
     void                                bring_selection_to_front            (void);
     void                                bring_selection_forward             (void);
@@ -617,7 +625,6 @@ private:
     // *************************************************************************** //
     //      INLINE FOR TOOLS...
     // *************************************************************************** //
-    
     //  "reset_pen"
     inline void                         reset_pen                           (void) {
         this->m_show_handles.erase( m_pen.handle_vid );
@@ -653,6 +660,7 @@ private:
     // *************************************************************************** //
     //      IMPORTANT DATA...
     // *************************************************************************** //
+    app::AppState &                     CBAPP_STATE_NAME;
     std::vector<Vertex>                 m_vertices;
     std::vector<Point>                  m_points;
     std::vector<Line>                   m_lines;

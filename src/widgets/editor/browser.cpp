@@ -78,7 +78,9 @@ static int point_index_from_vid(const std::vector<Editor::Point>& pts, uint32_t 
 
 //  Default Constructor.
 //
-Editor::Editor(void) {
+Editor::Editor(app::AppState & src)
+    : CBAPP_STATE_NAME(src)
+{
     this->m_window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_HiddenTabBar;
     
     

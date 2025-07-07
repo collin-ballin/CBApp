@@ -24,7 +24,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Parametric Constructor 1.
 //
 EditorApp::EditorApp(app::AppState & src)
-    : S(src)
+    : S(src), m_editor(src)
 {
     //  1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
     m_window_class.DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_None;      //    ImGuiDockNodeFlags_NoTabBar; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;

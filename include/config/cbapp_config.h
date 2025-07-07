@@ -90,7 +90,9 @@
 //      2.4     APP SETTINGS...
 // *************************************************************************** //
 // *************************************************************************** //
-#define     CBAPP_ENABLE_MOVE_AND_RESIZE                        1           //  Allow user to moving / resizing core windows.
+
+#define     CBAPP_ENABLE_FUNCTIONAL_TESTING                 1               //  Compiles with procedure to enact FUNCTIONAL TESTING...
+#define     CBAPP_ENABLE_MOVE_AND_RESIZE                    1           //  Allow user to moving / resizing core windows.
 //  #define     CBAPP_DISABLE_SAVE_WINDOW_SIZE                      1           //  Prevent windows from saving/loading from "ini".     //  ImGuiWindowFlags_NoSavedSettings
 #define     CBAPP_USE_FONTSCALE_DPI                         1           //  Use "S.m_dpi_fontscale" SEPERATE FROM "S.m_dpi_scale".
 

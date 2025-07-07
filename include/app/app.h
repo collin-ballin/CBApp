@@ -132,6 +132,7 @@ class App
 // *************************************************************************** //
 // *************************************************************************** //
 public:
+//
     // *************************************************************************** //
     //  1.1             INLINE PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
@@ -157,6 +158,13 @@ public:
                                 App                         (App &&         )               = delete;   //  Move Constructor.
     App &                       operator =                  (const App &    )               = delete;   //  Assgn. Operator.
     App &                       operator =                  (App &&         )               = delete;   //  Move-Assgn. Operator.
+    
+    // *************************************************************************** //
+    //      PRIVATE CLASS INITIALIZATIONS.  |   "init.cpp" ...
+    // *************************************************************************** //
+private:
+                                App                         (void);                     //  Def. Constructor.
+                                ~App                        (void);                     //  Def. Destructor.
     // *************************************************************************** //
 //
 //
@@ -172,14 +180,11 @@ public:
 //      2.A             PROTECTED MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+protected:
 //
     // *************************************************************************** //
     //      CLASS INITIALIZATIONS.          |   "init.cpp" ...
     // *************************************************************************** //
-    //                      DEFAULT CTOR, DTOR, ETC:
-                                App                         (void);                     //  Def. Constructor.
-                                ~App                        (void);                     //  Def. Destructor.
-    //
     //                      ADDITIONAL INIT. FUNCTIONS:
     void                        init                        (void);                     //  [init.cpp].
     void                        CreateContext               (void);                     //  [init.cpp].
@@ -313,9 +318,6 @@ protected:
 #ifdef CBAPP_ENABLE_CB_DEMO
     CBDemo                      m_cb_demo                       = CBDemo();
 #endif  //  CBAPP_ENABLE_CB_DEMO  //
-    //
-    //
-    cb::Editor                  m_editor;
 //
 //
 //
