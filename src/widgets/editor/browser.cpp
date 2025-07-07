@@ -27,6 +27,7 @@ namespace {  //     BEGINNING NAMESPACE "cb"...
 
 
 // Return true if a line already connects point indices a and b (order‑agnostic).
+[[maybe_unused]]
 static bool line_exists(const std::vector<Editor::Line>& lines, size_t a, size_t b)
 {
     for (const Editor::Line& ln : lines)
@@ -36,6 +37,7 @@ static bool line_exists(const std::vector<Editor::Line>& lines, size_t a, size_t
 }
 
 // Disconnect every edge that references the given point index.
+[[maybe_unused]]
 static void detach_point(std::vector<Editor::Line>& lines, size_t pi)
 {
     lines.erase(std::remove_if(lines.begin(), lines.end(),
@@ -44,6 +46,7 @@ static void detach_point(std::vector<Editor::Line>& lines, size_t pi)
 }
 
 // Return index into m_points for a given vertex‑id (or -1 if not found)
+[[maybe_unused]]
 static int point_index_from_vid(const std::vector<Editor::Point>& pts, uint32_t vid)
 {
     for (int i = 0; i < static_cast<int>(pts.size()); ++i)
@@ -568,7 +571,7 @@ void Editor::_draw_single_path_inspector(void)
     ImGui::SameLine();
     if (ImGui::Button("Delete Object"))
     {
-        _erase_path_and_orphans(pidx);   // ← replaces direct m_paths.erase()
+        _erase_path_and_orphans( static_cast<PathID>(pidx) );   // ← replaces direct m_paths.erase()
         m_sel.clear();
         m_inspector_vertex_idx = -1;
         return;

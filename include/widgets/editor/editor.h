@@ -150,6 +150,7 @@ public:
         using                           ID                              = cblib::utl::IDType<T, Tag>;
     //
         using                           VertexID                        = uint32_t;     //    ID<std::uint32_t, Vertex_Tag>         ;
+        using                           HandleID                        = uint8_t;      //    ID<std::uint32_t, Point_Tag>          ;
         using                           PointID                         = uint32_t;     //    ID<std::uint32_t, Point_Tag>          ;
         using                           LineID                          = uint32_t;     //    ID<std::uint32_t, Line_Tag>           ;
         using                           PathID                          = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
@@ -159,6 +160,7 @@ public:
     //
     //                              TYPENAME ALIASES (BASED ON INDEX TYPES):
         using                           Vertex                          = Vertex_t          <VertexID>                              ;
+        //  using                       Handle                          = Handle_t          <HandleID>                              ;
         using                           Point                           = Point_t           <PointID>                               ;
         using                           Line                            = Line_t            <LineID>                                ;
         using                           Path                            = Path_t            <PathID, VertexID, ZID>                 ;
@@ -297,13 +299,13 @@ private:
     // *************************************************************************** //
     //      PEN-TOOL STUFF.                 |   "pen_tool.cpp" ...
     // *************************************************************************** //
-    void                                _pen_begin_handle_drag              (uint32_t vid, bool out_handle, const bool force_select=false);
+    void                                _pen_begin_handle_drag              (VertexID vid, bool out_handle, const bool force_select=false);
     //bool                                _pen_try_begin_handle_drag          (const Interaction & );
     void                                _pen_update_handle_drag             ([[maybe_unused]] const Interaction & );
     void                                _pen_begin_path_if_click_empty      (const Interaction & );
     void                                _pen_append_or_close_live_path      (const Interaction & );
     //
-    std::optional<size_t>               _path_idx_if_last_vertex            (uint32_t vid) const;
+    std::optional<size_t>               _path_idx_if_last_vertex            (VertexID vid) const;
     inline bool                         _pen_click_hits_first_vertex        (const Interaction &, const Path &) const;
     inline bool                         _can_join_selected_path             (void) const;
     void                                _join_selected_open_path            (void);
@@ -426,16 +428,16 @@ private:
     // *************************************************************************** //
     //      UTILITIES.                      |   "utility.cpp" ...
     // *************************************************************************** //
-    Vertex *                            find_vertex                         (std::vector<Vertex> & , uint32_t);
-    const Vertex *                      find_vertex                         (const std::vector<Vertex> & , uint32_t) const;
-    std::optional<EndpointInfo>         _endpoint_if_open                   (uint32_t vid) const;
+    Vertex *                            find_vertex                         (std::vector<Vertex> & , VertexID);
+    const Vertex *                      find_vertex                         (const std::vector<Vertex> & , VertexID) const;
+    std::optional<EndpointInfo>         _endpoint_if_open                   (PathID vid) const;
     //
     //                              DATA MODIFIER UTILITIES:
-    void                                _add_point_glyph                    (uint32_t vid);
+    void                                _add_point_glyph                    (VertexID vid);
     uint32_t                            _add_vertex                         (ImVec2 w);
     void                                _add_point                          (ImVec2 w);
-    void                                _erase_vertex_and_fix_paths         (uint32_t vid);
-    void                                _erase_path_and_orphans             (size_t vid);
+    void                                _erase_vertex_and_fix_paths         (VertexID vid);
+    void                                _erase_path_and_orphans             (VertexID vid);
     //
     //                              APP UTILITY OPERATIONS:
     bool                                _try_begin_handle_drag              (const Interaction & );
@@ -567,6 +569,10 @@ private:
     inline ImVec2                       maybe_snap                          (ImVec2 w) const
     { return m_grid.snap_on ? snap_to_grid(w) : w; }
     
+    //  "path_is_mutable"
+    inline bool                         path_is_mutable                     (const Path * p) const noexcept
+    { return p && p->visible && !p->locked; }
+
     //  "_mode_has"
     inline bool                         _mode_has                           (CBCapabilityFlags flag) const
     { return (MODE_CAPS[static_cast<size_t>(m_mode)] & flag) != 0; }
@@ -722,7 +728,7 @@ private:
     bool                                m_drawing                       = false;
     bool                                m_dragging_handle               = false;
     bool                                m_dragging_out                  = true;
-    uint32_t                            m_drag_vid                      = 0;
+    VertexID                            m_drag_vid                      = 0;
     // *************************************************************************** //
     //
     //

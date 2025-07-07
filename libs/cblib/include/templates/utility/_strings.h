@@ -134,14 +134,15 @@ constexpr std::size_t cc_strlen_IMPL(const char * s) noexcept {
 template <std::string_view const&... Strs>
 struct strcat_string_view_cx {
     static constexpr auto impl() noexcept {
-        constexpr std::size_t len = (Strs.size() + ... + 0);
-        std::array<char, len + 1> arr{};
-        auto append = [i = 0, &arr](auto const& s) mutable {
-            for (char c : s) arr[i++] = c;
+        constexpr std::size_t           len     = (Strs.size() + ... + 0);
+        std::array<char, len + 1>       word_   {};
+        
+        auto append = [i = 0, &word_](auto const& s) mutable {
+            for (char c : s) word_[i++] = c;
         };
         (append(Strs), ...);
-        arr[len] = '\0';
-        return arr;
+        word_[len] = '\0';
+        return word_;
     }
 
     static constexpr auto               arr                 = impl();

@@ -403,8 +403,8 @@ inline void FileDialog::draw_top_bar(State & s)
 //
 inline void FileDialog::draw_breadcrumb_bar(State & s)
 {
-    ImGuiStyle &            style           = ImGui::GetStyle();
-    float                   avail_total     = 1.8 * this->m_window_size.x; // - 2 * style.WindowPadding.x;   // popup width
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+    float                           avail_total     = 1.8 * this->m_window_size.x; // - 2 * style.WindowPadding.x;   // popup width
 
 #ifdef _WIN32
     //  SHOW WINDOWS ("C:") DRIVE FIRST...

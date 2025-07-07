@@ -186,8 +186,7 @@ static void ShowTableColumnsStatusFlags(ImGuiTableColumnFlags flags)
 
 
 
-
-static void display_table_demo(void)
+[[maybe_unused]] static void display_table_demo(void)
 {
 
 
@@ -350,7 +349,7 @@ static void display_table_demo(void)
                 {
                     ImGui::TableSetColumnIndex(column);
                     char buf[32];
-                    sprintf(buf, "Hello %d,%d", column, row);
+                        snprintf(buf, sizeof(buf), "Hello %d,%d", column, row);
                     if (contents_type == CT_Text)
                         ImGui::TextUnformatted(buf);
                     else if (contents_type == CT_FillButton)
@@ -591,7 +590,7 @@ static void display_table_demo(void)
                     else
                     {
                         char buf[32];
-                        sprintf(buf, "Hello %d,%d", column, row);
+                        snprintf(buf, sizeof(buf), "Hello %d,%d", column, row);
                         ImGui::Button(buf, ImVec2(-FLT_MIN, 0.0f));
                     }
                     //if (ImGui::TableGetColumnFlags() & ImGuiTableColumnFlags_IsHovered)
@@ -737,17 +736,18 @@ static void display_table_demo(void)
                 int row = ImGui::TableGetRowIndex();
 
                 ImGui::PushID(cell);
-                char label[32];
-                static char text_buf[32] = "";
-                sprintf(label, "Hello %d,%d", column, row);
+                char            label[32];
+                static char     text_buf[32] = "";
+                std::snprintf(label, sizeof(label), "Hello %d,%d", column, row);
+                
                 switch (contents_type)
                 {
-                case CT_ShortText:  ImGui::TextUnformatted(label); break;
-                case CT_LongText:   ImGui::Text("Some %s text %d,%d\nOver two lines..", column == 0 ? "long" : "longeeer", column, row); break;
-                case CT_ShowWidth:  ImGui::Text("W: %.1f", ImGui::GetContentRegionAvail().x); break;
-                case CT_Button:     ImGui::Button(label); break;
-                case CT_FillButton: ImGui::Button(label, ImVec2(-FLT_MIN, 0.0f)); break;
-                case CT_InputText:  ImGui::SetNextItemWidth(-FLT_MIN); ImGui::InputText("##", text_buf, IM_ARRAYSIZE(text_buf)); break;
+                    case CT_ShortText:  ImGui::TextUnformatted(label); break;
+                    case CT_LongText:   ImGui::Text("Some %s text %d,%d\nOver two lines..", column == 0 ? "long" : "longeeer", column, row); break;
+                    case CT_ShowWidth:  ImGui::Text("W: %.1f", ImGui::GetContentRegionAvail().x); break;
+                    case CT_Button:     ImGui::Button(label); break;
+                    case CT_FillButton: ImGui::Button(label, ImVec2(-FLT_MIN, 0.0f)); break;
+                    case CT_InputText:  ImGui::SetNextItemWidth(-FLT_MIN); ImGui::InputText("##", text_buf, IM_ARRAYSIZE(text_buf)); break;
                 }
                 ImGui::PopID();
             }
@@ -1448,7 +1448,7 @@ static void display_table_demo(void)
                 for (int column = 0; column < 3; column++)
                 {
                     char buf[32];
-                    sprintf(buf, "Cell %d,%d", column, row);
+                    snprintf(buf, sizeof(buf), "Cell %d,%d", column, row);
                     ImGui::TableSetColumnIndex(column);
                     ImGui::Selectable(buf, column_selected[column]);
                 }
@@ -1654,7 +1654,8 @@ static void display_table_demo(void)
         for (int n = 0; n < 3; n++)
         {
             char buf[32];
-            sprintf(buf, "Synced Table %d", n);
+            snprintf(buf, sizeof(buf), "Synced Table %d", n);
+            
             bool open = ImGui::CollapsingHeader(buf, ImGuiTreeNodeFlags_DefaultOpen);
             if (open && ImGui::BeginTable("Table", 3, flags, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 5)))
             {
@@ -1999,7 +2000,8 @@ static void display_table_demo(void)
                     // For the demo purpose we can select among different type of items submitted in the first column
                     ImGui::TableSetColumnIndex(0);
                     char label[32];
-                    sprintf(label, "%04d", item->ID);
+                    std::snprintf(label, sizeof(label), "%04d", item->ID);
+                    
                     if (contents_type == CT_Text)
                         ImGui::TextUnformatted(label);
                     else if (contents_type == CT_Button)

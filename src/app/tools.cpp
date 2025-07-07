@@ -162,7 +162,7 @@ enum CopyFormat : int { FMT_HEX, FMT_HEXA, FMT_IM_COL32, FMT_IMVEC4, FMT_COUNT }
 //  "shader"
 //
 namespace shader {
-    constexpr size_t                BUFFER_SIZE             = 256;
+    //  constexpr size_t                BUFFER_SIZE             = 256;
     static bool                     first_frame             = true;
     
     //  DIMENSIONS...
@@ -172,7 +172,7 @@ namespace shader {
     static float                    WIDGET_COLUMN_WIDTH     = 300.0f;
 
     static ImVec4                   base_color              = ImVec4(114.0f/255.0f, 144.0f/255.0f, 154.0f/255.0f, 1.0f);    //  Base color in RGB (normalized to [0,1]).
-    static char                     hex_input[BUFFER_SIZE]  = "#728C9A";    //  Hex input for base color.
+    //  static char                     hex_input[BUFFER_SIZE]  = "#728C9A";    //  Hex input for base color.
     static int                      steps                   = 3;            //  Steps and lightness delta for variants.
     static float                    delta_l                 = 0.1f;
 
@@ -184,7 +184,7 @@ namespace shader {
     static ImGuiTableColumnFlags    col0_flags              = ImGuiTableColumnFlags_WidthFixed;
     static ImGuiTableColumnFlags    col1_flags              = stretch_column_1 ? ImGuiTableColumnFlags_WidthStretch : ImGuiTableColumnFlags_WidthFixed;
     static ImGuiTableFlags          table_flags             = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible; //ImGuiTableFlags_ScrollX;
-    static ImGuiSliderFlags         SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
+    //  static ImGuiSliderFlags         SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
 
     //              COLOR-INPUT FLAGS...
     static ImGuiColorEditFlags      COLOR_INPUT_FLAGS       = ImGuiColorEditFlags_None | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSmallPreview; //ImGuiColorEditFlags_NoAlpha
@@ -513,13 +513,13 @@ namespace cmap {
     static constexpr const char *   EXPORT_MODES[]      = {"Float", "Hex"};
     //
     //  TABLE...
-    constexpr float                 IDX_COL_WIDTH       = 20.0f;
-    constexpr float                 COLOR_COL_WIDTH     = -1.0f;
-    constexpr float                 ORDER_COL_WIDTH     = 80.0f;
+    //      constexpr float                 IDX_COL_WIDTH       = 20.0f;
+    //      constexpr float                 COLOR_COL_WIDTH     = -1.0f;
+    //      constexpr float                 ORDER_COL_WIDTH     = 80.0f;
     constexpr ImGuiTableFlags       TABLE_FLAGS         = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable;
     //
     // SLIDER WIDGETS...
-    constexpr ImGuiSliderFlags      POS_FLAGS           = ImGuiSliderFlags_AlwaysClamp;
+    //      constexpr ImGuiSliderFlags      POS_FLAGS           = ImGuiSliderFlags_AlwaysClamp;
     //
     //  LOOK-UP TABLE (LUT) RESOLUTION...
     constexpr int                   LUT_SIZE            = 256;
@@ -800,7 +800,7 @@ bool CMAPLoader(void)
 void CMAPTable(void)
 {
     using namespace cmap;
-    bool                    changed             = false;
+    //  bool                    changed             = false;
     bool                    pos_changed         = false;   // slider modified
     bool                    order_changed       = false;    // up/down swap
 
@@ -958,7 +958,7 @@ void CMAPPreview(bool apply)
         //
         //  if (ImPlot::ColormapButton("Button", ImVec2(0,0), cmap_demo))
         //      cmap_demo = (cmap_demo + 1) % ImPlot::GetColormapCount();
-        static float    t_custom        = 0.5f;
+        //  static float    t_custom        = 0.5f;
         static ImVec4   col_custom;
     
         if (ImGui::TreeNode("Additional Previews"))

@@ -183,7 +183,6 @@ void GraphApp::dispatch_plot_function(const std::string & uuid)
     if (!match) return;
     
     
-    auto &          T       = ms_PLOT_TABS[idx];
     //  DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
     switch (idx)
     {
@@ -231,7 +230,6 @@ void GraphApp::dispatch_ctrl_function(const std::string & uuid)
     if (!match) return;
     
     
-    auto &          T       = ms_PLOT_TABS[idx];
     
     
     //  DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...

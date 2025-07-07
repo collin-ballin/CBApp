@@ -39,7 +39,6 @@ using                           value_type                      = GraphApp::valu
 // *************************************************************************** //
 
 //          1.      MISC STUFF.
-static bool                     ms_running                      = false;
 //static std::atomic<bool>        data_ready(false);
 //static std::once_flag           init_once;
 
@@ -150,8 +149,6 @@ void GraphApp::ShowPlayback(void)
         static re_frame &               ms_Ez_F_data        = *ms_model.get_E_freq_data();
         
         static float                    perm_lims [2]       = {1.0, 16.0f};
-        static float                    eps_vrange[2]       = {};
-        static bool                     first_frame         = true;
 
         if (m_playback.playing && delta >= 1.0 / m_playback.fps) {
             m_playback.frame.value      = (m_playback.frame.value + 1) % m_playback.frame.limits.max;

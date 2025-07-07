@@ -42,7 +42,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 //  "_pen_begin_handle_drag"
 //
-void Editor::_pen_begin_handle_drag(uint32_t vid, bool out_handle, const bool force_select)
+void Editor::_pen_begin_handle_drag(VertexID vid, bool out_handle, const bool force_select)
 {
     // existing flag setup …
     m_pen.dragging_handle  = true;
@@ -124,7 +124,7 @@ void Editor::_pen_begin_path_if_click_empty(const Interaction& it)
     if (_hit_any(it)) return;                       // clicked on an object
 
     ImVec2 ws = pixels_to_world(ImGui::GetIO().MousePos);   // NEW
-    uint32_t vid = _add_vertex(ws);
+    VertexID vid = _add_vertex(ws);
     m_points.push_back({ vid, { PEN_ANCHOR_COLOR, PEN_ANCHOR_RADIUS, true } });
 
     Path p; p.verts = { vid }; p.closed = false;
@@ -191,7 +191,7 @@ void Editor::_pen_append_or_close_live_path(const Interaction& it)
 
     //  3.  Add a new vertex at mouse position.
     ImVec2          ws          = pixels_to_world(ms);           // NEW
-    uint32_t        new_vid     = _add_vertex(ws);
+    VertexID        new_vid     = _add_vertex(ws);
     _add_point_glyph(new_vid);
 
 
@@ -224,7 +224,7 @@ void Editor::_pen_append_or_close_live_path(const Interaction& it)
 
 //  "_path_idx_if_last_vertex"
 //
-std::optional<size_t> Editor::_path_idx_if_last_vertex(uint32_t vid) const
+std::optional<size_t> Editor::_path_idx_if_last_vertex(VertexID vid) const
 {
     for (size_t i = 0; i < m_paths.size(); ++i)
         if (!m_paths[i].closed && !m_paths[i].verts.empty() &&

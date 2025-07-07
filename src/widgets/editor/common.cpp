@@ -376,7 +376,7 @@ void Editor::delete_selection(void)
 
     // --- paths (use existing helper so vertices/orphans are handled) ---
     for (size_t i : pth)
-        _erase_path_and_orphans(i);
+        _erase_path_and_orphans( static_cast<PathID>(i) );
 
     // finally
     this->reset_selection();    // m_sel.clear();
@@ -410,7 +410,7 @@ void Editor::_clear_all(void)
     
     //  1.  CLEAR ALL EDITOR DATA...
     for (size_t idx = 0; idx < N; ++idx) {
-        _erase_path_and_orphans(idx);  // ← replaces direct m_paths.erase()
+        _erase_path_and_orphans( static_cast<VertexID>(idx) );  // ← replaces direct m_paths.erase()
     }
 
     m_vertices.clear();

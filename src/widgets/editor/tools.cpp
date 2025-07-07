@@ -693,11 +693,11 @@ void Editor::_overlay_display_main_content([[maybe_unused]] const Interaction& i
 void Editor::_overlay_display_extra_content([[maybe_unused]] const Interaction& it)
 {
     using namespace overlay;
-    
-    size_t n_pts  = m_sel.points.size();
-    size_t n_pths = m_sel.paths.size();
-    size_t n_lns  = m_sel.lines.size();
-    size_t total  = n_pts + n_pths + n_lns;
+    ImGuiIO &           io              = ImGui::GetIO();
+    size_t              n_pts           = m_sel.points.size();
+    size_t              n_pths          = m_sel.paths.size();
+    size_t              n_lns           = m_sel.lines.size();
+    size_t              total           = n_pts + n_pths + n_lns;
 
     // Selection summary --------------------------------------------------
     if (total == 0)
@@ -729,13 +729,13 @@ void Editor::_overlay_display_extra_content([[maybe_unused]] const Interaction& 
     }
     else
     {
-        char buf[128] = "";
-        if (n_pts)  std::snprintf(buf + std::strlen(buf), sizeof(buf) - std::strlen(buf),
-                                  "%zu Point%s    ", n_pts, n_pts>1?"s":"");
-        if (n_pths) std::snprintf(buf + std::strlen(buf), sizeof(buf) - std::strlen(buf),
-                                  "%zu Path%s    ", n_pths, n_pths>1?"s":"");
-        if (n_lns)  std::snprintf(buf + std::strlen(buf), sizeof(buf) - std::strlen(buf),
-                                  "%zu Line%s",  n_lns, n_lns>1?"s":"");
+        static constexpr size_t     SIZE            = 128;
+        char                        buf[SIZE]       = "";
+        
+        if (n_pts)      { std::snprintf(buf + std::strlen(buf), sizeof(buf) - std::strlen(buf), "%zu Point%s    ",  n_pts,  n_pts>  1 ? "s" : "");      }
+        if (n_pths)     { std::snprintf(buf + std::strlen(buf), sizeof(buf) - std::strlen(buf), "%zu Path%s    ",   n_pths, n_pths> 1 ? "s" : "");      }
+        if (n_lns)      { std::snprintf(buf + std::strlen(buf), sizeof(buf) - std::strlen(buf), "%zu Line%s",       n_lns,  n_lns>  1 ? "s" : "");      }
+        
         overlay_text(COL_INFO, "Selection: %s", buf);
     }
 
@@ -745,17 +745,33 @@ void Editor::_overlay_display_extra_content([[maybe_unused]] const Interaction& 
     ImGui::Separator();
     overlay_text(COL_INFO, "Zoom: %.2f", m_cam.zoom_mag);
     overlay_text(COL_INFO, "Scroll: (%.1f, %.1f)", m_cam.pan.x, m_cam.pan.y);
-    overlay_text(COL_INFO, "Grid step: %.2f    Snap: %s",
-                 m_grid.snap_step, m_grid.snap_on ? "on" : "off");
+    overlay_text(COL_INFO, "Grid step: %.2f    Snap: %s", m_grid.snap_step, m_grid.snap_on ? "on" : "off");
 
-    ImGuiIO& io = ImGui::GetIO();
-    char mods[32] = "none";
-    int len = 0;
-    if (io.KeyShift) len += std::sprintf(mods + len, "Shift ");
-    if (io.KeyCtrl)  len += std::sprintf(mods + len, "Ctrl ");
-    if (io.KeyAlt)   len += std::sprintf(mods + len, "Alt ");
-    if (io.KeySuper) len += std::sprintf(mods + len, "Super ");
-    overlay_text(COL_INFO, "Modifiers: %s", mods);
+
+    {
+        char        mods[32]        = "none";
+        int         len             = 0;
+
+        if (io.KeyShift) {
+            int written = std::snprintf(mods + len, sizeof(mods) - len, "Shift ");
+            if (written > 0) len += written;
+        }
+        if (io.KeyCtrl) {
+            int written = std::snprintf(mods + len, sizeof(mods) - len, "Ctrl ");
+            if (written > 0) len += written;
+        }
+        if (io.KeyAlt) {
+            int written = std::snprintf(mods + len, sizeof(mods) - len, "Alt ");
+            if (written > 0) len += written;
+        }
+        if (io.KeySuper) {
+            int written = std::snprintf(mods + len, sizeof(mods) - len, "Super ");
+            if (written > 0) len += written;
+        }
+        overlay_text(COL_INFO, "Modifiers: %s", mods);
+    }
+    
+    return;
 }
 
 // *************************************************************************** //
