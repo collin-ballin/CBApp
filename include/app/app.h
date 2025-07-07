@@ -129,6 +129,7 @@ void                    ShowExampleAppDocuments     ([[maybe_unused]] const char
 class App
 {
     CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+    using                       WinRenderFn                 = std::function<void(const char *, bool *, ImGuiWindowFlags)>;
 // *************************************************************************** //
 // *************************************************************************** //
 public:
@@ -192,7 +193,7 @@ protected:
     //
     //                      SUB-CLASS INIT. FUNCTIONS:
     void                        init_appstate               (void);                     //  [init.cpp].
-    void                        dispatch_window_function    (const Window & uuid);      //  [init.cpp].
+    [[nodiscard]] WinRenderFn   dispatch_window_function    (const Window & uuid);      //  [init.cpp].
     //
     //                      RUNTIME INIT. FUNCTIONS:
     void                        load                        (void);                     //  [init.cpp].

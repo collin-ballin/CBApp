@@ -208,11 +208,15 @@ void App::init_appstate(void)
 
     //  2.  LOAD APPLICATION WINDOW RENDER CALLBACK FUNCTIONS...
     //
-    for (std::size_t i = 0; i < static_cast<int>(Window::Count); ++i)
+    for (std::size_t i = S.ms_WINDOWS_BEGIN; i < static_cast<int>(Window::Count); ++i)
     {
         Window      uuid                    = static_cast<Window>(i);
-        m_windows[uuid].render_fn           = [this, uuid]([[maybe_unused]] const char * id, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
-        { this->dispatch_window_function(uuid); }; // uuid is now correctly captured per-lambda
+        //  m_windows[uuid].render_fn           = [this, uuid]([[maybe_unused]] const char * id, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+        //  { this->dispatch_window_function(uuid); };  // uuid is now correctly captured per-lambda
+        
+        this->S.m_windows[uuid].render_fn   = this->dispatch_window_function(uuid);   // final target stored
+        
+        IM_ASSERT( this->S.m_windows[uuid].render_fn && "render_fn bound here" );
     }
 
 
@@ -235,9 +239,9 @@ void App::init_appstate(void)
     //      4.1     FALLING BACK TO DEFAULT FONTS...
     if (!good_fonts) {
         S.m_logger.warning( std::format("Failure to load custom fonts.  Reverting to default DEAR IMGUI Fonts") );
-        for (int i = 0; i < static_cast<int>(Font::Count); ++i) {
-            const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
-            ImFontConfig    config;
+        for (int i = 0; i < static_cast<int>(Font::Count); ++i) {                               //  TODO:   REFACTOR.
+            const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];          //      Adapt this impl to use RESOURCE IDs so
+            ImFontConfig    config;                                                             //      we can package FONTS as binary resources.
             config.SizePixels                   = S.m_dpi_fontscale * info.size;
             m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontDefault(&config);
         }
@@ -249,9 +253,9 @@ void App::init_appstate(void)
     
     
     //      6.      INITIALIZE OTHER MEMBERS INSIDE APPSTATE...
-    S.m_detview_windows.push_back( std::addressof( this->m_graph_app.m_detview_window ) );
-    S.m_detview_windows.push_back( std::addressof( this->m_editor_app.m_detview_window ) );
-    S.m_detview_windows.push_back( std::addressof( this->m_counter_app.m_detview_window ) );
+    S.m_detview_windows.push_back( std::addressof( this->m_graph_app.m_detview_window )     );  //  TODO:   THIS SUCKS.
+    S.m_detview_windows.push_back( std::addressof( this->m_editor_app.m_detview_window )    );  //      Fix it w/ forward declarations.
+    S.m_detview_windows.push_back( std::addressof( this->m_counter_app.m_detview_window )   );
     
     //          6.1.    Make sure these windows cannot LEAVE the DetView Dockspace...
     for (auto & win : S.m_detview_windows) {
@@ -265,9 +269,12 @@ void App::init_appstate(void)
 
 //  "dispatch_window_function"
 //
-void App::dispatch_window_function(const Window & uuid)
+[[nodiscard]]
+App::WinRenderFn App::dispatch_window_function(const Window & uuid)
 {
-    auto &          w       = S.m_windows[uuid];
+    //  IM_ASSERT( !S.m_running.load(std::memory_order_acquire) && error::ASSERT_DISPATCH_CALLED_DURING_RUNTIME );
+    WinRenderFn     render_fn   = nullptr;
+    auto &       w           = S.m_windows[uuid];
     
     
     //  DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
@@ -276,27 +283,39 @@ void App::dispatch_window_function(const Window & uuid)
         //
         //      1.  PRIMARY GUI STRUCTURE...
         case Window::Dockspace:         {
-            this->ShowDockspace(            w.uuid.c_str(),     nullptr,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowDockspace(n, o, f); };
+            //this->ShowDockspace(            w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::MenuBar:           {
-            this->m_menubar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->m_menubar.Begin(n, o, f); };
+            //  this->m_menubar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::ControlBar:        {
-            this->m_controlbar.Begin(       w.uuid.c_str(),     nullptr,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->m_controlbar.Begin(n, o, f); };
+            //  this->m_controlbar.Begin(       w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::Browser:           {
-            this->m_browser.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->m_browser.Begin(n, o, f); };
+            //  this->m_browser.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::DetailView:        {
-            this->m_detview.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->m_detview.Begin(n, o, f); };
+            //  this->m_detview.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::MainApp:           {
-            this->ShowMainWindow(           w.uuid.c_str(),     nullptr,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowMainWindow(n, o, f); };
+            //  this->ShowMainWindow(           w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         //
@@ -304,15 +323,21 @@ void App::dispatch_window_function(const Window & uuid)
         //
         //      2.  MAIN APPLICATION WINDOWS...
         case Window::CCounterApp:       {
-            this->m_counter_app.Begin(      w.uuid.c_str(),     nullptr,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->m_counter_app.Begin(n, o, f); };
+            //  this->m_counter_app.Begin(      w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::EditorApp:         {
-            this->m_editor_app.Begin(       w.uuid.c_str(),     nullptr,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->m_editor_app.Begin(n, o, f); };
+            //  this->m_editor_app.Begin(       w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::GraphApp:          {
-            this->m_graph_app.Begin(        w.uuid.c_str(),     nullptr,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->m_graph_app.Begin(n, o, f); };
+            //  this->m_graph_app.Begin(        w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         //
@@ -320,29 +345,41 @@ void App::dispatch_window_function(const Window & uuid)
         //
         //      3.  TOOLS, SUBSIDIARY APPLICATION WINDOWS...
         case Window::ImGuiStyleEditor:  {
-            this->ShowImGuiStyleEditor(     w.uuid.c_str(),     &w.open,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImGuiStyleEditor(n, o, f); };
+            //  this->ShowImGuiStyleEditor(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::ImPlotStyleEditor: {
-            this->ShowImGuiStyleEditor(     w.uuid.c_str(),     &w.open,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImGuiStyleEditor(n, o, f); };
+            //  this->ShowImGuiStyleEditor(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::ImGuiMetrics:      {
-            this->ShowImGuiMetricsWindow(   w.uuid.c_str(),     &w.open,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImGuiMetricsWindow(n, o, f); };
+            //  this->ShowImGuiMetricsWindow(   w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::ImPlotMetrics:      {
-            this->ShowImPlotMetricsWindow(  w.uuid.c_str(),     &w.open,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImPlotMetricsWindow(n, o, f); };
+            //  this->ShowImPlotMetricsWindow(  w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //
         //
         case Window::Logs:              {
-            cb::ShowExampleAppLog(          w.uuid.c_str(),     &w.open,        w.flags);
+            render_fn   = [](const char * n, bool * o, ImGuiWindowFlags f)
+                          { cb::ShowExampleAppLog(n, o, f); };
+            //  cb::ShowExampleAppLog(          w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::Console:           {
-            cb::ShowExampleAppConsole(      w.uuid.c_str(),     &w.open,        w.flags);
+            render_fn   = [](const char * n, bool * o, ImGuiWindowFlags f)
+                          { cb::ShowExampleAppConsole(n, o, f); };
+            //  cb::ShowExampleAppConsole(      w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //
@@ -350,37 +387,50 @@ void App::dispatch_window_function(const Window & uuid)
         //
         //      4.  *MY* TOOLS...
         case Window::ColorTool:         {
-            this->ShowColorTool(            w.uuid.c_str(),     &w.open,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowColorTool(n, o, f); };
+            //  this->ShowColorTool(            w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::CustomRendering:   {
-            cb::ShowCustomRendering(        w.uuid.c_str(),     &w.open,        w.flags);
+            render_fn   = [](const char * n, bool * o, ImGuiWindowFlags f)
+                          { cb::ShowCustomRendering(n, o, f); };
+            //  cb::ShowCustomRendering(        w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //
         //
         //      5.  DEMOS, ETC...
         case Window::ImGuiDemo:         {
-            this->ShowImGuiDemoWindow(      w.uuid.c_str(),     &w.open,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImGuiDemoWindow(n, o, f); };
+            //  this->ShowImGuiDemoWindow(      w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::ImPlotDemo:        {
-            this->ShowImPlotDemoWindow(     w.uuid.c_str(),     &w.open,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImPlotDemoWindow(n, o, f); };
+            //  this->ShowImPlotDemoWindow(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::AboutMyApp:        {
-            this->ShowAboutWindow(          w.uuid.c_str(),     &w.open,        w.flags);
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowAboutWindow(n, o, f); };
+            //  this->ShowAboutWindow(          w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //
         //  ...
         //
         default: {
+            //IM_ASSERT(true && error::ASSERT_NO_DEFAULT_WINDOW_RENDER_SWITCH_CASE);
             break;
         }
     }
     
-    return;
+    
+    
+    return render_fn;
 }
 
 
@@ -474,9 +524,9 @@ bool App::init_asserts(void)
         IM_ASSERT( m_fonts[static_cast<Font>(i)] );
 
     //  4.  ASSERT THAT ALL WINDOW CALLBACK FUNCTIONS ARE VALID...
-    for (size_t idx = 0; idx < N_WINDOWS; ++idx) {
-        const app::WinInfo & winfo      = S.m_windows[ static_cast<Window>(idx) ];
-        IM_ASSERT( winfo.render_fn != nullptr       && error::ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS );
+    for (std::size_t i = S.ms_WINDOWS_BEGIN; i < N_WINDOWS; ++i) {
+        const app::WinInfo & winfo      = S.m_windows[ static_cast<Window>(i) ];
+        IM_ASSERT( winfo.render_fn       && error::ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS );
     }
 
     return true;

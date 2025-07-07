@@ -312,13 +312,13 @@ namespace error { //     BEGINNING NAMESPACE "error"...
 //  1.      GLFW ERRORS...
 // *************************************************************************** //
 // *************************************************************************** //
-inline constexpr const char *       GLFW_INIT_ERROR                             =
+inline constexpr const char *       GLFW_INIT_ERROR                                 =
     "Call to \"glfwInit()\" returned NULL.\n\t"
     "This may occur if your machine does not have the necessary graphics drivers for OpenGL installed.\n\t"
     "Ensure that your system is using the designated GPU / Graphics Card and NOT the on-board "
     "graphics that are build into the motherboard.\n";
     
-inline constexpr const char *       GLFW_WINDOW_INIT_ERROR                      =
+inline constexpr const char *       GLFW_WINDOW_INIT_ERROR                          =
     "Call to \"glfwCreateWindow()\" returned NULL.\n";
     
 // *************************************************************************** //
@@ -328,10 +328,10 @@ inline constexpr const char *       GLFW_WINDOW_INIT_ERROR                      
 //  2.      CONTEXT CREATION ERRORS...
 // *************************************************************************** //
 // *************************************************************************** //
-inline constexpr const char *       IMGUI_CONTEXT_CREATION_ERROR                =
+inline constexpr const char *       IMGUI_CONTEXT_CREATION_ERROR                    =
     "Call to \"ImGui::CreateContext()\" returned NULL.\n";
     
-inline constexpr const char *       IMPLOT_CONTEXT_CREATION_ERROR               =
+inline constexpr const char *       IMPLOT_CONTEXT_CREATION_ERROR                   =
     "Call to \"ImPlot::CreateContext()\" returned NULL.\n";
     
 // *************************************************************************** //
@@ -341,23 +341,29 @@ inline constexpr const char *       IMPLOT_CONTEXT_CREATION_ERROR               
 //  3.      ASSERT STATEMENT ERRORS...
 // *************************************************************************** //
 // *************************************************************************** //
-inline constexpr const char *       ASSERT_32BIT_IMDRAWIDX                      =
+inline constexpr const char *       ASSERT_32BIT_IMDRAWIDX                          =
     "sizeof( IMGUI_USE_WCHAR32 ) < 4 BYTES.  We require this to plot large graphical meshes.\n"
     "(#define ImDrawIdx unsigned int // inside <my_imconfig.h>)\n";
     
-inline constexpr const char *       ASSERT_32BIT_WCHAR                          =
+inline constexpr const char *       ASSERT_32BIT_WCHAR                              =
     "sizeof( IMGUI_USE_WCHAR32 ) != 4 BYTES.  We require this to typeset mathematical symbols.\n\t"
     "(#define IMGUI_USE_WCHAR32 // inside <my_imconfig.h>)\n";
     
 
 
-inline constexpr const char *       ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS      =
+inline constexpr const char *       ASSERT_DISPATCH_CALLED_DURING_RUNTIME           =
+    "\"App::dispatch_window_function\" should NOT be called during main application loop.\n";
+    
+inline constexpr const char *       ASSERT_NO_DEFAULT_WINDOW_RENDER_SWITCH_CASE     =
+    "One or more windows invoked \"default\" branch of the dispatch function switch statement.\n";
+
+inline constexpr const char *       ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS          =
     "One or more window render functions is NULL (app::WinInfo.render_fn).\n"
     "CHECK:\n"
     "\t(1.) \t \"dispatch_window_function()\" in \"src/app/init.cpp\".\n"
     "\t(2.) \t \"#define _CBAPP_WINDOW_LIST(X)\" in \"include/app/state/_state.h\".\n";
     
-inline constexpr const char *       ASSERT_INVALID_PRIMARY_WINDOWS              =
+inline constexpr const char *       ASSERT_INVALID_PRIMARY_WINDOWS                  =
     "\"Sidebar\" window cannot be an item inside \"this->m_primary_windows!\" variable.\n";
 
 // *************************************************************************** //
