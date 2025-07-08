@@ -543,22 +543,21 @@ private:
     //  "_update_grid"
     inline void                         _update_grid_info                   (void)
     {
-        ImPlotRect      lim      = ImPlot::GetPlotLimits();          // world extent
-        ImVec2          size     = ImPlot::GetPlotSize();           // in pixels
+        ImPlotRect      lim         = ImPlot::GetPlotLimits();          // world extent
+        ImVec2          size        = ImPlot::GetPlotSize();           // in pixels
 
-        float           range_x = static_cast<float>(lim.X.Max - lim.X.Min);
-        float           ppw     = size.x / range_x;                  // pixels‑per‑world‑unit
+        float           range_x     = static_cast<float>(lim.X.Max - lim.X.Min);
+        float           ppw         = size.x / range_x;                  // pixels‑per‑world‑unit
     
-        const float     TARGET_PX = 20.0f;                     // desired screen grid pitch
-        float           raw_step = TARGET_PX / ppw;                  // world units per 20 px
+        float           raw_step    = m_style.TARGET_PX / ppw;                  // world units per 20 px
 
         //  Quantize to     1·10^n, 2·10^n, or 5·10^n
-        float           exp10  = std::pow(10.0f, std::floor(std::log10(raw_step)));
-        float           mant   = raw_step / exp10;
-        if      (mant < 1.5f) mant = 1.0f;
-        else if (mant < 3.5f) mant = 2.0f;
-        else if (mant < 7.5f) mant = 5.0f;
-        else                  { mant = 1.0f; exp10 *= 10.0f; }
+        float           exp10       = std::pow(10.0f, std::floor(std::log10(raw_step)));
+        float           mant        = raw_step / exp10;
+        if      ( mant < 1.5f )     { mant = 1.0f;    }
+        else if ( mant < 3.5f )     { mant = 2.0f;    }
+        else if ( mant < 7.5f )     { mant = 5.0f;    }
+        else                        { mant = 1.0f; exp10 *= 10.0f; }
 
         m_grid.snap_step = mant * exp10;                        // store for the frame
         return;
@@ -775,11 +774,13 @@ private:
     //      IMPORTANT DATA...
     // *************************************************************************** //
     app::AppState &                     CBAPP_STATE_NAME;
+    EditorStyle                         m_style                         {  };
+    //
     std::vector<Vertex>                 m_vertices;
     std::vector<Point>                  m_points;
     std::vector<Line>                   m_lines;
     std::vector<Path>                   m_paths;                //  New path container
-    std::unordered_set<uint32_t>        m_show_handles;         //  List of which glyphs we WANT to display Bezier points for.
+    std::unordered_set<HandleID>        m_show_handles;         //  List of which glyphs we WANT to display Bezier points for.
     //
     OverlayManager                      m_overlays;
     // *************************************************************************** //
