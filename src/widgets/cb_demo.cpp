@@ -203,7 +203,7 @@ void CBDemo::child_windows(void)
 {
     //  CONSTANTS...
     static ImGuiChildFlags      child_flags             = ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY;
-    static ImGuiWindowFlags     window_flags            = ImGuiWindowFlags_None; //| ImGuiWindowFlags_MenuBar;
+    //  static ImGuiWindowFlags     window_flags            = ImGuiWindowFlags_None; //| ImGuiWindowFlags_MenuBar;
     static constexpr float      CORNER_RADIUS           = 5.0f;
     static const float          CONTROL_WIDTH           = ImGui::GetFontSize() * 8;
     
@@ -277,9 +277,9 @@ void CBDemo::child_tab_bar(void)
 
     //  CONSTANTS...
     static ImGuiChildFlags      child_flags             = ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY;
-    static ImGuiWindowFlags     window_flags            = ImGuiWindowFlags_None; //| ImGuiWindowFlags_MenuBar;
+    //  static ImGuiWindowFlags     window_flags            = ImGuiWindowFlags_None; //| ImGuiWindowFlags_MenuBar;
     static constexpr float      CORNER_RADIUS           = 5.0f;
-    static const float          CONTROL_WIDTH           = ImGui::GetFontSize() * 8;
+    //  static const float          CONTROL_WIDTH           = ImGui::GetFontSize() * 8;
     
     
     //  TAB-BAR VARIABLES...
@@ -297,7 +297,7 @@ void CBDemo::child_tab_bar(void)
     
     //  CHILD WINDOW WIDGET VARIABLES...
     static std::pair<int,int>   HEIGHT_LIMIT_IN_LINES   = {9, 15};  //  {y1, y2}    : "y1"  --- min height of child (no matter how many widgets are on it).     "y2"  --- max height the window will extend to WITHOUT adding scrollbar.
-    static int                  draw_lines              = 3;
+    //  static int                  draw_lines              = 3;
     static ImVec2               win_dims_min, win_dims_max;
     static ImVec2               size_arg                = ImVec2(-FLT_MIN,      0.0f);
       
@@ -678,6 +678,7 @@ void CBDemo::placeholder_21(void)
 //
 void CBDemo::placeholder_31(void)
 {
+/*
     if (!ImGui::CollapsingHeader("Layout & Scrolling"))
         return;
 
@@ -1478,7 +1479,7 @@ void CBDemo::placeholder_31(void)
 
 
 
-
+*/
     return;
 }
 
@@ -1515,12 +1516,12 @@ void CBDemo::_draw_menu_1(void)
     
     
     static ImVec2                       COLORBAR_SIZE           = ImVec2(0, 0);
-    static ImVec2                       SCALE_SIZE              = ImVec2(0, 0);
+    //  static ImVec2                       SCALE_SIZE              = ImVec2(0, 0);
     
-    static const char *                 m_window_title          = "DemoMenu";
-    static ImPlotHeatmapFlags           m_window_flags          = ImGuiWindowFlags_None; //| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+    //  static const char *                 m_window_title          = "DemoMenu";
+    //  static ImPlotHeatmapFlags           m_window_flags          = ImGuiWindowFlags_None; //| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
     static ImPlotHeatmapFlags           m_hm_flags              = 0;
-    static ImPlotAxisFlags              m_axes_flags            = ImPlotAxisFlags_None | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoDecorations;
+    //  static ImPlotAxisFlags              m_axes_flags            = ImPlotAxisFlags_None | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoDecorations;
     static ImPlotFlags                  m_plot_flags            = ImPlotFlags_None | ImPlotFlags_NoLegend;
     static ImPlotColormap               m_cmap                  = ImPlotColormap_Viridis;
     
@@ -1533,7 +1534,7 @@ void CBDemo::_draw_menu_1(void)
     static value_type                   m_freq                  = 1.0f;
     
     
-    static float                        m_time                  = 0.0f;
+    //  static float                        m_time                  = 0.0f;
     static value_type                   m_vmin                  = value_type(0);
     static value_type                   m_vmax                  = value_type(1);
     static std::vector<value_type>      m_data;

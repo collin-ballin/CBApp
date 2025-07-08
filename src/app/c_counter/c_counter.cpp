@@ -220,7 +220,7 @@ void CCounterApp::_draw_control_bar(void)
     static ImVec2                   WIDGET_SIZE     = ImVec2( -1,  32 );
     static ImVec2                   BUTTON_SIZE     = ImVec2( 32,   WIDGET_SIZE.y );
     //
-    constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
+    //  constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
     //int                             mode_i          = static_cast<int>(m_mode);
     
     

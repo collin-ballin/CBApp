@@ -146,8 +146,9 @@ inline void Editor::_dispatch_mode_handler([[maybe_unused]] const Interaction & 
 //
 void Editor::Begin(const char * /*id*/)
 {
+    ImGuiIO &               io              = ImGui::GetIO();
     const bool              space           = ImGui::IsKeyDown(ImGuiKey_Space);
-    const bool              zoom_enabled    = _mode_has(CBCapabilityFlags_Zoom);
+    const bool              zoom_enabled    = _mode_has(CBCapabilityFlags_Zoom) && (!io.MouseDown[0]);
     //
     m_avail                                 = ImGui::GetContentRegionAvail();       //  1. Canvas size & plot flags
     m_avail.x                               = std::max(m_avail.x, 50.f);
@@ -193,7 +194,6 @@ void Editor::Begin(const char * /*id*/)
         // ───────────────────────── 3. Per-frame context
         ImDrawList *        dl              = ImPlot::GetPlotDrawList();
         ImVec2              plotTL          = ImPlot::GetPlotPos();
-        ImGuiIO &           io              = ImGui::GetIO();
         bool                hovered         = ImPlot::IsPlotHovered();
         bool                active          = ImPlot::IsPlotSelected();
 
@@ -542,24 +542,27 @@ void Editor::_handle_pen(const Interaction& it)
         }
 
         // (3) Start a brand‑new path
-        ImVec2 ws = pixels_to_world(io.MousePos);   // NEW conversion
-        uint32_t vid = _add_vertex(ws);
+        ImVec2          ws      = pixels_to_world(io.MousePos);   // NEW conversion
+        VertexID        vid     = _add_vertex(ws);
         _add_point_glyph(vid);
 
-        Path p; p.verts.push_back(vid);
+        Path p;
+        p.set_default_label(this->m_next_pid++);    // unique PathID
+        p.verts.push_back(vid);
         m_paths.push_back(std::move(p));
 
-        m_pen.active      = true;
-        m_pen.path_index  = m_paths.size() - 1;
-        m_pen.last_vid    = vid;
-        m_pen.prepend     = false;
+        m_pen.active            = true;
+        m_pen.path_index        = m_paths.size() - 1;
+        m_pen.last_vid          = vid;
+        m_pen.prepend           = false;
 
-        // Possible click‑hold curvature on first segment
-        if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-            m_pen.pending_handle = true;
-            m_pen.pending_vid    = vid;
+        //  Possible click‑hold curvature on first segment
+        if ( ImGui::IsMouseDown(ImGuiMouseButton_Left) ) {
+            m_pen.pending_handle    = true;
+            m_pen.pending_vid       = vid;
         }
     }
+    return;
 }
 
 

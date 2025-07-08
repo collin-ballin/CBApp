@@ -37,7 +37,7 @@ set(    CB_MINIMUM_CMAKE_VERSION        3.15)
 ####################################################################################
 ####################################################################################
 set(    CBAPP_NAME                      "CBApp"                                 CACHE INTERNAL "")
-set(    CBAPP_VERSION                   "0.4.1"                                 CACHE INTERNAL "")
+set(    CBAPP_VERSION                   "0.4.3"                                 CACHE INTERNAL "")
 set(    CBAPP_COMPANY                   "Acme Labs"                             CACHE INTERNAL "")
 set(    CBAPP_LEGAL_COPYRIGHT           "Collin Andrew Bond  (c)  2024-2025"    CACHE INTERNAL "")
 

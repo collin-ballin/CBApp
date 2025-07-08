@@ -34,12 +34,6 @@ static constexpr ImVec4         COL_TYPE_A          = ImVec4(0.00f, 0.48f, 1.00f
 static constexpr ImVec4         COL_TYPE_B          = ImVec4(1.00f, 0.23f, 0.19f, 1.00f);   // red
 static constexpr ImVec4         COL_TYPE_C          = ImVec4(0.10f, 0.80f, 0.10f, 1.00f);   // green
 static constexpr ImVec4         COL_UNASN           = ImVec4(0.70f, 0.70f, 0.70f, 1.00f);   // light gray
-static constexpr ImVec4         COL_HELD            = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);   // gray while dragging
-static constexpr ImVec4         COL_SELECTED        = ImVec4(0.95f, 0.75f, 0.05f, 1.00f);   // gold highlight
-static constexpr ImU32          COL_LASSO_OUT       = IM_COL32(255,215,0,255);   // gold outline
-static constexpr ImU32          COL_LASSO_FILL      = IM_COL32(255,215,0,40);    // translucent fill
-static constexpr float          POINT_RADIUS        = 10.0f;                                //  radius in pixels
-
 
 
 //  0.      STATIC FUNCTIONS...

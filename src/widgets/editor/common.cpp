@@ -291,58 +291,75 @@ void Editor::copy_to_clipboard(void)
 //
 void Editor::paste_from_clipboard(ImVec2 target_ws)
 {
-    if ( m_clipboard.empty() ) return;
+    if (m_clipboard.empty()) return;
 
     const float dx = target_ws.x - m_clipboard.ref_ws.x;
     const float dy = target_ws.y - m_clipboard.ref_ws.y;
 
-    // map local index → new vertex ID
-    std::vector<uint32_t> new_vid(m_clipboard.vertices.size());
+    //  Map clipboard-local vertex index → new VertexID
+    std::vector<VertexID> new_vid(m_clipboard.vertices.size());
 
-    // --- duplicate vertices ---
+    // ─── 1.  Duplicate vertices ───────────────────────────────────────
     for (size_t i = 0; i < m_clipboard.vertices.size(); ++i)
     {
-        Vertex v = m_clipboard.vertices[i];
-        v.id = m_next_id++;
-        v.x += dx; v.y += dy;
+        Vertex v        = m_clipboard.vertices[i];
+        v.id            = m_next_id++;            // fresh VertexID
+        v.x            += dx;
+        v.y            += dy;
+
         m_vertices.push_back(v);
-        new_vid[i] = v.id;
+        new_vid[i]      = v.id;                   // record mapping
     }
 
-    this->reset_selection();    // m_sel.clear();   // select the pasted objects
+    this->reset_selection();                      // select pasted objects
 
-    // --- duplicate points ---
+    // ─── 2.  Duplicate points ─────────────────────────────────────────
     for (const Point& p : m_clipboard.points)
     {
         Point dup = p;
-        dup.v = new_vid[dup.v];
+        dup.v     = new_vid[dup.v];               // remap to new vertex
         m_points.push_back(dup);
-        m_sel.points.insert(m_points.size() - 1);
+
+        m_sel.points.insert(static_cast<PointID>(m_points.size() - 1));
         m_sel.vertices.insert(dup.v);
     }
 
-    // --- duplicate lines ---
+    // ─── 3.  Duplicate lines ──────────────────────────────────────────
     for (const Line& l : m_clipboard.lines)
     {
         Line dup = l;
-        dup.a = new_vid[dup.a];
-        dup.b = new_vid[dup.b];
+        dup.a    = new_vid[dup.a];
+        dup.b    = new_vid[dup.b];
+
         m_lines.push_back(dup);
-        m_sel.lines.insert(m_lines.size() - 1);
+
+        m_sel.lines.insert(static_cast<LineID>(m_lines.size() - 1));
         m_sel.vertices.insert(dup.a);
         m_sel.vertices.insert(dup.b);
     }
 
-    // --- duplicate paths ---
-    for (const Path& p : m_clipboard.paths)
+    // ─── 4.  Duplicate paths (assign new PathID + label) ─────────────
+    for (const Path& src : m_clipboard.paths)
     {
-        Path dup = p; dup.verts.clear();
-        for (uint32_t idx : p.verts)
-            dup.verts.push_back(new_vid[idx]);
+        Path dup   = src;              // copy style, flags; verts remapped next
+        dup.id     = m_next_pid++;     // fresh PathID
+        dup.set_default_label(dup.id); // e.g. "Path 12"
+
+        dup.z_index = next_z_index();  // land pasted objects on top
+
+        dup.verts.clear();
+        dup.closed = src.closed;       // preserve open/closed state
+
+        for (uint32_t localIdx : src.verts)
+            dup.verts.push_back(new_vid[localIdx]); // remap to new VertexID
+
         m_paths.push_back(std::move(dup));
-        m_sel.paths.insert(m_paths.size() - 1);
-        for (uint32_t vid : dup.verts) m_sel.vertices.insert(vid);
+
+        m_sel.paths.insert(static_cast<PathID>(m_paths.size() - 1));
+        for (VertexID vid : m_paths.back().verts)
+            m_sel.vertices.insert(vid);
     }
+
     return;
 }
 
@@ -376,7 +393,7 @@ void Editor::delete_selection(void)
 
     // --- paths (use existing helper so vertices/orphans are handled) ---
     for (size_t i : pth)
-        _erase_path_and_orphans(i);
+        _erase_path_and_orphans( static_cast<PathID>(i) );
 
     // finally
     this->reset_selection();    // m_sel.clear();
@@ -405,27 +422,39 @@ void Editor::delete_selection(void)
 //
 void Editor::_clear_all(void)
 {
-    const size_t    N       = this->m_paths.size();
-    
-    
-    //  1.  CLEAR ALL EDITOR DATA...
-    for (size_t idx = 0; idx < N; ++idx) {
-        _erase_path_and_orphans(idx);  // ← replaces direct m_paths.erase()
-    }
+    // ─── 1.  Wipe geometry containers in bulk ──────────────────────────
+    m_paths.clear();       // clears Path<…> vector
+    m_lines.clear();       // clears standalone Line<…> list
+    m_points.clear();      // glyphs
+    m_vertices.clear();    // anchors
 
-    m_vertices.clear();
-    m_points.clear();
-    m_lines.clear();
-    this->reset_selection();    //  m_sel.clear();
-    
-    
-    //  2.  RESET EDITOR STATE...
-    m_lasso_active  = false;
-    m_dragging      = false;
-    m_drawing       = false;
-    m_next_id       = 1;
-    this->reset_pen();//  m_pen           = {};
-    
+
+    // ─── 2.  Reset selection & per-tool state ─────────────────────────
+    this->reset_selection();   // m_sel.clear() + related resets
+    this->reset_pen();         // m_pen = {}      (live path state)
+
+    m_lasso_active          = false;
+    m_dragging              = false;
+    m_drawing               = false;
+
+
+    //  Next ID counter back to 1 so new vertices/path IDs start fresh
+    m_next_id               = 1;
+
+
+    // ─── 3.  Browser & filter housekeeping ────────────────────────────
+    //  Force filter to rebuild so the clipper sees an empty list.
+    m_browser_filter.Build();
+    m_browser_anchor        = -1;
+
+
+    // ─── 4.  Inspector / overlay clean-up (if any live) ───────────────
+    m_inspector_vertex_idx  = -1;        // no vertex selected in inspector
+    _prune_selection_mutability();      // ensures nothing stale lingers
+
+    //  Resident overlays such as selection HUD will auto-hide
+    //  because `m_sel` is now empty.  No explicit overlay mutation needed.
+
     return;
 }
 

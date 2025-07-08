@@ -105,6 +105,10 @@ protected:
     //  2.A             PROTECTED DATA-MEMBERS...
     // *************************************************************************** //
     
+    //                                          1.  IMPORTANT DATA...
+    app::AppState &                                 CBAPP_STATE_NAME;
+    cb::Editor                                      m_editor;
+    
     //  MISC APPLICATION STUFF...
     bool                                            m_initialized                   = false;
     
@@ -119,10 +123,6 @@ protected:
     //                                          3.  DOCKING SPACE...
     //                                              Main Dockspace:
     ImGuiWindowClass                                m_window_class;
-    
-    //                                          4.  IMPORTANT DATA...
-    cb::Editor                                      m_editor;
-    app::AppState &                                 CBAPP_STATE_NAME;
         
     
     //  2.B             PROTECTED MEMBER FUNCTIONS...

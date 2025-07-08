@@ -29,6 +29,7 @@
 #include "utility/utility.h"
 #include "widgets/widgets.h"
 #include "app/state/_config.h"
+#include "app/state/_constants.h"
 #include "app/_init.h"
 
 
@@ -165,9 +166,9 @@ struct WinInfo {
 };
 
 
-//  COMPILE-TIME ARRAY CONTAINING ALL APPLICATION_FONTS
+//  COMPILE-TIME ARRAY CONTAINING ALL APPLICATION WINDOWS...
 //
-inline static const std::array<WinInfo, size_t(Window_t::Count)>
+static inline const std::array<WinInfo, size_t(Window_t::Count)>
 APPLICATION_WINDOW_INFOS            = {{
 #define X(name, title, open, flags)  WinInfo{ title, flags, open, {} },
     _CBAPP_WINDOW_LIST(X)

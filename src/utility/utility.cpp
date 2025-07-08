@@ -175,7 +175,6 @@ void SetGLFWWindowSize(GLFWwindow * window, const float scale)
         new_w = static_cast<int>(new_h * aspect);
     }
 
-    int monitor_x, monitor_y;
     glfwGetMonitorPos(monitor, &pos_x, &pos_y);
     glfwSetWindowSize(window, new_w, new_h);
     glfwSetWindowPos(window, pos_x + (sys_w - new_w) / 2, pos_y + (sys_h - new_h) / 2);

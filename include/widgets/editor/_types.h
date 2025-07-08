@@ -91,6 +91,129 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  0.  EDITOR SETTINGS / CONFIGS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+struct EditorStyle
+{
+// *************************************************************************** //
+//                      INTERACTION / RESPONSIVENESS CONSTANTS...
+// *************************************************************************** //
+    int                 PEN_DRAG_TIME_THRESHOLD         = 0.05;                             //  PEN_DRAG_TIME_THRESHOLD         // seconds.
+    float               PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;                             //  PEN_DRAG_MOVEMENT_THRESHOLD     // px  (was 2)
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      USER INTERFACE CONSTANTS...
+// *************************************************************************** //
+//                  HANDLES:
+    ImU32               ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);       //  ms_HANDLE_COLOR             //  gold
+    float               ms_HANDLE_SIZE                  = 3.0f;                             //  ms_HANDLE_SIZE              //  px half-side
+    ImU32               ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);       //  ms_HANDLE_HOVER_COLOR       //  yellow
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      TOOL CONSTANTS...
+// *************************************************************************** //
+//                  PEN-TOOL ANCHORS:
+//                      //  ...
+//
+//                  LASSO TOOL:
+//                      //  ...
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      CURSOR CONSTANTS...
+// *************************************************************************** //
+//                  PEN-TOOL CURSOR STUFF:
+    float               PEN_RING_RADIUS                 = 6.0f;                             //  PEN_RING_RADIUS     // px
+    float               PEN_RING_THICK                  = 1.5f;                             //  PEN_RING_THICK      // px
+    float               PEN_DOT_RADIUS                  = 2.0f;                             //  PEN_DOT_RADIUS      // px
+    ImU32               PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);          //  PEN_COL_NORMAL      // yellow
+    ImU32               PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);          //  PEN_COL_EXTEND      // green
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      APPEARANCE / WIDGETS / UI CONSTANTS:
+// *************************************************************************** //
+    //
+    //              BROWSER CHILD-WINDOW COLORS:
+    ImVec4              ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
+    ImVec4              ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
+    ImVec4              ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
+    
+    ImVec4              ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
+    ImVec4              ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
+    ImVec4              ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
+    //
+    //              BROWSER CHILD-WINDOW SIZES:
+    float               ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
+    float               ms_CHILD_BORDER1                = 2.0f;     //  ms_CHILD_BORDER1
+    float               ms_CHILD_BORDER2                = 1.0f;     //  ms_CHILD_BORDER2
+    float               ms_CHILD_ROUND1                 = 8.0f;     //  ms_CHILD_ROUND1
+    float               ms_CHILD_ROUND2                 = 4.0f;     //  ms_CHILD_ROUND2
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      RENDERING CONSTANTS:
+// *************************************************************************** //
+    int                 ms_BEZIER_SEGMENTS              = 0;        //  ms_BEZIER_SEGMENTS
+    int                 ms_BEZIER_HIT_STEPS             = 20;       //  ms_BEZIER_HIT_STEPS
+    int                 ms_BEZIER_FILL_STEPS            = 24;       //  ms_BEZIER_FILL_STEPS
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      UTILITY:
+// *************************************************************************** //
+                        //
+                        //  ...
+                        //
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      MISC. / UNKNOWN CONSTANTS (RELOCATED FROM CODE)...
+// *************************************************************************** //
+    float               TARGET_PX                       = 20.0f;                     //     desired screen grid pitch"  | found in "_update_grid"
+
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //   END "EditorStyle"
+};
+
+
+
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
@@ -198,6 +321,9 @@ MODE_CAPS               = {
 //
 template<typename VID>
 struct Vertex_t {
+    static constexpr const char *   ms_DEF_VERTEX_LABEL_FMT_STRING      = "Vertex V%03d (id=%u)";
+    static constexpr const char *   ms_DEF_VERTEX_FMT_STRING            = "V%03u";
+//
     uint32_t    id              = 0;
     float       x               = 0.0f,
                 y               = 0.0f;
@@ -306,31 +432,45 @@ inline void from_json(const nlohmann::json& j, Point_t<PtID>& p)
 
 //  "Line_t"
 //
-template <typename LID>
+template <typename LID, typename ZID>
 struct Line_t         {
-    uint32_t    a, b;
+    [[nodiscard]] inline bool is_mutable(void) const noexcept
+    { return visible && !locked; }
+//
+//
+    LID         a, b;
     ImU32       color       = IM_COL32(255,255,0,255);
-    float       thickness   = 2.f;
+    float       thickness   = 2.0f;
+//
+    ZID         z_index     = Z_FLOOR_USER;
+    bool        locked      = false;
+    bool        visible     = true;
 };
 //
 //  "to_json"
-template <typename LID>
-inline void to_json(nlohmann::json& j, const Line_t<LID>& l)
+template <typename LID, typename ZID>
+inline void to_json(nlohmann::json  j, const Line_t<LID, ZID> & l)
 {
-    j = { { "a", l.a },
-          { "b", l.b },
-          { "color",     l.color },
-          { "thickness", l.thickness } };
+    j = { { "a",            l.a             },
+          { "b",            l.b             },
+          { "color",        l.color         },
+          { "thickness",    l.thickness     },
+          { "z_index",      l.z_index       },
+          { "locked",       l.locked        },
+          { "visible",      l.visible       }
+    };
 }
 //
 //  "from_json"
-template <typename LID>
-inline void from_json(const nlohmann::json& j, Line_t<LID>& l)
+template <typename LID, typename ZID>
+inline void from_json(const nlohmann::json & j, Line_t<LID, ZID>  & l)
 {
-    j.at("a").get_to(l.a);
-    j.at("b").get_to(l.b);
-    j.at("color"    ).get_to(l.color);
-    j.at("thickness").get_to(l.thickness);
+    j.at("a"                ).get_to(l.a);
+    j.at("b"                ).get_to(l.b);
+    j.at("color"            ).get_to(l.color);
+    j.at("z_index"          ).get_to(l.z_index);
+    j.at("locked"           ).get_to(l.locked);
+    j.at("visible"          ).get_to(l.visible);
 }
 
 // *************************************************************************** //
@@ -391,47 +531,76 @@ inline void from_json(const nlohmann::json& j, PathStyle& s)
 
 
 
-
-
 //  "Path_t"
 //
 template<typename PID, typename VID, typename ZID>
 struct Path_t {
-    inline bool is_area(void) const noexcept
+    static constexpr size_t         ms_MAX_PATH_LABEL_LENGTH    = 64;
+//
+//
+    [[nodiscard]] inline bool       is_area             (void) const noexcept
     { return this->closed && this->verts.size() >= 3; }
 //
-    std::vector<VID>        verts;   // ordered anchor IDs
-    bool                    closed      = false;
-    PathStyle               style       = PathStyle();
+    [[nodiscard]] inline bool       is_mutable          (void) const noexcept
+    { return visible && !locked; }
+//
+    inline void                     set_label           (const char * src) noexcept
+    { this->label = std::string(src); this->_truncate(); }
+//
+    inline void                     set_default_label   (const PID id_) noexcept
+    { this->id = id_;   this->label = std::format("Path {:03}", id_);   this->_truncate(); }
+//
+    inline void                     _truncate           (void)
+    { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
+//
+//
+//
+    std::vector<VID>    verts;   // ordered anchor IDs
+    PID                 id                                      = 0;
+    bool                closed                                  = false;
+    PathStyle           style                                   = PathStyle();
 //
 // ─────────── NEW ───────────
-    ZID                     z_index     = Z_FLOOR_USER;
-    bool                    locked      = false;
-    bool                    visible     = true;
+    ZID                 z_index                                 = Z_FLOOR_USER;
+    bool                locked                                  = false;
+    bool                visible                                 = true;
+    std::string         label                                   = "";
 };
 //
 //  "to_json"
 template<typename PID, typename VID, typename ZID>
 inline void to_json(nlohmann::json & j, const Path_t<PID, VID, ZID> & p)
 {
-    j = { { "verts",   p.verts  },
-          { "closed",  p.closed },
-          { "style",   p.style  },
-          { "z_index", p.z_index },
-          { "locked",  p.locked },
-          { "visible", p.visible } };
+    j = { { "verts",        p.verts         },
+          { "id",           p.id            },
+          { "closed",       p.closed        },
+          { "style",        p.style         },
+          { "z_index",      p.z_index       },
+          { "locked",       p.locked        },
+          { "visible",      p.visible       },
+          { "label",        p.label         } };
+    return;
 }
 //
 //  "from_json"
 template<typename PID, typename VID, typename ZID>
 inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
 {
-    j.at("verts"    ).get_to(p.verts );
-    j.at("closed"   ).get_to(p.closed);
-    j.at("style"    ).get_to(p.style );
-    j.at("z_index"  ).get_to(p.z_index);
-    j.at("locked"   ).get_to(p.locked);
-    j.at("visible"  ).get_to(p.visible);
+    if ( j.contains("id") )         { j.at("id").get_to(p.id);      }
+    else                            { p.id = 0;                     }
+    
+    j.at("verts"    ).get_to(p.verts    );
+    j.at("closed"   ).get_to(p.closed   );
+    j.at("style"    ).get_to(p.style    );
+    j.at("z_index"  ).get_to(p.z_index  );
+    j.at("locked"   ).get_to(p.locked   );
+    j.at("visible"  ).get_to(p.visible  );
+    
+    //  Handle old files that may lack "label"
+    if ( j.contains("label") )      { j.at("label").get_to(p.label); }
+    else                            { p.set_label("?"); }
+        
+    return;
 }
 
 
@@ -461,19 +630,19 @@ struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ fi
 template <typename HID>
 struct Hit_t {
     enum class Type { Point, Line, Path, Handle };
-    Type     type     = Type::Point;
-    size_t   index    = 0;     // Point/Line/Path: original meaning
-    bool     out      = false; // valid only when type == Handle
+    Type            type            = Type::Point;
+    size_t          index           = 0;     // Point/Line/Path: original meaning
+    bool            out             = false; // valid only when type == Handle
 };
 
 //  "PathHit_t"
 //
 template <typename PID, typename VID>
 struct PathHit_t {
-    size_t  path_idx   = 0;   // which Path in m_paths
-    size_t  seg_idx    = 0;   // segment i   (verts[i] → verts[i+1])
-    float   t          = 0.f; // param along that segment
-    ImVec2  pos_ws{};         // exact split position (world-space)
+    size_t          path_idx        = 0;    // which Path in m_paths
+    size_t          seg_idx         = 0;    // segment i   (verts[i] → verts[i+1])
+    float           t               = 0.f;  // param along that segment
+    ImVec2          pos_ws          {};     // exact split position (world-space)
 };
 
 
@@ -580,18 +749,18 @@ inline void from_json(const nlohmann::json& j,
 //
 template<typename VID>
 struct PenState_t {
-    bool        active          = false;
-    size_t      path_index      = static_cast<size_t>(-1);
-    VID         last_vid        = 0;
+    bool            active                  = false;
+    size_t          path_index              = static_cast<size_t>(-1);
+    VID             last_vid                = 0;
 
-    bool        dragging_handle = false;
-    bool        dragging_out    = true;     // NEW: true → out_handle, false → in_handle
-    VID         handle_vid      = 0;
+    bool            dragging_handle         = false;
+    bool            dragging_out            = true;     // NEW: true → out_handle, false → in_handle
+    VID             handle_vid              = 0;
 
-    bool        prepend         = false;
-    bool        pending_handle  = false;        // waiting to see if user drags
-    VID         pending_vid     = 0;            // vertex that may get a handle
-    float       pending_time    = 0.0f;
+    bool            prepend                 = false;
+    bool            pending_handle          = false;        // waiting to see if user drags
+    VID             pending_vid             = 0;            // vertex that may get a handle
+    float           pending_time            = 0.0f;
     //int         pending_frames  = 0;        // NEW – counts frames since click
 };
 

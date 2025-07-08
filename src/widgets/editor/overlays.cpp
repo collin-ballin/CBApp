@@ -244,8 +244,8 @@ std::pair<ImVec2, ImVec2> OverlayManager::_anchor_to_pos(
 {
     ImVec2          pos         = ImVec2(-1, -1);
     ImVec2          pivot       = ImVec2(0.0f, 0.0f);           // TL default
-    const ImVec2 &  tl          = plot_rect.Min;   // convenience
-    const ImVec2 &  br          = plot_rect.Max;
+    //  const ImVec2 &  tl          = plot_rect.Min;   // convenience
+    //  const ImVec2 &  br          = plot_rect.Max;
     
     //  NEW: treat anchor_px as an absolute inset (always ≥ 0)
     const float     ax          = std::fabs(ov.cfg.anchor_px.x);

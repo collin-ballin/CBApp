@@ -129,9 +129,11 @@ void                    ShowExampleAppDocuments     ([[maybe_unused]] const char
 class App
 {
     CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+    using                       WinRenderFn                 = std::function<void(const char *, bool *, ImGuiWindowFlags)>;
 // *************************************************************************** //
 // *************************************************************************** //
 public:
+//
     // *************************************************************************** //
     //  1.1             INLINE PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
@@ -157,6 +159,13 @@ public:
                                 App                         (App &&         )               = delete;   //  Move Constructor.
     App &                       operator =                  (const App &    )               = delete;   //  Assgn. Operator.
     App &                       operator =                  (App &&         )               = delete;   //  Move-Assgn. Operator.
+    
+    // *************************************************************************** //
+    //      PRIVATE CLASS INITIALIZATIONS.  |   "init.cpp" ...
+    // *************************************************************************** //
+private:
+                                App                         (void);                     //  Def. Constructor.
+                                ~App                        (void);                     //  Def. Destructor.
     // *************************************************************************** //
 //
 //
@@ -172,14 +181,11 @@ public:
 //      2.A             PROTECTED MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+protected:
 //
     // *************************************************************************** //
     //      CLASS INITIALIZATIONS.          |   "init.cpp" ...
     // *************************************************************************** //
-    //                      DEFAULT CTOR, DTOR, ETC:
-                                App                         (void);                     //  Def. Constructor.
-                                ~App                        (void);                     //  Def. Destructor.
-    //
     //                      ADDITIONAL INIT. FUNCTIONS:
     void                        init                        (void);                     //  [init.cpp].
     void                        CreateContext               (void);                     //  [init.cpp].
@@ -187,7 +193,7 @@ public:
     //
     //                      SUB-CLASS INIT. FUNCTIONS:
     void                        init_appstate               (void);                     //  [init.cpp].
-    void                        dispatch_window_function    (const Window & uuid);      //  [init.cpp].
+    [[nodiscard]] WinRenderFn   dispatch_window_function    (const Window & uuid);      //  [init.cpp].
     //
     //                      RUNTIME INIT. FUNCTIONS:
     void                        load                        (void);                     //  [init.cpp].
@@ -313,9 +319,6 @@ protected:
 #ifdef CBAPP_ENABLE_CB_DEMO
     CBDemo                      m_cb_demo                       = CBDemo();
 #endif  //  CBAPP_ENABLE_CB_DEMO  //
-    //
-    //
-    cb::Editor                  m_editor;
 //
 //
 //

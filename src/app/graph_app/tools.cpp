@@ -24,7 +24,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 namespace sketch {
     //  MISC STUFF...
-    static float                        w                       = 200.0f;
     
     //  SKETCH STUFF...
     static const char *                 heatmap_uuid            = "##EtchASketch";
@@ -59,8 +58,8 @@ namespace sketch {
 void GraphApp::ShowSketch(void)
 {
     // 1. CONSTANTS AND VARIABLES
-    static constexpr float LABEL_WIDTH  = 150.0f;
-    static constexpr float WIDGET_WIDTH = 250.0f;
+    //  static constexpr float LABEL_WIDTH  = 150.0f;
+    //  static constexpr float WIDGET_WIDTH = 250.0f;
 
     // 1.1 Layout flags
     ImPlotHeatmapFlags hm_flags   = 0;
@@ -173,25 +172,14 @@ void GraphApp::ShowSketch(void)
 void GraphApp::ShowSketchControls(void)
 {
     //  CONSTANTS...
-    static constexpr float              LABEL_COLUMN_WIDTH      = 200.0f;
-    static constexpr float              WIDGET_COLUMN_WIDTH     = 250.0f;
 
     //  INTERACTIVE VARIABLES...
-    static int                          param_a                 = 3;
-    static int                          param_b                 = 7;
-    static bool                         toggle                  = true;
-    static ImVec4                       color                   = {0.5f, 0.5f, 1.0f, 1.0f};
 
     //  TABLE GLOBAL FLAGS...
-    static bool                         freeze_header           = false;
-    static bool                         freeze_column           = false;
-    static bool                         stretch_column_1        = true;
 
     //  COLUMN-SPECIFIC FLAGS...
-    static ImGuiTableColumnFlags        col0_flags              = ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize;
-    static ImGuiTableColumnFlags        col1_flags              = stretch_column_1 ? ImGuiTableColumnFlags_WidthStretch : ImGuiTableColumnFlags_WidthFixed;
-    static ImGuiTableFlags              flags                   = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible; //| ImGuiTableFlags_ScrollX;
-        
+
+
     static const utl::WidgetRow rows[]                          = {
         {"Clear Sketch",        []{ if (ImGui::Button("Clear Canvas")) std::fill(sketch::data.begin(), sketch::data.end(), 0.0f); }                                                                                             },
         {"Sketch Resolution",   []{ float w = ImGui::GetColumnWidth(); ImGui::SetNextItemWidth(w); ImGui::SliderInt("##SketchResolution",&sketch::res,16, 256); }                                                               },

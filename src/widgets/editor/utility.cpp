@@ -25,21 +25,21 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 //  "find_vertex"
 //
-Editor::Vertex * Editor::find_vertex(std::vector<Vertex>& verts, uint32_t id) {
+Editor::Vertex * Editor::find_vertex(std::vector<Vertex> & verts, VertexID id) {
     for (auto & v : verts) if (v.id == id) return &v; return nullptr;
 }
 
 
 //  "find_vertex"
 //
-const Editor::Vertex * Editor::find_vertex(const std::vector<Vertex>& verts, uint32_t id) const {
+const Editor::Vertex * Editor::find_vertex(const std::vector<Vertex> & verts, VertexID id) const {
     for (auto & v : verts) if (v.id == id) return &v; return nullptr;
 }
 
 
 //  "_endpoint_if_open"
 //
-std::optional<Editor::EndpointInfo> Editor::_endpoint_if_open(uint32_t vid) const
+std::optional<Editor::EndpointInfo> Editor::_endpoint_if_open(VertexID vid) const
 {
     const PathID    N   = static_cast<PathID>( m_paths.size() );
     
@@ -65,7 +65,7 @@ std::optional<Editor::EndpointInfo> Editor::_endpoint_if_open(uint32_t vid) cons
 
 //  "_add_point_glyph"
 //
-void Editor::_add_point_glyph(uint32_t vid)
+void Editor::_add_point_glyph(VertexID vid)
 {
     PointStyle ps;
     m_points.push_back({ vid, ps });
@@ -92,7 +92,7 @@ void Editor::_add_point(ImVec2 w)
 
 //  "_erase_vertex_and_fix_paths"
 //
-void Editor::_erase_vertex_and_fix_paths(uint32_t vid)
+void Editor::_erase_vertex_and_fix_paths(VertexID vid)
 {
     /* a) erase vertex record ------------------------------------------- */
     m_vertices.erase(std::remove_if(m_vertices.begin(), m_vertices.end(),
@@ -121,22 +121,22 @@ void Editor::_erase_vertex_and_fix_paths(uint32_t vid)
 
 //  "_erase_path_and_orphans"
 //
-void Editor::_erase_path_and_orphans(size_t pidx)
+void Editor::_erase_path_and_orphans(PathID pidx)
 {
     if ( pidx >= m_paths.size() ) return;
 
-    // 1. move-out the doomed path so we still have its vertex IDs
+    //  1.  Move-out the doomed path so we still have its vertex IDs
     Path doomed = std::move(m_paths[pidx]);
     m_paths.erase(m_paths.begin() + pidx);
 
-    // 2. collect every vertex still used anywhere
-    std::unordered_set<uint32_t> still_used;
-    for (const Path& p : m_paths)
-        for (uint32_t vid : p.verts)
+    //  2.  Collect every vertex still used anywhere
+    std::unordered_set<VertexID> still_used;
+    for (const Path & p : m_paths)
+        for (VertexID vid : p.verts)
             still_used.insert(vid);
 
-    // 3. any vertex unique to the deleted path gets fully erased
-    for (uint32_t vid : doomed.verts)
+    //  3.  Any vertex unique to the deleted path gets fully erased
+    for (VertexID vid : doomed.verts)
         if (!still_used.count(vid))
             _erase_vertex_and_fix_paths(vid);      // your existing helper
             
@@ -165,7 +165,7 @@ bool Editor::_try_begin_handle_drag(const Interaction& it)
     if (auto h = _hit_any(it); h && h->type == Hit::Type::Handle)
     {
         m_dragging_handle = true;
-        m_drag_vid        = h->index;      // vertex-id
+        m_drag_vid        = static_cast<VertexID>( h->index );      // vertex-id
         m_dragging_out    = h->out;
         return true;                       // we’re in drag state
     }
@@ -189,44 +189,49 @@ bool Editor::_try_begin_handle_drag(const Interaction& it)
 //  "_scissor_cut"
 //      Core cut routine: split a Path at the hit position
 //
-void Editor::_scissor_cut(const PathHit& h)
+void Editor::_scissor_cut(const PathHit & h)
 {
-    Path& path = m_paths[h.path_idx];
-    const size_t insert_pos = h.seg_idx + 1;          // after the hit segment’s i-th vertex
+    Path&  leftPath   = m_paths[h.path_idx];            // original path
+    size_t insert_pos = h.seg_idx + 1;                  // after vertex i
 
-    // 1. two coincident vertices: one for each side of the cut
-    uint32_t vid_left  = _add_vertex(h.pos_ws);   // will live in the original path
+    // ─── 1.  Two coincident vertices at the cut position ─────────────
+    VertexID vid_left  = _add_vertex(h.pos_ws);         // stays in left path
     _add_point_glyph(vid_left);
 
-    uint32_t vid_right = _add_vertex(h.pos_ws);   // goes into the new right-hand path
+    VertexID vid_right = _add_vertex(h.pos_ws);         // first in right path
     _add_point_glyph(vid_right);
 
-    // 2. insert the LEFT vertex into the original path
-    path.verts.insert(path.verts.begin() + insert_pos, vid_left);
-    path.closed = false;                          // guarantee it’s now open
+    // ─── 2.  Insert left vertex and open the left path ──────────────
+    leftPath.verts.insert(leftPath.verts.begin() + insert_pos, vid_left);
+    leftPath.closed = false;
 
-    // 3. build the RIGHT-hand path
-    Path right;
-    right.style  = path.style;                    // clone stroke
-    right.closed = false;
+    // ─── 3.  Build right-hand path ──────────────────────────────────
+    Path   rightPath;                                   // new container
+    rightPath.id         = m_next_pid++;                // NEW unique ID
+    rightPath.set_default_label(rightPath.id);          // "Path N"
 
-    // first vertex is the RIGHT duplicate
-    right.verts.push_back(vid_right);
+    rightPath.style      = leftPath.style;              // copy appearance
+    rightPath.z_index    = leftPath.z_index;
+    rightPath.locked     = leftPath.locked;
+    rightPath.visible    = leftPath.visible;
+    rightPath.closed     = false;
 
-    // then everything *after* the left vertex
-    right.verts.insert(right.verts.end(),
-                       path.verts.begin() + insert_pos + 1,
-                       path.verts.end());
+    //  First vertex in right path is vid_right
+    rightPath.verts.push_back(vid_right);
 
-    // 4. trim the original (left) path so it ends at vid_left
-    path.verts.erase(path.verts.begin() + insert_pos + 1, path.verts.end());
+    //  Then every vertex AFTER vid_left in the original
+    rightPath.verts.insert(rightPath.verts.end(),
+                           leftPath.verts.begin() + insert_pos + 1,
+                           leftPath.verts.end());
 
-    // 5. store the new path
-    m_paths.push_back(std::move(right));
+    // ─── 4.  Trim the left path so it ends at vid_left ──────────────
+    leftPath.verts.erase(leftPath.verts.begin() + insert_pos + 1,
+                         leftPath.verts.end());
 
-    // NOTE: Bézier handle subdivision is still “TODO” —
-    //       handles on vid_left / vid_right are zeroed by _add_vertex,
-    //       so curvature continuity is lost for now.
+    // ─── 5.  Store the new path ─────────────────────────────────────
+    m_paths.push_back(std::move(rightPath));
+
+    // NOTE: Bézier handle subdivision still “TODO”.
 }
 
 
@@ -287,6 +292,10 @@ void Editor::_draw_controls(void)
     //
     constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
     int                             mode_i          = static_cast<int>(m_mode);
+    
+    this->S.PushFont( app::Font_t::Small );
+   
+    
     
    
    
@@ -388,6 +397,8 @@ void Editor::_draw_controls(void)
     ImGui::Columns(1);      //  END COLUMNS...
     
     
+    this->S.PopFont();
+   
     return;
 }
 

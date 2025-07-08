@@ -1466,12 +1466,13 @@ void ShowAboutWindow([[maybe_unused]]   const char *        uuid,
 // Simplified structure to mimic a Document model
 struct MyDocument
 {
-    char        Name[32];   // Document title
-    int         UID;        // Unique ID (necessary as we can change title)
-    bool        Open;       // Set when open (we keep an array of all available documents to simplify demo code!)
-    bool        OpenPrev;   // Copy of Open from last update.
-    bool        Dirty;      // Set when the document has been modified
-    ImVec4      Color;      // An arbitrary variable associated to the document
+    static constexpr int        SIZE    = 256;
+    char                        Name[32];   // Document title
+    int                         UID;        // Unique ID (necessary as we can change title)
+    bool                        Open;       // Set when open (we keep an array of all available documents to simplify demo code!)
+    bool                        OpenPrev;   // Copy of Open from last update.
+    bool                        Dirty;      // Set when the document has been modified
+    ImVec4                      Color;      // An arbitrary variable associated to the document
 
     MyDocument(int uid, const char* name, bool open = true, const ImVec4& color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f))
     {
@@ -1549,8 +1550,8 @@ struct ExampleAppDocuments
         if (!ImGui::BeginPopupContextItem())
             return;
 
-        char buf[256];
-        sprintf(buf, "Save %s", doc->Name);
+        char buf[MyDocument::SIZE];
+        snprintf(buf, MyDocument::SIZE, "Save %s", doc->Name);
         if (ImGui::MenuItem(buf, "Ctrl+S", false, doc->Open))
             doc->DoSave();
         if (ImGui::MenuItem("Rename...", "Ctrl+R", false, doc->Open))

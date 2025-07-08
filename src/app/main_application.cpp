@@ -183,7 +183,7 @@ void App::get_info2(void) const
 //
 void App::get_info1(void) const
 {
-    constexpr unsigned int              NUM_LINES       = 18;
+    //  constexpr unsigned int              NUM_LINES       = 18;
     [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO();
     [[maybe_unused]] ImGuiStyle &       style           = ImGui::GetStyle();
 
@@ -755,12 +755,11 @@ void App::ImPlot_Testing0ALT() {
     static constexpr size_t                 ms_BUFF_SIZE    = 256;
     static constexpr int                    rows            = 2;
     static constexpr int                    cols            = 3;
-    static constexpr int                    NUM             = rows * cols;
     static std::array< const char *, 6>     PLOT_NAMES      = {
         "One", "Two", "Three", "Four", "Five", "Six"
     };
     //static constexpr const char *           uuid            = PLOT_NAMES[0];
-    static ImGuiID                          plot_ID         = 0;
+    [[maybe_unused]] static ImGuiID         plot_ID         = 0;
     static bool                             first_frame     = true;
 
 
@@ -897,7 +896,7 @@ void App::ImPlot_Testing0(void)
     static std::string              PLOT_LABEL      = "Data";
     static ImVec4                   PLOT_COLOR      = app::DEF_APPLE_RED;
     static float                    PLOT_LW         = 3.0f;
-    static float                    YLIMS[2]        = {-1.5f, 1.5f};
+    //  static float                    YLIMS[2]        = {-1.5f, 1.5f};
     
     //  P2  DATA...
     static ImPlotStairsFlags        p2_flags        = 0;
@@ -913,9 +912,9 @@ void App::ImPlot_Testing0(void)
     static bool                     first_frame     = true;
     
     
-    static const char *             plot_name       = "##TestingPlotCFG";
-    ImPlotPlot *                    plot_ptr        = nullptr;
-    static ImGuiID                  plot_ID         = 0;
+    //  static const char *             plot_name       = "##TestingPlotCFG";
+    //  ImPlotPlot *                    plot_ptr        = nullptr;
+    //  static ImGuiID                  plot_ID         = 0;
     
     
     //  0.  CONTROL WIDGETS...

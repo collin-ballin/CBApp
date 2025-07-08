@@ -169,7 +169,7 @@ inline std::string format_elapsed_timestamp(std::chrono::system_clock::duration 
     //using clock             = std::chrono::system_clock                     ;   //using duration      = clock::duration;
     using days              = std::chrono::days                             ;   using hours         = std::chrono::hours;
     using minutes           = std::chrono::minutes                          ;   using seconds       = std::chrono::seconds;
-    using milliseconds      = std::chrono::milliseconds                     ;   using microseconds  = std::chrono::microseconds;
+    using milliseconds      = std::chrono::milliseconds                     ;   //  using microseconds  = std::chrono::microseconds;
 
     // 1) peel off each component
     std::ostringstream  oss;
@@ -178,7 +178,7 @@ inline std::string format_elapsed_timestamp(std::chrono::system_clock::duration 
     minutes             m   = std::chrono::duration_cast<minutes>(dt)       ;   dt -= m;
     seconds             s   = std::chrono::duration_cast<seconds>(dt)       ;   dt -= s;
     milliseconds        ms  = std::chrono::duration_cast<milliseconds>(dt)  ;   dt -= ms;
-    microseconds        us  = std::chrono::duration_cast<microseconds>(dt)  ;
+    //  microseconds        us  = std::chrono::duration_cast<microseconds>(dt)  ;
     oss << std::setfill('0');
 
     if (d.count() > 0) {

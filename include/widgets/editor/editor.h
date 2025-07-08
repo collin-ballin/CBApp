@@ -28,6 +28,7 @@
 #include "cblib.h"
 #include "app/_init.h"
 #include "app/state/_state.h"
+
 #include "utility/utility.h"
 #include "widgets/editor/_constants.h"
 #include "widgets/editor/_icon.h"
@@ -98,21 +99,13 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //                  return PathVertexPos{pi, vi};
 //      return std::nullopt;
 //  }
-
-
-
-
-
-
-
-
+     
+     
+ 
+//      UTILITY STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
-//                         Editor:
-//                 Editor Widget for Dear ImGui.
-// *************************************************************************** //
-// *************************************************************************** //
-       
+
 struct      EditorSnapshot;
 struct      Vertex_Tag          {};
 struct      Point_Tag           {};
@@ -136,7 +129,15 @@ enum class IoResult {
 };
 
 
+namespace app { class AppState; }
 
+// *************************************************************************** //
+// *************************************************************************** //
+//                         Editor:
+//                 Editor Widget for Dear ImGui.
+// *************************************************************************** //
+// *************************************************************************** //
+  
 //  "Editor"
 //
 class Editor {
@@ -150,6 +151,7 @@ public:
         using                           ID                              = cblib::utl::IDType<T, Tag>;
     //
         using                           VertexID                        = uint32_t;     //    ID<std::uint32_t, Vertex_Tag>         ;
+        using                           HandleID                        = uint8_t;      //    ID<std::uint32_t, Point_Tag>          ;
         using                           PointID                         = uint32_t;     //    ID<std::uint32_t, Point_Tag>          ;
         using                           LineID                          = uint32_t;     //    ID<std::uint32_t, Line_Tag>           ;
         using                           PathID                          = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
@@ -159,8 +161,9 @@ public:
     //
     //                              TYPENAME ALIASES (BASED ON INDEX TYPES):
         using                           Vertex                          = Vertex_t          <VertexID>                              ;
+        //  using                       Handle                          = Handle_t          <HandleID>                              ;
         using                           Point                           = Point_t           <PointID>                               ;
-        using                           Line                            = Line_t            <LineID>                                ;
+        using                           Line                            = Line_t            <LineID, ZID>                           ;
         using                           Path                            = Path_t            <PathID, VertexID, ZID>                 ;
         using                           Overlay                         = Overlay_t         <OverlayID>                             ;
         using                           Hit                             = Hit_t             <HitID>                                 ;
@@ -185,8 +188,8 @@ public:
 
 public:
     //  1.              INITIALIZATION METHODS...
-    // *************************************************************************** //
-                                        Editor                          (void);
+    // *************************************************************************** //;
+                                        Editor                          (app::AppState & src);
                                         ~Editor                         (void);
     //
     //
@@ -263,8 +266,9 @@ private:
     // *************************************************************************** //
     inline void                         _mode_switch_hotkeys                ([[maybe_unused]] const Interaction & );
     inline void                         _dispatch_mode_handler              ([[maybe_unused]] const Interaction & );
-    
-
+    // *************************************************************************** //
+    //
+    //
     // *************************************************************************** //
     //      PRIMARY STATE HANDLERS.         |   "editor.cpp" ...
     // *************************************************************************** //
@@ -280,34 +284,40 @@ private:
     void                                _handle_overlays                    ([[maybe_unused]] const Interaction & );
     //
     void                                _handle_io                          (void);
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
     //      BROWSER STUFF.                  |   "browser.cpp" ...
     // *************************************************************************** //
-    void                                _draw_path_inspector_column         (void);
-    void                                _draw_path_list_column              (void);
-    void                                _draw_vertex_list_subcolumn         (Path & );          // left part
-    void                                _draw_vertex_inspector_subcolumn    (Path & );
+    //                              OBJECT BROWSER:
+    void                                _dispatch_obj_inspector_column          (void);     //  PREVIOUSLY:     _draw_path_inspector_column
     //
-    void                                _draw_multi_path_inspector          (void);
-    void                                _draw_single_path_inspector         (void);
+    void                                _draw_obj_selector_column               (void);     //  PREVIOUSLY:     _draw_path_list_column
+    void                                _draw_single_obj_inspector              (void);     //  PREVIOUSLY:     _draw_single_path_inspector
+    void                                _draw_multi_obj_inspector               (void);     //  PREVIOUSLY:     _draw_multi_path_inspector
+    //
+    //                              VERTEX BROWSER:
+    void                                _draw_vertex_list_subcolumn             (Path & );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
+    void                                _draw_vertex_inspector_subcolumn        (Path & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
     //      PEN-TOOL STUFF.                 |   "pen_tool.cpp" ...
     // *************************************************************************** //
-    void                                _pen_begin_handle_drag              (uint32_t vid, bool out_handle, const bool force_select=false);
+    void                                _pen_begin_handle_drag              (VertexID vid, bool out_handle, const bool force_select=false);
     //bool                                _pen_try_begin_handle_drag          (const Interaction & );
     void                                _pen_update_handle_drag             ([[maybe_unused]] const Interaction & );
     void                                _pen_begin_path_if_click_empty      (const Interaction & );
     void                                _pen_append_or_close_live_path      (const Interaction & );
     //
-    std::optional<size_t>               _path_idx_if_last_vertex            (uint32_t vid) const;
+    std::optional<size_t>               _path_idx_if_last_vertex            (VertexID vid) const;
     inline bool                         _pen_click_hits_first_vertex        (const Interaction &, const Path &) const;
     inline bool                         _can_join_selected_path             (void) const;
     void                                _join_selected_open_path            (void);
     void                                _draw_pen_cursor                    (const ImVec2 &, ImU32);
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
@@ -331,6 +341,7 @@ private:
     //                              DEPRECATED:
     void                                _shape_preview_draw                 (ImDrawList* dl) const;
     void                                _draw_shape_cursor                  (const Interaction &) const;
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
@@ -342,6 +353,7 @@ private:
     void                                _draw_shape_resident_default        (void);
     //
     void                                _draw_selection_resident            (void);
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
@@ -366,7 +378,6 @@ private:
     // *************************************************************************** //
     //      RENDERING FUNCTIONS.            |   "render.cpp" ...
     // *************************************************************************** //
-    //
     //                              GRID:
     void                                _grid_handle_shortcuts              (void);
     //
@@ -379,6 +390,7 @@ private:
     void                                _render_selection_highlight         (ImDrawList *) const;
     inline void                         _render_selected_handles            (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
     inline void                         _render_selection_bbox              (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
@@ -421,21 +433,22 @@ private:
     inline void                         _selection_context_default          ([[maybe_unused]] const Interaction & );
     inline void                         _selection_context_single           ([[maybe_unused]] const Interaction & );
     inline void                         _selection_context_multi            ([[maybe_unused]] const Interaction & );
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
     //      UTILITIES.                      |   "utility.cpp" ...
     // *************************************************************************** //
-    Vertex *                            find_vertex                         (std::vector<Vertex> & , uint32_t);
-    const Vertex *                      find_vertex                         (const std::vector<Vertex> & , uint32_t) const;
-    std::optional<EndpointInfo>         _endpoint_if_open                   (uint32_t vid) const;
+    Vertex *                            find_vertex                         (std::vector<Vertex> & , VertexID);
+    const Vertex *                      find_vertex                         (const std::vector<Vertex> & , VertexID) const;
+    std::optional<EndpointInfo>         _endpoint_if_open                   (PathID vid) const;
     //
     //                              DATA MODIFIER UTILITIES:
-    void                                _add_point_glyph                    (uint32_t vid);
+    void                                _add_point_glyph                    (VertexID vid);
     uint32_t                            _add_vertex                         (ImVec2 w);
     void                                _add_point                          (ImVec2 w);
-    void                                _erase_vertex_and_fix_paths         (uint32_t vid);
-    void                                _erase_path_and_orphans             (size_t vid);
+    void                                _erase_vertex_and_fix_paths         (VertexID vid);
+    void                                _erase_path_and_orphans             (VertexID vid);
     //
     //                              APP UTILITY OPERATIONS:
     bool                                _try_begin_handle_drag              (const Interaction & );
@@ -448,12 +461,12 @@ private:
     void                                _draw_controls                      (void);
     void                                _display_canvas_settings            (void);
     void                                _draw_system_preferences            (void);
+    // *************************************************************************** //
     //
     //
     // *************************************************************************** //
     //      COMMON.                         |   "common.cpp" ...
     // *************************************************************************** //
-    //
     //                              NEW SELECTION FUNCTIONS:
     void                                bring_selection_to_front            (void);
     void                                bring_selection_forward             (void);
@@ -530,22 +543,21 @@ private:
     //  "_update_grid"
     inline void                         _update_grid_info                   (void)
     {
-        ImPlotRect      lim      = ImPlot::GetPlotLimits();          // world extent
-        ImVec2          size     = ImPlot::GetPlotSize();           // in pixels
+        ImPlotRect      lim         = ImPlot::GetPlotLimits();          // world extent
+        ImVec2          size        = ImPlot::GetPlotSize();           // in pixels
 
-        float           range_x = static_cast<float>(lim.X.Max - lim.X.Min);
-        float           ppw     = size.x / range_x;                  // pixels‑per‑world‑unit
+        float           range_x     = static_cast<float>(lim.X.Max - lim.X.Min);
+        float           ppw         = size.x / range_x;                  // pixels‑per‑world‑unit
     
-        const float     TARGET_PX = 20.0f;                     // desired screen grid pitch
-        float           raw_step = TARGET_PX / ppw;                  // world units per 20 px
+        float           raw_step    = m_style.TARGET_PX / ppw;                  // world units per 20 px
 
         //  Quantize to     1·10^n, 2·10^n, or 5·10^n
-        float           exp10  = std::pow(10.0f, std::floor(std::log10(raw_step)));
-        float           mant   = raw_step / exp10;
-        if      (mant < 1.5f) mant = 1.0f;
-        else if (mant < 3.5f) mant = 2.0f;
-        else if (mant < 7.5f) mant = 5.0f;
-        else                  { mant = 1.0f; exp10 *= 10.0f; }
+        float           exp10       = std::pow(10.0f, std::floor(std::log10(raw_step)));
+        float           mant        = raw_step / exp10;
+        if      ( mant < 1.5f )     { mant = 1.0f;    }
+        else if ( mant < 3.5f )     { mant = 2.0f;    }
+        else if ( mant < 7.5f )     { mant = 5.0f;    }
+        else                        { mant = 1.0f; exp10 *= 10.0f; }
 
         m_grid.snap_step = mant * exp10;                        // store for the frame
         return;
@@ -567,6 +579,10 @@ private:
     inline ImVec2                       maybe_snap                          (ImVec2 w) const
     { return m_grid.snap_on ? snap_to_grid(w) : w; }
     
+    //  "path_is_mutable"
+    inline bool                         path_is_mutable                     (const Path * p) const noexcept
+    { return p && p->visible && !p->locked; }
+
     //  "_mode_has"
     inline bool                         _mode_has                           (CBCapabilityFlags flag) const
     { return (MODE_CAPS[static_cast<size_t>(m_mode)] & flag) != 0; }
@@ -578,7 +594,7 @@ private:
     // *************************************************************************** //
     
     //  "next_z_index"
-    inline ZID                          next_z_index                        (void)
+    [[nodiscard]] inline ZID            next_z_index                        (void)
     {
         ZID max_z = Z_FLOOR_USER;       // find current maximum among user objects
         for (const Path& p : m_paths)
@@ -604,14 +620,89 @@ private:
         for (Path* p : items) p->z_index = z++;
         return;
     }
+    
+    //  "parent_path_of_vertex"
+    [[nodiscard]] inline const Path *   parent_path_of_vertex               (VertexID vid) const noexcept
+    {
+        for (const Path & p : m_paths)
+            for (VertexID v : p.verts)
+                if (v == vid) return &p;
+        return nullptr;                     // not found
+    }
+    
+    //  "_prune_selection_mutability"
+    inline void                         _prune_selection_mutability         (void)
+    {
+        // ── paths ───────────────────────────────────────────
+        for (auto it = m_sel.paths.begin(); it != m_sel.paths.end(); )
+        {
+            PathID pid = static_cast<PathID>(*it);
+            if (pid >= m_paths.size() || !m_paths[pid].is_mutable())
+                it = m_sel.paths.erase(it);
+            else
+                ++it;
+        }
+
+        // ── points & vertices ──────────────────────────────
+        for (auto it = m_sel.points.begin(); it != m_sel.points.end(); )
+        {
+            PointID idx = static_cast<PointID>(*it);
+            if (idx >= m_points.size())
+            { it = m_sel.points.erase(it); continue; }
+
+            const Path* pp = parent_path_of_vertex(m_points[idx].v);
+            if (!pp || !pp->is_mutable())
+                it = m_sel.points.erase(it);
+            else
+                ++it;
+        }
+
+        for (auto it = m_sel.vertices.begin(); it != m_sel.vertices.end(); )
+        {
+            VertexID vid = static_cast<VertexID>(*it);
+            const Path* pp = parent_path_of_vertex(vid);
+            if (!pp || !pp->is_mutable())
+                it = m_sel.vertices.erase(it);
+            else
+                ++it;
+        }
+
+        // ── stand-alone lines (if you keep them) ───────────
+        for (auto it = m_sel.lines.begin(); it != m_sel.lines.end(); )
+        {
+            LineID lid = static_cast<LineID>(*it);
+            if (lid >= m_lines.size() || !m_lines[lid].is_mutable())
+                it = m_sel.lines.erase(it);
+            else
+                ++it;
+        }
+
+        _rebuild_vertex_selection();     // sync vertices ↔ points
+    }
+    
+    //  "_new_path_from_prototype"
+    [[nodiscard]] inline Path           _new_path_from_prototype            (const Path & proto) {
+        Path    p   = proto;                    //  Copy style, verts cleared by caller
+        p.set_default_label(m_next_pid++);      //  "Path N"
+        return p;
+    }
+    
+    //  "_clone_path_proto"
+    [[nodiscard]] inline Path           _clone_path_proto                   (const Path& src) {
+        Path p = src;                     // copy style, z_index, locked, visible
+        p.id = m_next_pid++;              // fresh PathID
+        p.set_default_label(p.id);        // "Path %u"
+        p.verts.clear();                  // caller will fill verts
+        return p;
+    }
+
 
     //
     //
     //
     // *************************************************************************** //
-    //      INLINE FOR TOOLS...
+    //      STANDARDIZED MECHANICS FOR TOOLS...
     // *************************************************************************** //
-    
     //  "reset_pen"
     inline void                         reset_pen                           (void) {
         this->m_show_handles.erase( m_pen.handle_vid );
@@ -628,6 +719,41 @@ private:
     
     
     
+    //  "_make_path"
+    //      Always call this to materialise a new Path.
+    //      • Assigns fresh PathID & label
+    //      • Puts it on the top Z-layer (unless caller overrides)
+    //      • Copies style / flags from an optional prototype
+    //
+    inline Path &                       _make_path                          (const std::vector<VertexID> & verts, const Path * proto = nullptr) {
+        Path        p       = proto ? *proto : Path{};      // copy style/flags if given
+        p.id                = m_next_pid++;
+        p.set_default_label(p.id);
+        p.closed            = false;                        // caller may flip later
+        p.z_index           = next_z_index();
+
+        p.verts             = verts;                        // freshly-built vertex list
+        m_paths.push_back(std::move(p));
+        return m_paths.back();                              // reference for caller tweaks
+    }
+    
+    
+    //  "_clone_path"
+    //      Duplicate an existing path with a vid-remap (copy/paste, boolean ops …).
+    //
+    inline Path &                       _clone_path                         (const Path& src, const std::vector<VertexID> & vid_map) {
+        Path dup = src;                // copy style / flags
+        dup.id   = m_next_pid++;
+        dup.set_default_label(dup.id);
+        dup.z_index = next_z_index();
+
+        dup.verts.clear();
+        for (VertexID old : src.verts)
+            dup.verts.push_back(vid_map[old]); // map to duplicated verts
+
+        m_paths.push_back(std::move(dup));
+        return m_paths.back();
+    }
     //
     //
     //
@@ -647,11 +773,14 @@ private:
     // *************************************************************************** //
     //      IMPORTANT DATA...
     // *************************************************************************** //
+    app::AppState &                     CBAPP_STATE_NAME;
+    EditorStyle                         m_style                         {  };
+    //
     std::vector<Vertex>                 m_vertices;
     std::vector<Point>                  m_points;
     std::vector<Line>                   m_lines;
     std::vector<Path>                   m_paths;                //  New path container
-    std::unordered_set<uint32_t>        m_show_handles;         //  List of which glyphs we WANT to display Bezier points for.
+    std::unordered_set<HandleID>        m_show_handles;         //  List of which glyphs we WANT to display Bezier points for.
     //
     OverlayManager                      m_overlays;
     // *************************************************************************** //
@@ -722,7 +851,7 @@ private:
     bool                                m_drawing                       = false;
     bool                                m_dragging_handle               = false;
     bool                                m_dragging_out                  = true;
-    uint32_t                            m_drag_vid                      = 0;
+    VertexID                            m_drag_vid                      = 0;
     // *************************************************************************** //
     //
     //
@@ -761,7 +890,7 @@ private:
     GridSettings                        m_grid                          = { 100.0f,  true,  false };
     float                               m_ppw                           = 1.0f;
     Bounds                              m_world_bounds                  = {
-        /*min_x=*/0.0f,         /*min_y=*/0.0f,
+        /*min_x=*/0.0f,        /*min_y=*/0.0f,
         /*max_x=*/500.0f,      /*max_y=*/500.0f
     };
     //
@@ -782,7 +911,8 @@ private:
     //                              LASSO TOOL / SELECTION:
     ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
     ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
-    uint32_t                            m_next_id                       = 1;
+    VertexID                            m_next_id                       = 1;
+    PathID                              m_next_pid                      = 1;        // counter for new path IDs
     //
     //                              BBOX SCALING:
     mutable int                         m_hover_handle                  = -1;
@@ -892,7 +1022,7 @@ private:
 // *************************************************************************** //
 // *************************************************************************** //
 
-inline static constexpr uint32_t    kSaveFormatVersion      = 1;
+inline static constexpr uint32_t    kSaveFormatVersion      = 3;
 
 
 //  "Vertex"

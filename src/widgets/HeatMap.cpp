@@ -27,11 +27,11 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 using dim_type      = HeatMap::dim_type;
 using value_type    = HeatMap::value_type;
 
-static constexpr dim_type                               ms_control_width    = dim_type(225);
-static constexpr dim_type                               ms_scale_width      = dim_type(90);
-static constexpr std::pair<dim_type, dim_type>          ms_width_range      = { dim_type(500),          dim_type(1200) };
-static constexpr std::pair<dim_type, dim_type>          ms_height_range     = { dim_type(500),          dim_type(1200) };
-static constexpr std::pair<value_type, value_type>      ms_vlimits          = { value_type(-10),        value_type(10) };
+[[maybe_unused]] static constexpr dim_type                               ms_control_width    = dim_type(225);
+[[maybe_unused]] static constexpr dim_type                               ms_scale_width      = dim_type(90);
+[[maybe_unused]] static constexpr std::pair<dim_type, dim_type>          ms_width_range      = { dim_type(500),          dim_type(1200) };
+[[maybe_unused]] static constexpr std::pair<dim_type, dim_type>          ms_height_range     = { dim_type(500),          dim_type(1200) };
+[[maybe_unused]] static constexpr std::pair<value_type, value_type>      ms_vlimits          = { value_type(-10),        value_type(10) };
 
 
 

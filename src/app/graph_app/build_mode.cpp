@@ -545,9 +545,9 @@ void SketchWidget::build_handle_selection_popup(const BuildCtx &    ctx,
     // 3. If exactly two points are selected, and they share the same type, show Connect/Disconnect
     if (m_selected.size() == 2)
     {
-        int     i           = m_selected[0];
-        int     j           = m_selected[1];
-        bool    same_type   = (m_points[i].type == m_points[j].type);
+        //  int     i           = m_selected[0];
+        //  int     j           = m_selected[1];
+        //  bool    same_type   = (m_points[i].type == m_points[j].type);
         
         //  if (same_type)
         //  {
