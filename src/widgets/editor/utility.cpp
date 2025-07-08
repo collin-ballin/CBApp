@@ -191,42 +191,47 @@ bool Editor::_try_begin_handle_drag(const Interaction& it)
 //
 void Editor::_scissor_cut(const PathHit & h)
 {
-    Path &          path            = m_paths[h.path_idx];
-    const size_t    insert_pos      = h.seg_idx + 1;          // after the hit segment’s i-th vertex
+    Path&  leftPath   = m_paths[h.path_idx];            // original path
+    size_t insert_pos = h.seg_idx + 1;                  // after vertex i
 
-    // 1. two coincident vertices: one for each side of the cut
-    VertexID        vid_left        = _add_vertex(h.pos_ws);   // will live in the original path
+    // ─── 1.  Two coincident vertices at the cut position ─────────────
+    VertexID vid_left  = _add_vertex(h.pos_ws);         // stays in left path
     _add_point_glyph(vid_left);
 
-    VertexID        vid_right       = _add_vertex(h.pos_ws);   // goes into the new right-hand path
+    VertexID vid_right = _add_vertex(h.pos_ws);         // first in right path
     _add_point_glyph(vid_right);
 
-    // 2. insert the LEFT vertex into the original path
-    path.verts.insert(path.verts.begin() + insert_pos, vid_left);
-    path.closed = false;                          // guarantee it’s now open
+    // ─── 2.  Insert left vertex and open the left path ──────────────
+    leftPath.verts.insert(leftPath.verts.begin() + insert_pos, vid_left);
+    leftPath.closed = false;
 
-    // 3. build the RIGHT-hand path
-    Path right;
-    right.style  = path.style;                    // clone stroke
-    right.closed = false;
+    // ─── 3.  Build right-hand path ──────────────────────────────────
+    Path   rightPath;                                   // new container
+    rightPath.id         = m_next_pid++;                // NEW unique ID
+    rightPath.set_default_label(rightPath.id);          // "Path N"
 
-    // first vertex is the RIGHT duplicate
-    right.verts.push_back(vid_right);
+    rightPath.style      = leftPath.style;              // copy appearance
+    rightPath.z_index    = leftPath.z_index;
+    rightPath.locked     = leftPath.locked;
+    rightPath.visible    = leftPath.visible;
+    rightPath.closed     = false;
 
-    // then everything *after* the left vertex
-    right.verts.insert(right.verts.end(),
-                       path.verts.begin() + insert_pos + 1,
-                       path.verts.end());
+    //  First vertex in right path is vid_right
+    rightPath.verts.push_back(vid_right);
 
-    // 4. trim the original (left) path so it ends at vid_left
-    path.verts.erase(path.verts.begin() + insert_pos + 1, path.verts.end());
+    //  Then every vertex AFTER vid_left in the original
+    rightPath.verts.insert(rightPath.verts.end(),
+                           leftPath.verts.begin() + insert_pos + 1,
+                           leftPath.verts.end());
 
-    // 5. store the new path
-    m_paths.push_back(std::move(right));
+    // ─── 4.  Trim the left path so it ends at vid_left ──────────────
+    leftPath.verts.erase(leftPath.verts.begin() + insert_pos + 1,
+                         leftPath.verts.end());
 
-    // NOTE: Bézier handle subdivision is still “TODO” —
-    //       handles on vid_left / vid_right are zeroed by _add_vertex,
-    //       so curvature continuity is lost for now.
+    // ─── 5.  Store the new path ─────────────────────────────────────
+    m_paths.push_back(std::move(rightPath));
+
+    // NOTE: Bézier handle subdivision still “TODO”.
 }
 
 

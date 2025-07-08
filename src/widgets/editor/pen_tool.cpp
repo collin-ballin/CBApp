@@ -119,18 +119,39 @@ void Editor::_pen_update_handle_drag(const Interaction& /*it*/)
 
 //  "_pen_begin_path_if_click_empty"
 //
-void Editor::_pen_begin_path_if_click_empty(const Interaction& it)
+void Editor::_pen_begin_path_if_click_empty(const Interaction & it)
 {
-    if (_hit_any(it)) return;                       // clicked on an object
+/*
+    // 1. Ignore if the click actually hit something
+    if (_hit_any(it)) return;
 
-    ImVec2 ws = pixels_to_world(ImGui::GetIO().MousePos);   // NEW
+    // 2. Add first vertex at mouse position (world-space)
+    ImVec2   ws  = pixels_to_world(ImGui::GetIO().MousePos);
     VertexID vid = _add_vertex(ws);
-    m_points.push_back({ vid, { PEN_ANCHOR_COLOR, PEN_ANCHOR_RADIUS, true } });
 
-    Path p; p.verts = { vid }; p.closed = false;
+    // 3. Add glyph for that vertex
+    m_points.push_back({ vid,
+                         { PEN_ANCHOR_COLOR,
+                           PEN_ANCHOR_RADIUS,
+                           true } });
+
+    // 4. Create a brand-new Path object
+    Path p;
+    p.id = m_next_pid++;                         // unique ID
+    p.set_default_label(p.id);                   // default label: "Path %02u"
+
+    p.verts.push_back(vid);
+    p.closed = false;                            // open path
+
+    // 5. Push to container and update Pen state
     m_paths.push_back(std::move(p));
 
-    m_pen = { true, m_paths.size() - 1, vid, false, 0, false };
+    m_pen = { true,                    // active
+              m_paths.size() - 1,      // index of the new path
+              vid,                     // last_vid
+              false, 0, false };       // other PenState fields
+*/
+    return;
 }
 
 

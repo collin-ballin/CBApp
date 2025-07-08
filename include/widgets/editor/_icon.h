@@ -133,39 +133,39 @@ inline static ImU32  PREVIEW_FG_COL      = IM_COL32_WHITE;
 //
 */
 
-
-inline static ImU32  EYE_DILATE_COLOR    = IM_COL32(  0,  0,  0, 255); // dark spot
-inline static ImVec2 PREVIEW_CELL_SZ     = { 256.0f, 256.0f };
-inline static float  CELL_SZ             = 18.0f;
-inline static int    EYE_SEG             = 20;              // ellipse resolution (fixed)
+inline constexpr float      DESIGN_PX               = 256.0f;
+inline static ImU32         EYE_DILATE_COLOR        = IM_COL32(  0,  0,  0, 255); // dark spot
+inline static ImVec2        PREVIEW_CELL_SZ         = { 256.0f, 256.0f };
+inline static float         CELL_SZ                 = 18.0f;
+inline static int           EYE_SEG                 = 20;              // ellipse resolution (fixed)
 //
-inline static float  PREVIEW_PAD         = 16.0f;
-inline static ImU32  PREVIEW_BG_COL      = IM_COL32( 50, 50, 50, 255);
-inline static ImU32  PREVIEW_FG_COL      = IM_COL32_WHITE;
+inline static float         PREVIEW_PAD             = 16.0f;
+inline static ImU32         PREVIEW_BG_COL          = IM_COL32( 50, 50, 50, 255);
+inline static ImU32         PREVIEW_FG_COL          = IM_COL32_WHITE;
 //
 //
 //
 //––––– tuned values –––––//
-inline static float  BG_ROUNDING         = 0.421875f;
-inline static float  STROKE_THICK        = 0.421875f;
+inline static float         BG_ROUNDING             = 0.421875f;
+inline static float         STROKE_THICK            = 0.421875f;
 
 // eye
-inline static float  EYE_OUTER_FRAC      = 0.45f;
-inline static float  SLASH_PAD           = 1.757812f;
-inline static float  EYE_ASPECT          = 0.63f;
-inline static float  SLASH_THICK         = 0.84375f;
-inline static float  EYE_PUPIL_FRAC      = 0.60f;
-inline static float  EYE_PUPIL_ASPECT    = 0.75f;
-inline static float  EYE_DILATE_FRAC     = 0.30f;
+inline static float         EYE_OUTER_FRAC          = 0.45f;
+inline static float         SLASH_PAD               = 1.757812f;
+inline static float         EYE_ASPECT              = 0.63f;
+inline static float         SLASH_THICK             = 0.84375f;
+inline static float         EYE_PUPIL_FRAC          = 0.60f;
+inline static float         EYE_PUPIL_ASPECT        = 0.75f;
+inline static float         EYE_DILATE_FRAC         = 0.30f;
 
 // lock
-inline static float  LOCK_BODY_W_FRAC    = 0.70f;
-inline static float  LOCK_BODY_ROUND     = 0.421875f;
-inline static float  LOCK_BODY_H_FRAC    = 0.55f;
-inline static float  LOCK_LATCH_THICK    = 1.40625f;
-inline static float  LOCK_RADIUS_FRAC    = 0.22f;
-inline static float  SHACKLE_GAP_FRAC    = 0.30f;
-inline static float  LOCK_SHACKLE_TILT   = 0.0f;
+inline static float         LOCK_BODY_W_FRAC        = 0.70f;
+inline static float         LOCK_BODY_ROUND         = 0.421875f;
+inline static float         LOCK_BODY_H_FRAC        = 0.55f;
+inline static float         LOCK_LATCH_THICK        = 1.40625f;
+inline static float         LOCK_RADIUS_FRAC        = 0.22f;
+inline static float         SHACKLE_GAP_FRAC        = 0.30f;
+inline static float         LOCK_SHACKLE_TILT       = 0.0f;
 
 
 

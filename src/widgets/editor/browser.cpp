@@ -196,107 +196,122 @@ void Editor::DrawBrowser(void)
 void Editor::_draw_path_list_column(void)
 {
     using namespace icon;                      // pull in CELL_SZ, etc.
+    static constexpr float      ms_BROWSER_BUTTON_SEP       = 8.0f;
+    static constexpr float      ms_BROWSER_SELECTABLE_SEP   = 16.0f;
+    //
+    //  COLORS FROM CURRENT STYLE (Non-icon constants)
+    const ImU32                 col_text                    = ImGui::GetColorU32(ImGuiCol_Text);
+    const ImU32                 col_dim                     = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+    const ImU32                 col_frame                   = ImGui::GetColorU32(ImGuiCol_FrameBg);
+    ImGuiListClipper            clipper;
 
-    // ─── filter box
+
+    //  1.  SEARCH-QUERY BOX
     ImGui::SetNextItemWidth(-FLT_MIN);
-    if (ImGui::InputTextWithHint("##Editor_Browser_LeftFilter", "filter",
+    if ( ImGui::InputTextWithHint("##Editor_Browser_LeftFilter", "filter",
                                  m_browser_filter.InputBuf,
-                                 IM_ARRAYSIZE(m_browser_filter.InputBuf)))
-        m_browser_filter.Build();
+                                 IM_ARRAYSIZE(m_browser_filter.InputBuf)) )
+        { m_browser_filter.Build(); }
+        
+        
     ImGui::Separator();
 
-    // colours from current style (not icon constants)
-    const ImU32 col_text  = ImGui::GetColorU32(ImGuiCol_Text);
-    const ImU32 col_dim   = ImGui::GetColorU32(ImGuiCol_TextDisabled);
-    const ImU32 col_frame = ImGui::GetColorU32(ImGuiCol_FrameBg);
 
-    ImGuiListClipper clipper;
     clipper.Begin(static_cast<int>(m_paths.size()), -1);
 
-    while (clipper.Step())
+
+    //  2.  DRAWING EACH OBJECT IN THE LEFT-HAND SELECTION COLUMN OF THE BROWSER...
+    while ( clipper.Step() )
+    {
         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
         {
-            char label[12]; std::snprintf(label, sizeof(label), "Path%02d", i);
-            if (!m_browser_filter.PassFilter(label)) continue;
+            char                    label[12];
+            Path &                  path            = m_paths[i];
+            const bool              selected        = m_sel.paths.count(static_cast<size_t>(i));
+            const bool              mutable_path    = path.is_mutable();          // NEW – cached
+            ImGuiSelectableFlags    sel_flags       = (!mutable_path ? ImGuiSelectableFlags_Disabled | ImGuiSelectableFlags_AllowDoubleClick : ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick);
+            
+            
+            //  CASE 0 :    EARLY-OUT IF FILTER REMOVES OBJ...
+            if ( !m_browser_filter.PassFilter(label) )      { continue; }
 
-            Path& path = m_paths[i];
-            bool  selected = m_sel.paths.count(static_cast<size_t>(i));
 
+
+            std::snprintf(label, sizeof(label), "Path %02d", i);
             ImGui::PushID(i);
             ImGui::BeginGroup();
 
-            /*──────── Eye toggle ───────*/
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImGui::InvisibleButton("##eye", { CELL_SZ, CELL_SZ });
-            if (ImGui::IsItemClicked())
-                path.visible = !path.visible;
 
-            draw_icon_background(ImGui::GetWindowDrawList(),
-                                 pos, { CELL_SZ, CELL_SZ },
-                                 selected ? col_frame : 0);
+            //  2.1.    "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY)...
+            ImVec2      pos             = ImGui::GetCursorScreenPos();
+            ImGui::InvisibleButton("##Editor_Browser_VisibilityButton", { CELL_SZ, CELL_SZ });
+            if ( ImGui::IsItemClicked() )       { path.visible = !path.visible; _prune_selection_mutability(); }
 
-            if (path.visible)
-                draw_eye_icon(ImGui::GetWindowDrawList(),
-                              pos, { CELL_SZ, CELL_SZ }, col_text);
-            else
-                draw_eye_off_icon(ImGui::GetWindowDrawList(),
-                                  pos, { CELL_SZ, CELL_SZ }, col_dim);
 
-            ImGui::SameLine(0, 0);
+            //  Draw EYE or CLOSED-EYE Icon.
+            draw_icon_background(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, selected ? col_frame : 0);
+            if ( path.visible )                 { draw_eye_icon(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, col_text); }
+            else                                { draw_eye_off_icon(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, col_dim); }
 
-            /*──────── Lock toggle ──────*/
+            ImGui::SameLine(0.0f, ms_BROWSER_BUTTON_SEP);
+
+
+            //  2.2.    "LOCK" BUTTON (TO TOGGLE OBJECT'S LOCKED-STATE)...
             pos = ImGui::GetCursorScreenPos();
-            ImGui::InvisibleButton("##lock", { CELL_SZ, CELL_SZ });
-            if (ImGui::IsItemClicked())
-                path.locked = !path.locked;
+            ImGui::InvisibleButton("##Editor_Browser_LockButton", { CELL_SZ, CELL_SZ });
+            if ( ImGui::IsItemClicked() )       { path.locked = !path.locked; _prune_selection_mutability(); }
 
-            draw_icon_background(ImGui::GetWindowDrawList(),
-                                 pos, { CELL_SZ, CELL_SZ },
-                                 selected ? col_frame : 0);
+            ImGui::SameLine(0.0f, ms_BROWSER_SELECTABLE_SEP);
+            
+            //  Draw LOCK or UNLOCK Icon.
+            draw_icon_background(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, selected ? col_frame : 0);
+            if (path.locked)                    { draw_lock_icon(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, col_text); }
+            else                                { draw_unlock_icon(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, col_dim); }
 
-            if (path.locked)
-                draw_lock_icon(ImGui::GetWindowDrawList(),
-                               pos, { CELL_SZ, CELL_SZ }, col_text);
-            else
-                draw_unlock_icon(ImGui::GetWindowDrawList(),
-                                 pos, { CELL_SZ, CELL_SZ }, col_dim);
 
-            ImGui::SameLine(0, 4.0f);  // spacing before name
 
-            /*──────── Name selectable ─*/
-            ImGui::PushStyleColor(ImGuiCol_Text,
-                                  path.locked ? col_dim : col_text);
-            if (ImGui::Selectable(label, selected,
-                                  ImGuiSelectableFlags_SpanAllColumns))
+            ImGui::SameLine(0.0f, ms_BROWSER_SELECTABLE_SEP);     // Spacing before selectable object.
+            
+            
+            
+            //  3.1.    EDITING THE NAME FOR THE PATH...
+            ImGui::PushStyleColor( ImGuiCol_Text, (!mutable_path ? col_dim : col_text) ); // NEW – dim on invisible too
+            if (ImGui::Selectable(path.label.c_str(), selected, sel_flags))
             {
                 const bool ctrl  = ImGui::GetIO().KeyCtrl;
                 const bool shift = ImGui::GetIO().KeyShift;
 
                 if (!ctrl && !shift) {
                     this->reset_selection();
-                    m_sel.paths.insert(i);
+                    if (mutable_path) m_sel.paths.insert(i);
                     m_browser_anchor = i;
                 }
                 else if (shift && m_browser_anchor >= 0) {
-                    int lo = std::min(m_browser_anchor, i),
-                        hi = std::max(m_browser_anchor, i);
+                    int lo = std::min(m_browser_anchor, i);
+                    int hi = std::max(m_browser_anchor, i);
                     if (!ctrl) this->reset_selection();
-                    for (int k = lo; k <= hi; ++k) m_sel.paths.insert(k);
+                    for (int k = lo; k <= hi; ++k)
+                        if (m_paths[k].is_mutable())
+                            m_sel.paths.insert(k);
                 }
-                else if (ctrl) {
-                    if (!m_sel.paths.erase(i)) {
-                        m_sel.paths.insert(i);
-                        m_browser_anchor = i;
-                    }
+                else if (ctrl && mutable_path) {
+                    if (!m_sel.paths.erase(i)) m_sel.paths.insert(i);
+                    m_browser_anchor = i;
                 }
                 _rebuild_vertex_selection();
             }
             ImGui::PopStyleColor();
-
+            
             ImGui::EndGroup();
             ImGui::PopID();
-        }
+            
+        }// END "for-loop"
+        
+    }// END "while-loop"
+    
     clipper.End();
+    
+    return;
 }
 
 /* {
@@ -393,7 +408,7 @@ void Editor::_draw_vertex_list_subcolumn(Path& path)
     while (clipper.Step())
         for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
         {
-            char lbl[8]; std::snprintf(lbl, sizeof(lbl), "V%02d", row);
+            char lbl[8]; std::snprintf(lbl, sizeof(lbl), Vertex::ms_DEF_VERTEX_FMT_STRING, row);
             bool selected = (row == m_inspector_vertex_idx);
             if (ImGui::Selectable(lbl, selected))
                 m_inspector_vertex_idx = (selected ? -1 : row);      // toggle
@@ -427,7 +442,7 @@ void Editor::_draw_vertex_inspector_subcolumn(Path & path)
 
 
     //  1.  HEADER CONTENT...
-    ImGui::Text("Vertex V%02d  (id=%u)", m_inspector_vertex_idx, vid);
+    ImGui::Text( Vertex::ms_DEF_VERTEX_LABEL_FMT_STRING, m_inspector_vertex_idx, vid );
     ImGui::Separator();
     //
     //      1.1.    Constants:
@@ -555,12 +570,11 @@ void Editor::_draw_single_path_inspector(void)
     constexpr ImGuiColorEditFlags   COLOR_FLAGS     = ImGuiColorEditFlags_NoInputs;
     const ImGuiStyle &              style           = ImGui::GetStyle();
     //
-    size_t                          pidx            = *m_sel.paths.begin();
-    
+    const size_t                    pidx            = *m_sel.paths.begin();
     
     
     //  CASE 0 :    ERROR...
-    if (pidx >= m_paths.size()) {
+    if ( pidx >= m_paths.size() ) {
         ImGui::TextDisabled("[invalid object]"); return;
     }
     Path &          path            = m_paths[pidx];
@@ -569,7 +583,8 @@ void Editor::_draw_single_path_inspector(void)
 
 
     //  1.  HEADER-ENTRY AND "DELETE" BUTTON...
-    ImGui::Text("Object %zu  (%zu vertices)", pidx, path.verts.size());
+    //  ImGui::Text("%s. %zu  (%zu vertices)", pidx, path.verts.size());
+    ImGui::Text( "%s, (%zu vertices)", path.label.c_str(), path.verts.size() );
     ImGui::SameLine();
     if (ImGui::Button("Delete Object"))
     {

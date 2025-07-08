@@ -184,7 +184,6 @@ void App::init_appstate(void)
 {
     [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
-    auto &                          m_windows       = this->S.m_windows;
     auto &                          m_fonts         = this->S.m_fonts;
     std::tie( S.m_system_w, S.m_system_h )          = utl::GetMonitorDimensions(this->S.m_glfw_window);
     bool                            good_fonts      = true;
@@ -274,7 +273,6 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
 {
     //  IM_ASSERT( !S.m_running.load(std::memory_order_acquire) && error::ASSERT_DISPATCH_CALLED_DURING_RUNTIME );
     WinRenderFn     render_fn   = nullptr;
-    auto &       w           = S.m_windows[uuid];
     
     
     //  DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
@@ -283,38 +281,38 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         //
         //      1.  PRIMARY GUI STRUCTURE...
         case Window::Dockspace:         {
-            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->ShowDockspace(n, o, f); };
+            render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
+                          { this->ShowDockspace(n, nullptr, f); };
             //this->ShowDockspace(            w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::MenuBar:           {
-            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->m_menubar.Begin(n, o, f); };
+            render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
+                          { this->m_menubar.Begin(n, nullptr, f); };
             //  this->m_menubar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::ControlBar:        {
-            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->m_controlbar.Begin(n, o, f); };
+            render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
+                          { this->m_controlbar.Begin(n, nullptr, f); };
             //  this->m_controlbar.Begin(       w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::Browser:           {
-            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->m_browser.Begin(n, o, f); };
+            render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
+                          { this->m_browser.Begin(n, nullptr, f); };
             //  this->m_browser.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::DetailView:        {
-            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->m_detview.Begin(n, o, f); };
+            render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
+                          { this->m_detview.Begin(n, nullptr, f); };
             //  this->m_detview.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::MainApp:           {
-            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->ShowMainWindow(n, o, f); };
+            render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
+                          { this->ShowMainWindow(n, nullptr, f); };
             //  this->ShowMainWindow(           w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
@@ -423,7 +421,7 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         //  ...
         //
         default: {
-            //IM_ASSERT(true && error::ASSERT_NO_DEFAULT_WINDOW_RENDER_SWITCH_CASE);
+            IM_ASSERT(true && error::ASSERT_NO_DEFAULT_WINDOW_RENDER_SWITCH_CASE);
             break;
         }
     }

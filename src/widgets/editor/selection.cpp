@@ -778,134 +778,131 @@ void Editor::_start_lasso_tool(void)
 //      and add all intersecting objects to the selection set.
 void Editor::_update_lasso(const Interaction & it)
 {
-    ImGuiIO &       io      = ImGui::GetIO();
-    m_lasso_end             = io.MousePos;
+    ImGuiIO& io = ImGui::GetIO();
+    m_lasso_end = io.MousePos;
 
-
-
-    // Visual feedback
+    // Visual feedback rectangle
     it.dl->AddRectFilled(m_lasso_start, m_lasso_end, COL_LASSO_FILL);
     it.dl->AddRect      (m_lasso_start, m_lasso_end, COL_LASSO_OUT);
 
-    // On mouse-up: finalise selection
+    // Finalise on mouse-up
     if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
     {
-        // Screen-space rect → TL/BR order
+        // Screen → world conversion and rect normalisation
         ImVec2 tl_scr{ std::min(m_lasso_start.x, m_lasso_end.x),
                        std::min(m_lasso_start.y, m_lasso_end.y) };
         ImVec2 br_scr{ std::max(m_lasso_start.x, m_lasso_end.x),
                        std::max(m_lasso_start.y, m_lasso_end.y) };
-
-        // Convert to world space via ImPlot helper
-        ImVec2 tl_w = pixels_to_world(tl_scr);     // NEW
-        ImVec2 br_w = pixels_to_world(br_scr);     // NEW
-        // Normalise rectangle so tl_w is min corner, br_w is max corner
+        ImVec2 tl_w = pixels_to_world(tl_scr);
+        ImVec2 br_w = pixels_to_world(br_scr);
         if (tl_w.x > br_w.x) std::swap(tl_w.x, br_w.x);
         if (tl_w.y > br_w.y) std::swap(tl_w.y, br_w.y);
 
+        // Selection modifiers
         bool additive = io.KeyShift || io.KeyCtrl;
-        if (!additive)                       // fresh selection if no modifier
-            m_sel.clear();
+        if (!additive) m_sel.clear();
 
-        /* ---------- Points ---------- */
+        // ---------- Points ----------
         for (size_t i = 0; i < m_points.size(); ++i)
         {
-            const Vertex * v = find_vertex(m_vertices, m_points[i].v);
+            const Vertex* v = find_vertex(m_vertices, m_points[i].v);
             if (!v) continue;
+
+            const Path* pp = parent_path_of_vertex(m_points[i].v);
+            if (!pp || !pp->is_mutable()) continue;          // NEW guard
+
             bool inside = (v->x >= tl_w.x && v->x <= br_w.x &&
                            v->y >= tl_w.y && v->y <= br_w.y);
             if (!inside) continue;
 
-            if (additive) {                  // ⇧ / Ctrl  ⇒ toggle
-                if (!m_sel.points.erase(i))   // erase returns 0 if not present
-                    m_sel.points.insert(i);
+            if (additive) {
+                if (!m_sel.points.erase(i)) m_sel.points.insert(i);
             } else {
                 m_sel.points.insert(i);
             }
         }
 
-        // ---------- Lines (segment–rect test) ----------
-        auto seg_rect_intersect = [](ImVec2 a, ImVec2 b, ImVec2 tl, ImVec2 br)->bool
+        // ---------- Lines ----------
+        auto seg_rect_intersect = [](ImVec2 a, ImVec2 b,
+                                     ImVec2 tl, ImVec2 br)->bool
         {
             auto inside = [&](ImVec2 p){
-                return p.x >= tl.x && p.x <= br.x && p.y >= tl.y && p.y <= br.y;
+                return p.x >= tl.x && p.x <= br.x &&
+                       p.y >= tl.y && p.y <= br.y;
             };
-            if (inside(a) || inside(b))
-                return true;
-
-            // quick reject: both points on same outside side
+            if (inside(a) || inside(b)) return true;
             if ((a.x < tl.x && b.x < tl.x) || (a.x > br.x && b.x > br.x) ||
                 (a.y < tl.y && b.y < tl.y) || (a.y > br.y && b.y > br.y))
                 return false;
 
-            // helper for segment–segment intersection
             auto ccw = [](ImVec2 p1, ImVec2 p2, ImVec2 p3){
-                return (p3.y - p1.y)*(p2.x - p1.x) > (p2.y - p1.y)*(p3.x - p1.x);
+                return (p3.y - p1.y)*(p2.x - p1.x) >
+                       (p2.y - p1.y)*(p3.x - p1.x);
             };
-            auto intersect = [&](ImVec2 p1, ImVec2 p2, ImVec2 p3, ImVec2 p4){
-                return ccw(p1,p3,p4) != ccw(p2,p3,p4) && ccw(p1,p2,p3) != ccw(p1,p2,p4);
+            auto intersect = [&](ImVec2 p1, ImVec2 p2,
+                                 ImVec2 p3, ImVec2 p4){
+                return ccw(p1,p3,p4) != ccw(p2,p3,p4) &&
+                       ccw(p1,p2,p3) != ccw(p1,p2,p4);
             };
 
             ImVec2 tr{ br.x, tl.y }, bl{ tl.x, br.y };
             return intersect(a,b, tl,tr) || intersect(a,b,tr,br) ||
                    intersect(a,b, br,bl) || intersect(a,b, bl,tl);
         };
-        
-        
+
         for (size_t i = 0; i < m_lines.size(); ++i)
         {
-            const Vertex* a = find_vertex(m_vertices, m_lines[i].a);
-            const Vertex* b = find_vertex(m_vertices, m_lines[i].b);
-            if (!a || !b) continue;
+            const Line& ln = m_lines[i];
+            if (!ln.is_mutable()) continue;                     // NEW guard
 
+            const Vertex* a = find_vertex(m_vertices, ln.a);
+            const Vertex* b = find_vertex(m_vertices, ln.b);
+            if (!a || !b) continue;
             if (!seg_rect_intersect({a->x,a->y}, {b->x,b->y}, tl_w, br_w))
                 continue;
 
             if (additive) {
-                if (!m_sel.lines.erase(i))
-                    m_sel.lines.insert(i);    // toggle
+                if (!m_sel.lines.erase(i)) m_sel.lines.insert(i);
             } else {
                 m_sel.lines.insert(i);
             }
         }
-        
-        
-        // ---------- Paths (segment–rect test, straight segments only) ----------
+
+        // ---------- Paths ----------
         for (size_t pi = 0; pi < m_paths.size(); ++pi)
         {
             const Path& p = m_paths[pi];
+            if (!p.is_mutable()) continue;                      // NEW guard
+
             const size_t N = p.verts.size();
             if (N < 2) continue;
 
             bool intersects = false;
-            for (size_t si = 0; si < N - 1 + (p.closed ? 1 : 0); ++si)
+            for (size_t si = 0; si < N - 1 + (p.closed ? 1u : 0u); ++si)
             {
                 const Vertex* a = find_vertex(m_vertices, p.verts[si]);
-                const Vertex* b = find_vertex(m_vertices, p.verts[(si+1)%N]);
+                const Vertex* b = find_vertex(m_vertices,
+                                              p.verts[(si+1)%N]);
                 if (!a || !b) continue;
-                if (seg_rect_intersect({a->x,a->y}, {b->x,b->y}, tl_w, br_w))
+                if (seg_rect_intersect({a->x,a->y},
+                                       {b->x,b->y}, tl_w, br_w))
                 { intersects = true; break; }
             }
             if (!intersects) continue;
 
             if (additive) {
-                if (!m_sel.paths.erase(pi))
-                    m_sel.paths.insert(pi);    // toggle
+                if (!m_sel.paths.erase(pi)) m_sel.paths.insert(pi);
             } else {
                 m_sel.paths.insert(pi);
             }
         }
-        
 
-        /* ---------- Sync vertex list ---------- */
+        // Sync vertices and reset lasso state
         _rebuild_vertex_selection();
-
-        m_lasso_active = false;                   // reset
+        m_lasso_active = false;
     }
-    
-    
-    return;
 }
+
 
 
 
@@ -962,7 +959,7 @@ void Editor::_start_bbox_drag(uint8_t hidx, const ImVec2& tl, const ImVec2& br)
 
 //  "_update_bbox"
 //
-void Editor::_update_bbox()
+void Editor::_update_bbox(void)
 {
     if (!m_boxdrag.active)
         return;

@@ -137,7 +137,7 @@ namespace app { class AppState; }
 //                 Editor Widget for Dear ImGui.
 // *************************************************************************** //
 // *************************************************************************** //
-
+  
 //  "Editor"
 //
 class Editor {
@@ -163,7 +163,7 @@ public:
         using                           Vertex                          = Vertex_t          <VertexID>                              ;
         //  using                       Handle                          = Handle_t          <HandleID>                              ;
         using                           Point                           = Point_t           <PointID>                               ;
-        using                           Line                            = Line_t            <LineID>                                ;
+        using                           Line                            = Line_t            <LineID, ZID>                           ;
         using                           Path                            = Path_t            <PathID, VertexID, ZID>                 ;
         using                           Overlay                         = Overlay_t         <OverlayID>                             ;
         using                           Hit                             = Hit_t             <HitID>                                 ;
@@ -592,7 +592,7 @@ private:
     // *************************************************************************** //
     
     //  "next_z_index"
-    inline ZID                          next_z_index                        (void)
+    [[nodiscard]] inline ZID            next_z_index                        (void)
     {
         ZID max_z = Z_FLOOR_USER;       // find current maximum among user objects
         for (const Path& p : m_paths)
@@ -618,6 +618,82 @@ private:
         for (Path* p : items) p->z_index = z++;
         return;
     }
+    
+    //  "parent_path_of_vertex"
+    [[nodiscard]] inline const Path *   parent_path_of_vertex               (VertexID vid) const noexcept
+    {
+        for (const Path & p : m_paths)
+            for (VertexID v : p.verts)
+                if (v == vid) return &p;
+        return nullptr;                     // not found
+    }
+    
+    //  "_prune_selection_mutability"
+    inline void                         _prune_selection_mutability         (void)
+    {
+        // ── paths ───────────────────────────────────────────
+        for (auto it = m_sel.paths.begin(); it != m_sel.paths.end(); )
+        {
+            PathID pid = static_cast<PathID>(*it);
+            if (pid >= m_paths.size() || !m_paths[pid].is_mutable())
+                it = m_sel.paths.erase(it);
+            else
+                ++it;
+        }
+
+        // ── points & vertices ──────────────────────────────
+        for (auto it = m_sel.points.begin(); it != m_sel.points.end(); )
+        {
+            PointID idx = static_cast<PointID>(*it);
+            if (idx >= m_points.size())
+            { it = m_sel.points.erase(it); continue; }
+
+            const Path* pp = parent_path_of_vertex(m_points[idx].v);
+            if (!pp || !pp->is_mutable())
+                it = m_sel.points.erase(it);
+            else
+                ++it;
+        }
+
+        for (auto it = m_sel.vertices.begin(); it != m_sel.vertices.end(); )
+        {
+            VertexID vid = static_cast<VertexID>(*it);
+            const Path* pp = parent_path_of_vertex(vid);
+            if (!pp || !pp->is_mutable())
+                it = m_sel.vertices.erase(it);
+            else
+                ++it;
+        }
+
+        // ── stand-alone lines (if you keep them) ───────────
+        for (auto it = m_sel.lines.begin(); it != m_sel.lines.end(); )
+        {
+            LineID lid = static_cast<LineID>(*it);
+            if (lid >= m_lines.size() || !m_lines[lid].is_mutable())
+                it = m_sel.lines.erase(it);
+            else
+                ++it;
+        }
+
+        _rebuild_vertex_selection();     // sync vertices ↔ points
+    }
+    
+    //  "_new_path_from_prototype"
+    [[nodiscard]] inline Path           _new_path_from_prototype            (const Path & proto) {
+        Path    p   = proto;                    //  Copy style, verts cleared by caller
+        p.set_default_label(m_next_pid++);      //  "Path N"
+        return p;
+    }
+    
+    //  "_clone_path_proto"
+    [[nodiscard]] inline Path           _clone_path_proto                   (const Path& src) {
+        Path p = src;                     // copy style, z_index, locked, visible
+        p.id = m_next_pid++;              // fresh PathID
+        p.set_default_label(p.id);        // "Path %u"
+        p.verts.clear();                  // caller will fill verts
+        return p;
+    }
+
 
     //
     //
@@ -775,7 +851,7 @@ private:
     GridSettings                        m_grid                          = { 100.0f,  true,  false };
     float                               m_ppw                           = 1.0f;
     Bounds                              m_world_bounds                  = {
-        /*min_x=*/0.0f,         /*min_y=*/0.0f,
+        /*min_x=*/0.0f,        /*min_y=*/0.0f,
         /*max_x=*/500.0f,      /*max_y=*/500.0f
     };
     //
@@ -796,7 +872,8 @@ private:
     //                              LASSO TOOL / SELECTION:
     ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
     ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
-    uint32_t                            m_next_id                       = 1;
+    VertexID                            m_next_id                       = 1;
+    PathID                              m_next_pid                      = 1;        // counter for new path IDs
     //
     //                              BBOX SCALING:
     mutable int                         m_hover_handle                  = -1;
