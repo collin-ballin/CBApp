@@ -145,6 +145,9 @@ Editor::~Editor(void)
 //-------------------------------------------------------------------------
 
 //  "DrawBrowser"
+//      Main function to draw the entire "Browser" feature of the Editor app.
+//      > This function is called by the client-code / caller-routiene so they have
+//      > flexibility to customize which window they want to host the Browser inside, and etc.
 //
 void Editor::DrawBrowser(void)
 {
@@ -159,18 +162,19 @@ void Editor::DrawBrowser(void)
     //
     //
     //
-        //  2.  LEFTHAND BROWSER SELECTION MENU...
+        //  2.  OBJECT BROWSER'S SELECTOR COLUMN    (MAIN, LEFT-HAND MENU OF THE ENTIRE BROWSER)...
         ImGui::BeginChild("##Editor_Browser_Left", ImVec2(this->ms_LIST_COLUMN_WIDTH, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
-            _draw_path_list_column();
+            _draw_obj_selector_column();
         ImGui::EndChild();
         ImGui::PopStyleColor();
         //
         ImGui::SameLine();
         //
-        //  3.  RIGHTHAND BROWSER INSPECTOR MENU...
+        //
+        //  3.  OBJECT BROWSER'S INSPECTOR COLUMN   (MAIN, RIGHT-HAND MENU OF THE ENTIRE BROWSER)...
         ImGui::PushStyleColor(ImGuiCol_ChildBg,         ms_CHILD_FRAME_BG1R);
         ImGui::BeginChild("##Editor_Browser_Right", ImVec2(0, 0), ImGuiChildFlags_Borders);
-            _draw_path_inspector_column();
+            _dispatch_obj_inspector_column();
         ImGui::EndChild();
     //
     //
@@ -191,9 +195,9 @@ void Editor::DrawBrowser(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_draw_path_list_column"
+//  "_draw_obj_selector_column"
 //
-void Editor::_draw_path_list_column(void)
+void Editor::_draw_obj_selector_column(void)
 {
     using namespace icon;                      // pull in CELL_SZ, etc.
     static constexpr float      ms_BROWSER_BUTTON_SEP       = 8.0f;
@@ -370,22 +374,6 @@ void Editor::_draw_path_list_column(void)
 
 
 
-//  "_draw_path_inspector_column"
-//
-void Editor::_draw_path_inspector_column(void)
-{
-    if (m_sel.paths.empty()) {
-        ImGui::TextDisabled("No selection.");
-        return;
-    }
-
-    if (m_sel.paths.size() == 1)
-        _draw_single_path_inspector();
-    else
-        _draw_multi_path_inspector();
-}
-
-
 
 
 
@@ -394,178 +382,32 @@ void Editor::_draw_path_inspector_column(void)
 // *************************************************************************** //
 //
 //
-//  3.  SUBSIDIARY BROWSER FUNCTIONS...
+//
+//  3.  INSPECTOR COLUMN DISPATCHER FUNCTIONS (RIGHT-HAND SIDE OF 2-COLUMN BROWSER DESIGN)...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_draw_vertex_list_subcolumn"
+//  "_dispatch_obj_inspector_column"
 //
-void Editor::_draw_vertex_list_subcolumn(Path& path)
+void Editor::_dispatch_obj_inspector_column(void)
 {
-    const int total = static_cast<int>(path.verts.size());
-    ImGuiListClipper clipper; clipper.Begin(total, -1);
+    const size_t    sel_paths       = this->m_sel.paths.empty();
 
-    while (clipper.Step())
-        for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
-        {
-            char lbl[8]; std::snprintf(lbl, sizeof(lbl), Vertex::ms_DEF_VERTEX_FMT_STRING, row);
-            bool selected = (row == m_inspector_vertex_idx);
-            if (ImGui::Selectable(lbl, selected))
-                m_inspector_vertex_idx = (selected ? -1 : row);      // toggle
-        }
-    clipper.End();
-}
+    //  CASE 0 :    EMPTY SELECTION...
+    if ( sel_paths )            { ImGui::TextDisabled("No selection."); return; }
 
 
-//  "_draw_vertex_inspector_subcolumn"
-//
-void Editor::_draw_vertex_inspector_subcolumn(Path & path)
-{
-    //  CASE 0 :    NO VALID SELECTION...
-    if (m_inspector_vertex_idx < 0 ||
-        m_inspector_vertex_idx >= static_cast<int>(path.verts.size()))
-    {
-        ImGui::TextDisabled("Select a vertex from the lefthand column...");
-        return;
-    }
-
-    //  0.  OBTAIN POINTER TO VERTEX...
-    uint32_t    vid     = path.verts[static_cast<size_t>(m_inspector_vertex_idx)];
-    Vertex *    v       = find_vertex_mut(m_vertices, vid);
-    
-    //  CASE 1 :    STALE VERTEX...
-    if (!v) {
-        ImGui::TextDisabled("[stale vertex]");
-        return;
-    }
-
-
-
-    //  1.  HEADER CONTENT...
-    ImGui::Text( Vertex::ms_DEF_VERTEX_LABEL_FMT_STRING, m_inspector_vertex_idx, vid );
-    ImGui::Separator();
-    //
-    //      1.1.    Constants:
-    const float     grid        = GRID_STEP / m_cam.zoom_mag;
-    const float     speed       = 0.1f * grid;
-    auto            snap        = [grid](float f){ return std::round(f / grid) * grid; };
-    bool            dirty       = false;
-    int             kind_idx    = static_cast<int>(v->kind);
-
-
-
-    //  2.  WIDGETS...
-    //
-    //      2.1.    Position:
-    utl::LeftLabel("Position:");
-    dirty                      |= ImGui::DragFloat2("##Editor_VertexBrowser_Pos", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
-    //
-    if ( dirty && /*!ImGui::IsItemActive() && */ this->want_snap() ) {
-        dirty       = false;
-        ImVec2 s    = snap_to_grid({v->x, v->y});
-        v->x        = s.x;
-        v->y        = s.y;
-    }
-
-
-
-    //      2.2.    Bézier Handles / Control Points
-    ImGui::SeparatorText("Handles");
-    //
-    //              2.2A    ANCHOR TYPE (corner / smooth / symmetric):
-    {
-        utl::LeftLabel("Anchor Type:");
-        dirty               = ImGui::Combo( "##Editor_VertexBrowser_AnchorType", &kind_idx,
-                                            ANCHOR_TYPE_NAMES, IM_ARRAYSIZE(ANCHOR_TYPE_NAMES) );
-        if (dirty) {
-            v->kind     = static_cast<AnchorType>(kind_idx);
-            dirty       = false;
-        }
-    }
-    //
-    //
-    //              2.2B    OUTWARD (to next vertex):
-    //
-    utl::LeftLabel("Outward:");
-    dirty               = ImGui::DragFloat2("##Editor_VertexBrowser_OutwardControl",    &v->out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
-    if ( dirty && !ImGui::IsItemActive() )
-    {
-        v->out_handle.x     = snap(v->out_handle.x);
-        v->out_handle.y     = snap(v->out_handle.y);
-        mirror_handles<VertexID>(*v, /*dragging_out=*/true);  // keep smooth/symmetric rule
-        dirty               = false;
-    }
-    //
-    //
-    //              2.2C    INWARD (from previous vertex):
-    utl::LeftLabel("Inward:");
-    //
-    dirty              = ImGui::DragFloat2("##Editor_VertexBrowser_InwardControl",     &v->in_handle.x,    speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
-    if ( dirty && !ImGui::IsItemActive() ) {
-        v->in_handle.x      = snap(v->in_handle.x);
-        v->in_handle.y      = snap(v->in_handle.y);
-        mirror_handles<VertexID>(*v, /*dragging_out=*/false);
-        dirty               = false;
-    }
-
-
-
-
-
-
-    /* delete ----------------------------------------------------------- */
-    ImGui::Separator();
-    if (ImGui::Button("Delete Vertex", {120,0}))
-    {
-        _erase_vertex_and_fix_paths(vid);
-        m_inspector_vertex_idx = -1;
-        _rebuild_vertex_selection();
-    }
-    
+    if (sel_paths == 1)         { _draw_single_obj_inspector();     }
+    else                        { _draw_multi_obj_inspector();      }
     
     return;
 }
 
 
-
-
-
-
-
-// *************************************************************************** //
+//  "_draw_single_obj_inspector"
+//      Draws the right-hand, INSPECTOR COLUMN for the case: SELECTION CONTAINS ONLY ONE OBJECT.
 //
-//
-//
-//  4.  INSPECTOR COLUMN DISPATCHER FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-/*---------------------------------------------------------------
-    1.  Multi-selection inspector  (>=2 paths)
-----------------------------------------------------------------*/
-void Editor::_draw_multi_path_inspector(void)
-{
-    ImGui::Text("%zu paths selected", m_sel.paths.size());
-    ImGui::Separator();
-
-    if (ImGui::Button("Delete Selections", {150,0}))
-    {
-        std::vector<size_t> idxs(m_sel.paths.begin(), m_sel.paths.end());
-        std::sort(idxs.rbegin(), idxs.rend());
-        for (size_t i : idxs)
-            if (i < m_paths.size())
-                m_paths.erase(m_paths.begin() + static_cast<long>(i));
-
-        this->reset_selection();    // m_sel.clear();
-        m_inspector_vertex_idx = -1;
-    }
-}
-
-
-/*---------------------------------------------------------------
-    2.  Single-path inspector  (exactly one path)
-----------------------------------------------------------------*/
-void Editor::_draw_single_path_inspector(void)
+void Editor::_draw_single_obj_inspector(void)
 {
     constexpr ImGuiColorEditFlags   COLOR_FLAGS     = ImGuiColorEditFlags_NoInputs;
     const ImGuiStyle &              style           = ImGui::GetStyle();
@@ -583,7 +425,7 @@ void Editor::_draw_single_path_inspector(void)
 
 
     //  1.  HEADER-ENTRY AND "DELETE" BUTTON...
-    //  ImGui::Text("%s. %zu  (%zu vertices)", pidx, path.verts.size());
+    //  I   mGui::Text("%s. %zu  (%zu vertices)", pidx, path.verts.size());
     ImGui::Text( "%s, (%zu vertices)", path.label.c_str(), path.verts.size() );
     ImGui::SameLine();
     if (ImGui::Button("Delete Object"))
@@ -688,6 +530,199 @@ void Editor::_draw_single_path_inspector(void)
     
     return;
 }
+
+
+
+
+
+
+//  "_draw_multi_obj_inspector"
+//      Draws the right-hand, INSPECTOR COLUMN for case of: SELECTION CONTAINS MORE THAN ONE OBJECT.
+//
+void Editor::_draw_multi_obj_inspector(void)
+{
+    ImGui::Text("%zu paths selected", m_sel.paths.size());
+    ImGui::Separator();
+
+    if (ImGui::Button("Delete Selections", {150,0}))
+    {
+        std::vector<size_t> idxs(m_sel.paths.begin(), m_sel.paths.end());
+        std::sort(idxs.rbegin(), idxs.rend());
+        for (size_t i : idxs)
+            if (i < m_paths.size())
+                m_paths.erase(m_paths.begin() + static_cast<long>(i));
+
+        this->reset_selection();    // m_sel.clear();
+        m_inspector_vertex_idx = -1;
+    }
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  4.  VERTEX BROWSER FUNCTIONS (NESTED INSIDE THE MAIN PATH BROWSER)...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_draw_vertex_list_subcolumn"
+//
+void Editor::_draw_vertex_list_subcolumn(Path & path)
+{
+    const int total = static_cast<int>(path.verts.size());
+    ImGuiListClipper clipper; clipper.Begin(total, -1);
+
+    while ( clipper.Step() )
+        for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
+        {
+            char lbl[8]; std::snprintf(lbl, sizeof(lbl), Vertex::ms_DEF_VERTEX_FMT_STRING, row);
+            bool selected = (row == m_inspector_vertex_idx);
+            if (ImGui::Selectable(lbl, selected))
+                m_inspector_vertex_idx = (selected ? -1 : row);      // toggle
+        }
+    clipper.End();
+}
+
+
+
+//  "_draw_vertex_inspector_subcolumn"
+//
+void Editor::_draw_vertex_inspector_subcolumn(Path & path)
+{
+    //  CASE 0 :    NO VALID SELECTION...
+    if (m_inspector_vertex_idx < 0 ||
+        m_inspector_vertex_idx >= static_cast<int>(path.verts.size()))
+    {
+        ImGui::TextDisabled("Select a vertex from the left hand column...");
+        return;
+    }
+
+    //  0.  OBTAIN POINTER TO VERTEX...
+    uint32_t    vid     = path.verts[static_cast<size_t>(m_inspector_vertex_idx)];
+    Vertex *    v       = find_vertex_mut(m_vertices, vid);
+    
+    
+    //  CASE 1 :    STALE VERTEX...
+    if ( !v ) {
+        ImGui::TextDisabled("[stale vertex]"); return;
+    }
+
+
+
+    //  1.  HEADER CONTENT...       "Vertex ID"
+    //
+    ImGui::Text( Vertex::ms_DEF_VERTEX_LABEL_FMT_STRING, m_inspector_vertex_idx, vid );
+    
+    ImGui::SameLine();
+    
+    if ( ImGui::Button("Delete Vertex##Editor_Browser_DeleteVertexButton", {120,0}) )
+    {
+        _erase_vertex_and_fix_paths(vid);
+        m_inspector_vertex_idx = -1;
+        _rebuild_vertex_selection();
+    }
+    
+    
+    
+    ImGui::Separator();
+    //
+    //      1.1.    Constants:
+    const float     grid        = GRID_STEP / m_cam.zoom_mag;
+    const float     speed       = 0.1f * grid;
+    auto            snap        = [grid](float f){ return std::round(f / grid) * grid; };
+    bool            dirty       = false;
+    int             kind_idx    = static_cast<int>(v->kind);
+
+
+
+    //  2.  WIDGETS...
+    //
+    //      2.1.    Position:
+    utl::LeftLabel("Position:");
+    dirty                      |= ImGui::DragFloat2("##Editor_VertexBrowser_Pos", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
+    //
+    if ( dirty && /*!ImGui::IsItemActive() && */ this->want_snap() ) {
+        dirty       = false;
+        ImVec2 s    = snap_to_grid({v->x, v->y});
+        v->x        = s.x;
+        v->y        = s.y;
+    }
+
+
+
+    //      2.2.    Bézier Handles / Control Points
+    ImGui::SeparatorText("Handles");
+    //
+    //              2.2A    ANCHOR TYPE (corner / smooth / symmetric):
+    {
+        utl::LeftLabel("Anchor Type:");
+        dirty               = ImGui::Combo( "##Editor_VertexBrowser_AnchorType", &kind_idx,
+                                            ANCHOR_TYPE_NAMES, IM_ARRAYSIZE(ANCHOR_TYPE_NAMES) );
+        if (dirty) {
+            v->kind     = static_cast<AnchorType>(kind_idx);
+            dirty       = false;
+        }
+    }
+    //
+    //
+    //              2.2B    OUTWARD (to next vertex):
+    //
+    utl::LeftLabel("Outward:");
+    dirty               = ImGui::DragFloat2("##Editor_VertexBrowser_OutwardControl",    &v->out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
+    if ( dirty && !ImGui::IsItemActive() )
+    {
+        v->out_handle.x     = snap(v->out_handle.x);
+        v->out_handle.y     = snap(v->out_handle.y);
+        mirror_handles<VertexID>(*v, /*dragging_out=*/true);  // keep smooth/symmetric rule
+        dirty               = false;
+    }
+    //
+    //
+    //              2.2C    INWARD (from previous vertex):
+    utl::LeftLabel("Inward:");
+    //
+    dirty              = ImGui::DragFloat2("##Editor_VertexBrowser_InwardControl",     &v->in_handle.x,    speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
+    if ( dirty && !ImGui::IsItemActive() ) {
+        v->in_handle.x      = snap(v->in_handle.x);
+        v->in_handle.y      = snap(v->in_handle.y);
+        mirror_handles<VertexID>(*v, /*dragging_out=*/false);
+        dirty               = false;
+    }
+
+
+
+
+
+
+    /* delete ----------------------------------------------------------- */
+    ImGui::Separator();
+    if (ImGui::Button("Delete Vertex", {120,0}))
+    {
+        _erase_vertex_and_fix_paths(vid);
+        m_inspector_vertex_idx = -1;
+        _rebuild_vertex_selection();
+    }
+    
+    
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

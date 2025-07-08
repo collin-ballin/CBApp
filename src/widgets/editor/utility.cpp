@@ -293,6 +293,10 @@ void Editor::_draw_controls(void)
     constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
     int                             mode_i          = static_cast<int>(m_mode);
     
+    this->S.PushFont( app::Font_t::Small );
+   
+    
+    
    
    
     //  BEGIN COLUMNS...
@@ -393,6 +397,8 @@ void Editor::_draw_controls(void)
     ImGui::Columns(1);      //  END COLUMNS...
     
     
+    this->S.PopFont();
+   
     return;
 }
 

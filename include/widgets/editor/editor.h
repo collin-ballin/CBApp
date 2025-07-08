@@ -290,13 +290,16 @@ private:
     // *************************************************************************** //
     //      BROWSER STUFF.                  |   "browser.cpp" ...
     // *************************************************************************** //
-    void                                _draw_path_inspector_column         (void);
-    void                                _draw_path_list_column              (void);
-    void                                _draw_vertex_list_subcolumn         (Path & );          // left part
-    void                                _draw_vertex_inspector_subcolumn    (Path & );
+    //                              OBJECT BROWSER:
+    void                                _dispatch_obj_inspector_column          (void);     //  PREVIOUSLY:     _draw_path_inspector_column
     //
-    void                                _draw_multi_path_inspector          (void);
-    void                                _draw_single_path_inspector         (void);
+    void                                _draw_obj_selector_column               (void);     //  PREVIOUSLY:     _draw_path_list_column
+    void                                _draw_single_obj_inspector              (void);     //  PREVIOUSLY:     _draw_single_path_inspector
+    void                                _draw_multi_obj_inspector               (void);     //  PREVIOUSLY:     _draw_multi_path_inspector
+    //
+    //                              VERTEX BROWSER:
+    void                                _draw_vertex_list_subcolumn             (Path & );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
+    void                                _draw_vertex_inspector_subcolumn        (Path & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
     // *************************************************************************** //
     //
     //
@@ -699,7 +702,7 @@ private:
     //
     //
     // *************************************************************************** //
-    //      INLINE FOR TOOLS...
+    //      STANDARDIZED MECHANICS FOR TOOLS...
     // *************************************************************************** //
     //  "reset_pen"
     inline void                         reset_pen                           (void) {
@@ -717,6 +720,41 @@ private:
     
     
     
+    //  "_make_path"
+    //      Always call this to materialise a new Path.
+    //      • Assigns fresh PathID & label
+    //      • Puts it on the top Z-layer (unless caller overrides)
+    //      • Copies style / flags from an optional prototype
+    //
+    inline Path &                       _make_path                          (const std::vector<VertexID> & verts, const Path * proto = nullptr) {
+        Path        p       = proto ? *proto : Path{};      // copy style/flags if given
+        p.id                = m_next_pid++;
+        p.set_default_label(p.id);
+        p.closed            = false;                        // caller may flip later
+        p.z_index           = next_z_index();
+
+        p.verts             = verts;                        // freshly-built vertex list
+        m_paths.push_back(std::move(p));
+        return m_paths.back();                              // reference for caller tweaks
+    }
+    
+    
+    //  "_clone_path"
+    //      Duplicate an existing path with a vid-remap (copy/paste, boolean ops …).
+    //
+    inline Path &                       _clone_path                         (const Path& src, const std::vector<VertexID> & vid_map) {
+        Path dup = src;                // copy style / flags
+        dup.id   = m_next_pid++;
+        dup.set_default_label(dup.id);
+        dup.z_index = next_z_index();
+
+        dup.verts.clear();
+        for (VertexID old : src.verts)
+            dup.verts.push_back(vid_map[old]); // map to duplicated verts
+
+        m_paths.push_back(std::move(dup));
+        return m_paths.back();
+    }
     //
     //
     //
@@ -983,7 +1021,7 @@ private:
 // *************************************************************************** //
 // *************************************************************************** //
 
-inline static constexpr uint32_t    kSaveFormatVersion      = 1;
+inline static constexpr uint32_t    kSaveFormatVersion      = 3;
 
 
 //  "Vertex"

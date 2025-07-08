@@ -205,7 +205,7 @@ inline constexpr const char *       DEF_FONT_PATH                       = get_fo
 // *************************************************************************** //
 inline constexpr float              DEF_FONT_SIZE                       = 13.0f;
 inline constexpr float              DEF_SMALL_FONT_SIZE                 = 11.0f;
-inline constexpr float              DEF_FOOTNOTE_FONT_SIZE              = 8.0f;
+inline constexpr float              DEF_FOOTNOTE_FONT_SIZE              = 9.0f;
 
 
 //  FUNCTIONAL MACRO TO DEFINE APPLICATION FONTS...

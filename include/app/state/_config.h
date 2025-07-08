@@ -73,9 +73,9 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 //  1.0     CREATE THE APPLICATION TITLE...
 //
 #ifdef __CBAPP_BUILD_CCOUNTER_APP__
-    # define __CBAPP_APP_TITLE__ "Single Photon Lab (" __CBAPP_VERSION__ " [" __CBAPP_BUILD__ "] WIP)"
+    # define __CBAPP_APP_TITLE__ "Single Photon Lab " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
 # else
-    # define __CBAPP_APP_TITLE__ "CBApp (" __CBAPP_VERSION__ " [" __CBAPP_BUILD__ "] WIP)"
+    # define __CBAPP_APP_TITLE__ "CBApp " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
 #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
 
 
@@ -86,8 +86,8 @@ inline constexpr const char *               _CBAPP_APP_TITLE                =  _
 //
 //
 //      1.1
-inline constexpr const char *                   _IMGUI_DEMO_UUID                = "Dear ImGui Demo";
-inline constexpr const char *                   _IMPLOT_DEMO_UUID               = "ImPlot Demo";
+inline constexpr const char *                   _IMGUI_DEMO_UUID            = "Dear ImGui Demo";
+inline constexpr const char *                   _IMPLOT_DEMO_UUID           = "ImPlot Demo";
 //
 //
 //      1.3     [ CBAPP_ENABLE_MOVE_AND_RESIZE ]    IF WINDOW MOVEMENT AND RESIZING IS #DEFINED...
@@ -121,7 +121,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DETVIEW_WINDOW_FLAGS         = Im
 inline constexpr ImGuiWindowFlags       _CBAPP_HOME_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
 
-inline constexpr ImGuiWindowFlags       _CBAPP_EDITOR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+inline constexpr ImGuiWindowFlags       _CBAPP_EDITOR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
 inline constexpr ImGuiWindowFlags       _CBAPP_CORE_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
 
 
