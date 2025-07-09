@@ -208,8 +208,7 @@ void Editor::_draw_obj_selector_column(void)
     const ImU32                 col_dim                     = ImGui::GetColorU32(ImGuiCol_TextDisabled);
     const ImU32                 col_frame                   = ImGui::GetColorU32(ImGuiCol_FrameBg);
     ImGuiListClipper            clipper;
-    
-    //S.PushFont(app::AppState::Font_t::Small);
+    S.PushFont(Font::Small);
 
 
     //  1.  SEARCH-QUERY BOX
