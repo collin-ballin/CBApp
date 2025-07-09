@@ -82,30 +82,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-//  1.  STATIC / CONSTEXPR / CONSTANTS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-// Inserted constants after GRID_STEP and HIT_THRESH_SQ
-inline static constexpr float           GRID_STEP                   = 64.0f;
-inline static constexpr float           HIT_THRESH_SQ               = 6.0f * 6.0f;
-
-
-// ---- standardized style -----------------------------------------------
-inline static constexpr ImU32           COL_POINT_DEFAULT           = IM_COL32(0,255,0,255);   // idle green
-inline static constexpr ImU32           COL_POINT_HELD              = IM_COL32(255,100,0,255); // while dragging
-inline static constexpr ImU32           COL_SELECTION_OUT           = IM_COL32(255,215,0,255); // gold outline
-inline static constexpr float           DEFAULT_POINT_RADIUS        = 12.0f;                  // px
-
-inline static constexpr ImU32           COL_LASSO_OUT               = IM_COL32(255,215,0,255); // gold outline
-inline static constexpr ImU32           COL_LASSO_FILL              = IM_COL32(255,215,0,40);  // translucent fill
-//
-//  APPEARANCE FOR SELECTION STUFF...
-inline static constexpr float           HANDLE_BOX_SIZE             = 4.f;
-
-
-
-
 
 
 // *************************************************************************** //

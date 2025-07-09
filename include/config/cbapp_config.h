@@ -64,10 +64,13 @@
 
 //  ENFORCE THAT THERE ARE NOT MULTIPLE BUILDS ARE #DEFINED...
 //
-#if (  defined(__CBAPP_BUILD_CCOUNTER_APP__)    \
-     + defined(__CBAPP_BUILD_FDTD_APP__)        \
-     + defined(__CBAPP_BUILD_EDITOR_APP__)      \
-    ) > 1
+#define         __CBAPP_BUILD_APP_COUNT__                   (   \
+          __CBAPP_BUILD_CCOUNTER_APP__                  \
+        + __CBAPP_BUILD_FDTD_APP__                      \
+        + __CBAPP_BUILD_EDITOR_APP__                    \
+)
+        
+#if __CBAPP_BUILD_APP_COUNT__ > 1
 #   error "Cannot build with more than one __CBAPP_BUILD_APP__ macro defined (look in \"cbapp_config.h\")"
 #endif
 

@@ -156,9 +156,9 @@ void Editor::DrawBrowser(void)
     
     
     //  2.  LEFTHAND BROWSER SELECTION MENU...
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER1);
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    ms_CHILD_ROUND1);
-    ImGui::PushStyleColor(ImGuiCol_ChildBg,             ms_CHILD_FRAME_BG1L);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  m_style.ms_CHILD_BORDER1);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    m_style.ms_CHILD_ROUND1);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg,             m_style.ms_CHILD_FRAME_BG1L);
     //
     //
     //
@@ -172,7 +172,7 @@ void Editor::DrawBrowser(void)
         //
         //
         //  3.  OBJECT BROWSER'S INSPECTOR COLUMN   (MAIN, RIGHT-HAND MENU OF THE ENTIRE BROWSER)...
-        ImGui::PushStyleColor(ImGuiCol_ChildBg,         ms_CHILD_FRAME_BG1R);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg,         m_style.ms_CHILD_FRAME_BG1R);
         ImGui::BeginChild("##Editor_Browser_Right", ImVec2(0, 0), ImGuiChildFlags_Borders);
             _dispatch_obj_inspector_column();
         ImGui::EndChild();
@@ -208,6 +208,8 @@ void Editor::_draw_obj_selector_column(void)
     const ImU32                 col_dim                     = ImGui::GetColorU32(ImGuiCol_TextDisabled);
     const ImU32                 col_frame                   = ImGui::GetColorU32(ImGuiCol_FrameBg);
     ImGuiListClipper            clipper;
+    
+    //S.PushFont(app::AppState::Font_t::Small);
 
 
     //  1.  SEARCH-QUERY BOX
@@ -313,6 +315,8 @@ void Editor::_draw_obj_selector_column(void)
         
     }// END "while-loop"
     
+    
+    S.PopFont();
     clipper.End();
     
     return;
@@ -391,14 +395,14 @@ void Editor::_draw_obj_selector_column(void)
 //
 void Editor::_dispatch_obj_inspector_column(void)
 {
-    const size_t    sel_paths       = this->m_sel.paths.empty();
+    const size_t    sel_paths       = this->m_sel.paths.size();
 
     //  CASE 0 :    EMPTY SELECTION...
-    if ( sel_paths )            { ImGui::TextDisabled("No selection."); return; }
+    if ( sel_paths == 0 )       { ImGui::TextDisabled("No selection."); return; }
 
 
-    if (sel_paths == 1)         { _draw_single_obj_inspector();     }
-    else                        { _draw_multi_obj_inspector();      }
+    if (sel_paths == 1)         { _draw_single_obj_inspector(); }
+    else                        { _draw_multi_obj_inspector(); }
     
     return;
 }
@@ -497,15 +501,15 @@ void Editor::_draw_single_obj_inspector(void)
 
     //  4.  "VERTEX BROWSER" FOR THE OBJECT...
     float availY = ImGui::GetContentRegionAvail().y;
-    float sub_h  = availY * ms_VERTEX_SUBBROWSER_HEIGHT; 
+    float sub_h  = availY * m_style.ms_VERTEX_SUBBROWSER_HEIGHT; 
     float filler = availY - sub_h - style.WindowPadding.y;
     
     if (filler > 0.0f)
         { ImGui::Dummy(ImVec2(0, filler)); }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER2);
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    ms_CHILD_ROUND2);
-    ImGui::PushStyleColor(ImGuiCol_ChildBg,             ms_CHILD_FRAME_BG2L);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  m_style.ms_CHILD_BORDER2);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    m_style.ms_CHILD_ROUND2);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg,             m_style.ms_CHILD_FRAME_BG2L);
     //
     //
     //  //  4.1.    LEFT-HAND VERTEX BROWSER.
@@ -517,7 +521,7 @@ void Editor::_draw_single_obj_inspector(void)
         ImGui::SameLine();
         //
         //  4.2.    RIGHT-HAND VERTEX BROWSER.
-        ImGui::PushStyleColor(ImGuiCol_ChildBg, ms_CHILD_FRAME_BG2R);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, m_style.ms_CHILD_FRAME_BG2R);
         ImGui::BeginChild("##VertexPanel_Right", ImVec2(0, sub_h),
                           ImGuiChildFlags_Borders);
             _draw_vertex_inspector_subcolumn(path);
@@ -632,7 +636,7 @@ void Editor::_draw_vertex_inspector_subcolumn(Path & path)
     ImGui::Separator();
     //
     //      1.1.    Constants:
-    const float     grid        = GRID_STEP / m_cam.zoom_mag;
+    const float     grid        = m_style.GRID_STEP / m_cam.zoom_mag;
     const float     speed       = 0.1f * grid;
     auto            snap        = [grid](float f){ return std::round(f / grid) * grid; };
     bool            dirty       = false;
@@ -661,8 +665,8 @@ void Editor::_draw_vertex_inspector_subcolumn(Path & path)
     //              2.2A    ANCHOR TYPE (corner / smooth / symmetric):
     {
         utl::LeftLabel("Anchor Type:");
-        dirty               = ImGui::Combo( "##Editor_VertexBrowser_AnchorType", &kind_idx,
-                                            ANCHOR_TYPE_NAMES, IM_ARRAYSIZE(ANCHOR_TYPE_NAMES) );
+        dirty = ImGui::Combo("##Editor_VertexBrowser_AnchorType", &kind_idx,
+                             ANCHOR_TYPE_NAMES.data(), static_cast<int>( AnchorType::COUNT ));          // <- int, not enum
         if (dirty) {
             v->kind     = static_cast<AnchorType>(kind_idx);
             dirty       = false;

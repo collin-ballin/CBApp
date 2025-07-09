@@ -348,8 +348,8 @@ void Editor::_handle_line(const Interaction& it)
         uint32_t a = _add_vertex(w);
         uint32_t b = _add_vertex(w);
         // Create visible anchor glyphs so the endpoints behave like legacy points
-        m_points.push_back({ a, { COL_POINT_DEFAULT, DEFAULT_POINT_RADIUS, true } });
-        m_points.push_back({ b, { COL_POINT_DEFAULT, DEFAULT_POINT_RADIUS, true } });
+        m_points.push_back({ a, { m_style.COL_POINT_DEFAULT, m_style.DEFAULT_POINT_RADIUS, true } });
+        m_points.push_back({ b, { m_style.COL_POINT_DEFAULT, m_style.DEFAULT_POINT_RADIUS, true } });
 
         // Legacy Line container (kept for now)
         // m_lines.push_back({ a, b });
@@ -495,7 +495,7 @@ void Editor::_handle_pen(const Interaction& it)
                     v->out_handle = ImVec2(0,0);
             }
         }
-        _draw_pen_cursor(io.MousePos, PEN_COL_NORMAL);   // yellow bullseye
+        _draw_pen_cursor(io.MousePos, m_style.PEN_COL_NORMAL);   // yellow bullseye
         return;
     }
 
@@ -516,7 +516,7 @@ void Editor::_handle_pen(const Interaction& it)
     // Cursor hint colour
     if (it.hovered && !it.space)
         _draw_pen_cursor(io.MousePos,
-                         can_extend ? PEN_COL_EXTEND : PEN_COL_NORMAL);
+                         can_extend ? m_style.PEN_COL_EXTEND : m_style.PEN_COL_NORMAL);
 
     // ───── E. Mouse‑click handling
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && it.hovered)

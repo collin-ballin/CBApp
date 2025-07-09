@@ -166,8 +166,8 @@ void Editor::_render_paths(ImDrawList* dl) const
                     dl->PathLineTo(pa);
                 }
                 else {
-                    for (int step = 0; step <= ms_BEZIER_FILL_STEPS; ++step) {
-                        float  t  = static_cast<float>(step) / ms_BEZIER_FILL_STEPS;
+                    for (int step = 0; step <= m_style.ms_BEZIER_FILL_STEPS; ++step) {
+                        float  t  = static_cast<float>(step) / m_style.ms_BEZIER_FILL_STEPS;
                         ImVec2 wp = cubic_eval<VertexID>(a, b, t);
                         dl->PathLineTo(world_to_pixels(wp));
                     }
@@ -196,7 +196,7 @@ void Editor::_render_paths(ImDrawList* dl) const
                 dl->AddBezierCubic(P0, P1, P2, P3,
                                    p.style.stroke_color,
                                    p.style.stroke_width,
-                                   ms_BEZIER_SEGMENTS);   // 0 ⇒ default tessellation
+                                   m_style.ms_BEZIER_SEGMENTS);   // 0 ⇒ default tessellation
             }
         };
 
@@ -267,7 +267,7 @@ void Editor::_render_paths(ImDrawList* dl) const
                 dl->AddBezierCubic(P0, P1, P2, P3,
                                    p.style.stroke_color,
                                    p.style.stroke_width,
-                                   ms_BEZIER_SEGMENTS);   // 0 ⇒ default tessellation
+                                   m_style.ms_BEZIER_SEGMENTS);   // 0 ⇒ default tessellation
             }
         };
 
@@ -299,7 +299,7 @@ void Editor::_render_points(ImDrawList* dl) const
         if (!v) continue;
 
         ImU32 col = (m_dragging && m_sel.points.count(i))
-                    ? COL_POINT_HELD
+                    ? m_style.COL_POINT_HELD
                     : pt.sty.color;
 
         ImVec2 pix = world_to_pixels({ v->x, v->y });   // NEW transform
@@ -327,7 +327,7 @@ void Editor::_render_points(ImDrawList* dl) const
 //
 void Editor::_render_selection_highlight(ImDrawList * dl) const
 {
-    const ImU32 col = COL_SELECTION_OUT;
+    const ImU32 col = m_style.COL_SELECTION_OUT;
 
     auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
 
@@ -374,7 +374,7 @@ void Editor::_render_selection_highlight(ImDrawList * dl) const
                 ImVec2 P1 = ws2px({ a->x + a->out_handle.x,       a->y + a->out_handle.y });
                 ImVec2 P2 = ws2px({ b->x + b->in_handle.x,        b->y + b->in_handle.y  });
                 ImVec2 P3 = ws2px({ b->x,                         b->y });
-                dl->AddBezierCubic(P0, P1, P2, P3, col, w, ms_BEZIER_SEGMENTS);
+                dl->AddBezierCubic(P0, P1, P2, P3, col, w, m_style.ms_BEZIER_SEGMENTS);
             }
             else
             {
@@ -416,10 +416,10 @@ inline void Editor::_render_selected_handles(ImDrawList* dl) const
         auto draw_handle = [&](const ImVec2& off){
             if (off.x == 0.f && off.y == 0.f) return;
             ImVec2 h = ws2px({ v.x + off.x, v.y + off.y });
-            dl->AddLine(a, h, ms_HANDLE_COLOR, 1.0f);
-            dl->AddRectFilled({ h.x - ms_HANDLE_SIZE, h.y - ms_HANDLE_SIZE },
-                              { h.x + ms_HANDLE_SIZE, h.y + ms_HANDLE_SIZE },
-                              ms_HANDLE_COLOR);
+            dl->AddLine(a, h, m_style.ms_HANDLE_COLOR, 1.0f);
+            dl->AddRectFilled({ h.x - m_style.ms_HANDLE_SIZE, h.y - m_style.ms_HANDLE_SIZE },
+                              { h.x + m_style.ms_HANDLE_SIZE, h.y + m_style.ms_HANDLE_SIZE },
+                              m_style.ms_HANDLE_COLOR);
         };
 
         draw_handle(v.out_handle);
@@ -444,8 +444,8 @@ inline void Editor::_render_selection_bbox(ImDrawList* dl) const
     ImVec2 p0 = ws2px(tl);
     ImVec2 p1 = ws2px(br);
 
-    dl->AddRect(p0, p1, SELECTION_BBOX_COL, 0.0f,
-                ImDrawFlags_None, SELECTION_BBOX_TH);
+    dl->AddRect(p0, p1, m_style.SELECTION_BBOX_COL, 0.0f,
+                ImDrawFlags_None, m_style.SELECTION_BBOX_TH);
 
     // handle positions
     ImVec2 hw{ (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
@@ -464,14 +464,14 @@ inline void Editor::_render_selection_bbox(ImDrawList* dl) const
     for (int i = 0; i < 8; ++i)
     {
         ImVec2 s = ws2px(ws[i]);
-        ImVec2 min{ s.x - HANDLE_BOX_SIZE, s.y - HANDLE_BOX_SIZE };
-        ImVec2 max{ s.x + HANDLE_BOX_SIZE, s.y + HANDLE_BOX_SIZE };
+        ImVec2 min{ s.x - m_style.HANDLE_BOX_SIZE, s.y - m_style.HANDLE_BOX_SIZE };
+        ImVec2 max{ s.x + m_style.HANDLE_BOX_SIZE, s.y + m_style.HANDLE_BOX_SIZE };
 
         bool hovered = ImGui::IsMouseHoveringRect(min, max);
         if (hovered) m_hover_handle = i;
 
-        dl->AddRectFilled(min, max, hovered ? ms_HANDLE_HOVER_COLOR
-                                            : ms_HANDLE_COLOR);
+        dl->AddRectFilled(min, max, hovered ? m_style.ms_HANDLE_HOVER_COLOR
+                                            : m_style.ms_HANDLE_COLOR);
     }
 }
 

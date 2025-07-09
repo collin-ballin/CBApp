@@ -25,55 +25,59 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 
 //  "_hit_point"
 //
-int Editor::_hit_point([[maybe_unused]] const Interaction& it) const
+int Editor::_hit_point([[maybe_unused]] const Interaction & it) const
 {
-{
-    const ImVec2 ms = ImGui::GetIO().MousePos;          // mouse in px
-
-    for (size_t i = 0; i < m_points.size(); ++i)
     {
-        const Vertex* v = find_vertex(m_vertices, m_points[i].v);
-        if (!v) continue;
+        const ImVec2    ms  = ImGui::GetIO().MousePos;          // mouse in px
 
-        ImVec2 scr = world_to_pixels({ v->x, v->y });   // NEW
-        float dx = scr.x - ms.x;
-        float dy = scr.y - ms.y;
-        if (dx*dx + dy*dy <= HIT_THRESH_SQ)
-            return static_cast<int>(i);
+        for (size_t i = 0; i < m_points.size(); ++i)
+        {
+            const Vertex *      v       = find_vertex(m_vertices, m_points[i].v);
+            if (!v) continue;
+
+            ImVec2              scr     = world_to_pixels({ v->x, v->y });   // NEW
+            float               dx      = scr.x - ms.x;
+            float               dy      = scr.y - ms.y;
+            if ( dx*dx + dy*dy <= m_style.HIT_THRESH_SQ )
+                return static_cast<int>(i);
+        }
+        return -1;
     }
-    return -1;
-}
 }
 
 
 //  "_hit_any"
 //
-std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
+std::optional<Editor::Hit> Editor::_hit_any(const Interaction & it) const
 {
     // ─── utilities ───────────────────────────────────────────────────────
-    const ImVec2 ms = ImGui::GetIO().MousePos;          // mouse in pixels
-    auto ws2px      = [&](const ImVec2& w){ return world_to_pixels(w); };
+    constexpr float         PAD             = 4.0f;
+    const float             HALF            = m_style.HANDLE_BOX_SIZE * 0.5f + PAD;
+    const ImVec2            ms              = ImGui::GetIO().MousePos;          // mouse in pixels
+    auto                    ws2px           = [&](const ImVec2& w){ return world_to_pixels(w); };
 
-    // Helper: map vertex-id → parent Path*, or nullptr if none
-    auto parent_path_of_vertex = [&](uint32_t vid) -> const Path*
+
+
+    //  "parent_path_of_vertex"
+    //      Helper: map vertex-id → parent Path*, or nullptr if none.
+    auto            parent_path_of_vertex   = [&](VertexID vid) -> const Path*
     {
-        for (const Path& p : m_paths)
-            for (uint32_t v : p.verts)
-                if (v == vid) return &p;
+        for (const Path & p : m_paths) {
+            for (VertexID v : p.verts) {
+                if (v == vid) { return &p; }
+            }
+        }
         return nullptr;
     };
 
+    //  "overlap"
+    auto            overlap     = [&](ImVec2 scr)
+    { return fabsf(ms.x - scr.x) <= HALF && fabsf(ms.y - scr.y) <= HALF; };
+
+
+
     // ───────────────────────────────────────────── 1. Bézier handles
-    constexpr float PAD  = 4.0f;
-    const float     half = HANDLE_BOX_SIZE * 0.5f + PAD;
-
-    auto overlap = [&](ImVec2 scr)
-    {
-        return fabsf(ms.x - scr.x) <= half &&
-               fabsf(ms.y - scr.y) <= half;
-    };
-
-    for (const Vertex& v : m_vertices)
+    for (const Vertex & v : m_vertices)
     {
         if (!m_sel.vertices.count(v.id)) continue;  // handles only for selected verts
         const Path* pp = parent_path_of_vertex(v.id);
@@ -123,7 +127,7 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
 
         ImVec2 C{ A.x + AB.x*t, A.y + AB.y*t };
         float  dx = ms.x - C.x, dy = ms.y - C.y;
-        if (dx*dx + dy*dy <= HIT_THRESH_SQ)
+        if (dx*dx + dy*dy <= m_style.HIT_THRESH_SQ)
             return Hit{ Hit::Type::Line, i };
     }
 
@@ -139,56 +143,57 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
 
     for (auto rit = vec.rbegin(); rit != vec.rend(); ++rit)
     {
-        const Path& p      = **rit;
-        const size_t N     = p.verts.size();
-        const size_t index = &p - m_paths.data();          // back to array idx
-        if (N < 2) continue;
+        const Path &        p           = **rit;
+        const size_t        N           = p.verts.size();
+        const size_t        index       = &p - m_paths.data();          // back to array idx
+        if (N < 2)          { continue; }
 
         // edge hit-test  (body identical to previous version)
-        for (size_t si = 0; si < N - 1 + (p.closed ? 1u : 0u); ++si)
+        for ( size_t si = 0; si < N - 1 + (p.closed ? 1u : 0u); ++si )
         {
-            const Vertex* a = find_vertex(m_vertices, p.verts[si]);
-            const Vertex* b = find_vertex(m_vertices, p.verts[(si + 1) % N]);
-            if (!a || !b) continue;
+            const Vertex *      a       = find_vertex(m_vertices, p.verts[si]);
+            const Vertex *      b       = find_vertex(m_vertices, p.verts[(si + 1) % N]);
+            if ( !a || !b )     { continue; }
 
-            if (!is_curved<VertexID>(a, b))
+
+            if ( !is_curved<VertexID>(a, b) )
             {
-                ImVec2 A = ws2px({ a->x, a->y });
-                ImVec2 B = ws2px({ b->x, b->y });
-                ImVec2 AB{ B.x - A.x, B.y - A.y };
-                ImVec2 AP{ ms.x - A.x, ms.y - A.y };
-                float len_sq = AB.x*AB.x + AB.y*AB.y;
-                float t = (len_sq > 0.f) ? (AP.x*AB.x + AP.y*AB.y) / len_sq : 0.f;
-                t = std::clamp(t, 0.f, 1.f);
+                ImVec2      A           = ws2px({ a->x, a->y });
+                ImVec2      B           = ws2px({ b->x, b->y });
+                ImVec2      AB          { B.x - A.x, B.y - A.y };
+                ImVec2      AP          { ms.x - A.x, ms.y - A.y };
+                float       len_sq      = AB.x*AB.x + AB.y*AB.y;
+                float       t           = (len_sq > 0.f) ? (AP.x*AB.x + AP.y*AB.y) / len_sq : 0.f;
+                t                       = std::clamp(t, 0.f, 1.f);
 
-                ImVec2 C{ A.x + AB.x*t, A.y + AB.y*t };
-                float  dx = ms.x - C.x, dy = ms.y - C.y;
-                if (dx*dx + dy*dy <= HIT_THRESH_SQ)
-                    return Hit{ Hit::Type::Path, index };
+                ImVec2      C           { A.x + AB.x*t, A.y + AB.y*t };
+                float       dx          = ms.x - C.x, dy = ms.y - C.y;
+                if ( dx*dx + dy*dy <= m_style.HIT_THRESH_SQ )
+                    { return Hit{ Hit::Type::Path, index }; }
             }
             else
             {
-                ImVec2 prev_ws{ a->x, a->y };
-                ImVec2 prev_px = ws2px(prev_ws);
+                ImVec2      prev_ws     { a->x, a->y };
+                ImVec2      prev_px     = ws2px(prev_ws);
 
-                for (int k = 1; k <= ms_BEZIER_HIT_STEPS; ++k)
+                for (int k = 1; k <= m_style.ms_BEZIER_HIT_STEPS; ++k)
                 {
-                    float  t  = static_cast<float>(k) / ms_BEZIER_HIT_STEPS;
-                    ImVec2  cur_ws = cubic_eval<VertexID>(a, b, t);
-                    ImVec2  cur_px = ws2px(cur_ws);
+                    float       t           = static_cast<float>(k) / m_style.ms_BEZIER_HIT_STEPS;
+                    ImVec2      cur_ws      = cubic_eval<VertexID>(a, b, t);
+                    ImVec2      cur_px      = ws2px(cur_ws);
 
-                    ImVec2 seg{ cur_px.x - prev_px.x, cur_px.y - prev_px.y };
-                    ImVec2 to_pt{ ms.x - prev_px.x,  ms.y - prev_px.y };
-                    float  len_sq = seg.x*seg.x + seg.y*seg.y;
-                    float  u = (len_sq > 0.f) ? (to_pt.x*seg.x + to_pt.y*seg.y) / len_sq : 0.f;
-                    u = std::clamp(u, 0.f, 1.f);
+                    ImVec2      seg         { cur_px.x - prev_px.x, cur_px.y - prev_px.y };
+                    ImVec2      to_pt       { ms.x - prev_px.x,  ms.y - prev_px.y };
+                    float       len_sq      = seg.x*seg.x + seg.y*seg.y;
+                    float       u           = (len_sq > 0.f) ? (to_pt.x*seg.x + to_pt.y*seg.y) / len_sq : 0.f;
+                    u                       = std::clamp(u, 0.f, 1.f);
+                    ImVec2      C           { prev_px.x + seg.x*u, prev_px.y + seg.y*u };
+                    float       dx          = ms.x - C.x, dy = ms.y - C.y;
+                    
+                    if ( dx*dx + dy*dy <= m_style.HIT_THRESH_SQ )
+                        { return Hit{ Hit::Type::Path, index }; }
 
-                    ImVec2 C{ prev_px.x + seg.x*u, prev_px.y + seg.y*u };
-                    float  dx = ms.x - C.x, dy = ms.y - C.y;
-                    if (dx*dx + dy*dy <= HIT_THRESH_SQ)
-                        return Hit{ Hit::Type::Path, index };
-
-                    prev_px = cur_px;
+                    prev_px                 = cur_px;
                 }
             }
         }
@@ -196,7 +201,7 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
         // interior point-in-polygon (same as before)
         if (p.closed)
         {
-            std::vector<ImVec2> poly;
+            std::vector<ImVec2>     poly;
             poly.reserve(N * 4);
 
             for (size_t vi = 0; vi < N; ++vi)
@@ -208,8 +213,8 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction& it) const
                 if (!is_curved<VertexID>(a, b))
                     poly.push_back(ws2px({ a->x, a->y }));
                 else
-                    for (int k = 0; k <= ms_BEZIER_HIT_STEPS; ++k) {
-                        float  t   = static_cast<float>(k) / ms_BEZIER_HIT_STEPS;
+                    for (int k = 0; k <= m_style.ms_BEZIER_HIT_STEPS; ++k) {
+                        float  t   = static_cast<float>(k) / m_style.ms_BEZIER_HIT_STEPS;
                         ImVec2 wpt = cubic_eval<VertexID>(a, b, t);
                         poly.push_back(ws2px(wpt));
                     }
@@ -290,9 +295,9 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
             else
             {
                 // ---- cubic Bézier: sample STEPS sub‑segments ----
-                const int STEPS = ms_BEZIER_HIT_STEPS;
-                ImVec2 prev_px = ws2px({ a->x, a->y });
-                ImVec2 prev_ws{ a->x, a->y };
+                const int   STEPS       = m_style.ms_BEZIER_HIT_STEPS;
+                ImVec2      prev_px     = ws2px({ a->x, a->y });
+                ImVec2      prev_ws     { a->x, a->y };
 
                 for (int k = 1; k <= STEPS; ++k)
                 {
@@ -778,12 +783,12 @@ void Editor::_start_lasso_tool(void)
 //      and add all intersecting objects to the selection set.
 void Editor::_update_lasso(const Interaction & it)
 {
-    ImGuiIO& io = ImGui::GetIO();
-    m_lasso_end = io.MousePos;
+    ImGuiIO &   io      = ImGui::GetIO();
+    m_lasso_end         = io.MousePos;
 
     // Visual feedback rectangle
-    it.dl->AddRectFilled(m_lasso_start, m_lasso_end, COL_LASSO_FILL);
-    it.dl->AddRect      (m_lasso_start, m_lasso_end, COL_LASSO_OUT);
+    it.dl->AddRectFilled(m_lasso_start, m_lasso_end, m_style.COL_LASSO_FILL);
+    it.dl->AddRect      (m_lasso_start, m_lasso_end, m_style.COL_LASSO_OUT);
 
     // Finalise on mouse-up
     if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))

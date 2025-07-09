@@ -74,7 +74,7 @@ void Editor::_add_point_glyph(VertexID vid)
 
 //  "_add_vertex"
 //
-uint32_t Editor::_add_vertex(ImVec2 w) {
+Editor::VertexID Editor::_add_vertex(ImVec2 w) {
     w = snap_to_grid(w);                       // <- snap if enabled
     m_vertices.push_back({ m_next_id++, w.x, w.y });
     return m_vertices.back().id;
@@ -85,8 +85,8 @@ uint32_t Editor::_add_vertex(ImVec2 w) {
 //
 void Editor::_add_point(ImVec2 w)
 {
-    uint32_t vid = _add_vertex(w);
-    m_points.push_back({ vid, { COL_POINT_DEFAULT, DEFAULT_POINT_RADIUS, true } });
+    VertexID vid = _add_vertex(w);
+    m_points.push_back({ vid, { m_style.COL_POINT_DEFAULT, m_style.DEFAULT_POINT_RADIUS, true } });
 }
 
 
@@ -293,7 +293,7 @@ void Editor::_draw_controls(void)
     constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
     int                             mode_i          = static_cast<int>(m_mode);
     
-    this->S.PushFont( app::Font_t::Small );
+    this->S.PushFont( Font::Small );
    
     
     

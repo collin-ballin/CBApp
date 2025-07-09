@@ -108,8 +108,22 @@ struct EditorStyle
 // *************************************************************************** //
 //                      INTERACTION / RESPONSIVENESS CONSTANTS...
 // *************************************************************************** //
+    float               GRID_STEP                       = 64.0f;
+    float               HIT_THRESH_SQ                   = 6.0f * 6.0f;
+//
     int                 PEN_DRAG_TIME_THRESHOLD         = 0.05;                             //  PEN_DRAG_TIME_THRESHOLD         // seconds.
     float               PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;                             //  PEN_DRAG_MOVEMENT_THRESHOLD     // px  (was 2)
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      STANDARDIZED STYLE...
+// *************************************************************************** //
+    ImU32               COL_POINT_DEFAULT               = IM_COL32(0,255,0,255);        // idle green
+    ImU32               COL_POINT_HELD                  = IM_COL32(255,100,0,255);      // while dragging
+    ImU32               COL_SELECTION_OUT               = IM_COL32(255,215,0,255);      // gold outline
+    float               DEFAULT_POINT_RADIUS            = 12.0f;                        // px
 // *************************************************************************** //
 //
 //
@@ -119,8 +133,9 @@ struct EditorStyle
 // *************************************************************************** //
 //                  HANDLES:
     ImU32               ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);       //  ms_HANDLE_COLOR             //  gold
-    float               ms_HANDLE_SIZE                  = 3.0f;                             //  ms_HANDLE_SIZE              //  px half-side
     ImU32               ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);       //  ms_HANDLE_HOVER_COLOR       //  yellow
+    float               ms_HANDLE_SIZE                  = 3.0f;      
+    float               HANDLE_BOX_SIZE                 = 4.f;                              //  ms_HANDLE_SIZE              //  px half-side
 // *************************************************************************** //
 //
 //
@@ -128,11 +143,19 @@ struct EditorStyle
 // *************************************************************************** //
 //                      TOOL CONSTANTS...
 // *************************************************************************** //
+//
+//                  STANDARDIZED STYLE:
+//
 //                  PEN-TOOL ANCHORS:
 //                      //  ...
 //
 //                  LASSO TOOL:
-//                      //  ...
+    ImU32               COL_LASSO_OUT                   = IM_COL32(255,215,0,255); // gold outline
+    ImU32               COL_LASSO_FILL                  = IM_COL32(255,215,0,40);  // translucent fill
+//
+//                  BOUNDING BOX:
+    ImU32               SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 255);   //  cyan-blue
+    float               SELECTION_BBOX_TH               = 1.5f;
 // *************************************************************************** //
 //
 //
@@ -141,9 +164,13 @@ struct EditorStyle
 //                      CURSOR CONSTANTS...
 // *************************************************************************** //
 //                  PEN-TOOL CURSOR STUFF:
-    float               PEN_RING_RADIUS                 = 6.0f;                             //  PEN_RING_RADIUS     // px
-    float               PEN_RING_THICK                  = 1.5f;                             //  PEN_RING_THICK      // px
+    float               PEN_RING_RADIUS                 = 6.0f;                             //  PEN_RING_RADIUS     [px]
+    float               PEN_RING_THICK                  = 1.5f;                             //  PEN_RING_THICK      [px]
+    int                 PEN_RING_SEGMENTS               = 32;                               //  NUMBER OF SEGMENTS TO DRAW OUTER RING.
     float               PEN_DOT_RADIUS                  = 2.0f;                             //  PEN_DOT_RADIUS      // px
+    int                 PEN_DOT_SEGMENTS                = 16;                               //  NUMBER OF SEGMENTS TO DRAW INNER DOT.
+    //
+    //
     ImU32               PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);          //  PEN_COL_NORMAL      // yellow
     ImU32               PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);          //  PEN_COL_EXTEND      // green
 // *************************************************************************** //
@@ -207,7 +234,38 @@ struct EditorStyle
 };
 
 
-
+//  "ZOrderCFG_t"
+//
+template<typename ZID>
+struct ZOrderCFG_t {
+    ZID         Z_EDITOR_BACK               = 1;                        //  Grid / background
+    ZID         Z_FLOOR_USER                = 255;                      //  First user layer
+    ZID         Z_EDITOR_FRONT              = UINT32_MAX - 2;           //  Overlays, guides
+    ZID         Z_CEIL_USER                 = Z_EDITOR_FRONT - 1;       //  Max allowed for user items
+    ZID         RENORM_THRESHOLD            = 10'000;                   //  Span triggering re-pack
+};
+//
+//  "to_json"
+template <typename ZID>
+inline void to_json(nlohmann::json & j, const ZOrderCFG_t<ZID> & obj) {
+    j = {
+        { "Z_EDITOR_BACK",          obj.Z_EDITOR_BACK       },
+        { "Z_FLOOR_USER",           obj.Z_FLOOR_USER        },
+        { "Z_EDITOR_FRONT",         obj.Z_EDITOR_FRONT      },
+        { "Z_CEIL_USER",            obj.Z_CEIL_USER         },
+        { "RENORM_THRESHOLD",       obj.RENORM_THRESHOLD    }
+    };
+}
+//
+//  "from_json"
+template <typename ZID>
+inline void from_json(nlohmann::json & j, ZOrderCFG_t<ZID> & obj) {
+    j.at("Z_EDITOR_BACK")           .get_to(obj.Z_EDITOR_BACK);
+    j.at("Z_FLOOR_USER")            .get_to(obj.Z_FLOOR_USER);
+    j.at("Z_EDITOR_FRONT")          .get_to(obj.Z_EDITOR_FRONT);
+    j.at("Z_CEIL_USER")             .get_to(obj.Z_CEIL_USER);
+    j.at("RENORM_THRESHOLD")        .get_to(obj.RENORM_THRESHOLD);
+}
 
 
 
@@ -224,14 +282,24 @@ struct EditorStyle
 
 //  "AnchorType"
 //
-enum class AnchorType : uint8_t { Corner, Smooth, Symmetric };
-static constexpr const char *   ANCHOR_TYPE_NAMES[] = { "Corner", "Smooth", "Symmetric" };
-//
-static constexpr ImU32          ANCHOR_COLORS[]     = {
-    IM_COL32(255,255,0,255),   // corner  – yellow
-    IM_COL32(  0,255,0,255),   // smooth  – green
-    IM_COL32(  0,200,255,255)  // symmetric – cyan
+enum class AnchorType : uint8_t     {
+    Corner, Smooth, Symmetric,
+    COUNT
 };
+//
+static constexpr std::array<const char *, static_cast<size_t>(AnchorType::COUNT)>
+ANCHOR_TYPE_NAMES                   = {
+    "Corner",
+    "Smooth",
+    "Symmetric"
+};
+//
+static constexpr std::array< ImColor, static_cast<size_t>(AnchorType::COUNT) >
+ANCHOR_COLORS                       = { {
+    /*  Corner          */      ImColor(255,       255,        0,      255     ),      //   yellow
+    /*  Smooth          */      ImColor(  0,       255,        0,      255     ),      //   green
+    /*  Symmetric       */      ImColor(  0,       200,        255,    255     )       //   cyan
+} };
 
 
 
@@ -266,7 +334,7 @@ constexpr std::array<const char*, static_cast<size_t>(Mode::Count)>
 //      Global capability flags (extensible)
 //      Camera / editor feature toggles, ImGui-style
 //
-enum CBCapabilityFlags_ : uint8_t {
+enum CBCapabilityFlags_ : uint16_t {
     CBCapabilityFlags_None              = 0,            // no special behaviour
 //
     CBCapabilityFlags_Pan               = 1 << 0,       // Space + drag navigation
@@ -281,10 +349,9 @@ enum CBCapabilityFlags_ : uint8_t {
 //
 //
 //
-using   CBCapabilityFlags     = CBCapabilityFlags_;
 //
 //  Per‑mode capability mask
-static constexpr std::array<uint8_t, static_cast<size_t>(Mode::Count)>
+static constexpr std::array<uint16_t, static_cast<size_t>(Mode::Count)>
 MODE_CAPS               = {
 /*  Default         */      CBCapabilityFlags_Navigation | CBCapabilityFlags_Select | CBCapabilityFlags_CursorHint,
 /*  Line            */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,

@@ -26,8 +26,9 @@
 //  0.1.        ** MY **  HEADERS...
 #include CBAPP_USER_CONFIG
 #include "cblib.h"
-#include "app/_init.h"
-#include "app/state/_state.h"
+//  #include "app/_init.h"
+#include "app/state/_init.h"
+#include "app/state/state.h"
 
 #include "utility/utility.h"
 #include "widgets/editor/_constants.h"
@@ -143,8 +144,10 @@ namespace app { class AppState; }
 class Editor {
 public:
         friend class                    App;
+        using                           Font                            = app::Font_t;
         using                           Logger                          = utl::Logger;
         using                           LogLevel                        = utl::LogLevel;
+        using                           CBCapabilityFlags               = CBCapabilityFlags_;
     //
     //                      ID / INDEX TYPES:
         template<typename T, typename Tag>
@@ -445,7 +448,7 @@ private:
     //
     //                              DATA MODIFIER UTILITIES:
     void                                _add_point_glyph                    (VertexID vid);
-    uint32_t                            _add_vertex                         (ImVec2 w);
+    VertexID                            _add_vertex                         (ImVec2 w);
     void                                _add_point                          (ImVec2 w);
     void                                _erase_vertex_and_fix_paths         (VertexID vid);
     void                                _erase_path_and_orphans             (VertexID vid);
@@ -941,9 +944,9 @@ private:
     //
     //                              USER INTERFACE CONSTANTS:
     //                                  Handles.
-    static constexpr ImU32              ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);   //  gold
-    static constexpr float              ms_HANDLE_SIZE                  = 3.0f;                         //  px half-side
-    static constexpr ImU32              ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);   //  yellow
+        //  static constexpr ImU32              ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);   //  gold
+        //  static constexpr float              ms_HANDLE_SIZE                  = 3.0f;                         //  px half-side
+        //  static constexpr ImU32              ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);   //  yellow
     //
     //                                  Pen-Tool Anchors.
     static constexpr ImU32              PEN_ANCHOR_COLOR                = IM_COL32(255, 200, 0, 255);
@@ -959,36 +962,36 @@ private:
     //
     //                              CURSOR CONSTANTS:
     //                                  Pen-Tool Cursor Stuff.
-    static constexpr float              PEN_RING_RADIUS                 = 6.0f;                         // px
-    static constexpr float              PEN_RING_THICK                  = 1.5f;                         // px
-    static constexpr float              PEN_DOT_RADIUS                  = 2.0f;                         // px
-    static constexpr ImU32              PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);      // yellow
-    static constexpr ImU32              PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);      // green
+        //  static constexpr float              PEN_RING_RADIUS                 = 6.0f;                         // px
+        //  static constexpr float              PEN_RING_THICK                  = 1.5f;                         // px
+        //  static constexpr float              PEN_DOT_RADIUS                  = 2.0f;                         // px
+        //  static constexpr ImU32              PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);      // yellow
+        //  static constexpr ImU32              PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);      // green
     //
     //
     //
     //                      UTILITY:
     // *************************************************************************** //
     //                              RENDERING CONSTANTS:
-    static constexpr int                ms_BEZIER_SEGMENTS              = 0;
-    static constexpr int                ms_BEZIER_HIT_STEPS             = 20;
-    static constexpr int                ms_BEZIER_FILL_STEPS            = 24;
+        //  static constexpr int                ms_BEZIER_SEGMENTS              = 0;
+        //  static constexpr int                ms_BEZIER_HIT_STEPS             = 20;
+        //  static constexpr int                ms_BEZIER_FILL_STEPS            = 24;
     //
     //                              APPEARANCE / WIDGETS / UI CONSTANTS:
-    static constexpr float              ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;
-    static constexpr ImVec4             ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//  BASE = #343944
-    static constexpr ImVec4             ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//  #17191E
-    static constexpr ImVec4             ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//  #21242B
+        //  static constexpr float              ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;
+        //  static constexpr ImVec4             ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//  BASE = #343944
+        //  static constexpr ImVec4             ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//  #17191E
+        //  static constexpr ImVec4             ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//  #21242B
     
-    static constexpr ImVec4             ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//  BASE = #52596B
-    static constexpr ImVec4             ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//  ##353A46
-    static constexpr ImVec4             ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//  #5B6377
+        //  static constexpr ImVec4             ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//  BASE = #52596B
+        //  static constexpr ImVec4             ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//  ##353A46
+        //  static constexpr ImVec4             ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//  #5B6377
     //
     //                                  Browser Child-Window Sizes.
-    static constexpr float              ms_CHILD_BORDER1                = 2.0f;
-    static constexpr float              ms_CHILD_BORDER2                = 1.0f;
-    static constexpr float              ms_CHILD_ROUND1                 = 8.0f;
-    static constexpr float              ms_CHILD_ROUND2                 = 4.0f;
+        //  static constexpr float              ms_CHILD_BORDER1                = 2.0f;
+        //  static constexpr float              ms_CHILD_BORDER2                = 1.0f;
+        //  static constexpr float              ms_CHILD_ROUND1                 = 8.0f;
+        //  static constexpr float              ms_CHILD_ROUND2                 = 4.0f;
     //
     //
     //

@@ -199,7 +199,7 @@ void Editor::_pen_append_or_close_live_path(const Interaction& it)
             ImVec2  first_px = world_to_pixels({ first->x, first->y });
             float   dx = first_px.x - ms.x, dy = first_px.y - ms.y;
             
-            if ( dx*dx + dy*dy <= HIT_THRESH_SQ ) {
+            if ( dx*dx + dy*dy <= m_style.HIT_THRESH_SQ ) {
                 p.closed = true;
                 
                 this->reset_pen();
@@ -290,13 +290,13 @@ void Editor::_join_selected_open_path(void)
 
 //  "_draw_pen_cursor"
 //
-void Editor::_draw_pen_cursor(const ImVec2& p, ImU32 col)
+void Editor::_draw_pen_cursor(const ImVec2 & p, ImU32 col)
 {
     ImGui::SetMouseCursor(ImGuiMouseCursor_None);
     ImDrawList* dl = ImGui::GetForegroundDrawList();
 
-    dl->AddCircle      (p, PEN_RING_RADIUS, col, 32, PEN_RING_THICK);
-    dl->AddCircleFilled(p, PEN_DOT_RADIUS,  col, 16);
+    dl->AddCircle      (p, m_style.PEN_RING_RADIUS, col, m_style.PEN_RING_SEGMENTS, m_style.PEN_RING_THICK);
+    dl->AddCircleFilled(p, m_style.PEN_DOT_RADIUS,  col, m_style.PEN_DOT_SEGMENTS);
 }
 
 

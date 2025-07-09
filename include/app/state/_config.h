@@ -28,7 +28,7 @@
 #include "cblib.h"
 #include "utility/utility.h"
 #include "widgets/widgets.h"
-#include "app/_init.h"
+//  #include "app/_init.h"
 
 
 
@@ -72,8 +72,19 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 
 //  1.0     CREATE THE APPLICATION TITLE...
 //
-#ifdef __CBAPP_BUILD_CCOUNTER_APP__
+//          1.0A    COINCIDENCE COUNTER APP:
+#if defined(__CBAPP_BUILD_CCOUNTER_APP__)
     # define __CBAPP_APP_TITLE__ "Single Photon Lab " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
+//
+//          1.0B    FDTD APP:
+# elif defined(__CBAPP_BUILD_FDTD_APP__)
+    # define __CBAPP_APP_TITLE__ "CBApp FDTD " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
+//
+//          1.0C    EDITOR APP:
+# elif defined(__CBAPP_BUILD_EDITOR_APP__)
+    # define __CBAPP_APP_TITLE__ "CBApp Editor " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
+//
+//          1.0Z    DEFAULT APPLICATION NAME:
 # else
     # define __CBAPP_APP_TITLE__ "CBApp " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
 #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
@@ -81,8 +92,7 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 
 
 //      1.0
-inline constexpr const char *               _CBAPP_APP_TITLE                =  __CBAPP_APP_TITLE__;
-//inline constexpr const char *               _CBAPP_APP_TITLE                =  "CBApp (V0.4.0 WIP)";    //std::string( _CBAPP_APP_TITLE_IMPL );
+inline constexpr const char *                   _CBAPP_APP_TITLE            =  __CBAPP_APP_TITLE__;
 //
 //
 //      1.1

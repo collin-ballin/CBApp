@@ -30,7 +30,7 @@
 #include CBAPP_USER_CONFIG
 #include "cblib.h"
 //#include "widgets/widgets.h"
-#include "app/_init.h"
+//  #include "app/_init.h"
 
 
 #ifdef _WIN32

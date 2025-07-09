@@ -38,6 +38,34 @@ function(print_list list_var)
 endfunction()
 
 
+#   "print_file_list"
+#
+function(print_file_list list_var)
+    # ---------- choose root ----------
+    set(_root "${CMAKE_SOURCE_DIR}")        # default
+    cmake_parse_arguments(ARG "" "" "BASE_DIR" ${ARGN})
+    if(ARG_BASE_DIR)
+        set(_root "${ARG_BASE_DIR}")
+    endif()
+
+    # ---------- sanity ----------
+    if(NOT ${list_var})
+        message(WARNING "[print_file_list] '${list_var}' is empty")
+        return()
+    endif()
+
+    message(STATUS "---- ${list_var} (relative to ${_root}) ----")
+    set(_idx 0)
+
+    foreach(_abs IN LISTS ${list_var})
+        # file(RELATIVE_PATH) trims the prefix if _abs is under _root
+        file(RELATIVE_PATH _rel "${_root}" "${_abs}")
+        message(STATUS "  #${_idx}\t${_rel}")
+        math(EXPR _idx "${_idx}+1")
+    endforeach()
+endfunction()
+
+
 
 # ---------------------------------------------------------------------------
 #  CB_Log(<LEVEL> <FORMAT_STRING> [fmt-args...])
