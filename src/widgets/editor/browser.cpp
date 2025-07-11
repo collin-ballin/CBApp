@@ -100,23 +100,28 @@ Editor::Editor(app::AppState & src)
 //
 void Editor::_dispatch_resident_draw_fn(Resident idx)
 {
-    ResidentEntry& entry = m_residents[idx];
+    ResidentEntry &     entry   = m_residents[idx];
 
-    // attach the correct draw callback BEFORE registering the overlay
-    switch (idx) {
-        case Resident::Shape:
-            entry.cfg.draw_fn = [this]{ _draw_shape_resident(); };
-            break;
-        case Resident::Selection:
-            entry.cfg.draw_fn = [this]{ _draw_selection_resident(); };
-            break;
-        default:
-            IM_ASSERT(false && "Unknown resident index");
+    //  Attatch the correct callback function for each RESIDENTIAL OVERLAY WINDOW...
+    switch (idx)
+    {
+        case Resident::Debugger :                   //  1.  DEBUGGER-TOOL OVERLAY.
+        { entry.cfg.draw_fn   = [this]{ _draw_debugger_resident(); };       break;      }
+        
+        case Resident::Selection :                  //  2.  SELECTION OVERLAY.
+        { entry.cfg.draw_fn   = [this]{ _draw_selection_resident(); };      break;      }
+    
+        case Resident::Shape :                      //  3.  SHAPE-TOOL OVERLAY.
+        { entry.cfg.draw_fn   = [this]{ _draw_shape_resident(); };          break;      }
+            
+        default :                                   //  DEFAULT :  Failure.
+        { IM_ASSERT(true && "Unknown resident index"); }
     }
 
-    // register once, then cache the pointer
-    entry.id  = m_overlays.add_resident(entry.cfg);
-    entry.ptr = m_overlays.get_resident(entry.id);   // now safe
+
+    entry.id    = m_overlays.add_resident(entry.cfg);
+    entry.ptr   = m_overlays.get_resident(entry.id);   // now safe
+    return;
 }
 
 

@@ -758,10 +758,10 @@ struct Clipboard_t {
 // *************************************************************************** //
 
 //  "Resident"
-//      > Enums for each RESIDENT that will be default-assigned in the Editor class.
+//      Enums for each RESIDENT that will be default-assigned in the Editor class.
 //
 enum Resident: uint8_t {
-    Selection, Shape, Debugger, COUNT
+    Debugger, Selection, Shape, COUNT
 };
 
 
