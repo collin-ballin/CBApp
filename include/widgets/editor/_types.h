@@ -388,6 +388,7 @@ inline void from_json(const nlohmann::json & j, Line_t<LID, ZID>  & l)
 // *************************************************************************** //
 //
 //
+//
 //      "Path":     -- (polyline / spline / area).
 // *************************************************************************** //
 // *************************************************************************** //
@@ -497,25 +498,25 @@ inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
 }
 
 
-
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-
 //  "EndpointInfo"
 //
 template<typename PID>
 struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ first vertex
+
+// *************************************************************************** //
+// *************************************************************************** //   END "PATH".
+
   
 
 
 
 
-
 // *************************************************************************** //
-//      2.3.    HIT.
+//
+//
+//
+//      2.3.    HIT DETECTION.
+// *************************************************************************** //
 // *************************************************************************** //
 
 //  "Hit_t"
@@ -528,6 +529,7 @@ struct Hit_t {
     bool            out             = false; // valid only when type == Handle
 };
 
+
 //  "PathHit_t"
 //
 template <typename PID, typename VID>
@@ -538,10 +540,19 @@ struct PathHit_t {
     ImVec2          pos_ws          {};     // exact split position (world-space)
 };
 
+// *************************************************************************** //
+// *************************************************************************** //   END "HIT DETECTION"
+
+
+
+
 
 
 // *************************************************************************** //
+//
+//
 //      2.4.    INTERACTION INFORMATION/STATES.
+// *************************************************************************** //
 // *************************************************************************** //
 
 //  "GridSettings"
@@ -562,7 +573,8 @@ struct Interaction {
 };
 
 // *************************************************************************** //
-// *************************************************************************** //
+// *************************************************************************** //   END "INTERACTION STATES"
+
 
 
 
@@ -637,6 +649,7 @@ inline void from_json(const nlohmann::json& j,
 // *************************************************************************** //
 //
 //
+//
 //      2.5.        TOOL STATE.
 // *************************************************************************** //
 // *************************************************************************** //
@@ -661,19 +674,18 @@ struct PenState_t {
 };
 
 
-
 //  "ShapeKind"
 //
 enum class ShapeKind : uint32_t {
     Square,             Rectangle,
     Circle,             Oval,               Ellipse, /*, Polygon, Star, …*/
 //
-    Count
+    COUNT
 };
 //
 //  "APPLICATION_PLOT_COLOR_STYLE_NAMES"
 //      COMPILE-TIME ARRAY CONTAINING THE NAME OF ALL STYLES.
-inline static const std::array<const char *, static_cast<size_t>(ShapeKind::Count)>
+inline static const std::array<const char *, static_cast<size_t>(ShapeKind::COUNT)>
 EDITOR_SHAPE_NAMES = {{
     "Square",           "Rectangle",
     "Circle",           "Oval",             "Ellipse"
@@ -729,15 +741,14 @@ struct Clipboard_t {
     std::vector<Path>       paths;              // verts[] hold vertex indices into vertices[]
 };
 
-
-
 // *************************************************************************** //
 // *************************************************************************** //   END "SERIALIZATION"
   
   
   
 
-    
+
+
 // *************************************************************************** //
 //
 //
@@ -750,7 +761,7 @@ struct Clipboard_t {
 //      > Enums for each RESIDENT that will be default-assigned in the Editor class.
 //
 enum Resident: uint8_t {
-    Shape, Selection, Count
+    Selection, Shape, Debugger, COUNT
 };
 
 
@@ -758,7 +769,7 @@ enum Resident: uint8_t {
 //      Defiled in the order of unit circle angles (0deg = +x-axis) and DEFAULT = 0 = CENTER.
 //
 enum class BBoxAnchor : uint8_t {
-    Center, East, NorthEast, North, NorthWest, West, SouthWest, South, SouthEast
+    Center, East, NorthEast, North, NorthWest, West, SouthWest, South, SouthEast, COUNT
 };
 
 
@@ -774,8 +785,9 @@ enum class OverlayAnchor : uint8_t {
 //  "OffscreenPolicy"
 //
 enum class OffscreenPolicy : uint8_t {
-    Hide,                // overlay vanishes when anchor is outside canvas
-    Clamp                // overlay clamps to nearest edge (old behaviour)
+    Hide,                // Overlay vanishes when anchor is outside canvas
+    Clamp,              //  Overlay clamps to nearest edge (old behaviour)
+    COUNT
 };
 
 
@@ -939,6 +951,7 @@ struct EditorState
 //                                  OVERALL STATE...
 // *************************************************************************** //
     Mode                                m_mode                          = Mode::Default;
+    ImPlotInputMap                      m_backup;
 // *************************************************************************** //
 //
 //

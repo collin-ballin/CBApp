@@ -85,7 +85,7 @@ Editor::Editor(app::AppState & src)
     
     
     //  INITIALIZE EACH RESIDENT OVERLAY-WINDOW...
-    for (size_t i = 0; i < static_cast<size_t>( Resident::Count ); ++i)
+    for (size_t i = 0; i < static_cast<size_t>( Resident::COUNT ); ++i)
     {
         Resident idx = static_cast<Resident>(i);
         this->_dispatch_resident_draw_fn( idx );
@@ -96,6 +96,8 @@ Editor::Editor(app::AppState & src)
 }
 
 
+//  "_dispatch_resident_draw_fn"
+//
 void Editor::_dispatch_resident_draw_fn(Resident idx)
 {
     ResidentEntry& entry = m_residents[idx];

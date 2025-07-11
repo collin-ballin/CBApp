@@ -361,6 +361,8 @@ void Editor::_process_selection(const Interaction& it)
 
     // NEW: selection-aware hot-keys
     _selection_handle_shortcuts         (it);
+    _process_selection
+    
     
     return;
 }

@@ -496,6 +496,7 @@ void Editor::_draw_system_preferences(void)
 // *************************************************************************** //
 //
 //
+//
 //      4.  RESIDENT UTILITY STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -517,7 +518,7 @@ void Editor::_draw_shape_resident(void)
     if (ImGui::Combo( "##Editor_Shape_ShapeType",
                       &kind_idx,
                       this->ms_SHAPE_NAMES.data(),                          //  Names table
-                      static_cast<int>(ShapeKind::Count)) )                 //  Item count
+                      static_cast<int>(ShapeKind::COUNT)) )                 //  Item count
     {
         m_shape.kind = static_cast<ShapeKind>(kind_idx);
     }

@@ -186,17 +186,21 @@ public:
     //
     // *************************************************************************** //
     //                              RESIDENT OVERLAY FUNCTIONS:
+    // *************************************************************************** //
     void                                _dispatch_resident_draw_fn      (Resident idx);
+    // *************************************************************************** //
     //
     //
+    // *************************************************************************** //
     //                              RESIDENT OVERLAY DATA:
+    // *************************************************************************** //
     struct ResidentEntry {
         OverlayID                   id;         //  runtime ID (filled in ctor)
         Overlay *                   ptr;        //  Reference.
         OverlayCFG                  cfg;        //  compile-time defaults
     };
     //
-    std::array<ResidentEntry, Resident::Count>      m_residents { {
+    std::array<ResidentEntry, Resident::COUNT>      m_residents { {
         //
         //  Shape:
         {   0,                                  //  ID.
@@ -341,12 +345,14 @@ private:
     // *************************************************************************** //
     //      RESIDENT STUFF.                 |   "utility.cpp" ...
     // *************************************************************************** //
+    //                              SELECTION RESIDENT:
+    void                                _draw_selection_resident            (void);
+    //
+    //                              SHAPE-TOOL RESIDENT:
     void                                _draw_shape_resident                (void);
     void                                _draw_shape_resident_custom         (void);
     void                                _draw_shape_resident_multi          (void);
     void                                _draw_shape_resident_default        (void);
-    //
-    void                                _draw_selection_resident            (void);
     // *************************************************************************** //
     //
     //
