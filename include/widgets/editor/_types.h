@@ -190,12 +190,17 @@ struct EditorStyle
     ImVec4              ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
     ImVec4              ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
     //
-    //              BROWSER CHILD-WINDOW SIZES:
+    //              BROWSER CHILD-WINDOW STYLE:
     float               ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
     float               ms_CHILD_BORDER1                = 2.0f;     //  ms_CHILD_BORDER1
     float               ms_CHILD_BORDER2                = 1.0f;     //  ms_CHILD_BORDER2
     float               ms_CHILD_ROUND1                 = 8.0f;     //  ms_CHILD_ROUND1
     float               ms_CHILD_ROUND2                 = 4.0f;     //  ms_CHILD_ROUND2
+    //
+    //              BROWSER CHILD-WINDOW DIMENSIONS:
+    float              OBJ_PROPERTIES_REL_WIDTH         = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
+    float              VERTEX_SELECTOR_REL_WIDTH        = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
+    float              VERTEX_INSPECTOR_REL_WIDTH       = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
 // *************************************************************************** //
 //
 //

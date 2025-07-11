@@ -301,11 +301,11 @@ private:
     void                                _draw_multi_obj_inspector               (void);     //  PREVIOUSLY:     _draw_multi_path_inspector
     //
     //                              VERTEX BROWSER:
-    void                                _draw_vertex_list_subcolumn             (Path & );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
-    void                                _draw_vertex_inspector_subcolumn        (Path & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
+    void                                _draw_vertex_selector_column            (Path & );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
+    void                                _draw_vertex_inspector_column           (Path & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
     //
     //                              PANELS FOR EACH OBJECT TYPE:
-    void                                _draw_obj_properties_panel              (void);
+    void                                _draw_obj_properties_panel              (Path & , size_t );
     void                                _draw_vertex_properties_panel           (void);
     // *************************************************************************** //
     //

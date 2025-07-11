@@ -194,8 +194,8 @@ void Editor::Begin(const char * /*id*/)
         // ───────────────────────── 3. Per-frame context
         ImDrawList *        dl              = ImPlot::GetPlotDrawList();
         ImVec2              plotTL          = ImPlot::GetPlotPos();
-        bool                hovered         = ImPlot::IsPlotHovered();
-        bool                active          = ImPlot::IsPlotSelected();
+        const bool          hovered         = ImPlot::IsPlotHovered();
+        const bool          active          = ImPlot::IsPlotSelected();
 
         ImVec2              origin_scr      = plotTL;
         ImVec2              mouse_canvas    { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
@@ -209,7 +209,7 @@ void Editor::Begin(const char * /*id*/)
 
         //  6.      CURSOR HINTS AND SHORTCUTS...
         //
-        if ( space && _mode_has(CBCapabilityFlags_Pan) )
+        if ( space && hovered && _mode_has(CBCapabilityFlags_Pan) )
             { ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); }
         //
         else if ( !space && hovered && _mode_has(CBCapabilityFlags_CursorHint) )
