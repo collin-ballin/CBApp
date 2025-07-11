@@ -303,6 +303,10 @@ private:
     //                              VERTEX BROWSER:
     void                                _draw_vertex_list_subcolumn             (Path & );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
     void                                _draw_vertex_inspector_subcolumn        (Path & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
+    //
+    //                              PANELS FOR EACH OBJECT TYPE:
+    void                                _draw_obj_properties_panel              (void);
+    void                                _draw_vertex_properties_panel           (void);
     // *************************************************************************** //
     //
     //

@@ -153,6 +153,7 @@ void Editor::DrawBrowser(void)
 {
     //  1.  CONTROL BAR...
     _draw_controls();
+    S.PushFont(Font::Small);
     
     
     //  2.  LEFTHAND BROWSER SELECTION MENU...
@@ -183,6 +184,7 @@ void Editor::DrawBrowser(void)
     ImGui::PopStyleVar(2);  //  ImGuiStyleVar_ChildBorderSize, ImGuiStyleVar_ChildRounding
     
     
+    S.PopFont();
     return;
 }
 
@@ -208,7 +210,6 @@ void Editor::_draw_obj_selector_column(void)
     const ImU32                 col_dim                     = ImGui::GetColorU32(ImGuiCol_TextDisabled);
     const ImU32                 col_frame                   = ImGui::GetColorU32(ImGuiCol_FrameBg);
     ImGuiListClipper            clipper;
-    S.PushFont(Font::Small);
 
 
     //  1.  SEARCH-QUERY BOX
@@ -314,8 +315,6 @@ void Editor::_draw_obj_selector_column(void)
         
     }// END "while-loop"
     
-    
-    S.PopFont();
     clipper.End();
     
     return;
@@ -400,8 +399,8 @@ void Editor::_dispatch_obj_inspector_column(void)
     if ( sel_paths == 0 )       { ImGui::TextDisabled("No selection."); return; }
 
 
-    if (sel_paths == 1)         { _draw_single_obj_inspector(); }
-    else                        { _draw_multi_obj_inspector(); }
+    if (sel_paths == 1)         { _draw_single_obj_inspector();     }
+    else                        { _draw_multi_obj_inspector();      }
     
     return;
 }
@@ -429,7 +428,7 @@ void Editor::_draw_single_obj_inspector(void)
 
     //  1.  HEADER-ENTRY AND "DELETE" BUTTON...
     //  I   mGui::Text("%s. %zu  (%zu vertices)", pidx, path.verts.size());
-    ImGui::Text( "%s, (%zu vertices)", path.label.c_str(), path.verts.size() );
+    ImGui::Text( "%s (%zu vertices)", path.label.c_str(), path.verts.size() );
     ImGui::SameLine();
     if (ImGui::Button("Delete Object"))
     {
@@ -714,6 +713,156 @@ void Editor::_draw_vertex_inspector_subcolumn(Path & path)
     
     return;
 }
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      INDIVIDUAL PANELS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_draw_obj_properties_panel"
+//
+void Editor::_draw_obj_properties_panel(void)
+{
+    constexpr ImGuiColorEditFlags   COLOR_FLAGS     = ImGuiColorEditFlags_NoInputs;
+    const ImGuiStyle &              style           = ImGui::GetStyle();
+    //
+    const size_t                    pidx            = *m_sel.paths.begin();
+    
+    
+    //  CASE 0 :    ERROR...
+    if ( pidx >= m_paths.size() ) {
+        ImGui::TextDisabled("[invalid object]"); return;
+    }
+    Path &          path            = m_paths[pidx];
+    bool            is_area         = path.is_area();
+
+
+
+    //  1.  HEADER-ENTRY AND "DELETE" BUTTON...
+    //  I   mGui::Text("%s. %zu  (%zu vertices)", pidx, path.verts.size());
+    ImGui::Text( "%s (%zu vertices)", path.label.c_str(), path.verts.size() );
+    ImGui::SameLine();
+    if (ImGui::Button("Delete Object"))
+    {
+        _erase_path_and_orphans( static_cast<PathID>(pidx) );   // ← replaces direct m_paths.erase()
+        m_sel.clear();
+        m_inspector_vertex_idx = -1;
+        return;
+    }
+    ImGui::Separator();
+
+
+
+    //  2.  LINE-STROKE, AREA-FILL COLORS...
+    {
+        ImVec4          stroke_f            = u32_to_f4(path.style.stroke_color);
+        ImVec4          fill_f              = u32_to_f4(path.style.fill_color);
+        bool            stroke_dirty        = false;
+        bool            fill_dirty          = false;
+
+
+        utl::LeftLabelSimple("Stroke:");    ImGui::SameLine();
+        stroke_dirty                        = ImGui::ColorEdit4( "##Editor_VertexBrowser_LineColor",    (float*)&stroke_f,  COLOR_FLAGS );
+        //
+        ImGui::SameLine();
+        ImGui::BeginDisabled( !is_area );
+            utl::LeftLabelSimple("Fill:");  ImGui::SameLine();
+            fill_dirty                      = ImGui::ColorEdit4( "##Editor_VertexBrowser_FillColor",    (float*)&fill_f,    COLOR_FLAGS );
+        ImGui::EndDisabled();
+        
+        if (stroke_dirty)   { path.style.stroke_color = f4_to_u32(stroke_f); }
+        if (fill_dirty)     { path.style.fill_color   = f4_to_u32(fill_f); }
+        if (!is_area)       { path.style.fill_color  &= 0x00FFFFFF; }   // clear alpha
+
+        ImGui::SameLine(); 
+    }
+
+
+    //  3.  LINE WIDTH...
+    {
+        static constexpr float  min_width   = 0.25;
+        static constexpr float  max_width   = 32;
+        bool                    dirty       = false;
+        float                   w           = path.style.stroke_width;
+        
+        utl::LeftLabelSimple("Line Width:");    ImGui::SameLine();
+        ImGui::SetNextItemWidth(200.0f);
+        //
+        //  CASE 1 :    Value < 2.0f
+        if (w < 2.0f) {
+            dirty = ImGui::InputFloat("##Editor_VertexBrowser_LineWidth", &w,   0.125f,   0.25f,      "%.3f px");
+        }
+        //
+        //  CASE 2 :    2.0 <= Value.
+        else {
+            dirty = ImGui::InputFloat("##Editor_VertexBrowser_LineWidth", &w,   1.0f,     2.0f,       "%.1f px");
+        }
+        //
+        //
+        //
+        if ( dirty ) {
+            w = std::clamp(w, min_width, max_width);
+            path.style.stroke_width = w;
+        }
+    }
+    ImGui::Separator();
+
+
+
+    //  4.  "VERTEX BROWSER" FOR THE OBJECT...
+    float availY = ImGui::GetContentRegionAvail().y;
+    float sub_h  = availY * m_style.ms_VERTEX_SUBBROWSER_HEIGHT; 
+    float filler = availY - sub_h - style.WindowPadding.y;
+    
+    if (filler > 0.0f)
+        { ImGui::Dummy(ImVec2(0, filler)); }
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  m_style.ms_CHILD_BORDER2);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    m_style.ms_CHILD_ROUND2);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg,             m_style.ms_CHILD_FRAME_BG2L);
+    //
+    //
+    //  //  4.1.    LEFT-HAND VERTEX BROWSER.
+        ImGui::BeginChild("##VertexPanel_Left", ImVec2(ms_LIST_COLUMN_WIDTH, sub_h), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+            _draw_vertex_list_subcolumn(path);
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+        //
+        ImGui::SameLine();
+        //
+        //  4.2.    RIGHT-HAND VERTEX BROWSER.
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, m_style.ms_CHILD_FRAME_BG2R);
+        ImGui::BeginChild("##VertexPanel_Right", ImVec2(0, sub_h),
+                          ImGuiChildFlags_Borders);
+            _draw_vertex_inspector_subcolumn(path);
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+    //
+    //
+    ImGui::PopStyleVar(2);   // border size, rounding
+    
+    
+    return;
+}
+
+
+
+
+//  "_draw_vertex_properties_panel"
+//
+void Editor::_draw_vertex_properties_panel(void)
+{
+    return;
+}
+
 
 
 

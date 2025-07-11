@@ -154,7 +154,7 @@ struct EditorStyle
     ImU32               COL_LASSO_FILL                  = IM_COL32(255,215,0,40);  // translucent fill
 //
 //                  BOUNDING BOX:
-    ImU32               SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 255);   //  cyan-blue
+    ImU32               SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 153);   //  cyan-blue
     float               SELECTION_BBOX_TH               = 1.5f;
 // *************************************************************************** //
 //
