@@ -91,192 +91,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//  0.  EDITOR SETTINGS / CONFIGS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-struct EditorStyle
-{
-// *************************************************************************** //
-//                      INTERACTION / RESPONSIVENESS CONSTANTS...
-// *************************************************************************** //
-    float               GRID_STEP                       = 64.0f;
-    float               HIT_THRESH_SQ                   = 6.0f * 6.0f;
-//
-    int                 PEN_DRAG_TIME_THRESHOLD         = 0.05;                             //  PEN_DRAG_TIME_THRESHOLD         // seconds.
-    float               PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;                             //  PEN_DRAG_MOVEMENT_THRESHOLD     // px  (was 2)
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                      STANDARDIZED STYLE...
-// *************************************************************************** //
-    ImU32               COL_POINT_DEFAULT               = IM_COL32(0,255,0,255);        // idle green
-    ImU32               COL_POINT_HELD                  = IM_COL32(255,100,0,255);      // while dragging
-    ImU32               COL_SELECTION_OUT               = IM_COL32(255,215,0,255);      // gold outline
-    float               DEFAULT_POINT_RADIUS            = 12.0f;                        // px
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                      USER INTERFACE CONSTANTS...
-// *************************************************************************** //
-//                  HANDLES:
-    ImU32               ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);       //  ms_HANDLE_COLOR             //  gold
-    ImU32               ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);       //  ms_HANDLE_HOVER_COLOR       //  yellow
-    float               ms_HANDLE_SIZE                  = 3.0f;      
-    float               HANDLE_BOX_SIZE                 = 4.f;                              //  ms_HANDLE_SIZE              //  px half-side
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                      TOOL CONSTANTS...
-// *************************************************************************** //
-//
-//                  STANDARDIZED STYLE:
-//
-//                  PEN-TOOL ANCHORS:
-//                      //  ...
-//
-//                  LASSO TOOL:
-    ImU32               COL_LASSO_OUT                   = IM_COL32(255,215,0,255); // gold outline
-    ImU32               COL_LASSO_FILL                  = IM_COL32(255,215,0,40);  // translucent fill
-//
-//                  BOUNDING BOX:
-    ImU32               SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 153);   //  cyan-blue
-    float               SELECTION_BBOX_TH               = 1.5f;
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                      CURSOR CONSTANTS...
-// *************************************************************************** //
-//                  PEN-TOOL CURSOR STUFF:
-    float               PEN_RING_RADIUS                 = 6.0f;                             //  PEN_RING_RADIUS     [px]
-    float               PEN_RING_THICK                  = 1.5f;                             //  PEN_RING_THICK      [px]
-    int                 PEN_RING_SEGMENTS               = 32;                               //  NUMBER OF SEGMENTS TO DRAW OUTER RING.
-    float               PEN_DOT_RADIUS                  = 2.0f;                             //  PEN_DOT_RADIUS      // px
-    int                 PEN_DOT_SEGMENTS                = 16;                               //  NUMBER OF SEGMENTS TO DRAW INNER DOT.
-    //
-    //
-    ImU32               PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);          //  PEN_COL_NORMAL      // yellow
-    ImU32               PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);          //  PEN_COL_EXTEND      // green
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                      APPEARANCE / WIDGETS / UI CONSTANTS:
-// *************************************************************************** //
-    //
-    //              BROWSER CHILD-WINDOW COLORS:
-    ImVec4              ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
-    ImVec4              ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
-    ImVec4              ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
-    
-    ImVec4              ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
-    ImVec4              ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
-    ImVec4              ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
-    //
-    //              BROWSER CHILD-WINDOW STYLE:
-    float               ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
-    float               ms_CHILD_BORDER1                = 2.0f;     //  ms_CHILD_BORDER1
-    float               ms_CHILD_BORDER2                = 1.0f;     //  ms_CHILD_BORDER2
-    float               ms_CHILD_ROUND1                 = 8.0f;     //  ms_CHILD_ROUND1
-    float               ms_CHILD_ROUND2                 = 4.0f;     //  ms_CHILD_ROUND2
-    //
-    //              BROWSER CHILD-WINDOW DIMENSIONS:
-    float              OBJ_PROPERTIES_REL_WIDTH         = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
-    float              VERTEX_SELECTOR_REL_WIDTH        = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
-    float              VERTEX_INSPECTOR_REL_WIDTH       = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                      RENDERING CONSTANTS:
-// *************************************************************************** //
-    int                 ms_BEZIER_SEGMENTS              = 0;        //  ms_BEZIER_SEGMENTS
-    int                 ms_BEZIER_HIT_STEPS             = 20;       //  ms_BEZIER_HIT_STEPS
-    int                 ms_BEZIER_FILL_STEPS            = 24;       //  ms_BEZIER_FILL_STEPS
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                      UTILITY:
-// *************************************************************************** //
-                        //
-                        //  ...
-                        //
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                      MISC. / UNKNOWN CONSTANTS (RELOCATED FROM CODE)...
-// *************************************************************************** //
-    float               TARGET_PX                       = 20.0f;                     //     desired screen grid pitch"  | found in "_update_grid"
-
-// *************************************************************************** //
-
-
-
-// *************************************************************************** //
-// *************************************************************************** //   END "EditorStyle"
-};
-
-
-//  "ZOrderCFG_t"
-//
-template<typename ZID>
-struct ZOrderCFG_t {
-    ZID         Z_EDITOR_BACK               = 1;                        //  Grid / background
-    ZID         Z_FLOOR_USER                = 255;                      //  First user layer
-    ZID         Z_EDITOR_FRONT              = UINT32_MAX - 2;           //  Overlays, guides
-    ZID         Z_CEIL_USER                 = Z_EDITOR_FRONT - 1;       //  Max allowed for user items
-    ZID         RENORM_THRESHOLD            = 10'000;                   //  Span triggering re-pack
-};
-//
-//  "to_json"
-template <typename ZID>
-inline void to_json(nlohmann::json & j, const ZOrderCFG_t<ZID> & obj) {
-    j = {
-        { "Z_EDITOR_BACK",          obj.Z_EDITOR_BACK       },
-        { "Z_FLOOR_USER",           obj.Z_FLOOR_USER        },
-        { "Z_EDITOR_FRONT",         obj.Z_EDITOR_FRONT      },
-        { "Z_CEIL_USER",            obj.Z_CEIL_USER         },
-        { "RENORM_THRESHOLD",       obj.RENORM_THRESHOLD    }
-    };
-}
-//
-//  "from_json"
-template <typename ZID>
-inline void from_json(nlohmann::json & j, ZOrderCFG_t<ZID> & obj) {
-    j.at("Z_EDITOR_BACK")           .get_to(obj.Z_EDITOR_BACK);
-    j.at("Z_FLOOR_USER")            .get_to(obj.Z_FLOOR_USER);
-    j.at("Z_EDITOR_FRONT")          .get_to(obj.Z_EDITOR_FRONT);
-    j.at("Z_CEIL_USER")             .get_to(obj.Z_CEIL_USER);
-    j.at("RENORM_THRESHOLD")        .get_to(obj.RENORM_THRESHOLD);
-}
-
-
-
-
-
-
 // *************************************************************************** //
 //
 //
@@ -284,6 +98,13 @@ inline void from_json(nlohmann::json & j, ZOrderCFG_t<ZID> & obj) {
 //  1.  [TYPE/ENUM LAYER]   TYPES AND ENUMERATIONS THAT WE USE FOR THE EDITOR...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "IoResult"
+//
+enum class IoResult {
+    Ok, IoError, ParseError, VersionMismatch
+};
+
 
 //  "AnchorType"
 //
@@ -800,7 +621,7 @@ inline void from_json(const nlohmann::json& j,
 }
 
 // *************************************************************************** //
-// *************************************************************************** //
+// *************************************************************************** //   END "SELECTION".
     
     
     
@@ -814,7 +635,10 @@ inline void from_json(const nlohmann::json& j,
     
     
 // *************************************************************************** //
-//      2.5.    APPLICATION TOOL STATE.
+//
+//
+//      2.5.        TOOL STATE.
+// *************************************************************************** //
 // *************************************************************************** //
 
 //  "PenState_t"
@@ -876,14 +700,20 @@ struct ShapeState_t {
     float               start_rad               = 0.0f;
 };
 
-
-
-
-
-
-    
 // *************************************************************************** //
-//      2.6.    OTHER STATE STRUCTURES.
+// *************************************************************************** //   END "TOOL STATE"
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.6.    SERIALIZATION STUFF...
+// *************************************************************************** //
 // *************************************************************************** //
 
 //  "Clipboard_t"
@@ -899,6 +729,131 @@ struct Clipboard_t {
     std::vector<Path>       paths;              // verts[] hold vertex indices into vertices[]
 };
 
+
+
+// *************************************************************************** //
+// *************************************************************************** //   END "SERIALIZATION"
+  
+  
+  
+
+    
+// *************************************************************************** //
+//
+//
+//
+//      2.7.    OVERLAY STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "Resident"
+//      > Enums for each RESIDENT that will be default-assigned in the Editor class.
+//
+enum Resident: uint8_t {
+    Shape, Selection, Count
+};
+
+
+//  "BBoxAnchor"
+//      Defiled in the order of unit circle angles (0deg = +x-axis) and DEFAULT = 0 = CENTER.
+//
+enum class BBoxAnchor : uint8_t {
+    Center, East, NorthEast, North, NorthWest, West, SouthWest, South, SouthEast
+};
+
+
+//  "OverlayAnchor"
+//
+enum class OverlayAnchor : uint8_t {
+    World,      // anchor_ws interpreted in world-space → converts via world_to_pixels()
+    Screen,     // anchor_ws is absolute screen coords (pixels)
+    Cursor      // anchor_ws is Δ offset from current cursor (pixels)
+};
+
+
+//  "OffscreenPolicy"
+//
+enum class OffscreenPolicy : uint8_t {
+    Hide,                // overlay vanishes when anchor is outside canvas
+    Clamp                // overlay clamps to nearest edge (old behaviour)
+};
+
+
+//  "OverlayPlacement"
+//
+enum class OverlayPlacement : uint8_t {
+    ScreenXY,           // anchor_px    = screen position (px)
+    Cursor,             // anchor_px    = offset  (px)
+    World,              // anchor_ws    = world‑space point
+    CanvasTL,           // anchor_padpx = inset from top‑left  corner
+    CanvasTR,           // anchor_padpx = inset from top‑right corner
+    CanvasBL,           // anchor_padpx = inset from bot‑left  corner
+    CanvasBR,           // anchor_padpx = inset from bot‑right corner
+//
+    CanvasPoint
+};
+
+
+//  "OverlayCFG"
+//
+struct OverlayCFG {
+    OverlayPlacement            placement       {OverlayPlacement::ScreenXY};
+    ImVec2                      anchor_px       {0,0};     // pixel inset / offset
+    ImVec2                      anchor_ws       {0,0};     // world-space anchor
+    float                       alpha           {0.65f};
+    OffscreenPolicy             offscreen       {OffscreenPolicy::Clamp}; // NEW
+//
+    std::function<void()>       draw_fn         {};                    // widgets callback
+};
+
+
+//  "Overlay_t"
+//      MAIN "STATE" / "DATA" PACKET FOR EACH OVERLAY WINDOW...
+//
+template<typename T = uint32_t>
+struct Overlay_t {
+    using                       OverlayID       = T;
+//
+    OverlayID                   id              = 0;
+    bool                        visible         = false;                 // owner sets false to retire
+    ImGuiWindowFlags            flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    OverlayCFG                  cfg{};
+};
+
+
+//  "OverlayState"
+//      **DEPRECATED** > State for the OLD "HELPER" OVERLAY MENU / DEBUGGER MENU...
+struct OverlayState
+{
+    bool                open                = true;         // Editor toggles this; no “x” button
+    bool                show_details        = true;         // extra diagnostics pane
+    bool                verbose_detail      = false;        // extra diagnostics pane
+    int                 location            = 3;            // 0-3 corners, −2 centre, −1 free
+    float               alpha               = 0.65f;        // window translucency
+    float               pad                 = 40.0f;        // margin from viewport edge
+    ImGuiWindowFlags    base_flags          = ImGuiWindowFlags_NoDecoration       | ImGuiWindowFlags_NoDocking          | ImGuiWindowFlags_AlwaysAutoResize |
+                                              ImGuiWindowFlags_NoSavedSettings    | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    ImGuiWindowFlags    flags               = 0;            // recomputed each frame
+//
+    std::string         log_msg;                            // last message (≤40 words)
+    float               log_timer           = 0.0f;         // seconds until it disappears
+};
+
+// *************************************************************************** //
+// *************************************************************************** //   END "OVERLAY"
+
+
+
+
+
+    
+// *************************************************************************** //
+//
+//
+//
+//      3.      OTHER STATE STRUCTURES.
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "MoveDrag"
 //
@@ -954,95 +909,306 @@ struct Camera {
     }
 };
   
-  
-//  "OverlayState"
+// *************************************************************************** //
+// *************************************************************************** //   END "OTHER STATES"
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
 //
-struct OverlayState
+//
+//
+//      99.     EDITOR SETTINGS / CONFIGS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "EditorState"
+//
+template<typename VertexID, typename PathID>
+struct EditorState
 {
-    bool                open                = true;         // Editor toggles this; no “x” button
-    bool                show_details        = true;         // extra diagnostics pane
-    bool                verbose_detail      = false;        // extra diagnostics pane
-    int                 location            = 3;            // 0-3 corners, −2 centre, −1 free
-    float               alpha               = 0.65f;        // window translucency
-    float               pad                 = 40.0f;        // margin from viewport edge
-    ImGuiWindowFlags    base_flags          = ImGuiWindowFlags_NoDecoration       | ImGuiWindowFlags_NoDocking          | ImGuiWindowFlags_AlwaysAutoResize |
-                                              ImGuiWindowFlags_NoSavedSettings    | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-    ImGuiWindowFlags    flags               = 0;            // recomputed each frame
+// *************************************************************************** //
+//                                  OVERALL STATE...
+// *************************************************************************** //
+    Mode                                m_mode                          = Mode::Default;
+// *************************************************************************** //
 //
-    std::string         log_msg;                            // last message (≤40 words)
-    float               log_timer           = 0.0f;         // seconds until it disappears
-};
+//
+//
+// *************************************************************************** //
+//                                  TRANSIENT STATE...
+// *************************************************************************** //
+    //
+    //                              BEHAVIORS:
+    bool                                m_show_grid                     = true;
+    bool                                m_dragging                      = false;
+    bool                                m_lasso_active                  = false;
+    //
+    //                              OTHER:
+    bool                                m_pending_clear                 = false;    //  pending click selection state ---
+    //
+    //                              UTILITY:
+    float                               m_bar_h                         = 0.0f;
+    ImVec2                              m_avail                         = ImVec2(0.0f, 0.0f);
+    ImVec2                              m_p0                            = ImVec2(0.0f, 0.0f);
+    ImVec2                              m_p1                            = ImVec2(0.0f, 0.0f);
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                                      TOOL STATE (TODO: RE-HOME THESE INTO TOOL STATE OBJs)...
+// *************************************************************************** //
+    //
+    //                              LASSO TOOL / SELECTION:
+    ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
+    ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
+    VertexID                            m_next_id                       = 1;
+    PathID                              m_next_pid                      = 1;        // counter for new path IDs
+    //
+    //                              PEN-TOOL STATE:
+    bool                                m_drawing                       = false;
+    bool                                m_dragging_handle               = false;
+    bool                                m_dragging_out                  = true;
+    VertexID                            m_drag_vid                      = 0;
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                                      MISC STATE...
+// *************************************************************************** //
 
-
-
-
-
+                                        //
+                                        //  ...
+                                        //
 
 // *************************************************************************** //
 //
 //
 //
-//  0.  OVERLAY UTILITY CLASS STUFF...
 // *************************************************************************** //
+//                                      BROWSER / SELECTION STATE...
+// *************************************************************************** //
+    //
+    //                              MISC:
+    //
+    //                              SELECTION / BROWSER STATE:
+    ImGuiTextFilter                     m_browser_filter;                           // search box text filter
+    int                                 m_browser_anchor                = -1;       // anchor index for Shift‑range select
+    int                                 m_inspector_vertex_idx          = -1;       // anchor index for Shift‑range select
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                                      SERIALIZATION STUFF...
+// *************************************************************************** //
+    std::mutex                          m_task_mtx;
+    std::vector<std::function<void()>>  m_main_tasks;
+    std::atomic<bool>                   m_io_busy                       {false};
+    IoResult                            m_io_last                       {IoResult::Ok};
+    std::string                         m_io_msg                        {  };
+    //
+    std::atomic<bool>                   m_sdialog_open                  = {false};
+    std::atomic<bool>                   m_odialog_open                  = {false};
 // *************************************************************************** //
 
-//  "BBoxAnchor"
-//      Defiled in the order of unit circle angles (0deg = +x-axis) and DEFAULT = 0 = CENTER.
+
+
 //
-enum class BBoxAnchor : uint8_t {
-    Center, East, NorthEast, North, NorthWest, West, SouthWest, South, SouthEast
-};
-
-
-enum class OverlayAnchor : uint8_t {
-    World,      // anchor_ws interpreted in world-space → converts via world_to_pixels()
-    Screen,     // anchor_ws is absolute screen coords (pixels)
-    Cursor      // anchor_ws is Δ offset from current cursor (pixels)
-};
-
-enum class OffscreenPolicy : uint8_t {
-    Hide,                // overlay vanishes when anchor is outside canvas
-    Clamp                // overlay clamps to nearest edge (old behaviour)
-};
-
-
-
-enum class OverlayPlacement : uint8_t {
-    ScreenXY,           // anchor_px    = screen position (px)
-    Cursor,             // anchor_px    = offset  (px)
-    World,              // anchor_ws    = world‑space point
-    CanvasTL,           // anchor_padpx = inset from top‑left  corner
-    CanvasTR,           // anchor_padpx = inset from top‑right corner
-    CanvasBL,           // anchor_padpx = inset from bot‑left  corner
-    CanvasBR,           // anchor_padpx = inset from bot‑right corner
 //
-    CanvasPoint
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "EditorState"
 };
 
 
-struct OverlayCFG {
-    OverlayPlacement            placement       {OverlayPlacement::ScreenXY};
-    ImVec2                      anchor_px       {0,0};     // pixel inset / offset
-    ImVec2                      anchor_ws       {0,0};     // world-space anchor
-    float                       alpha           {0.65f};
-    OffscreenPolicy             offscreen       {OffscreenPolicy::Clamp}; // NEW
+
+
+
+
+//  "EditorStyle"
+struct EditorStyle
+{
+// *************************************************************************** //
+//                      INTERACTION / RESPONSIVENESS CONSTANTS...
+// *************************************************************************** //
+    float               GRID_STEP                       = 64.0f;
+    float               HIT_THRESH_SQ                   = 6.0f * 6.0f;
 //
-    std::function<void()>       draw_fn         {};                    // widgets callback
+    int                 PEN_DRAG_TIME_THRESHOLD         = 0.05;                             //  PEN_DRAG_TIME_THRESHOLD         // seconds.
+    float               PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;                             //  PEN_DRAG_MOVEMENT_THRESHOLD     // px  (was 2)
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      STANDARDIZED STYLE...
+// *************************************************************************** //
+    ImU32               COL_POINT_DEFAULT               = IM_COL32(0,255,0,255);        // idle green
+    ImU32               COL_POINT_HELD                  = IM_COL32(255,100,0,255);      // while dragging
+    ImU32               COL_SELECTION_OUT               = IM_COL32(255,215,0,255);      // gold outline
+    float               DEFAULT_POINT_RADIUS            = 12.0f;                        // px
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      USER INTERFACE CONSTANTS...
+// *************************************************************************** //
+//                  HANDLES:
+    ImU32               ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);       //  ms_HANDLE_COLOR             //  gold
+    ImU32               ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);       //  ms_HANDLE_HOVER_COLOR       //  yellow
+    float               ms_HANDLE_SIZE                  = 3.0f;      
+    float               HANDLE_BOX_SIZE                 = 4.f;                              //  ms_HANDLE_SIZE              //  px half-side
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      TOOL CONSTANTS...
+// *************************************************************************** //
+//
+//                  STANDARDIZED STYLE:
+//
+//                  PEN-TOOL ANCHORS:
+//                      //  ...
+//
+//                  LASSO TOOL:
+    ImU32               COL_LASSO_OUT                   = IM_COL32(255,215,0,255); // gold outline
+    ImU32               COL_LASSO_FILL                  = IM_COL32(255,215,0,40);  // translucent fill
+//
+//                  BOUNDING BOX:
+    ImU32               SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 153);   //  cyan-blue
+    float               SELECTION_BBOX_TH               = 1.5f;
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      CURSOR CONSTANTS...
+// *************************************************************************** //
+//                  PEN-TOOL CURSOR STUFF:
+    float               PEN_RING_RADIUS                 = 6.0f;                             //  PEN_RING_RADIUS     [px]
+    float               PEN_RING_THICK                  = 1.5f;                             //  PEN_RING_THICK      [px]
+    int                 PEN_RING_SEGMENTS               = 32;                               //  NUMBER OF SEGMENTS TO DRAW OUTER RING.
+    float               PEN_DOT_RADIUS                  = 2.0f;                             //  PEN_DOT_RADIUS      // px
+    int                 PEN_DOT_SEGMENTS                = 16;                               //  NUMBER OF SEGMENTS TO DRAW INNER DOT.
+    //
+    //
+    ImU32               PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);          //  PEN_COL_NORMAL      // yellow
+    ImU32               PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);          //  PEN_COL_EXTEND      // green
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      APPEARANCE / WIDGETS / UI CONSTANTS:
+// *************************************************************************** //
+    //
+    //              BROWSER CHILD-WINDOW COLORS:
+    ImVec4              ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
+    ImVec4              ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
+    ImVec4              ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
+    
+    ImVec4              ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
+    ImVec4              ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
+    ImVec4              ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
+    //
+    //              BROWSER CHILD-WINDOW STYLE:
+    float               ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
+    float               ms_CHILD_BORDER1                = 2.0f;     //  ms_CHILD_BORDER1
+    float               ms_CHILD_BORDER2                = 1.0f;     //  ms_CHILD_BORDER2
+    float               ms_CHILD_ROUND1                 = 8.0f;     //  ms_CHILD_ROUND1
+    float               ms_CHILD_ROUND2                 = 4.0f;     //  ms_CHILD_ROUND2
+    //
+    //              BROWSER CHILD-WINDOW DIMENSIONS:
+    float              OBJ_PROPERTIES_REL_WIDTH         = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
+    float              VERTEX_SELECTOR_REL_WIDTH        = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
+    float              VERTEX_INSPECTOR_REL_WIDTH       = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      RENDERING CONSTANTS:
+// *************************************************************************** //
+    int                 ms_BEZIER_SEGMENTS              = 0;        //  ms_BEZIER_SEGMENTS
+    int                 ms_BEZIER_HIT_STEPS             = 20;       //  ms_BEZIER_HIT_STEPS
+    int                 ms_BEZIER_FILL_STEPS            = 24;       //  ms_BEZIER_FILL_STEPS
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      UTILITY:
+// *************************************************************************** //
+                        //
+                        //  ...
+                        //
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      MISC. / UNKNOWN CONSTANTS (RELOCATED FROM CODE)...
+// *************************************************************************** //
+    float               TARGET_PX                       = 20.0f;                     //     desired screen grid pitch"  | found in "_update_grid"
+
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //   END "EditorStyle"
 };
 
 
-//  "Overlay_t"
-//
-template<typename T = uint32_t>
-struct Overlay_t {
-    using                       OverlayID       = T;
-//
-    OverlayID                   id              = 0;
-    bool                        visible         = false;                 // owner sets false to retire
-    ImGuiWindowFlags            flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-    OverlayCFG                  cfg{};
-};
 
+
+
+
+//  "ZOrderCFG_t"
+//
+template<typename ZID>
+struct ZOrderCFG_t {
+    ZID         Z_EDITOR_BACK               = 1;                        //  Grid / background
+    ZID         Z_FLOOR_USER                = 255;                      //  First user layer
+    ZID         Z_EDITOR_FRONT              = UINT32_MAX - 2;           //  Overlays, guides
+    ZID         Z_CEIL_USER                 = Z_EDITOR_FRONT - 1;       //  Max allowed for user items
+    ZID         RENORM_THRESHOLD            = 10'000;                   //  Span triggering re-pack
+};
+//
+//  "to_json"
+template <typename ZID>
+inline void to_json(nlohmann::json & j, const ZOrderCFG_t<ZID> & obj) {
+    j = {
+        { "Z_EDITOR_BACK",          obj.Z_EDITOR_BACK       },
+        { "Z_FLOOR_USER",           obj.Z_FLOOR_USER        },
+        { "Z_EDITOR_FRONT",         obj.Z_EDITOR_FRONT      },
+        { "Z_CEIL_USER",            obj.Z_CEIL_USER         },
+        { "RENORM_THRESHOLD",       obj.RENORM_THRESHOLD    }
+    };
+}
+//
+//  "from_json"
+template <typename ZID>
+inline void from_json(nlohmann::json & j, ZOrderCFG_t<ZID> & obj) {
+    j.at("Z_EDITOR_BACK")           .get_to(obj.Z_EDITOR_BACK);
+    j.at("Z_FLOOR_USER")            .get_to(obj.Z_FLOOR_USER);
+    j.at("Z_EDITOR_FRONT")          .get_to(obj.Z_EDITOR_FRONT);
+    j.at("Z_CEIL_USER")             .get_to(obj.Z_CEIL_USER);
+    j.at("RENORM_THRESHOLD")        .get_to(obj.RENORM_THRESHOLD);
+}
 
 
 
@@ -1072,8 +1238,12 @@ struct Overlay_t {
 
 
 
+
+
+
+
+
+
 #endif      //  _CBWIDGETS_EDITOR_TYPES_H  //
 // *************************************************************************** //
-// *************************************************************************** //
-//
-//  END.
+// *************************************************************************** //   END FILE.

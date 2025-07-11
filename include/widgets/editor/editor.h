@@ -114,20 +114,7 @@ struct      Line_Tag            {};
 struct      Path_Tag            {};
 struct      Overlay_Tag         {};
 struct      Hit_Tag             {};
-  
-  
-//  "Resident"
-//
-enum Resident: uint8_t {
-    Shape, Selection, Count
-};
 
-
-//  "IoResult"
-//
-enum class IoResult {
-    Ok, IoError, ParseError, VersionMismatch
-};
 
 
 namespace app { class AppState; }

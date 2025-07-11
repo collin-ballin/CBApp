@@ -239,11 +239,11 @@ void Editor::_draw_obj_selector_column(void)
             
             
             //  CASE 0 :    EARLY-OUT IF FILTER REMOVES OBJ...
-            if ( !m_browser_filter.PassFilter(label) )      { continue; }
+            if ( !m_browser_filter.PassFilter(path.label.c_str()) )      { continue; }
 
 
 
-            std::snprintf(label, sizeof(label), "Path %02d", i);
+            //std::snprintf(label, sizeof(label), "Path %02d", i);
             ImGui::PushID(i);
             ImGui::BeginGroup();
 
@@ -442,7 +442,7 @@ void Editor::_draw_single_obj_inspector(void)
     ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", ImVec2(P0_w, 0.0f),     P0_FLAGS);
         _draw_obj_properties_panel(path, sel_idx);     // <-- NEW helper you just wrote
     ImGui::EndChild();
-    ImGui::SameLine();
+    ImGui::SameLine(0.0f );
     //
     //
     //
@@ -461,7 +461,7 @@ void Editor::_draw_single_obj_inspector(void)
             ImGui::EndChild();
             ImGui::PopStyleColor();
             //
-            ImGui::SameLine();
+            ImGui::SameLine(0.0f );
             //
             //  4B.2.   RIGHT-HAND VERTEX BROWSER.
             const float             P1C1_w              = ImGui::GetContentRegionAvail().x;
@@ -925,41 +925,67 @@ void Editor::_draw_vertex_inspector_column(Path & path)
 
 //  "_draw_obj_properties_panel"
 //
-void Editor::_draw_obj_properties_panel(Path & path, size_t idx)
+void Editor::_draw_obj_properties_panel(Path & path, size_t pidx)
 {
     constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
+    const bool                      is_area             = path.is_area();
     
     //     "edit_u32_colour"  // ── colour editors ────────────────────────────────────────────────
     auto                            edit_u32_colour     = [&](const char * label, ImU32 & col_u32) {
         ImVec4  col_f   = ImGui::ColorConvertU32ToFloat4(col_u32);
         if ( ImGui::ColorEdit4(label, &col_f.x, COLOR_FLAGS) )      { col_u32 = ImGui::ColorConvertFloat4ToU32(col_f); }
     };
+
+
     
-    
-    // ── header ────────────────────────────────────────────────────────
-    ImGui::Text("Path %02zu  (%d vertices)", idx,
-                static_cast<int>(path.verts.size()));
+    //  CASE 0 :    ERROR...
+    if ( pidx >= m_paths.size() ) {
+        ImGui::TextDisabled("[invalid object]"); return;
+    }
+
+
+
+    //  1.  HEADER-ENTRY AND "DELETE" BUTTON...
+    //  I   mGui::Text("%s. %zu  (%zu vertices)", pidx, path.verts.size());
+    ImGui::Text( "%s (%zu vertices)", path.label.c_str(), path.verts.size() );
     ImGui::SameLine();
-    if ( ImGui::Button("Delete Object") )
+    if (ImGui::Button("Delete Object"))
     {
-        //_erase_path(idx);          // <- your existing helper
-        return;                    // early-out; Path is gone
+        _erase_path_and_orphans( static_cast<PathID>(pidx) );   // ← replaces direct m_paths.erase()
+        m_sel.clear();
+        m_inspector_vertex_idx = -1;
+        return;
     }
     ImGui::Separator();
 
 
 
 
-    utl::LeftLabel("Stroke:");
-    edit_u32_colour("##stroke_col", path.style.stroke_color);
+    //  2.  LINE-STROKE, AREA-FILL COLORS...
+    {
+        ImVec4          stroke_f            = u32_to_f4(path.style.stroke_color);
+        ImVec4          fill_f              = u32_to_f4(path.style.fill_color);
+        bool            stroke_dirty        = false;
+        bool            fill_dirty          = false;
 
-    utl::LeftLabel("Fill:");
-    edit_u32_colour("##fill_col",   path.style.fill_color);
+
+        utl::LeftLabelSimple("Stroke:");    ImGui::SameLine();
+        stroke_dirty                        = ImGui::ColorEdit4( "##Editor_VertexInspector_LineColor",    (float*)&stroke_f,  COLOR_FLAGS );
+        //
+        //
+        ImGui::BeginDisabled( !is_area );
+            utl::LeftLabelSimple("Fill:");  ImGui::SameLine();
+            fill_dirty                      = ImGui::ColorEdit4( "##Editor_VertexInspector_FillColor",    (float*)&fill_f,    COLOR_FLAGS );
+        ImGui::EndDisabled();
+        
+        if (stroke_dirty)   { path.style.stroke_color = f4_to_u32(stroke_f); }
+        if (fill_dirty)     { path.style.fill_color   = f4_to_u32(fill_f); }
+        if (!is_area)       { path.style.fill_color  &= 0x00FFFFFF; }   // clear alpha
+
+    }
 
 
 
-    // ── stroke width ─────────────────────────────────────────────────
-    ImGui::Separator();
 
     //  3.  LINE WIDTH...
     {
