@@ -591,18 +591,17 @@ struct Interaction {
 //
 template<typename VID, typename PtID, typename LID, typename PID>
 struct Selection_t {
-    std::unordered_set<uint32_t>    vertices;
-    std::unordered_set<size_t>      points;
-    std::unordered_set<size_t>      lines;
-    std::unordered_set<size_t>      paths;     // ← NEW
+    inline void                     clear           (void)          { vertices.clear(); points.clear(); lines.clear(); paths.clear();               }        // new
+    inline bool                     empty           (void) const    { return vertices.empty() && points.empty() && lines.empty() && paths.empty();  }
+    inline bool                     is_empty        (void) const    { return paths.empty();                                                         }
 //
-    inline void clear(void) {
-        vertices.clear();
-        points.clear();
-        lines.clear();
-        paths.clear();        // new
-    }
-    inline bool empty() const { return vertices.empty() && points.empty() && lines.empty(); }
+//
+//
+    std::unordered_set<uint32_t>    vertices                {};
+    std::unordered_set<size_t>      points                  {};
+    std::unordered_set<size_t>      lines                   {};
+    std::unordered_set<size_t>      paths                   {};     // ← NEW
+//
 };
 //
 //  "to_json"
@@ -794,26 +793,32 @@ enum class OffscreenPolicy : uint8_t {
 //  "OverlayPlacement"
 //
 enum class OverlayPlacement : uint8_t {
-    ScreenXY,           // anchor_px    = screen position (px)
+    Custom,             // anchor_px    = screen position (px)
     Cursor,             // anchor_px    = offset  (px)
     World,              // anchor_ws    = world‑space point
+//
+    CanvasPoint,
     CanvasTL,           // anchor_padpx = inset from top‑left  corner
     CanvasTR,           // anchor_padpx = inset from top‑right corner
     CanvasBL,           // anchor_padpx = inset from bot‑left  corner
     CanvasBR,           // anchor_padpx = inset from bot‑right corner
 //
-    CanvasPoint
+    COUNT
 };
 
 
 //  "OverlayCFG"
 //
 struct OverlayCFG {
-    OverlayPlacement            placement       {OverlayPlacement::ScreenXY};
+    bool                        locked          = false;
+    OverlayPlacement            placement       {OverlayPlacement::Custom};
+    BBoxAnchor                  src_anchor      = BBoxAnchor::NorthWest;        // top-centre of the window
+    OffscreenPolicy             offscreen       {OffscreenPolicy::Clamp};       // NEW
+//
+//
     ImVec2                      anchor_px       {0,0};     // pixel inset / offset
     ImVec2                      anchor_ws       {0,0};     // world-space anchor
     float                       alpha           {0.65f};
-    OffscreenPolicy             offscreen       {OffscreenPolicy::Clamp}; // NEW
 //
     std::function<void()>       draw_fn         {};                    // widgets callback
 };
@@ -964,6 +969,7 @@ struct EditorState
     bool                                m_show_grid                     = true;
     bool                                m_dragging                      = false;
     bool                                m_lasso_active                  = false;
+    bool                                m_show_sel_overlay              = false;
     //
     //                              OTHER:
     bool                                m_pending_clear                 = false;    //  pending click selection state ---

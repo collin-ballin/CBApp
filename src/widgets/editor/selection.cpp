@@ -352,20 +352,22 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
 //      THIS IS WHERE "SELECTION" STARTS...
 //      ---This functon is called by "Begin()" to handle ALL sunsequent selection operations.
 //
-void Editor::_process_selection(const Interaction& it)
+void Editor::_process_selection(const Interaction & it)
 {
-    update_move_drag_state              (it);             // helpers (2-4 merged)
-    resolve_pending_selection           (it);          // helper (5)
-    dispatch_selection_context_menus    (it);
-    //show_selection_context_menu(it);        // helper (6)
-
-    // NEW: selection-aware hot-keys
-    _selection_handle_shortcuts         (it);
-    //  _process_selection
+    update_move_drag_state              (it);   //  Helpers (2-4 merged)...
+    resolve_pending_selection           (it);   //  ...
     
+    
+    //  1.  SELECTION IS EMPTY (EARLY OUT IF NO SELECTION)...
+    if ( m_sel.is_empty() )             { return; }
+    else                                { this->m_show_sel_overlay = true; }
+    
+    dispatch_selection_context_menus    (it);   //  Right-Click CONTEXT MENU...
+    _selection_handle_shortcuts         (it);   // NEW: selection-aware hot-keys
     
     return;
 }
+
 
 //////////////////////////////////////////////////////////////
 //      HELPERS FOR "PROCESS_SELECTION" IMPLEMENTATION      //
@@ -487,7 +489,7 @@ void Editor::update_move_drag_state(const Interaction & it)
         if (m_pending_hit)                          // hit something
         {
             // clear selection unless additive
-            if (!io.KeyCtrl && !io.KeyShift) m_sel.clear();
+            if (!io.KeyCtrl && !io.KeyShift)        { this->reset_selection(); }
             add_hit_to_selection(*m_pending_hit);   // select the hit
             m_pending_hit.reset();
             m_pending_clear = false;
@@ -593,7 +595,7 @@ void Editor::resolve_pending_selection(const Interaction & it)
     {
         if (m_pending_hit || !m_pending_clear)
         {
-            if (m_pending_clear) this->reset_selection(); // m_sel.clear();
+            if (m_pending_clear)    { this->reset_selection(); } // m_sel.clear();
 
             if (m_pending_hit)
             {
@@ -652,21 +654,26 @@ void Editor::resolve_pending_selection(const Interaction & it)
 void Editor::_rebuild_vertex_selection()
 {
     m_sel.vertices.clear();
-    for (size_t pi : m_sel.points)
+    for (size_t pi : m_sel.points) {
         if (pi < m_points.size())
             m_sel.vertices.insert(m_points[pi].v);
+    }
 
-    for (size_t li : m_sel.lines)
+    for (size_t li : m_sel.lines) {
         if (li < m_lines.size()) {
             m_sel.vertices.insert(m_lines[li].a);
             m_sel.vertices.insert(m_lines[li].b);
         }
+    }
 
     // Include vertices from any selected paths
-    for (size_t pi : m_sel.paths)
+    for (size_t pi : m_sel.paths) {
         if (pi < m_paths.size())
             for (uint32_t vid : m_paths[pi].verts)
                 m_sel.vertices.insert(vid);
+    }
+    
+    return;
 }
 
 
@@ -769,8 +776,7 @@ void Editor::_start_lasso_tool(void)
     m_lasso_start           = io.MousePos;                      // in screen coords
     m_lasso_end             = m_lasso_start;
     
-    if ( !io.KeyShift && !io.KeyCtrl )
-        m_sel.clear();  // fresh selection
+    if ( !io.KeyShift && !io.KeyCtrl )  { this->reset_selection(); } //m_sel.clear();  // fresh selection
 
     return;
 }
@@ -1145,7 +1151,7 @@ void Editor::dispatch_selection_context_menus([[maybe_unused]] const Interaction
         if ( m_sel.empty() )
         {
             if ( auto h = _hit_any(it) ) {        // pick under cursor
-                m_sel.clear();
+                this->reset_selection(); // m_sel.clear();
                 add_hit_to_selection(*h);
             }
         }

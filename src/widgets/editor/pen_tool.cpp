@@ -60,8 +60,8 @@ void Editor::_pen_begin_handle_drag(VertexID vid, bool out_handle, const bool fo
 
     // --- NEW: make the vertex temporarily selected --------------------
     if (force_select) {
-        m_sel.clear();                               //     optional: keep if you want solo-select
-        m_show_handles.clear();
+        this->reset_selection();    // m_sel.clear();                               //     optional: keep if you want solo-select
+        //  m_show_handles.clear();
         //
         m_sel.vertices.insert(vid);
         m_show_handles.insert(vid);

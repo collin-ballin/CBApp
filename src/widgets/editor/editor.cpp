@@ -55,21 +55,17 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it)
 {
+    //  I/O INPUTS...
     ImGuiIO &           io                  = ImGui::GetIO();
     const bool          shift               = io.KeyShift,          ctrl    = io.KeyCtrl,
                         alt                 = io.KeyAlt,            super   = io.KeySuper;
     const bool          no_mod              = !ctrl && !shift && !alt && !super;
     const bool          only_shift          = !ctrl &&  shift && !alt && !super;
     const bool          lmb_held            = ImGui::IsMouseDown(ImGuiMouseButton_Left);
-    //
-    static auto &       shape_entry         = m_residents[Resident::Shape];
-    static Overlay &    shape_resident      = *m_overlays.lookup_resident(shape_entry.id);
-    //
-    //  static auto &       selection_entry     = m_residents[Resident::Selection];
-    //  static Overlay *    selection_resident  = m_overlays.lookup_resident(shape_entry.id);
 
 
-    if ( it.space || !it.hovered || lmb_held )  return;   // Early-out if [SPACE], [NOT HOVERING OVER CANVAS], or [LMB IS HELD DOWN]...
+
+    if ( it.space || !it.hovered || lmb_held )  { return; }   // Early-out if [SPACE], [NOT HOVERING OVER CANVAS], or [LMB IS HELD DOWN]...
     
 
 
@@ -86,16 +82,19 @@ inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it
     }
     //
     //  3.1     MODE SWITCH BEHAVIORS   [WITH SHIFT]...
-    else if (only_shift)
+    else if ( only_shift )
     {
         if ( !ctrl && shift && !alt && !super && ImGui::IsKeyPressed(ImGuiKey_C)    )       m_mode = Mode::EditAnchor;
+        
+        //
+        //      More SHIFT-KEY Handlers...
+        //
     }
     
     
-    //  4.      CLEAR LINGERING STATE BEHAVIORS...
-    if ( m_mode != Mode::Pen )    { this->reset_pen(); } // m_pen = {};     //  Leaving the Pen-Tool resets current path appending.
-    shape_resident.visible          = ( m_mode == Mode::Shape );            //  Leaving the Shape-Tool closes the overlay window.
-    
+    //  4.      HANDLE LINGERING STATE BEHAVIORS...
+    if ( m_mode != Mode::Pen )      { this->reset_pen(); } // m_pen = {};       //  Leaving the Pen-Tool resets current path appending.
+
     
     //  5.      INVOKE GRID SHORTCUT BEHAVIORS...
     this->_grid_handle_shortcuts();
@@ -202,9 +201,10 @@ void Editor::Begin(const char * /*id*/)
         Interaction         it              { hovered, active, space, mouse_canvas, origin_scr, plotTL, dl };
 
 
-        //  5.      MODE SWITCH BEHAVIORS...
+        //  5.      MODE SWITCH BEHAVIORS AND OVERLAY WINDOWS...
         //
         this->_mode_switch_hotkeys(it);
+        this->_handle_overlays(it);
 
 
         //  6.      CURSOR HINTS AND SHORTCUTS...
@@ -217,7 +217,7 @@ void Editor::Begin(const char * /*id*/)
 
 
 
-        //  7.      GLOBAL SELECTION BEHAVIOR...
+        //  7.      SELECTION BEHAVIOR...
         //
         if  ( !space && _mode_has(CBCapabilityFlags_Select) )
         {
@@ -250,7 +250,6 @@ void Editor::Begin(const char * /*id*/)
         ImPlot::PopPlotClipRect();
 
         this->_clamp_plot_axes();
-        this->_handle_overlays(it);
 
 
 
@@ -287,7 +286,7 @@ void Editor::Begin(const char * /*id*/)
 
 //  "_handle_default"
 //
-void Editor::_handle_default(const Interaction& it)
+inline void Editor::_handle_default(const Interaction& it)
 {
     [[maybe_unused]]    ImGuiIO &   io          = ImGui::GetIO();
     
@@ -336,7 +335,7 @@ void Editor::_handle_default(const Interaction& it)
 
 //  "_handle_line"
 //
-void Editor::_handle_line(const Interaction& it)
+inline void Editor::_handle_line(const Interaction& it)
 {
     if (it.space) return; // ignore while panning
 
@@ -385,7 +384,7 @@ void Editor::_handle_line(const Interaction& it)
 
 //  "_handle_point"
 //
-void Editor::_handle_point(const Interaction& it)
+inline void Editor::_handle_point(const Interaction& it)
 {
     // handle-drag branch (unchanged)
     if (m_pen.dragging_handle) {
@@ -433,7 +432,7 @@ void Editor::_handle_point(const Interaction& it)
 
 //  "_handle_pen"
 //
-void Editor::_handle_pen(const Interaction& it)
+inline void Editor::_handle_pen(const Interaction& it)
 {
     ImGuiIO& io = ImGui::GetIO();
 
@@ -568,7 +567,7 @@ void Editor::_handle_pen(const Interaction& it)
 
 //  "_handle_scissor"
 //
-void Editor::_handle_scissor(const Interaction & it)
+inline void Editor::_handle_scissor(const Interaction & it)
 {
     if (!it.hovered) return;
 
@@ -588,7 +587,7 @@ void Editor::_handle_scissor(const Interaction & it)
 
 //  "_handle_add_anchor"
 //
-void Editor::_handle_add_anchor([[maybe_unused]] const Interaction & it)
+inline void Editor::_handle_add_anchor([[maybe_unused]] const Interaction & it)
 {
     return;
 }
@@ -596,7 +595,7 @@ void Editor::_handle_add_anchor([[maybe_unused]] const Interaction & it)
 
 //  "_handle_remove_anchor"
 //
-void Editor::_handle_remove_anchor([[maybe_unused]] const Interaction & it)
+inline void Editor::_handle_remove_anchor([[maybe_unused]] const Interaction & it)
 {
     return;
 }
@@ -604,13 +603,13 @@ void Editor::_handle_remove_anchor([[maybe_unused]] const Interaction & it)
 
 //  "_handle_edit_anchor"
 //
-void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
+inline void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
 {
     [[maybe_unused]] ImGuiIO & io = ImGui::GetIO();
 
     auto select_vertex = [&](uint32_t vid)
     {
-        m_sel.clear();
+        this->reset_selection();    // m_sel.clear();
         m_sel.vertices.insert(vid);
 
         // also select matching Point glyph so _render_selected_handles() knows which one
@@ -664,21 +663,53 @@ void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
 
 //  "_handle_overlays"
 //
-void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
+inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
 {
     [[maybe_unused]] ImGuiIO & io = ImGui::GetIO();
     
-    //  ImVec2 tl = it.origin;                       // top-left in screen px
-    //  ImVec2 br = { tl.x + m_avail.x,
-    //                tl.y + m_avail.y };            // bottom-right of canvas
+    //  RESIDENTIAL WINDOWS...
     //
-    //  m_overlays.Begin(
-    //      /* world→pixel lambda */ [this](ImVec2 ws){ return world_to_pixels(ws); },
-    //      /* cursor position   */ ImGui::GetIO().MousePos,
-    //      /* canvas rectangle  */ ImRect(tl, br));
+    //  static auto &           debugger_entry          = m_residents[Resident::Debugger];                  //  1.  Debugger/Info Overlay.
+    //  static Overlay &        debugger_resident       = m_overlays.lookup_resident(debugger_entry.id);
+    //
+    static bool             sel_overlay_cache       = this->m_show_sel_overlay;                         //  2.  Selection Overlay.
+    static auto &           selection_entry         = m_residents[Resident::Selection];
+    static Overlay &        selection_resident      = *m_overlays.lookup_resident(selection_entry.id);
+    //
+    static auto &           shape_entry             = m_residents[Resident::Shape];                     //  3.  Shape Resident.
+    static Overlay &        shape_resident          = *m_overlays.lookup_resident(shape_entry.id);
+
     
+    
+    //      1.      UPDATE "DEBUGGER" OVERLAY...
+    {
+        //
+        //  ...
+        //
+    }
     
 
+    //      2.      UPDATE SELECTION OVERLAY...
+    if ( this->m_show_sel_overlay != sel_overlay_cache ) [[unlikely]] {
+        sel_overlay_cache               = this->m_show_sel_overlay;
+        selection_resident.visible      = this->m_show_sel_overlay;
+    }
+    if (selection_resident.visible) {
+        ImVec2 tl, br;
+        if ( _selection_bounds(tl, br) ) {
+            selection_resident.cfg.anchor_ws = { (tl.x + br.x) * 0.5f, br.y }; // bottom-centre in world
+        }
+    }
+    
+    
+    
+    //      3.      UPDATE "SHAPE" OVERLAY...
+    shape_resident.visible          = ( m_mode == Mode::Shape );                //  Leaving the Shape-Tool closes the overlay window.
+    
+    
+    
+    //  DRAW EACH OVERLAY WINDOW...
+    //
     ImVec2 bb_min = ImGui::GetItemRectMin();   // full ImPlot widget (axes included)
     ImVec2 bb_max = ImGui::GetItemRectMax();
     m_overlays.Begin(
@@ -692,7 +723,7 @@ void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
 
 //  "_handle_io"
 //
-void Editor::_handle_io(void)
+inline void Editor::_handle_io(void)
 {
     using                       Type            = cb::FileDialog::Type;
     //using                       Initializer     = cb::FileDialog::Initializer;

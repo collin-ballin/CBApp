@@ -227,7 +227,7 @@ void Editor::_shape_commit()
                    ? _shape_build_rectangle(m_shape.press_ws, r)
                    : _shape_build_ellipse   (m_shape.press_ws, r);
 
-    m_sel.clear();
+    this->reset_selection(); //m_sel.clear();
     m_sel.paths.insert(new_idx);
     _rebuild_vertex_selection();
     _shape_reset();

@@ -427,15 +427,13 @@ void Editor::_draw_system_preferences(void)
 
 
     //  1.  SAVE DIALOGUE...
-    if ( ImGui::Button("Save") ) {
-        save_dialog.initialize(Type::Save, save_data );
-    }
+    if ( ImGui::Button("Save") )    { save_dialog.initialize(Type::Save, save_data ); }
     //
     if ( save_dialog.is_open() )
     {
         if ( save_dialog.Begin("Save Editor Session") ) {        // returns true when finished
             if ( auto path = save_dialog.result() )
-                save_async( *path );        // your own handler
+                { save_async( *path ); }        // your own handler
         }
     }
 
@@ -444,15 +442,13 @@ void Editor::_draw_system_preferences(void)
     
     
     //  2.  LOAD DIALOGUE...
-    if ( ImGui::Button("Open") ) {
-        open_dialog.initialize(Type::Open, open_data );
-    }
+    if ( ImGui::Button("Open") )    { open_dialog.initialize(Type::Open, open_data ); }
     //
     if ( open_dialog.is_open() )
     {
         if ( open_dialog.Begin("Load session from file") ) {        // returns true when finished
             if ( auto path = open_dialog.result() )
-                load_async( *path );        // your own handler
+                { load_async( *path ); }        // your own handler
         }
     }
 

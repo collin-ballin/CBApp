@@ -135,6 +135,7 @@ public:
         using                           Logger                          = utl::Logger;
         using                           LogLevel                        = utl::LogLevel;
         using                           CBCapabilityFlags               = CBCapabilityFlags_;
+        using                           Anchor                          = BBoxAnchor;
     //
     //                      ID / INDEX TYPES:
         template<typename T, typename Tag>
@@ -194,28 +195,61 @@ public:
         OverlayCFG                  cfg;        //  compile-time defaults
     };
     //
+
+
+//      OverlayPlacement            placement       {OverlayPlacement::ScreenXY};
+//      BBoxAnchor                  src_anchor      = BBoxAnchor::North;          // top-centre of the window
+//      OffscreenPolicy             offscreen       {OffscreenPolicy::Clamp}; // NEW
+//
+//
+//      ImVec2                      anchor_px       {0,0};     // pixel inset / offset
+//      ImVec2                      anchor_ws       {0,0};     // world-space anchor
+//      float                       alpha           {0.65f};
+//
+//      std::function<void()>       draw_fn         {};
+    
+    
     std::array<ResidentEntry, Resident::COUNT>      m_residents { {
         //
-        //  Shape:
+        //  Debugger:
         {   0,                                  //  ID.
             nullptr,                            //  Reference.
-            { OverlayPlacement::CanvasBR,       //  CFG.
-                ImVec2{12,12},                              // px inset
-                ImVec2{0,0},                                // ws anchor unused here
-                0.65f,
-                OffscreenPolicy::Clamp,
-                {}                                          // draw_fn patched in ctor
-        }},
+            {   /*  locked      */  false,
+                /*  placement   */  OverlayPlacement::CanvasBL,
+                /*  src_anchor  */  Anchor::North,
+                /*  offscreen   */  OffscreenPolicy::Clamp,
+                /*  anchor_px   */  ImVec2{0,8},                        //  nudge below bbox
+                /*  anchor_ws   */  ImVec2{0,0},                        //  ws anchor filled each frame
+                /*  alpha       */  0.65f,
+                /*  draw_fn     */  {}                                  // draw_fn patched in ctor
+            }
+        },
         //
         //  Selection:
         {   0,                                  //  ID.
             nullptr,                            //  Reference.
-            { OverlayPlacement::CanvasPoint,    //  CFG.
-                ImVec2{0,8},                                // nudge below bbox
-                ImVec2{0,0},                                // ws anchor filled each frame
-                0.65f,
-                OffscreenPolicy::Hide,
-                {}                                          // draw_fn patched in ctor
+            {   /*  locked      */  true,
+                /*  placement   */  OverlayPlacement::CanvasPoint,
+                /*  src_anchor  */  Anchor::North,
+                /*  offscreen   */  OffscreenPolicy::Hide,
+                /*  anchor_px   */  ImVec2{0,8},                        //  nudge below bbox
+                /*  anchor_ws   */  ImVec2{0,0},                        //  ws anchor filled each frame
+                /*  alpha       */  0.65f,
+                /*  draw_fn     */  {}                                  // draw_fn patched in ctor
+            }
+        },
+        //
+        //  Shape:
+        {   0,                                  //  ID.
+            nullptr,                            //  Reference.
+            {   /*  locked      */  true,
+                /*  placement   */  OverlayPlacement::CanvasBR,
+                /*  src_anchor  */  Anchor::SouthEast,
+                /*  offscreen   */  OffscreenPolicy::Clamp,
+                /*  anchor_px   */  ImVec2{0,8},                        //  nudge below bbox
+                /*  anchor_ws   */  ImVec2{0,0},                        //  ws anchor filled each frame
+                /*  alpha       */  0.65f,
+                /*  draw_fn     */  {}                                  // draw_fn patched in ctor
             }
         }
     } };
@@ -261,18 +295,17 @@ private:
     // *************************************************************************** //
     //      PRIMARY STATE HANDLERS.         |   "editor.cpp" ...
     // *************************************************************************** //
-    void                                _handle_default                     (const Interaction & );
-    void                                _handle_line                        (const Interaction & );
-    void                                _handle_point                       (const Interaction & );
-    void                                _handle_pen                         (const Interaction & );
-    void                                _handle_scissor                     (const Interaction & );
-    void                                _handle_shape                       ([[maybe_unused]] const Interaction & );
-    void                                _handle_add_anchor                  ([[maybe_unused]] const Interaction & );
-    void                                _handle_remove_anchor               ([[maybe_unused]] const Interaction & );
-    void                                _handle_edit_anchor                 ([[maybe_unused]] const Interaction & );
-    void                                _handle_overlays                    ([[maybe_unused]] const Interaction & );
+    inline void                         _handle_default                     (const Interaction & );
+    inline void                         _handle_line                        (const Interaction & );
+    inline void                         _handle_point                       (const Interaction & );
+    inline void                         _handle_pen                         (const Interaction & );
+    inline void                         _handle_scissor                     (const Interaction & );
+    inline void                         _handle_add_anchor                  ([[maybe_unused]] const Interaction & );
+    inline void                         _handle_remove_anchor               ([[maybe_unused]] const Interaction & );
+    inline void                         _handle_edit_anchor                 ([[maybe_unused]] const Interaction & );
+    inline void                         _handle_overlays                    ([[maybe_unused]] const Interaction & );
     //
-    void                                _handle_io                          (void);
+    inline void                         _handle_io                          (void);
     // *************************************************************************** //
     //
     //
@@ -317,6 +350,7 @@ private:
     //      SHAPE TOOL STUFF.               |   "tools.cpp" ...
     // *************************************************************************** //
     //                              MAIN SHAPE-TOOL FUNCTIONS:
+    void                                _handle_shape                       ([[maybe_unused]] const Interaction & );
     void                                _shape_begin_anchor                 ([[maybe_unused]] const Interaction& it);
     void                                _shape_update_radius                ([[maybe_unused]] const Interaction& it);
     //
@@ -332,7 +366,7 @@ private:
     //                                  ...
     //
     //                              DEPRECATED:
-    void                                _shape_preview_draw                 (ImDrawList* dl) const;
+    void                                _shape_preview_draw                 (ImDrawList * dl) const;
     void                                _draw_shape_cursor                  (const Interaction &) const;
     // *************************************************************************** //
     //
@@ -371,9 +405,7 @@ private:
     void                                _overlay_draw_content               ([[maybe_unused]]const Interaction &);
     void                                _overlay_display_main_content       ([[maybe_unused]]const Interaction &);
     void                                _overlay_display_extra_content      ([[maybe_unused]]const Interaction &);
-    //
     // *************************************************************************** //
-    //
     //
     //
     // *************************************************************************** //
@@ -587,6 +619,18 @@ private:
     //  "_mode_has"
     inline bool                         _mode_has                           (CBCapabilityFlags flag) const
     { return (MODE_CAPS[static_cast<size_t>(m_mode)] & flag) != 0; }
+
+    //  "_toggle_resident_overlay"
+    inline void                         _toggle_resident_overlay            (const Resident idx) {
+        auto & entry = m_residents[idx];    Overlay * ov = entry.ptr;
+        ov->visible = !ov->visible;         return;
+    }
+
+    //  "_set_resident_visibility"
+    inline void                         _set_resident_visibility            (const Resident idx, const bool vis) {
+        auto & entry = m_residents[idx];    Overlay * ov = entry.ptr;
+        ov->visible = vis;                  return;
+    }
     //
     //
     //
@@ -635,47 +679,38 @@ private:
     inline void                         _prune_selection_mutability         (void)
     {
         // ── paths ───────────────────────────────────────────
-        for (auto it = m_sel.paths.begin(); it != m_sel.paths.end(); )
+        for ( auto it = m_sel.paths.begin(); it != m_sel.paths.end(); )
         {
-            PathID pid = static_cast<PathID>(*it);
-            if (pid >= m_paths.size() || !m_paths[pid].is_mutable())
-                it = m_sel.paths.erase(it);
-            else
-                ++it;
+            PathID  pid     = static_cast<PathID>(*it);
+            if ( pid >= m_paths.size() || !m_paths[pid].is_mutable() )      { it = m_sel.paths.erase(it); }
+            else                                                            { ++it; }
         }
 
         // ── points & vertices ──────────────────────────────
-        for (auto it = m_sel.points.begin(); it != m_sel.points.end(); )
+        for ( auto it = m_sel.points.begin(); it != m_sel.points.end(); )
         {
-            PointID idx = static_cast<PointID>(*it);
-            if (idx >= m_points.size())
-            { it = m_sel.points.erase(it); continue; }
+            PointID         idx     = static_cast<PointID>(*it);
+            if ( idx >= m_points.size() )                                   { it = m_sel.points.erase(it); continue; }
 
-            const Path* pp = parent_path_of_vertex(m_points[idx].v);
-            if (!pp || !pp->is_mutable())
-                it = m_sel.points.erase(it);
-            else
-                ++it;
+            const Path *    pp      = parent_path_of_vertex(m_points[idx].v);
+            if ( !pp || !pp->is_mutable() )                                 { it = m_sel.points.erase(it); }
+            else                                                            { ++it; }
         }
 
-        for (auto it = m_sel.vertices.begin(); it != m_sel.vertices.end(); )
+        for ( auto it = m_sel.vertices.begin(); it != m_sel.vertices.end(); )
         {
-            VertexID vid = static_cast<VertexID>(*it);
-            const Path* pp = parent_path_of_vertex(vid);
-            if (!pp || !pp->is_mutable())
-                it = m_sel.vertices.erase(it);
-            else
-                ++it;
+            VertexID        vid     = static_cast<VertexID>(*it);
+            const Path *    pp      = parent_path_of_vertex(vid);
+            if ( !pp || !pp->is_mutable() )                                 { it = m_sel.vertices.erase(it); }
+            else                                                            { ++it; }
         }
 
         // ── stand-alone lines (if you keep them) ───────────
-        for (auto it = m_sel.lines.begin(); it != m_sel.lines.end(); )
+        for ( auto it = m_sel.lines.begin(); it != m_sel.lines.end(); )
         {
             LineID lid = static_cast<LineID>(*it);
-            if (lid >= m_lines.size() || !m_lines[lid].is_mutable())
-                it = m_sel.lines.erase(it);
-            else
-                ++it;
+            if ( lid >= m_lines.size() || !m_lines[lid].is_mutable() )      { it = m_sel.lines.erase(it); }
+            else                                                            { ++it; }
         }
 
         _rebuild_vertex_selection();     // sync vertices ↔ points
@@ -713,10 +748,8 @@ private:
     }
     
     //  "reset_selection"
-    inline void                         reset_selection                     (void) {
-        this->m_sel.clear(); this->m_show_handles.clear();
-        return;
-    }
+    inline void                         reset_selection                     (void)
+    { this->m_sel.clear(); this->m_show_handles.clear(); this->m_show_sel_overlay = false; return; }
     
     
     
@@ -910,6 +943,7 @@ private:
     //      VARIABLES FOR SPECIFIC MECHANICS...
     // *************************************************************************** //
     //                              LASSO TOOL / SELECTION:
+    bool                                m_show_sel_overlay              = false;
     ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
     ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
     VertexID                            m_next_id                       = 1;

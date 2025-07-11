@@ -87,6 +87,7 @@ class OverlayManager {
 public:
         using                   OverlayID                       = uint32_t;
         using                   Overlay                         = Overlay_t<OverlayID>;
+        using                   Anchor                          = BBoxAnchor;
 //
 //      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 // *************************************************************************** //
@@ -148,6 +149,22 @@ public:
             
         IM_ASSERT(false && "get_resident: id not found");           // debug-time catch
         return std::addressof( m_residents.front() );                // fallback (never hit in release)
+    }
+    
+    //  "anchor_to_pivot"
+    inline static ImVec2    anchor_to_pivot         (const Anchor a) {
+        switch (a) {
+            case Anchor::North:         return {0.5f, 0.0f};
+            case Anchor::NorthEast:     return {1.0f, 0.0f};
+            case Anchor::East:          return {1.0f, 0.5f};
+            case Anchor::SouthEast:     return {1.0f, 1.0f};
+            case Anchor::South:         return {0.5f, 1.0f};
+            case Anchor::SouthWest:     return {0.0f, 1.0f};
+            case Anchor::West:          return {0.0f, 0.5f};
+            case Anchor::NorthWest:     return {0.0f, 0.0f};
+            case Anchor::Center:
+            default:                    return {0.5f, 0.5f};
+        }
     }
 
 

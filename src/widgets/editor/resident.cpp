@@ -33,13 +33,22 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //          4.1.    DEBUGGER OVERLAY.
 // *************************************************************************** //
 
+//  "_toggle_selection_resident"
+//
+//  void Editor::_toggle_selection_resident(const bool vis) {
+//      return;
+//  }
+
+
 //  "_draw_debugger_resident"
 //
 void Editor::_draw_debugger_resident(void)
 {
-    ImGui::TextUnformatted("Debugger");
+    ImGui::TextUnformatted("Selection HUD");
     ImGui::Separator();
-           
+    ImGui::Text("Verts : %zu", m_sel.vertices.size());
+    ImGui::Text("Paths : %zu", m_sel.paths.size());
+    
     return;
 }
 
