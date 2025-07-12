@@ -669,8 +669,9 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
     
     //  RESIDENTIAL WINDOWS...
     //
-    //  static auto &           debugger_entry          = m_residents[Resident::Debugger];                  //  1.  Debugger/Info Overlay.
-    //  static Overlay &        debugger_resident       = m_overlays.lookup_resident(debugger_entry.id);
+    static bool             debug_overlay_cache     = this->m_show_debug_overlay;                       //  1.  Debugger/Info Overlay.
+    static auto &           debugger_entry          = m_residents[Resident::Debugger];
+    static Overlay &        debugger_resident       = *m_overlays.lookup_resident(debugger_entry.id);
     //
     static bool             sel_overlay_cache       = this->m_show_sel_overlay;                         //  2.  Selection Overlay.
     static auto &           selection_entry         = m_residents[Resident::Selection];
@@ -682,10 +683,9 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
     
     
     //      1.      UPDATE "DEBUGGER" OVERLAY...
-    {
-        //
-        //  ...
-        //
+    if ( this->m_show_debug_overlay != debug_overlay_cache ) [[unlikely]] {
+        debug_overlay_cache             = this->m_show_debug_overlay;
+        debugger_resident.visible       = this->m_show_debug_overlay;
     }
     
 
@@ -697,14 +697,14 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
     if (selection_resident.visible) {
         ImVec2 tl, br;
         if ( _selection_bounds(tl, br) ) {
-            selection_resident.cfg.anchor_ws = { (tl.x + br.x) * 0.5f, br.y }; // bottom-centre in world
+            selection_resident.cfg.anchor_ws = { (tl.x + br.x) * 0.5f, tl.y }; // bottom-centre in world
         }
     }
     
     
     
     //      3.      UPDATE "SHAPE" OVERLAY...
-    shape_resident.visible          = ( m_mode == Mode::Shape );                //  Leaving the Shape-Tool closes the overlay window.
+    shape_resident.visible              = ( m_mode == Mode::Shape );                //  Leaving the Shape-Tool closes the overlay window.
     
     
     
@@ -754,8 +754,13 @@ inline void Editor::_handle_io(void)
     if ( this->m_open_dialog.is_open() )
     {
         if ( this->m_open_dialog.Begin("Load session from file") ) {        // returns true when finished
+        
             if ( auto path = this->m_open_dialog.result() )
+            {
+                this->RESET_ALL();
+                
                 load_async( *path );        // your own handler
+            }
         }
     }
 

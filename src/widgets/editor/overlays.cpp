@@ -48,11 +48,21 @@ void OverlayManager::destroy_overlay(OverlayID id)
 
 //  "add_resident"
 //
-OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG& cfg)
+OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG & cfg)
 {
     Overlay ov;
     ov.id  = m_next_id++;
     ov.cfg = cfg;
+    m_residents.push_back(std::move(ov));
+    return m_residents.back().id;
+}
+
+//  "add_resident"
+OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG & cfg, const OverlayStyle & style) {
+    Overlay ov;
+    ov.id       = m_next_id++;
+    ov.cfg      = cfg;
+    ov.style    = style;
     m_residents.push_back(std::move(ov));
     return m_residents.back().id;
 }
@@ -230,7 +240,7 @@ void OverlayManager::_draw_context_menu(Overlay& ov)
 
         //  6.  TRANSPARENCY / ALPHA SLIDER...
         utl::LeftLabelSimple("Alpha:");
-        ImGui::SliderFloat("##OverlayManager_Alpha", &ov.cfg.alpha, 0.10f, 1.00f, "%.2f");
+        ImGui::SliderFloat("##OverlayManager_Alpha", &ov.style.alpha, 0.10f, 1.00f, "%.2f");
         
         
 
@@ -245,107 +255,104 @@ void OverlayManager::_draw_context_menu(Overlay& ov)
 //  "_render_overlay"
 //
 void OverlayManager::_render_overlay(
-        Overlay &                       ov,
-        const std::function<ImVec2(ImVec2)>& world_to_px,
-        ImVec2                         cursor_px,
-        const ImRect&                  plot_rect)
+        Overlay&                                ov,
+        const std::function<ImVec2(ImVec2)>&    world_to_px,
+        ImVec2                                  cursor_px,
+        const ImRect&                           plot_rect)
 {
 #ifdef __CBAPP_DEBUG__
     IM_ASSERT(ov.cfg.draw_fn && "Overlay draw_fn must not be null");
 #endif
 
-    // ─────────────────────────────────────────────────────────────── 1. anchor → pos,pivot
-    ImVec2 pos, pivot;
-    std::tie(pos, pivot) = _anchor_to_pos(ov, world_to_px, cursor_px, plot_rect);
+    // ───────────────────────────────────────────────────────────── 1. anchor
+    auto            [pos, pivot]    = _anchor_to_pos(ov, world_to_px, cursor_px, plot_rect);
 
-    // keep raw anchor-px for off-screen test when CanvasPoint
-    const ImVec2 anchor_px =
-        (ov.cfg.placement == OverlayPlacement::CanvasPoint)
-        ? world_to_px(ov.cfg.anchor_ws)
-        : ImVec2{0,0};
+    const bool      is_custom       = (ov.cfg.placement == OverlayPlacement::Custom);
 
-    // ─────────────────────────────────────────────────────────────── 2. Hide / Clamp policy
+    // pixel coords of anchor itself (CanvasPoint only)
+    const ImVec2    anchor_px       = (ov.cfg.placement == OverlayPlacement::CanvasPoint) ? world_to_px(ov.cfg.anchor_ws) : ImVec2{0,0};
+
+    // ───────────────────────────────────────────────────────────── 2. off‑screen
     if (ov.cfg.placement == OverlayPlacement::CanvasPoint)
     {
-        bool inside =
-            (anchor_px.x >= plot_rect.Min.x && anchor_px.x <= plot_rect.Max.x &&
-             anchor_px.y >= plot_rect.Min.y && anchor_px.y <= plot_rect.Max.y);
+        const bool inside =
+              anchor_px.x >= plot_rect.Min.x && anchor_px.x <= plot_rect.Max.x &&
+              anchor_px.y >= plot_rect.Min.y && anchor_px.y <= plot_rect.Max.y;
 
-        if (!inside && ov.cfg.offscreen == OffscreenPolicy::Hide)
-            return;                                     // skip draw this frame
-        // Clamp handled after window size is known (section 6)
+        if (!inside) {
+            if (ov.cfg.offscreen == OffscreenPolicy::Hide)      { return; }  // skip draw
+
+            if (ov.cfg.offscreen == OffscreenPolicy::Clamp)
+            {
+                ImVec2 clamped_anchor{
+                    std::clamp(anchor_px.x, plot_rect.Min.x, plot_rect.Max.x),
+                    std::clamp(anchor_px.y, plot_rect.Min.y, plot_rect.Max.y)
+                };
+                pos = clamped_anchor + ov.cfg.anchor_px;          // new pos
+            }
+        }
     }
 
-    // ─────────────────────────────────────────────────────────────── 3. window flags + pos
-    ImGuiWindowFlags win_flags = ov.flags;
-    if (ov.cfg.placement == OverlayPlacement::Custom)
-        win_flags &= ~ImGuiWindowFlags_NoMove;
-    else
-        win_flags |=  ImGuiWindowFlags_NoMove;
+    // ───────────────────────────────────────────────────────────── 3. flags/pos
+    ImGuiWindowFlags            win_flags       = ov.flags;
+    if (is_custom)              { win_flags &= ~ImGuiWindowFlags_NoMove; }
+    else                        { win_flags |=  ImGuiWindowFlags_NoMove; }
+    ImGuiCond                   cond            = is_custom ? ImGuiCond_Once : ImGuiCond_Always;
+    const ImGuiViewport *       vp              = ImGui::GetMainViewport();
+    const std::string           win_name        = "##EditorOverlay_" + std::to_string(ov.id);
+    
+    if (!is_custom)             { ImGui::SetNextWindowViewport(vp->ID); }
 
-    ImGuiCond cond = (ov.cfg.placement == OverlayPlacement::Custom)
-                     ? ImGuiCond_Once
-                     : ImGuiCond_Always;
 
-    const ImGuiViewport* vp = ImGui::GetMainViewport();
-    if (ov.cfg.placement != OverlayPlacement::Custom)
-        ImGui::SetNextWindowViewport(vp->ID);
 
-    ImGui::SetNextWindowBgAlpha(ov.cfg.alpha);
     ImGui::SetNextWindowPos(pos, cond, pivot);
+    ImGui::PushStyleColor(  ImGuiCol_WindowBg, ov.style.bg );
+    ImGui::SetNextWindowBgAlpha(ov.style.alpha);
 
-    const std::string win_name = "##EditorOverlay_" + std::to_string(ov.id);
-
-    // ─────────────────────────────────────────────────────────────── 4. begin, draw
+    // ───────────────────────────────────────────────────────────── 4. draw
     ImGui::Begin(win_name.c_str(), nullptr, win_flags);
+        ImGui::PopStyleColor(); //  ImGuiCol_WindowBg
+        
         ov.cfg.draw_fn();
-        _draw_context_menu(ov);
+        if ( !ov.cfg.locked )   { _draw_context_menu(ov); }
     ImGui::End();
 
-    ImGuiWindow* win = ImGui::FindWindowByName(win_name.c_str());
-    if (!win) return;
 
-    // ─────────────────────────────────────────────────────────────── 5. persist drag (Custom)
-    if (ov.cfg.placement == OverlayPlacement::Custom &&
-        !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-        ov.cfg.anchor_px = win->Pos;
 
-    // ─────────────────────────────────────────────────────────────── 6. Clamp window rect
-    if (ov.cfg.placement == OverlayPlacement::CanvasPoint &&
-        ov.cfg.offscreen  == OffscreenPolicy::Clamp)
+    ImGuiWindow * win = ImGui::FindWindowByName(win_name.c_str());
+    if ( !win )         { return; }
+
+
+    // ───────────────────────────────────────────────────────────── 5. clamp rect
+    const bool want_rect_clamp =
+        (ov.cfg.placement == OverlayPlacement::CanvasPoint &&
+         ov.cfg.offscreen == OffscreenPolicy::Clamp) ||
+        (ov.cfg.placement != OverlayPlacement::Cursor &&
+         ov.cfg.placement != OverlayPlacement::Custom &&
+         ov.cfg.placement != OverlayPlacement::CanvasPoint);
+
+    if (want_rect_clamp)
     {
-        ImVec2 min_allowed = plot_rect.Min;
-        ImVec2 max_allowed = plot_rect.Max;
+        ImVec2 win_min = win->Pos;
+        ImVec2 win_max = win_min + win->Size;
+        ImVec2 shift   {0,0};
 
-        ImVec2 win_min  = win->Pos;
-        ImVec2 win_max  = { win->Pos.x + win->Size.x,
-                            win->Pos.y + win->Size.y };
+        // left vs right
+        if ( win_min.x < plot_rect.Min.x )          { shift.x = plot_rect.Min.x - win_min.x; }
+        else if ( win_max.x > plot_rect.Max.x )     { shift.x = plot_rect.Max.x - win_max.x; }
 
-        ImVec2 delta{0.0f, 0.0f};
+        // top vs bottom
+        if ( win_min.y < plot_rect.Min.y )          { shift.y = plot_rect.Min.y - win_min.y; }
+        else if ( win_max.y > plot_rect.Max.y )     { shift.y = plot_rect.Max.y - win_max.y; }
 
-        if (win_min.x < min_allowed.x)                 // left face
-            delta.x = min_allowed.x - win_min.x;
-        else if (win_max.x > max_allowed.x)            // right face
-            delta.x = max_allowed.x - win_max.x;
-
-        if (win_min.y < min_allowed.y)                 // top face
-            delta.y = min_allowed.y - win_min.y;
-        else if (win_max.y > max_allowed.y)            // bottom face
-            delta.y = max_allowed.y - win_max.y;
-
-        if (delta.x != 0.f || delta.y != 0.f)
-            win->Pos = { win->Pos.x + delta.x, win->Pos.y + delta.y };
+        if ( shift.x || shift.y )                   { win->Pos = win_min + shift; }
     }
-    else if (ov.cfg.placement != OverlayPlacement::Cursor &&
-             ov.cfg.placement != OverlayPlacement::Custom)
-    {
-        // original clamp for other placements (top-left clamp)
-        ImVec2 max_pos{ plot_rect.Max.x - win->Size.x,
-                        plot_rect.Max.y - win->Size.y };
-        win->Pos.x = std::clamp(win->Pos.x, plot_rect.Min.x, max_pos.x);
-        win->Pos.y = std::clamp(win->Pos.y, plot_rect.Min.y, max_pos.y);
-    }
+
+    // ───────────────────────────────────────────────────────────── 6. persist drag
+    if (is_custom && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        ov.cfg.anchor_px = win->Pos;        // remember new TL
 }
+
 
 
 

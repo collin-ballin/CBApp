@@ -44,11 +44,13 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::_draw_debugger_resident(void)
 {
+    S.PushFont(Font::FootNote);
     ImGui::TextUnformatted("Selection HUD");
     ImGui::Separator();
     ImGui::Text("Verts : %zu", m_sel.vertices.size());
     ImGui::Text("Paths : %zu", m_sel.paths.size());
-    
+
+    S.PopFont();
     return;
 }
 
@@ -63,9 +65,21 @@ void Editor::_draw_debugger_resident(void)
 //
 void Editor::_draw_selection_resident(void)
 {
-    ImGui::TextUnformatted("Selection");
+    const size_t        N_vertices      = m_sel.vertices.size();
+    const size_t        N_points        = m_sel.points.size();
+    const size_t        N_lines         = m_sel.lines.size();
+    const size_t        N_paths         = m_sel.paths.size();
+    S.PushFont(Font::Small);
+    
+    
+    ImGui::TextDisabled("Selection");
     ImGui::Separator();
-           
+    
+    ImGui::Text("Paths: %zu.  Lines: %zu.  Points: %zu.  Vertices: %zu.", N_paths, N_lines, N_points, N_vertices);
+    
+
+
+    S.PopFont();
     return;
 }
 
@@ -80,6 +94,7 @@ void Editor::_draw_selection_resident(void)
 void Editor::_draw_shape_resident(void)
 {
     int kind_idx = static_cast<int>(m_shape.kind);
+    S.PushFont(Font::Small);
 
 
 
@@ -121,6 +136,7 @@ void Editor::_draw_shape_resident(void)
     ImGui::SliderFloat("Radius", &m_shape.radius, 1.0f, 100.0f, "%.2f");
            
 
+    S.PopFont();
     return;
 }
 

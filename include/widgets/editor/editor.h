@@ -193,22 +193,10 @@ public:
         OverlayID                   id;         //  runtime ID (filled in ctor)
         Overlay *                   ptr;        //  Reference.
         OverlayCFG                  cfg;        //  compile-time defaults
+        OverlayStyle                style;
     };
     //
-
-
-//      OverlayPlacement            placement       {OverlayPlacement::ScreenXY};
-//      BBoxAnchor                  src_anchor      = BBoxAnchor::North;          // top-centre of the window
-//      OffscreenPolicy             offscreen       {OffscreenPolicy::Clamp}; // NEW
-//
-//
-//      ImVec2                      anchor_px       {0,0};     // pixel inset / offset
-//      ImVec2                      anchor_ws       {0,0};     // world-space anchor
-//      float                       alpha           {0.65f};
-//
-//      std::function<void()>       draw_fn         {};
-    
-    
+    //
     std::array<ResidentEntry, Resident::COUNT>      m_residents { {
         //
         //  Debugger:
@@ -220,8 +208,11 @@ public:
                 /*  offscreen   */  OffscreenPolicy::Clamp,
                 /*  anchor_px   */  ImVec2{0,8},                        //  nudge below bbox
                 /*  anchor_ws   */  ImVec2{0,0},                        //  ws anchor filled each frame
-                /*  alpha       */  0.65f,
                 /*  draw_fn     */  {}                                  // draw_fn patched in ctor
+            },
+            {//     STYLE...
+                /*  alpha       */  0.80f,
+                /*  background  */  0x00000000
             }
         },
         //
@@ -234,22 +225,29 @@ public:
                 /*  offscreen   */  OffscreenPolicy::Hide,
                 /*  anchor_px   */  ImVec2{0,8},                        //  nudge below bbox
                 /*  anchor_ws   */  ImVec2{0,0},                        //  ws anchor filled each frame
-                /*  alpha       */  0.65f,
                 /*  draw_fn     */  {}                                  // draw_fn patched in ctor
+            },
+            {//     STYLE...
+                /*  alpha       */  0.95f,
+                /*  background  */  0x00000000
             }
         },
         //
         //  Shape:
         {   0,                                  //  ID.
             nullptr,                            //  Reference.
-            {   /*  locked      */  true,
+            {//     CONFIGURE...
+                /*  locked      */  false,
                 /*  placement   */  OverlayPlacement::CanvasBR,
                 /*  src_anchor  */  Anchor::SouthEast,
                 /*  offscreen   */  OffscreenPolicy::Clamp,
                 /*  anchor_px   */  ImVec2{0,8},                        //  nudge below bbox
                 /*  anchor_ws   */  ImVec2{0,0},                        //  ws anchor filled each frame
-                /*  alpha       */  0.65f,
                 /*  draw_fn     */  {}                                  // draw_fn patched in ctor
+            },
+            {//     STYLE...
+                /*  alpha       */  0.65f,
+                /*  background  */  0xFF000000
             }
         }
     } };
@@ -354,13 +352,13 @@ private:
     void                                _shape_begin_anchor                 ([[maybe_unused]] const Interaction& it);
     void                                _shape_update_radius                ([[maybe_unused]] const Interaction& it);
     //
-    uint32_t                            _shape_add_vertex                   (const ImVec2& ws);
     void                                _shape_commit                       (void);
     void                                _shape_reset                        (void);
     //
     //                              SPECIFIC SHAPE FUNCTIONS:
-    size_t                              _shape_build_rectangle              (const ImVec2& cen, float r);
-    size_t                              _shape_build_ellipse                (const ImVec2& cen, float r);
+    VertexID                            _shape_add_vertex                   (const ImVec2 & ws);
+    size_t                              _shape_build_rectangle              (const ImVec2 & cen, float r);
+    size_t                              _shape_build_ellipse                (const ImVec2 & cen, float r);
     //
     //                              UTILITIES:
     //                                  ...
@@ -731,6 +729,14 @@ private:
         p.verts.clear();                  // caller will fill verts
         return p;
     }
+    
+    //  "_recompute_next_ids"
+    inline void                         _recompute_next_ids                 (void) {
+        m_next_id   = 1;
+        m_next_pid  = 1;
+        for (const Vertex& v : m_vertices)  { if (v.id >= m_next_id)    { m_next_id  = v.id + 1; }      }
+        for (const Path& p : m_paths)       { if (p.id >= m_next_pid)   { m_next_pid = p.id + 1; }      }
+    }
 
 
     //
@@ -750,6 +756,11 @@ private:
     //  "reset_selection"
     inline void                         reset_selection                     (void)
     { this->m_sel.clear(); this->m_show_handles.clear(); this->m_show_sel_overlay = false; return; }
+    
+    
+    //  "RESET_ALL"
+    inline void                         RESET_ALL                           (void)
+    { this->reset_pen(); this->m_clipboard.clear(); this->m_shape = {}; this->_clear_all(); }
     
     
     
@@ -943,6 +954,7 @@ private:
     //      VARIABLES FOR SPECIFIC MECHANICS...
     // *************************************************************************** //
     //                              LASSO TOOL / SELECTION:
+    bool                                m_show_debug_overlay            = true;
     bool                                m_show_sel_overlay              = false;
     ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
     ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);

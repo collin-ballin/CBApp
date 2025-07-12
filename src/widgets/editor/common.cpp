@@ -296,62 +296,87 @@ void Editor::paste_from_clipboard(ImVec2 target_ws)
     const float dx = target_ws.x - m_clipboard.ref_ws.x;
     const float dy = target_ws.y - m_clipboard.ref_ws.y;
 
-    //  Map clipboard-local vertex index → new VertexID
-    std::vector<VertexID> new_vid(m_clipboard.vertices.size());
+    // -----------------------------------------------------------------
+    // 1. duplicate vertices – build two mappings:
+    //    • new_vid_by_idx  :  local clipboard index  ->  new VertexID
+    //    • new_vid_by_id   :  original VertexID      ->  new VertexID
+    // -----------------------------------------------------------------
+    std::vector<VertexID>                new_vid_by_idx(m_clipboard.vertices.size());
+    std::unordered_map<VertexID,VertexID> new_vid_by_id;
+    new_vid_by_id.reserve(m_clipboard.vertices.size());
 
-    // ─── 1.  Duplicate vertices ───────────────────────────────────────
     for (size_t i = 0; i < m_clipboard.vertices.size(); ++i)
     {
-        Vertex v        = m_clipboard.vertices[i];
-        v.id            = m_next_id++;            // fresh VertexID
-        v.x            += dx;
-        v.y            += dy;
+        const Vertex& v_src = m_clipboard.vertices[i];
+
+        Vertex v = v_src;                    // copy
+        v.id = m_next_id++;                  // assign fresh VID
+        v.x += dx; v.y += dy;
 
         m_vertices.push_back(v);
-        new_vid[i]      = v.id;                   // record mapping
+
+        new_vid_by_idx[i]      = v.id;       // index-based mapping
+        new_vid_by_id[v_src.id] = v.id;      // id-based   mapping
     }
 
-    this->reset_selection();                      // select pasted objects
-
-    // ─── 2.  Duplicate points ─────────────────────────────────────────
-    for (const Point& p : m_clipboard.points)
+    auto map_vertex = [&](uint32_t key)->VertexID
     {
-        Point dup = p;
-        dup.v     = new_vid[dup.v];               // remap to new vertex
-        m_points.push_back(dup);
+        // Try "by index" first
+        if (key < new_vid_by_idx.size())
+            return new_vid_by_idx[key];
 
+        // Fallback to "by original id"
+        if (auto it = new_vid_by_id.find(key); it != new_vid_by_id.end())
+            return it->second;
+
+        // Last resort: duplicate on-demand (shouldn’t normally happen)
+        Vertex dummy{};
+        dummy.id = m_next_id++;
+        m_vertices.push_back(dummy);
+        return dummy.id;
+    };
+
+    // -----------------------------------------------------------------
+    this->reset_selection();                // select pasted objects
+    // -----------------------------------------------------------------
+
+    // 2. duplicate points
+    for (const Point& p_src : m_clipboard.points)
+    {
+        Point dup = p_src;
+        dup.v = map_vertex(p_src.v);
+
+        m_points.push_back(dup);
         m_sel.points.insert(static_cast<PointID>(m_points.size() - 1));
         m_sel.vertices.insert(dup.v);
     }
 
-    // ─── 3.  Duplicate lines ──────────────────────────────────────────
-    for (const Line& l : m_clipboard.lines)
+    // 3. duplicate lines
+    for (const Line& l_src : m_clipboard.lines)
     {
-        Line dup = l;
-        dup.a    = new_vid[dup.a];
-        dup.b    = new_vid[dup.b];
+        Line dup = l_src;
+        dup.a = map_vertex(l_src.a);
+        dup.b = map_vertex(l_src.b);
 
         m_lines.push_back(dup);
-
         m_sel.lines.insert(static_cast<LineID>(m_lines.size() - 1));
         m_sel.vertices.insert(dup.a);
         m_sel.vertices.insert(dup.b);
     }
 
-    // ─── 4.  Duplicate paths (assign new PathID + label) ─────────────
-    for (const Path& src : m_clipboard.paths)
+    // 4. duplicate paths
+    for (const Path& p_src : m_clipboard.paths)
     {
-        Path dup   = src;              // copy style, flags; verts remapped next
-        dup.id     = m_next_pid++;     // fresh PathID
-        dup.set_default_label(dup.id); // e.g. "Path 12"
-
-        dup.z_index = next_z_index();  // land pasted objects on top
+        Path dup   = p_src;                     // copy style / flags
+        dup.id     = m_next_pid++;              // fresh PathID
+        dup.set_default_label(dup.id);
+        dup.z_index = next_z_index();           // topmost layer
 
         dup.verts.clear();
-        dup.closed = src.closed;       // preserve open/closed state
+        dup.closed = p_src.closed;
 
-        for (uint32_t localIdx : src.verts)
-            dup.verts.push_back(new_vid[localIdx]); // remap to new VertexID
+        for (uint32_t key : p_src.verts)
+            dup.verts.push_back(map_vertex(key));
 
         m_paths.push_back(std::move(dup));
 
@@ -359,8 +384,6 @@ void Editor::paste_from_clipboard(ImVec2 target_ws)
         for (VertexID vid : m_paths.back().verts)
             m_sel.vertices.insert(vid);
     }
-
-    return;
 }
 
 
@@ -498,7 +521,10 @@ void Editor::load_from_snapshot(EditorSnapshot && snap)
     m_sel       = std::move(snap.selection);
     //
     //
+    //
     //  TODO:   grid, view, mode …
+    _recompute_next_ids();          // ← ensure unique IDs going forward
+    
     return;
 }
 

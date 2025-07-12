@@ -105,7 +105,8 @@ public:
     void                    destroy_overlay         (OverlayID );
     //
     Overlay *               resident                (OverlayID id);
-    OverlayID               add_resident            (const OverlayCFG& cfg);
+    OverlayID               add_resident            (const OverlayCFG & cfg);
+    OverlayID               add_resident            (const OverlayCFG &, const OverlayStyle &);
     
     
 

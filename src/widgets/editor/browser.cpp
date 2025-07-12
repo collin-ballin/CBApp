@@ -119,7 +119,7 @@ void Editor::_dispatch_resident_draw_fn(Resident idx)
     }
 
 
-    entry.id    = m_overlays.add_resident(entry.cfg);
+    entry.id    = m_overlays.add_resident(entry.cfg, entry.style);
     entry.ptr   = m_overlays.get_resident(entry.id);   // now safe
     return;
 }

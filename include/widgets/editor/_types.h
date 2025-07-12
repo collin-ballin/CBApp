@@ -731,6 +731,7 @@ struct ShapeState_t {
 //
 template<typename Vertex, typename Point, typename Line, typename Path>
 struct Clipboard_t {
+    inline void             clear()         { ref_ws = ImVec2(); vertices.clear(); points.clear(); lines.clear(); paths.clear(); return; }
     inline bool             empty() const   { return vertices.empty() && points.empty() && lines.empty() && paths.empty(); }
 //
     ImVec2                  ref_ws      {};     // reference origin (top-left of bbox)
@@ -818,9 +819,16 @@ struct OverlayCFG {
 //
     ImVec2                      anchor_px       {0,0};     // pixel inset / offset
     ImVec2                      anchor_ws       {0,0};     // world-space anchor
-    float                       alpha           {0.65f};
 //
     std::function<void()>       draw_fn         {};                    // widgets callback
+};
+
+
+//  "OverlayStyle"
+//
+struct OverlayStyle {
+    float                       alpha           = 0.65f;
+    ImU32                       bg              = 0x000000FF;
 };
 
 
@@ -834,14 +842,14 @@ struct Overlay_t {
     OverlayID                   id              = 0;
     bool                        visible         = false;                 // owner sets false to retire
     ImGuiWindowFlags            flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-    OverlayCFG                  cfg{};
+    OverlayCFG                  cfg             {};
+    OverlayStyle                style           {};
 };
 
 
 //  "OverlayState"
 //      **DEPRECATED** > State for the OLD "HELPER" OVERLAY MENU / DEBUGGER MENU...
-struct OverlayState
-{
+struct OverlayState {
     bool                open                = true;         // Editor toggles this; no “x” button
     bool                show_details        = true;         // extra diagnostics pane
     bool                verbose_detail      = false;        // extra diagnostics pane
@@ -970,6 +978,7 @@ struct EditorState
     bool                                m_dragging                      = false;
     bool                                m_lasso_active                  = false;
     bool                                m_show_sel_overlay              = false;
+    bool                                m_show_debug_overlay            = true;
     //
     //                              OTHER:
     bool                                m_pending_clear                 = false;    //  pending click selection state ---

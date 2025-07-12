@@ -65,9 +65,9 @@
 //  ENFORCE THAT THERE ARE NOT MULTIPLE BUILDS ARE #DEFINED...
 //
 #define         __CBAPP_BUILD_APP_COUNT__                   (   \
-          __CBAPP_BUILD_CCOUNTER_APP__                  \
-        + __CBAPP_BUILD_FDTD_APP__                      \
-        + __CBAPP_BUILD_EDITOR_APP__                    \
+          __CBAPP_BUILD_CCOUNTER_APP__                          \
+        + __CBAPP_BUILD_FDTD_APP__                              \
+        + __CBAPP_BUILD_EDITOR_APP__                            \
 )
         
 #if __CBAPP_BUILD_APP_COUNT__ > 1
