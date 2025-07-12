@@ -125,39 +125,15 @@ void Editor::_render_lines(ImDrawList* dl, const ImVec2& origin) const
 //void Editor::_draw_paths(ImDrawList* dl, const ImVec2& origin) const
 void Editor::_render_paths(ImDrawList* dl) const
 {
-    //  "draw_seg"      Lambda to draw one segment (straight or cubic).
-    auto        draw_seg        = [&](const Vertex * a, const Vertex * b)
-    {
-        const bool curved = is_curved<VertexID>(a, b);
-
-        if (!curved) {
-            dl->AddLine(world_to_pixels({ a->x, a->y }),
-                        world_to_pixels({ b->x, b->y }),
-                        p.style.stroke_color,
-                        p.style.stroke_width);
-        }
-        else {
-            ImVec2 P0 = world_to_pixels({ a->x,                         a->y });
-            ImVec2 P1 = world_to_pixels({ a->x + a->out_handle.x,       a->y + a->out_handle.y });
-            ImVec2 P2 = world_to_pixels({ b->x + b->in_handle.x,        b->y + b->in_handle.y  });
-            ImVec2 P3 = world_to_pixels({ b->x,                         b->y });
-
-            dl->AddBezierCubic(P0, P1, P2, P3,
-                               p.style.stroke_color,
-                               p.style.stroke_width,
-                               m_style.ms_BEZIER_SEGMENTS);   // 0 ⇒ default tessellation
-        }
-    };
-    std::vector<const Path*>    draw_vec;
-        
-        
     // ---------------------------------------------------------------------
     // 1. Build draw list: visible paths only
     // ---------------------------------------------------------------------
-    for (const Path & p : m_paths) {
-        if (p.visible) { draw_vec.push_back(&p); }  // NEW visibility filter
-    }
-    
+    std::vector<const Path*> draw_vec;
+    draw_vec.reserve(m_paths.size());
+
+    for (const Path& p : m_paths)
+        if (p.visible)                    // NEW visibility filter
+            draw_vec.push_back(&p);
 
     // ---------------------------------------------------------------------
     // 2. Stable-sort by z-index (background → foreground)
@@ -165,25 +141,24 @@ void Editor::_render_paths(ImDrawList* dl) const
     std::stable_sort(draw_vec.begin(), draw_vec.end(),
         [](const Path* a, const Path* b) { return a->z_index < b->z_index; });
 
-
     // ---------------------------------------------------------------------
     // 3. Draw each path in order
     // ---------------------------------------------------------------------
-    for (const Path * pp : draw_vec)
+    for (const Path* pp : draw_vec)
     {
-        const Path &    p       = *pp;
-        const size_t    N       = p.verts.size();
+        const Path& p = *pp;
+        const size_t N = p.verts.size();
         if (N < 2) continue;
 
         // ───── Filled-area pass (only for closed paths with non-transparent fill)
-        if ( p.is_area() && (p.style.fill_color & 0xFF000000) )
+        if (p.is_area() && (p.style.fill_color & 0xFF000000))
         {
             dl->PathClear();
 
             for (size_t i = 0; i < N; ++i)
             {
-                const Vertex *  a   = find_vertex(m_vertices, p.verts[i]);
-                const Vertex *  b   = find_vertex(m_vertices, p.verts[(i + 1) % N]);
+                const Vertex* a = find_vertex(m_vertices, p.verts[i]);
+                const Vertex* b = find_vertex(m_vertices, p.verts[(i + 1) % N]);
                 if (!a || !b) continue;
 
                 if (!is_curved<VertexID>(a, b)) {
@@ -201,22 +176,42 @@ void Editor::_render_paths(ImDrawList* dl) const
             dl->PathFillConvex(p.style.fill_color);
         }
 
+        // ───── Lambda to draw one segment (straight or cubic)
+        auto draw_seg = [&](const Vertex* a, const Vertex* b)
+        {
+            const bool curved = is_curved<VertexID>(a, b);
+
+            if (!curved) {
+                dl->AddLine(world_to_pixels({ a->x, a->y }),
+                            world_to_pixels({ b->x, b->y }),
+                            p.style.stroke_color,
+                            p.style.stroke_width);
+            }
+            else {
+                ImVec2 P0 = world_to_pixels({ a->x,                         a->y });
+                ImVec2 P1 = world_to_pixels({ a->x + a->out_handle.x,       a->y + a->out_handle.y });
+                ImVec2 P2 = world_to_pixels({ b->x + b->in_handle.x,        b->y + b->in_handle.y  });
+                ImVec2 P3 = world_to_pixels({ b->x,                         b->y });
+
+                dl->AddBezierCubic(P0, P1, P2, P3,
+                                   p.style.stroke_color,
+                                   p.style.stroke_width,
+                                   m_style.ms_BEZIER_SEGMENTS);   // 0 ⇒ default tessellation
+            }
+        };
+
         // ───── Stroke contiguous segments
-        for (size_t i = 0; i < N - 1; ++i) {
-            if ( const Vertex* a = find_vertex(m_vertices, p.verts[i]) )
-                if ( const Vertex* b = find_vertex(m_vertices, p.verts[i + 1]) )    { draw_seg(a, b); }
-        }
+        for (size_t i = 0; i < N - 1; ++i)
+            if (const Vertex* a = find_vertex(m_vertices, p.verts[i]))
+                if (const Vertex* b = find_vertex(m_vertices, p.verts[i + 1]))
+                    draw_seg(a, b);
 
         // Close the loop if required
         if (p.closed)
-        {
-            if ( const Vertex* a = find_vertex(m_vertices, p.verts.back()) ) {
-                if ( const Vertex* b = find_vertex(m_vertices, p.verts.front()) )   { draw_seg(a, b); }
-            }
-        }
+            if (const Vertex* a = find_vertex(m_vertices, p.verts.back()))
+                if (const Vertex* b = find_vertex(m_vertices, p.verts.front()))
+                    draw_seg(a, b);
     }
-    
-    return;
 }
 
 
