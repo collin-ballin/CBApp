@@ -20,6 +20,7 @@
 //  0.1.        ** MY **  HEADERS...
 #include CBAPP_USER_CONFIG
 #include "cblib.h"
+#include "widgets/_popups.h"
 #include "widgets/_heatmap.h"
 #include "widgets/_file_dialogue.h"
 #include "widgets/editor/editor.h"
@@ -55,17 +56,6 @@
 namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -158,8 +158,6 @@ Editor::~Editor(void)
 //
 void Editor::DrawBrowser(void)
 {
-    //  1.  CONTROL BAR...
-    _draw_controls();
     S.PushFont(Font::Small);
     
     

@@ -361,18 +361,9 @@ void Editor::_draw_controls(void)
 
 
         //  5.  CANVAS SETTINGS...
-        ImGui::NextColumn();
-        //ImGui::Text("##Editor_Controls_CanvasSettings");
-        ImGui::Text("");
-        //
-        //
-        if (ImGui::Button("Settings", WIDGET_SIZE))
-            ImGui::OpenPopup("Editor_Canvas_SettingsPopup");
-
-        if (ImGui::BeginPopup("Editor_Canvas_SettingsPopup"))
-        {
-            this->_draw_system_preferences();      // << new helper
-            ImGui::EndPopup();
+        ImGui::NextColumn(); ImGui::NewLine();
+        if ( ImGui::Button("Settings", WIDGET_SIZE) ) {
+            ui::open_preferences_popup( "Editor System Preferences", [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
         }
 
 
@@ -387,10 +378,13 @@ void Editor::_draw_controls(void)
         //  X.  CLEAR ALL...
         //ImGui::NextColumn();
         //ImGui::TextUnformatted("##Editor_Controls_ClearCanvas");
-        ImGui::Text("");
+        ImGui::NewLine();
         if ( ImGui::Button("Clear", WIDGET_SIZE) ) {
-            _clear_all();
+            ui::ask_ok_cancel( "Ask Ok Cancel",
+                               "This will erase all content on the plot.\nAre you sure you want to continue?",
+                               [this]{ _clear_all(); } );
         }
+        popup::Draw();
     //
     //
     //
@@ -403,9 +397,51 @@ void Editor::_draw_controls(void)
 }
 
 
-//  "_draw_system_preferences"
+//  "_draw_editor_settings"
 //
-void Editor::_draw_system_preferences(void)
+void Editor::_draw_editor_settings([[maybe_unused]] popup::Context & ctx)
+{
+        
+    //  1.  EDITOR SETTINGS...
+    ImGui::SeparatorText("Mechanics");
+    this->_draw_settings_mechanics();
+
+
+
+    //  2.  SAVE/LOAD SERIALIZATION...
+    ImGui::SeparatorText("Serialization");
+    this->_draw_settings_serialize();
+    
+    
+    
+    //  3.  USER PREFERENCES...
+    ImGui::SeparatorText("User Preferences");
+    this->_draw_settings_user_preferences();
+    
+    
+    
+    return;
+}
+
+
+// *************************************************************************** //
+//
+//
+//      HELPER FUNCTIONS FOR EDITOR SETTINGS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_draw_settings_mechanics"
+//
+void Editor::_draw_settings_mechanics(void)
+{
+    return;
+}
+
+ 
+//  "_draw_settings_serialize"
+//
+void Editor::_draw_settings_serialize(void)
 {
     using                       Type            = cb::FileDialog::Type;
     using                       Initializer     = cb::FileDialog::Initializer;
@@ -423,7 +459,6 @@ void Editor::_draw_system_preferences(void)
     };
     static cb::FileDialog       save_dialog;
     static cb::FileDialog       open_dialog;
-
 
 
     //  1.  SAVE DIALOGUE...
@@ -454,30 +489,9 @@ void Editor::_draw_system_preferences(void)
 
 
 
-
-
-    //  2.  LOAD DIALOGUE...
-
-    
-
-        //  // ------------------- LOAD -------------------
-        //  if (ImGui::Button("Load…"))
-        //      ImGui::OpenPopup("LoadDlg");
-
-        //  if (ImGui::BeginPopupModal("LoadDlg", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-        //  {
-        //      if (auto res = file_dialog(loadDlg, /*save_mode=*/false)) {
-        //          if (res) load_async(*res);        // user clicked OK
-        //          ImGui::CloseCurrentPopup();
-        //      }
-        //      ImGui::EndPopup();
-        //  }
-
-
-
-        // status
-        if ( !m_io_msg.empty() )
-            ImGui::TextDisabled("%s", m_io_msg.c_str());
+    // status
+    if ( !m_io_msg.empty() )
+        ImGui::TextDisabled("%s", m_io_msg.c_str());
     
 
     // (existing Canvas/Grid prefs below …)
@@ -485,6 +499,13 @@ void Editor::_draw_system_preferences(void)
 }
 
 
+
+//  "_draw_settings_user_preferences"
+//
+void Editor::_draw_settings_user_preferences(void)
+{
+    return;
+}
 
 
 

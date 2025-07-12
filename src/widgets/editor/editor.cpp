@@ -167,7 +167,10 @@ void Editor::Begin(const char * /*id*/)
 
     //  2.  CREATING THE CANVAS/GRID...
     //
-    //          CASE 2A     : FAILURE TO CREATE CANVAS.
+    //      2A.     CONTROL BAR...
+    this->_draw_controls();
+    //
+    //          CASE 2B     : FAILURE TO CREATE CANVAS.
     if ( !ImPlot::BeginPlot("##Editor_CanvasGrid", ImVec2(m_avail.x, m_avail.y), m_plot_flags) ) {
         ImPlot::GetInputMap() = backup;
         return;
@@ -765,7 +768,7 @@ inline void Editor::_handle_io(void)
     }
 
 
-
+    //  popup::Begin();
     return;
 }
 

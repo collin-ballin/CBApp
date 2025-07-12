@@ -152,7 +152,7 @@ bool FileDialog::Begin(const char * popup_id)
     }
     
     //  CASE 0 :    EARLY-EXIT IF NO POPUP WINDOW...
-    if ( !ImGui::BeginPopupModal(popup_id, nullptr, m_modal_flags) )
+    if ( !ImGui::BeginPopupModal(popup_id, &m_visible, m_modal_flags) )
     { m_visible = false;    return false; }
     
     //  1.  AUTO-REFRESH IF EXTERNAL CHANGES...

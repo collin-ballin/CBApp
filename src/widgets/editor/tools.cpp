@@ -340,28 +340,28 @@ void Editor::_draw_shape_cursor(const Interaction& it) const
     ImGui::SetMouseCursor(ImGuiMouseCursor_None);   // hide OS cursor
 
     const ImVec2  P = io.MousePos;
-    const float   S = ms_SHAPE_CURSOR_HALF_SIZE_PX; // constant half-size
+    const float   SZ = ms_SHAPE_CURSOR_HALF_SIZE_PX; // constant half-size
 
     ImDrawList* dl = ImGui::GetForegroundDrawList();
 
     switch (m_shape.kind)
     {
         case ShapeKind::Rectangle:
-            dl->AddRectFilled({P.x - S, P.y - S}, {P.x + S, P.y + S},
+            dl->AddRectFilled({P.x - SZ, P.y - SZ}, {P.x + SZ, P.y + SZ},
                               ms_SHAPE_CURSOR_FILL_COLOR, 2.0f);
-            dl->AddRect({P.x - S, P.y - S}, {P.x + S, P.y + S},
+            dl->AddRect({P.x - SZ, P.y - SZ}, {P.x + SZ, P.y + SZ},
                         ms_SHAPE_CURSOR_LINE_COLOR, 2.0f, 0, ms_SHAPE_CURSOR_LINE_WIDTH);
             break;
 
         case ShapeKind::Ellipse:
-            dl->AddCircleFilled(P, S, ms_SHAPE_CURSOR_FILL_COLOR, 16);
-            dl->AddCircle(P, S, ms_SHAPE_CURSOR_LINE_COLOR, 16, ms_SHAPE_CURSOR_LINE_WIDTH);
+            dl->AddCircleFilled(P, SZ, ms_SHAPE_CURSOR_FILL_COLOR, 16);
+            dl->AddCircle(P, SZ, ms_SHAPE_CURSOR_LINE_COLOR, 16, ms_SHAPE_CURSOR_LINE_WIDTH);
             break;
 
         default: // fallback glyph
-            dl->AddLine({P.x - S, P.y - S}, {P.x + S, P.y + S},
+            dl->AddLine({P.x - SZ, P.y - SZ}, {P.x + SZ, P.y + SZ},
                         ms_SHAPE_CURSOR_LINE_COLOR, ms_SHAPE_CURSOR_LINE_WIDTH);
-            dl->AddLine({P.x - S, P.y + S}, {P.x + S, P.y - S},
+            dl->AddLine({P.x - SZ, P.y + SZ}, {P.x + SZ, P.y - SZ},
                         ms_SHAPE_CURSOR_LINE_COLOR, ms_SHAPE_CURSOR_LINE_WIDTH);
             break;
     }

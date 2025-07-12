@@ -302,7 +302,7 @@ private:
     bool                            m_show_hidden           = false;     //  (T): Show Hidden-Files that have the form ".filename.txt".  (F): Hide these.
 //
     ImVec2                          m_window_size           = {};
-    ImGuiWindowFlags                m_modal_flags           = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings;
+    ImGuiWindowFlags                m_modal_flags           = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings;
     ImGuiTableFlags                 m_table_flags           = ImGuiTableFlags_RowBg | ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV;
 
 

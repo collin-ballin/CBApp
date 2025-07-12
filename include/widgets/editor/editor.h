@@ -490,8 +490,12 @@ private:
     //
     //                              MISC. UTILITIES:
     void                                _draw_controls                      (void);
-    void                                _display_canvas_settings            (void);
-    void                                _draw_system_preferences            (void);
+    void                                _draw_editor_settings               ([[maybe_unused]] popup::Context & ctx);
+    //
+    //                              HELPER FUNCTIONS FOR EDITOR SETTINGS:
+    void                                _draw_settings_mechanics            (void);
+    void                                _draw_settings_serialize            (void);
+    void                                _draw_settings_user_preferences     (void);
     // *************************************************************************** //
     //
     //
