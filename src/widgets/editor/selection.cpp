@@ -464,18 +464,19 @@ void Editor::start_move_drag(const ImVec2 & press_ws)
 //
 void Editor::update_move_drag_state(const Interaction & it)
 {
-    ImGuiIO& io           = ImGui::GetIO();
-    const bool lmb        = io.MouseDown[ImGuiMouseButton_Left];
-    const bool lmb_click  = ImGui::IsMouseClicked  (ImGuiMouseButton_Left);
-    const bool lmb_release= ImGui::IsMouseReleased (ImGuiMouseButton_Left);
-    const bool dragging_now =
-    ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, 0.0f);
+    ImGuiIO &       io              = ImGui::GetIO();
+    const bool      lmb             = io.MouseDown[ImGuiMouseButton_Left];
+    const bool      lmb_click       = ImGui::IsMouseClicked  (ImGuiMouseButton_Left);
+    const bool      lmb_release     = ImGui::IsMouseReleased (ImGuiMouseButton_Left);
+    const bool      dragging_now    = ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, 0.0f);
 
-    ImVec2 w_mouse = pixels_to_world(io.MousePos);      // NEW
+    ImVec2          w_mouse         = pixels_to_world(io.MousePos);      // NEW
+
 
     // remember exact press-position once ----------------------------------
     static ImVec2 press_ws{};
     if (lmb_click) press_ws = pixels_to_world(io.MousePos);   // NEW
+
 
     // --------------------------------------------------------------------
     // 0. NEW: start drag immediately on a fresh hit
@@ -502,23 +503,21 @@ void Editor::update_move_drag_state(const Interaction & it)
     // --------------------------------------------------------------------
     // 1. drag inside an already-selected region (threshold kept)
     // --------------------------------------------------------------------
-    if (!m_dragging && lmb && !m_sel.empty() && !m_pending_hit)
+    if ( !m_dragging && lmb && !m_sel.empty() && !m_pending_hit )
     {
-        bool inside_sel = false;
-
-        int idx = _hit_point(it);
-        if (idx >= 0 && m_sel.points.count(idx))
-            inside_sel = true;
-        else if (m_sel.vertices.size() > 1)
+        bool    inside_sel  = false;
+        int     idx         = _hit_point(it);
+        
+        if ( idx >= 0 && m_sel.points.count(idx) )  { inside_sel = true; }
+        else if ( m_sel.vertices.size() > 1 )
         {
             ImVec2 tl, br;
-            if (_selection_bounds(tl, br))
+            if ( _selection_bounds(tl, br) ) {
                 inside_sel = (press_ws.x >= tl.x && press_ws.x <= br.x &&
                                press_ws.y >= tl.y && press_ws.y <= br.y);
+            }
         }
-
-        if (inside_sel && dragging_now)
-            start_move_drag(press_ws);
+        if ( inside_sel && dragging_now )           { start_move_drag(press_ws); }
     }
 
     // --------------------------------------------------------------------
@@ -526,26 +525,24 @@ void Editor::update_move_drag_state(const Interaction & it)
     // --------------------------------------------------------------------
     if (m_dragging)
     {
-        ImVec2 delta{
-            w_mouse.x - m_movedrag.press_ws.x,
-            w_mouse.y - m_movedrag.press_ws.y
-        };
+        ImVec2      delta    = ImVec2( w_mouse.x - m_movedrag.press_ws.x, w_mouse.y - m_movedrag.press_ws.y );
 
-        if (want_snap()) {
+        if ( want_snap() ) {
             ImVec2 snapped  = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,    m_movedrag.anchor_ws.y + delta.y });
             delta.x         = snapped.x - m_movedrag.anchor_ws.x;
             delta.y         = snapped.y - m_movedrag.anchor_ws.y;
         }
 
-        for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i)
+        for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i) {
             if (Vertex* v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i]))
             {
-                const ImVec2& orig = m_movedrag.v_orig[i];
-                v->x = orig.x + delta.x;
-                v->y = orig.y + delta.y;
+                const ImVec2 &  orig    = m_movedrag.v_orig[i];
+                v->x                    = orig.x + delta.x;
+                v->y                    = orig.y + delta.y;
             }
+        }
 
-        if (lmb_release) m_dragging = false;
+        if (lmb_release)    { m_dragging = false; }
     }
 
     // ------------------------------------------------------------------
@@ -554,16 +551,12 @@ void Editor::update_move_drag_state(const Interaction & it)
     if (m_dragging)
     {
         // raw translation from initial press
-        ImVec2 delta{
-            w_mouse.x - m_movedrag.press_ws.x,
-            w_mouse.y - m_movedrag.press_ws.y
-        };
+        ImVec2      delta       = ImVec2( w_mouse.x - m_movedrag.press_ws.x, w_mouse.y - m_movedrag.press_ws.y );
 
         // snap the delta **once**, via the bbox anchor
         if ( this->want_snap() )
         {
             ImVec2 snapped_anchor   = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,    m_movedrag.anchor_ws.y + delta.y });
-
             delta.x                 = snapped_anchor.x - m_movedrag.anchor_ws.x;
             delta.y                 = snapped_anchor.y - m_movedrag.anchor_ws.y;
         }
@@ -579,6 +572,8 @@ void Editor::update_move_drag_state(const Interaction & it)
         if (lmb_release)               // drag finished
             m_dragging = false;
     }
+    
+    
     return;
 }
 
@@ -701,6 +696,7 @@ void Editor::_update_cursor_select(const Interaction& it) const
     auto hit = _hit_any(it);                        // point / path / line / handle / none
     if (!hit) return;
 
+
     switch (hit->type)
     {
         case Hit::Type::Handle:                     // NEW — Bézier handle square
@@ -716,6 +712,8 @@ void Editor::_update_cursor_select(const Interaction& it) const
         default:
             break;
     }
+    
+    return;
 }
 
 

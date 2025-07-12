@@ -562,8 +562,8 @@ void Editor::save_async(std::filesystem::path path)
 //
 void Editor::load_async(std::filesystem::path path)
 {
-    m_io_busy = true;
-    path = std::filesystem::absolute(path);
+    m_io_busy   = true;
+    path        = std::filesystem::absolute(path);
 
     std::thread([this, path]{
         load_worker(path);

@@ -241,8 +241,8 @@ public:
                 /*  placement   */  OverlayPlacement::CanvasBR,
                 /*  src_anchor  */  Anchor::SouthEast,
                 /*  offscreen   */  OffscreenPolicy::Clamp,
-                /*  anchor_px   */  ImVec2{0,8},                        //  nudge below bbox
-                /*  anchor_ws   */  ImVec2{0,0},                        //  ws anchor filled each frame
+                /*  anchor_px   */  ImVec2{10.0f,   70.0f},                 //  nudge below bbox
+                /*  anchor_ws   */  ImVec2{0.0f,    0.0f},                  //  ws anchor filled each frame
                 /*  draw_fn     */  {}                                  // draw_fn patched in ctor
             },
             {//     STYLE...
@@ -1170,7 +1170,7 @@ static inline const char * mode_label(Mode m)
 
 
 
-//  0.  STATIC INLINE FUNCTIONS...
+//  0.  STATIC INLINE       | DRAWING / CURVATURE / RENDERING...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -1223,6 +1223,68 @@ static bool point_in_polygon(const std::vector<ImVec2>& poly, ImVec2 p)
 }
 
 
+//  "is_convex_poly"
+//
+[[maybe_unused]] static bool is_convex_poly(const std::vector<ImVec2>& poly)
+{
+    const size_t n = poly.size();
+    if (n < 4) return true;
+    float sign = 0.f;
+    for (size_t i = 0; i < n; ++i) {
+        const ImVec2& a = poly[i];
+        const ImVec2& b = poly[(i + 1) % n];
+        const ImVec2& c = poly[(i + 2) % n];
+        float cross = (b.x - a.x) * (c.y - a.y) -
+                      (b.y - a.y) * (c.x - a.x);
+        if (cross != 0.f) {
+            if (sign == 0.f) sign = cross;
+            else if ((sign > 0.f) != (cross > 0.f)) return false;
+        }
+    }
+    return true;
+}
+    
+    
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  1.  STATIC INLINE       | VECTOR OPERATIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "vec_len"
+//      Returns length of a 2-D vector.
+//
+static inline float vec_len(const ImVec2& v) { return sqrtf(v.x*v.x + v.y*v.y); }
+
+
+//  "vec_norm"
+//      Normalises `v` unless zero; returns {0,0} if zero.
+//
+static inline ImVec2 vec_norm(const ImVec2& v)
+{
+    float l = vec_len(v);
+    return (l > 0.f) ? ImVec2{ v.x / l, v.y / l } : ImVec2{0,0};
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  2.  STATIC INLINE       | MISC / OTHER...
+// *************************************************************************** //
+// *************************************************************************** //
+
 //  "u32_to_f4"
 //
 [[maybe_unused]] static inline ImVec4 u32_to_f4(ImU32 c)        { return ImGui::ColorConvertU32ToFloat4(c); }
@@ -1233,19 +1295,9 @@ static bool point_in_polygon(const std::vector<ImVec2>& poly, ImVec2 p)
 [[maybe_unused]] static inline ImU32  f4_to_u32(ImVec4 f)       { return ImGui::ColorConvertFloat4ToU32(f); }
 
 
-//  Returns length of a 2-D vector
-static inline float vec_len(const ImVec2& v) { return sqrtf(v.x*v.x + v.y*v.y); }
-
-
-//  Normalises `v` unless zero; returns {0,0} if zero
-static inline ImVec2 vec_norm(const ImVec2& v)
-{
-    float l = vec_len(v);
-    return (l > 0.f) ? ImVec2{ v.x / l, v.y / l } : ImVec2{0,0};
-}
-
-
-//  Mirrors the opposite handle according to anchor kind
+//  "mirror_handles"
+//      Mirrors the opposite handle according to anchor kind.
+//
 template< typename ID, typename Vertex = Vertex_t<ID> >
 inline void mirror_handles(Vertex & v, bool dragged_out_handle) noexcept
 {
@@ -1254,19 +1306,23 @@ inline void mirror_handles(Vertex & v, bool dragged_out_handle) noexcept
 
     switch (v.kind)
     {
-        case AnchorType::Corner:
+        case AnchorType::Corner: {
             /* no coupling */ break;
+        }
 
         case AnchorType::Smooth: {
-            const float  len = vec_len(h_other);          // preserve length
-            const ImVec2 dir = vec_norm(h_dragged);
-            h_other = ImVec2{ -dir.x * len, -dir.y * len };
+            const float  len    = vec_len(h_other);          // preserve length
+            const ImVec2 dir    = vec_norm(h_dragged);
+            h_other             = ImVec2{ -dir.x * len, -dir.y * len };
             break;
         }
 
-        case AnchorType::Symmetric:
+        case AnchorType::Symmetric:     {
             h_other = ImVec2{ -h_dragged.x, -h_dragged.y };
             break;
+        }
+        
+        default :                       { IM_ASSERT( false && "Function __func__ called with unknown AnchorType" ); }   //  Quiet the warning.
     }
 }
 
@@ -1282,7 +1338,9 @@ inline Vertex * find_vertex_mut( std::vector< Vertex > & arr, ID id ) noexcept {
 }
 
 
-static inline bool alt_down()
+//  "alt_down"
+//
+static inline bool alt_down(void)
 {
     ImGuiIO& io = ImGui::GetIO();
 #if defined(ImGuiMod_Alt)          // 1.90+
