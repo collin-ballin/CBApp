@@ -33,9 +33,9 @@
 #include "utility/utility.h"
 #include "widgets/editor/_constants.h"
 #include "widgets/editor/_icon.h"
-#include "widgets/editor/_types.h"
-#include "widgets/editor/_history.h"
-#include "widgets/editor/_overlays.h"
+#include "widgets/editor/_editor.h"
+//  #include "widgets/editor/_types.h"
+//  #include "widgets/editor/_overlays.h"
 
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
@@ -82,6 +82,9 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 namespace                       app                         { class AppState; }
 struct                          EditorSnapshot;
+class                           History;
+struct                          SnapshotCmd;
+struct                          Command;
 //
 //
 struct                          Vertex_Tag                  {};
@@ -106,41 +109,42 @@ class Editor {
 public:
         friend class                    App;
         friend struct                   EditorSnapshot;
+        friend class                    History;
+        friend struct                   SnapshotCmd;
+        friend struct                   Command;
         //
-        using                           Font                            = app::Font_t;
-        using                           Logger                          = utl::Logger;
-        using                           LogLevel                        = utl::LogLevel;
-        using                           CBCapabilityFlags               = CBCapabilityFlags_;
-        using                           Anchor                          = BBoxAnchor;
+        using                           Font                            = EditorIMPL::Font                      ;
+        using                           Logger                          = EditorIMPL::Logger                    ;
+        using                           LogLevel                        = EditorIMPL::LogLevel                  ;
+        using                           CBCapabilityFlags               = EditorIMPL::CBCapabilityFlags         ;
+        using                           Anchor                          = EditorIMPL::Anchor                    ;
     //
-    //                      ID / INDEX TYPES:
-        template<typename T, typename Tag>
-        using                           ID                              = cblib::utl::IDType<T, Tag>;
-    //
-        using                           VertexID                        = uint32_t;     //    ID<std::uint32_t, Vertex_Tag>         ;
-        using                           HandleID                        = uint8_t;      //    ID<std::uint32_t, Point_Tag>          ;
-        using                           PointID                         = uint32_t;     //    ID<std::uint32_t, Point_Tag>          ;
-        using                           LineID                          = uint32_t;     //    ID<std::uint32_t, Line_Tag>           ;
-        using                           PathID                          = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
-        using                           ZID                             = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
-        using                           OverlayID                       = OverlayManager::OverlayID;
-        using                           HitID                           = uint32_t;     //    ID<std::uint32_t, Hit_Tag>            ;
+    //                              ID / INDEX TYPES:
+    //  using                           ID                              = Editor::ID                        ;
+        using                           VertexID                        = EditorIMPL::VertexID                  ;
+        using                           HandleID                        = EditorIMPL::HandleID                  ;
+        using                           PointID                         = EditorIMPL::PointID                   ;
+        using                           LineID                          = EditorIMPL::LineID                    ;
+        using                           PathID                          = EditorIMPL::PathID                    ;
+        using                           ZID                             = EditorIMPL::ZID                       ;
+        using                           OverlayID                       = EditorIMPL::OverlayID                 ;
+        using                           HitID                           = EditorIMPL::HitID                     ;
     //
     //                              TYPENAME ALIASES (BASED ON INDEX TYPES):
-        using                           Vertex                          = Vertex_t          <VertexID>                              ;
-        //  using                       Handle                          = Handle_t          <HandleID>                              ;
-        using                           Point                           = Point_t           <PointID>                               ;
-        using                           Line                            = Line_t            <LineID, ZID>                           ;
-        using                           Path                            = Path_t            <PathID, VertexID, ZID>                 ;
-        using                           Overlay                         = Overlay_t         <OverlayID>                             ;
-        using                           Hit                             = Hit_t             <HitID>                                 ;
-        using                           PathHit                         = PathHit_t         <PathID, VertexID>                      ;
-        using                           Selection                       = Selection_t       <VertexID, PointID, LineID, PathID>     ;
-        //
-        using                           EndpointInfo                    = EndpointInfo_t    <PathID>                                ;
-        using                           PenState                        = PenState_t        <VertexID>                              ;
-        using                           ShapeState                      = ShapeState_t      <OverlayID>                             ;
-        using                           Clipboard                       = Clipboard_t       <Vertex, Point, Line, Path>             ;
+        using                           Vertex                          = EditorIMPL::Vertex                    ;
+    //  using                           Handle                          = EditorIMPL::Handle                    ;
+        using                           Point                           = EditorIMPL::Point                     ;
+        using                           Line                            = EditorIMPL::Line                      ;
+        using                           Path                            = EditorIMPL::Path                      ;
+        using                           Overlay                         = EditorIMPL::Overlay                   ;
+        using                           Hit                             = EditorIMPL::Hit                       ;
+        using                           PathHit                         = EditorIMPL::PathHit                   ;
+        using                           Selection                       = EditorIMPL::Selection                 ;
+    //
+        using                           EndpointInfo                    = EditorIMPL::EndpointInfo              ;
+        using                           PenState                        = EditorIMPL::PenState                  ;
+        using                           ShapeState                      = EditorIMPL::ShapeState                ;
+        using                           Clipboard                       = EditorIMPL::Clipboard                 ;
 //
 //      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 //
@@ -1510,6 +1514,100 @@ static inline bool alt_down(void)
 }
 
 
+
+
+
+
+
+
+
+
+
+//      0.      FORWARD DECLARATIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+//      2.      CONSTANTS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+/// Default maximum number of undo-stack entries
+static constexpr std::size_t DEF_HISTORY_CAP = 64;
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//      3.      FORWARD DECLARATIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+/// Base interface for every undo/redo command
+struct Command {
+    virtual ~Command()                          = default;
+    virtual void undo(Editor& editor)           = 0;
+    virtual void redo(Editor& editor)           = 0;
+};
+
+/// PoC: stores two full snapshots (before / after)
+struct SnapshotCmd final : Command {
+    EditorSnapshot before;
+    EditorSnapshot after;
+
+    SnapshotCmd(EditorSnapshot b, EditorSnapshot a);    // : before(std::move(b)), after(std::move(a)) {}
+
+    void undo(Editor& ed) override { ed.load_from_snapshot(std::move(before)); }
+    void redo(Editor& ed) override { ed.load_from_snapshot(std::move(after )); }
+};
+
+
+
+class History {
+public:
+    explicit History(std::size_t max_entries = DEF_HISTORY_CAP)
+    : m_cap(max_entries) {}
+
+    template<typename Cmd, typename... Args>
+    void push(Args&&... args) {
+        if (m_cursor < m_stack.size())              // drop redo tail
+            m_stack.resize(m_cursor);
+
+        if (m_stack.size() == m_cap) {              // ring-buffer cap
+            m_stack.erase(m_stack.begin());
+            --m_cursor;
+        }
+        m_stack.emplace_back(std::make_unique<Cmd>(std::forward<Args>(args)...));
+        ++m_cursor;
+    }
+
+    bool can_undo() const { return m_cursor > 0; }
+    bool can_redo() const { return m_cursor < m_stack.size(); }
+
+    void undo(Editor& ed) {
+        if (!can_undo()) return;
+        m_stack[m_cursor - 1]->undo(ed);
+        --m_cursor;
+    }
+
+    void redo(Editor& ed) {
+        if (!can_redo()) return;
+        m_stack[m_cursor]->redo(ed);
+        ++m_cursor;
+    }
+
+    void clear() { m_stack.clear(); m_cursor = 0; }
+
+private:
+    std::vector<std::unique_ptr<Command>> m_stack;
+    std::size_t                           m_cursor{0};
+    std::size_t                           m_cap;
+};
 
 
 
