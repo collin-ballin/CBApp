@@ -464,9 +464,9 @@ inline void Editor::_handle_pen(const Interaction& it)
             return;                                 // plain vertex click
         }
 
-        if ( m_pen.pending_time >= PEN_DRAG_TIME_THRESHOLD &&
+        if ( m_pen.pending_time >= m_style.PEN_DRAG_TIME_THRESHOLD &&
              ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left,
-                                             PEN_DRAG_MOVEMENT_THRESHOLD) )
+                                             m_style.PEN_DRAG_MOVEMENT_THRESHOLD) )
         {
             _pen_begin_handle_drag(m_pen.pending_vid,
                                    /*out_handle=*/false,

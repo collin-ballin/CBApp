@@ -236,7 +236,6 @@ void Editor::_draw_obj_selector_column(void)
     {
         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
         {
-            char                    label[12];
             Path &                  path            = m_paths[i];
             const bool              selected        = m_sel.paths.count(static_cast<size_t>(i));
             const bool              mutable_path    = path.is_mutable();          // NEW – cached
@@ -320,8 +319,9 @@ void Editor::_draw_obj_selector_column(void)
         
     }// END "while-loop"
     
-    clipper.End();
     
+    
+    clipper.End();
     return;
 }
 

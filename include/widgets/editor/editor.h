@@ -75,49 +75,22 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-
+//      FORWARD DECLARATIONS...
 // *************************************************************************** //
+// *************************************************************************** //
+
+namespace                       app                         { class AppState; }
+struct                          EditorSnapshot;
 //
 //
-//      NEW STUFF...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  static std::optional<size_t>
-//  point_index_from_vid(const std::vector<Point>& points, uint32_t vid) {
-//      for (size_t i = 0; i < points.size(); ++i)
-//          if (points[i].v == vid)
-//              return i;
-//      return std::nullopt;
-//  }
-//
-//  static std::optional<PathVertexPos>
-//  find_vertex_in_paths(const std::vector<Path>& paths, uint32_t vid)
-//  {
-//      for (size_t pi = 0; pi < paths.size(); ++pi)
-//          for (size_t vi = 0; vi < paths[pi].verts.size(); ++vi)
-//              if (paths[pi].verts[vi] == vid)
-//                  return PathVertexPos{pi, vi};
-//      return std::nullopt;
-//  }
-     
-     
- 
-//      UTILITY STUFF...
-// *************************************************************************** //
-// *************************************************************************** //
-
-struct      EditorSnapshot;
-struct      Vertex_Tag          {};
-struct      Point_Tag           {};
-struct      Line_Tag            {};
-struct      Path_Tag            {};
-struct      Overlay_Tag         {};
-struct      Hit_Tag             {};
+struct                          Vertex_Tag                  {};
+struct                          Point_Tag                   {};
+struct                          Line_Tag                    {};
+struct                          Path_Tag                    {};
+struct                          Overlay_Tag                 {};
+struct                          Hit_Tag                     {};
 
 
-
-namespace app { class AppState; }
 
 // *************************************************************************** //
 // *************************************************************************** //
@@ -131,6 +104,8 @@ namespace app { class AppState; }
 class Editor {
 public:
         friend class                    App;
+        friend class                    EditorSnapshot;
+        //
         using                           Font                            = app::Font_t;
         using                           Logger                          = utl::Logger;
         using                           LogLevel                        = utl::LogLevel;
@@ -349,8 +324,8 @@ private:
     // *************************************************************************** //
     //                              MAIN SHAPE-TOOL FUNCTIONS:
     void                                _handle_shape                       ([[maybe_unused]] const Interaction & );
-    void                                _shape_begin_anchor                 ([[maybe_unused]] const Interaction& it);
-    void                                _shape_update_radius                ([[maybe_unused]] const Interaction& it);
+    void                                _shape_begin_anchor                 ([[maybe_unused]] const Interaction & );
+    void                                _shape_update_radius                ([[maybe_unused]] const Interaction & );
     //
     void                                _shape_commit                       (void);
     void                                _shape_reset                        (void);
@@ -518,7 +493,7 @@ private:
     void                                _clear_all                          (void);
     //
     //                              SERIALIZATION:
-    EditorSnapshot                      make_snapshot                       (void) const;
+    inline EditorSnapshot               make_snapshot                       (void) const;
     void                                load_from_snapshot                  (EditorSnapshot && );
     void                                pump_main_tasks                     (void);
     void                                save_worker                         (EditorSnapshot snap, std::filesystem::path path);
@@ -671,9 +646,9 @@ private:
     //  "parent_path_of_vertex"
     [[nodiscard]] inline const Path *   parent_path_of_vertex               (VertexID vid) const noexcept
     {
-        for (const Path & p : m_paths)
-            for (VertexID v : p.verts)
-                if (v == vid) return &p;
+        for (const Path & p : m_paths) {
+            for (VertexID v : p.verts)      { if (v == vid) return &p; }
+        }
         return nullptr;                     // not found
     }
     
@@ -986,8 +961,8 @@ private:
     // *************************************************************************** //
     //
     //                              INTERACTION / RESPONSIVENESS CONSTANTS:
-    static constexpr int                PEN_DRAG_TIME_THRESHOLD         = 0.05;     // seconds.
-    static constexpr float              PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;     // px  (was 2)
+        //  static constexpr int                PEN_DRAG_TIME_THRESHOLD         = 0.05;     // seconds.
+        //  static constexpr float              PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;     // px  (was 2)
     //
     //
     //                              USER INTERFACE CONSTANTS:
@@ -997,15 +972,15 @@ private:
         //  static constexpr ImU32              ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);   //  yellow
     //
     //                                  Pen-Tool Anchors.
-    static constexpr ImU32              PEN_ANCHOR_COLOR                = IM_COL32(255, 200, 0, 255);
-    static constexpr float              PEN_ANCHOR_RADIUS               = 5.0f;
+        //  static constexpr ImU32              PEN_ANCHOR_COLOR                = IM_COL32(255, 200, 0, 255);
+        //  static constexpr float              PEN_ANCHOR_RADIUS               = 5.0f;
     //
     //                                  Lasso.
     //                                  //  ...
     //
     //                                  Bounding Box.
-    static constexpr ImU32              SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 255);   //  cyan-blue
-    static constexpr float              SELECTION_BBOX_TH               = 1.5f;
+        //  static constexpr ImU32              SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 255);   //  cyan-blue
+        //  static constexpr float              SELECTION_BBOX_TH               = 1.5f;
     //
     //
     //                              CURSOR CONSTANTS:
@@ -1073,71 +1048,241 @@ private:
 // *************************************************************************** //
 // *************************************************************************** //
 
-inline static constexpr uint32_t    kSaveFormatVersion      = 3;
-
-
-//  "Vertex"
-//
-//  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( Editor::Vertex,
-//      id, x, y, in_handle, out_handle, kind)
-
-
-//  "Path"
-//
-//  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( Editor::Path,
-//      verts, closed, style,
-//      z_index, locked, visible)
-
+inline static constexpr uint32_t        kSaveFormatVersion              = 3;
 
 // Extend similarly for Point, Line, GridSettings, ViewState …
 //
-struct EditorSnapshot
-{
-    using                       Vertex          = Editor::Vertex        ;
-    using                       Point           = Editor::Point         ;
-    using                       Line            = Editor::Line          ;
-    using                       Path            = Editor::Path          ;
-    using                       Selection       = Editor::Selection     ;
+struct EditorSnapshot {
+    // *************************************************************************** //
+    //
+    //
+    //      1.          NESTED PUBLIC TYPENAME ALIASES...
+    // *************************************************************************** //
+    // *************************************************************************** //
+        using                           Font                            = Editor::Font                      ;
+        using                           Logger                          = Editor::Logger                    ;
+        using                           LogLevel                        = Editor::LogLevel                  ;
+        using                           CBCapabilityFlags               = Editor::CBCapabilityFlags         ;
+        using                           Anchor                          = Editor::Anchor                    ;
+    //
+    //                              ID / INDEX TYPES:
+    //  using                           ID                              = Editor::ID                        ;
+        using                           VertexID                        = Editor::VertexID                  ;
+        using                           HandleID                        = Editor::HandleID                  ;
+        using                           PointID                         = Editor::PointID                   ;
+        using                           LineID                          = Editor::LineID                    ;
+        using                           PathID                          = Editor::PathID                    ;
+        using                           ZID                             = Editor::ZID                       ;
+        using                           OverlayID                       = Editor::OverlayID                 ;
+        using                           HitID                           = Editor::HitID                     ;
+    //
+    //                              TYPENAME ALIASES (BASED ON INDEX TYPES):
+        using                           Vertex                          = Editor::Vertex                    ;
+    //  using                           Handle                          = Editor::Handle                    ;
+        using                           Point                           = Editor::Point                     ;
+        using                           Line                            = Editor::Line                      ;
+        using                           Path                            = Editor::Path                      ;
+        using                           Overlay                         = Editor::Overlay                   ;
+        using                           Hit                             = Editor::Hit                       ;
+        using                           PathHit                         = Editor::PathHit                   ;
+        using                           Selection                       = Editor::Selection                 ;
+    //
+        using                           EndpointInfo                    = Editor::EndpointInfo              ;
+        using                           PenState                        = Editor::PenState                  ;
+        using                           ShapeState                      = Editor::ShapeState                ;
+        using                           Clipboard                       = Editor::Clipboard                 ;
 //
-    std::vector<Vertex>         vertices;
-    std::vector<Path>           paths;
-    std::vector<Point>          points;
-    std::vector<Line>           lines;
-    Selection                   selection;
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+    // *************************************************************************** //
+    //
+    //
+    //      2.          MEMBER FUNCTIONS...
+    // *************************************************************************** //
+    // *************************************************************************** //
+    
+    // *************************************************************************** //
+    //                                  RULE OF 7...
+    // *************************************************************************** //
+    //
+    //                              DEFAULTED SPECIAL MEMBERS:
+    inline                              EditorSnapshot          (const Editor & src);
+    
+    inline                              EditorSnapshot          (void)                              = default;
+    inline                              EditorSnapshot          (const EditorSnapshot & )           = default;
+    inline                              EditorSnapshot          (EditorSnapshot && ) noexcept       = default;
+    //
+    //                              DEFAULTED SPECIAL MEMBERS:
+    EditorSnapshot &                    operator =              (const EditorSnapshot&)             = default;
+    EditorSnapshot &                    operator =              (EditorSnapshot&&) noexcept         = default;
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                                  CENTRALIZED FUNCTIONS...
+    // *************************************************************************** //
+        
+    //  "copy_from"
+    //      centralised copy function.
+    //
+    inline void                         copy_from               (const Editor & e)
+    {
+        //  1.  CORE DATA...
+        this->vertices                  = e.m_vertices              ;
+        this->paths                     = e.m_paths                 ;
+        this->points                    = e.m_points                ;
+        this->lines                     = e.m_lines                 ;
+        //
+        //  2.  SUB-STATE OBJECTS...
+        this->selection                 = e.m_sel                   ;
+        //
+        //  3.  ADDITIONAL MEMBERS...
+        this->next_vid                  = e.m_next_id               ;       // << new
+        this->next_pid                  = e.m_next_pid              ;       // << new
+    
+        return;
+    }
+    
+    
+    //  "assign_to"
+    //      centralised "apply" function.
+    //
+    inline void                         assign_to               ([[maybe_unused]] const Editor & e)
+    {
+        //  1.  CORE DATA...
+        //      e.m_vertices                    = std::vector<Vertex>   ( this->vertices  )     ;
+        //      e.m_paths                       = std::vector<Point>    ( this->paths     )     ;
+        //      e.m_points                      = std::vector<Line>     ( this->points    )     ;
+        //      e.m_lines                       = std::vector<Path>     ( this->lines     )     ;
+        //
+        //
+        //  2.  SUB-STATE OBJECTS...
+        //      e.m_sel                         = Selection(this->selection)    ;
+        //
+        //
+        //  3.  ADDITIONAL MEMBERS...
+        //  this->next_vid                  = m_next_id;    // << new
+        //  this->next_pid                  = m_next_pid;   // << new
+    
+        return;
+    }
+    
+    
+    // *************************************************************************** //
 //
-    // add grid, view, mode, etc. as needed
-};
 //
+//
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+    // *************************************************************************** //
+    //
+    //
+    //      3.          DATA MEMBERS...
+    // *************************************************************************** //
+    // *************************************************************************** //
+    
+    // *************************************************************************** //
+    //                                  MISC DATA...
+    // *************************************************************************** //
+    static constexpr uint32_t           version                 { kSaveFormatVersion };
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      CORE DATA...
+    // *************************************************************************** //
+    std::vector<Vertex>                 vertices;
+    std::vector<Path>                   paths;
+    std::vector<Point>                  points;
+    std::vector<Line>                   lines;
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                                  APPLICATION SUB-STATES...
+    // *************************************************************************** //
+    Selection                           selection;
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                                  NEW STUFF...
+    // *************************************************************************** //
+    VertexID                            next_vid                        {0};            // first free vertex ID
+    PathID                              next_pid                        {0};            // first free path  ID
+    // *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//    END "EditorSnapshot" Struct Definition.
+
+//  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EditorSnapshot,
+//                                     version,
+//                                     next_vid,
+//                                     next_pid,
+//                                     vertices,
+//                                     paths,
+//                                     points,
+//                                     lines,
+//                                     selection)
+
+
+
+
 //  "to_json"
-inline void to_json(nlohmann::json& j, const EditorSnapshot& s)
-{
-    j = nlohmann::json{
-        { "vertices",  s.vertices  },
-        { "paths",     s.paths     },
-        { "points",    s.points    },
-        { "lines",     s.lines     },
-        { "selection", s.selection }
-        // add grid / view / mode when you serialize them
-    };
-}
 //
-//  "from_json"
-inline void from_json(const nlohmann::json& j, EditorSnapshot& s)
+inline void to_json(nlohmann::json & j, const EditorSnapshot & s)
 {
-    j.at("vertices").get_to (s.vertices );
-    j.at("paths")   .get_to (s.paths    );
-    j.at("points")  .get_to (s.points   );
-    j.at("lines")   .get_to (s.lines    );
-    j.at("selection").get_to(s.selection);
+    j   = nlohmann::json{
+        { "vertices",               s.vertices              },
+        { "paths",                  s.paths                 },
+        { "points",                 s.points                },
+        { "lines",                  s.lines                 },
+        { "selection",              s.selection             }
+        //
+        //  add grid / view / mode when you serialize them
+        //
+    };
+    
+    return;
 }
 
 
-//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( EditorSnapshot,
-//    vertices, paths, points, lines, selection)
+//  "from_json"
+//
+inline void from_json(const nlohmann::json & j, EditorSnapshot & s)
+{
+    j.at(   "vertices"              )       .get_to (   s.vertices             );
+    j.at(   "paths"                 )       .get_to (   s.paths                );
+    j.at(   "points"                )       .get_to (   s.points               );
+    j.at(   "lines"                 )       .get_to (   s.lines                );
+    j.at(   "selection"             )       .get_to (   s.selection            );
     
-    
-    
+    return;
+}
 
+        
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** // END "EditorSnapshot"
 
 
 

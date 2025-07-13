@@ -631,26 +631,28 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
 void Editor::load_worker(std::filesystem::path path)
 {
     // ---------- read file -------------------------------------------------
-    nlohmann::json  j;
-    std::ifstream   is(path, std::ios::binary);
-    IoResult        res  = is ? IoResult::Ok : IoResult::IoError;
-    EditorSnapshot  snap;
+    nlohmann::json      j;
+    std::ifstream       is(path, std::ios::binary);
+    IoResult            res     = is ? IoResult::Ok : IoResult::IoError;
+    EditorSnapshot      snap;
+
 
     if (res == IoResult::Ok)
     {
         try {
             is >> j;
-            if (j.at("version").get<uint32_t>() != kSaveFormatVersion)
-                res = IoResult::VersionMismatch;
-            else
-                snap = j.at("state").get<EditorSnapshot>();
+            if ( j.at("version").get<uint32_t>() != kSaveFormatVersion )
+                        { res = IoResult::VersionMismatch; }
+            else        { snap = j.at("state").get<EditorSnapshot>(); }
         }
-        catch (...) { res = IoResult::ParseError; }
+        catch (...)     { res = IoResult::ParseError; }
     }
+
 
     // ---------- enqueue GUI-thread callback -------------------------------
     {
-        std::lock_guard lk(m_task_mtx);
+        std::lock_guard     lk  (m_task_mtx);
+        
         m_main_tasks.push_back(
             [this, res, snap = std::move(snap), path]() mutable
             {
@@ -659,7 +661,9 @@ void Editor::load_worker(std::filesystem::path path)
                 if (res == IoResult::Ok) {
                     load_from_snapshot(std::move(snap));
                     m_io_msg = "Loaded \"" + path.filename().string() + "\"";
-                } else {
+                }
+                else
+                {
                     switch (res) {
                         case IoResult::IoError:         m_io_msg = "Load I/O error";                 break;
                         case IoResult::ParseError:      m_io_msg = "Load parse error";               break;
@@ -670,6 +674,9 @@ void Editor::load_worker(std::filesystem::path path)
                 m_io_last = res;
             });
     }
+    
+    
+    return;
 }
 
 
