@@ -131,14 +131,15 @@ void Editor::_erase_path_and_orphans(PathID pidx)
 
     //  2.  Collect every vertex still used anywhere
     std::unordered_set<VertexID> still_used;
-    for (const Path & p : m_paths)
-        for (VertexID vid : p.verts)
-            still_used.insert(vid);
+    for (const Path & p : m_paths) {
+        for (VertexID vid : p.verts)    { still_used.insert(vid); }
+    }
 
     //  3.  Any vertex unique to the deleted path gets fully erased
-    for (VertexID vid : doomed.verts)
+    for (VertexID vid : doomed.verts) {
         if (!still_used.count(vid))
             _erase_vertex_and_fix_paths(vid);      // your existing helper
+    }
             
     return;
 }

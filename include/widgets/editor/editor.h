@@ -34,6 +34,7 @@
 #include "widgets/editor/_constants.h"
 #include "widgets/editor/_icon.h"
 #include "widgets/editor/_types.h"
+#include "widgets/editor/_history.h"
 #include "widgets/editor/_overlays.h"
 
 //  0.2     STANDARD LIBRARY HEADERS...
@@ -104,7 +105,7 @@ struct                          Hit_Tag                     {};
 class Editor {
 public:
         friend class                    App;
-        friend class                    EditorSnapshot;
+        friend struct                   EditorSnapshot;
         //
         using                           Font                            = app::Font_t;
         using                           Logger                          = utl::Logger;
@@ -299,6 +300,9 @@ private:
     //                              PANELS FOR EACH OBJECT TYPE:
     void                                _draw_obj_properties_panel              (Path & , size_t );
     void                                _draw_vertex_properties_panel           (void);
+    //
+    //                              BROWSER HELPERS:
+    void                                _handle_selection_click                 (int row_idx, bool mutable_path);
     // *************************************************************************** //
     //
     //
@@ -887,6 +891,7 @@ private:
     PenState                            m_pen;
     ShapeState                          m_shape;
     OverlayState                        m_overlay;
+    BrowserState                        m_browser;
     //
     //                              OTHER FACILITIES:
     std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---

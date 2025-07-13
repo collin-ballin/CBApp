@@ -673,6 +673,8 @@ struct PenState_t {
 };
 
 
+
+
 //  "ShapeKind"
 //
 enum class ShapeKind : uint32_t {
@@ -689,7 +691,6 @@ EDITOR_SHAPE_NAMES = {{
     "Square",           "Rectangle",
     "Circle",           "Oval",             "Ellipse"
 }};
-
 
 
 //  "ShapeState_t"
@@ -710,9 +711,43 @@ struct ShapeState_t {
     float               start_y                 = 0.0f;
     float               start_rad               = 0.0f;
 };
+//
+//  "to_json"
+template<typename OID>
+inline void to_json(nlohmann::json & j, const ShapeState_t<OID> & obj)
+{
+    j = {
+            { "kind",               obj.kind            },
+            { "radius",             obj.radius          }
+    };
+    return;
+}
+//
+//  "from_json"
+template<typename OID>
+inline void from_json(const nlohmann::json & j, ShapeState_t<OID> & o)
+{
+    j.at("kind"         ).get_to(o.kind         );
+    j.at("radius"       ).get_to(o.radius       );
+    return;
+}
+
+
+
+
+//  "BrowserState"
+//
+struct BrowserState {
+    int                 rename_idx              = -1;       // row currently in rename-mode (–1 = none)
+    bool                renaming                = false;    // true while an InputText for rename is active
+    char                rename_buf[64]          = {};       // scratch text
+};
+
+
 
 // *************************************************************************** //
 // *************************************************************************** //   END "TOOL STATE"
+
 
 
 
@@ -1163,6 +1198,10 @@ struct EditorStyle
     float              OBJ_PROPERTIES_REL_WIDTH         = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
     float              VERTEX_SELECTOR_REL_WIDTH        = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
     float              VERTEX_INSPECTOR_REL_WIDTH       = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
+    //
+    //              BROWSER WIDGET STUFF:
+    float               ms_BROWSER_BUTTON_SEP           = 8.0f;
+    float               ms_BROWSER_SELECTABLE_SEP       = 16.0f;
 // *************************************************************************** //
 //
 //
