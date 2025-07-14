@@ -31,11 +31,9 @@
 #include "app/state/state.h"
 
 #include "utility/utility.h"
-#include "widgets/editor/_constants.h"
 #include "widgets/editor/_icon.h"
 #include "widgets/editor/_editor.h"
 //  #include "widgets/editor/_types.h"
-//  #include "widgets/editor/_overlays.h"
 
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
@@ -1049,7 +1047,6 @@ private:
 
 
 
-
 // *************************************************************************** //
 //
 //
@@ -1514,100 +1511,6 @@ static inline bool alt_down(void)
 }
 
 
-
-
-
-
-
-
-
-
-
-//      0.      FORWARD DECLARATIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-//      2.      CONSTANTS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-/// Default maximum number of undo-stack entries
-static constexpr std::size_t DEF_HISTORY_CAP = 64;
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//      3.      FORWARD DECLARATIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-/// Base interface for every undo/redo command
-struct Command {
-    virtual ~Command()                          = default;
-    virtual void undo(Editor& editor)           = 0;
-    virtual void redo(Editor& editor)           = 0;
-};
-
-/// PoC: stores two full snapshots (before / after)
-struct SnapshotCmd final : Command {
-    EditorSnapshot before;
-    EditorSnapshot after;
-
-    SnapshotCmd(EditorSnapshot b, EditorSnapshot a);    // : before(std::move(b)), after(std::move(a)) {}
-
-    void undo(Editor& ed) override { ed.load_from_snapshot(std::move(before)); }
-    void redo(Editor& ed) override { ed.load_from_snapshot(std::move(after )); }
-};
-
-
-
-class History {
-public:
-    explicit History(std::size_t max_entries = DEF_HISTORY_CAP)
-    : m_cap(max_entries) {}
-
-    template<typename Cmd, typename... Args>
-    void push(Args&&... args) {
-        if (m_cursor < m_stack.size())              // drop redo tail
-            m_stack.resize(m_cursor);
-
-        if (m_stack.size() == m_cap) {              // ring-buffer cap
-            m_stack.erase(m_stack.begin());
-            --m_cursor;
-        }
-        m_stack.emplace_back(std::make_unique<Cmd>(std::forward<Args>(args)...));
-        ++m_cursor;
-    }
-
-    bool can_undo() const { return m_cursor > 0; }
-    bool can_redo() const { return m_cursor < m_stack.size(); }
-
-    void undo(Editor& ed) {
-        if (!can_undo()) return;
-        m_stack[m_cursor - 1]->undo(ed);
-        --m_cursor;
-    }
-
-    void redo(Editor& ed) {
-        if (!can_redo()) return;
-        m_stack[m_cursor]->redo(ed);
-        ++m_cursor;
-    }
-
-    void clear() { m_stack.clear(); m_cursor = 0; }
-
-private:
-    std::vector<std::unique_ptr<Command>> m_stack;
-    std::size_t                           m_cursor{0};
-    std::size_t                           m_cap;
-};
 
 
 

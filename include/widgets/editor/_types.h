@@ -18,27 +18,6 @@
 #define _CBWIDGETS_EDITOR_TYPES_H  1
 
 
-//      //  From the 2nd frame onward, test drag distance
-//      //  if ( m_pen.pending_time >= PEN_DRAG_TIME_THRESHOLD && ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, PEN_DRAG_MOVEMENT_THRESHOLD) )
-//      if ( m_pen.pending_time >= PEN_DRAG_TIME_THRESHOLD && ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, PEN_DRAG_MOVEMENT_THRESHOLD) )
-//      {
-//          _pen_begin_handle_drag( m_pen.pending_vid, /*out_handle=*/true, /*force_select=*/true );
-//          if ( Vertex * v = find_vertex_mut(m_vertices, m_pen.pending_vid) )
-//              v->in_handle = ImVec2(0,0);              // make handle visible
-//
-// Updated declarations for selection overlay functions (no origin argument)
-// void _draw_selection_highlight(ImDrawList* dl) const;
-// void _draw_selection_bbox(ImDrawList* dl) const;
-// void _draw_selected_handles(ImDrawList* dl) const;
-
-//
-//          m_pen.pending_handle = false;                // hand-off to drag logic
-//          m_pen.pending_time   = 0.0f;
-//          _pen_update_handle_drag(it);                 // first update
-//          return;
-//      }
-        
-
 
 //  1.  INCLUDES    | Headers, Modules, etc...
 // *************************************************************************** //
@@ -49,6 +28,7 @@
 #include "cblib.h"
 #include "utility/utility.h"
 #include "widgets/editor/_constants.h"
+#include "widgets/editor/_objects.h"
 
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
@@ -104,28 +84,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 enum class IoResult {
     Ok, IoError, ParseError, VersionMismatch
 };
-
-
-//  "AnchorType"
-//
-enum class AnchorType : uint8_t     {
-    Corner, Smooth, Symmetric,
-    COUNT
-};
-//
-static constexpr std::array<const char *, static_cast<size_t>(AnchorType::COUNT)>
-ANCHOR_TYPE_NAMES                   = {
-    "Corner",
-    "Smooth",
-    "Symmetric"
-};
-//
-static constexpr std::array< ImColor, static_cast<size_t>(AnchorType::COUNT) >
-ANCHOR_COLORS                       = { {
-    /*  Corner          */      ImColor(255,       255,        0,      255     ),      //   yellow
-    /*  Smooth          */      ImColor(  0,       255,        0,      255     ),      //   green
-    /*  Symmetric       */      ImColor(  0,       200,        255,    255     )       //   cyan
-} };
 
 
 
@@ -189,325 +147,6 @@ MODE_CAPS               = {
 /*  RemoveAnchor    */      CBCapabilityFlags_None,
 /*  EditAnchor      */      CBCapabilityFlags_Navigation
 };
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//  2.  [DATA LAYER]    STRUCTS AND HELPER TYPE ABSTRACTIONS FOR THE "EDITOR" WIDGET...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-// *************************************************************************** //
-//      2.1.    VERTEX.
-// *************************************************************************** //
-
-//  "Vertex_t" / "Pos" / "Anchor Point"
-//
-//      A pure geometry node. `in_handle` and `out_handle` are offsets from
-//      `pos`; when they are both zero the segment attached to this vertex is
-//      straight. Handles live in world‑space units.
-//
-template<typename VID>
-struct Vertex_t {
-    static constexpr const char *   ms_DEF_VERTEX_LABEL_FMT_STRING      = "Vertex V%03d (id=%u)";
-    static constexpr const char *   ms_DEF_VERTEX_FMT_STRING            = "V%03u";
-//
-    uint32_t    id              = 0;
-    float       x               = 0.0f,
-                y               = 0.0f;
-    //
-    ImVec2      in_handle       = ImVec2(0.0f, 0.0f);   // incoming Bézier handle (from previous vertex)
-    ImVec2      out_handle      = ImVec2(0.0f, 0.0f);   // outgoing Bézier handle (to next vertex)
-    AnchorType  kind            = AnchorType::Corner;
-};
-//
-//  "to_json"
-template <typename IdT>
-inline void to_json(nlohmann::json& j, const Vertex_t<IdT>& v)
-{
-    j = {
-        { "id",          v.id },
-        { "x",           v.x  },
-        { "y",           v.y  },
-        { "in_handle",   { v.in_handle.x,  v.in_handle.y } },
-        { "out_handle",  { v.out_handle.x, v.out_handle.y } },
-        { "kind",        v.kind }
-    };
-}
-//
-//  "from_json"
-template <typename IdT>
-inline void from_json(const nlohmann::json& j, Vertex_t<IdT>& v)
-{
-    j.at("id")  .get_to(v.id);
-    j.at("x")   .get_to(v.x);
-    j.at("y")   .get_to(v.y);
-    auto ih = j.at("in_handle");  v.in_handle  = { ih[0], ih[1] };
-    auto oh = j.at("out_handle"); v.out_handle = { oh[0], oh[1] };
-    j.at("kind").get_to(v.kind);
-}
-
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//      POINT:
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "PointStyle"
-//
-struct PointStyle   {
-    ImU32       color       = IM_COL32(0,255,0,255);
-    float       radius      = 4.0f;
-    bool        visible     = true;
-};
-//
-//  "to_json"
-inline void to_json(nlohmann::json& j, const PointStyle& s)
-{
-    j = nlohmann::json{
-        { "color",  s.color   },
-        { "radius", s.radius  },
-        { "visible",s.visible }
-    };
-}
-//
-//  "from_json"
-inline void from_json(const nlohmann::json& j, PointStyle& s)
-{
-    j.at("color" ).get_to(s.color );
-    j.at("radius").get_to(s.radius);
-    j.at("visible").get_to(s.visible);
-}
-
-
-
-
-//  "Point_t"
-//
-template <typename PtID>
-struct Point_t        {
-    PtID            v;
-    PointStyle      sty{};
-};
-//
-//  "to_json"
-template <typename PtID>
-inline void to_json(nlohmann::json& j, const Point_t<PtID>& p)
-{
-    j = { { "v", p.v },
-          { "sty", p.sty } };
-}
-//
-//  "from_json"
-template <typename PtID>
-inline void from_json(const nlohmann::json& j, Point_t<PtID>& p)
-{
-    j.at("v"  ).get_to(p.v  );
-    j.at("sty").get_to(p.sty);
-}
-
-
-
-
-//  "Line_t"
-//
-template <typename LID, typename ZID>
-struct Line_t         {
-    [[nodiscard]] inline bool is_mutable(void) const noexcept
-    { return visible && !locked; }
-//
-//
-    LID         a, b;
-    ImU32       color       = IM_COL32(255,255,0,255);
-    float       thickness   = 2.0f;
-//
-    ZID         z_index     = Z_FLOOR_USER;
-    bool        locked      = false;
-    bool        visible     = true;
-};
-//
-//  "to_json"
-template <typename LID, typename ZID>
-inline void to_json(nlohmann::json  j, const Line_t<LID, ZID> & l)
-{
-    j = { { "a",            l.a             },
-          { "b",            l.b             },
-          { "color",        l.color         },
-          { "thickness",    l.thickness     },
-          { "z_index",      l.z_index       },
-          { "locked",       l.locked        },
-          { "visible",      l.visible       }
-    };
-}
-//
-//  "from_json"
-template <typename LID, typename ZID>
-inline void from_json(const nlohmann::json & j, Line_t<LID, ZID>  & l)
-{
-    j.at("a"                ).get_to(l.a);
-    j.at("b"                ).get_to(l.b);
-    j.at("color"            ).get_to(l.color);
-    j.at("z_index"          ).get_to(l.z_index);
-    j.at("locked"           ).get_to(l.locked);
-    j.at("visible"          ).get_to(l.visible);
-}
-
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-
-
-
-// *************************************************************************** //
-//      2.2.    PATH.
-// *************************************************************************** //
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//      "Path":     -- (polyline / spline / area).
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "Path"  -- (polyline / spline / area).
-//
-//      A sequence of vertex IDs. `closed == true` means the last vertex connects
-//      back to the first. Vertices carry their own Bézier handles; this struct
-//      only stores ordering and style.
-//
-struct PathStyle {
-    ImU32 stroke_color = IM_COL32(255,255,0,255);
-    ImU32 fill_color   = IM_COL32(255,255,255,0);   // default: transparent white
-    float stroke_width = 2.0f;
-};
-//
-//  "to_json"
-inline void to_json(nlohmann::json& j, const PathStyle& s)
-{
-    j = nlohmann::json{
-        { "stroke_color", s.stroke_color },
-        { "fill_color",   s.fill_color   },
-        { "stroke_width", s.stroke_width }
-    };
-}
-//
-//  "from_json"
-inline void from_json(const nlohmann::json& j, PathStyle& s)
-{
-    j.at("stroke_color").get_to(s.stroke_color);
-    j.at("fill_color"  ).get_to(s.fill_color  );
-    j.at("stroke_width").get_to(s.stroke_width);
-}
-
-
-
-//  "Path_t"
-//
-template<typename PID, typename VID, typename ZID>
-struct Path_t {
-    static constexpr size_t         ms_MAX_PATH_LABEL_LENGTH    = 64;
-//
-//
-    [[nodiscard]] inline bool       is_area             (void) const noexcept
-    { return this->closed && this->verts.size() >= 3; }
-//
-    [[nodiscard]] inline bool       is_mutable          (void) const noexcept
-    { return visible && !locked; }
-//
-    inline void                     set_label           (const char * src) noexcept
-    { this->label = std::string(src); this->_truncate(); }
-//
-    inline void                     set_default_label   (const PID id_) noexcept
-    { this->id = id_;   this->label = std::format("Path {:03}", id_);   this->_truncate(); }
-//
-    inline void                     _truncate           (void)
-    { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
-//
-//
-//
-    std::vector<VID>    verts;   // ordered anchor IDs
-    PID                 id                                      = 0;
-    bool                closed                                  = false;
-    PathStyle           style                                   = PathStyle();
-//
-// ─────────── NEW ───────────
-    ZID                 z_index                                 = Z_FLOOR_USER;
-    bool                locked                                  = false;
-    bool                visible                                 = true;
-    std::string         label                                   = "";
-};
-//
-//  "to_json"
-template<typename PID, typename VID, typename ZID>
-inline void to_json(nlohmann::json & j, const Path_t<PID, VID, ZID> & p)
-{
-    j = { { "verts",        p.verts         },
-          { "id",           p.id            },
-          { "closed",       p.closed        },
-          { "style",        p.style         },
-          { "z_index",      p.z_index       },
-          { "locked",       p.locked        },
-          { "visible",      p.visible       },
-          { "label",        p.label         } };
-    return;
-}
-//
-//  "from_json"
-template<typename PID, typename VID, typename ZID>
-inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
-{
-    if ( j.contains("id") )         { j.at("id").get_to(p.id);      }
-    else                            { p.id = 0;                     }
-    
-    j.at("verts"    ).get_to(p.verts    );
-    j.at("closed"   ).get_to(p.closed   );
-    j.at("style"    ).get_to(p.style    );
-    j.at("z_index"  ).get_to(p.z_index  );
-    j.at("locked"   ).get_to(p.locked   );
-    j.at("visible"  ).get_to(p.visible  );
-    
-    //  Handle old files that may lack "label"
-    if ( j.contains("label") )      { j.at("label").get_to(p.label); }
-    else                            { p.set_label("?"); }
-        
-    return;
-}
-
-
-//  "EndpointInfo"
-//
-template<typename PID>
-struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ first vertex
-
-// *************************************************************************** //
-// *************************************************************************** //   END "PATH".
-
-  
-
 
 
 
@@ -1102,134 +741,135 @@ struct EditorState
 //  "EditorStyle"
 struct EditorStyle
 {
+    static constexpr size_t     DEF_HISTORY_CAP                 = 64;
 // *************************************************************************** //
-//                      INTERACTION / RESPONSIVENESS CONSTANTS...
+//                              INTERACTION / RESPONSIVENESS CONSTANTS...
 // *************************************************************************** //
-    float               GRID_STEP                       = 64.0f;
-    float               HIT_THRESH_SQ                   = 6.0f * 6.0f;
+    float                       GRID_STEP                       = 64.0f;
+    float                       HIT_THRESH_SQ                   = 6.0f * 6.0f;
 //
-    int                 PEN_DRAG_TIME_THRESHOLD         = 0.05;                             //  PEN_DRAG_TIME_THRESHOLD         // seconds.
-    float               PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;                             //  PEN_DRAG_MOVEMENT_THRESHOLD     // px  (was 2)
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                      STANDARDIZED STYLE...
-// *************************************************************************** //
-    ImU32               COL_POINT_DEFAULT               = IM_COL32(0,255,0,255);        // idle green
-    ImU32               COL_POINT_HELD                  = IM_COL32(255,100,0,255);      // while dragging
-    ImU32               COL_SELECTION_OUT               = IM_COL32(255,215,0,255);      // gold outline
-    float               DEFAULT_POINT_RADIUS            = 12.0f;                        // px
+    int                         PEN_DRAG_TIME_THRESHOLD         = 0.05;                             //  PEN_DRAG_TIME_THRESHOLD         // seconds.
+    float                       PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;                             //  PEN_DRAG_MOVEMENT_THRESHOLD     // px  (was 2)
 // *************************************************************************** //
 //
 //
 //
 // *************************************************************************** //
-//                      USER INTERFACE CONSTANTS...
+//                              STANDARDIZED STYLE...
 // *************************************************************************** //
-//                  HANDLES:
-    ImU32               ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);       //  ms_HANDLE_COLOR             //  gold
-    ImU32               ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);       //  ms_HANDLE_HOVER_COLOR       //  yellow
-    float               ms_HANDLE_SIZE                  = 3.0f;      
-    float               HANDLE_BOX_SIZE                 = 4.f;                              //  ms_HANDLE_SIZE              //  px half-side
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                      TOOL CONSTANTS...
-// *************************************************************************** //
-//
-//                  STANDARDIZED STYLE:
-//
-//                  PEN-TOOL ANCHORS:
-//                      //  ...
-//
-//                  LASSO TOOL:
-    ImU32               COL_LASSO_OUT                   = IM_COL32(255,215,0,255); // gold outline
-    ImU32               COL_LASSO_FILL                  = IM_COL32(255,215,0,40);  // translucent fill
-//
-//                  BOUNDING BOX:
-    ImU32               SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 153);   //  cyan-blue
-    float               SELECTION_BBOX_TH               = 1.5f;
+    ImU32                       COL_POINT_DEFAULT               = IM_COL32(0,255,0,255);        // idle green
+    ImU32                       COL_POINT_HELD                  = IM_COL32(255,100,0,255);      // while dragging
+    ImU32                       COL_SELECTION_OUT               = IM_COL32(255,215,0,255);      // gold outline
+    float                       DEFAULT_POINT_RADIUS            = 12.0f;                        // px
 // *************************************************************************** //
 //
 //
 //
 // *************************************************************************** //
-//                      CURSOR CONSTANTS...
+//                              USER INTERFACE CONSTANTS...
 // *************************************************************************** //
-//                  PEN-TOOL CURSOR STUFF:
-    float               PEN_RING_RADIUS                 = 6.0f;                             //  PEN_RING_RADIUS     [px]
-    float               PEN_RING_THICK                  = 1.5f;                             //  PEN_RING_THICK      [px]
-    int                 PEN_RING_SEGMENTS               = 32;                               //  NUMBER OF SEGMENTS TO DRAW OUTER RING.
-    float               PEN_DOT_RADIUS                  = 2.0f;                             //  PEN_DOT_RADIUS      // px
-    int                 PEN_DOT_SEGMENTS                = 16;                               //  NUMBER OF SEGMENTS TO DRAW INNER DOT.
+//                          HANDLES:
+    ImU32                       ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);       //  ms_HANDLE_COLOR             //  gold
+    ImU32                       ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);       //  ms_HANDLE_HOVER_COLOR       //  yellow
+    float                       ms_HANDLE_SIZE                  = 3.0f;
+    float                       HANDLE_BOX_SIZE                 = 4.f;                              //  ms_HANDLE_SIZE              //  px half-side
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                              TOOL CONSTANTS...
+// *************************************************************************** //
+//
+//                          STANDARDIZED STYLE:
+//
+//                          PEN-TOOL ANCHORS:
+//                              //  ...
+//
+//                          LASSO TOOL:
+    ImU32                       COL_LASSO_OUT                   = IM_COL32(255,215,0,255); // gold outline
+    ImU32                       COL_LASSO_FILL                  = IM_COL32(255,215,0,40);  // translucent fill
+//
+//                          BOUNDING BOX:
+    ImU32                       SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 153);   //  cyan-blue
+    float                       SELECTION_BBOX_TH               = 1.5f;
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                              CURSOR CONSTANTS...
+// *************************************************************************** //
+//                          PEN-TOOL CURSOR STUFF:
+    float                       PEN_RING_RADIUS                 = 6.0f;                             //  PEN_RING_RADIUS     [px]
+    float                       PEN_RING_THICK                  = 1.5f;                             //  PEN_RING_THICK      [px]
+    int                         PEN_RING_SEGMENTS               = 32;                               //  NUMBER OF SEGMENTS TO DRAW OUTER RING.
+    float                       PEN_DOT_RADIUS                  = 2.0f;                             //  PEN_DOT_RADIUS      // px
+    int                         PEN_DOT_SEGMENTS                = 16;                               //  NUMBER OF SEGMENTS TO DRAW INNER DOT.
     //
     //
-    ImU32               PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);          //  PEN_COL_NORMAL      // yellow
-    ImU32               PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);          //  PEN_COL_EXTEND      // green
+    ImU32                       PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);          //  PEN_COL_NORMAL      // yellow
+    ImU32                       PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);          //  PEN_COL_EXTEND      // green
 // *************************************************************************** //
 //
 //
 //
 // *************************************************************************** //
-//                      APPEARANCE / WIDGETS / UI CONSTANTS:
+//                              APPEARANCE / WIDGETS / UI CONSTANTS:
 // *************************************************************************** //
     //
-    //              BROWSER CHILD-WINDOW COLORS:
-    ImVec4              ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
-    ImVec4              ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
-    ImVec4              ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
+    //                      BROWSER CHILD-WINDOW COLORS:
+    ImVec4                      ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
+    ImVec4                      ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
+    ImVec4                      ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
     
-    ImVec4              ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
-    ImVec4              ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
-    ImVec4              ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
+    ImVec4                      ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
+    ImVec4                      ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
+    ImVec4                      ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
     //
-    //              BROWSER CHILD-WINDOW STYLE:
-    float               ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
-    float               ms_CHILD_BORDER1                = 2.0f;     //  ms_CHILD_BORDER1
-    float               ms_CHILD_BORDER2                = 1.0f;     //  ms_CHILD_BORDER2
-    float               ms_CHILD_ROUND1                 = 8.0f;     //  ms_CHILD_ROUND1
-    float               ms_CHILD_ROUND2                 = 4.0f;     //  ms_CHILD_ROUND2
+    //                      BROWSER CHILD-WINDOW STYLE:
+    float                       ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
+    float                       ms_CHILD_BORDER1                = 2.0f;     //  ms_CHILD_BORDER1
+    float                       ms_CHILD_BORDER2                = 1.0f;     //  ms_CHILD_BORDER2
+    float                       ms_CHILD_ROUND1                 = 8.0f;     //  ms_CHILD_ROUND1
+    float                       ms_CHILD_ROUND2                 = 4.0f;     //  ms_CHILD_ROUND2
     //
-    //              BROWSER CHILD-WINDOW DIMENSIONS:
-    float              OBJ_PROPERTIES_REL_WIDTH         = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
-    float              VERTEX_SELECTOR_REL_WIDTH        = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
-    float              VERTEX_INSPECTOR_REL_WIDTH       = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
+    //                      BROWSER CHILD-WINDOW DIMENSIONS:
+    float                       OBJ_PROPERTIES_REL_WIDTH         = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
+    float                       VERTEX_SELECTOR_REL_WIDTH        = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
+    float                       VERTEX_INSPECTOR_REL_WIDTH       = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
     //
-    //              BROWSER WIDGET STUFF:
-    float               ms_BROWSER_BUTTON_SEP           = 8.0f;
-    float               ms_BROWSER_SELECTABLE_SEP       = 16.0f;
+    //                      BROWSER WIDGET STUFF:
+    float                       ms_BROWSER_BUTTON_SEP           = 8.0f;
+    float                       ms_BROWSER_SELECTABLE_SEP       = 16.0f;
 // *************************************************************************** //
 //
 //
 //
 // *************************************************************************** //
-//                      RENDERING CONSTANTS:
+//                          RENDERING CONSTANTS:
 // *************************************************************************** //
-    int                 ms_BEZIER_SEGMENTS              = 0;        //  ms_BEZIER_SEGMENTS
-    int                 ms_BEZIER_HIT_STEPS             = 20;       //  ms_BEZIER_HIT_STEPS
-    int                 ms_BEZIER_FILL_STEPS            = 24;       //  ms_BEZIER_FILL_STEPS
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                      UTILITY:
-// *************************************************************************** //
-                        //
-                        //  ...
-                        //
+    int                         ms_BEZIER_SEGMENTS              = 0;        //  ms_BEZIER_SEGMENTS
+    int                         ms_BEZIER_HIT_STEPS             = 20;       //  ms_BEZIER_HIT_STEPS
+    int                         ms_BEZIER_FILL_STEPS            = 24;       //  ms_BEZIER_FILL_STEPS
 // *************************************************************************** //
 //
 //
 //
 // *************************************************************************** //
-//                      MISC. / UNKNOWN CONSTANTS (RELOCATED FROM CODE)...
+//                          UTILITY:
 // *************************************************************************** //
-    float               TARGET_PX                       = 20.0f;                     //     desired screen grid pitch"  | found in "_update_grid"
+                                //
+                                //  ...
+                                //
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                          MISC. / UNKNOWN CONSTANTS (RELOCATED FROM CODE)...
+// *************************************************************************** //
+    float                       TARGET_PX                       = 20.0f;                     //     desired screen grid pitch"  | found in "_update_grid"
 
 // *************************************************************************** //
 

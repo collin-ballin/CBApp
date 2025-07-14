@@ -48,6 +48,7 @@
 #include CBAPP_USER_CONFIG
 #include "cblib.h"
 #include "utility/utility.h"
+#include "widgets/editor/_constants.h"
 #include "widgets/editor/_types.h"
 #include "widgets/editor/_overlays.h"
 
@@ -86,6 +87,7 @@
 namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
+
 
 
 //  "EditorIMPL"
@@ -128,6 +130,12 @@ struct EditorIMPL {
         using                           Clipboard                       = Clipboard_t       <Vertex, Point, Line, Path>             ;
 //
 };
+
+
+
+
+
+
 
 
 
