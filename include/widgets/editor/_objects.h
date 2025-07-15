@@ -304,41 +304,105 @@ inline void from_json(const nlohmann::json & j, Line_t<LID, ZID>  & l)
 //
 //
 //      5.      [DATA LAYER]    PATH EXTENSIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-
-
-
-// *************************************************************************** //
 //
-//
-//
-//      PATH EXTENSIONS...
 namespace path { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-enum class PathKind : uint8_t {
-    Default         = 0,
-    Dielectric      = 1,
-    // Boundary   = 2,
-    // Source     = 3,
-    // … add more as needed
-};
 
 
+// *************************************************************************** //
+//      1.      DEFINE EACH "KIND" OF PATH...
+// *************************************************************************** //
+
+//  "PathKind"
 //
-struct DielectricExtra {
-    double                eps_r {1.0};          // relative permittivity
-    double                mu_r  {1.0};          // relative permeability
-    std::array<double,2>  n     {1.0, 0.0};     // complex n = n + i·k
+enum class PathKind : uint8_t {
+    Default = 0,
+    Generic,
+//
+    //  Dielectric  = 2,
+    //  Boundary    = 3,
+    //  Source      = 4,
+    // … add more as needed
+//
+    COUNT
 };
 
-// using ExtraData = std::variant<std::monostate, DielectricExtra /*, BoundaryExtra, SourceExtra*/>;
-                               
+
+
+
+
+
+// *************************************************************************** //
+//      2.      DEFINE DATA-PAYLOADS (FOR EACH PATH-KIND TO CARRY)...
+// *************************************************************************** //
+
+//  "GenericPayload"
+//
+struct GenericPayload {
+    double                  x       {1.0};              //  relative permittivity
+    double                  y       {1.0};              //  relative permeability
+    std::string             data    {};
+    std::string             meta    {};
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GenericPayload, x, y, data, meta)
+
+
+
+
+
+
+// *************************************************************************** //
+//      3.      DEFINE "PAYLOAD" STD::VARIANT ALIAS TYPE...
+// *************************************************************************** //
+using       Payload         = std::variant<std::monostate, GenericPayload /*, DielectricPayload, FuturePayload, etc...*/>;
+
+
+
+
+
+
+// *************************************************************************** //
+//      4.      DEFINE "JSON" HELPERS FOR PAYLOADS...
+// *************************************************************************** //
+
+//  "to_json"           | For GenericPayload...
+//
+inline void to_json(nlohmann::json & j, const Payload & v)
+{
+    //  1.  monostate  ⇒ store null  (omit field entirely if you prefer)
+    if ( std::holds_alternative<std::monostate>(v) ) {
+        j = nullptr;
+        return;
+    }
+
+    //  2.  GenericPayload ⇒ store as plain object...
+    if ( const auto* gp = std::get_if<GenericPayload>(&v) ) {
+        j = *gp;                          // uses GenericPayload serializer
+        return;
+    }
+    //
+    //
+    //  Add more  else-ifs  as you introduce new payload structs...
+}
+
+
+//  "from_json"         | For GenericPayload...
+//
+inline void from_json(const nlohmann::json& j, Payload& v)
+{
+    //  1.  MONOSTATE...
+    if ( j.is_null() || j.empty() )     { v = std::monostate{}; }
+    
+    //  2.  "GenericPayload"    | Until we add more Payload types, we assume either (1) Monostate, or (2) Generic...
+    else                                { v = j.get<GenericPayload>(); }
+    
+    //  when adding more kinds:
+    //      – inspect a “kind” key or structure to decide which get<>() to call...
+    //
+}
+
 
 
 // *************************************************************************** //
@@ -348,9 +412,6 @@ struct DielectricExtra {
 // *************************************************************************** //
 // *************************************************************************** //
 }//   END OF "path" NAMESPACE.
-
-// *************************************************************************** //
-// *************************************************************************** //   END "Path Extensions".
 
 
 
@@ -368,9 +429,9 @@ struct DielectricExtra {
 //  "PathStyle"
 //
 struct PathStyle {
-    ImU32 stroke_color = IM_COL32(255,255,0,255);
-    ImU32 fill_color   = IM_COL32(255,255,255,0);   // default: transparent white
-    float stroke_width = 2.0f;
+    ImU32       stroke_color        = IM_COL32(255,255,0,255);
+    ImU32       fill_color          = IM_COL32(255,255,255,0);   // default: transparent white
+    float       stroke_width        = 2.0f;
 };
 
 
@@ -407,83 +468,180 @@ template<typename PID, typename VID, typename ZID>
 struct Path_t {
 // *************************************************************************** //
 // *************************************************************************** //
-    static constexpr size_t         ms_MAX_PATH_LABEL_LENGTH    = 64;
+//
+//
+//
+//      0.  GLOBAL CONSTANTS, TYPENAME ALIASES, ETC...
+// *************************************************************************** //
+// *************************************************************************** //
+    //                          ALIASES:
+    using                           Payload                         = path::Payload;
+    using                           PathKind                        = path::PathKind;
+    //
+    //                          CONSTANTS:
+    static constexpr size_t         ms_MAX_PATH_LABEL_LENGTH        = 64;
+    
+// *************************************************************************** //
+//
 //
 //
 //      1.  MEMBER FUNCTIONS...
 // *************************************************************************** //
-    [[nodiscard]] inline bool       is_area             (void) const noexcept
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //                          NEW:
+    // *************************************************************************** //
+    
+                                    //
+                                    //  ...
+                                    //
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                          UTILITY FUNCTIONS:
+    // *************************************************************************** //
+    
+    //  "is_area"
+    [[nodiscard]] inline bool       is_area                         (void) const noexcept
     { return this->closed && this->verts.size() >= 3; }
-//
-    [[nodiscard]] inline bool       is_mutable          (void) const noexcept
+    
+    //  "is_mutable"
+    [[nodiscard]] inline bool       is_mutable                      (void) const noexcept
     { return visible && !locked; }
-//
-    inline void                     set_label           (const char * src) noexcept
+        
+    //  "set_label"
+    inline void                     set_label               (const char * src) noexcept
     { this->label = std::string(src); this->_truncate_label(); }
-//
-    inline void                     set_default_label   (const PID id_) noexcept
+    
+    //  "set_default_label"
+    inline void                     set_default_label               (const PID id_) noexcept
     { this->id = id_;   this->label = std::format("Path {:03}", id_);   this->_truncate_label(); }
-//
-    inline void                     _truncate_label     (void)
+    
+    //  "_truncate_label"
+    inline void                     _truncate_label                 (void)
     { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
+    
+// *************************************************************************** //
 //
 //
 //
-    std::vector<VID>    verts;   // ordered anchor IDs
-    PID                 id                                      = 0;
-    bool                closed                                  = false;
-    PathStyle           style                                   = PathStyle();
-//
-// ─────────── NEW ───────────
-    ZID                 z_index                                 = Z_FLOOR_USER;
-    bool                locked                                  = false;
-    bool                visible                                 = true;
-    std::string         label                                   = "";
+//      2.  DATA MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //                          CORE:
+    // *************************************************************************** //
+    std::vector<VID>                verts;   // ordered anchor IDs
+    PID                             id                              = 0;
+    bool                            closed                          = false;
+    PathStyle                       style                           = PathStyle();
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                          NEW:
+    // *************************************************************************** //
+    ZID                             z_index                         = Z_FLOOR_USER;
+    bool                            locked                          = false;
+    bool                            visible                         = true;
+    std::string                     label                           = "";
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                          NEW-ER:
+    // *************************************************************************** //
+    PathKind                        kind                            = PathKind::Default;
+    Payload                         payload                         {  };
+    
 
 // *************************************************************************** //
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //
+// *************************************************************************** //   END "Path_t" CLASS DEFINITION.
 };//    END "Path_t" CLASS DEFINITION.
 
 
-//  "to_json"
+
+
+//  "to_json"           | For Path_t...
 //
 template<typename PID, typename VID, typename ZID>
 inline void to_json(nlohmann::json & j, const Path_t<PID, VID, ZID> & p)
 {
-    j = { { "verts",        p.verts         },
-          { "id",           p.id            },
-          { "closed",       p.closed        },
-          { "style",        p.style         },
-          { "z_index",      p.z_index       },
-          { "locked",       p.locked        },
-          { "visible",      p.visible       },
-          { "label",        p.label         } };
+    j={
+        { "verts",        p.verts                             },
+        { "id",           p.id                                },
+        { "closed",       p.closed                            },
+        { "style",        p.style                             },
+        { "z_index",      p.z_index                           },
+        { "locked",       p.locked                            },
+        { "visible",      p.visible                           },
+        { "label",        p.label                             },
+        { "kind",         static_cast<uint8_t>( p.kind )      }
+    };
+    
+    if ( !std::holds_alternative<std::monostate>(p.payload) )   { j["payload"] = p.payload; }   // Serialises only non-empty payload.
+    
     return;
 }
 
 
-//  "from_json"
+//  "from_json"         | For Path_t...
 //
 template<typename PID, typename VID, typename ZID>
 inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
 {
-    if ( j.contains("id") )         { j.at("id").get_to(p.id);      }
-    else                            { p.id = 0;                     }
+    using   PathKind        = path::PathKind;
+    bool    has_kind        = j.contains("kind");
+    bool    has_payload     = j.contains("payload");
+    bool    invalid         = has_kind != has_payload;
+
+    //  1.      ID...
+    if ( j.contains("id") )         { j.at("id").get_to(p.id);              }
+    else                            { p.id = 0;                             }
     
+    //  2.      LABEL...
+    if ( j.contains("label") )      { j.at("label").get_to(p.label);        }
+    else                            { p.set_label("?");                                                 }
+    
+    //  3.      Z-INDEX...
+    if ( j.contains("z_index") )    { j.at("z_index").get_to(p.z_index);                                }
+    else                            { p.z_index = 200;                                                  }
+    
+    //  4.      LOCKED...
+    if ( j.contains("locked") )     { j.at("locked").get_to(p.locked);                                  }
+    else                            { p.locked = false;                                                 }
+    
+    //  5.      VISIBLE...
+    if ( j.contains("visible") )    { j.at("visible").get_to(p.visible);                                }
+    else                            { p.visible = true;                                                 }
+    
+    
+    //  6A.     INVALID FORM OF OBJECT (Must have either BOTH a kind AND payload -- OR NEITHER)...
+    if ( invalid )                  { IM_ASSERT(true && "JSON loading error for typename<Path_t>:  object must have either (1) BOTH 'kind' AND 'payload', (2) NEITHER 'kind' NOR 'payload'."); }
+    //
+    //  6B.     GET "kind"...
+    if ( has_kind )                 { p.kind = static_cast<PathKind>( j.at("kind").get<uint8_t>() );    }
+    else                            { p.kind = PathKind::Default;                                       }
+    //
+    //  6C.     GET "payload"...
+    if ( has_payload )              { j.at("payload").get_to(p.payload);                                }
+    
+    
+    //  99.     REMAINING DATA-MEMBERS...
     j.at("verts"    ).get_to(p.verts    );
     j.at("closed"   ).get_to(p.closed   );
     j.at("style"    ).get_to(p.style    );
-    j.at("z_index"  ).get_to(p.z_index  );
-    j.at("locked"   ).get_to(p.locked   );
-    j.at("visible"  ).get_to(p.visible  );
-    
-    //  Handle old files that may lack "label"
-    if ( j.contains("label") )      { j.at("label").get_to(p.label); }
-    else                            { p.set_label("?"); }
         
     return;
 }
