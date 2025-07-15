@@ -149,8 +149,6 @@ public:
 //
 // *************************************************************************** //
 // *************************************************************************** //
-    static constexpr std::array<const char*, static_cast<size_t>(Mode::Count)>
-                                        ms_MODE_LABELS                  = DEF_EDITOR_STATE_NAMES;
     static constexpr float              ms_LIST_COLUMN_WIDTH            = 240.0f;   // px width of point‑list column
 
 
@@ -1027,9 +1025,11 @@ private:
     //
     //                      ARRAYS:
     // *************************************************************************** //
-    static constexpr auto &             ms_SHAPE_NAMES                  = EDITOR_SHAPE_NAMES;
+    static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;
+    static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
+    static constexpr auto &             ms_PATH_PAYLOAD_NAMES           = path::DEF_PATH_PAYLOAD_NAMES;
 
-
+// static constexpr std::array<const char *, static_cast<size_t>(Mode::COUNT)>
 
 
 
@@ -1307,8 +1307,8 @@ inline void from_json(const nlohmann::json & j, EditorSnapshot & s)
 
 //  "mode_label"
 //
-static inline const char * mode_label(Mode m)
-{ return Editor::ms_MODE_LABELS[ static_cast<size_t>(m) ]; }
+// static inline const char * mode_label(Mode m)
+// { return Editor::ms_EDITOR_STATE_NAMES[ static_cast<size_t>(m) ]; }
 
 
 

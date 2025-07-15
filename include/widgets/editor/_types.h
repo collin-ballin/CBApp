@@ -101,11 +101,11 @@ enum class Mode : int {
     RemoveAnchor,       //  "Remove Anchor"         (KEY: "-").
     EditAnchor,         //  "Edit Anchor"           (KEY: "SHIFT" + "C").
 //
-    Count
+    COUNT
 };
 //
 //  "DEF_EDITOR_STATE_NAMES"
-constexpr std::array<const char*, static_cast<size_t>(Mode::Count)>
+static constexpr std::array<const char *, static_cast<size_t>(Mode::COUNT)>
     DEF_EDITOR_STATE_NAMES  = { {
     "Default",              "Line",                     "Point",                    "Pen",
     "Scissor",              "Shape",                    "Add Anchor Point",         "Remove Anchor Point",
@@ -135,7 +135,7 @@ enum CBCapabilityFlags_ : uint16_t {
 //
 //
 //  Per‑mode capability mask
-static constexpr std::array<uint16_t, static_cast<size_t>(Mode::Count)>
+static constexpr std::array<uint16_t, static_cast<size_t>(Mode::COUNT)>
 MODE_CAPS               = {
 /*  Default         */      CBCapabilityFlags_Navigation | CBCapabilityFlags_Select | CBCapabilityFlags_CursorHint,
 /*  Line            */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
@@ -325,8 +325,8 @@ enum class ShapeKind : uint32_t {
 //
 //  "APPLICATION_PLOT_COLOR_STYLE_NAMES"
 //      COMPILE-TIME ARRAY CONTAINING THE NAME OF ALL STYLES.
-inline static const std::array<const char *, static_cast<size_t>(ShapeKind::COUNT)>
-EDITOR_SHAPE_NAMES = {{
+static constexpr std::array<const char *, static_cast<size_t>(ShapeKind::COUNT)>
+DEF_EDITOR_SHAPE_NAMES = {{
     "Square",           "Rectangle",
     "Circle",           "Oval",             "Ellipse"
 }};

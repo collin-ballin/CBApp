@@ -329,6 +329,14 @@ enum class PathKind : uint8_t {
     COUNT
 };
 
+//  "PATH_KIND_NAMES"
+//
+static constexpr std::array<const char *, static_cast<size_t>(PathKind::COUNT)>
+DEF_PATH_PAYLOAD_NAMES                  = {
+    "Default",
+    "Generic"
+};
+
 
 
 

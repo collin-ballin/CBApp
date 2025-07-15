@@ -311,7 +311,7 @@ void Editor::_draw_controls(void)
         //
         ImGui::SetNextItemWidth( WIDGET_SIZE.x );
         if ( ImGui::Combo("##Editor_Controls_EditorState",      &mode_i,
-                          ms_MODE_LABELS.data(),                static_cast<int>(Mode::Count)) )
+                          ms_EDITOR_STATE_NAMES.data(),         static_cast<int>(Mode::COUNT)) )
         {
             m_mode = static_cast<Mode>(mode_i);
         }
