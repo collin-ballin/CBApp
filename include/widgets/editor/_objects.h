@@ -34,21 +34,23 @@
 #include <cstdlib>          // C-Headers...
 #include <stdio.h>
 #include <unistd.h>
-#include <random>
-#include <tuple>
-#include <utility>
 
-#include <algorithm>
+#include <algorithm>        //  SPECIAL...
+#include <optional>
+#include <variant>
+#include <tuple>
+
+#include <string>           //  DATA STRUCTURES...      //  <======| std::string, ...
+#include <string_view>
+#include <vector>           //                          //  <======| std::vector, ...
 #include <array>
 #include <unordered_set>
-#include <optional>
 
-#include <string>           //  <======| std::string, ...
-#include <string_view>
-#include <vector>           //  <======| std::vector, ...
-#include <stdexcept>        //  <======| ...
+#include <stdexcept>        //                          //  <======| ...
 #include <limits.h>
 #include <math.h>
+#include <utility>
+
 
 //  0.3     "DEAR IMGUI" HEADERS...
 #include "json.hpp"
@@ -79,7 +81,7 @@ enum class AnchorType : uint8_t     {
 };
 //
 static constexpr std::array<const char *, static_cast<size_t>(AnchorType::COUNT)>
-ANCHOR_TYPE_NAMES                   = {
+DEF_ANCHOR_TYPE_NAMES               = {
     "Corner",
     "Smooth",
     "Symmetric"
@@ -321,10 +323,9 @@ enum class PathKind : uint8_t {
     Default = 0,
     Generic,
 //
-    //  Dielectric  = 2,
-    //  Boundary    = 3,
-    //  Source      = 4,
-    // … add more as needed
+    Source,
+    Boundary,
+    Dielectric,
 //
     COUNT
 };
@@ -332,9 +333,10 @@ enum class PathKind : uint8_t {
 //  "PATH_KIND_NAMES"
 //
 static constexpr std::array<const char *, static_cast<size_t>(PathKind::COUNT)>
-DEF_PATH_PAYLOAD_NAMES                  = {
+DEF_PATH_KIND_NAMES                     = {
     "Default",
-    "Generic"
+    "Generic",
+    "Source", "Boundary Condition", "Dielectric"
 };
 
 
@@ -347,14 +349,148 @@ DEF_PATH_PAYLOAD_NAMES                  = {
 // *************************************************************************** //
 
 //  "GenericPayload"
-//
 struct GenericPayload {
-    double                  x       {1.0};              //  relative permittivity
-    double                  y       {1.0};              //  relative permeability
-    std::string             data    {};
-    std::string             meta    {};
-};
+// *************************************************************************** //
+// *************************************************************************** //
+
+    //  "ui_properties"
+    inline void                     ui_properties                   (void)
+    {
+        static constexpr float          ms_LABEL_WIDTH          = 196.0f;
+        static constexpr float          ms_WIDGET_WIDTH         = 256.0f;
+        auto                            label                   = [&](const char * label) -> void
+        { utl::LeftLabel(label, ms_LABEL_WIDTH, ms_WIDGET_WIDTH);   ImGui::SameLine(); };
+        
+        
+        label("ε\u209B (rel. ϵ):");
+        ImGui::InputDouble("##rel_perm", &x, 0.0, 0.0, "%.3f");     // x: relative permittivity
+
+        label("μ\u209B (rel. μ):");
+        ImGui::InputDouble("##rel_perm_mu", &y, 0.0, 0.0, "%.3f");  // y: relative permeability
+
+        label("Data:");
+        ImGui::InputText("##payload_data", &data);                  // needs imgui_stdlib.h
+
+        label("Meta:");
+        ImGui::InputText("##payload_meta", &meta);
+        
+        
+        
+        return;
+    }
+    
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+    double                          x                               {1.0};              //  relative permittivity
+    double                          y                               {1.0};              //  relative permeability
+    std::string                     data                            {};
+    std::string                     meta                            {};
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "Path_t" CLASS DEFINITION.
+};//    END "Path_t" CLASS DEFINITION.
+
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GenericPayload, x, y, data, meta)
+
+
+
+
+
+
+//  "SourcePayload"
+struct SourcePayload {
+// *************************************************************************** //
+// *************************************************************************** //
+
+    //  "ui_properties"
+    inline void                     ui_properties                   (void)
+    {
+        //  static constexpr float          ms_LABEL_WIDTH         = 196.0f;
+        //  static constexpr float          ms_WIDGET_WIDTH        = 256.0f;
+        //  constexpr ImGuiSliderFlags      SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
+        //  constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
+        //  auto                            label                   = [&](const char * label) -> void
+        //  { utl::LeftLabel(label, ms_LABEL_WIDTH, ms_WIDGET_WIDTH);   ImGui::SameLine(); };
+        return;
+    }
+    
+    // *************************************************************************** //
+    //      DATA MEMBERS...
+    // *************************************************************************** //
+    float                           value                           = 1.0f;
+
+// *************************************************************************** //
+// *************************************************************************** //   END "SourcePayload" CLASS DEFINITION.
+};//    END "SourcePayload" CLASS DEFINITION.
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SourcePayload, value)
+
+
+
+
+
+
+//  "BoundaryPayload"
+struct BoundaryPayload {
+// *************************************************************************** //
+// *************************************************************************** //
+
+    //  "ui_properties"
+    inline void                     ui_properties                   (void)
+    {
+        //  static constexpr float          ms_LABEL_WIDTH         = 196.0f;
+        //  static constexpr float          ms_WIDGET_WIDTH        = 256.0f;
+        //  constexpr ImGuiSliderFlags      SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
+        //  constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
+        //  auto                            label                   = [&](const char * label) -> void
+        //  { utl::LeftLabel(label, ms_LABEL_WIDTH, ms_WIDGET_WIDTH);   ImGui::SameLine(); };
+        return;
+    }
+    
+    // *************************************************************************** //
+    //      DATA MEMBERS...
+    // *************************************************************************** //
+    float                           value                           = 1.0f;
+
+// *************************************************************************** //
+// *************************************************************************** //   END "BoundaryPayload" CLASS DEFINITION.
+};//    END "BoundaryPayload" CLASS DEFINITION.
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BoundaryPayload, value)
+
+
+
+
+
+
+//  "DielectricPayload"
+struct DielectricPayload {
+// *************************************************************************** //
+// *************************************************************************** //
+
+    //  "ui_properties"
+    inline void                     ui_properties                   (void)
+    {
+        return;
+    }
+    
+    // *************************************************************************** //
+    //      DATA MEMBERS...
+    // *************************************************************************** //
+    float                           value                           = 1.0f;
+
+// *************************************************************************** //
+// *************************************************************************** //   END "DielectricPayload" CLASS DEFINITION.
+};//    END "DielectricPayload" CLASS DEFINITION.
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DielectricPayload, value)
 
 
 
@@ -364,7 +500,10 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GenericPayload, x, y, data, meta)
 // *************************************************************************** //
 //      3.      DEFINE "PAYLOAD" STD::VARIANT ALIAS TYPE...
 // *************************************************************************** //
-using       Payload         = std::variant<std::monostate, GenericPayload /*, DielectricPayload, FuturePayload, etc...*/>;
+using       Payload         = std::variant<
+    std::monostate,     GenericPayload,
+    SourcePayload,      BoundaryPayload,    DielectricPayload
+>;
 
 
 
@@ -380,25 +519,25 @@ using       Payload         = std::variant<std::monostate, GenericPayload /*, Di
 inline void to_json(nlohmann::json & j, const Payload & v)
 {
     //  1.  monostate  ⇒ store null  (omit field entirely if you prefer)
-    if ( std::holds_alternative<std::monostate>(v) ) {
-        j = nullptr;
-        return;
-    }
+    if ( std::holds_alternative<std::monostate>(v) )                { j = nullptr; return; }
 
     //  2.  GenericPayload ⇒ store as plain object...
-    if ( const auto* gp = std::get_if<GenericPayload>(&v) ) {
-        j = *gp;                          // uses GenericPayload serializer
-        return;
-    }
-    //
-    //
-    //  Add more  else-ifs  as you introduce new payload structs...
+    if ( const auto* gp = std::get_if<GenericPayload>(&v) )         { j = *gp;  return; }    // uses GenericPayload serializer
+
+    //  3.  SourcePayload...
+    if ( const auto * gp = std::get_if<SourcePayload>(&v) )         { j = *gp;  return; }
+
+    //  4.  BoundaryPayload...
+    if ( const auto * gp = std::get_if<BoundaryPayload>(&v) )       { j = *gp;  return; }
+
+    //  5.  DielectricPayload...
+    if ( const auto * gp = std::get_if<DielectricPayload>(&v) )     { j = *gp;  return; }
 }
 
 
 //  "from_json"         | For GenericPayload...
 //
-inline void from_json(const nlohmann::json& j, Payload& v)
+inline void from_json(const nlohmann::json & j, Payload & v)
 {
     //  1.  MONOSTATE...
     if ( j.is_null() || j.empty() )     { v = std::monostate{}; }
@@ -498,13 +637,53 @@ struct Path_t {
 // *************************************************************************** //
 
     // *************************************************************************** //
-    //                          NEW:
+    //                          OPERATION FUNCTIONS:
     // *************************************************************************** //
     
                                     //
                                     //  ...
                                     //
+                                    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                          UI HELPER FUNCTIONS:
+    // *************************************************************************** //
     
+    //  "ui_properties"
+    inline void                     ui_properties                   (void)
+    {
+        using namespace path;
+        if ( this->ui_kind() )        { /*    "kind" was changes.     */ }
+        
+        //  2.  CALL THE "PROPERTIES UI" FOR THE
+        std::visit([&](auto & pl) {
+            using T = std::decay_t<decltype(pl)>;
+            //  skip monostate (has no draw_ui)
+            if constexpr (!std::is_same_v<T, std::monostate>)
+                { pl.ui_properties(); }          // every real payload implements this
+        }, payload);
+        
+        return;
+    }
+    
+    //  "ui_kind"
+    [[nodiscard]] inline bool       ui_kind                         (void)
+    {
+        bool    modified    = false;
+        int     kind_idx    = static_cast<int>(this->kind);
+        if (( modified = ImGui::Combo("##Path_UIInternal_Kind",             &kind_idx,
+                                      path::DEF_PATH_KIND_NAMES.data(),     static_cast<int>(PathKind::COUNT)) ))
+        {
+            this->kind          = static_cast<PathKind>(kind_idx);
+            this->payload       = make_default_payload(this->kind);     // << reset payload
+        }
+        
+        return modified;
+    }
+                                    
     // *************************************************************************** //
     //
     //
@@ -513,6 +692,23 @@ struct Path_t {
     //                          UTILITY FUNCTIONS:
     // *************************************************************************** //
     
+    //  "make_default_payload"
+    static inline Payload make_default_payload(const PathKind k)
+    {
+        switch (k)
+        {
+            case PathKind::Generic :    { return path::GenericPayload{}; }          // default-constructed
+            
+            /* case PathKind::Boundary:  return BoundaryPayload{};  */
+            /* case PathKind::Source:    return SourcePayload{};    */
+            
+            default:                    { break; }                   // PathKind::Default or unknown
+        }
+        
+        return std::monostate{};                  // no extra data
+    }
+
+
     //  "is_area"
     [[nodiscard]] inline bool       is_area                         (void) const noexcept
     { return this->closed && this->verts.size() >= 3; }
@@ -598,7 +794,19 @@ inline void to_json(nlohmann::json & j, const Path_t<PID, VID, ZID> & p)
         { "kind",         static_cast<uint8_t>( p.kind )      }
     };
     
-    if ( !std::holds_alternative<std::monostate>(p.payload) )   { j["payload"] = p.payload; }   // Serialises only non-empty payload.
+    //if ( !std::holds_alternative<std::monostate>(p.payload) )   { j["payload"] = p.payload; }   // Serialises only non-empty payload.
+    if ( !std::holds_alternative<std::monostate>(p.payload) ) {
+        j["payload"] = std::visit(
+            [](const auto& pl) -> nlohmann::json
+            {
+                using T = std::decay_t<decltype(pl)>;
+                
+                if constexpr (std::is_same_v<T, std::monostate>)
+                        { return nlohmann::json{};      }           //  Never reaches here at run-time...
+                else    { return nlohmann::json(pl);    }           //  Uses the payload’s serializer...
+            },
+            p.payload);
+    }
     
     return;
 }
@@ -609,7 +817,7 @@ inline void to_json(nlohmann::json & j, const Path_t<PID, VID, ZID> & p)
 template<typename PID, typename VID, typename ZID>
 inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
 {
-    using   PathKind        = path::PathKind;
+    using   namespace       path;
     bool    has_kind        = j.contains("kind");
     bool    has_payload     = j.contains("payload");
     bool    invalid         = has_kind != has_payload;
@@ -624,7 +832,7 @@ inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
     
     //  3.      Z-INDEX...
     if ( j.contains("z_index") )    { j.at("z_index").get_to(p.z_index);                                }
-    else                            { p.z_index = 200;                                                  }
+    else                            { p.z_index = Z_FLOOR_USER;                                         }
     
     //  4.      LOCKED...
     if ( j.contains("locked") )     { j.at("locked").get_to(p.locked);                                  }
@@ -639,18 +847,44 @@ inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
     if ( invalid )                  { IM_ASSERT(true && "JSON loading error for typename<Path_t>:  object must have either (1) BOTH 'kind' AND 'payload', (2) NEITHER 'kind' NOR 'payload'."); }
     //
     //  6B.     GET "kind"...
-    if ( has_kind )                 { p.kind = static_cast<PathKind>( j.at("kind").get<uint8_t>() );    }
+    if ( has_kind && !invalid)      { p.kind = static_cast<PathKind>( j.at("kind").get<uint8_t>() );    }
     else                            { p.kind = PathKind::Default;                                       }
     //
     //  6C.     GET "payload"...
-    if ( has_payload )              { j.at("payload").get_to(p.payload);                                }
+    if ( has_payload && !invalid)
+    {
+        const auto & jp = j.at("payload");
+
+        switch (p.kind) {
+            case PathKind::Generic:
+                p.payload = jp.get<GenericPayload>();
+                break;
+
+            case PathKind::Source:
+                p.payload = jp.get<SourcePayload>();
+                break;
+
+            case PathKind::Boundary:
+                p.payload = jp.get<BoundaryPayload>();
+                break;
+
+            case PathKind::Dielectric:
+                p.payload = jp.get<DielectricPayload>();
+                break;
+
+            default:      // Default or unknown kind
+                break;
+        }
+    }
     
     
     //  99.     REMAINING DATA-MEMBERS...
     j.at("verts"    ).get_to(p.verts    );
     j.at("closed"   ).get_to(p.closed   );
     j.at("style"    ).get_to(p.style    );
-        
+            
+            
+            
     return;
 }
 

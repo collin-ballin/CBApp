@@ -842,6 +842,14 @@ struct EditorStyle
     //                      BROWSER WIDGET STUFF:
     float                       ms_BROWSER_BUTTON_SEP           = 8.0f;
     float                       ms_BROWSER_SELECTABLE_SEP       = 16.0f;
+    float                       ms_BROWSER_LABEL_WIDTH          = 55.0f;
+    //
+    //
+    //
+    //                      SYSTEM PREFERENCES WIDGETS:
+    float                       ms_SETTINGS_LABEL_WIDTH         = 196.0f;
+    float                       ms_SETTINGS_WIDGET_WIDTH        = 256.0f;
+    //
 // *************************************************************************** //
 //
 //

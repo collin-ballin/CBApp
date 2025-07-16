@@ -1135,31 +1135,28 @@ void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it
 //
 void Editor::dispatch_selection_context_menus([[maybe_unused]] const Interaction & it)
 {
-    constexpr const char* selection_popup_id = "Editor_Selection_ContextMenu";
-    constexpr const char* canvas_popup_id    = "Editor_Canvas_ContextMenu";
+    constexpr const char *      selection_popup_id  = "Editor_Selection_ContextMenu";
+    constexpr const char *      canvas_popup_id     = "Editor_Canvas_ContextMenu";
+    const bool                  rmb_click           = it.hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right);
 
-    const bool rmb_click = it.hovered &&
-                           ImGui::IsMouseClicked(ImGuiMouseButton_Right);
 
-    // 1. Handle the click (selection update + OpenPopup)
+    //      1.      Handle the click (selection update + OpenPopup)
     if (rmb_click)
     {
         if ( m_sel.empty() )
         {
-            if ( auto h = _hit_any(it) ) {        // pick under cursor
-                this->reset_selection(); // m_sel.clear();
+            if ( auto h = _hit_any(it) ) {      // pick under cursor
+                this->reset_selection();        // m_sel.clear();
                 add_hit_to_selection(*h);
             }
         }
 
-        // Decide which popup to open based on current selection state
-        if ( m_sel.empty() )
-            ImGui::OpenPopup(canvas_popup_id);      // empty → canvas menu
-        else
-            ImGui::OpenPopup(selection_popup_id);   // non-empty → selection menu
+        //  Decide which popup to open based on current selection state
+        if ( m_sel.empty() )    { ImGui::OpenPopup(canvas_popup_id); }     // empty → canvas menu
+        else                    { ImGui::OpenPopup(selection_popup_id); }  // non-empty → selection menu
     }
 
-    // 2. Render both popups every frame; BeginPopup() returns false if not open
+    //      2.      Render both popups every frame; BeginPopup() returns false if not open
     _show_selection_context_menu(it, selection_popup_id);
     _show_canvas_context_menu(it,    canvas_popup_id);
 }
@@ -1221,20 +1218,25 @@ inline void Editor::_show_selection_context_menu([[maybe_unused]] const Interact
 
     //  1.  CONTEXT MENU FOR SPECIALIZED SELECTIONS (Single vs. Multi.)...
     if (total_items == 1) {
+#ifdef __CBAPP_DEBUG__
         ImGui::TextDisabled("Single");
+#endif  //  __CBAPP_DEBUG__  //
         _selection_context_single(it);
     }
     else {
+#ifdef __CBAPP_DEBUG__
         ImGui::TextDisabled("Multi.");
+#endif  //  __CBAPP_DEBUG__  //
         _selection_context_multi(it);
     }
 
 
-
     //  2.  DEFAULT FUNCTIONS ENABLED FOR *ALL* SELECTIONS...
     ImGui::Separator();
+#ifdef __CBAPP_DEBUG__
     ImGui::TextDisabled("Primative");
-    _selection_context_default(it);
+#endif  //  __CBAPP_DEBUG__  //
+    _selection_context_primative(it);
 
 
 
@@ -1243,10 +1245,10 @@ inline void Editor::_show_selection_context_menu([[maybe_unused]] const Interact
 }
 
 
-//  "_selection_context_default"
+//  "_selection_context_primative"
 //      Functions that can operate on ANY set of selected items.
 //
-inline void Editor::_selection_context_default([[maybe_unused]] const Interaction & it)
+inline void Editor::_selection_context_primative([[maybe_unused]] const Interaction & it)
 {
     
     //  1.  REORDER Z-ORDER OF OBJECTS ON CANVAS...
@@ -1296,24 +1298,43 @@ inline void Editor::_selection_context_default([[maybe_unused]] const Interactio
 //
 inline void Editor::_selection_context_single([[maybe_unused]] const Interaction & it)
 {
-
-
-    //  1.  TRANSFORM...
-    if ( ImGui::BeginMenu("Transform") ) {
+    const size_t                    sel_idx             = *m_sel.paths.begin();   // only element
+    Path &                          path                = m_paths[sel_idx];
+    
+    
+    //  1.  PROPERTIES...
+    if ( ImGui::BeginMenu("Properties") ) {
         //
-        if ( ImGui::MenuItem("Move")            )       { /*  TODO:  */     }
-        if ( ImGui::MenuItem("Scale")           )       { /*  TODO:  */     }
-        if ( ImGui::MenuItem("Rotate")          )       { /*  TODO:  */     }
+        path.ui_properties();
+        //  if ( path.ui_kind() )                   { /*    changed the path kind.      */ }
         //
         ImGui::EndMenu();
     }
     
     
-    // Example: Rename path, convert to outline, etc.
-    if (ImGui::MenuItem("Reverse Path Direction"))
-    {
-        // TODO: implement
+    
+
+    //  2.  TRANSFORM...
+    if ( ImGui::BeginMenu("Transform") ) {
+        //
+        if ( ImGui::MenuItem("Move")            )       { /*  TODO:  */     }
+        if ( ImGui::MenuItem("Scale")           )       { /*  TODO:  */     }
+        if ( ImGui::MenuItem("Rotate")          )       { /*  TODO:  */     }
+        if ( ImGui::MenuItem("Reflect")         )       { /*  TODO:  */     }
+        //
+        ImGui::Separator();
+        if ( ImGui::MenuItem("Quantize")        )       { /*  TODO:  */     }
+        if ( ImGui::MenuItem("Smooth")          )       { /*  TODO:  */     }
+        //
+        ImGui::EndMenu();
     }
+    
+    
+    //  Example: Rename path, convert to outline, etc.
+    //      if (ImGui::MenuItem("Reverse Path Direction"))
+    //      {
+    //          // TODO: implement
+    //      }
     
     
     
@@ -1328,14 +1349,14 @@ inline void Editor::_selection_context_multi([[maybe_unused]] const Interaction 
 {
 
 
-    if (ImGui::MenuItem("Group Selection"))
+    if ( ImGui::MenuItem("Create Group") )
     {
         // TODO: implement grouping
     }
-    if (ImGui::MenuItem("Align Vertices"))
-    {
-        // TODO: implement alignment helpers
-    }
+    //  if (ImGui::MenuItem("Align Vertices"))
+    //  {
+    //      // TODO: implement alignment helpers
+    //  }
     
     
     

@@ -440,7 +440,7 @@ private:
     inline void                         _show_selection_context_menu        ([[maybe_unused]] const Interaction & it, const char * );
     inline void                         _show_canvas_context_menu           ([[maybe_unused]] const Interaction & it, const char * );
     //
-    inline void                         _selection_context_default          ([[maybe_unused]] const Interaction & );
+    inline void                         _selection_context_primative        ([[maybe_unused]] const Interaction & );
     inline void                         _selection_context_single           ([[maybe_unused]] const Interaction & );
     inline void                         _selection_context_multi            ([[maybe_unused]] const Interaction & );
     // *************************************************************************** //
@@ -473,8 +473,8 @@ private:
     //
     //                              HELPER FUNCTIONS FOR EDITOR SETTINGS:
     void                                _draw_settings_mechanics            (void);
-    void                                _draw_settings_serialize            (void);
     void                                _draw_settings_user_preferences     (void);
+    void                                _draw_settings_serialize            (void);
     // *************************************************************************** //
     //
     //
@@ -1027,7 +1027,8 @@ private:
     // *************************************************************************** //
     static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;
     static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
-    static constexpr auto &             ms_PATH_PAYLOAD_NAMES           = path::DEF_PATH_PAYLOAD_NAMES;
+    static constexpr auto &             ms_ANCHOR_TYPE_NAMES            = DEF_ANCHOR_TYPE_NAMES;
+    static constexpr auto &             ms_PATH_KIND_NAMES              = path::DEF_PATH_KIND_NAMES;
 
 // static constexpr std::array<const char *, static_cast<size_t>(Mode::COUNT)>
 
