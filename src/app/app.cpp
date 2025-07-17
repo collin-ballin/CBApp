@@ -141,7 +141,7 @@ void App::run_IMPL(void)
     static const size_t &           WINDOWS_BEGIN       = this->S.ms_WINDOWS_BEGIN;   // static_cast<size_t>(Window::Sidebar);
     static const size_t &           WINDOWS_END         = this->S.ms_WINDOWS_END;     // static_cast<size_t>(Window::Count);
 
-    static app::WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
+    //static app::WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
     static bool                     first_frame         = true;
     
     
@@ -182,7 +182,8 @@ void App::run_IMPL(void)
     //                          - If one of these is NULL, something has gone very wrong and we  *WANT*  THE PROGRAM TO CRASH !!!
     for (idx = WINDOWS_BEGIN; idx < WINDOWS_END; ++idx)
     {
-        winfo           = S.m_windows[ static_cast<Window>(idx) ];
+        app::WinInfo &  winfo   = S.m_windows[ static_cast<Window>(idx) ];
+        
         if (winfo.open) {
             winfo.render_fn( winfo.uuid.c_str(), &winfo.open, winfo.flags );
         }
@@ -401,22 +402,23 @@ inline void App::DialogHandler(void)
 {
     static bool     initialized  = false;
 
-/*
+
     if (S.m_dialog_queued)
     {
     
         if (!initialized) {
             initialized  = true;
-            this->S.m_file_dialog.is_open().initialize(this->S.m_dialog_settings );
+            this->S.m_file_dialog.initialize(this->S.m_dialog_settings );
         }
 
         if ( this->S.m_file_dialog.is_open() )
         {
-            m_sdialog_open.store(false, std::memory_order_release);
-            if ( this->m_save_dialog.Begin("File Dialog") ) {        // returns true when finished
+            //m_file_dialog.store(false, std::memory_order_release);
+            if ( this->S.m_file_dialog.Begin() ) {        // returns true when finished
             
-                if ( auto path = this->m_save_dialog.result() ) {
-                    CB_LOG(LogLevel::Info, "DialogHandler recieved filepath: {}", path);
+                if ( auto path = this->S.m_file_dialog.result() ) {
+                    //CB_LOG(LogLevel::Info, "DialogHandler recieved filepath: {}", path.value());
+                }
             }
         }
         else {
@@ -424,7 +426,7 @@ inline void App::DialogHandler(void)
             S.m_dialog_queued   = false;
         }
     }
- */
+ 
     return;
 }
 
@@ -562,19 +564,22 @@ inline void App::QuerySignalStates(void)
 //
 void App::SaveHandler_Default(void)
 {
-    static constexpr const char *   save_popup_id       = "S A V E   P R O G R A M  .  .  .";
-            
+    if (!S.m_dialog_queued)
+    {
+        S.m_dialog_queued = true;
+        this->S.m_dialog_settings   = {
+            /* type               = */  cb::FileDialog::Type::Save,
+            /* window_name        = */  "Save File...",
+            /* default_filename   = */  "",
+            /* required_extension = */  "",
+            /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
+            /* starting_dir       = */  std::filesystem::current_path()
+        };
 
-    ImGui::OpenPopup(save_popup_id);
+    }
     
-    
-    ImVec2                          center              = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    utl::Popup_Save(save_popup_id);
-    
-    //ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags  | ImGuiInputFlags_Tooltip);
-
     CB_LOG( LogLevel::Info, "Applet::MainApp--save" );
+    
     return;
 }
 

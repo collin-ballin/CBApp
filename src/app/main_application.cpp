@@ -35,7 +35,9 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
 {
     static bool                     show_config_info    = false;
 
-    ImGui::OpenPopup(uuid);
+    if (*p_open) {
+        ImGui::OpenPopup(uuid);
+    }
     
     
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
@@ -88,11 +90,6 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
         {
             this->get_build_info();
         }
-        
- 
-   
-
-
     
 
         ImGui::EndPopup();

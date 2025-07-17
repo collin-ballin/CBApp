@@ -245,8 +245,8 @@ public:
     cb::FileDialog::Initializer         m_dialog_settings               = {
     //
     //                              "OPEN" SETTINGS...                      //  |   "SAVE" SETTINGS...
-        /* type               = */  cb::FileDialog::Type::None,
-        /* window_name        = */  "",
+        /* type               = */  cb::FileDialog::Type::Open,
+        /* window_name        = */  "File Dialog",
         /* default_filename   = */  "",                                     //  |       "canvas_settings.json",
         /* required_extension = */  "",                                     //  |       "json",
         /* valid_extensions   = */  {".json", ".cbjson", ".txt"},           //  |       {".json", ".txt"}

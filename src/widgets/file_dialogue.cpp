@@ -653,7 +653,7 @@ inline void FileDialog::refresh_listing(State & s)
 
 //  "handle_keyboard_nav"
 //
-inline void FileDialog::handle_keyboard_nav(State & s)
+inline void FileDialog::handle_keyboard_nav(State & /* s */)
 {
 /*
     static constexpr ImGuiInputFlags        esc_key_flags           = ImGuiInputFlags_RouteOverFocused; //ImGuiInputFlags_None;
