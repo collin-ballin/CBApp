@@ -207,9 +207,12 @@ void Editor::_draw_obj_selector_column(void)
     using namespace icon;                      // pull in CELL_SZ, etc.
     //
     //  COLORS FROM CURRENT STYLE (Non-icon constants)
+    static constexpr auto       ms_DELETE_BUTTON_COLOR      = IM_COL32(  255,  0,  0, 255);
+    static constexpr float      ms_DELETE_BUTTON_ROUNDING   = 0.0f;
     const ImU32                 col_text                    = ImGui::GetColorU32(ImGuiCol_Text);
     const ImU32                 col_dim                     = ImGui::GetColorU32(ImGuiCol_TextDisabled);
     const ImU32                 col_frame                   = ImGui::GetColorU32(ImGuiCol_FrameBg);
+    ImDrawList *                dl                          = ImGui::GetWindowDrawList();
     ImGuiListClipper            clipper;
 
 
@@ -254,9 +257,10 @@ void Editor::_draw_obj_selector_column(void)
             if ( ImGui::IsItemClicked() )       { path.visible = !path.visible; _prune_selection_mutability(); }
             //
             //  Draw EYE or CLOSED-EYE Icon.
-            draw_icon_background(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, selected ? col_frame : 0);
-            if ( path.visible )                 { draw_eye_icon(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, col_text); }
-            else                                { draw_eye_off_icon(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, col_dim); }
+            draw_icon_background(dl, pos, { CELL_SZ, CELL_SZ }, selected ? col_frame : 0);
+            if ( path.visible )                 { draw_eye_icon(dl,     pos, { CELL_SZ, CELL_SZ }, col_text); }
+            else                                { draw_eye_off_icon(dl, pos, { CELL_SZ, CELL_SZ }, col_dim); }
+
 
             ImGui::SameLine(0.0f, m_style.ms_BROWSER_BUTTON_SEP);
 
@@ -265,29 +269,51 @@ void Editor::_draw_obj_selector_column(void)
             pos = ImGui::GetCursorScreenPos();
             ImGui::InvisibleButton("##Editor_Browser_LockButton", { CELL_SZ, CELL_SZ });
             if ( ImGui::IsItemClicked() )       { path.locked = !path.locked; _prune_selection_mutability(); }
-
+            //
             ImGui::SameLine(0.0f, m_style.ms_BROWSER_SELECTABLE_SEP);
-            
+            //
             //  Draw LOCK or UNLOCK Icon.
-            draw_icon_background(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, selected ? col_frame : 0);
-            if (path.locked)                    { draw_lock_icon(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, col_text); }
-            else                                { draw_unlock_icon(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, col_dim); }
+            draw_icon_background(dl, pos, { CELL_SZ, CELL_SZ }, selected ? col_frame : 0);
+            if (path.locked)                    { draw_lock_icon(dl,    pos, { CELL_SZ, CELL_SZ }, col_text); }
+            else                                { draw_unlock_icon(dl,  pos, { CELL_SZ, CELL_SZ }, col_dim); }
 
 
 
             ImGui::SameLine(0.0f, m_style.ms_BROWSER_SELECTABLE_SEP);     // Spacing before selectable object.
             
             
+            //  3.3.    "DELETE" BUTTON...
+            const float     availX          = ImGui::GetContentRegionAvail().x;
+            const float     del_button_w    = 1.2f * CELL_SZ;
+            const auto      prev_pos        = ImGui::GetCursorScreenPos();
+            pos                             = prev_pos + ImVec2(availX - del_button_w, 0.0f);
+            //
+            //
+            if (!path.locked && selected) {
+                ImGui::SetCursorScreenPos(pos);
+                ImGui::InvisibleButton( "##Editor_Browser_DeleteButton", { CELL_SZ, CELL_SZ } );
+                if ( ImGui::IsItemClicked() )
+                {
+                    _erase_path_and_orphans(static_cast<PathID>(i)); // ← your helper
+                    this->reset_selection();
+                    m_browser_S.m_inspector_vertex_idx  = -1;
+                    _prune_selection_mutability();      //  ??  DO I NEED THIS  ??
+                }
+                //
+                //  Draw EYE or CLOSED-EYE Icon.
+                draw_icon_background(dl, pos, { CELL_SZ, CELL_SZ }, !path.locked ? ms_DELETE_BUTTON_COLOR : 0, ms_DELETE_BUTTON_ROUNDING);
+            }
             
-            //  3.3.    EDITING THE NAME FOR THE PATH...
+            
+            
+            //  3.4.    EDITING THE NAME FOR THE PATH...
+            ImGui::SetCursorScreenPos(prev_pos);
             ImGui::PushStyleColor( ImGuiCol_Text, (!mutable_path ? col_dim : col_text) ); // NEW – dim on invisible too
             //
-            const float     availX          = ImGui::GetContentRegionAvail().x;
-            const float     select_pad      = 2 * CELL_SZ;
-            const float     select_w        = availX - select_pad;
             //
             //  ImGui::SetNextItemWidth(select_w);
-            if ( ImGui::Selectable(path.label.c_str(), selected, sel_flags, {select_w, 0.0f}) )
+            //  if ( ImGui::Selectable(path.label.c_str(), selected, sel_flags, {select_w, 0.0f}) )
+            if ( ImGui::Selectable(path.label.c_str(), selected, sel_flags, {0.0f, 1.05f * CELL_SZ}) )
             {
                 const bool ctrl  = ImGui::GetIO().KeyCtrl;
                 const bool shift = ImGui::GetIO().KeyShift;
@@ -295,11 +321,11 @@ void Editor::_draw_obj_selector_column(void)
                 if (!ctrl && !shift) {
                     this->reset_selection();
                     if (mutable_path) m_sel.paths.insert(i);
-                    m_browser_anchor = i;
+                    m_browser_S.m_browser_anchor = i;
                 }
-                else if (shift && m_browser_anchor >= 0) {
-                    int lo = std::min(m_browser_anchor, i);
-                    int hi = std::max(m_browser_anchor, i);
+                else if (shift && m_browser_S.m_browser_anchor >= 0) {
+                    int lo = std::min(m_browser_S.m_browser_anchor, i);
+                    int hi = std::max(m_browser_S.m_browser_anchor, i);
                     if (!ctrl) this->reset_selection();
                     for (int k = lo; k <= hi; ++k)
                         if (m_paths[k].is_mutable())
@@ -307,30 +333,11 @@ void Editor::_draw_obj_selector_column(void)
                 }
                 else if (ctrl && mutable_path) {
                     if (!m_sel.paths.erase(i)) m_sel.paths.insert(i);
-                    m_browser_anchor = i;
+                    m_browser_S.m_browser_anchor = i;
                 }
                 _rebuild_vertex_selection();
             }
             ImGui::PopStyleColor();
-            
-            
-            
-            ImGui::SameLine(0.0f, m_style.ms_BROWSER_SELECTABLE_SEP);     // Spacing before selectable object.
-            //
-            //
-            //  3.4.    "DELETE" BUTTON...
-            pos             = ImGui::GetCursorScreenPos();
-            ImGui::InvisibleButton("##Editor_Browser_DeleteButton", { CELL_SZ, CELL_SZ });
-            if ( ImGui::IsItemClicked() ) {
-                _erase_path_and_orphans(static_cast<PathID>(i)); // ← your helper
-                this->reset_selection();
-                m_inspector_vertex_idx = -1;
-            }
-            //
-            //  Draw EYE or CLOSED-EYE Icon.
-            draw_icon_background(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, selected ? col_frame : 0);
-            //  if ( path.visible )                 { draw_eye_icon(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, col_text); }
-            //  else                                { draw_eye_off_icon(ImGui::GetWindowDrawList(), pos, { CELL_SZ, CELL_SZ }, col_dim); }
             
             
             
@@ -476,8 +483,12 @@ void Editor::_dispatch_obj_inspector_column(void)
     const size_t    sel_paths       = this->m_sel.paths.size();
 
     //  CASE 0 :    EMPTY SELECTION...
-    if ( sel_paths == 0 )       { ImGui::TextDisabled("Select an object from the left hand column..."); return; }
-
+    if ( sel_paths == 0 ) {
+        S.PushFont(Font::Main); ImGui::BeginDisabled(true);
+        ImGui::SeparatorText("Select an object from the left hand column...");
+        ImGui::EndDisabled(); S.PopFont(); return;
+    }
+    
     if (sel_paths == 1)         { _draw_single_obj_inspector();     }
     else                        { _draw_multi_obj_inspector();      }
     
@@ -490,7 +501,7 @@ void Editor::_dispatch_obj_inspector_column(void)
 //
 void Editor::_draw_single_obj_inspector(void)
 {
-    constexpr ImGuiChildFlags       P0_FLAGS            = ImGuiChildFlags_ResizeX       | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoScrollbar;
+    constexpr ImGuiChildFlags       P0_FLAGS            = ImGuiChildFlags_ResizeX       | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoScrollbar;
     constexpr ImGuiChildFlags       P1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     constexpr ImGuiChildFlags       C0_FLAGS            = ImGuiChildFlags_ResizeX       | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     constexpr ImGuiChildFlags       C1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
@@ -699,7 +710,7 @@ void Editor::_draw_multi_obj_inspector(void)
         }
 
         this->reset_selection();    // m_sel.clear();
-        m_inspector_vertex_idx = -1;
+        m_browser_S.m_inspector_vertex_idx = -1;
     }
 }
 
@@ -726,10 +737,10 @@ void Editor::_draw_vertex_selector_column(Path & path)
     while ( clipper.Step() )
         for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
         {
-            char lbl[8]; std::snprintf(lbl, sizeof(lbl), Vertex::ms_DEF_VERTEX_FMT_STRING, row);
-            bool selected = (row == m_inspector_vertex_idx);
+            char lbl[8]; std::snprintf(lbl, sizeof(lbl), Vertex::ms_DEF_VERTEX_SELECTOR_FMT_STRING, row);
+            bool selected = (row == m_browser_S.m_inspector_vertex_idx);
             if (ImGui::Selectable(lbl, selected))
-                m_inspector_vertex_idx = (selected ? -1 : row);      // toggle
+                m_browser_S.m_inspector_vertex_idx = (selected ? -1 : row);      // toggle
         }
     clipper.End();
 }
@@ -740,99 +751,115 @@ void Editor::_draw_vertex_selector_column(Path & path)
 //
 void Editor::_draw_vertex_inspector_column(Path & path)
 {
+    static constexpr size_t     TITLE_SIZE      = 32ULL;
+    const float &               LABEL_W         = m_style.ms_BROWSER_OBJ_LABEL_WIDTH;
+    const float &               WIDGET_W        = m_style.ms_BROWSER_OBJ_WIDGET_WIDTH;
+    
+    
     //  CASE 0 :    NO VALID SELECTION...
-    if ( m_inspector_vertex_idx < 0 || m_inspector_vertex_idx >= static_cast<int>(path.verts.size()) )
-    { ImGui::TextDisabled("Select a vertex from the left hand column..."); return; }
+    if ( m_browser_S.m_inspector_vertex_idx < 0 || m_browser_S.m_inspector_vertex_idx >= static_cast<int>(path.verts.size()) ) 
+    { ImGui::BeginDisabled(true); ImGui::SeparatorText("Select a vertex from the left hand column..."); ImGui::EndDisabled(); return; }
 
+                      
     //  0.  OBTAIN POINTER TO VERTEX...
-    VertexID        vid     = path.verts[static_cast<size_t>(m_inspector_vertex_idx)];
-    Vertex *        v       = find_vertex_mut(m_vertices, vid);
+    VertexID                    vid             = path.verts[static_cast<size_t>(m_browser_S.m_inspector_vertex_idx)];
+    Vertex *                    v               = find_vertex_mut(m_vertices, vid);
+    VertexID                    cache_id        = static_cast<VertexID>(-1);
+    static char                 title [TITLE_SIZE];     // safe head-room
+    
+    
+    //      0.1.    UPDATE TITLE IF SELECTION CHANGED...
+    if (cache_id != vid) {
+        cache_id        = vid;
+        int retcode     = std::snprintf( title, TITLE_SIZE, Vertex::ms_DEF_VERTEX_TITLE_FMT_STRING, m_browser_S.m_inspector_vertex_idx, vid );
+        
+        if (retcode < 0) [[unlikely]] {//  Log a warning message if truncation takes place.
+            auto message = std::format( "snprintf truncated Vertex title.\n"
+                                        "vertex-ID: {}.  title: \"{}\".  buffer-size: {}.  return value: \"{}\".",
+                                        vid, title, TITLE_SIZE, retcode );
+            CB_LOG( LogLevel::Warning, message );
+        }
+    }
+    
     
     
     //  CASE 1 :    STALE VERTEX...
-    if ( !v ) {
-        ImGui::TextDisabled("[stale vertex]"); return;
-    }
+    if ( !v )           { cache_id = static_cast<VertexID>(-1); ImGui::SeparatorText("[stale vertex]"); return; }
 
 
 
     //  1.  HEADER CONTENT...       "Vertex ID"
     //
-    ImGui::Text( Vertex::ms_DEF_VERTEX_LABEL_FMT_STRING, m_inspector_vertex_idx, vid );
-    
+    //ImGui::Text( Vertex::ms_DEF_VERTEX_LABEL_FMT_STRING, m_browser_S.m_inspector_vertex_idx, vid );
+    ImGui::SeparatorText(title);
+
+
+    //  2.  "DELETE" BUTTON...
     ImGui::SameLine();
-    
     if ( ImGui::Button("Delete Vertex##Editor_VertexBrowser_DeleteVertexButton", {120,0}) )
     {
         _erase_vertex_and_fix_paths(vid);
-        m_inspector_vertex_idx = -1;
+        m_browser_S.m_inspector_vertex_idx = -1;
         _rebuild_vertex_selection();
     }
     
     
     
-    ImGui::Separator();
-    //
-    //      1.1.    Constants:
-    const float     grid        = m_style.GRID_STEP / m_cam.zoom_mag;
-    const float     speed       = 0.1f * grid;
-    auto            snap        = [grid](float f){ return std::round(f / grid) * grid; };
-    bool            dirty       = false;
-    int             kind_idx    = static_cast<int>(v->kind);
-
-
-
-    //  2.  WIDGETS...
-    //
-    //      2.1.    Position:
-    utl::LeftLabel("Position:", m_style.ms_BROWSER_LABEL_WIDTH);  ImGui::SameLine();
-    dirty                      |= ImGui::DragFloat2("##Editor_VertexBrowser_Pos", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
-    //
-    if ( dirty && /*!ImGui::IsItemActive() && */ this->want_snap() ) {
-        dirty       = false;
-        ImVec2 s    = snap_to_grid({v->x, v->y});
-        v->x        = s.x;
-        v->y        = s.y;
-    }
-
-
-
-    //      2.2.    Bézier Handles / Control Points
-    ImGui::SeparatorText("Bezier Controls");
-    //
-    //              2.2A    ANCHOR TYPE (corner / smooth / symmetric):
+    //  3.  WIDGETS EDITS...
     {
-        utl::LeftLabel("Anchor Type:", m_style.ms_BROWSER_LABEL_WIDTH);  ImGui::SameLine();
-        dirty = ImGui::Combo("##Editor_VertexBrowser_AnchorType", &kind_idx,
-                             ms_ANCHOR_TYPE_NAMES.data(), static_cast<int>( AnchorType::COUNT ));          // <- int, not enum
-        if (dirty) {
-            v->kind     = static_cast<AnchorType>(kind_idx);
+        const float         grid            = m_style.GRID_STEP / m_cam.zoom_mag;
+        const float         speed           = 0.1f * grid;
+        bool                dirty           = false;
+        int                 kind_idx        = static_cast<int>(v->kind);
+        auto                snap            = [grid](float f){ return std::round(f / grid) * grid; };
+
+        //      3.1.    Position:
+        this->left_label("Position:", LABEL_W, WIDGET_W);
+        dirty                              |= ImGui::DragFloat2("##Editor_VertexBrowser_Pos", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
+        //
+        if ( dirty && /*!ImGui::IsItemActive() && */ this->want_snap() ) {
             dirty       = false;
+            ImVec2 s    = snap_to_grid({v->x, v->y});
+            v->x        = s.x;
+            v->y        = s.y;
         }
-    }
-    //
-    //
-    //              2.2B    OUTWARD (to next vertex):
-    utl::LeftLabel("Outward:", m_style.ms_BROWSER_LABEL_WIDTH);  ImGui::SameLine();
-    dirty               = ImGui::DragFloat2("##Editor_VertexBrowser_OutwardControl",    &v->out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
-    if ( dirty && !ImGui::IsItemActive() )
-    {
-        v->out_handle.x     = snap(v->out_handle.x);
-        v->out_handle.y     = snap(v->out_handle.y);
-        mirror_handles<VertexID>(*v, /*dragging_out=*/true);  // keep smooth/symmetric rule
-        dirty               = false;
-    }
-    //
-    //
-    //              2.2C    INWARD (from previous vertex):
-    utl::LeftLabel("Inward:", m_style.ms_BROWSER_LABEL_WIDTH);  ImGui::SameLine();
-    //
-    dirty              = ImGui::DragFloat2("##Editor_VertexBrowser_InwardControl",     &v->in_handle.x,    speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
-    if ( dirty && !ImGui::IsItemActive() ) {
-        v->in_handle.x      = snap(v->in_handle.x);
-        v->in_handle.y      = snap(v->in_handle.y);
-        mirror_handles<VertexID>(*v, /*dragging_out=*/false);
-        dirty               = false;
+
+
+        //      3.2.    Bézier Handles / Control Points
+        //ImGui::SeparatorText("Bezier Controls");
+        ImGui::TextDisabled("Bezier Controls");
+        //
+        //              3.2A    ANCHOR TYPE (corner / smooth / symmetric):
+        {
+            this->left_label("Type:", LABEL_W, WIDGET_W);
+            dirty = ImGui::Combo("##Editor_VertexBrowser_AnchorType", &kind_idx, ms_ANCHOR_TYPE_NAMES.data(), static_cast<int>( AnchorType::COUNT ));          // <- int, not enum
+            //
+            if (dirty) {
+                v->kind     = static_cast<AnchorType>(kind_idx);
+                dirty       = false;
+            }
+        }
+        //
+        //              3.2B    INWARD (from previous vertex):
+        this->left_label("Inward:", LABEL_W, WIDGET_W);
+        //
+        dirty              = ImGui::DragFloat2("##Editor_VertexBrowser_InwardControl",     &v->in_handle.x,    speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
+        if ( dirty && !ImGui::IsItemActive() ) {
+            v->in_handle.x      = snap(v->in_handle.x);
+            v->in_handle.y      = snap(v->in_handle.y);
+            mirror_handles<VertexID>(*v, /*dragging_out=*/false);
+            dirty               = false;
+        }
+        //
+        //              3.2C    OUTWARD (to next vertex):
+        this->left_label("Outward:", LABEL_W, WIDGET_W);
+        dirty               = ImGui::DragFloat2("##Editor_VertexBrowser_OutwardControl",    &v->out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
+        if ( dirty && !ImGui::IsItemActive() ) {
+            v->out_handle.x     = snap(v->out_handle.x);
+            v->out_handle.y     = snap(v->out_handle.y);
+            mirror_handles<VertexID>(*v, /*dragging_out=*/true);  // keep smooth/symmetric rule
+            dirty               = false;
+        }
     }
     
     
@@ -877,7 +904,7 @@ void Editor::_draw_vertex_inspector_column(Path & path)
     {
         _erase_path_and_orphans( static_cast<PathID>(pidx) );   // ← replaces direct m_paths.erase()
         m_sel.clear();
-        m_inspector_vertex_idx = -1;
+        m_browser_S.m_inspector_vertex_idx = -1;
         return;
     }
     ImGui::Separator();
@@ -981,26 +1008,48 @@ void Editor::_draw_vertex_inspector_column(Path & path)
 
 //  "_draw_obj_properties_panel"
 //
-void Editor::_draw_obj_properties_panel(Path & path, size_t pidx)
+void Editor::_draw_obj_properties_panel(Path & path, const PathID pidx)
 {
     constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
+    //
     const bool                      is_area             = path.is_area();
-    static char                     title [128];   // safe head-room
-    std::snprintf( title, sizeof(title), "%s (%zu vertices)", path.label.c_str(), path.verts.size() );
-    S.PushFont(Font::Main);
+    const float &                   LABEL_W             = m_style.ms_BROWSER_VERTEX_LABEL_WIDTH;
+    const float &                   WIDGET_W            = m_style.ms_BROWSER_VERTEX_WIDGET_WIDTH;
+    //
+    static constexpr size_t         TITLE_SIZE          = 128;
+    static char                     title [TITLE_SIZE];   // safe head-room
+    static PathID                   cache_id            = static_cast<PathID>(-1);
     
     
     //     "edit_u32_colour"  // ── colour editors ────────────────────────────────────────────────
-    auto                            edit_u32_colour     = [&](const char * label, ImU32 & col_u32) {
+    [[maybe_unused]] auto           edit_u32_colour     = [&](const char * label, ImU32 & col_u32) {
         ImVec4  col_f   = ImGui::ColorConvertU32ToFloat4(col_u32);
         if ( ImGui::ColorEdit4(label, &col_f.x, COLOR_FLAGS) )      { col_u32 = ImGui::ColorConvertFloat4ToU32(col_f); }
     };
 
 
+
+    S.PushFont(Font::Main);
+
     //  CASE 0 :    ERROR...
-    if ( pidx >= m_paths.size() ) {
-        ImGui::SeparatorText("[invalid object]"); S.PopFont(); return;
+    if ( pidx >= m_paths.size() )   { ImGui::SeparatorText("[invalid object]"); S.PopFont(); cache_id = static_cast<PathID>(-1); return; }
+    
+    
+    
+    
+    //      0.1.    UPDATE TITLE IF SELECTION CHANGED...
+    if (cache_id != pidx )           {
+        cache_id        = pidx;
+        int retcode     = std::snprintf( title, TITLE_SIZE, Path::ms_DEF_PATH_TITLE_FMT_STRING, path.label.c_str(), path.id );
+        
+        if (retcode < 0) [[unlikely]] {//  Log a warning message if truncation takes place.
+            auto message = std::format( "snprintf truncated Path title.\n"
+                                        "Path ID: {}.  title: \"{}\".  buffer-size: {}.  return value: \"{}\".",
+                                        pidx, title, TITLE_SIZE, retcode );
+            CB_LOG( LogLevel::Warning, message );
+        }
     }
+    
 
 
     //  1.  HEADER-ENTRY AND "DELETE" BUTTON...
@@ -1008,16 +1057,16 @@ void Editor::_draw_obj_properties_panel(Path & path, size_t pidx)
     ImGui::SeparatorText(title);
     
     //  2.  "DELETE" BUTTON...
-    ImGui::SameLine();
     S.PopFont();
-    if ( ImGui::Button("Delete Object") )
-    {
-        _erase_path_and_orphans( static_cast<PathID>(pidx) );   // ← replaces direct m_paths.erase()
-        m_sel.clear();
-        m_inspector_vertex_idx = -1;
-        return;
-    }
-    ImGui::Separator();
+    //      ImGui::SameLine();
+    //      if ( ImGui::Button("Delete Object") )
+    //      {
+    //          _erase_path_and_orphans( static_cast<PathID>(pidx) );   // ← replaces direct m_paths.erase()
+    //          m_sel.clear();
+    //          m_browser_S.m_inspector_vertex_idx = -1;
+    //          return;
+    //      }
+    //      ImGui::Separator();
 
 
 
@@ -1030,12 +1079,12 @@ void Editor::_draw_obj_properties_panel(Path & path, size_t pidx)
         bool            fill_dirty          = false;
 
 
-        utl::LeftLabel("Line Color:", m_style.ms_BROWSER_LABEL_WIDTH);    ImGui::SameLine();
+        this->left_label("Line Color:", LABEL_W, WIDGET_W);
         stroke_dirty                        = ImGui::ColorEdit4( "##Editor_VertexInspector_LineColor",    (float*)&stroke_f,  COLOR_FLAGS );
         //
         //
         ImGui::BeginDisabled( !is_area );
-            utl::LeftLabel("Fill Color:", m_style.ms_BROWSER_LABEL_WIDTH);  ImGui::SameLine();
+            this->left_label("Fill Color:", LABEL_W, WIDGET_W);
             fill_dirty                      = ImGui::ColorEdit4( "##Editor_VertexInspector_FillColor",    (float*)&fill_f,    COLOR_FLAGS );
         ImGui::EndDisabled();
         
@@ -1055,7 +1104,7 @@ void Editor::_draw_obj_properties_panel(Path & path, size_t pidx)
         bool                    dirty       = false;
         float                   w           = path.style.stroke_width;
         
-        utl::LeftLabel("Line Width:", m_style.ms_BROWSER_LABEL_WIDTH);    ImGui::SameLine();
+        this->left_label("Line Color:", LABEL_W, WIDGET_W);
         ImGui::SetNextItemWidth(200.0f);
         //
         //  CASE 1 :    Value < 2.0f
@@ -1081,7 +1130,7 @@ void Editor::_draw_obj_properties_panel(Path & path, size_t pidx)
 
     //  4.  Z-ORDER...
     {
-        utl::LeftLabel("Z-Index:", m_style.ms_BROWSER_LABEL_WIDTH);     ImGui::SameLine();
+        this->left_label("Z-Index:", LABEL_W, WIDGET_W);
         ImGui::Text("%3u", path.z_index);
         
         

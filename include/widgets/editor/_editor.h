@@ -93,12 +93,28 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  "EditorIMPL"
 //
 struct EditorIMPL {
-        //
+// *************************************************************************** //
+// *************************************************************************** //
+//
+//
+//
         using                           Font                            = app::Font_t;
         using                           Logger                          = utl::Logger;
         using                           LogLevel                        = utl::LogLevel;
         using                           CBCapabilityFlags               = CBCapabilityFlags_;
         using                           Anchor                          = BBoxAnchor;
+    // *************************************************************************** //
+    //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      ** ID-VALUE TEMPLATE CONVENTIONS **
+    //      ID Template Parameters MUST ALWAYS follow this order:
+    //
+    //          template< typename VertexID, typename PointID, typename LineID, typename PathID >
+    // *************************************************************************** //
+    // *************************************************************************** //
     //
     //                      ID / INDEX TYPES:
         template<typename T, typename Tag>
@@ -113,7 +129,7 @@ struct EditorIMPL {
         using                           OverlayID                       = OverlayManager::OverlayID;
         using                           HitID                           = uint32_t;     //    ID<std::uint32_t, Hit_Tag>            ;
     //
-    //                              TYPENAME ALIASES (BASED ON INDEX TYPES):
+    //                              OBJECT TYPE ALIASES (BASED ON INDEX TYPES):
         using                           Vertex                          = Vertex_t          <VertexID>                              ;
         //  using                       Handle                          = Handle_t          <HandleID>                              ;
         using                           Point                           = Point_t           <PointID>                               ;
@@ -123,12 +139,19 @@ struct EditorIMPL {
         using                           Hit                             = Hit_t             <HitID>                                 ;
         using                           PathHit                         = PathHit_t         <PathID, VertexID>                      ;
         using                           Selection                       = Selection_t       <VertexID, PointID, LineID, PathID>     ;
-        //
+    //
+    //                              SUBSIDIARY STATE OBJECTS:
         using                           EndpointInfo                    = EndpointInfo_t    <PathID>                                ;
         using                           PenState                        = PenState_t        <VertexID>                              ;
         using                           ShapeState                      = ShapeState_t      <OverlayID>                             ;
+        using                           BrowserState                    = BrowserState_t    <VertexID, PointID, LineID, PathID>     ;
+    //
         using                           Clipboard                       = Clipboard_t       <Vertex, Point, Line, Path>             ;
 //
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "EditorIMPL".
 };
 
 

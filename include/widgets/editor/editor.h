@@ -142,6 +142,8 @@ public:
         using                           EndpointInfo                    = EditorIMPL::EndpointInfo              ;
         using                           PenState                        = EditorIMPL::PenState                  ;
         using                           ShapeState                      = EditorIMPL::ShapeState                ;
+        using                           BrowserState                    = EditorIMPL::BrowserState              ;
+    //
         using                           Clipboard                       = EditorIMPL::Clipboard                 ;
 //
 //      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
@@ -298,7 +300,7 @@ private:
     void                                _draw_vertex_inspector_column           (Path & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
     //
     //                              PANELS FOR EACH OBJECT TYPE:
-    void                                _draw_obj_properties_panel              (Path & , size_t );
+    void                                _draw_obj_properties_panel              (Path & , const PathID );
     void                                _draw_vertex_properties_panel           (void);
     //
     //                              BROWSER HELPERS:
@@ -589,6 +591,10 @@ private:
     //      INLINE MISC. FUNCTIONS...
     // *************************************************************************** //
 
+    //  "left_label"
+    inline void                         left_label                          (const char * label, const float label_w, const float widget_w) const
+    { utl::LeftLabel(label, label_w, widget_w); ImGui::SameLine(); return; };
+    
     //  "maybe_snap"
     inline ImVec2                       maybe_snap                          (ImVec2 w) const
     { return m_grid.snap_on ? snap_to_grid(w) : w; }
@@ -737,13 +743,24 @@ private:
     }
     
     //  "reset_selection"
-    inline void                         reset_selection                     (void)
-    { this->m_sel.clear(); this->m_show_handles.clear(); this->m_show_sel_overlay = false; return; }
+    inline void                         reset_selection                     (void) {
+        this->m_sel.clear();                this->m_show_handles.clear();
+        this->m_show_sel_overlay = false;   this->m_browser_S.reset();
+        return;
+    }
     
     
     //  "RESET_ALL"
-    inline void                         RESET_ALL                           (void)
-    { this->reset_pen(); this->m_clipboard.clear(); this->m_shape = {}; this->_clear_all(); }
+    inline void                         RESET_ALL                           (void) {
+        this->reset_pen();
+        this->reset_selection();
+        this->m_clipboard.clear();
+        this->m_shape = {};
+        
+        this->_clear_all();
+    
+        return;
+    }
     
     
     
@@ -856,9 +873,10 @@ private:
     bool                                WinInfo_open                    = true;
     ImGuiWindowClass                    m_window_class;
     //
+    BrowserState                        m_browser_state                 {  };
     ImGuiTextFilter                     m_browser_filter;                           // search box text filter
-    int                                 m_browser_anchor                = -1;       // anchor index for Shift‑range select
-    int                                 m_inspector_vertex_idx          = -1;       // anchor index for Shift‑range select
+    //  int                                 m_browser_anchor                = -1;       // anchor index for Shift‑range select
+    //  int                                 m_inspector_vertex_idx          = -1;       // anchor index for Shift‑range select
     // *************************************************************************** //
     //
     //
@@ -891,7 +909,7 @@ private:
     PenState                            m_pen;
     ShapeState                          m_shape;
     OverlayState                        m_overlay;
-    BrowserState                        m_browser;
+    BrowserState                        m_browser_S;        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
     //
     //                              OTHER FACILITIES:
     std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
@@ -1055,7 +1073,7 @@ private:
 // *************************************************************************** //
 // *************************************************************************** //
 
-inline static constexpr uint32_t        kSaveFormatVersion              = 3;
+inline static constexpr uint32_t        kSaveFormatVersion              = 4;
 
 // Extend similarly for Point, Line, GridSettings, ViewState …
 //
@@ -1310,8 +1328,6 @@ inline void from_json(const nlohmann::json & j, EditorSnapshot & s)
 //
 // static inline const char * mode_label(Mode m)
 // { return Editor::ms_EDITOR_STATE_NAMES[ static_cast<size_t>(m) ]; }
-
-
 
 
 

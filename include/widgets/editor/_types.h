@@ -374,13 +374,67 @@ inline void from_json(const nlohmann::json & j, ShapeState_t<OID> & o)
 
 
 
-//  "BrowserState"
+//  "BrowserState_t"
 //
-struct BrowserState {
-    int                 rename_idx              = -1;       // row currently in rename-mode (–1 = none)
-    bool                renaming                = false;    // true while an InputText for rename is active
-    char                rename_buf[64]          = {};       // scratch text
+template<typename VID, typename PtID, typename LID, typename PID>
+struct BrowserState_t {
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      1.      CONSTEXPR AND ALIASES...
+    // *************************************************************************** //
+    static constexpr size_t     ms_PATH_TITLE_BUFFER_SIZE               = 128ULL;
+    static constexpr size_t     ms_VERTEX_TITLE_BUFFER_SIZE             = 64ULL;
+
+    // *************************************************************************** //
+    //      2.      MEMBER FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "reset"
+    inline void                 reset(void) {
+        m_browser_anchor            = -1;
+        m_inspector_vertex_idx      = -1;
+        rename_idx                  = -1;
+        renaming                    = false;
+        return;
+    }
+    
+    // *************************************************************************** //
+
+
+    // *************************************************************************** //
+    //      3.      DATA MEMBERS...
+    // *************************************************************************** //
+    int                         m_browser_anchor                        = -1;       //  anchor index for Shift‑range select
+    int                         m_inspector_vertex_idx                  = -1;       //  anchor index for Shift‑range select
+//
+    int                         rename_idx                              = -1;       //  row currently in rename-mode (–1 = none)
+    bool                        renaming                                = false;    //  true while an InputText for rename is active
+    char                        rename_buf[ms_PATH_TITLE_BUFFER_SIZE]   = {};       //  scratch text
+    
+    // *************************************************************************** //
+
+
+// *************************************************************************** //
+// *************************************************************************** //   END "BrowserState_t".
 };
+
+
+
+
+
+
+//  "IndexState_t"
+//
+template<typename VID, typename PtID, typename LID, typename PID>
+struct IndexState {
+    VID                         next_vid                                = 0;    //  original:   "m_next_id"...
+    PID                         next_pid                                = 0;    //  original:   "m_next_pid"...
+};
+
+
+
 
 
 
@@ -839,10 +893,17 @@ struct EditorStyle
     float                       VERTEX_SELECTOR_REL_WIDTH        = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
     float                       VERTEX_INSPECTOR_REL_WIDTH       = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
     //
-    //                      BROWSER WIDGET STUFF:
+    //                      BROWSER **ALL** WIDGET STUFF:
     float                       ms_BROWSER_BUTTON_SEP           = 8.0f;
     float                       ms_BROWSER_SELECTABLE_SEP       = 16.0f;
-    float                       ms_BROWSER_LABEL_WIDTH          = 55.0f;
+    //
+    //                      BROWSER PATH WIDGET STUFF:
+    float                       ms_BROWSER_OBJ_LABEL_WIDTH      = 55.0f;
+    float                       ms_BROWSER_OBJ_WIDGET_WIDTH     = 256.0f;
+    //
+    //                      BROWSER VERTEX WIDGET STUFF:
+    float                       ms_BROWSER_VERTEX_LABEL_WIDTH   = 55.0f;
+    float                       ms_BROWSER_VERTEX_WIDGET_WIDTH  = 196.0f;
     //
     //
     //

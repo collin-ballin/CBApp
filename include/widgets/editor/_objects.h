@@ -127,8 +127,8 @@ struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ fi
 //
 template<typename VID>
 struct Vertex_t {
-    static constexpr const char *   ms_DEF_VERTEX_LABEL_FMT_STRING      = "Vertex V%03d (id=%u)";
-    static constexpr const char *   ms_DEF_VERTEX_FMT_STRING            = "V%03u";
+    static constexpr const char *   ms_DEF_VERTEX_TITLE_FMT_STRING          = "Vertex V%03d (ID #%06u)";
+    static constexpr const char *   ms_DEF_VERTEX_SELECTOR_FMT_STRING       = "V%03u";
 //
     uint32_t    id              = 0;
     float       x               = 0.0f,
@@ -627,6 +627,7 @@ struct Path_t {
     //
     //                          CONSTANTS:
     static constexpr size_t         ms_MAX_PATH_LABEL_LENGTH        = 64;
+    static constexpr const char *   ms_DEF_PATH_TITLE_FMT_STRING    = "%s (ID #%06u)";
     
 // *************************************************************************** //
 //
