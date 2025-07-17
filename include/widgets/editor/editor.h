@@ -848,15 +848,15 @@ private:
     //
     cb::FileDialog::Initializer         m_SAVE_DIALOG_DATA              = {
         /* type               = */  cb::FileDialogType::Save,
-        /* default_filename   = */  "canvas_settings.json",
         /* window_name        = */  "Save Editor Session",
+        /* default_filename   = */  "canvas_settings.json",
         /* required_extension = */  "json",
         /* valid_extensions   = */  {".json", ".txt"},
         /* starting_dir       = */  std::filesystem::current_path()
     };
     cb::FileDialog::Initializer         m_OPEN_DIALOG_DATA              = {
         /* type               = */  cb::FileDialogType::Open,
-        /* window_name        = */  "Load Editor Session",
+        /* window_name        = */  "Save Editor Session",
         /* default_filename   = */  "",
         /* required_extension = */  "",
         /* valid_extensions   = */  {".json", ".cbjson", ".txt"},

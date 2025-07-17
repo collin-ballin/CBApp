@@ -308,6 +308,7 @@ private:
     bool                            m_visible               = false;
     bool                            m_first_frame           = false;
     bool                            m_show_hidden           = false;     //  (T): Show Hidden-Files that have the form ".filename.txt".  (F): Hide these.
+    bool                            m_abort                 = false;
 //
     ImVec2                          m_window_size           = {};
     ImGuiWindowFlags                m_modal_flags           = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings;

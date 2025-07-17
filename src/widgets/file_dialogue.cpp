@@ -198,10 +198,10 @@ bool FileDialog::Begin(void)
 
 //  "draw_file_list"
 //
-inline void FileDialog::draw_file_list(State & s, const char* list_id)
+inline void FileDialog::draw_file_list(State & s, const char * list_id)
 {
     ImGui::BeginChild(list_id, ImVec2(0, 200), true, ImGuiWindowFlags_None); // ImGuiWindowFlags_NoScrollWithMouse);
-    handle_keyboard_nav(s);
+    //  handle_keyboard_nav(s);
 
 
     if ( s.cwd.has_parent_path() && ImGui::Selectable(UPDIR_NAME, false) )      { push_history(s, s.cwd.parent_path()); }
@@ -217,8 +217,8 @@ inline void FileDialog::draw_file_list(State & s, const char* list_id)
         {
             if (is_dir)     { push_history(s, e.path()); }
             else {
-                s.current_selection = e.path();
-                s.default_filename = e.path().filename().string();
+                s.current_selection     = e.path();
+                s.default_filename      = e.path().filename().string();
             }
         }
         if ( is_dir && ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0) )   { push_history(s, e.path()); }
@@ -243,7 +243,8 @@ inline void FileDialog::draw_file_table(State & s, const char * table_id)
     
     //  CASE 0 :    EARLY-OUT IF TABLE IS NOT CREATED...
     if ( !ImGui::BeginTable(table_id, 4, m_table_flags, ImVec2(0, avail_h)) ) return;
-
+    
+    //  this->handle_keyboard_nav(s);
 
     ImGui::TableSetupScrollFreeze(0, 1);          // header row always visible
     ImGui::TableSetupColumn("Name",     ImGuiTableColumnFlags_WidthStretch,             0.0f); //    , 0.55f);
@@ -523,10 +524,10 @@ inline void FileDialog::draw_nav_buttons(State & s)
 //
 inline void FileDialog::draw_bottom_bar(State & s)
 {
-    const float     ROW_HEIGHT      = ImGui::GetFrameHeightWithSpacing();
-    const ImVec2    BUTTON_SIZE     = ImVec2(1.8f, 0.0f) * ImGui::CalcTextSize("Cancel");
-    bool            ok              = false;
-    bool            cancel          = false;
+    const float         ROW_HEIGHT      = ImGui::GetFrameHeightWithSpacing();
+    const ImVec2        BUTTON_SIZE     = ImVec2(1.8f, 0.0f) * ImGui::CalcTextSize("Cancel");
+    bool                ok              = false;
+    bool                cancel          = false || this->m_abort;
     
     
     //  left-aligned label helper assumed to exist in your utils
@@ -549,7 +550,7 @@ inline void FileDialog::draw_bottom_bar(State & s)
 
     //  ACCEPTING / CANCELLING THE OPERATION...
     if ( ok && !s.default_filename.empty() )    { this->on_accept(); }
-    if ( cancel )                       { this->on_cancel(); }
+    if ( cancel )                               { this->on_cancel(); }
     
     
     
@@ -595,8 +596,10 @@ inline void FileDialog::on_cancel(void)
 {
     auto &                  s       = *m_state;
     s.selected_path.reset();
-    m_visible = false;
+    m_visible   = false;
+    m_abort     = false;
     ImGui::CloseCurrentPopup();
+    
     return;
 }
 
@@ -652,23 +655,29 @@ inline void FileDialog::refresh_listing(State & s)
 //
 inline void FileDialog::handle_keyboard_nav(State & s)
 {
-    if ( !ImGui::IsWindowFocused() )    { return; }
+/*
+    static constexpr ImGuiInputFlags        esc_key_flags           = ImGuiInputFlags_RouteOverFocused; //ImGuiInputFlags_None;
+    static constexpr ImGuiKeyChord          ESC_KEY                 = ImGuiKey_Escape; //ImGuiMod_Shift | ImGuiKey_Apostrophe;
+    
+    
+    //if ( !ImGui::IsWindowFocused() )    { return; }
 
-    int         move                    = (ImGui::IsKeyPressed(ImGuiKey_UpArrow)   ? -1 : (ImGui::IsKeyPressed(ImGuiKey_DownArrow) ? +1 : 0));
-    int         idx                     = -1;
-    auto        is_row_selectable       = [&](size_t i) {
-        if (i >= s.entries.size()) return false;
-        const auto & ent = s.entries[i];
-        return ent.is_directory() || is_valid_extension(s.valid_extensions, ent.path());
-    };
 
-    //  1.  NAVIGATE WITH ARROW KEYS...
-    while ( move ) {
-        int next = std::clamp(idx + move, 0, int(s.entries.size()) - 1);
-        if (is_row_selectable(next)) { idx = next; break; }
-        if (next == idx) break;      // no selectable rows in that direction
-        idx = next;
-    }
+    //      int         move                    = (ImGui::IsKeyPressed(ImGuiKey_UpArrow)   ? -1 : (ImGui::IsKeyPressed(ImGuiKey_DownArrow) ? +1 : 0));
+    //      int         idx                     = -1;
+    //      auto        is_row_selectable       = [&](size_t i) {
+    //          if (i >= s.entries.size()) return false;
+    //          const auto & ent = s.entries[i];
+    //          return ent.is_directory() || is_valid_extension(s.valid_extensions, ent.path());
+    //      };
+
+    //      //  1.  NAVIGATE WITH ARROW KEYS...
+    //      while ( move ) {
+    //          int next = std::clamp(idx + move, 0, int(s.entries.size()) - 1);
+    //          if (is_row_selectable(next)) { idx = next; break; }
+    //          if (next == idx) break;      // no selectable rows in that direction
+    //          idx = next;
+    //      }
 
     //  2.  ACCEPT WITH ENTER KEY...
     if (ImGui::IsKeyPressed(ImGuiKey_Enter) && s.current_selection) {
@@ -682,11 +691,9 @@ inline void FileDialog::handle_keyboard_nav(State & s)
     }
 
     //  3.  CLOSE DIALOG WITH ESCAPE KEY...
-    if ( ImGui::IsKeyPressed(ImGuiKey_Escape ) ) {
-        this->on_cancel();
-    }
+    if ( ImGui::IsKeyChordPressed(ESC_KEY, esc_key_flags) )   { this->m_abort = true; }
     
-    
+*/
     return;
 }
 
