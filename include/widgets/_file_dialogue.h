@@ -76,6 +76,7 @@ inline static constexpr ImVec2              FILE_DIALOG_REL_WINDOW_POSITION     
 //
 inline static constexpr float               TOP_HEIGHT                          = 3.0f;                             //  RESERVED SPACE AT TOP       [ multiples of FRAME height ].
 inline static constexpr float               BOTTOM_HEIGHT                       = 6.0f;                             //  RESERVED SPACE AT BOTTOM    [ multiples of FRAME height ].
+inline static constexpr float               MODIFIED_COLUMN_WIDTH               = 0.40f;                            //  DEFAULT WIDTH OF "DATE MODIFIED" COLUMN.
 //
 //
 //
@@ -112,10 +113,13 @@ enum class FileDialogSortingCriterion : uint8_t {
 //  "Initializer_t"
 //
 struct Initializer_t {
-    std::filesystem::path                           default_dir             = std::filesystem::current_path();
+    using                                           Type                    = FileDialogType;
+    Type                                            type                    = Type::None;
+    std::string                                     window_name             = "File Dialog";
     std::string                                     default_filename;           // empty ⇒ none
     std::string                                     required_extension;         // ".json" etc.; empty ⇒ none
     std::vector<std::string>                        valid_extensions;           //  What file extensions the user is able to select.
+    std::filesystem::path                           default_dir             = std::filesystem::current_path();
 };
 
 
@@ -129,7 +133,7 @@ struct FileDialogState_t {
 //  TARGET FILE DATA:
     std::string                                     default_filename;
     std::string                                     required_extension;                 // File-Extension that will be appended by FORCE (whether or not the user types it).
-    std::optional<std::filesystem::path>            result;
+    std::optional<std::filesystem::path>            selected_path;
 //
 //
 //  NAVIGATOR / BROWSER DATA:
@@ -150,7 +154,8 @@ struct FileDialogState_t {
 //  CACHED DATA:
     std::filesystem::path                           home_dir;                                       //  Ref. to original default directory.
     std::filesystem::path                           desktop_dir;                                    //  Ref. to user's Desktop folder.
-    std::filesystem::file_time_type                 cwd_timestamp{};                                //  Track last modification of CWD to refresh if contents change while browsing.
+    std::filesystem::file_time_type                 cwd_timestamp           {};                     //  Track last modification of CWD to refresh if contents change while browsing.
+    std::string                                     window_name             = "File Dialog";
 //
 //
 //  MUTABLE OBJECT STATE / BEHAVIORS:
@@ -190,8 +195,8 @@ public:
     // *************************************************************************** //
     //
     //                                  MAIN PUBLIC API:
-    bool                                Begin                       (const char* popup_id = "File Dialog");          // call every frame
-    void                                initialize                  (const Type , const Initializer & ) noexcept;
+    bool                                Begin                       (void);          // call every frame
+    void                                initialize                  (const Initializer & ) noexcept;
     //
     //                                  PUBLIC UTILITIES:
     [[nodiscard]] bool                  is_open                     (void) const noexcept;
@@ -281,6 +286,9 @@ private:
         return buf;
     };
     
+    //  "get_last_path"
+    [[nodiscard]] std::optional<std::filesystem::path>
+                                        get_last_path               (void) noexcept     { return m_state->selected_path; }
     
     // *************************************************************************** //
     // *************************************************************************** //

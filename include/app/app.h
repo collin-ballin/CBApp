@@ -235,6 +235,7 @@ protected:
     // *************************************************************************** //
     //                      APPLICATION SIGNAL & HOTKEY HANDLERS:
     void                        KeyboardShortcutHandler     (void);
+    inline void                 DialogHandler               (void);
     void                        SaveHandler                 (void);
     void                        OpenHandler                 (void);
     void                        CopyHandler                 (void);

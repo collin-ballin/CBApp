@@ -386,8 +386,48 @@ void App::KeyboardShortcutHandler(void)
 
 
 
+    //  7.  FILE DIALOG HANDLER...
+    this->DialogHandler();
+    
+    
     return;
 }
+
+
+
+//  "DialogHandler"
+//
+inline void App::DialogHandler(void)
+{
+    static bool     initialized  = false;
+
+/*
+    if (S.m_dialog_queued)
+    {
+    
+        if (!initialized) {
+            initialized  = true;
+            this->S.m_file_dialog.is_open().initialize(this->S.m_dialog_settings );
+        }
+
+        if ( this->S.m_file_dialog.is_open() )
+        {
+            m_sdialog_open.store(false, std::memory_order_release);
+            if ( this->m_save_dialog.Begin("File Dialog") ) {        // returns true when finished
+            
+                if ( auto path = this->m_save_dialog.result() ) {
+                    CB_LOG(LogLevel::Info, "DialogHandler recieved filepath: {}", path);
+            }
+        }
+        else {
+            initialized         = false;
+            S.m_dialog_queued   = false;
+        }
+    }
+ */
+    return;
+}
+
 
 
 

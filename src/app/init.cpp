@@ -350,7 +350,7 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         }
         case Window::ImPlotStyleEditor: {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->ShowImGuiStyleEditor(n, o, f); };
+                          { this->ShowImPlotStyleEditor(n, o, f); };
             //  this->ShowImGuiStyleEditor(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
@@ -455,7 +455,6 @@ void App::load(void)
     io.IniFilename                      = nullptr;
 # else
     io.IniFilename                      = cb::app::INI_FILEPATH;
-    //ImGui::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH);
     if ( utl::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH) ) {
         S.m_logger.debug( std::format("Successfully loaded ImGui \".ini\" from \"{}\"", cb::app::INI_FILEPATH) );
     }

@@ -539,26 +539,29 @@ void Editor::_draw_settings_user_preferences(void)
 //
 void Editor::_draw_settings_serialize(void)
 {
-    using                       Type            = cb::FileDialog::Type;
-    using                       Initializer     = cb::FileDialog::Initializer;
-    static Initializer          save_data       = {
-        /* starting_dir       = */  std::filesystem::current_path(),
-        /* default_filename   = */  "canvas settings",
-        /* required_extension = */  ".json",
-        /* valid_extensions   = */  {".json", ".txt"}
-    };
-    static Initializer          open_data       = {
-        /* starting_dir       = */  std::filesystem::current_path(),
-        /* default_filename   = */  "",
-        /* required_extension = */  "",
-        /* valid_extensions   = */  {".json", ".txt"}
-    };
-    static cb::FileDialog       save_dialog;
-    static cb::FileDialog       open_dialog;
 
+    //      using                       Type            = cb::FileDialog::Type;
+    //      using                       Initializer     = cb::FileDialog::Initializer;
+    //      static Initializer          save_data       = {
+    //          /* type               = */  Type::Save,
+    //          /* starting_dir       = */  std::filesystem::current_path(),
+    //          /* default_filename   = */  "canvas settings",
+    //          /* required_extension = */  ".json",
+    //          /* valid_extensions   = */  {".json", ".txt"}
+    //      };
+    //      static Initializer          open_data       = {
+    //          /* type               = */  Type::Open,
+    //          /* starting_dir       = */  std::filesystem::current_path(),
+    //          /* default_filename   = */  "",
+    //          /* required_extension = */  "",
+    //          /* valid_extensions   = */  {".json", ".txt"}
+    //      };
+    //      static cb::FileDialog       save_dialog;
+    //      static cb::FileDialog       open_dialog;
 
+/*
     //  1.  SAVE DIALOGUE...
-    if ( ImGui::Button("Save") )    { save_dialog.initialize(Type::Save, save_data ); }
+    if ( ImGui::Button("Save") )    { save_dialog.initialize(save_data); }
     //
     if ( save_dialog.is_open() )
     {
@@ -573,7 +576,7 @@ void Editor::_draw_settings_serialize(void)
     
     
     //  2.  LOAD DIALOGUE...
-    if ( ImGui::Button("Open") )    { open_dialog.initialize(Type::Open, open_data ); }
+    if ( ImGui::Button("Open") )    { open_dialog.initialize(open_data); }
     //
     if ( open_dialog.is_open() )
     {
@@ -591,6 +594,7 @@ void Editor::_draw_settings_serialize(void)
     
 
     // (existing Canvas/Grid prefs below …)
+*/
     return;
 }
 

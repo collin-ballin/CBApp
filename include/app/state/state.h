@@ -235,6 +235,28 @@ public:
     AppColorStyle_t                     m_current_app_color_style       = AppColorStyle_t::Laser_410NM;
 #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
     PlotColorStyle_t                    m_current_plot_color_style      = PlotColorStyle_t::Default;
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //  2.21            OTHER IMPORTANT DATA...
+    // *************************************************************************** //
+    cb::FileDialog::Initializer         m_dialog_settings               = {
+    //
+    //                              "OPEN" SETTINGS...                      //  |   "SAVE" SETTINGS...
+        /* type               = */  cb::FileDialog::Type::None,
+        /* window_name        = */  "",
+        /* default_filename   = */  "",                                     //  |       "canvas_settings.json",
+        /* required_extension = */  "",                                     //  |       "json",
+        /* valid_extensions   = */  {".json", ".cbjson", ".txt"},           //  |       {".json", ".txt"}
+        /* starting_dir       = */  std::filesystem::current_path()         //  |       std::filesystem::current_path(),
+    //
+    };
+    cb::FileDialog                      m_file_dialog;
+    bool                                m_dialog_queued                 = false;
+    bool                                m_dialog_path                   = false;
+    
     
     // *************************************************************************** //
     //
@@ -289,7 +311,7 @@ public:
 #if defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__) || defined(__CBAPP_DEBUG__)
     LogLevel                            m_LogLevel                  = LogLevel::Debug;
 # else
-    LogLevel                            m_LogLevel                  = LogLevel::Error;
+    LogLevel                            m_LogLevel                  = LogLevel::Warning;
 #endif  //  __CBLIB_RELEASE_WITH_DEBUG_INFO__ || __CBAPP_DEBUG__  //
 
 

@@ -847,16 +847,20 @@ private:
     std::atomic<bool>                   m_odialog_open                  = {false};
     //
     cb::FileDialog::Initializer         m_SAVE_DIALOG_DATA              = {
-        /* starting_dir       = */  std::filesystem::current_path(),
+        /* type               = */  cb::FileDialogType::Save,
         /* default_filename   = */  "canvas_settings.json",
+        /* window_name        = */  "Save Editor Session",
         /* required_extension = */  "json",
-        /* valid_extensions   = */  {".json", ".txt"}
+        /* valid_extensions   = */  {".json", ".txt"},
+        /* starting_dir       = */  std::filesystem::current_path()
     };
     cb::FileDialog::Initializer         m_OPEN_DIALOG_DATA              = {
-        /* starting_dir       = */  std::filesystem::current_path(),
+        /* type               = */  cb::FileDialogType::Open,
+        /* window_name        = */  "Load Editor Session",
         /* default_filename   = */  "",
         /* required_extension = */  "",
-        /* valid_extensions   = */  {".json", ".cbjson", ".txt"}
+        /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
+        /* starting_dir       = */  std::filesystem::current_path()
     };
     cb::FileDialog                      m_save_dialog;
     cb::FileDialog                      m_open_dialog;

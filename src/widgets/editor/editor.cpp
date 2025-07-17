@@ -728,20 +728,19 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
 //
 inline void Editor::_handle_io(void)
 {
-    using                       Type            = cb::FileDialog::Type;
     //using                       Initializer     = cb::FileDialog::Initializer;
 
 
     //  1.  SAVE DIALOGUE...
     if ( m_sdialog_open.load(std::memory_order_acquire) ) {
         m_sdialog_open.store(false, std::memory_order_release);
-        this->m_save_dialog.initialize(Type::Save, this->m_SAVE_DIALOG_DATA );
+        this->m_save_dialog.initialize(this->m_SAVE_DIALOG_DATA );
     }
     //
     if ( this->m_save_dialog.is_open() )
     {
         m_sdialog_open.store(false, std::memory_order_release);
-        if ( this->m_save_dialog.Begin("Save Editor Session") ) {        // returns true when finished
+        if ( this->m_save_dialog.Begin() ) {        // returns true when finished
             if ( auto path = this->m_save_dialog.result() )
                 save_async( *path );        // your own handler
         }
@@ -751,12 +750,12 @@ inline void Editor::_handle_io(void)
     //  2.  LOAD DIALOGUE...
     if ( m_odialog_open.load(std::memory_order_acquire) ) {
         m_odialog_open.store(false, std::memory_order_release);
-        this->m_open_dialog.initialize(Type::Open, m_OPEN_DIALOG_DATA );
+        this->m_open_dialog.initialize(m_OPEN_DIALOG_DATA );
     }
     //
     if ( this->m_open_dialog.is_open() )
     {
-        if ( this->m_open_dialog.Begin("Load session from file") ) {        // returns true when finished
+        if ( this->m_open_dialog.Begin() ) {        // returns true when finished
         
             if ( auto path = this->m_open_dialog.result() )
             {

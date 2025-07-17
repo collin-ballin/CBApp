@@ -63,7 +63,7 @@ bool FileDialog::is_open() const noexcept
 //  "result"
 //
 std::optional<std::filesystem::path> FileDialog::result() const noexcept
-{ return m_state->result; }
+{ return m_state->selected_path; }
 
 
 //  "set_filters"
@@ -81,11 +81,11 @@ void FileDialog::set_filters(std::vector<std::string> pat) noexcept
 /// @param      default_filename    pre-filled filename (optional)
 /// @param      force_ext           Mandatory extension such as ".json" (optional)
 ///
-void FileDialog::initialize(const Type mode, const Initializer & data) noexcept
+void FileDialog::initialize(const Initializer & data) noexcept
 {
     State & s                   = *m_state;
-    m_type                      = mode;
-    m_prepared                  = (mode != Type::None);
+    m_type                      = data.type;
+    m_prepared                  = (m_type != Type::None);
 
 
     if (!m_prepared) return;    //  Return if INVALID state.  Begin() will fail ASSERTION.
@@ -100,10 +100,12 @@ void FileDialog::initialize(const Type mode, const Initializer & data) noexcept
     
 
     //  3.  EXISTING WORK...
+    s.window_name               = data.window_name;
     s.default_filename          = data.default_filename;                 //  NEW
     s.required_extension        = data.required_extension;
     s.valid_extensions          = data.valid_extensions;
-
+    if ( s.window_name.empty() )        { s.window_name = "File Dialog Menu"; }
+    
     
     //  4.  PREPARE DIALOG MENU FOR OPENING...
     m_first_frame               = true;
@@ -134,7 +136,7 @@ FileDialog::FileDialog() noexcept
 
 //  "Begin"
 //
-bool FileDialog::Begin(const char * popup_id)
+bool FileDialog::Begin(void)
 {
     State &  s   = *m_state;
     
@@ -148,12 +150,12 @@ bool FileDialog::Begin(const char * popup_id)
         
         ImGui::SetNextWindowSize( m_window_size, ImGuiCond_Appearing );
         ImGui::SetNextWindowPos( pos, ImGuiCond_Appearing, FILE_DIALOG_REL_WINDOW_POSITION );
-        ImGui::OpenPopup(popup_id);
+        ImGui::OpenPopup(s.window_name.c_str());
     }
     
     //  CASE 0 :    EARLY-EXIT IF NO POPUP WINDOW...
-    if ( !ImGui::BeginPopupModal(popup_id, &m_visible, m_modal_flags) )
-    { m_visible = false;    return false; }
+    if ( !ImGui::BeginPopupModal( s.window_name.c_str(), &m_visible, m_modal_flags) )
+    { m_visible = false;    s.selected_path = std::nullopt;     return false; }
     
     //  1.  AUTO-REFRESH IF EXTERNAL CHANGES...
     if ( std::filesystem::exists(s.cwd) &&
@@ -233,8 +235,9 @@ inline void FileDialog::draw_file_table(State & s, const char * table_id)
 {
     static constexpr ImGuiTableColumnFlags      sort_col_flags  = ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_PreferSortDescending;
     const float                                 row_h           = ImGui::GetFrameHeightWithSpacing();
-    const float                                 reserve_h       = (TOP_HEIGHT + BOTTOM_HEIGHT) * ( row_h ); // filename + buttons
-    float                                       avail_h         = m_window_size.y - reserve_h; //ImGui::GetContentRegionAvail().y - bottom_h;
+    const float                                 reserve_h       = 0.5f * (TOP_HEIGHT + BOTTOM_HEIGHT) * ( row_h ); // filename + buttons
+    // float                                       avail_h         = m_window_size.y - reserve_h; //ImGui::GetContentRegionAvail().y - bottom_h;
+    float                                       avail_h         = ImGui::GetContentRegionAvail().y - reserve_h; //ImGui::GetContentRegionAvail().y - bottom_h;
     int                                         row_idx         = 0;
     
     
@@ -246,7 +249,7 @@ inline void FileDialog::draw_file_table(State & s, const char * table_id)
     ImGui::TableSetupColumn("Name",     ImGuiTableColumnFlags_WidthStretch,             0.0f); //    , 0.55f);
     ImGui::TableSetupColumn("Type",     ImGuiTableColumnFlags_WidthFixed);  // ImGuiTableColumnFlags_WidthStretch,                                     0.15f);
     ImGui::TableSetupColumn("Size",     ImGuiTableColumnFlags_WidthFixed);  // ImGuiTableColumnFlags_WidthStretch,                                     0.15f);
-    ImGui::TableSetupColumn("Modified", sort_col_flags,                                 0.325f);
+    ImGui::TableSetupColumn("Modified", sort_col_flags,                                 MODIFIED_COLUMN_WIDTH);
     ImGui::TableHeadersRow();
     
 
@@ -404,8 +407,9 @@ inline void FileDialog::draw_top_bar(State & s)
 inline void FileDialog::draw_breadcrumb_bar(State & s)
 {
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
-    float                           avail_total     = 1.8 * this->m_window_size.x; // - 2 * style.WindowPadding.x;   // popup width
-
+    //float                           avail_total     = 1.0f * this->m_window_size.x; // - 2 * style.WindowPadding.x;   // popup width
+    float                           avail_total     = 1.35f * ImGui::GetContentRegionAvail().x;
+    
 #ifdef _WIN32
     //  SHOW WINDOWS ("C:") DRIVE FIRST...
     if ( s.cwd.has_root_name() )
@@ -424,13 +428,13 @@ inline void FileDialog::draw_breadcrumb_bar(State & s)
     for ( const auto & part_raw : s.cwd.relative_path() )
     {
         //  1.  TRUNCATE DIRECTORY-NAME IF TOO LONG...
-        std::string     part    = part_raw.string();
+        std::string         part        = part_raw.string();
         if ( (int)part.length() > BREADCRUMB_DIRNAME_LIMIT )
             { part = part.substr(0, BREADCRUMB_DIRNAME_LIMIT - TRUNCATION_CHAR_LENGTH) + TRUNCATION_CHAR; }
 
 
         //  2.  ESTIMATE WIDTH...
-        float btn_w = ImGui::CalcTextSize(part.c_str()).x + 2.0f * ImGui::GetStyle().FramePadding.x;
+        float               btn_w       = ImGui::CalcTextSize(part.c_str()).x + 2.0f * ImGui::GetStyle().FramePadding.x;
 
 
         //  3.  WRAP IMGUI COLUM WIDGET TO NEXT-LINE (IF NEEDED)...
@@ -579,8 +583,8 @@ inline void FileDialog::on_accept(void)
             fname.replace_extension(want);              // safe: want starts with '.'
     }
 
-    s.result  = s.cwd / fname;          // final absolute path for caller
-    m_visible = false;
+    s.selected_path     = s.cwd / fname;          // final absolute path for caller
+    m_visible           = false;
     ImGui::CloseCurrentPopup();
 }
 
@@ -590,7 +594,7 @@ inline void FileDialog::on_accept(void)
 inline void FileDialog::on_cancel(void)
 {
     auto &                  s       = *m_state;
-    s.result.reset();
+    s.selected_path.reset();
     m_visible = false;
     ImGui::CloseCurrentPopup();
     return;
@@ -671,7 +675,7 @@ inline void FileDialog::handle_keyboard_nav(State & s)
         if (std::filesystem::is_directory(*s.current_selection))
             push_history(s, *s.current_selection);
         else {
-            s.result  = *s.current_selection;
+            s.selected_path  = *s.current_selection;
             m_visible = false;
             ImGui::CloseCurrentPopup();
         }
