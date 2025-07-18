@@ -149,9 +149,6 @@ void Editor::Begin(const char * /*id*/)
     const bool              space           = ImGui::IsKeyDown(ImGuiKey_Space);
     const bool              zoom_enabled    = _mode_has(CBCapabilityFlags_Zoom) && (!io.MouseDown[0]);
     //
-    m_avail                                 = ImGui::GetContentRegionAvail();       //  1. Canvas size & plot flags
-    m_avail.x                               = std::max(m_avail.x, 50.f);
-    m_avail.y                               = std::max(m_avail.y, 50.f);
     //
     ImPlotInputMap          backup          = ImPlot::GetInputMap();                //  Adjust ImPlot input map (backup, edit, restore at end)
     ImPlotInputMap &        map             = ImPlot::GetInputMap();                        //
@@ -170,17 +167,18 @@ void Editor::Begin(const char * /*id*/)
     //      2A.     CONTROL BAR...
     this->_draw_controls();
     //
+    m_avail                                 = ImGui::GetContentRegionAvail();       //  1. Canvas size & plot flags
+    m_avail.x                               = std::max(m_avail.x, 50.f);
+    m_avail.y                               = std::max(m_avail.y, 50.f);
+    //
+    //
     //          CASE 2B     : FAILURE TO CREATE CANVAS.
-    if ( !ImPlot::BeginPlot("##Editor_CanvasGrid", ImVec2(m_avail.x, m_avail.y), m_plot_flags) ) {
-        ImPlot::GetInputMap() = backup;
-        return;
-    }
+    if ( !ImPlot::BeginPlot("##Editor_CanvasGrid", ImVec2(m_avail.x, m_avail.y), m_plot_flags) )
+        { ImPlot::GetInputMap() = backup;       return; }
     //
     //          CASE 2B     : SUCCESSFULLY CREATED THE "IMPLOT" PLOT...
     {
         //      3.0     CREATE VARIABLES FOR THIS FRAME CONTEXT...
-    
-    
     
         //      4.  CONFIGURE THE "IMPLOT" APPEARANCE...
         //
@@ -255,12 +253,10 @@ void Editor::Begin(const char * /*id*/)
         this->_clamp_plot_axes();
 
 
-
     }// END "IMPLOT".
     //
     ImPlot::EndPlot();
     ImPlot::GetInputMap() = backup;   // restore map
-    
     
     
     this->_draw_io_overlay();

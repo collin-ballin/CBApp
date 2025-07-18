@@ -171,7 +171,7 @@ namespace shader {
     static float                    LABEL_COLUMN_WIDTH      = 150.0f;
     static float                    WIDGET_COLUMN_WIDTH     = 300.0f;
 
-    static ImVec4                   base_color              = ImVec4(114.0f/255.0f, 144.0f/255.0f, 154.0f/255.0f, 1.0f);    //  Base color in RGB (normalized to [0,1]).
+    static ImVec4                   base_color              = ImVec4(0.224f, 0.467f, 0.847, 1.0f);    //  Base color in RGB (normalized to [0,1]).
     //  static char                     hex_input[BUFFER_SIZE]  = "#728C9A";    //  Hex input for base color.
     static int                      steps                   = 3;            //  Steps and lightness delta for variants.
     static float                    delta_l                 = 0.1f;

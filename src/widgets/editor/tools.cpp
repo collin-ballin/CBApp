@@ -212,8 +212,7 @@ size_t Editor::_shape_build_rectangle(const ImVec2 & cen, float r)
     };
 
     // ─── 3. Build the Path via central factory ──────────────────────
-    Path &  p   = _make_path(ids);   // assigns id, label, z_index, flags
-    p.closed    = true;
+    [[maybe_unused]] Path &  p   = _make_shape(ids);   // assigns id, label, z_index, flags
 
     //  Return the index of the newly added path
     return m_paths.size() - 1;

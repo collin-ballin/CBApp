@@ -141,7 +141,6 @@ void App::run_IMPL(void)
     static const size_t &           WINDOWS_BEGIN       = this->S.ms_WINDOWS_BEGIN;   // static_cast<size_t>(Window::Sidebar);
     static const size_t &           WINDOWS_END         = this->S.ms_WINDOWS_END;     // static_cast<size_t>(Window::Count);
 
-    //static app::WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
     static bool                     first_frame         = true;
     
     

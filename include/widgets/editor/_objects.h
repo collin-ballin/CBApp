@@ -49,6 +49,7 @@
 #include <stdexcept>        //                          //  <======| ...
 #include <limits.h>
 #include <math.h>
+#include <complex>
 #include <utility>
 
 
@@ -357,21 +358,21 @@ struct GenericPayload {
     inline void                     ui_properties                   (void)
     {
         static constexpr float          ms_LABEL_WIDTH          = 196.0f;
-        static constexpr float          ms_WIDGET_WIDTH         = 256.0f;
+        static constexpr float          ms_WIDGET_WIDTH         = 300.0f;
         auto                            label                   = [&](const char * label) -> void
         { utl::LeftLabel(label, ms_LABEL_WIDTH, ms_WIDGET_WIDTH);   ImGui::SameLine(); };
         
         
-        label("ε\u209B (rel. ϵ):");
+        label("Double #1:");
         ImGui::InputDouble("##rel_perm", &x, 0.0, 0.0, "%.3f");     // x: relative permittivity
 
-        label("μ\u209B (rel. μ):");
+        label("Double #2:");
         ImGui::InputDouble("##rel_perm_mu", &y, 0.0, 0.0, "%.3f");  // y: relative permeability
 
-        label("Data:");
+        label("Persistent String Data:");
         ImGui::InputText("##payload_data", &data);                  // needs imgui_stdlib.h
 
-        label("Meta:");
+        label("Metadata:");
         ImGui::InputText("##payload_meta", &meta);
         
         
@@ -412,19 +413,72 @@ struct SourcePayload {
     //  "ui_properties"
     inline void                     ui_properties                   (void)
     {
-        //  static constexpr float          ms_LABEL_WIDTH         = 196.0f;
-        //  static constexpr float          ms_WIDGET_WIDTH        = 256.0f;
-        //  constexpr ImGuiSliderFlags      SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
-        //  constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
-        //  auto                            label                   = [&](const char * label) -> void
-        //  { utl::LeftLabel(label, ms_LABEL_WIDTH, ms_WIDGET_WIDTH);   ImGui::SameLine(); };
-        return;
+        static const char *     type_items[]    = { "Hard-E",   "Hard-H",           "Soft-E",   "Soft-H" };
+        static const char *     wf_items[]      = { "Gaussian", "Time-Harmonic",    "Ricker",   "User" };
+        constexpr float         LABEL_W         = 196.0f;
+        constexpr float         WIDGET_W        = 300.0f;
+        auto label_fn = [&](const char* txt) {
+            utl::LeftLabel(txt, LABEL_W, WIDGET_W);
+            ImGui::SameLine();
+        };
+
+        //      Type
+        label_fn("Type:");
+        int t = static_cast<int>(type);
+        if (ImGui::Combo("##src_type", &t, type_items, IM_ARRAYSIZE(type_items)))
+            type = static_cast<Type>(t);
+
+        //      Waveform
+        label_fn("Waveform:");
+        int w = static_cast<int>(waveform);
+        if (ImGui::Combo("##src_wave", &w, wf_items, IM_ARRAYSIZE(wf_items)))
+            waveform = static_cast<Wave>(w);
+
+        //      Amplitude / frequency / phase
+        label_fn("Amplitude:");
+        ImGui::DragScalar("##src_amp",  ImGuiDataType_Double, &amplitude, 1e-3, nullptr, nullptr, "%.6f");
+
+        label_fn("Frequency [Hz]:");
+        ImGui::DragScalar("##src_freq", ImGuiDataType_Double, &frequency, 1.0,  nullptr, nullptr, "%.4e");
+
+        label_fn("Phase [rad]:");
+        ImGui::DragScalar("##src_phase",ImGuiDataType_Double, &phase, 1e-3,   nullptr, nullptr, "%.4f");
+
+        //      Pulse-specific parameters (always visible, disabled unless waveform is pulse-type)
+        const bool pulse_ok = (waveform == Wave::Gaussian || waveform == Wave::Ricker);
+        ImGui::BeginDisabled(!pulse_ok);
+        {
+            label_fn("Duration [s]:");
+            ImGui::DragScalar("##src_tau", ImGuiDataType_Double, &tau, 1e-12, nullptr, nullptr, "%.3e");
+
+            label_fn("T0 [s]:");
+            ImGui::DragScalar("##src_t0",  ImGuiDataType_Double, &t0,  1e-12, nullptr, nullptr, "%.3e");
+        }
+        ImGui::EndDisabled();
+
+        //      Direction vector (always active)
+        label_fn("Direction:");
+        ImGui::DragScalarN("##src_dir",
+                           ImGuiDataType_Double,
+                           direction.data(), 3,
+                           1e-3, nullptr, nullptr, "%.4f");
     }
     
     // *************************************************************************** //
     //      DATA MEMBERS...
     // *************************************************************************** //
     float                           value                           = 1.0f;
+    enum class                      Type                            { HardE, HardH, SoftE, SoftH };
+    enum class                      Wave                            { Gaussian, Sine, Ricker, User };
+    Type                            type                            {Type::HardE};
+    Wave                            waveform                        {Wave::Gaussian};
+    //
+    double                          amplitude                       {1.0};          // peak field
+    double                          frequency                       {0.0};          // Hz (0 = DC / impulse)
+    double                          phase                           {0.0};          // rad
+    double                          tau                             {1.0e-9};       // pulse width for Gaussian/Ricker
+    double                          t0                              {0.0};          // time offset
+    std::array<double,3>            direction                       {1.0, 0.0, 0.0}; // unit vector (Ex,Hx etc)
 
 // *************************************************************************** //
 // *************************************************************************** //   END "SourcePayload" CLASS DEFINITION.
@@ -445,12 +499,61 @@ struct BoundaryPayload {
     //  "ui_properties"
     inline void                     ui_properties                   (void)
     {
-        //  static constexpr float          ms_LABEL_WIDTH         = 196.0f;
-        //  static constexpr float          ms_WIDGET_WIDTH        = 256.0f;
-        //  constexpr ImGuiSliderFlags      SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
-        //  constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
-        //  auto                            label                   = [&](const char * label) -> void
-        //  { utl::LeftLabel(label, ms_LABEL_WIDTH, ms_WIDGET_WIDTH);   ImGui::SameLine(); };
+        const char *        kind_items[]    = { "PEC", "PMC", "PML", "Mur 1", "Mur 2", "TF/SF" };
+        constexpr float     LABEL_W         = 196.0f;
+        constexpr float     WIDGET_W        = 300.0f;
+        auto label_fn = [&](const char* txt){
+            utl::LeftLabel(txt, LABEL_W, WIDGET_W);
+            ImGui::SameLine();
+        };
+
+        //------------------------------------------------------------------
+        //  Kind
+        label_fn("Kind:");
+        int k = static_cast<int>(kind);
+        if (ImGui::Combo("##b_kind", &k, kind_items, IM_ARRAYSIZE(kind_items)))
+            kind = static_cast<Kind>(k);
+
+        //------------------------------------------------------------------
+        //  PML parameters (widgets always present, disabled if not PML)
+        bool is_pml = (kind == Kind::PML);
+        ImGui::BeginDisabled(!is_pml);
+        {
+            label_fn("Thickness [cells]:");
+            ImGui::DragScalar("##b_thick", ImGuiDataType_U32, &thickness_cells, 1.0f);
+
+            label_fn("PML order, m:");
+            ImGui::DragScalar("##b_m",     ImGuiDataType_U8,  &pml_order,       1.0f);
+
+            label_fn("Sigma, max:");
+            ImGui::DragScalar("##b_sig",   ImGuiDataType_Double, &sigma_max, 1e-2, nullptr, nullptr, "%.3e");
+
+            label_fn("Kappa, max:");
+            ImGui::DragScalar("##b_kap",   ImGuiDataType_Double, &kappa_max, 1e-2, nullptr, nullptr, "%.3e");
+
+            label_fn("Alpha, max");
+            ImGui::DragScalar("##b_alp",   ImGuiDataType_Double, &alpha_max, 1e-3, nullptr, nullptr, "%.3e");
+        }
+        ImGui::EndDisabled();
+
+        //------------------------------------------------------------------
+        // TF/SF interface geometry (disabled unless TF/SF)
+        bool is_tfsf = (kind == Kind::TFSF);
+        ImGui::BeginDisabled(!is_tfsf);
+        {
+            label_fn("Pos. (x,y,z):");
+            ImGui::DragScalarN("##b_refpos",
+                               ImGuiDataType_Double,
+                               ref_pos.data(), 3,
+                               1e-3, nullptr, nullptr, "%.4f");
+
+            label_fn("Normal (nx,ny,nz):");
+            ImGui::DragScalarN("##b_norm",
+                               ImGuiDataType_Double,
+                               normal.data(), 3,
+                               1e-3, nullptr, nullptr, "%.3f");
+        }
+        ImGui::EndDisabled();
         return;
     }
     
@@ -458,6 +561,20 @@ struct BoundaryPayload {
     //      DATA MEMBERS...
     // *************************************************************************** //
     float                           value                           = 1.0f;
+    enum class                      Kind                            { PEC, PMC, PML, Mur1, Mur2, TFSF };
+    Kind                            kind                            {Kind::PEC};
+
+    //------------------------------------------------------------------ PML
+    uint32_t                        thickness_cells                 {10};
+    uint8_t                         pml_order                       {3};
+    double                          sigma_max                       {1.0};
+    double                          kappa_max                       {1.0};
+    double                          alpha_max                       {0.0};
+
+    //------------------------------------------------------------------ TF/SF
+    std::array<double,3>            ref_pos                         {0.0, 0.0, 0.0};   // position of interface plane
+    std::array<double,3>            normal                          {1.0, 0.0, 0.0};   // outward unit normal
+
 
 // *************************************************************************** //
 // *************************************************************************** //   END "BoundaryPayload" CLASS DEFINITION.
@@ -476,8 +593,79 @@ struct DielectricPayload {
 // *************************************************************************** //
 
     //  "ui_properties"
-    inline void                     ui_properties                   (void)
+    inline void ui_properties()
     {
+        constexpr const char *      options[]           = { "None", "Debye", "Drude", "Lorentz" };
+        static constexpr float      ms_LABEL_WIDTH      = 196.0f;
+        static constexpr float      ms_WIDGET_WIDTH     = 300.0f;
+        auto label = [&](const char* txt) {
+            utl::LeftLabel(txt, ms_LABEL_WIDTH, ms_WIDGET_WIDTH);
+            ImGui::SameLine();
+        };
+
+
+        // -----------------------------------------------------------------
+        // εr
+        double eps_vals[2] = { eps_r.real(), eps_r.imag() };
+        label("Permittivity:");
+        if (ImGui::DragScalarN("##eps",
+                               ImGuiDataType_Double,
+                               eps_vals,
+                               2,               // two components
+                               1e-3,            // step
+                               nullptr, nullptr,
+                               "%.6f Relative")) {
+            eps_r = { eps_vals[0], eps_vals[1] };
+        }
+
+        // -----------------------------------------------------------------
+        // μr
+        double mu_vals[2] = { mu_r.real(), mu_r.imag() };
+        label("Permeability:");
+        if (ImGui::DragScalarN("##mu",
+                               ImGuiDataType_Double,
+                               mu_vals, 2, 1e-3, nullptr, nullptr, "%.6f Relative")) {
+            mu_r = { mu_vals[0], mu_vals[1] };
+        }
+
+        // -----------------------------------------------------------------
+        // Conductivities
+        double sigma[2] = { sigma_e, sigma_m };
+        label("Conductivity (E, B):");
+        if (ImGui::DragScalarN("##sigma",
+                               ImGuiDataType_Double,
+                               sigma, 2, 1e-3, nullptr, nullptr, "%.6f [S/m]"))
+        {
+            sigma_e = sigma[0];     sigma_m = sigma[1];
+        }
+        
+        
+        
+
+        // -----------------------------------------------------------------
+        // Dispersion model
+        label("Dispersion:");
+        int choice = static_cast<int>(disp_model);
+        if (ImGui::Combo("##disp_model", &choice, options, IM_ARRAYSIZE(options)))
+            disp_model = static_cast<DispersionModel>(choice);
+
+        ImGui::BeginDisabled( disp_model == DispersionModel::None );
+        // Extra parameters only when a model is active
+        {
+            label("delta perm.:");
+            ImGui::InputDouble("##d_eps", &disp_par[0], 0.0, 0.0, "%.5f");
+
+            label("freq [Hz]:");
+            ImGui::InputDouble("##f0", &disp_par[1], 0.0, 0.0, "%.4e");
+
+            label("gamma [Hz]:");
+            ImGui::InputDouble("##gamma", &disp_par[2], 0.0, 0.0, "%.4e");
+
+            label("N / count:");
+            ImGui::InputDouble("##order", &disp_par[3], 0.0, 0.0, "%.0f");
+        }
+        ImGui::EndDisabled();
+        
         return;
     }
     
@@ -485,6 +673,15 @@ struct DielectricPayload {
     //      DATA MEMBERS...
     // *************************************************************************** //
     float                           value                           = 1.0f;
+    std::complex<double>            eps_r                           {1.0, 0.0};   // relative permittivity
+    std::complex<double>            mu_r                            {1.0, 0.0};   // relative permeability
+    double                          sigma_e                         {0.0};        // electric conductivity   [S/m]
+    double                          sigma_m                         {0.0};        // magnetic conductivity   [S/m]
+
+    enum class                      DispersionModel                 { None, Debye, Drude, Lorentz };
+    DispersionModel                 disp_model                      {DispersionModel::None};
+    std::array<double,4>            disp_par                        {};           // Δε, f₀, γ, N (or as you choose)
+
 
 // *************************************************************************** //
 // *************************************************************************** //   END "DielectricPayload" CLASS DEFINITION.
@@ -628,6 +825,7 @@ struct Path_t {
     //                          CONSTANTS:
     static constexpr size_t         ms_MAX_PATH_LABEL_LENGTH        = 64;
     static constexpr const char *   ms_DEF_PATH_TITLE_FMT_STRING    = "%s (ID #%06u)";
+    static constexpr ImU32          ms_DEF_PATH_FILL_COLOR          = IM_COL32(0,110,255,45); 
     
 // *************************************************************************** //
 //
@@ -653,11 +851,27 @@ struct Path_t {
     //                          UI HELPER FUNCTIONS:
     // *************************************************************************** //
     
+    //  "ui_all"
+    inline void                     ui_all                          (void)
+    {
+        using namespace path;
+        if ( this->ui_kind() )        { /*    "kind" was changes.     */ }
+        
+        //  2.  CALL THE "PROPERTIES UI" FOR THE
+        std::visit([&](auto & pl) {
+            using T = std::decay_t<decltype(pl)>;
+            //  skip monostate (has no draw_ui)
+            if constexpr (!std::is_same_v<T, std::monostate>)
+                { pl.ui_properties(); }          // every real payload implements this
+        }, payload);
+        
+        return;
+    }
+    
     //  "ui_properties"
     inline void                     ui_properties                   (void)
     {
         using namespace path;
-        if ( this->ui_kind() )        { /*    "kind" was changes.     */ }
         
         //  2.  CALL THE "PROPERTIES UI" FOR THE
         std::visit([&](auto & pl) {
@@ -698,12 +912,13 @@ struct Path_t {
     {
         switch (k)
         {
-            case PathKind::Generic :    { return path::GenericPayload{}; }          // default-constructed
-            
-            /* case PathKind::Boundary:  return BoundaryPayload{};  */
-            /* case PathKind::Source:    return SourcePayload{};    */
-            
-            default:                    { break; }                   // PathKind::Default or unknown
+            case PathKind::Generic :        { return path::GenericPayload{}; }          // default-constructed
+            //
+            //
+            case PathKind::Boundary :       { return path::BoundaryPayload{}; }
+            case PathKind::Source :         { return path::SourcePayload{}; }
+            case PathKind::Dielectric :     { return path::DielectricPayload{}; }
+            default:                        { break; }                   // PathKind::Default or unknown
         }
         
         return std::monostate{};                  // no extra data

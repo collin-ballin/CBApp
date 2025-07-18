@@ -480,12 +480,12 @@ void App::load(void)
     }
     //
     //  2.  Load ImPlot Style...
-    //if ( utl::LoadImPlotStyleFromDisk(ImPlot::GetStyle(), cb::app::IMPLOT_STYLE_FILEPATH) ) {
-    //    S.m_logger.debug( std::format("Successfully loaded ImPlot style from \"{}\"", cb::app::IMPLOT_STYLE_FILEPATH) );
-    //}
-    //else {
-    //    S.m_logger.warning( std::format("Failure to load ImPlot style from \"{}\".", cb::app::IMPLOT_STYLE_FILEPATH) );
-    //}
+    if ( utl::LoadImPlotStyleFromDisk(ImPlot::GetStyle(), cb::app::IMPLOT_STYLE_FILEPATH) ) {
+        S.m_logger.debug( std::format("Successfully loaded ImPlot style from \"{}\"", cb::app::IMPLOT_STYLE_FILEPATH) );
+    }
+    else {
+        S.m_logger.warning( std::format("Failure to load ImPlot style from \"{}\".", cb::app::IMPLOT_STYLE_FILEPATH) );
+    }
 # else
     S.m_logger.debug( std::format("#CBAPP_LOAD_STYLE_FILE is defined -- Loading from external style file is disabled") );
     S.SetDarkMode();

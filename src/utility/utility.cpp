@@ -997,78 +997,94 @@ bool LoadImGuiStyleFromDisk(ImGuiStyle & style, const std::string_view & file_pa
 
 //  "LoadImPlotStyleFromDisk_IMPL"
 //
-inline bool LoadImPlotStyleFromDisk_IMPL(ImPlotStyle & style, const char *   file_path)
+inline bool LoadImPlotStyleFromDisk_IMPL(ImPlotStyle & style, const char * file_path)
 {
     using json = nlohmann::json;
-    
-    if (!std::filesystem::exists(file_path))    // Return false immediately if path doesn't exist
+
+    if (!std::filesystem::exists(file_path))
         return false;
-        
+
     std::ifstream ifs(file_path);
-    if (!ifs) return false;
-    json j; ifs >> j;
+    if (!ifs)
+        return false;
 
+    json j;
+    try { ifs >> j; }
+    catch (...) { return false; }
+
+    // -------------------------------------------------------------------------
     // helpers
-    auto getf = [&](auto& dst, const char* key) {
-        using T = std::remove_reference_t<decltype(dst)>;
-        if (j.contains(key)) dst = j[key].get<T>();
+    // -------------------------------------------------------------------------
+    auto get_scalar = [&](auto& dst, const char* key)
+    {
+        auto it = j.find(key);
+        if (it != j.end() && it->is_primitive())          // skip if wrong type
+            it->get_to(dst);
     };
-    auto get2 = [&](ImVec2& v, const char* key) {
-        if (j.contains(key) && j[key].is_array() && j[key].size() == 2) {
-            v.x = j[key][0].get<float>();
-            v.y = j[key][1].get<float>();
-        }
-    };
-    auto getcol = [&](int i) {
-        if (!j.contains("Colors")) return;
-        const auto& arr = j["Colors"];
-        if (!arr.is_array() || i >= (int)arr.size()) return;
-        const auto& entry = arr[i];
-        if (entry.is_string() || entry.is_number_unsigned()) {
-            ImU32 packed = StyleJson::from_json(entry);
-            style.Colors[i] = ImGui::ColorConvertU32ToFloat4(packed);
-        }
-        else if (entry.is_array() && entry.size() == 4) {
-            style.Colors[i] = {entry[0].get<float>(), entry[1].get<float>(),
-                               entry[2].get<float>(), entry[3].get<float>()};
+
+    auto get_vec2 = [&](ImVec2& v, const char* key)
+    {
+        auto it = j.find(key);
+        if (it != j.end() && it->is_array() && it->size() == 2) {
+            v.x = (*it)[0].get<float>();
+            v.y = (*it)[1].get<float>();
         }
     };
 
-#define GET_SCALAR(name) getf(style.name, #name)
-    GET_SCALAR(LineWeight);    GET_SCALAR(Marker);         GET_SCALAR(MarkerSize);
-    GET_SCALAR(MarkerWeight);  GET_SCALAR(FillAlpha);      GET_SCALAR(ErrorBarSize);
-    GET_SCALAR(ErrorBarWeight);GET_SCALAR(DigitalBitHeight);GET_SCALAR(DigitalBitGap);
-    //  GET_SCALAR(PlotBorderSize);GET_SCALAR(MinorAlpha);     GET_SCALAR(ReferenceScale);
-    GET_SCALAR(Colormap);      GET_SCALAR(UseLocalTime);   GET_SCALAR(UseISO8601);
-    GET_SCALAR(Use24HourClock);
-#undef GET_SCALAR
+    auto get_color = [&](int i)
+    {
+        auto arr_it = j.find("Colors");
+        if (arr_it == j.end() || !arr_it->is_array() || i >= static_cast<int>(arr_it->size()))
+            return;
 
+        const json& e = (*arr_it)[i];
+        if (e.is_string() || e.is_number_unsigned()) {
+            ImU32 packed = StyleJson::from_json(e);
+            if (packed)
+                style.Colors[i] = ImGui::ColorConvertU32ToFloat4(packed);
+        }
+        else if (e.is_array() && e.size() == 4) {
+            style.Colors[i] = { e[0].get<float>(), e[1].get<float>(),
+                                e[2].get<float>(), e[3].get<float>() };
+        }
+    };
+
+    // -------------------------------------------------------------------------
+    // scalars
+    // -------------------------------------------------------------------------
+#define LOAD_SCALAR(name) get_scalar(style.name, #name)
+    LOAD_SCALAR(LineWeight);        LOAD_SCALAR(Marker);           LOAD_SCALAR(MarkerSize);
+    LOAD_SCALAR(MarkerWeight);      LOAD_SCALAR(FillAlpha);        LOAD_SCALAR(ErrorBarSize);
+    LOAD_SCALAR(ErrorBarWeight);    LOAD_SCALAR(DigitalBitHeight); LOAD_SCALAR(DigitalBitGap);
+    LOAD_SCALAR(PlotBorderSize);    LOAD_SCALAR(MinorAlpha);       LOAD_SCALAR(Colormap);
+    LOAD_SCALAR(UseLocalTime);      LOAD_SCALAR(UseISO8601);       LOAD_SCALAR(Use24HourClock);
+#undef  LOAD_SCALAR
+
+    // -------------------------------------------------------------------------
     // vectors
-    get2(style.MajorTickLen,       "MajorTickLen");
-    get2(style.MinorTickLen,       "MinorTickLen");
-    get2(style.MajorTickSize,      "MajorTickSize");
-    get2(style.MinorTickSize,      "MinorTickSize");
-    get2(style.MajorGridSize,      "MajorGridSize");
-    get2(style.MinorGridSize,      "MinorGridSize");
-    get2(style.PlotPadding,        "PlotPadding");
-    get2(style.LabelPadding,       "LabelPadding");
-    get2(style.LegendPadding,      "LegendPadding");
-    get2(style.LegendInnerPadding, "LegendInnerPadding");
-    get2(style.LegendSpacing,      "LegendSpacing");
-    get2(style.MousePosPadding,    "MousePosPadding");
-    get2(style.AnnotationPadding,  "AnnotationPadding");
-    get2(style.FitPadding,         "FitPadding");
-    get2(style.PlotDefaultSize,    "PlotDefaultSize");
-    get2(style.PlotMinSize,        "PlotMinSize");
+    // -------------------------------------------------------------------------
+    get_vec2(style.MajorTickLen,        "MajorTickLen");
+    get_vec2(style.MinorTickLen,        "MinorTickLen");
+    get_vec2(style.MajorTickSize,       "MajorTickSize");
+    get_vec2(style.MinorTickSize,       "MinorTickSize");
+    get_vec2(style.MajorGridSize,       "MajorGridSize");
+    get_vec2(style.MinorGridSize,       "MinorGridSize");
+    get_vec2(style.PlotPadding,         "PlotPadding");
+    get_vec2(style.LabelPadding,        "LabelPadding");
+    get_vec2(style.LegendPadding,       "LegendPadding");
+    get_vec2(style.LegendInnerPadding,  "LegendInnerPadding");
+    get_vec2(style.LegendSpacing,       "LegendSpacing");
+    get_vec2(style.MousePosPadding,     "MousePosPadding");
+    get_vec2(style.AnnotationPadding,   "AnnotationPadding");
+    get_vec2(style.FitPadding,          "FitPadding");
+    get_vec2(style.PlotDefaultSize,     "PlotDefaultSize");
+    get_vec2(style.PlotMinSize,         "PlotMinSize");
 
-    // enums
-    //  if (j.contains("LegendOrientation"))
-    //      style.LegendOrientation = static_cast<ImPlotLegendOrientation>(j["LegendOrientation"].get<int>());
-    //  if (j.contains("LegendLocation"))
-    //      style.LegendLocation = static_cast<ImPlotLegendLocation>(j["LegendLocation"].get<int>());
-
+    // -------------------------------------------------------------------------
     // colors
-    for (int i = 0; i < ImPlotCol_COUNT; ++i) getcol(i);
+    // -------------------------------------------------------------------------
+    for (int i = 0; i < ImPlotCol_COUNT; ++i)
+        get_color(i);
 
     return true;
 }

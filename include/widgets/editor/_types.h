@@ -338,7 +338,7 @@ template<typename OID>
 struct ShapeState_t {
     bool                active                  = false;            // true while user is click-dragging a preview
     OID                 overlay_id              = OID(0);           // contextual UI (0 ⇒ none)
-    ShapeKind           kind                    = ShapeKind::Square;
+    ShapeKind           kind                    = ShapeKind::Rectangle;
     float               radius                  = 25.0f;            // corner- or major-radius (placeholder)
     float               params[5]               = {0.0f};           // Array to hold multiple geometric descriptors for more complex shapes.
     //

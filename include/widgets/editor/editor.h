@@ -134,6 +134,9 @@ public:
         using                           Point                           = EditorIMPL::Point                     ;
         using                           Line                            = EditorIMPL::Line                      ;
         using                           Path                            = EditorIMPL::Path                      ;
+        using                           PathKind                        = Path::PathKind                        ;
+        using                           Payload                         = Path::Payload                         ;
+    //
         using                           Overlay                         = EditorIMPL::Overlay                   ;
         using                           Hit                             = EditorIMPL::Hit                       ;
         using                           PathHit                         = EditorIMPL::PathHit                   ;
@@ -219,7 +222,7 @@ public:
                 /*  placement   */  OverlayPlacement::CanvasBR,
                 /*  src_anchor  */  Anchor::SouthEast,
                 /*  offscreen   */  OffscreenPolicy::Clamp,
-                /*  anchor_px   */  ImVec2{10.0f,   70.0f},                 //  nudge below bbox
+                /*  anchor_px   */  ImVec2{-30.0f,   45.0f},                 //  nudge below bbox
                 /*  anchor_ws   */  ImVec2{0.0f,    0.0f},                  //  ws anchor filled each frame
                 /*  draw_fn     */  {}                                  // draw_fn patched in ctor
             },
@@ -782,6 +785,14 @@ private:
         return m_paths.back();                              // reference for caller tweaks
     }
     
+    //  "_make_shape"
+    inline Path &                       _make_shape                         (const std::vector<VertexID> & verts, const Path * proto = nullptr) {
+        Path &  p               = _make_path(verts, proto);   // assigns id, label, z_index, flags
+        p.closed                = true;
+        p.style.fill_color      = Path::ms_DEF_PATH_FILL_COLOR;
+        return p;
+    }
+    
     
     //  "_clone_path"
     //      Duplicate an existing path with a vid-remap (copy/paste, boolean ops …).
@@ -1332,6 +1343,9 @@ inline void from_json(const nlohmann::json & j, EditorSnapshot & s)
 //
 // static inline const char * mode_label(Mode m)
 // { return Editor::ms_EDITOR_STATE_NAMES[ static_cast<size_t>(m) ]; }
+
+
+
 
 
 

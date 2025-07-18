@@ -410,7 +410,7 @@ void Editor::_draw_editor_settings([[maybe_unused]] popup::Context & ctx)
 
 
     //  2.  USER PREFERENCES...
-    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::CollapsingHeader("User Preferences") ) {
         this->_draw_settings_user_preferences();
     }
@@ -439,19 +439,19 @@ void Editor::_draw_editor_settings([[maybe_unused]] popup::Context & ctx)
 //
 void Editor::_draw_settings_mechanics(void)
 {
+    const float &                   LABEL_W             = m_style.ms_SETTINGS_LABEL_WIDTH;
+    const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
     constexpr ImGuiSliderFlags      SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
     //constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
-    auto                            label               = [this](const char * label) -> void
-    { utl::LeftLabel(label, m_style.ms_SETTINGS_LABEL_WIDTH, m_style.ms_SETTINGS_WIDGET_WIDTH);   ImGui::SameLine(); };
     
     
-    label("Show Grid:");                //  1.      SHOW GRID.
+    this->left_label("Show Grid:", LABEL_W, WIDGET_W);              //  1.      SHOW GRID.
     ImGui::Checkbox("##Editor_Settings_Mechanics_ShowGrid",             &m_grid.visible);
     
-    label("Snap-To-Grid:");             //  2.      SNAP-TO-GRID.
+    this->left_label("Snap-To-Grid:", LABEL_W, WIDGET_W);           //  2.      SNAP-TO-GRID.
     ImGui::Checkbox("##Editor_Settings_Mechanics_SnapToGrid",           &m_grid.snap_on);
     
-    label("Vertex Hit Radius:");        //  3.      HIT THRESHOLD.
+    this->left_label("Vertex Hit Radius:", LABEL_W, WIDGET_W);      //  3.      HIT THRESHOLD.
     ImGui::SliderFloat( "##Editor_Settings_Mechanics_HitThreshold",     &m_style.HIT_THRESH_SQ,       4.0f,   81.0f,  "%.1f units-squared",  SLIDER_FLAGS);
     
     
@@ -463,33 +463,32 @@ void Editor::_draw_settings_mechanics(void)
 //
 void Editor::_draw_settings_user_preferences(void)
 {
+    const float &                   LABEL_W             = m_style.ms_SETTINGS_LABEL_WIDTH;
+    const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
     constexpr ImGuiSliderFlags      SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
     constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
-    auto                            label               = [this](const char * label) -> void
-    { utl::LeftLabel(label, m_style.ms_SETTINGS_LABEL_WIDTH, m_style.ms_SETTINGS_WIDGET_WIDTH);   ImGui::SameLine(); };
-
-
 
 
     //  1.  HANDLES...
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::TreeNode("Handles") )
     {
         ImVec4          handle_color_f              = u32_to_f4(m_style.ms_HANDLE_COLOR);
         ImVec4          handle_hover_color_f        = u32_to_f4(m_style.ms_HANDLE_HOVER_COLOR);
     
     
-        label("Handle Size:");                          //  1.1.    HANDLE SIZE
+        this->left_label("Handle Size:", LABEL_W, WIDGET_W);            //  1.1.    HANDLE SIZE
         ImGui::SliderFloat( "##Editor_Settings_Style_Handle_Size", &m_style.ms_HANDLE_SIZE,         1.0f,   32.0f,  "%.2f px",  SLIDER_FLAGS);
         
-        label("Handle Box-Size:");                      //  1.2.    HANDLE BOX-SIZE
+        this->left_label("Handle Box-Size:", LABEL_W, WIDGET_W);        //  1.2.    HANDLE BOX-SIZE
         ImGui::SliderFloat( "##Editor_Settings_Style_Handle_BoxSize", &m_style.HANDLE_BOX_SIZE,     1.0f,   32.0f,  "%.2f px",  SLIDER_FLAGS);
         
     
-        label("Handle Color:");                         //  1.3.    ms_HANDLE_COLOR
+        this->left_label("Handle Color:", LABEL_W, WIDGET_W);           //  1.3.    ms_HANDLE_COLOR
         if ( ImGui::ColorEdit4( "##Editor_Settings_Style_Handle_Color",          (float*)&handle_color_f,  COLOR_FLAGS ) )
         { m_style.ms_HANDLE_COLOR = f4_to_u32(handle_color_f); }
     
-        label("Handle Hover Color:");                   //  1.4.    ms_HANDLE_HOVER_COLOR
+        this->left_label("Handle Hover Color:", LABEL_W, WIDGET_W);     //  1.4.    ms_HANDLE_HOVER_COLOR
         if ( ImGui::ColorEdit4( "##Editor_Settings_Style_Handle_HoverColor",     (float*)&handle_hover_color_f,  COLOR_FLAGS ) )
         { m_style.ms_HANDLE_HOVER_COLOR = f4_to_u32(handle_hover_color_f); }
         //
@@ -501,6 +500,7 @@ void Editor::_draw_settings_user_preferences(void)
     
     
     //  2.  LASSO...
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::TreeNode("Selection") )
     {
         ImVec4          lasso_line_color_f           = u32_to_f4(m_style.COL_LASSO_OUT);
@@ -508,15 +508,15 @@ void Editor::_draw_settings_user_preferences(void)
         ImVec4          selection_bbox_color         = u32_to_f4(m_style.SELECTION_BBOX_COL);
     
     
-        label("Lasso Line Color:");                     //  2.1.    COL_LASSO_OUT
+        this->left_label("Lasso Line Color:", LABEL_W, WIDGET_W);               //  2.1.    COL_LASSO_OUT
         if ( ImGui::ColorEdit4( "##Editor_Settings_Style_Selection_LassoLineColor",     (float*)&lasso_line_color_f,    COLOR_FLAGS ) )
         { m_style.COL_LASSO_OUT = f4_to_u32(lasso_line_color_f); }
     
-        label("Lasso Fill Color:");                     //  2.2.    COL_LASSO_FILL
+        this->left_label("Lasso Fill Color:", LABEL_W, WIDGET_W);               //  2.2.    COL_LASSO_FILL
         if ( ImGui::ColorEdit4( "##Editor_Settings_Style_Selection_LassoFillColor",     (float*)&lasso_fill_color_f,    COLOR_FLAGS ) )
         { m_style.COL_LASSO_FILL = f4_to_u32(lasso_fill_color_f); }
     
-        label("Selection Bounding-Box Color:");         //  2.3.    SELECTION_BBOX_COL
+        this->left_label("Selection Bounding-Box Color:", LABEL_W, WIDGET_W);   //  2.3.    SELECTION_BBOX_COL
         if ( ImGui::ColorEdit4( "##Editor_Settings_Style_Selection_BBoxColor",          (float*)&selection_bbox_color,  COLOR_FLAGS ) )
         { m_style.SELECTION_BBOX_COL = f4_to_u32(selection_bbox_color); }
         //

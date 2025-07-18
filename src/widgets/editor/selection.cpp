@@ -1305,8 +1305,8 @@ inline void Editor::_selection_context_single([[maybe_unused]] const Interaction
     //  1.  PROPERTIES...
     if ( ImGui::BeginMenu("Properties") ) {
         //
+        if ( path.ui_kind() )                   { /*    changed the path kind.      */ }
         path.ui_properties();
-        //  if ( path.ui_kind() )                   { /*    changed the path kind.      */ }
         //
         ImGui::EndMenu();
     }

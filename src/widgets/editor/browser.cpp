@@ -501,7 +501,8 @@ void Editor::_dispatch_obj_inspector_column(void)
 //
 void Editor::_draw_single_obj_inspector(void)
 {
-    constexpr ImGuiChildFlags       P0_FLAGS            = ImGuiChildFlags_ResizeX       | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoScrollbar;
+    //constexpr ImGuiChildFlags       P0_FLAGS            = ImGuiChildFlags_ResizeX       | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoScrollbar;
+    constexpr ImGuiChildFlags       P0_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoScrollbar;
     constexpr ImGuiChildFlags       P1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     constexpr ImGuiChildFlags       C0_FLAGS            = ImGuiChildFlags_ResizeX       | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     constexpr ImGuiChildFlags       C1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
@@ -512,19 +513,20 @@ void Editor::_draw_single_obj_inspector(void)
     
     
     //  Compute adaptive column widths BEFORE we emit any child windows
-    const float                     TOTAL_W             = ImGui::GetContentRegionAvail().x;            // free width right now
+    const ImVec2                    Avail               = ImGui::GetContentRegionAvail();
+    const float                     TOTAL_W             = Avail.x;            // free width right now
     const float                     PADDING             = 2 * style.ItemSpacing.x;
-    const float                     P0_w                = TOTAL_W * m_style.OBJ_PROPERTIES_REL_WIDTH - PADDING;
+    //const float                     P0_w                = TOTAL_W * m_style.OBJ_PROPERTIES_REL_WIDTH - PADDING;
+    const float                     P0_w                = 0.65f * ImGui::GetContentRegionAvail().x;
     
     
     //  4.  "VERTEX BROWSER" FOR THE OBJECT...
-    float                           availY              = ImGui::GetContentRegionAvail().y;
     float                           sub_h               = 0.0f; // availY * m_style.ms_VERTEX_SUBBROWSER_HEIGHT;
 
 
 
     //  4A.     OBJECT PROPERTIES PANEL.
-    ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", ImVec2(P0_w, 0.0f),     P0_FLAGS);
+    ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", ImVec2(P0_w, Avail.y),     P0_FLAGS);
         _draw_obj_properties_panel(path, sel_idx);     // <-- NEW helper you just wrote
     ImGui::EndChild();
     ImGui::SameLine(0.0f );
@@ -698,10 +700,21 @@ void Editor::_draw_single_obj_inspector(void)
 //
 void Editor::_draw_multi_obj_inspector(void)
 {
-    ImGui::Text("%zu paths selected", m_sel.paths.size());
-    ImGui::Separator();
+    static constexpr size_t         TITLE_SIZE              = 128;
+    static char                     title [TITLE_SIZE];   // safe head-room
+    //
+    const size_t                    num_paths           = m_sel.paths.size();
 
-    if (ImGui::Button("Delete Selection", {150,0}))
+
+    //      0.1.    UPDATE TITLE IF SELECTION CHANGED...
+    S.PushFont(Font::Main);
+    std::snprintf( title, TITLE_SIZE, "%zu Paths Selected", num_paths);
+    ImGui::SeparatorText(title);
+    S.PopFont();
+    
+
+
+    if ( ImGui::Button("Delete Selection", {150,0}) )
     {
         std::vector<size_t> idxs(m_sel.paths.begin(), m_sel.paths.end());
         std::sort(idxs.rbegin(), idxs.rend());
@@ -712,6 +725,10 @@ void Editor::_draw_multi_obj_inspector(void)
         this->reset_selection();    // m_sel.clear();
         m_browser_S.m_inspector_vertex_idx = -1;
     }
+    
+    
+    
+    return;
 }
 
 
@@ -795,7 +812,7 @@ void Editor::_draw_vertex_inspector_column(Path & path)
 
 
     //  2.  "DELETE" BUTTON...
-    ImGui::SameLine();
+    //  ImGui::SameLine();
     if ( ImGui::Button("Delete Vertex##Editor_VertexBrowser_DeleteVertexButton", {120,0}) )
     {
         _erase_vertex_and_fix_paths(vid);
@@ -1019,7 +1036,7 @@ void Editor::_draw_obj_properties_panel(Path & path, const PathID pidx)
     static constexpr size_t         TITLE_SIZE          = 128;
     static char                     title [TITLE_SIZE];   // safe head-room
     static PathID                   cache_id            = static_cast<PathID>(-1);
-    
+    const bool                      PAYLOAD             = path.kind != PathKind::Default;
     
     //     "edit_u32_colour"  // ── colour editors ────────────────────────────────────────────────
     [[maybe_unused]] auto           edit_u32_colour     = [&](const char * label, ImU32 & col_u32) {
@@ -1033,6 +1050,8 @@ void Editor::_draw_obj_properties_panel(Path & path, const PathID pidx)
 
     //  CASE 0 :    ERROR...
     if ( pidx >= m_paths.size() )   { ImGui::SeparatorText("[invalid object]"); S.PopFont(); cache_id = static_cast<PathID>(-1); return; }
+    
+    
     
     
     
@@ -1058,90 +1077,106 @@ void Editor::_draw_obj_properties_panel(Path & path, const PathID pidx)
     
     //  2.  "DELETE" BUTTON...
     S.PopFont();
-    //      ImGui::SameLine();
-    //      if ( ImGui::Button("Delete Object") )
-    //      {
-    //          _erase_path_and_orphans( static_cast<PathID>(pidx) );   // ← replaces direct m_paths.erase()
-    //          m_sel.clear();
-    //          m_browser_S.m_inspector_vertex_idx = -1;
-    //          return;
-    //      }
-    //      ImGui::Separator();
 
 
 
-
-    //  2.  LINE-STROKE, AREA-FILL COLORS...
-    {
-        ImVec4          stroke_f            = u32_to_f4(path.style.stroke_color);
-        ImVec4          fill_f              = u32_to_f4(path.style.fill_color);
-        bool            stroke_dirty        = false;
-        bool            fill_dirty          = false;
-
-
-        this->left_label("Line Color:", LABEL_W, WIDGET_W);
-        stroke_dirty                        = ImGui::ColorEdit4( "##Editor_VertexInspector_LineColor",    (float*)&stroke_f,  COLOR_FLAGS );
-        //
-        //
-        ImGui::BeginDisabled( !is_area );
-            this->left_label("Fill Color:", LABEL_W, WIDGET_W);
-            fill_dirty                      = ImGui::ColorEdit4( "##Editor_VertexInspector_FillColor",    (float*)&fill_f,    COLOR_FLAGS );
-        ImGui::EndDisabled();
-        
-        if (stroke_dirty)   { path.style.stroke_color = f4_to_u32(stroke_f); }
-        if (fill_dirty)     { path.style.fill_color   = f4_to_u32(fill_f); }
-        if (!is_area)       { path.style.fill_color  &= 0x00FFFFFF; }   // clear alpha
-
-    }
+    if (!PAYLOAD) {
+    //
+    //
+    //
+        //  2.  LINE-STROKE, AREA-FILL COLORS...
+        {
+            ImVec4          stroke_f            = u32_to_f4(path.style.stroke_color);
+            ImVec4          fill_f              = u32_to_f4(path.style.fill_color);
+            bool            stroke_dirty        = false;
+            bool            fill_dirty          = false;
 
 
+            this->left_label("Line Color:", LABEL_W, WIDGET_W);
+            stroke_dirty                        = ImGui::ColorEdit4( "##Editor_VertexInspector_LineColor",    (float*)&stroke_f,  COLOR_FLAGS );
+            //
+            //
+            ImGui::BeginDisabled( !is_area );
+                this->left_label("Fill Color:", LABEL_W, WIDGET_W);
+                fill_dirty                      = ImGui::ColorEdit4( "##Editor_VertexInspector_FillColor",    (float*)&fill_f,    COLOR_FLAGS );
+            ImGui::EndDisabled();
+            
+            if (stroke_dirty)   { path.style.stroke_color = f4_to_u32(stroke_f); }
+            if (fill_dirty)     { path.style.fill_color   = f4_to_u32(fill_f); }
+            if (!is_area)       { path.style.fill_color  &= 0x00FFFFFF; }   // clear alpha
 
-
-    //  3.  LINE WIDTH...
-    {
-        static constexpr float  min_width   = 0.25;
-        static constexpr float  max_width   = 32;
-        bool                    dirty       = false;
-        float                   w           = path.style.stroke_width;
-        
-        this->left_label("Line Color:", LABEL_W, WIDGET_W);
-        ImGui::SetNextItemWidth(200.0f);
-        //
-        //  CASE 1 :    Value < 2.0f
-        if (w < 2.0f) {
-            dirty = ImGui::InputFloat("##Editor_VertexBrowser_LineWidth", &w,   0.125f,   0.25f,      "%.4f px");
         }
-        //
-        //  CASE 2 :    2.0 <= Value.
+
+
+
+
+        //  3.  LINE WIDTH...
+        {
+            static constexpr float  min_width   = 0.25;
+            static constexpr float  max_width   = 32;
+            bool                    dirty       = false;
+            float                   w           = path.style.stroke_width;
+            
+            this->left_label("Line Color:", LABEL_W, WIDGET_W);
+            ImGui::SetNextItemWidth(200.0f);
+            //
+            //  CASE 1 :    Value < 2.0f
+            if (w < 2.0f) {
+                dirty = ImGui::InputFloat("##Editor_VertexBrowser_LineWidth", &w,   0.125f,   0.25f,      "%.4f px");
+            }
+            //
+            //  CASE 2 :    2.0 <= Value.
+            else {
+                dirty = ImGui::InputFloat("##Editor_VertexBrowser_LineWidth", &w,   1.0f,     2.0f,       "%.2f px");
+            }
+            //
+            //
+            //
+            if ( dirty ) {
+                w = std::clamp(w, min_width, max_width);
+                path.style.stroke_width = w;
+            }
+        }
+        // ImGui::Separator();
+        
+        
+
+        //  4.  Z-ORDER...
+        {
+            this->left_label("Z-Index:", LABEL_W, WIDGET_W);
+            ImGui::Text("%3u", path.z_index);
+            
+            if ( ImGui::SmallButton("Send To Back")     )       { send_selection_to_back();     }
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("Send Backward")    )       { send_selection_backward();    }
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("Bring Forward")    )       { bring_selection_forward();    }
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("Bring To Front")   )       { bring_selection_to_front();   }
+        }
+    //
+    //
+    //
+    }
+    
+
+
+    //  5.  PROPERTIES...
+    //  ImGui::NewLine();
+    ImGui::BeginDisabled(true);
+    ImGui::SeparatorText("Properties");
+    ImGui::EndDisabled();
+    {
+        this->left_label("Payload:", 196.0f, 256.0f);    path.ui_kind();
+        
+        if (!PAYLOAD)   { ImGui::Separator(); }
+        
+        if (path.kind == PathKind::Default) {
+            ImGui::TextDisabled("None");
+        }
         else {
-            dirty = ImGui::InputFloat("##Editor_VertexBrowser_LineWidth", &w,   1.0f,     2.0f,       "%.2f px");
+            path.ui_properties();
         }
-        //
-        //
-        //
-        if ( dirty ) {
-            w = std::clamp(w, min_width, max_width);
-            path.style.stroke_width = w;
-        }
-    }
-    ImGui::Separator();
-    
-    
-
-    //  4.  Z-ORDER...
-    {
-        this->left_label("Z-Index:", LABEL_W, WIDGET_W);
-        ImGui::Text("%3u", path.z_index);
-        
-        
-        
-        if ( ImGui::SmallButton("Send To Back")     )       { send_selection_to_back();     }
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("Send Backward")    )       { send_selection_backward();    }
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("Bring Forward")    )       { bring_selection_forward();    }
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("Bring To Front")   )       { bring_selection_to_front();   }
     }
     
     
