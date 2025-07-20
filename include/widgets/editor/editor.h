@@ -657,18 +657,33 @@ private:
     }
     
     //  "parent_path_of_vertex"
-    [[nodiscard]] inline const Path *   parent_path_of_vertex               (VertexID vid) const noexcept
-    {
+    [[nodiscard]] inline const Path *   parent_path_of_vertex               (VertexID vid) const noexcept {
         for (const Path & p : m_paths) {
             for (VertexID v : p.verts)      { if (v == vid) return &p; }
         }
         return nullptr;                     // not found
     }
     
+    //  "parent_path_of_vertex_mut"
+    //      Mutable variant – returns nullptr if not found
+    [[nodiscard]] inline Path *         parent_path_of_vertex_mut           (VertexID vid) {
+        for (Path& p : m_paths) {
+            for (VertexID v : p.verts) {
+                if (v == vid)   { return &p; }
+            }
+        }
+        return nullptr;
+    }
+    
+    //  "_erase_vertex_record_only"
+    inline void                         _erase_vertex_record_only           (VertexID vid) {
+        m_vertices.erase(std::remove_if(m_vertices.begin(), m_vertices.end(), [vid](const Vertex& v){ return v.id == vid; }), m_vertices.end());
+    }
+    
     //  "_prune_selection_mutability"
     inline void                         _prune_selection_mutability         (void)
     {
-        // ── paths ───────────────────────────────────────────
+        //  1.  PATHS...
         for ( auto it = m_sel.paths.begin(); it != m_sel.paths.end(); )
         {
             PathID  pid     = static_cast<PathID>(*it);
@@ -676,7 +691,7 @@ private:
             else                                                            { ++it; }
         }
 
-        // ── points & vertices ──────────────────────────────
+        //  2.  POINTS & VERTICES...
         for ( auto it = m_sel.points.begin(); it != m_sel.points.end(); )
         {
             PointID         idx     = static_cast<PointID>(*it);
@@ -686,7 +701,6 @@ private:
             if ( !pp || !pp->is_mutable() )                                 { it = m_sel.points.erase(it); }
             else                                                            { ++it; }
         }
-
         for ( auto it = m_sel.vertices.begin(); it != m_sel.vertices.end(); )
         {
             VertexID        vid     = static_cast<VertexID>(*it);
@@ -695,7 +709,7 @@ private:
             else                                                            { ++it; }
         }
 
-        // ── stand-alone lines (if you keep them) ───────────
+        //  3.  STAND-ALONE LINES (Deprecated)...
         for ( auto it = m_sel.lines.begin(); it != m_sel.lines.end(); )
         {
             LineID lid = static_cast<LineID>(*it);
@@ -704,6 +718,7 @@ private:
         }
 
         _rebuild_vertex_selection();     // sync vertices ↔ points
+        return;
     }
     
     //  "_new_path_from_prototype"

@@ -596,6 +596,44 @@ inline void Editor::_handle_add_anchor([[maybe_unused]] const Interaction & it)
 //
 inline void Editor::_handle_remove_anchor([[maybe_unused]] const Interaction & it)
 {
+    int                 point_idx       = -1;
+    VertexID            vid             = 0;
+    Path *              path            = nullptr;                              //  Helper returning Path *
+
+
+    //  0.  Respond only to a fresh LMB click on the canvas.
+    if ( !ImGui::IsMouseClicked(ImGuiMouseButton_Left) )    { return; }
+        
+        
+    //  1.  Hit-test for a point glyph under the cursor
+    point_idx                           = _hit_point(it);                       //  Returns glyph index, or -1.
+    if (point_idx < 0)                                      { return; }         //  No vertex hit.
+
+
+    //  2.  Locate owning path and check mutability
+    vid                                 = m_points[point_idx].v;
+    path                                = parent_path_of_vertex_mut(vid);       //  Helper returning Path *
+    
+    
+    if ( !path || !path->is_mutable() )                     { return; }         //  Hidden / locked → ignore
+
+
+    //  3.  Remove glyph from list
+    m_points.erase( m_points.begin() + point_idx );
+
+
+    //  4.  Remove vertex from every container
+    _erase_vertex_record_only(vid);                // helper: removes from m_vertices & handles
+
+    //  5.  Repair path topology; if path now invalid, drop it entirely
+    if ( !path->remove_vertex(vid) ) {
+        m_paths.erase( std::remove_if(m_paths.begin(), m_paths.end(),    //  Path has <2 verts; erase it from m_paths
+                       [path](const Path& p){ return &p == path; }),
+                       m_paths.end() );
+    }
+
+    //  6.  Selection hygiene: purge any IDs that vanished
+    _prune_selection_mutability();
     return;
 }
 
