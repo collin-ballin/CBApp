@@ -622,6 +622,7 @@ inline void Editor::_handle_remove_anchor([[maybe_unused]] const Interaction & i
     m_points.erase( m_points.begin() + point_idx );
 
 
+
     //  4.  Remove vertex from every container
     _erase_vertex_record_only(vid);                // helper: removes from m_vertices & handles
 
