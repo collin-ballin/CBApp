@@ -819,6 +819,7 @@ struct Path_t {
 // *************************************************************************** //
 // *************************************************************************** //
     //                          ALIASES:
+    using                           Path                            = Path_t<PID, VID, ZID>;
     using                           Payload                         = path::Payload;
     using                           PathKind                        = path::PathKind;
     //
@@ -904,11 +905,30 @@ struct Path_t {
     //
     //
     // *************************************************************************** //
+    //                          PATH OPERATION FUNCTIONS:
+    // *************************************************************************** //
+    
+    //  "remove_vertex"
+    inline bool                     remove_vertex                   (VID vid) noexcept {
+        verts.erase(std::remove(verts.begin(), verts.end(), vid), verts.end());
+
+        if (closed && verts.size() < 3)     { closed = false; }     // cannot stay a polygon
+
+        return verts.size() >= 2;
+    }
+                                    
+                                    
+                                    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
     //                          UTILITY FUNCTIONS:
     // *************************************************************************** //
     
     //  "make_default_payload"
-    static inline Payload make_default_payload(const PathKind k)
+    static inline Payload           make_default_payload(const PathKind k)
     {
         switch (k)
         {

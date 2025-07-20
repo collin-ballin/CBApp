@@ -94,13 +94,36 @@ void Editor::_add_point(ImVec2 w)
 //
 void Editor::_erase_vertex_and_fix_paths(VertexID vid)
 {
-    /* a) erase vertex record ------------------------------------------- */
+    //  1.  Remove vertex record.
+    m_vertices.erase(std::remove_if(m_vertices.begin(), m_vertices.end(),
+                    [vid](const Vertex& v){ return v.id == vid; }),
+                    m_vertices.end());
+
+    //  2.  Update every path using the new member helper.
+    for (size_t i = 0; i < m_paths.size(); /* ++i inside */)
+    {
+        if (!m_paths[i].remove_vertex(vid))
+            m_paths.erase(m_paths.begin() + static_cast<long>(i)); // drop path
+        else
+            ++i;
+    }
+
+    //  3.  Drop glyphs referencing the vertex.
+    m_points.erase(std::remove_if(m_points.begin(), m_points.end(),
+                   [vid](const Point& pt){ return pt.v == vid; }),
+                   m_points.end());
+    return;
+}
+
+/*{
+    //  1.  Erase vertex record -------------------------------------------
     m_vertices.erase(std::remove_if(m_vertices.begin(), m_vertices.end(),
                    [vid](const Vertex& v){ return v.id == vid; }),
                    m_vertices.end());
 
-    /* b) remove this ID from every path; drop paths < 2 verts ---------- */
-    for (size_t i = 0; i < m_paths.size(); /*++i done inside*/)
+    //  2.  Remove this ID from every path; drop paths < 2 verts ----------
+    //  for (size_t i = 0; i < m_paths.size(); // * ++i done inside // )
+    for (size_t i = 0; i < m_paths.size(); )
     {
         Path& p = m_paths[i];
         p.verts.erase(std::remove(p.verts.begin(), p.verts.end(), vid),
@@ -112,11 +135,11 @@ void Editor::_erase_vertex_and_fix_paths(VertexID vid)
             ++i;
     }
 
-    /* c) remove any glyph referencing the vertex ----------------------- */
+    //  3.  Remove any glyph referencing the vertex -----------------------
     m_points.erase(std::remove_if(m_points.begin(), m_points.end(),
                   [vid](const Point& pt){ return pt.v == vid; }),
                   m_points.end());
-}
+}*/
 
 
 //  "_erase_path_and_orphans"
