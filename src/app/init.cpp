@@ -430,13 +430,18 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
 #elif defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
         case Window::CBFunctionalTesting:   {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->ShowImGuiDemoWindow(n, o, f); };
+                          { this->BeginFunctionalTesting(n, o, f); };
             //  this->ShowImGuiDemoWindow(      w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
 #endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
         //
-        //  ...
+        //
+            //
+            //  ...
+            //
+        //
+        //
         //
         default: {
             IM_ASSERT(true && error::ASSERT_NO_DEFAULT_WINDOW_RENDER_SWITCH_CASE);

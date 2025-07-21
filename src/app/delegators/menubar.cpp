@@ -386,6 +386,26 @@ void MenuBar::disp_show_windows_menubar(void)
         }
     //  END "Demos" SUB-MENU.
 
+
+
+    //  6.  DRAW **EXTRA** WINDOWS...                                       | SUB-MENU.
+#if defined(CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
+    ImGui::Separator();
+    ImGui::TextDisabled("Extra");
+        for (idx = S.ms_EXTRA_WINDOWS_BEGIN; idx < S.ms_EXTRA_WINDOWS_END; ++idx)
+        {
+            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                                 nullptr,
+                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+            {
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+            }
+        }
+    //  END "Extra" SUB-MENU.
+#endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+
+
+
     return;
 }
 

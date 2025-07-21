@@ -291,7 +291,7 @@ private:
     // *************************************************************************** //
     //      UNIT TESTING STUFF.             |   "tests.cpp" ...
     // *************************************************************************** //
-    void                        BeginUnitTests              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        BeginFunctionalTesting      ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 //
 //
 //
