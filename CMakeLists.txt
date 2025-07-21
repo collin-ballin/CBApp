@@ -16,8 +16,11 @@
 #   0.  INCLUDING EXTERNAL CMAKE RESOURCES...
 ########################################################################
 ########################################################################
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/project_meta.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/utility.cmake)
+
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/system/cbapp_cmake.cmake)
+#
+# include(${CMAKE_CURRENT_LIST_DIR}/cmake/project_meta.cmake)
+# include(${CMAKE_CURRENT_LIST_DIR}/cmake/utility.cmake)
 
 
 
@@ -82,12 +85,21 @@ CB_Log(STATUS "\n\n\nCENTRAL CMAKE FILE.  BUILDING \"${CBAPP_NAME} VERSION ${CBA
 CB_Log(STATUS "Current CMake Version                : ${CMAKE_VERSION}  (${CMAKE_COMMAND})")
 CB_Log(STATUS "Minimum CMake Version Required       : ${CB_MINIMUM_CMAKE_VERSION}")
 #
-CB_Log(STATUS "\n")
 #
+CB_Log(STATUS "\nMAIN DIRECTORIES...")
 CB_Log(STATUS "CB_ROOT_DIR                          : ${CB_ROOT_DIR}")
 CB_Log(STATUS "CB_SRC_DIR                           : ${CB_SRC_DIR}")
 CB_Log(STATUS "CB_MISC_DIR                          : ${CB_MISC_DIR}")
 CB_Log(STATUS "CB_MISC_CPP_DIR                      : ${CB_MISC_CPP_DIR}")
+#
+#
+CB_Log(STATUS "\nOTHER DIRECTORIES...")
+#
+CB_Log(STATUS "CB_CMAKE_DIR                         : ${CB_CMAKE_DIR}")
+
+
+
+CB_Log(STATUS "\n\nBEGINNING BUILD...\n")
     
     
     

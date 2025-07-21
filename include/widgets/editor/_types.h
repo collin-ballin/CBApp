@@ -797,6 +797,11 @@ struct EditorStyle
 {
     static constexpr size_t     DEF_HISTORY_CAP                 = 64;
 // *************************************************************************** //
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
 //                              INTERACTION / RESPONSIVENESS CONSTANTS...
 // *************************************************************************** //
     float                       GRID_STEP                       = 64.0f;
@@ -820,13 +825,23 @@ struct EditorStyle
 //
 //
 // *************************************************************************** //
-//                              USER INTERFACE CONSTANTS...
+//                              CANVAS  | USER-INTERFACE CONSTANTS...
 // *************************************************************************** //
 //                          HANDLES:
     ImU32                       ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);       //  ms_HANDLE_COLOR             //  gold
     ImU32                       ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);       //  ms_HANDLE_HOVER_COLOR       //  yellow
     float                       ms_HANDLE_SIZE                  = 3.0f;
     float                       HANDLE_BOX_SIZE                 = 4.f;                              //  ms_HANDLE_SIZE              //  px half-side
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                              CANVAS  | PREVIEW APPEARANCE CONSTANTS...
+// *************************************************************************** //
+//                          VERTICES:
+    float                       VERTEX_PREVIEW_RADIUS           = 4.0f;
+    ImU32                       VERTEX_PREVIEW_COLOR            = IM_COL32(255, 255, 0, 160);
 // *************************************************************************** //
 //
 //
@@ -869,7 +884,7 @@ struct EditorStyle
 //
 //
 // *************************************************************************** //
-//                              APPEARANCE / WIDGETS / UI CONSTANTS:
+//                              WIDGETS / UI-CONSTANTS / APP-APPEARANCE...
 // *************************************************************************** //
     //
     //                      BROWSER CHILD-WINDOW COLORS:
@@ -889,9 +904,9 @@ struct EditorStyle
     float                       ms_CHILD_ROUND2                 = 4.0f;     //  ms_CHILD_ROUND2
     //
     //                      BROWSER CHILD-WINDOW DIMENSIONS:
-    float                       OBJ_PROPERTIES_REL_WIDTH         = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
-    float                       VERTEX_SELECTOR_REL_WIDTH        = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
-    float                       VERTEX_INSPECTOR_REL_WIDTH       = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
+    float                       OBJ_PROPERTIES_REL_WIDTH        = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
+    float                       VERTEX_SELECTOR_REL_WIDTH       = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
+    float                       VERTEX_INSPECTOR_REL_WIDTH      = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
     //
     //                      BROWSER **ALL** WIDGET STUFF:
     float                       ms_BROWSER_BUTTON_SEP           = 8.0f;
@@ -916,8 +931,12 @@ struct EditorStyle
 //
 //
 // *************************************************************************** //
-//                          RENDERING CONSTANTS:
+//                              RENDERING CONSTANTS...
 // *************************************************************************** //
+    //                      VERTEX RENDERING:
+    int                         ms_VERTEX_NUM_SEGMENTS          = 12;
+    //
+    //                      BEZIER RENDERING:
     int                         ms_BEZIER_SEGMENTS              = 0;        //  ms_BEZIER_SEGMENTS
     int                         ms_BEZIER_HIT_STEPS             = 20;       //  ms_BEZIER_HIT_STEPS
     int                         ms_BEZIER_FILL_STEPS            = 24;       //  ms_BEZIER_FILL_STEPS
@@ -926,7 +945,7 @@ struct EditorStyle
 //
 //
 // *************************************************************************** //
-//                          UTILITY:
+//                              UTILITY...
 // *************************************************************************** //
                                 //
                                 //  ...
@@ -936,9 +955,10 @@ struct EditorStyle
 //
 //
 // *************************************************************************** //
-//                          MISC. / UNKNOWN CONSTANTS (RELOCATED FROM CODE)...
+//                              MISC. / UNKNOWN CONSTANTS (RELOCATED FROM CODE)...
 // *************************************************************************** //
-    float                       TARGET_PX                       = 20.0f;                     //     desired screen grid pitch"  | found in "_update_grid"
+    float                       TARGET_PX                       = 20.0f;                    //     desired screen grid pitch"  | found in "_update_grid"
+    float                       PICK_PX                         = 6.0f;                     //     desired screen grid pitch"  | found in "_update_grid"
 
 // *************************************************************************** //
 

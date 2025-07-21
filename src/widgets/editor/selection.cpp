@@ -27,6 +27,34 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //
 int Editor::_hit_point([[maybe_unused]] const Interaction & it) const
 {
+    const ImVec2 ms = ImGui::GetIO().MousePos;          // mouse in px
+
+    // helper to find owning path
+    auto parent_path_of_vertex = [&](VertexID vid)->const Path*
+    {
+        for (const Path& p : m_paths)
+            for (VertexID v : p.verts)
+                if (v == vid) return &p;
+        return nullptr;
+    };
+
+    for (size_t i = 0; i < m_points.size(); ++i)
+    {
+        const Vertex* v = find_vertex(m_vertices, m_points[i].v);
+        if (!v) continue;
+
+        const Path* pp = parent_path_of_vertex(v->id);
+        if (!pp || pp->locked || !pp->visible) continue;   // NEW guard
+
+        ImVec2 scr = world_to_pixels({ v->x, v->y });
+        float  dx  = scr.x - ms.x;
+        float  dy  = scr.y - ms.y;
+        if (dx*dx + dy*dy <= m_style.HIT_THRESH_SQ)
+            return static_cast<int>(i);
+    }
+    return -1;
+}
+/*{
     {
         const ImVec2    ms  = ImGui::GetIO().MousePos;          // mouse in px
 
@@ -43,7 +71,7 @@ int Editor::_hit_point([[maybe_unused]] const Interaction & it) const
         }
         return -1;
     }
-}
+}*/
 
 
 //  "_hit_any"
@@ -239,14 +267,14 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
     const float     thresh_sq = PICK_PX * PICK_PX;
 
     // mouse position in pixel space
-    ImVec2 ms = ImGui::GetIO().MousePos;
+    ImVec2                  ms              = ImGui::GetIO().MousePos;
 
-    std::optional<PathHit> best;
-    float best_d2 = thresh_sq;
+    std::optional<PathHit>  best;
+    float                   best_d2         = thresh_sq;
 
-    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
-    auto lerp   = [](float a, float b, float t){ return a + (b - a) * t; };
-    auto is_zero = [](const ImVec2& v){ return v.x == 0.f && v.y == 0.f; };
+    auto    ws2px          = [this](ImVec2 w){ return world_to_pixels(w); };
+    auto    lerp           = [](float a, float b, float t){ return a + (b - a) * t; };
+    auto    is_zero        = [](const ImVec2& v){ return v.x == 0.f && v.y == 0.f; };
 
     for (size_t pi = 0; pi < m_paths.size(); ++pi)
     {

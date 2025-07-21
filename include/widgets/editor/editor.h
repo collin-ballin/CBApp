@@ -158,7 +158,17 @@ public:
 
 
 
+
+    
+// *************************************************************************** //
+//
+//
+//  1.              TEMPORARY PUBLIC STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
 public:
+
+    // *************************************************************************** //;
     //  1.              INITIALIZATION METHODS...
     // *************************************************************************** //;
                                         Editor                          (app::AppState & src);
@@ -232,14 +242,24 @@ public:
             }
         }
     } };
-    //
-    // *************************************************************************** //
-    // *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END TEMPORARY STUFF.
 
 
-
-    //  2.              PUBLIC MEMBER FUNCTIONS...
+    
+// *************************************************************************** //
+//
+//
+//  2.              PUBLIC MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+    
     // *************************************************************************** //
+    //      MAIN API.                       |   "common.cpp" ...
     // *************************************************************************** //
     void                                save                                (void);
     void                                open                                (void);
@@ -252,16 +272,21 @@ public:
     //
     void                                Begin                               (const char * id = "##EditorCanvas");
     void                                DrawBrowser                         (void);
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END PUBLIC MEMBER FUNCTIONS.
 
 
-
+    
+// *************************************************************************** //
+//
+//
+//  2.A             PROTECTED OPERATION MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-private:
-    //
-    //  2.A             PROTECTED OPERATION MEMBER FUNCTIONS...
-    // *************************************************************************** //
-    // *************************************************************************** //
+protected:
     
     // *************************************************************************** //
     //      "Begin" HELPERS.                |   "editor.cpp" ...
@@ -507,23 +532,21 @@ private:
     void                                pump_main_tasks                     (void);
     void                                save_worker                         (EditorSnapshot snap, std::filesystem::path path);
     void                                load_worker                         (std::filesystem::path );
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END PROTECTED MEMBER FUNCTIONS.
 
 
+   
+// *************************************************************************** //
+//
+//
+//  2.C                 INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
 
-    // *************************************************************************** //
-    //
-    //
-    //  2.C             INLINE FUNCTIONS...
-    // *************************************************************************** //
-    // *************************************************************************** //
-    
-
-
-    // *************************************************************************** //
-    // *************************************************************************** //
-    //
-    //
-    //
     // *************************************************************************** //
     //      INLINE GRID/WORLD FUNCTIONS...
     // *************************************************************************** //
@@ -587,6 +610,8 @@ private:
     {
         return;
     }
+    
+    // *************************************************************************** //
     //
     //
     //
@@ -621,6 +646,8 @@ private:
         auto & entry = m_residents[idx];    Overlay * ov = entry.ptr;
         ov->visible = vis;                  return;
     }
+    
+    // *************************************************************************** //
     //
     //
     //
@@ -744,14 +771,14 @@ private:
         for (const Vertex& v : m_vertices)  { if (v.id >= m_next_id)    { m_next_id  = v.id + 1; }      }
         for (const Path& p : m_paths)       { if (p.id >= m_next_pid)   { m_next_pid = p.id + 1; }      }
     }
-
-
+    // *************************************************************************** //
     //
     //
     //
     // *************************************************************************** //
     //      STANDARDIZED MECHANICS FOR TOOLS...
     // *************************************************************************** //
+    
     //  "reset_pen"
     inline void                         reset_pen                           (void) {
         this->m_show_handles.erase( m_pen.handle_vid );
@@ -767,7 +794,6 @@ private:
         return;
     }
     
-    
     //  "RESET_ALL"
     inline void                         RESET_ALL                           (void) {
         this->reset_pen();
@@ -779,8 +805,6 @@ private:
     
         return;
     }
-    
-    
     
     //  "_make_path"
     //      Always call this to materialise a new Path.
@@ -808,7 +832,6 @@ private:
         return p;
     }
     
-    
     //  "_clone_path"
     //      Duplicate an existing path with a vid-remap (copy/paste, boolean ops …).
     //
@@ -825,21 +848,20 @@ private:
         m_paths.push_back(std::move(dup));
         return m_paths.back();
     }
-    //
-    //
-    //
-    // *************************************************************************** //
-    // *************************************************************************** //   END INLINE FUNCITONS...
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END INLINE FUNCITONS...
 
 
-
-    // *************************************************************************** //
-    //
-    //
-    //  3.              PROTECTED DATA-MEMBERS...
-    // *************************************************************************** //
-    // *************************************************************************** //
-    
+   
+// *************************************************************************** //
+//
+//
+//  3.              PROTECTED DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //    
     
     // *************************************************************************** //
     //      IMPORTANT DATA...
@@ -1003,83 +1025,22 @@ private:
     ImVec2                              m_p0                            = ImVec2(0.0f, 0.0f);
     ImVec2                              m_p1                            = ImVec2(0.0f, 0.0f);
     // *************************************************************************** //
-
-
-
-
-
-
+    //
+    //
+    //
     // *************************************************************************** //
     //      STATIC / CONSTANTS...
     // *************************************************************************** //
-    //
-    //                              INTERACTION / RESPONSIVENESS CONSTANTS:
-        //  static constexpr int                PEN_DRAG_TIME_THRESHOLD         = 0.05;     // seconds.
-        //  static constexpr float              PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;     // px  (was 2)
-    //
-    //
-    //                              USER INTERFACE CONSTANTS:
-    //                                  Handles.
-        //  static constexpr ImU32              ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);   //  gold
-        //  static constexpr float              ms_HANDLE_SIZE                  = 3.0f;                         //  px half-side
-        //  static constexpr ImU32              ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);   //  yellow
-    //
-    //                                  Pen-Tool Anchors.
-        //  static constexpr ImU32              PEN_ANCHOR_COLOR                = IM_COL32(255, 200, 0, 255);
-        //  static constexpr float              PEN_ANCHOR_RADIUS               = 5.0f;
-    //
-    //                                  Lasso.
-    //                                  //  ...
-    //
-    //                                  Bounding Box.
-        //  static constexpr ImU32              SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 255);   //  cyan-blue
-        //  static constexpr float              SELECTION_BBOX_TH               = 1.5f;
-    //
-    //
-    //                              CURSOR CONSTANTS:
-    //                                  Pen-Tool Cursor Stuff.
-        //  static constexpr float              PEN_RING_RADIUS                 = 6.0f;                         // px
-        //  static constexpr float              PEN_RING_THICK                  = 1.5f;                         // px
-        //  static constexpr float              PEN_DOT_RADIUS                  = 2.0f;                         // px
-        //  static constexpr ImU32              PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);      // yellow
-        //  static constexpr ImU32              PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);      // green
-    //
-    //
-    //
-    //                      UTILITY:
-    // *************************************************************************** //
-    //                              RENDERING CONSTANTS:
-        //  static constexpr int                ms_BEZIER_SEGMENTS              = 0;
-        //  static constexpr int                ms_BEZIER_HIT_STEPS             = 20;
-        //  static constexpr int                ms_BEZIER_FILL_STEPS            = 24;
-    //
-    //                              APPEARANCE / WIDGETS / UI CONSTANTS:
-        //  static constexpr float              ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;
-        //  static constexpr ImVec4             ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//  BASE = #343944
-        //  static constexpr ImVec4             ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//  #17191E
-        //  static constexpr ImVec4             ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//  #21242B
-    
-        //  static constexpr ImVec4             ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//  BASE = #52596B
-        //  static constexpr ImVec4             ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//  ##353A46
-        //  static constexpr ImVec4             ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//  #5B6377
-    //
-    //                                  Browser Child-Window Sizes.
-        //  static constexpr float              ms_CHILD_BORDER1                = 2.0f;
-        //  static constexpr float              ms_CHILD_BORDER2                = 1.0f;
-        //  static constexpr float              ms_CHILD_ROUND1                 = 8.0f;
-        //  static constexpr float              ms_CHILD_ROUND2                 = 4.0f;
-    //
-    //
-    //
     //                      ARRAYS:
-    // *************************************************************************** //
     static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;
     static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
     static constexpr auto &             ms_ANCHOR_TYPE_NAMES            = DEF_ANCHOR_TYPE_NAMES;
     static constexpr auto &             ms_PATH_KIND_NAMES              = path::DEF_PATH_KIND_NAMES;
-
-// static constexpr std::array<const char *, static_cast<size_t>(Mode::COUNT)>
-
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END PROTECTED DATA-MEMBERS...
 
 
 

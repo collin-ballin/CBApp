@@ -588,6 +588,39 @@ inline void Editor::_handle_scissor(const Interaction & it)
 //
 inline void Editor::_handle_add_anchor([[maybe_unused]] const Interaction & it)
 {
+    VertexID                    vid         = 0;
+    Path *                      path        = nullptr;                          //  Helper returning Path *
+    std::optional<PathHit>      p_hit       = _hit_path_segment(it);
+    
+
+    if ( !p_hit )                                           { return; }
+
+
+
+    path                                    = &m_paths[p_hit->path_idx];
+    
+    //  1.  EARLY OUT IF: (1) PATH IS NOT MUTABLE (Locked, Invisible),  (2) CURSOR IS ABOVE A VERTEX...
+    if ( !path->is_mutable() || (_hit_point(it) > 0) )      { return; }
+
+
+
+    //  CASE 1 :    RENDER PREVIEW...
+    it.dl->AddCircleFilled( world_to_pixels(p_hit->pos_ws),     m_style.VERTEX_PREVIEW_RADIUS,
+                            m_style.VERTEX_PREVIEW_COLOR,       m_style.ms_VERTEX_NUM_SEGMENTS );
+    //
+    //  CASE 2 :    INSERT VERTEX   (Check condition TWICE so we can use the preview as an accurate reference)...
+    if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left) ) {
+        vid                                     = _add_vertex(p_hit->pos_ws);               //  Add new vertex...
+        _add_point_glyph(vid);
+        path->insert_vertex_after(p_hit->seg_idx, vid);                                     //  Insert into path right after seg_idx...
+    }
+
+
+    //
+    //  TODO:
+    //      Re-compute Bézier handles around the split (TODO)
+    //
+    
     return;
 }
 
