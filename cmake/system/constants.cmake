@@ -16,10 +16,35 @@
 
 
 
-#   1.      BUILD SYSTEM METADATA...
+#   1.      ANSI COLOR CODES...
 ####################################################################################
 ####################################################################################
-set(    CB_MINIMUM_CMAKE_VERSION        3.15)
+
+#   1.1.    DEFINE ANSI COLORS FOR macOS BUILDS...
+if(MACOS)
+    string(ASCII 27 ESC)  ESC = '\x1B'
+#
+#
+    set(        RESET                       "${ESC}[0m")
+    set(        BOLD                        "${ESC}[1m")
+#
+    set(        BLACK                       "${ESC}[30m")
+    set(        RED                         "${ESC}[31m")
+    set(        GREEN                       "${ESC}[32m")
+    set(        YELLOW                      "${ESC}[33m")
+    set(        BLUE                        "${ESC}[34m")
+    set(        MAGENTA                     "${ESC}[35m")
+    set(        CYAN                        "${ESC}[36m")
+    set(        WHITE                       "${ESC}[37m")
+#
+#
+#
+#   1.2.    OTHERWISE---WE DEFINE EMPTY VARIABLES FOR OTHER BUILDS TO PREVENT ERRORS...
+else()
+    foreach(c RESET BOLD BLACK RED GREEN YELLOW BLUE MAGENTA CYAN WHITE)
+        set(${c} "")
+    endforeach()
+endif()
 
 
 

@@ -299,6 +299,18 @@ public:
     //                      1.5         Demo Windows.
     static constexpr size_t             ms_DEMO_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiDemo);
     static constexpr size_t             ms_DEMO_WINDOWS_END         = static_cast<size_t>(Window::Count);
+    //
+    //                      1.6         **Extra** Windows.
+#if defined(CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
+    static constexpr size_t             ms_EXTRA_WINDOWS_BEGIN      = ms_DEMO_WINDOWS_END;
+    #if defined(CBAPP_ENABLE_CB_DEMO)
+        static constexpr size_t         ms_EXTRA_WINDOWS_END        = static_cast<size_t>(Window::CBDemo);
+    # elif defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
+        static constexpr size_t         ms_EXTRA_WINDOWS_END        = static_cast<size_t>(Window::CBFunctionalTesting);
+    #endif
+#endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+
+
     
     // *************************************************************************** //
     //

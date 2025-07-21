@@ -19,6 +19,29 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 
 
 
+//  "BeginUnitTests"
+//
+void App::BeginUnitTests([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+
+
+
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // *************************************************************************** //

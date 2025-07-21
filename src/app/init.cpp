@@ -280,37 +280,37 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
     {
         //
         //      1.  PRIMARY GUI STRUCTURE...
-        case Window::Dockspace:         {
+        case Window::Dockspace:             {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->ShowDockspace(n, nullptr, f); };
             //this->ShowDockspace(            w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
-        case Window::MenuBar:           {
+        case Window::MenuBar:               {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->m_menubar.Begin(n, nullptr, f); };
             //  this->m_menubar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
-        case Window::ControlBar:        {
+        case Window::ControlBar:            {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->m_controlbar.Begin(n, nullptr, f); };
             //  this->m_controlbar.Begin(       w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
-        case Window::Browser:           {
+        case Window::Browser:               {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->m_browser.Begin(n, nullptr, f); };
             //  this->m_browser.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
-        case Window::DetailView:        {
+        case Window::DetailView:            {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->m_detview.Begin(n, nullptr, f); };
             //  this->m_detview.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
-        case Window::MainApp:           {
+        case Window::MainApp:               {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->ShowMainWindow(n, nullptr, f); };
             //  this->ShowMainWindow(           w.uuid.c_str(),     nullptr,        w.flags);
@@ -326,13 +326,13 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
             //  this->m_counter_app.Begin(      w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
-        case Window::EditorApp:         {
+        case Window::EditorApp:             {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->m_editor_app.Begin(n, o, f); };
             //  this->m_editor_app.Begin(       w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
-        case Window::GraphApp:          {
+        case Window::GraphApp:              {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->m_graph_app.Begin(n, o, f); };
             //  this->m_graph_app.Begin(        w.uuid.c_str(),     nullptr,        w.flags);
@@ -342,25 +342,25 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         //
         //
         //      3.  TOOLS, SUBSIDIARY APPLICATION WINDOWS...
-        case Window::ImGuiStyleEditor:  {
+        case Window::ImGuiStyleEditor:      {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiStyleEditor(n, o, f); };
             //  this->ShowImGuiStyleEditor(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
-        case Window::ImPlotStyleEditor: {
+        case Window::ImPlotStyleEditor:     {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImPlotStyleEditor(n, o, f); };
             //  this->ShowImGuiStyleEditor(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
-        case Window::ImGuiMetrics:      {
+        case Window::ImGuiMetrics:          {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiMetricsWindow(n, o, f); };
             //  this->ShowImGuiMetricsWindow(   w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
-        case Window::ImPlotMetrics:      {
+        case Window::ImPlotMetrics:         {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImPlotMetricsWindow(n, o, f); };
             //  this->ShowImPlotMetricsWindow(  w.uuid.c_str(),     &w.open,        w.flags);
@@ -368,13 +368,13 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         }
         //
         //
-        case Window::Logs:              {
+        case Window::Logs:                  {
             render_fn   = [](const char * n, bool * o, ImGuiWindowFlags f)
                           { cb::ShowExampleAppLog(n, o, f); };
             //  cb::ShowExampleAppLog(          w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
-        case Window::Console:           {
+        case Window::Console:               {
             render_fn   = [](const char * n, bool * o, ImGuiWindowFlags f)
                           { cb::ShowExampleAppConsole(n, o, f); };
             //  cb::ShowExampleAppConsole(      w.uuid.c_str(),     &w.open,        w.flags);
@@ -384,13 +384,13 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         //
         //
         //      4.  *MY* TOOLS...
-        case Window::ColorTool:         {
+        case Window::ColorTool:             {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowColorTool(n, o, f); };
             //  this->ShowColorTool(            w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
-        case Window::CustomRendering:   {
+        case Window::CustomRendering:       {
             render_fn   = [](const char * n, bool * o, ImGuiWindowFlags f)
                           { cb::ShowCustomRendering(n, o, f); };
             //  cb::ShowCustomRendering(        w.uuid.c_str(),     &w.open,        w.flags);
@@ -399,24 +399,42 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         //
         //
         //      5.  DEMOS, ETC...
-        case Window::ImGuiDemo:         {
+        case Window::ImGuiDemo:             {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiDemoWindow(n, o, f); };
             //  this->ShowImGuiDemoWindow(      w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
-        case Window::ImPlotDemo:        {
+        case Window::ImPlotDemo:            {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImPlotDemoWindow(n, o, f); };
             //  this->ShowImPlotDemoWindow(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
-        case Window::AboutMyApp:        {
+        case Window::AboutMyApp:            {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowAboutWindow(n, o, f); };
             //  this->ShowAboutWindow(          w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
+        //
+        //
+        //      6.  **EXTRA** WINDOWS...
+#if defined(CBAPP_ENABLE_CB_DEMO)
+        case Window::CBDemo:                {
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImGuiDemoWindow(n, o, f); };
+            //  this->ShowImGuiDemoWindow(      w.uuid.c_str(),     &w.open,        w.flags);
+            break;
+        }
+#elif defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
+        case Window::CBFunctionalTesting:   {
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImGuiDemoWindow(n, o, f); };
+            //  this->ShowImGuiDemoWindow(      w.uuid.c_str(),     &w.open,        w.flags);
+            break;
+        }
+#endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
         //
         //  ...
         //

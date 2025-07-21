@@ -146,15 +146,35 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 //  1.3     OPTIONAL / ADDITIONAL WINDOWS...        | [ CBAPP_ENABLE_CB_DEMO ]
 // *************************************************************************** //
 // *************************************************************************** //
+        
+#if defined(CBAPP_ENABLE_CB_DEMO) && defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
+#   error "Cannot define both  CBAPP_ENABLE_CB_DEMO  and  CBAPP_ENABLE_FUNCTIONAL_TESTING."
+#endif
 
-#ifdef CBAPP_ENABLE_CB_DEMO                         // IF [ CBAPP_ENABLE_CB_DEMO IS #DEFINED ]      --- this expands to one extra X(...).
+
+
+#if defined(CBAPP_ENABLE_CB_DEMO)                           // IF [ CBAPP_ENABLE_CB_DEMO IS #DEFINED ]      --- this expands to one extra X(...).
     #define _CBAPP_OPTIONAL_WINDOWS(X)                                                                                                      \
-/*| NAME.               TITLE.                      DEFAULT OPEN.       FLAGS.                                                          */  \
+/*| NAME.                       TITLE.                      DEFAULT OPEN.       FLAGS.                                                  */  \
 /*|========================================================================================================================|            */  \
-    X(CBDemo,           "CBDemo",                   true,               _CBAPP_CORE_WINDOW_FLAGS                                )
+    X(CBDemo,                   "CBDemo",                   true,               _CBAPP_CORE_WINDOW_FLAGS                                )
+//
+//
+//
+#elif defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
+    #define _CBAPP_OPTIONAL_WINDOWS(X)                                                                                                      \
+/*| NAME.                       TITLE.                      DEFAULT OPEN.       FLAGS.                                                  */  \
+/*|========================================================================================================================|            */  \
+    X(CBFunctionalTesting,      "Functional Tests",           true,               _CBAPP_CORE_WINDOW_FLAGS                                )
+//
+//
+//
 # else                                              // OTHERWISE                                    --- it expands to nothing...
     #define _CBAPP_OPTIONAL_WINDOWS(X)
-#endif  //  CBAPP_ENABLE_CB_DEMO  //
+#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+
+
+
 
 
 
