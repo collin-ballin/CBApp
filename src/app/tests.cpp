@@ -121,6 +121,26 @@ struct FunctionalTestRunner {
 //      ACTION TYPE LAYER...
 // *************************************************************************** //
 
+//  "ComposerState"
+//
+enum class ComposerState : uint8_t {
+    None = 0,
+    Run,
+    Capture,
+    COUNT
+};
+
+static constexpr std::array<const char *, static_cast<size_t>(ComposerState::COUNT)>
+DEF_COMPOSER_STATE_NAMES = {
+    "None", "Running", "Capturing"
+};
+
+
+
+// *************************************************************************** //
+//      ACTION TYPE LAYER...
+// *************************************************************************** //
+
 //  "ActionType"
 //
 enum class ActionType {
@@ -324,18 +344,36 @@ struct ActionExecutor
 
 
 
+// *************************************************************************** //
+//                                  COMPOSITION TYPES...
+// *************************************************************************** //
+    
+//  "Composition_t"
+//
+struct Composition_t {
+//
+    std::string             name        { "New Composition" };
+    std::vector<Action>     actions;
+};
+
+
+
+
+
+
 // ─────────────────────────────────────────────────────────────
 //  ActionComposer  –  minimal two-pane “browser” for test steps
 // ─────────────────────────────────────────────────────────────
 
-struct ActionComposer
+class ActionComposer
 {
 public:
     // *************************************************************************** //
     //  0.1.                            TYPENAME ALIASES...
     // *************************************************************************** //
-        //using                           Clipboard                       = EditorIMPL::Clipboard                 ;
-        
+    using                               State                               = ComposerState;
+    using                               Composition                         = Composition_t;
+    
     // *************************************************************************** //
     //
     //
@@ -359,6 +397,7 @@ public:
     static constexpr float              ms_SETTINGS_LABEL_WIDTH             = 150.0f;
     static constexpr float              ms_SETTINGS_WIDGET_WIDTH            = 300.0f;
     //
+    static constexpr float              ms_COMPOSITION_COLUMN_WIDTH         = 340.0f;
     static constexpr float              ms_SELECTOR_COLUMN_WIDTH            = 340.0f;
     static constexpr const char *       ms_DRAG_DROP_HANDLE                 = "=";
     static constexpr const char *       ms_DELETE_BUTTON_HANDLE             = "-";
@@ -368,6 +407,7 @@ public:
     static constexpr float              ms_BROWSER_SELECTABLE_SEP           = 16.0f;    //  offset for buttons ontop of each selectable
     //
     //                              ARRAYS:
+    static constexpr auto &             ms_COMPOSER_STATE_NAMES             = DEF_COMPOSER_STATE_NAMES;
     static constexpr auto &             ms_ACTION_TYPE_NAMES                = DEF_ACTION_TYPE_NAMES;
     static constexpr auto &             ms_EXEC_STATE_NAMES                 = DEF_EXEC_STATE_NAMES;
   
@@ -381,19 +421,26 @@ public:
 protected:
     //                              IMPORTANT DATA:
     GLFWwindow *                        m_glfw_window;
-    ActionExecutor                      m_executor                      {};
+    ActionExecutor                      m_executor                          {  };
+    std::vector<Composition>            m_compositions                      { 1 };
     std::vector<Action>                 m_actions;
-    int                                 m_sel                           = -1;           // current selection
-    int                                 m_play_index                    = -1;           // current action being executed, -1 = idle
+    //
+    int                                 m_comp_sel                          = 0;            // current composition selection
+    int                                 m_sel                               = -1;           // current selection
+    int                                 m_play_index                        = -1;           // current action being executed, -1 = idle
+    //
     //
     //                              STATE:
-    bool                                m_is_running                    = false;
-    bool                                m_step_req                      = false;
-    bool                                m_show_overlay                  = true;
+    State                               m_state                             = State::None;
+    bool                                m_is_running                        = false;
+    bool                                m_step_req                          = false;
+    bool                                m_show_overlay                      = true;
+    bool                                m_capture_is_active                 = false;        //  < true while “Auto” sampling.
+    //
     //
     //                              UTILITY:
     ImGuiTextFilter                     m_filter;
-    
+    ImVec2 *                            m_capture_dest                      = nullptr;      //  < pointer to coord being written
 //
 //
 //
@@ -422,26 +469,11 @@ public:
     void Begin(void)
     {
         //  1.  DRAW THE "CONTROL-BAR" UI-INTERFACE...
+        this->_update_capture();
         this->_draw_controlbar();
         
-        
         //  2.  DRAW THE "BROWSER" UI-INTERFACE...
-        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1);
-        //
-        //
-            ImGui::BeginChild("##SeqLeft",  {ms_SELECTOR_COLUMN_WIDTH, 0}, ImGuiChildFlags_Borders);
-                _draw_selector();
-            ImGui::EndChild();
-            
-            ImGui::SameLine();
-            
-            ImGui::BeginChild("##SeqRight", {0,0},     ImGuiChildFlags_Borders);
-                draw_inspector();
-            ImGui::EndChild();
-        //
-        //
-        ImGui::PopStyleVar();
-        
+        this->draw_all();
         
         //  3.  DRIVE EXECUTION OF THE ACTION COMPOSITION...
         this->_drive_execution();
@@ -449,6 +481,46 @@ public:
         
         return;
     }
+    
+    
+    //  "draw_all"
+    //
+    void draw_all(void)
+    {
+        //  1.  DRAW THE TOP-MOST "COMPOSITION" BAR...
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1);
+        ImGui::BeginChild("##ActionComposed_TestSelector", {ms_COMPOSITION_COLUMN_WIDTH, 0.0f}, ImGuiChildFlags_Borders);
+            this->_draw_test_selector();
+        ImGui::EndChild();
+        ImGui::PopStyleVar();
+
+
+        ImGui::SameLine();
+        
+        
+        //  2.  DRAW THE "BROWSER" UI-INTERFACE...
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1);
+        //
+        //
+            ImGui::BeginChild("##ActionComposer_Action_Selector",  {ms_SELECTOR_COLUMN_WIDTH, 0}, ImGuiChildFlags_Borders);
+                this->_draw_action_selector();
+            ImGui::EndChild();
+            
+            ImGui::SameLine();
+            
+            ImGui::BeginChild("##ActionComposer_Action_Inspector", {0,0},     ImGuiChildFlags_Borders);
+                this->_draw_action_inspector();
+            ImGui::EndChild();
+        //
+        //
+        ImGui::PopStyleVar();
+    
+    
+    
+        return;
+    }
+    
+    
     
 //
 //
@@ -468,9 +540,67 @@ public:
     //                                  MAIN UI FUNCTIONS...
     // *************************************************************************** //
 
-    //  "_draw_selector"
+    //  "_load_actions_from_comp"
     //
-    void _draw_selector(void)
+    void _load_actions_from_comp(void)
+    {
+        return;
+    }
+
+
+    //  "_save_actions_to_comp"
+    //
+    void _save_actions_to_comp(void)
+    {
+        return;
+    }
+
+
+    //  "_draw_test_selector"
+    //
+    void _draw_test_selector(void)
+    {
+        // add / remove
+        if ( ImGui::Button("+ Add Composition") ) {
+            m_compositions.emplace_back();
+            m_comp_sel = (int)m_compositions.size() - 1;
+            _load_actions_from_comp();
+        }
+        ImGui::SameLine();
+        ImGui::BeginDisabled(m_compositions.size() <= 1);
+        if ( ImGui::Button("- Delete") ) {
+            m_compositions.erase(m_compositions.begin() + m_comp_sel);
+            m_comp_sel = std::clamp(m_comp_sel, 0, (int)m_compositions.size() - 1);
+            _load_actions_from_comp();
+        }
+        ImGui::EndDisabled();
+
+        ImGui::Separator();
+
+        // listbox
+        for (int i = 0; i < (int)m_compositions.size(); ++i)
+        {
+            ImGui::PushID(i);
+            bool selected = (i == m_comp_sel);
+            if (ImGui::Selectable(m_compositions[i].name.c_str(), selected))
+            {
+                /* store previous comp, then load new */
+                _save_actions_to_comp();
+                m_comp_sel = i;
+                _load_actions_from_comp();
+            }
+            ImGui::PopID();
+        }
+
+        // rename current
+        ImGui::InputText("Name", &m_compositions[m_comp_sel].name);
+        return;
+    }
+    
+    
+    //  "_draw_action_selector"
+    //
+    void _draw_action_selector(void)
     {
         //  1.  FILTER SEARCH BOX...
         //
@@ -506,76 +636,8 @@ public:
         ImGui::Separator();
         
         
-#ifdef _CBAPP_USE_SELECTOR_LIST_FOR_FUNCTIONAL_TESTING
-        this->_draw_selector_list();
-# else
         this->_draw_selector_table();
-#endif  //  _CBAPP_USE_SELECTOR_LIST_FOR_FUNCTIONAL_TESTING  //
         
-        
-        return;
-    }
-    
-    
-    //  "_draw_selector_list"
-    //
-    inline void _draw_selector_list(void)
-    {
-        constexpr ImGuiSelectableFlags      SELECTABLE_FLAGS   = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
-        ImGuiListClipper                    clip;
-
-    
-        //  3.  ARRAY OF EACH ACTION...
-        clip.Begin( static_cast<int>(m_actions.size()) );
-        while ( clip.Step() )
-        {
-            for (int i = clip.DisplayStart; i < clip.DisplayEnd; ++i)
-            {
-                if ( !m_filter.PassFilter(m_actions[i].name.c_str()) )      { continue; }
-
-
-                const bool      selected        = (m_sel == i);
-                ImGui::PushID(i);
-
-
-
-                //      3.1.    Handle for DRAG/DROP.
-                ImGui::TextUnformatted("[=]");
-                if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) )
-                {
-                    ImGui::SetDragDropPayload("ACTION_ROW", &i, sizeof i);
-                    ImGui::EndDragDropSource();
-                }
-                if ( ImGui::BeginDragDropTarget() )
-                {
-                    if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("ACTION_ROW") )      { _reorder(*(int*)p->Data, i); }
-                    ImGui::EndDragDropTarget();
-                }
-                ImGui::SameLine(0.0f, ms_BROWSER_SELECTABLE_SEP);
-
-
-                //      3.2.    Selectible Row.
-                if ( ImGui::Selectable(m_actions[i].name.c_str(), selected, SELECTABLE_FLAGS) )  { m_sel = i; }
-                ImGui::SameLine(0.0f, ms_BROWSER_SELECTABLE_SEP);
-
-
-                //      3.3.    "Delete" Button.
-                const float spacing = ImGui::GetContentRegionAvail().x - 2 * ms_DELETE_BUTTON_DIMS.x;
-                ImGui::SameLine(0.0f, spacing);
-                if ( utl::SmallCButton("-") )
-                {
-                    m_actions.erase(m_actions.begin() + i);
-                    if ( m_sel >= i )   { m_sel = std::max(m_sel - 1, (int)m_actions.size() - 1); }
-                    ImGui::PopID(); break;                              // vector mutated
-                }
-                
-                
-                ImGui::PopID();
-                
-            }// END SELECTABLE ROW.
-            
-        }
-        clip.End();
         
         return;
     }
@@ -667,9 +729,9 @@ public:
     }
     
     
-    //  "draw_inspector"
+    //  "_draw_action_inspector"
     //
-    void draw_inspector(void)
+    void _draw_action_inspector(void)
     {
         if ( m_sel < 0 || m_sel >= m_actions.size() )         { ImGui::TextDisabled("No Selection..."); return; }
         
@@ -722,7 +784,6 @@ public:
     //                                  SECONDARY UI FUNCTIONS...
     // *************************************************************************** //
     
-    
     //  "_draw_controlbar"
     //
     void _draw_controlbar(void)
@@ -752,19 +813,18 @@ public:
             //
             ImGui::SetNextItemWidth( WIDGET_SIZE.x );
             ImGui::BeginDisabled( m_actions.empty() );
-                if (!m_is_running)
+                if ( !this->is_running() )
                 {
                     if ( ImGui::Button("Run", WIDGET_SIZE) ) {
-                        m_play_index        = (m_sel >= 0 ? m_sel : 0);
+                        m_play_index        = (m_sel >= 0           ? m_sel             : 0);
                         m_is_running        = !m_actions.empty();
+                        m_state             = (m_actions.empty())   ? State::None       : State::Run;
                     }
                 }
                 else
                 {
                     if ( utl::CButton("Stop", 0xFF453AFF, WIDGET_SIZE) ) {
-                        m_is_running        = false;
-                        m_play_index        = -1;
-                        m_executor.abort();
+                        this->reset_all();
                     }
                 }
             ImGui::EndDisabled();
@@ -773,7 +833,7 @@ public:
         
             //  2.  STEP BUTTON...
             ImGui::NextColumn();        ImGui::NewLine();
-            ImGui::BeginDisabled( m_is_running || m_actions.size() < 2 );
+            ImGui::BeginDisabled( m_is_running || (m_state == State::Run) || m_actions.size() < 2 );
                 if ( ImGui::Button("Step", WIDGET_SIZE) )
                 {
                     m_play_index    = (m_play_index + 1) % (int)m_actions.size();
@@ -796,8 +856,8 @@ public:
             ImGui::NextColumn();
             ImGui::TextDisabled("Info:");
             //
-            if ( m_is_running )     { ImGui::Text("running: %d / %zu", m_play_index + 1, m_actions.size()); }
-            else                    { ImGui::Text("idle"); }
+            if ( this->is_running() )       { ImGui::Text("running: %d / %zu", m_play_index + 1, m_actions.size()); }
+            else                            { ImGui::Text("idle"); }
             
             
 
@@ -853,19 +913,70 @@ public:
         ImGui::SetNextWindowPos(win_pos, ImGuiCond_Always);
             if ( ImGui::Begin("##ac_overlay", nullptr, flags) )
             {
-                this->_draw_overlay_content();
+                this->_dispatch_overlay_content();
             }
         ImGui::End();
         return;
     }
     
     
-    //  "_draw_overlay_content"
-    //
-    void _draw_overlay_content(void)
+    //  "_dispatch_overlay_content"
+    inline void _dispatch_overlay_content(void)
     {
-        ImGui::TextUnformatted("Overlay Window");
+        this->_overlay_ui_none();
+    
+        switch (m_state)
+        {
+            //  1.  "Run" STATE...
+            case State::Run :  {
+                this->_overlay_ui_run();
+                break;
+            }
+            
+            //  2.  "Capture" STATE...
+            case State::Capture :  {
+                this->_overlay_ui_capture();
+                break;
+            }
+            
+            //  DEFAULT...
+            default :   { break; }
+        }
         
+        return;
+    }
+    
+    //  "_overlay_ui_none"
+    inline void _overlay_ui_none(void)
+    {
+        static constexpr const char *   FMT_STRING              = "State: %s. \t Mouse: (%.0f, %.0f)";
+        //
+        static const char *             state_str               = nullptr;
+        static State                    state_cache             = static_cast<State>( static_cast<int>(this->m_state) - 1 );
+        const ImVec2                    mpos                    = ImGui::GetMousePos();
+                
+        if ( state_cache != this->m_state ) {
+            state_cache     = static_cast<State>( this->m_state );
+            state_str       = ms_COMPOSER_STATE_NAMES[ static_cast<size_t>(this->m_state) ];
+        }
+        
+        ImGui::Text(FMT_STRING, state_str, mpos.x, mpos.y);
+        ImGui::Separator();
+        
+        return;
+    }
+    
+    //  "_overlay_ui_run"
+    inline void _overlay_ui_run(void)
+    {
+        ImGui::TextUnformatted("Running test... (press ESC to CANCEL)");
+        return;
+    }
+    
+    //  "_overlay_ui_capture"
+    inline void _overlay_ui_capture(void)
+    {
+        ImGui::TextUnformatted("Capturing... (press ESC to ENTER)");
         return;
     }
 
@@ -887,12 +998,13 @@ public:
         m_executor.update();
 
         /* ready for next action? */
-        if ( !m_executor.busy() && (m_is_running || m_step_req) )
+        if ( !m_executor.busy() && this->is_running() )
         {
             if ( m_play_index < 0 || m_play_index >= static_cast<int>(m_actions.size()) ) {
-                m_is_running = false;
-                m_step_req   = false;
-                m_play_index = -1;
+                m_state         = State::None;
+                m_is_running    = false;
+                m_step_req      = false;
+                m_play_index    = -1;
                 return;
             }
 
@@ -902,13 +1014,16 @@ public:
 
             /* prepare for next index */
             ++m_play_index;
-            if (m_is_running && m_play_index >= static_cast<int>(m_actions.size())) {
-                m_is_running = false;
-                m_play_index = -1;
+            if ( this->is_running() && m_play_index >= static_cast<int>(m_actions.size()) ) {
+                m_state         = State::None;
+                m_is_running    = false;
+                m_play_index    = -1;
             }
             m_step_req = false;
             m_sel      = m_play_index;
         }
+        
+        return;
     }
 
 
@@ -981,14 +1096,27 @@ public:
     //  "_ui_cursor_move"
     inline void _ui_cursor_move(Action & a)
     {
+    
         this->label("Begin:");
-        ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
+        ImGui::PushID("ActionComposed_CursorMove_Begin");
+            ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("auto") )           { _begin_cursor_capture(&a.cursor.first); }     // start capture for Begin
+        ImGui::PopID();
+        
         
         this->label("End:");
-        ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
+        ImGui::PushID("ActionComposed_CursorMove_End");
+            ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("auto") )           { _begin_cursor_capture(&a.cursor.last); }     // start capture for Begin
+        ImGui::PopID();
+        
         
         this->label("Duration:");
         ImGui::DragFloat    ("##duration",      &a.cursor.duration,             0.05f,      0.0f,       10,             "%.2f s");
+        
+        
         
         return;
     }
@@ -1028,18 +1156,80 @@ public:
     { utl::LeftLabel(text, this->ms_SETTINGS_LABEL_WIDTH, this->ms_SETTINGS_WIDGET_WIDTH); ImGui::SameLine(); };
     
     
+    //  "is_running"
+    inline bool                 is_running                          (void) const    { return ( this->m_is_running  &&  (this->m_state == State::Run) ); }
+    
+    
+    //  "reset_state"
+    inline void                 reset_state                         (void)          {
+        m_is_running            = false;
+        m_capture_is_active     = false;
+        m_state                 = State::None;
+        return;
+    }
+    
+    //  "reset_data"
+    inline void                 reset_data                         (void)          {
+        m_sel                   = -1;
+        m_play_index            = -1;
+        m_capture_dest          = nullptr;
+        m_executor.abort();
+        return;
+    }
+    
+    
+    //  "reset_all"
+    inline void                 reset_all                         (void)
+    { this->reset_state();    this->reset_data(); }
+    
+    
     //  "_reorder"
-    void _reorder(int from, int to)
+    void                        _reorder                            (int from, int to)
     {
         if( from == to )    { return; }
         
         Action      tmp         = std::move(m_actions[from]);
-        m_actions.erase(m_actions.begin()+from);
-        m_actions.insert(m_actions.begin()+to,std::move(tmp));
+        m_actions.erase( m_actions.begin() + from );
+        m_actions.insert( m_actions.begin() + to, std::move(tmp) );
         m_sel                   = to;
         
         return;
     }
+    
+    
+    //  "_begin_cursor_capture"
+    inline bool                 _begin_cursor_capture               (ImVec2 * destination)
+    {
+        if (m_state == State::Run)  { return false; }
+        
+        m_state             = State::Capture;
+        m_capture_dest      = destination;
+        return true;
+    }
+    
+    
+    //  "_update_capture"
+    inline void                 _update_capture                     (void)
+    {
+        ImGuiIO &   io      = ImGui::GetIO();
+        
+        if ( m_state != State::Capture || m_capture_dest == nullptr )   { return; }
+
+
+        //  ESC key ends capture...
+        if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )
+        {
+            m_state             = State::None;
+            m_capture_dest      = nullptr;
+            return;
+        }
+
+        //  live-update destination with current cursor position */
+        *m_capture_dest     = io.MousePos;
+        return;
+    }
+
+
     
 //
 //
