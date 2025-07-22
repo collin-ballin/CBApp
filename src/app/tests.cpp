@@ -107,6 +107,76 @@ struct FunctionalTestRunner {
 
 
 
+    
+// *************************************************************************** //
+//
+//
+//      0.      "ActionComposer" TYPES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//      ACTION TYPE LAYER...
+// *************************************************************************** //
+
+//  "ActionType"
+//
+enum class ActionType {
+    CursorMove,
+    Hotkey,
+//
+    COUNT
+};
+
+
+//  "DEF_ACTION_TYPE_NAMES"
+static constexpr std::array<const char *, static_cast<size_t>( ActionType::COUNT )>
+DEF_ACTION_TYPE_NAMES = {
+    "CursorMove", "Hotkey"
+};
+
+
+
+// *************************************************************************** //
+//      ACTION DATA LAYER...
+// *************************************************************************** //
+
+//  "CursorMoveParams"
+//
+struct CursorMoveParams {
+    ImVec2              p0              {};
+    ImVec2              pf              {};
+    float               duration        {1.f};
+};
+
+
+//  "HotkeyParams"
+//
+struct HotkeyParams {
+    ImGuiKey            key             {ImGuiKey_C};
+    bool                ctrl            {true};
+    bool                shift           {false};
+    bool                alt             {false};
+};
+
+
+//  "Action"
+//
+struct Action {
+    std::string         name            = "new action";
+    std::string         descr           = "description...";
+    ActionType          type            = ActionType::CursorMove;
+//
+    CursorMoveParams    cursor;
+    HotkeyParams        hotkey;
+//
+    bool                enabled         = true;
+};
+
+
+    
 
 
 
@@ -114,179 +184,237 @@ struct FunctionalTestRunner {
 // ─────────────────────────────────────────────────────────────
 //  ActionComposer  –  minimal two-pane “browser” for test steps
 // ─────────────────────────────────────────────────────────────
+
 struct ActionComposer
 {
-    static constexpr float      ms_SETTINGS_LABEL_WIDTH             = 196.0f;
-    static constexpr float      ms_SETTINGS_WIDGET_WIDTH            = 256.0f;
-    static constexpr float      ms_DESCRIPTION_FIELD_HEIGHT         = 60.0f;
+public:
+    // *************************************************************************** //
+    //  0.1.                            TYPENAME ALIASES...
+    // *************************************************************************** //
+        //using                           Clipboard                       = EditorIMPL::Clipboard                 ;
+        
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //  0.2.                            CONSTANTS...
+    // *************************************************************************** //
+    //                              INDIVIDUAL WIDGET DIMENSIONS:
+    static constexpr float              ms_SETTINGS_LABEL_WIDTH             = 196.0f;
+    static constexpr float              ms_SETTINGS_WIDGET_WIDTH            = 256.0f;
+    static constexpr float              ms_DESCRIPTION_FIELD_HEIGHT         = 60.0f;
+    //
+    //                              UI BROWSER DIMENSIONS:
+    static constexpr float              ms_SELECTOR_COLUMN_WIDTH            = 340.0f;
+    static constexpr float              ms_BROWSER_SELECTABLE_SEP           = 16.0f;
+    static constexpr float              ms_TOOLBAR_SELECTABLE_SEP           = 16.0f;
+    //
+    //                              ARRAYS:
+    static constexpr auto &             ms_ACTION_TYPE_NAMES                = DEF_ACTION_TYPE_NAMES;
     
-// *************************************************************************** //
-    
-    inline void                 label                               (const char * text)
-    { utl::LeftLabel(text, this->ms_SETTINGS_LABEL_WIDTH, this->ms_SETTINGS_WIDGET_WIDTH); ImGui::SameLine(); };
-    
-    
-    
-// *************************************************************************** //
 //
 //
-//      1.  INTERNAL TYPES AND OBJECTS...
 // *************************************************************************** //
-// *************************************************************************** //
-    
-    enum class                  ActionType                      { CursorMove, Hotkey, COUNT };
-    struct                      CursorMoveParams                { ImVec2 from{}, to{}; float duration{1.f}; };
-    struct                      HotkeyParams                    { ImGuiKey key{ImGuiKey_C}; bool ctrl{true}, shift{false}, alt{false}; };
-    
-    static constexpr std::array<const char *, static_cast<size_t>( ActionType::COUNT )>
-                                ms_ACTION_TYPE_NAMES            = { "CursorMove", "Hotkey" };
+// *************************************************************************** //   END ALIASES AND CONSTANTS.
 
-    struct Action {
-        std::string         name        = "new action";
-        std::string         descr       = "expect...";
-        ActionType          type        = ActionType::CursorMove;
-        CursorMoveParams    cursor;
-        HotkeyParams        hotkey;
-        bool                enabled     = true;
-    };
 
-    std::vector<Action>     actions;
-    ImGuiTextFilter         filter;
-    int                     sel = -1;                 // current selection
-    
-    
+
+
     
 // *************************************************************************** //
 //
 //
-//      2.  FUNCTIONS...
+//  1.              MAIN PUBLIC API FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+public:
     
     //  "Begin"
+    //
     void Begin(void)
     {
-        const float LEFT_W = 260.0f;
+        this->_draw_controlbar();
+        
+        
         ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1);
-        ImGui::BeginChild("##SeqLeft",  {LEFT_W,0}, ImGuiChildFlags_Borders);
-            draw_selector();
-        ImGui::EndChild();
-        ImGui::SameLine();
-        ImGui::BeginChild("##SeqRight", {0,0},     ImGuiChildFlags_Borders);
-            draw_inspector();
-        ImGui::EndChild();
+        //
+        //
+            ImGui::BeginChild("##SeqLeft",  {ms_SELECTOR_COLUMN_WIDTH, 0}, ImGuiChildFlags_Borders);
+                _draw_selector();
+            ImGui::EndChild();
+            
+            ImGui::SameLine();
+            
+            ImGui::BeginChild("##SeqRight", {0,0},     ImGuiChildFlags_Borders);
+                draw_inspector();
+            ImGui::EndChild();
+        //
+        //
         ImGui::PopStyleVar();
+        
+        
+        return;
     }
     
-    
-private:
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END PUBLIC API.
 
-    // -----------------------  selector column  ------------------------ //
-    void draw_selector()
+
+
+
+    
+    
+// *************************************************************************** //
+//
+//
+//  2.              PROTECTED DATA MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+    //                              IMPORTANT DATA:
+    std::vector<Action>                 m_actions;
+    int                                 m_sel                           = -1;           // current selection
+    //
+    //                              STATE:
+    int                                 m_play_idx                      = -1;           // current action being executed, -1 = idle
+    bool                                m_is_running                    = false;
+    //
+    //                              UTILITY:
+    ImGuiTextFilter                     m_filter;
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END DATA MEMBERS.
+
+    
+    
+// *************************************************************************** //
+//
+//
+//  3.              PROTECTED MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //                                  MAIN UI FUNCTIONS...
+    // *************************************************************************** //
+
+    //  "_draw_selector"
+    //
+    void _draw_selector(void)
     {
+        ImGuiListClipper clip;
     
     
-        //  Filter -------------------------------------------------------------- //
-        if ( ImGui::InputTextWithHint("##flt", "filter", filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf)) )
-            { filter.Build(); }
+        //  1.  FILTER SEARCH BOX...
+        //
+        if ( ImGui::InputTextWithHint("##flt", "filter", m_filter.InputBuf, IM_ARRAYSIZE(m_filter.InputBuf)) )
+            { m_filter.Build(); }
+            
             
         ImGui::Separator();
 
 
-        //  Toolbar -------------------------------------------------------------   //
-        if (ImGui::Button("+ Add")) {                    // Add new action
-            actions.emplace_back();
-            sel = static_cast<int>(actions.size()) - 1;
+        //  2.  TOOL-BAR WIDGETS...
+        if ( ImGui::Button("+ Add") ) {
+            m_actions.emplace_back();
+            m_sel = static_cast<int>(m_actions.size()) - 1;
         }
         
         ImGui::SameLine();
-        ImGui::BeginDisabled(sel <= 0);
-        if ( ImGui::Button("Prev") )            { sel = std::max(sel - 1, 0); }     //  Select previous row
-        ImGui::EndDisabled();
         
+        ImGui::BeginDisabled(m_sel <= 0);
+            if ( ImGui::Button("Prev") )        { m_sel = std::max(m_sel - 1, 0); }
+        ImGui::EndDisabled();
         
         ImGui::SameLine();
         
-        
-        ImGui::BeginDisabled(sel < 0 || sel >= actions.size() - 1);
-        if (ImGui::Button("Next"))                       // select next row
-            sel = std::min(sel + 1, (int)actions.size() - 1);
+        ImGui::BeginDisabled( m_sel < 0 || m_sel >= (int)m_actions.size() - 1 );
+            if ( ImGui::Button("Next") )        { m_sel = std::min(m_sel + 1, (int)m_actions.size() - 1); }
         ImGui::EndDisabled();
 
-        ImGui::Separator();
 
+        ImGui::SameLine(0.0f, ms_BROWSER_SELECTABLE_SEP);
+        ImGui::SameLine(0.0f, ms_BROWSER_SELECTABLE_SEP);
 
-
-        //  List ---------------------------------------------------------------- //
-        ImGuiListClipper clip;
-        clip.Begin(static_cast<int>(actions.size()));
-        while (clip.Step())
+        
+    
+        //  3.  ARRAY OF EACH ACTION...
+        //
+        clip.Begin( static_cast<int>(m_actions.size()) );
+        while ( clip.Step() )
         {
             for (int i = clip.DisplayStart; i < clip.DisplayEnd; ++i)
             {
-                if ( !filter.PassFilter(actions[i].name.c_str()) )
-                    continue;
+                if ( !m_filter.PassFilter(m_actions[i].name.c_str()) )      { continue; }
 
+
+                const bool      selected        = (m_sel == i);
                 ImGui::PushID(i);
 
-                // --- drag-handle (ASCII '≡') --------------------------------- //
-                ImGui::TextUnformatted("[=]");             // visual hint only
-                if (ImGui::IsItemActive() && ImGui::BeginDragDropSource(
-                        ImGuiDragDropFlags_SourceNoPreviewTooltip))
+
+
+                //      3.1.    Handle for DRAG/DROP.
+                ImGui::TextUnformatted("[=]");
+                if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) )
                 {
                     ImGui::SetDragDropPayload("ACTION_ROW", &i, sizeof i);
                     ImGui::EndDragDropSource();
                 }
-                if (ImGui::BeginDragDropTarget())
+                
+                if ( ImGui::BeginDragDropTarget() )
                 {
-                    if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("ACTION_ROW"))
-                    {
-                        int from = *static_cast<const int*>(p->Data);
-                        reorder(from, i);
-                    }
+                    if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("ACTION_ROW") )      { _reorder(*(int*)p->Data, i); }
                     ImGui::EndDragDropTarget();
                 }
                 ImGui::SameLine();
 
-                // --- selectable label --------------------------------------- //
-                bool selected = (sel == i);
-                if (ImGui::Selectable(actions[i].name.c_str(), selected,
-                                      ImGuiSelectableFlags_SpanAllColumns))
-                    sel = i;
-                ImGui::SameLine();
+                //      3.2.    Selectible Row.
+                if ( ImGui::Selectable(m_actions[i].name.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns) )  { m_sel = i; }
+                ImGui::SameLine(0.0f, ms_BROWSER_SELECTABLE_SEP);
 
-                // --- delete button ('X') ------------------------------------ //
-                if (ImGui::SmallButton("X"))
+                //      3.3.    "Delete" Button.
+                if ( ImGui::SmallButton("X") )
                 {
-                    actions.erase(actions.begin() + i);
-                    if (sel >= i) sel = std::max(sel - 1, (int)actions.size() - 1);
-                    ImGui::PopID();
-                    break;                                 // row array changed
+                    m_actions.erase(m_actions.begin() + i);
+                    if ( m_sel >= i )   { m_sel = std::max(m_sel - 1, (int)m_actions.size() - 1); }
+                    ImGui::PopID(); break;                              // vector mutated
                 }
                 ImGui::PopID();
-            }
+                
+            }// END SELECTABLE ROW.
+            
         }
         clip.End();
+        
+        
         return;
     }
     
     
-    // -----------------------  inspector column  ----------------------- //
-    void draw_inspector()
+    //  "draw_inspector"
+    //
+    void draw_inspector(void)
     {
-        if ( sel < 0 || sel >= actions.size() )         { ImGui::TextDisabled("Select…"); return; }
+        if ( m_sel < 0 || m_sel >= m_actions.size() )         { ImGui::TextDisabled("No Selection..."); return; }
         
-        Action &        a           = actions[sel];
+        Action &        a           = m_actions[m_sel];
         int             type_int    = static_cast<int>( a.type );
 
         
         this->label("Name:");
         ImGui::InputText("##name", &a.name);
-        this->label("Description:");
-        ImGui::InputTextMultiline("description", &a.descr, { -FLT_MIN, ms_DESCRIPTION_FIELD_HEIGHT });
-
         
-        if ( ImGui::Combo("type", &type_int, ms_ACTION_TYPE_NAMES.data(), static_cast<int>( ActionType::COUNT )) )
+        this->label("Description:");
+        ImGui::InputTextMultiline("##description", &a.descr, { -FLT_MIN, ms_DESCRIPTION_FIELD_HEIGHT });
+        
+        this->label("Type:");
+        if ( ImGui::Combo("##type", &type_int, ms_ACTION_TYPE_NAMES.data(), static_cast<int>( ActionType::COUNT )) )
             { a.type    = static_cast<ActionType>(type_int); }
 
 
@@ -295,24 +423,90 @@ private:
         
         switch(a.type)
         {
-            case ActionType::CursorMove:        { this->cursor_widgets(a); break;       }
-            case ActionType::Hotkey:            { this->hotkey_widgets(a); break;       }
+            case ActionType::CursorMove:        { this->_ui_cursor_move(a); break;       }
+            case ActionType::Hotkey:            { this->_ui_cursor_move(a); break;       }
             default:                            { break; }
         }
         
         return;
     }
     
-    
-    //  "cursor_widgets"
+    // *************************************************************************** //
     //
-    void cursor_widgets(Action & a)
+    //
+    //
+    // *************************************************************************** //
+    //                                  SECONDARY UI FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "_draw_controlbar"
+    //
+    void _draw_controlbar(void)
+    {
+        //  1.  PLAY / PAUSE...
+        if (!m_is_running)
+        {
+            if ( ImGui::Button("Run") )
+            {
+                m_play_idx      = (m_sel >= 0 ? m_sel : 0);   // start at selection or first
+                m_is_running    = !m_actions.empty();
+            }
+        }
+        else
+        {
+            if ( ImGui::Button("Stop") ) {
+                m_is_running = false;
+                m_play_idx   = -1;
+            }
+        }
+        
+        ImGui::SameLine(0.0f, ms_TOOLBAR_SELECTABLE_SEP);
+
+
+        //  2.  STEP BUTTON...
+        ImGui::BeginDisabled(m_is_running || m_actions.empty());
+            if ( ImGui::Button("Step →") )
+            {
+                m_play_idx = (m_play_idx + 1) % (int)m_actions.size();
+                m_sel      = m_play_idx;          // highlight row that will run next
+            }
+        ImGui::EndDisabled();
+
+
+        //  3.  INFO...
+        ImGui::SameLine(0.0f, ms_TOOLBAR_SELECTABLE_SEP);
+        if ( m_is_running )     { ImGui::TextDisabled("running: %d / %zu", m_play_idx + 1, m_actions.size()); }
+        else                    { ImGui::TextDisabled("idle"); }
+    
+    
+        ImGui::SameLine(0.0f, ms_TOOLBAR_SELECTABLE_SEP);
+        
+        
+        //  4.  MOUSE COORDINATES...
+        ImVec2 mpos = ImGui::GetMousePos();
+        ImGui::Text("MousePos: (%.1f , %.1f)", mpos.x, mpos.y);     //  Live cursor read-out in the same units we feed to glfwSetCursorPos...
+
+
+        return;
+    }
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                                  ACTION-UI FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "_ui_cursor_move"
+    //
+    void _ui_cursor_move(Action & a)
     {
         this->label("Init:");
-        ImGui::DragFloat2   ("##from",          (float*)&a.cursor.from,     1,          0,          FLT_MAX,        "%.f");
+        ImGui::DragFloat2   ("##init",          (float*)&a.cursor.p0,       1,          0,          FLT_MAX,        "%.f");
         
         this->label("Final:");
-        ImGui::DragFloat2   ("##to",            (float*)&a.cursor.to,       1,          0,          FLT_MAX,        "%.f");
+        ImGui::DragFloat2   ("##final",         (float*)&a.cursor.pf,       1,          0,          FLT_MAX,        "%.f");
         
         this->label("Duration:");
         ImGui::DragFloat    ("##duration",      &a.cursor.duration,         0.05f,      0.0f,       10,             "%.2f s");
@@ -321,36 +515,68 @@ private:
     }
     
     
-    //  "hotkey_widgets"
+    //  "_ui_hotkey"
     //
-    void hotkey_widgets(Action & a)
+    void _ui_hotkey(Action & a)
     {
-        ImGui::Text("key: %d",a.hotkey.key);  // quick placeholder
-        ImGui::Checkbox("Ctrl",&a.hotkey.ctrl); ImGui::SameLine();
-        ImGui::Checkbox("Shift",&a.hotkey.shift); ImGui::SameLine();
-        ImGui::Checkbox("Alt",&a.hotkey.alt);
+        ImGui::Text(        "Key: %d",      a.hotkey.key);      //  Quick placeholder
+        //
+        ImGui::Checkbox(    "Ctrl",         &a.hotkey.ctrl);    ImGui::SameLine();
+        ImGui::Checkbox(    "Shift",        &a.hotkey.shift);   ImGui::SameLine();
+        ImGui::Checkbox(    "Alt",          &a.hotkey.alt);
         
         return;
     }
     
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END PROTECTED FUNCTIONS.
+
+
+
+
+    
+// *************************************************************************** //
+//
+//
+//  4.              UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    //  "label"
+    inline void                 label                               (const char * text)
+    { utl::LeftLabel(text, this->ms_SETTINGS_LABEL_WIDTH, this->ms_SETTINGS_WIDGET_WIDTH); ImGui::SameLine(); };
     
     
-    
-    
-    //  "reorder"
-    //
-    void reorder(int from,int to) {
-        if(from==to) return;
-        Action tmp = std::move(actions[from]);
-        actions.erase(actions.begin()+from);
-        actions.insert(actions.begin()+to,std::move(tmp));
-        sel = to;
+    //  "_reorder"
+    void _reorder(int from, int to)
+    {
+        if( from == to )    { return; }
+        
+        Action      tmp         = std::move(m_actions[from]);
+        m_actions.erase(m_actions.begin()+from);
+        m_actions.insert(m_actions.begin()+to,std::move(tmp));
+        m_sel                   = to;
         
         return;
     }
     
-    
-};
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END UTILITY FUNCTIONS...
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//    END "ActionComposer" CLASS DEFINITION.
 
 
 
@@ -407,35 +633,35 @@ private:
 void App::BeginFunctionalTesting([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
     using namespace                     ft;
-    static FunctionalTestRunner         s_test;
     static float                        duration_s          = 2.5f;
     static ActionComposer               composer;
+    static FunctionalTestRunner         runner;          // from earlier
     
     
     
-    ImGui::Begin("Functional Tests", nullptr, flags);
+    ImGui::Begin(uuid, p_open, flags);
+        
+                
+        //  ImGui::InputFloat("Move duration (s)", &duration_s, 0.1f, 1.0f, "%.2f");
 
+        //  if (ImGui::Button("Run test: move && click"))
+        //      runner.start(S.m_glfw_window, ImVec2(400.0f, 300.0f), duration_s);
+
+        //  if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+        //      runner.abort();
+
+
+        ImGui::TextUnformatted(runner.running() ? "Running… (Esc aborts)" : "Idle");
+        
+        
         composer.Begin();          // draws the new browser
         
-        
-        
-        ImGui::InputFloat("Move duration (s)", &duration_s, 0.1f, 1.0f, "%.2f");
-
-        if (ImGui::Button("Run test: move && click"))
-            s_test.start(S.m_glfw_window, ImVec2(400.0f, 300.0f), duration_s);
-
-        if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-            s_test.abort();
-
-        /* live cursor read-out in the same units we feed to glfwSetCursorPos */
-        ImVec2 mpos = ImGui::GetMousePos();
-        ImGui::Text("MousePos: (%.1f , %.1f)", mpos.x, mpos.y);
-
-        ImGui::TextUnformatted(s_test.running() ? "Running… (Esc aborts)" : "Idle");
     ImGui::End();
 
+
     /* drive the script */
-    s_test.update();
+    runner.update();
+    return;
 }
 
 
