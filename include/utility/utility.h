@@ -71,8 +71,11 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 
 
 
-
-//  0.1     INLINE DEFINITIONS (HEADER ONLY)        |   WIDGETS & WINDOW STRUCTS...
+// *************************************************************************** //
+//
+//
+//
+//      0.1.    INLINE DEFINITIONS (HEADER ONLY)        |   WIDGETS & WINDOW STRUCTS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -111,6 +114,31 @@ inline void RightHandJustify(const ImVec2 & size) {
     return;
 }
 
+
+
+
+
+//  "ColorButton"
+//
+inline bool ColorButton (const char * label, const ImVec4 & color, const ImVec2 & size = ImVec2(0, 0))
+{
+    bool    dirty   = false;
+
+    ImGui::PushStyleColor( ImGuiCol_Button,          color );
+    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color );
+    
+    
+        dirty           = ImGui::Button(label, size);   // button
+    
+    
+    ImGui::PopStyleColor(2);
+    return dirty;
+}
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
 
 
 

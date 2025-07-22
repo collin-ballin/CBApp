@@ -31,6 +31,69 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 
 
 
+// *************************************************************************** //
+//
+//
+//
+//  ?.?     GENERAL INLINE UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "compute_shade"
+//
+//      shade >  0 : → darker (percentage)          e.g. 0.20 :     → 20 % darker
+//      shade ≤  0 : → brighter (tint)              e.g.-0.15 :     → 15 % brighter
+//
+inline ImVec4 compute_shade(const ImVec4 & color, float shade)
+{
+    constexpr float     MIN_FACTOR      = 0.0f;
+    constexpr float     MAX_FACTOR      = 1.0f;
+    const float         factor          = (shade >= 0.0f)
+                                            ? (1.0f - std::clamp(shade, MIN_FACTOR, MAX_FACTOR))
+                                            : (1.0f + std::clamp(shade, -MAX_FACTOR, MIN_FACTOR));
+
+    return ImVec4(color.x * factor, color.y * factor, color.z * factor, color.w);                 // preserve alpha
+}
+
+//  "compute_shade"
+//
+inline ImU32 compute_shade(const ImU32 & color, float shade) {
+    const ImVec4    src     = ImGui::ColorConvertU32ToFloat4(color);
+    const ImVec4    dst     = compute_shade(src, shade);
+    return ImGui::ColorConvertFloat4ToU32(dst);
+}
+
+//  "compute_shade"
+//      ImColor → ImColor   (wrapper around ImVec4)
+//
+inline ImColor compute_shade(const ImColor & color, float shade) {
+    const ImVec4    src     = color;               // ImColor → ImVec4 implicit
+    const ImVec4    dst     = compute_shade(src, shade);
+    return ImColor(dst);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
 //  1.4A    INLINE TEMPLATES FOR HELPER WIDGET FUNCTIONS / ABSTRACTIONS     [1 OF 2]...
 // *************************************************************************** //
 // *************************************************************************** //
