@@ -343,19 +343,29 @@ public:
     // *************************************************************************** //
     //  0.2.                            CONSTANTS...
     // *************************************************************************** //
-    //                              INDIVIDUAL WIDGET CONSTANTS:
+    //
+    //                              MISC. CONSTANTS:
+    static constexpr ImVec2             ms_OVERLAY_OFFSET                   = ImVec2( 20.0f, 20.0f );
+    //
+    //                              WIDGET CONSTANTS:
     static constexpr size_t             ms_ACTION_NAME_LIMIT                = 64ULL;
     static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT         = 512ULL;
     //
     //                              INDIVIDUAL WIDGET DIMENSIONS:
-    static constexpr float              ms_SETTINGS_LABEL_WIDTH             = 196.0f;
-    static constexpr float              ms_SETTINGS_WIDGET_WIDTH            = 256.0f;
     static constexpr float              ms_DESCRIPTION_FIELD_HEIGHT         = 60.0f;
+    static constexpr ImVec2             ms_DELETE_BUTTON_DIMS               = ImVec2( 18.0f, 0.0f );
     //
     //                              UI BROWSER DIMENSIONS:
+    static constexpr float              ms_SETTINGS_LABEL_WIDTH             = 150.0f;
+    static constexpr float              ms_SETTINGS_WIDGET_WIDTH            = 300.0f;
+    //
     static constexpr float              ms_SELECTOR_COLUMN_WIDTH            = 340.0f;
-    static constexpr float              ms_BROWSER_SELECTABLE_SEP           = 16.0f;
-    static constexpr float              ms_TOOLBAR_SELECTABLE_SEP           = 16.0f;
+    static constexpr const char *       ms_DRAG_DROP_HANDLE                 = "=";
+    static constexpr const char *       ms_DELETE_BUTTON_HANDLE             = "-";
+    //
+    static constexpr float              ms_CONTROLBAR_SELECTABLE_SEP        = 16.0f;    //  controlbar offset.
+    static constexpr float              ms_TOOLBAR_SELECTABLE_SEP           = 16.0f;    //  sep for  "+ Add",  "Prev",  etc...
+    static constexpr float              ms_BROWSER_SELECTABLE_SEP           = 16.0f;    //  offset for buttons ontop of each selectable
     //
     //                              ARRAYS:
     static constexpr auto &             ms_ACTION_TYPE_NAMES                = DEF_ACTION_TYPE_NAMES;
@@ -379,6 +389,7 @@ protected:
     //                              STATE:
     bool                                m_is_running                    = false;
     bool                                m_step_req                      = false;
+    bool                                m_show_overlay                  = true;
     //
     //                              UTILITY:
     ImGuiTextFilter                     m_filter;
@@ -434,7 +445,7 @@ public:
         
         //  3.  DRIVE EXECUTION OF THE ACTION COMPOSITION...
         this->_drive_execution();
-        
+        this->_draw_overlay();
         
         return;
     }
@@ -461,14 +472,13 @@ public:
     //
     void _draw_selector(void)
     {
-        ImGuiListClipper clip;
-    
-    
         //  1.  FILTER SEARCH BOX...
         //
-        ImGui::SetNextItemWidth(-FLT_MIN);
-        if ( ImGui::InputTextWithHint("##flt", "filter", m_filter.InputBuf, IM_ARRAYSIZE(m_filter.InputBuf)) )
-            { m_filter.Build(); }
+        ImGui::BeginDisabled(true);
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            if ( ImGui::InputTextWithHint("##flt", "filter", m_filter.InputBuf, IM_ARRAYSIZE(m_filter.InputBuf)) )
+                { m_filter.Build(); }
+        ImGui::EndDisabled();
             
             
         ImGui::Separator();
@@ -486,21 +496,36 @@ public:
             if ( ImGui::Button("Prev") )        { m_sel = std::max(m_sel - 1, 0); }
         ImGui::EndDisabled();
         
-        ImGui::SameLine();
+        ImGui::SameLine(0.0f, ms_TOOLBAR_SELECTABLE_SEP);
         
         ImGui::BeginDisabled( m_sel < 0 || m_sel >= (int)m_actions.size() - 1 );
             if ( ImGui::Button("Next") )        { m_sel = std::min(m_sel + 1, (int)m_actions.size() - 1); }
         ImGui::EndDisabled();
 
-
-        //  ImGui::SameLine(0.0f, ms_BROWSER_SELECTABLE_SEP);
-        //  ImGui::SameLine(0.0f, ms_BROWSER_SELECTABLE_SEP);
         ImGui::Separator();
-        ImGui::Separator(); 
+        ImGui::Separator();
         
+        
+#ifdef _CBAPP_USE_SELECTOR_LIST_FOR_FUNCTIONAL_TESTING
+        this->_draw_selector_list();
+# else
+        this->_draw_selector_table();
+#endif  //  _CBAPP_USE_SELECTOR_LIST_FOR_FUNCTIONAL_TESTING  //
+        
+        
+        return;
+    }
+    
+    
+    //  "_draw_selector_list"
+    //
+    inline void _draw_selector_list(void)
+    {
+        constexpr ImGuiSelectableFlags      SELECTABLE_FLAGS   = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
+        ImGuiListClipper                    clip;
+
     
         //  3.  ARRAY OF EACH ACTION...
-        //
         clip.Begin( static_cast<int>(m_actions.size()) );
         while ( clip.Step() )
         {
@@ -521,25 +546,30 @@ public:
                     ImGui::SetDragDropPayload("ACTION_ROW", &i, sizeof i);
                     ImGui::EndDragDropSource();
                 }
-                
                 if ( ImGui::BeginDragDropTarget() )
                 {
                     if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("ACTION_ROW") )      { _reorder(*(int*)p->Data, i); }
                     ImGui::EndDragDropTarget();
                 }
-                ImGui::SameLine();
-
-                //      3.2.    Selectible Row.
-                if ( ImGui::Selectable(m_actions[i].name.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns) )  { m_sel = i; }
                 ImGui::SameLine(0.0f, ms_BROWSER_SELECTABLE_SEP);
 
+
+                //      3.2.    Selectible Row.
+                if ( ImGui::Selectable(m_actions[i].name.c_str(), selected, SELECTABLE_FLAGS) )  { m_sel = i; }
+                ImGui::SameLine(0.0f, ms_BROWSER_SELECTABLE_SEP);
+
+
                 //      3.3.    "Delete" Button.
-                if ( ImGui::SmallButton("X") )
+                const float spacing = ImGui::GetContentRegionAvail().x - 2 * ms_DELETE_BUTTON_DIMS.x;
+                ImGui::SameLine(0.0f, spacing);
+                if ( utl::SmallCButton("-") )
                 {
                     m_actions.erase(m_actions.begin() + i);
                     if ( m_sel >= i )   { m_sel = std::max(m_sel - 1, (int)m_actions.size() - 1); }
                     ImGui::PopID(); break;                              // vector mutated
                 }
+                
+                
                 ImGui::PopID();
                 
             }// END SELECTABLE ROW.
@@ -547,7 +577,92 @@ public:
         }
         clip.End();
         
-        
+        return;
+    }
+    
+    
+    //  "_draw_selector_table"
+    //
+    inline void _draw_selector_table(void)
+    {
+        static constexpr ImGuiTableFlags            TABLE_FLAGS         = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
+        static constexpr ImGuiTableColumnFlags      C0_FLAGS            = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+        static constexpr ImGuiTableColumnFlags      C1_FLAGS            = ImGuiTableColumnFlags_WidthStretch;
+        static constexpr ImGuiTableColumnFlags      C2_FLAGS            = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+        //
+        static constexpr ImGuiSelectableFlags       SELECTABLE_FLAGS    = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
+        ImGuiListClipper                            clip;
+    
+    
+        // ── 3. list body (table) ────────────────────────────────────────
+        //      fixed: [handle] | stretchy name | fixed delete
+        //
+        if ( ImGui::BeginTable( "##actions",   3,    TABLE_FLAGS,    ImVec2(0, -1)) )           // full remaining height
+        {
+            ImGui::TableSetupColumn( "H",       C0_FLAGS,     ImGui::GetFrameHeight()   );      // ~ square
+            ImGui::TableSetupColumn( "Name",    C1_FLAGS                                );
+            ImGui::TableSetupColumn( "Del",     C2_FLAGS,     ImGui::GetFrameHeight()   );
+            //  ImGui::TableHeadersRow();        // optional – draws thin top line
+
+            clip.Begin(static_cast<int>(m_actions.size()));
+            while ( clip.Step() )
+            {
+                for (int i = clip.DisplayStart; i < clip.DisplayEnd; ++i)
+                {
+                    const bool  selected    = (m_sel == i);
+                    
+                    if ( !m_filter.PassFilter(m_actions[i].name.c_str()) )      { continue; }
+
+
+                    ImGui::PushID(i);
+                    ImGui::TableNextRow();
+
+                    //      3.1.    DRAG / DROP HANDLE...
+                    ImGui::TableSetColumnIndex(0);
+                    //if ( ImGui::SmallButton(this->ms_DRAG_DROP_HANDLE) ) {}   // larger hit-box
+                    utl::SmallCButton(this->ms_DRAG_DROP_HANDLE, 0x00000000);
+                    
+                    if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) )
+                    {
+                        ImGui::SetDragDropPayload("ACTION_ROW", &i, sizeof i);
+                        ImGui::EndDragDropSource();
+                    }
+                    if ( ImGui::BeginDragDropTarget() )
+                    {
+                        if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("ACTION_ROW") )
+                            { _reorder(*(int*)p->Data, i); }
+                        ImGui::EndDragDropTarget();
+                    }
+
+
+                    //      3.2.    SELECTIBLE WIDGET...
+                    ImGui::TableSetColumnIndex(1);
+                    if ( ImGui::Selectable(m_actions[i].name.c_str(), selected, SELECTABLE_FLAGS) )     { m_sel = i; }
+
+
+                    //      3.3.    DELETE BUTTON...
+                    ImGui::TableSetColumnIndex(2);
+                    if ( utl::SmallCButton(this->ms_DELETE_BUTTON_HANDLE) ) //  if ( ImGui::SmallButton("X") )
+                    {
+                        m_actions.erase(m_actions.begin() + i);
+                        if ( m_sel >= i )       { m_sel = std::max(m_sel - 1, (int)m_actions.size() - 1); }
+                        ImGui::PopID();
+                        clip.End();          // ← ensure clipper is closed
+                        ImGui::EndTable();   // close the table
+                        return;              // abort safely after mutation
+                    }
+                
+                
+                
+
+                    ImGui::PopID();
+                }
+            }
+            clip.End();
+            ImGui::EndTable();
+        }
+    
+            
         return;
     }
     
@@ -607,57 +722,106 @@ public:
     //                                  SECONDARY UI FUNCTIONS...
     // *************************************************************************** //
     
+    
     //  "_draw_controlbar"
     //
     void _draw_controlbar(void)
     {
-        //  1.  PLAY / PAUSE...
-        ImGui::BeginDisabled( m_actions.empty() );
-            if (!m_is_running)
-            {
-                if ( ImGui::Button("Run") ) {
-                    m_play_index        = (m_sel >= 0 ? m_sel : 0);
-                    m_is_running        = !m_actions.empty();
+        static constexpr const char *   uuid            = "##Editor_Controls_Columns";
+        static constexpr int            NC              = 8;
+        static ImGuiOldColumnFlags      COLUMN_FLAGS    = ImGuiOldColumnFlags_None;
+        static ImVec2                   WIDGET_SIZE     = ImVec2( -1,  32 );
+        static ImVec2                   BUTTON_SIZE     = ImVec2( 32,   WIDGET_SIZE.y );
+        //
+        constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
+        
+        //this->S.PushFont( Font::Small );
+       
+        
+        
+       
+       
+        //  BEGIN COLUMNS...
+        //
+        ImGui::Columns(NC, uuid, COLUMN_FLAGS);
+        //
+        //
+        //
+            //  1.  PLAY / PAUSE...
+            ImGui::TextDisabled("Controls:");
+            //
+            ImGui::SetNextItemWidth( WIDGET_SIZE.x );
+            ImGui::BeginDisabled( m_actions.empty() );
+                if (!m_is_running)
+                {
+                    if ( ImGui::Button("Run", WIDGET_SIZE) ) {
+                        m_play_index        = (m_sel >= 0 ? m_sel : 0);
+                        m_is_running        = !m_actions.empty();
+                    }
                 }
-            }
-            else
-            {
-                if ( ImGui::Button("Stop") ) {
-                    m_is_running        = false;
-                    m_play_index        = -1;
-                    m_executor.abort();
+                else
+                {
+                    if ( utl::CButton("Stop", 0xFF453AFF, WIDGET_SIZE) ) {
+                        m_is_running        = false;
+                        m_play_index        = -1;
+                        m_executor.abort();
+                    }
                 }
+            ImGui::EndDisabled();
+        
+        
+        
+            //  2.  STEP BUTTON...
+            ImGui::NextColumn();        ImGui::NewLine();
+            ImGui::BeginDisabled( m_is_running || m_actions.size() < 2 );
+                if ( ImGui::Button("Step", WIDGET_SIZE) )
+                {
+                    m_play_index    = (m_play_index + 1) % (int)m_actions.size();
+                    m_sel           = m_play_index;          // highlight row that will run next
+                }
+            ImGui::EndDisabled();
+
+
+
+            //  3.  OVERVIEW...
+            ImGui::NextColumn();
+            ImGui::TextDisabled("Overlay:");
+            //
+            ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+            ImGui::Checkbox("##ActionComposer_OverlayToggle",           &m_show_overlay);
+
+
+
+            //  4.  INFO...
+            ImGui::NextColumn();
+            ImGui::TextDisabled("Info:");
+            //
+            if ( m_is_running )     { ImGui::Text("running: %d / %zu", m_play_index + 1, m_actions.size()); }
+            else                    { ImGui::Text("idle"); }
+            
+            
+
+
+
+            
+            //  5.  EMPTY SPACES FOR LATER...
+            for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
+                ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
             }
-        ImGui::EndDisabled();
+
+
+            //  X.  MOUSE COORDINATES...
+            ImGui::TextDisabled("Mouse Position:");
+            ImVec2 mpos = ImGui::GetMousePos();
+            ImGui::Text("(%.1f , %.1f)",    mpos.x, mpos.y);     //  Live cursor read-out in the same units we feed to glfwSetCursorPos...
+        //
+        //
+        //
+        ImGui::Columns(1);      //  END COLUMNS...
         
         
-        ImGui::SameLine(0.0f, ms_TOOLBAR_SELECTABLE_SEP);
-
-
-        //  2.  STEP BUTTON...
-        ImGui::BeginDisabled(m_is_running || m_actions.empty());
-            if ( ImGui::Button("Step") )
-            {
-                m_play_index    = (m_play_index + 1) % (int)m_actions.size();
-                m_sel           = m_play_index;          // highlight row that will run next
-            }
-        ImGui::EndDisabled();
-
-
-        //  3.  INFO...
-        ImGui::SameLine(0.0f, ms_TOOLBAR_SELECTABLE_SEP);
-        if ( m_is_running )     { ImGui::TextDisabled("running: %d / %zu", m_play_index + 1, m_actions.size()); }
-        else                    { ImGui::TextDisabled("idle"); }
-    
-    
-        ImGui::SameLine(0.0f, ms_TOOLBAR_SELECTABLE_SEP);
-        
-        
-        //  4.  MOUSE COORDINATES...
-        ImVec2 mpos = ImGui::GetMousePos();
-        ImGui::Text("MousePos: (%.1f , %.1f)", mpos.x, mpos.y);     //  Live cursor read-out in the same units we feed to glfwSetCursorPos...
-
-
+        //this->S.PopFont();
+       
         return;
     }
     
@@ -670,6 +834,42 @@ public:
 
         return;
     }
+    
+    
+    //  "_draw_overlay"
+    //
+    void _draw_overlay(void)
+    {
+        static constexpr ImGuiWindowFlags       flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+        ImVec2                                  cursor_pos      = ImGui::GetMousePos();
+        ImVec2                                  win_pos         = cursor_pos + ms_OVERLAY_OFFSET;
+    
+    
+        if ( !m_show_overlay )                                          { return; }
+        if ( glfwGetWindowAttrib(m_glfw_window, GLFW_FOCUSED) == 0 )    { return; }
+
+
+        ImGui::SetNextWindowBgAlpha(0.5f);   // semi-transparent
+        ImGui::SetNextWindowPos(win_pos, ImGuiCond_Always);
+            if ( ImGui::Begin("##ac_overlay", nullptr, flags) )
+            {
+                this->_draw_overlay_content();
+            }
+        ImGui::End();
+        return;
+    }
+    
+    
+    //  "_draw_overlay_content"
+    //
+    void _draw_overlay_content(void)
+    {
+        ImGui::TextUnformatted("Overlay Window");
+        
+        return;
+    }
+
+
     
     // *************************************************************************** //
     //
@@ -687,9 +887,9 @@ public:
         m_executor.update();
 
         /* ready for next action? */
-        if (!m_executor.busy() && (m_is_running || m_step_req))
+        if ( !m_executor.busy() && (m_is_running || m_step_req) )
         {
-            if (m_play_index < 0 || m_play_index >= static_cast<int>(m_actions.size())) {
+            if ( m_play_index < 0 || m_play_index >= static_cast<int>(m_actions.size()) ) {
                 m_is_running = false;
                 m_step_req   = false;
                 m_play_index = -1;
@@ -764,7 +964,8 @@ public:
     // *************************************************************************** //
 
     //  "_dispatch_action_ui"
-    inline void _dispatch_action_ui(Action & a) {
+    inline void _dispatch_action_ui(Action & a)
+    {
         
         switch(a.type)
         {
@@ -780,10 +981,10 @@ public:
     //  "_ui_cursor_move"
     inline void _ui_cursor_move(Action & a)
     {
-        this->label("Init:");
+        this->label("Begin:");
         ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
         
-        this->label("Final:");
+        this->label("End:");
         ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
         
         this->label("Duration:");

@@ -96,6 +96,10 @@ inline constexpr float              PERF_PLOTS_HISTORY_LENGTH           = 6.0f; 
 //                              A.  GENERAL COLORS.
 inline constexpr ImVec4             DEF_APPLE_BLUE                      = ImVec4(0.244f,    0.467f,     0.847f,     1.000f);
 inline constexpr ImVec4             DEF_APPLE_RED                       = ImVec4(1.000f,    0.271f,     0.227f,     1.000f);
+//
+inline constexpr ImU32              DEF_APPLE_BLUE_IMU32                = 0x3977D8FF;
+inline constexpr ImU32              DEF_APPLE_RED_IMU32                 = 0xFF453AFF;
+//
 inline constexpr ImVec4             DEF_INVISIBLE_COLOR                 = ImVec4(0.000f,    0.000f,     0.000f,     0.000f);
 //
 inline constexpr ImVec4             DEF_LIVE_SELECTBLUE                 = ImVec4(0.255,     0.298f,     0.361f,     1.000f);

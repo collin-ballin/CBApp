@@ -958,7 +958,7 @@ struct Path_t {
     { return visible && !locked; }
         
     //  "set_label"
-    inline void                     set_label               (const char * src) noexcept
+    inline void                     set_label                       (const char * src) noexcept
     { this->label = std::string(src); this->_truncate_label(); }
     
     //  "set_default_label"

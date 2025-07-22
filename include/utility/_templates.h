@@ -77,8 +77,34 @@ inline ImColor compute_shade(const ImColor & color, float shade) {
 
 
 
+//  "compute_tint"
+//      +0.25 → 25 % brighter   |   -0.20 → 20 % darker
+//
+inline ImVec4 compute_tint(const ImVec4 & color, float tint) {
+    constexpr float     MIN_FACTOR  = 0.0f;
+    constexpr float     MAX_FACTOR  = 1.0f;
+    float               factor      = (tint >= 0.0f)
+                                        ? (1.0f + std::clamp(tint, MIN_FACTOR, MAX_FACTOR))   // brighten
+                                        : (1.0f - std::clamp(-tint, MIN_FACTOR, MAX_FACTOR)); // darken
 
+    return ImVec4(color.x * factor, color.y * factor, color.z * factor, color.w);        // alpha unchanged
+}
 
+//  "compute_tint"
+//
+inline ImU32 compute_tint(const ImU32 & color, float tint) {
+    ImVec4      as_vec4     = ImGui::ColorConvertU32ToFloat4(color);
+    ImVec4      tinted      = compute_tint(as_vec4, tint);
+    return ImGui::ColorConvertFloat4ToU32(tinted);
+}
+
+//  "compute_tint"
+//
+inline ImColor compute_tint(const ImColor & color, float tint) {
+    ImVec4      as_vec4     = static_cast<ImVec4>(color);
+    ImVec4      tinted      = compute_tint(as_vec4, tint);
+    return ImColor(tinted);
+}
 
 
 
