@@ -1,19 +1,18 @@
 /***********************************************************************************
 *
-*       *********************************************************************
-*       ****              T E S T S . C P P  ____  F I L E               ****
-*       *********************************************************************
+*       **************************************************************************
+*       ****    F U N C T I O N A L _ T E S T I N G . C P P  ____  F I L E    ****
+*       **************************************************************************
 *
 *              AUTHOR:      Collin A. Bond
 *               DATED:      July 20, 2025.
 *
 **************************************************************************************
 **************************************************************************************/
-#include "app/app.h"
+#include "widgets/functional_testing/functional_testing.h"
 
 
-
-namespace cb {  //     BEGINNING NAMESPACE "cb"...
+namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -1432,28 +1431,6 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "BeginFunctionalTesting"
-//
-void App::BeginFunctionalTesting([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
-{
-    using namespace                     ft;
-    static ActionComposer               composer            (S.m_glfw_window);
-    
-    
-    //  MAIN WINDOW FOR FUNCTIONAL TESTING OPERATIONS...
-    //
-    ImGui::Begin(uuid, p_open, flags);
-    //
-    //
-        composer.Begin();          // draws the new browser
-    //
-    //
-    ImGui::End();
-
-
-
-    return;
-}
 
 
 
@@ -1482,7 +1459,7 @@ void App::BeginFunctionalTesting([[maybe_unused]] const char * uuid, [[maybe_unu
 //
 // *************************************************************************** //
 // *************************************************************************** //
-}//   END OF "cb" NAMESPACE.
+} }//   END OF "cb" "ui" NAMESPACE.
 
 
 
