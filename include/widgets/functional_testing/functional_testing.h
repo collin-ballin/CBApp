@@ -88,13 +88,6 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 
 
 
-namespace ft {  //     BEGINNING NAMESPACE "ft"...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-
 // *************************************************************************** //
 // *************************************************************************** //
 //                PRIMARY CLASS INTERFACE:
@@ -186,7 +179,7 @@ struct ActionExecutor
     // *************************************************************************** //
                                         ActionExecutor          (void) noexcept     = default;
     explicit                            ActionExecutor          (GLFWwindow * window) noexcept;
-                                        ~ActionExecutor         (void);
+                                        ~ActionExecutor         (void)              = default;
                                         
     // *************************************************************************** //
     //
@@ -200,7 +193,7 @@ struct ActionExecutor
     //
     //
     void                                abort                               (void);
-    void                                busy                                (void);
+    bool                                busy                                (void) const;
     void                                update                              (void);
     
 //
@@ -222,19 +215,9 @@ struct ActionExecutor
     //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
     
-    //  "reset_all"
-    inline void                         reset                               (void) noexcept
-    { this->reset_state; this->reset_data; }
-    
-    //  "reset_state"
-    inline void                         reset_state                         (void) noexcept
-    { this->m_state = State::None; }
-    
-    //  "reset_data"
-    inline void                         reset_data                          (void) noexcept
-    { this->m_data.clear(); }
-    
-    
+    //
+    //                                      ...
+    //
     
     // *************************************************************************** //
     
@@ -262,15 +245,373 @@ struct ActionExecutor
 
 
 // *************************************************************************** //
+// *************************************************************************** //
+//                PRIMARY CLASS INTERFACE:
+// 		Class-Interface for the "ActionComposer" Abstraction.
+// *************************************************************************** //
+// *************************************************************************** //
+
+class ActionComposer
+{
+//  0.              CONSTANTS AND ALIASES...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    using                               State                                   = ComposerState;
+    using                               Composition                             = Composition_t;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //  0.2.                            BROWSER CONSTANTS...
+    // *************************************************************************** //
+    //                              BROWSER CHILD-WINDOW COLORS:
+    ImVec4                              ms_CHILD_FRAME_BG1                      = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
+    ImVec4                              ms_CHILD_FRAME_BG1L                     = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
+    ImVec4                              ms_CHILD_FRAME_BG1R                     = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
+    
+    ImVec4                              ms_CHILD_FRAME_BG2                      = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
+    ImVec4                              ms_CHILD_FRAME_BG2L                     = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
+    ImVec4                              ms_CHILD_FRAME_BG2R                     = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
+    //
+    //                              BROWSER CHILD-WINDOW STYLE:
+    float                               ms_VERTEX_SUBBROWSER_HEIGHT             = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
+    float                               ms_CHILD_BORDER1                        = 2.0f;     //  ms_CHILD_BORDER1
+    float                               ms_CHILD_BORDER2                        = 1.0f;     //  ms_CHILD_BORDER2
+    float                               ms_CHILD_ROUND1                         = 8.0f;     //  ms_CHILD_ROUND1
+    float                               ms_CHILD_ROUND2                         = 4.0f;     //  ms_CHILD_ROUND2
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    //                              MISC. CONSTANTS:
+    static constexpr ImVec2             ms_OVERLAY_OFFSET                       = ImVec2( 20.0f, 20.0f );
+    //
+    //                              WIDGET CONSTANTS:
+    static constexpr size_t             ms_COMPOSITION_NAME_LIMIT               = 64ULL;
+    static constexpr size_t             ms_COMPOSITION_DESCRIPTION_LIMIT        = 512ULL;
+    static constexpr size_t             ms_ACTION_NAME_LIMIT                    = 64ULL;
+    static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT             = 512ULL;
+    //
+    //                              INDIVIDUAL WIDGET DIMENSIONS:
+    static constexpr float              ms_COMPOSITION_DESCRIPTION_FIELD_HEIGHT = 110.0f;
+    static constexpr float              ms_ACTION_DESCRIPTION_FIELD_HEIGHT      = 65.0f;
+    static constexpr ImVec2             ms_DELETE_BUTTON_DIMS                   = ImVec2( 18.0f, 0.0f );
+    //
+    //                              UI BROWSER DIMENSIONS:
+    static constexpr float              ms_LABEL_WIDTH                          = 150.0f;
+    static constexpr float              ms_WIDGET_WIDTH                         = 300.0f;
+    //
+    static constexpr float              ms_COMPOSITION_COLUMN_WIDTH             = 340.0f;
+    static constexpr float              ms_SELECTOR_COLUMN_WIDTH                = 340.0f;
+    static constexpr const char *       ms_DRAG_DROP_HANDLE                     = "=";
+    static constexpr const char *       ms_DELETE_BUTTON_HANDLE                 = "-";
+    //
+    static constexpr float              ms_CONTROLBAR_SELECTABLE_SEP            = 16.0f;    //  controlbar offset.
+    static constexpr float              ms_TOOLBAR_SELECTABLE_SEP               = 16.0f;    //  sep for  "+ Add",  "Prev",  etc...
+    static constexpr float              ms_BROWSER_SELECTABLE_SEP               = 16.0f;    //  offset for buttons ontop of each selectable
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      REFERENCES TO GLOBAL ARRAYS.
+    // *************************************************************************** //
+    static constexpr auto &             ms_COMPOSER_STATE_NAMES                 = DEF_COMPOSER_STATE_NAMES;
+    static constexpr auto &             ms_ACTION_TYPE_NAMES                    = DEF_ACTION_TYPE_NAMES;
+    static constexpr auto &             ms_EXEC_STATE_NAMES                     = DEF_EXEC_STATE_NAMES;
+    
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//
+//  1.              CLASS DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+    //                              IMPORTANT DATA:
+    GLFWwindow *                        m_glfw_window;
+    ActionExecutor                      m_executor                              {  };
+    std::vector<Composition>            m_compositions                          { 1 };
+    std::vector<Action> *               m_actions                               = nullptr;
+    //
+    int                                 m_comp_sel                              = 0;            // current composition selection
+    int                                 m_sel                                   = -1;           // current selection
+    int                                 m_play_index                            = -1;           // current action being executed, -1 = idle
+    //
+    //
+    //                              STATE:
+    State                               m_state                                 = State::None;
+    bool                                m_is_running                            = false;
+    bool                                m_step_req                              = false;
+    bool                                m_show_overlay                          = true;
+    bool                                m_capture_is_active                     = false;        //  < true while “Auto” sampling.
+    //
+    //
+    //                              UTILITY:
+    ImGuiTextFilter                     m_filter;
+    ImVec2 *                            m_capture_dest                          = nullptr;      //  < pointer to coord being written
+    
 //
 //
 //
 // *************************************************************************** //
+// *************************************************************************** //   END "CLASS DATA-MEMBERS".
+
+
+
 // *************************************************************************** //
-} //   END OF "ft" NAMESPACE.
+//
+//
+//  2.A.            PUBLIC MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+                                        ActionComposer          (void)      = default;
+    explicit                            ActionComposer          (GLFWwindow *);
+                                        ~ActionComposer         (void)      = default;
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      MAIN API.                       |   "interface.cpp" ...
+    // *************************************************************************** //
+    void                                Begin                               (void);
+    void                                draw_all                            (void);
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "PUBLIC MEMBER FUNCS".
+
+
+    
+// *************************************************************************** //
+//
+//
+//      2.B.        PROTECTED MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+    
+    // *************************************************************************** //
+    //      MAIN UI FUNCTIONS...
+    // *************************************************************************** //
+    void                                _draw_composition_selector          (void);
+    void                                _draw_action_selector               (void);
+    void                                _draw_selector_table                (void);
+    void                                _draw_action_inspector              (void);
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      SECONDARY UI FUNCTIONS...
+    // *************************************************************************** //
+    void                                _draw_controlbar                    (void);
+    void                                _draw_toolbar                       (void);
+    void                                _draw_overlay                       (void);
+    //
+    //                              OVERLAY CONTENT:
+    void                                _dispatch_overlay_content           (void);
+    void                                _overlay_ui_none                    (void);
+    void                                _overlay_ui_run                     (void);
+    void                                _overlay_ui_capture                 (void);
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      GENERAL FUNCTIONS...
+    // *************************************************************************** //
+    inline void                         _drive_execution                    (void);
+    inline void                         _dispatch_execution                 (Action & act);
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      ACTION-UI FUNCTIONS...
+    // *************************************************************************** //
+    inline void                         _dispatch_action_ui                 (Action & a);
+    inline void                         _ui_cursor_move                     (Action & a);
+    inline void                         _ui_hotkey                          (Action & a);
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      UTILITY FUNCTIONS...
+    // *************************************************************************** //
+    
+    inline bool                         _begin_cursor_capture           (ImVec2 * destination);
+    inline void                         _update_capture                 (void);
+    
+    
+    
+    
+    
+    
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "PROTECTED" FUNCTIONS.
+
+    
+   
+// *************************************************************************** //
+//
+//
+//  2.C                 INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+
+    //  "is_running"
+    inline bool                         is_running                      (void) const    { return ( this->m_is_running  &&  (this->m_state == State::Run) ); }
+    
+    //  "reset_state"
+    inline void                         reset_state                     (void)          {
+        m_state                 = State::None;
+        m_is_running            = false;
+        m_capture_is_active     = false;
+        return;
+    }
+    
+    //  "reset_data"
+    inline void                         reset_data                      (void)          {
+        m_sel                   = -1;
+        m_comp_sel              = -1;
+        m_play_index            = -1;
+        m_capture_dest          = nullptr;
+        m_executor.abort();
+        return;
+    }
+    
+    //  "reset_all"
+    inline void                         reset_all                       (void)
+    { this->reset_state();    this->reset_data(); }
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                      CENTRALIZED OPERATION FUNCTIONS...
+    // *************************************************************************** //
+        
+    //  "_load_actions_from_comp"
+    //
+    inline void _load_actions_from_comp(void) {
+        /* copy actions out of selected composition */
+        //  comp_index              = std::clamp(comp_index, 0, static_cast<int>(m_compositions.size()) - 1);
+        //  m_comp_sel              = comp_index;
+    
+        m_actions               = &m_compositions[m_comp_sel].actions;
+        m_sel                   = -1;          // clear action selection
+        m_play_index            = -1;          // reset executor position
+
+
+        this->reset_all();
+        return;
+    }
+
+
+    //  "_save_actions_to_comp"
+    //
+    void _save_actions_to_comp(void) {
+        m_compositions[m_comp_sel].actions = *m_actions;
+        return;
+    }
+    
+    
+    //  "_reorder"
+    void                                _reorder                        (int from, int to)
+    {
+        if( from == to )    { return; }
+        
+        Action      tmp         = std::move( (*m_actions)[from] );
+        m_actions->erase( m_actions->begin() + from );
+        m_actions->insert( m_actions->begin() + to, std::move(tmp) );
+        m_sel                   = to;
+        
+        return;
+    }
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      MISC. UTILITY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "get_cursor_pos"
+    inline ImVec2                       get_cursor_pos                  (void)
+    { double cx = -1.0f; double cy = -1.0f; glfwGetCursorPos(m_glfw_window, &cx, &cy);  return ImVec2(cx, cy); }
+    
+    //  "label"
+    inline void                         label                           (const char * text)
+    { utl::LeftLabel(text, this->ms_LABEL_WIDTH, this->ms_WIDGET_WIDTH); ImGui::SameLine(); };
+    
+    
+    
+    // *************************************************************************** //
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
 
 
 
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "ActionComposer" INLINE CLASS DEFINITION.
 
 
 

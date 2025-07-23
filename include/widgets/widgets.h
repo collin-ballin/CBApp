@@ -24,7 +24,7 @@
 #include "widgets/_heatmap.h"
 #include "widgets/_file_dialogue.h"
 #include "widgets/editor/editor.h"
-// #include "widgets/functional_testing/functional_testing.h"
+#include "widgets/functional_testing/functional_testing.h"
 #include "utility/utility.h"
 
 
