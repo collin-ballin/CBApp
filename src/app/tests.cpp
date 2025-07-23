@@ -252,7 +252,12 @@ struct ActionExecutor
         m_last_pos    = last;
         m_duration_s  = std::max(duration_s, ms_MIN_DURATION_S);
         m_elapsed_s   = 0.0f;
-        m_state       = State::Move;
+
+        /* immediately warp OS cursor to starting point -----------------------*/
+        glfwSetCursorPos(m_window, m_first_pos.x, m_first_pos.y);
+        ImGui::GetIO().AddMousePosEvent(m_first_pos.x, m_first_pos.y);
+
+        m_state = State::Move;
     }
 
 
@@ -352,8 +357,9 @@ struct ActionExecutor
 //
 struct Composition_t {
 //
-    std::string             name        { "New Composition" };
     std::vector<Action>     actions;
+    std::string             name            { "New Composition" };
+    std::string             description     { "description..." };
 };
 
 
@@ -379,37 +385,61 @@ public:
     //
     //
     // *************************************************************************** //
-    //  0.2.                            CONSTANTS...
+    //  0.2.                            BROWSER CONSTANTS...
+    // *************************************************************************** //
+    //                      BROWSER CHILD-WINDOW COLORS:
+    ImVec4                      ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
+    ImVec4                      ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
+    ImVec4                      ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
+    
+    ImVec4                      ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
+    ImVec4                      ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
+    ImVec4                      ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
+    //
+    //                      BROWSER CHILD-WINDOW STYLE:
+    float                       ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
+    float                       ms_CHILD_BORDER1                = 2.0f;     //  ms_CHILD_BORDER1
+    float                       ms_CHILD_BORDER2                = 1.0f;     //  ms_CHILD_BORDER2
+    float                       ms_CHILD_ROUND1                 = 8.0f;     //  ms_CHILD_ROUND1
+    float                       ms_CHILD_ROUND2                 = 4.0f;     //  ms_CHILD_ROUND2
     // *************************************************************************** //
     //
+    //
+    //
+    // *************************************************************************** //
+    //  0.2.                            CONSTANTS...
+    // *************************************************************************** //
     //                              MISC. CONSTANTS:
-    static constexpr ImVec2             ms_OVERLAY_OFFSET                   = ImVec2( 20.0f, 20.0f );
+    static constexpr ImVec2             ms_OVERLAY_OFFSET                       = ImVec2( 20.0f, 20.0f );
     //
     //                              WIDGET CONSTANTS:
-    static constexpr size_t             ms_ACTION_NAME_LIMIT                = 64ULL;
-    static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT         = 512ULL;
+    static constexpr size_t             ms_COMPOSITION_NAME_LIMIT               = 64ULL;
+    static constexpr size_t             ms_COMPOSITION_DESCRIPTION_LIMIT        = 512ULL;
+    static constexpr size_t             ms_ACTION_NAME_LIMIT                    = 64ULL;
+    static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT             = 512ULL;
     //
     //                              INDIVIDUAL WIDGET DIMENSIONS:
-    static constexpr float              ms_DESCRIPTION_FIELD_HEIGHT         = 60.0f;
-    static constexpr ImVec2             ms_DELETE_BUTTON_DIMS               = ImVec2( 18.0f, 0.0f );
+    static constexpr float              ms_COMPOSITION_DESCRIPTION_FIELD_HEIGHT = 110.0f;
+    static constexpr float              ms_ACTION_DESCRIPTION_FIELD_HEIGHT      = 65.0f;
+    static constexpr ImVec2             ms_DELETE_BUTTON_DIMS                   = ImVec2( 18.0f, 0.0f );
     //
     //                              UI BROWSER DIMENSIONS:
-    static constexpr float              ms_SETTINGS_LABEL_WIDTH             = 150.0f;
-    static constexpr float              ms_SETTINGS_WIDGET_WIDTH            = 300.0f;
+    static constexpr float              ms_SETTINGS_LABEL_WIDTH                 = 150.0f;
+    static constexpr float              ms_SETTINGS_WIDGET_WIDTH                = 300.0f;
     //
-    static constexpr float              ms_COMPOSITION_COLUMN_WIDTH         = 340.0f;
-    static constexpr float              ms_SELECTOR_COLUMN_WIDTH            = 340.0f;
-    static constexpr const char *       ms_DRAG_DROP_HANDLE                 = "=";
-    static constexpr const char *       ms_DELETE_BUTTON_HANDLE             = "-";
+    static constexpr float              ms_COMPOSITION_COLUMN_WIDTH             = 340.0f;
+    static constexpr float              ms_SELECTOR_COLUMN_WIDTH                = 340.0f;
+    static constexpr const char *       ms_DRAG_DROP_HANDLE                     = "=";
+    static constexpr const char *       ms_DELETE_BUTTON_HANDLE                 = "-";
     //
-    static constexpr float              ms_CONTROLBAR_SELECTABLE_SEP        = 16.0f;    //  controlbar offset.
-    static constexpr float              ms_TOOLBAR_SELECTABLE_SEP           = 16.0f;    //  sep for  "+ Add",  "Prev",  etc...
-    static constexpr float              ms_BROWSER_SELECTABLE_SEP           = 16.0f;    //  offset for buttons ontop of each selectable
+    static constexpr float              ms_CONTROLBAR_SELECTABLE_SEP            = 16.0f;    //  controlbar offset.
+    static constexpr float              ms_TOOLBAR_SELECTABLE_SEP               = 16.0f;    //  sep for  "+ Add",  "Prev",  etc...
+    static constexpr float              ms_BROWSER_SELECTABLE_SEP               = 16.0f;    //  offset for buttons ontop of each selectable
     //
     //                              ARRAYS:
-    static constexpr auto &             ms_COMPOSER_STATE_NAMES             = DEF_COMPOSER_STATE_NAMES;
-    static constexpr auto &             ms_ACTION_TYPE_NAMES                = DEF_ACTION_TYPE_NAMES;
-    static constexpr auto &             ms_EXEC_STATE_NAMES                 = DEF_EXEC_STATE_NAMES;
+    static constexpr auto &             ms_COMPOSER_STATE_NAMES                 = DEF_COMPOSER_STATE_NAMES;
+    static constexpr auto &             ms_ACTION_TYPE_NAMES                    = DEF_ACTION_TYPE_NAMES;
+    static constexpr auto &             ms_EXEC_STATE_NAMES                     = DEF_EXEC_STATE_NAMES;
   
     // *************************************************************************** //
     //
@@ -421,26 +451,26 @@ public:
 protected:
     //                              IMPORTANT DATA:
     GLFWwindow *                        m_glfw_window;
-    ActionExecutor                      m_executor                          {  };
-    std::vector<Composition>            m_compositions                      { 1 };
-    std::vector<Action>                 m_actions;
+    ActionExecutor                      m_executor                              {  };
+    std::vector<Composition>            m_compositions;
+    std::vector<Action> &               m_actions;//                               = &m_compositions[0].actions;
     //
-    int                                 m_comp_sel                          = 0;            // current composition selection
-    int                                 m_sel                               = -1;           // current selection
-    int                                 m_play_index                        = -1;           // current action being executed, -1 = idle
+    int                                 m_comp_sel                              = 0;            // current composition selection
+    int                                 m_sel                                   = -1;           // current selection
+    int                                 m_play_index                            = -1;           // current action being executed, -1 = idle
     //
     //
     //                              STATE:
-    State                               m_state                             = State::None;
-    bool                                m_is_running                        = false;
-    bool                                m_step_req                          = false;
-    bool                                m_show_overlay                      = true;
-    bool                                m_capture_is_active                 = false;        //  < true while “Auto” sampling.
+    State                               m_state                                 = State::None;
+    bool                                m_is_running                            = false;
+    bool                                m_step_req                              = false;
+    bool                                m_show_overlay                          = true;
+    bool                                m_capture_is_active                     = false;        //  < true while “Auto” sampling.
     //
     //
     //                              UTILITY:
     ImGuiTextFilter                     m_filter;
-    ImVec2 *                            m_capture_dest                      = nullptr;      //  < pointer to coord being written
+    ImVec2 *                            m_capture_dest                          = nullptr;      //  < pointer to coord being written
 //
 //
 //
@@ -461,7 +491,11 @@ public:
     
     //  Default Constructor.
     //
-    ActionComposer(GLFWwindow * window) : m_glfw_window(window) {  }
+    ActionComposer(GLFWwindow * window)
+        : m_glfw_window(window)
+        , m_compositions{ 1 }                           // Creates a single, default composition
+        , m_actions(m_compositions.front().actions)     // Bind reference here
+    {  }
     
     
     //  "Begin"
@@ -487,34 +521,50 @@ public:
     //
     void draw_all(void)
     {
-        //  1.  DRAW THE TOP-MOST "COMPOSITION" BAR...
-        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1);
-        ImGui::BeginChild("##ActionComposed_TestSelector", {ms_COMPOSITION_COLUMN_WIDTH, 0.0f}, ImGuiChildFlags_Borders);
-            this->_draw_test_selector();
-        ImGui::EndChild();
-        ImGui::PopStyleVar();
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER1);
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    ms_CHILD_ROUND1);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg,             ms_CHILD_FRAME_BG1L);
+            
+            //  1.  DRAW THE TOP-MOST "COMPOSITION" BAR...
+            ImGui::BeginChild("##ActionComposer_CompositionSelector", {ms_COMPOSITION_COLUMN_WIDTH, 0.0f}, ImGuiChildFlags_Borders);
+                this->_draw_composition_selector();
+            ImGui::EndChild();
+
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar(2);  //  ImGuiStyleVar_ChildBorderSize, ImGuiStyleVar_ChildRounding
 
 
         ImGui::SameLine();
         
         
         //  2.  DRAW THE "BROWSER" UI-INTERFACE...
-        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1);
-        //
-        //
-            ImGui::BeginChild("##ActionComposer_Action_Selector",  {ms_SELECTOR_COLUMN_WIDTH, 0}, ImGuiChildFlags_Borders);
-                this->_draw_action_selector();
-            ImGui::EndChild();
-            
-            ImGui::SameLine();
-            
-            ImGui::BeginChild("##ActionComposer_Action_Inspector", {0,0},     ImGuiChildFlags_Borders);
-                this->_draw_action_inspector();
-            ImGui::EndChild();
-        //
-        //
-        ImGui::PopStyleVar();
-    
+        ImGui::BeginChild("##ActionComposer_Action_Browser",  {0, 0}, ImGuiChildFlags_Borders);
+            //
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER1);
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    ms_CHILD_ROUND1);
+            ImGui::PushStyleColor(ImGuiCol_ChildBg,             ms_CHILD_FRAME_BG1L);
+            //
+            //
+            //
+                ImGui::BeginChild("##ActionComposer_Action_Selector",  {ms_SELECTOR_COLUMN_WIDTH, 0}, ImGuiChildFlags_Borders);
+                    this->_draw_action_selector();
+                ImGui::EndChild();
+                ImGui::PopStyleColor();
+                
+                ImGui::SameLine();
+                
+                ImGui::PushStyleColor(ImGuiCol_ChildBg,         ms_CHILD_FRAME_BG1R);
+                ImGui::BeginChild("##ActionComposer_Action_Inspector", {0,0},     ImGuiChildFlags_Borders);
+                    this->_draw_action_inspector();
+                ImGui::EndChild();
+            //
+            //
+            //
+            ImGui::PopStyleColor();
+            ImGui::PopStyleVar(2);  //  ImGuiStyleVar_ChildBorderSize, ImGuiStyleVar_ChildRounding
+            //
+        ImGui::EndChild();
+        
     
     
         return;
@@ -542,31 +592,40 @@ public:
 
     //  "_load_actions_from_comp"
     //
-    void _load_actions_from_comp(void)
-    {
+    inline void _load_actions_from_comp(void) {
+        /* copy actions out of selected composition */
+        m_actions               = m_compositions[m_comp_sel].actions;
+        m_sel                   = -1;          // clear action selection
+        m_play_index            = -1;          // reset executor position
+
+
+        this->reset_all();
         return;
     }
 
 
     //  "_save_actions_to_comp"
     //
-    void _save_actions_to_comp(void)
-    {
+    void _save_actions_to_comp(void) {
+        m_compositions[m_comp_sel].actions = m_actions;
         return;
     }
 
 
-    //  "_draw_test_selector"
+    //  "_draw_composition_selector"
     //
-    void _draw_test_selector(void)
+    void _draw_composition_selector(void)
     {
-        // add / remove
+        //  1.  ADD A NEW COMPOSITION...
         if ( ImGui::Button("+ Add Composition") ) {
+        
             m_compositions.emplace_back();
-            m_comp_sel = (int)m_compositions.size() - 1;
-            _load_actions_from_comp();
+            m_comp_sel = static_cast<int>(m_compositions.size()) - 1;
+            _load_actions_from_comp();     // already resets pointers & executor
         }
+        
         ImGui::SameLine();
+        
         ImGui::BeginDisabled(m_compositions.size() <= 1);
         if ( ImGui::Button("- Delete") ) {
             m_compositions.erase(m_compositions.begin() + m_comp_sel);
@@ -576,6 +635,7 @@ public:
         ImGui::EndDisabled();
 
         ImGui::Separator();
+
 
         // listbox
         for (int i = 0; i < (int)m_compositions.size(); ++i)
@@ -591,9 +651,31 @@ public:
             }
             ImGui::PopID();
         }
+        
+        auto &      comp    = m_compositions[m_comp_sel];
 
-        // rename current
-        ImGui::InputText("Name", &m_compositions[m_comp_sel].name);
+
+        //  2.  COMPOSITION NAME...
+        {
+            ImGui::TextUnformatted("Name:");
+            ImGui::SetNextItemWidth( -FLT_MIN );
+            if ( ImGui::InputText("##Composition_Name", &comp.name) )
+            {
+                if ( comp.name.size() > ms_COMPOSITION_NAME_LIMIT )                  { comp.name.resize(ms_COMPOSITION_NAME_LIMIT); }
+            }
+        }
+    
+        //  3.  COMPOSITION DESCRIPTION...
+        {
+            ImGui::TextUnformatted("Description:");
+            if ( ImGui::InputTextMultiline("##Composition_Description",     &comp.description, { -FLT_MIN, ms_COMPOSITION_DESCRIPTION_FIELD_HEIGHT }) )
+            {
+                if ( comp.description.size() > ms_COMPOSITION_DESCRIPTION_LIMIT )    { comp.description.resize(ms_COMPOSITION_DESCRIPTION_LIMIT); }
+            }
+        }
+        
+        
+        
         return;
     }
     
@@ -751,7 +833,7 @@ public:
         //  2.  ACTION DESCRIPTION...
         {
             this->label("Description:");
-            if ( ImGui::InputTextMultiline("##Action_Description", &a.descr, { -FLT_MIN, ms_DESCRIPTION_FIELD_HEIGHT }) )
+            if ( ImGui::InputTextMultiline("##Action_Description", &a.descr, { -FLT_MIN, ms_ACTION_DESCRIPTION_FIELD_HEIGHT }) )
             {
                 if ( a.descr.size() > ms_ACTION_DESCRIPTION_LIMIT )     { a.descr.resize(ms_ACTION_DESCRIPTION_LIMIT); }
             }
@@ -815,7 +897,7 @@ public:
             ImGui::BeginDisabled( m_actions.empty() );
                 if ( !this->is_running() )
                 {
-                    if ( ImGui::Button("Run", WIDGET_SIZE) ) {
+                    if ( ImGui::Button("Run All", WIDGET_SIZE) ) {
                         m_play_index        = (m_sel >= 0           ? m_sel             : 0);
                         m_is_running        = !m_actions.empty();
                         m_state             = (m_actions.empty())   ? State::None       : State::Run;
@@ -831,9 +913,22 @@ public:
         
         
         
-            //  2.  STEP BUTTON...
+            //  2.  RUN ONCE...
             ImGui::NextColumn();        ImGui::NewLine();
-            ImGui::BeginDisabled( m_is_running || (m_state == State::Run) || m_actions.size() < 2 );
+            ImGui::SetNextItemWidth( WIDGET_SIZE.x );
+            ImGui::BeginDisabled( !this->is_running() && m_actions.empty() && (m_sel < 0) );
+                if ( ImGui::Button("Run Once", WIDGET_SIZE) ) {
+                    m_play_index = m_sel;
+                    m_step_req   = true;             // drive exactly one action
+                }
+            ImGui::EndDisabled();
+            
+    
+    
+        
+            //  3.  STEP BUTTON...
+            ImGui::NextColumn();        ImGui::NewLine();
+            ImGui::BeginDisabled( !this->is_running() || m_actions.size() < 2 );
                 if ( ImGui::Button("Step", WIDGET_SIZE) )
                 {
                     m_play_index    = (m_play_index + 1) % (int)m_actions.size();
@@ -843,7 +938,7 @@ public:
 
 
 
-            //  3.  OVERVIEW...
+            //  4.  OVERVIEW...
             ImGui::NextColumn();
             ImGui::TextDisabled("Overlay:");
             //
@@ -852,7 +947,7 @@ public:
 
 
 
-            //  4.  INFO...
+            //  5.  INFO...
             ImGui::NextColumn();
             ImGui::TextDisabled("Info:");
             //
@@ -864,7 +959,7 @@ public:
 
 
             
-            //  5.  EMPTY SPACES FOR LATER...
+            //  6.  EMPTY SPACES FOR LATER...
             for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
                 ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
             }
@@ -872,7 +967,9 @@ public:
 
             //  X.  MOUSE COORDINATES...
             ImGui::TextDisabled("Mouse Position:");
-            ImVec2 mpos = ImGui::GetMousePos();
+            //ImVec2 mpos = ImGui::GetMousePos();
+            ImVec2 mpos = this->get_cursor_pos();
+            
             ImGui::Text("(%.1f , %.1f)",    mpos.x, mpos.y);     //  Live cursor read-out in the same units we feed to glfwSetCursorPos...
         //
         //
@@ -953,7 +1050,8 @@ public:
         //
         static const char *             state_str               = nullptr;
         static State                    state_cache             = static_cast<State>( static_cast<int>(this->m_state) - 1 );
-        const ImVec2                    mpos                    = ImGui::GetMousePos();
+        //const ImVec2                    mpos                    = ImGui::GetMousePos();
+        const ImVec2                    mpos                    = this->get_cursor_pos();
                 
         if ( state_cache != this->m_state ) {
             state_cache     = static_cast<State>( this->m_state );
@@ -994,10 +1092,10 @@ public:
     //
     void _drive_execution(void)
     {
-        /* advance current primitive */
+        //  1.  ADVANCE TO THE CURRENT ACTION...
         m_executor.update();
 
-        /* ready for next action? */
+        //  2.  CHECK IF WE ARE READY TO PROCEED...
         if ( !m_executor.busy() && this->is_running() )
         {
             if ( m_play_index < 0 || m_play_index >= static_cast<int>(m_actions.size()) ) {
@@ -1008,12 +1106,16 @@ public:
                 return;
             }
 
-            Action& act = m_actions[m_play_index];
+            Action &    act     = m_actions[m_play_index];
             this->_dispatch_execution(act);
 
 
-            /* prepare for next index */
-            ++m_play_index;
+            //  3.  PREPARE FOR THE NEXT INDEX...=
+            //  ++m_play_index;
+            //
+            if ( !this->is_running() )      { m_play_index = -1;    }               //  RUNNING ONLY ONCE...
+            else                            { ++m_play_index;       }               //  RUNNING **ALL** ACTIONS...
+                
             if ( this->is_running() && m_play_index >= static_cast<int>(m_actions.size()) ) {
                 m_state         = State::None;
                 m_is_running    = false;
@@ -1036,12 +1138,9 @@ public:
         {
             //  1.  CURSOR MOVEMENT...
             case ActionType::CursorMove: {
-                double cx, cy;
-                glfwGetCursorPos(m_glfw_window, &cx, &cy);
-
                 m_executor.start_cursor_move(
                     m_glfw_window,
-                    ImVec2(static_cast<float>(cx), static_cast<float>(cy)),
+                    act.cursor.first,           // <- use stored begin coordinate
                     act.cursor.last,
                     act.cursor.duration
                 );
@@ -1152,25 +1251,26 @@ public:
 // *************************************************************************** //
 
     //  "label"
-    inline void                 label                               (const char * text)
+    inline void                         label                           (const char * text)
     { utl::LeftLabel(text, this->ms_SETTINGS_LABEL_WIDTH, this->ms_SETTINGS_WIDGET_WIDTH); ImGui::SameLine(); };
     
     
     //  "is_running"
-    inline bool                 is_running                          (void) const    { return ( this->m_is_running  &&  (this->m_state == State::Run) ); }
+    inline bool                         is_running                      (void) const    { return ( this->m_is_running  &&  (this->m_state == State::Run) ); }
     
     
     //  "reset_state"
-    inline void                 reset_state                         (void)          {
+    inline void                         reset_state                     (void)          {
+        m_state                 = State::None;
         m_is_running            = false;
         m_capture_is_active     = false;
-        m_state                 = State::None;
         return;
     }
     
     //  "reset_data"
-    inline void                 reset_data                         (void)          {
+    inline void                         reset_data                      (void)          {
         m_sel                   = -1;
+        m_comp_sel              = -1;
         m_play_index            = -1;
         m_capture_dest          = nullptr;
         m_executor.abort();
@@ -1179,12 +1279,20 @@ public:
     
     
     //  "reset_all"
-    inline void                 reset_all                         (void)
+    inline void                         reset_all                       (void)
     { this->reset_state();    this->reset_data(); }
     
     
+    //  "get_cursor_pos"
+    inline ImVec2       get_cursor_pos                  (void)
+    { double cx = -1.0f; double cy = -1.0f; glfwGetCursorPos(m_glfw_window, &cx, &cy);  return ImVec2(cx, cy); }
+    //
+    //  inline std::tuple<float, float>     get_cursor_pos                  (void)
+    //  { double cx{}, cy{};  glfwGetCursorPos(m_glfw_window, &cx, &cy);  return std::make_tuple(cx, cy); }
+    
+    
     //  "_reorder"
-    void                        _reorder                            (int from, int to)
+    void                                _reorder                        (int from, int to)
     {
         if( from == to )    { return; }
         
@@ -1198,7 +1306,7 @@ public:
     
     
     //  "_begin_cursor_capture"
-    inline bool                 _begin_cursor_capture               (ImVec2 * destination)
+    inline bool                         _begin_cursor_capture           (ImVec2 * destination)
     {
         if (m_state == State::Run)  { return false; }
         
@@ -1209,9 +1317,10 @@ public:
     
     
     //  "_update_capture"
-    inline void                 _update_capture                     (void)
+    inline void                         _update_capture                 (void)
     {
-        ImGuiIO &   io      = ImGui::GetIO();
+        ImVec2          mpos        = ImVec2(-1.0f, -1.0f);
+        ImGuiIO &       io          = ImGui::GetIO();
         
         if ( m_state != State::Capture || m_capture_dest == nullptr )   { return; }
 
@@ -1224,8 +1333,10 @@ public:
             return;
         }
 
-        //  live-update destination with current cursor position */
-        *m_capture_dest     = io.MousePos;
+        /* Query GLFW for window-relative cursor coordinates --------------------*/
+        mpos                        = this->get_cursor_pos();
+        m_capture_dest->x           = static_cast<float>(mpos.x);
+        m_capture_dest->y           = static_cast<float>(mpos.y);
         return;
     }
 
