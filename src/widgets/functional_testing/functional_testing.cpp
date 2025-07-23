@@ -12,7 +12,7 @@
 #include "widgets/functional_testing/functional_testing.h"
 
 
-namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb"...
+namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -106,244 +106,131 @@ struct FunctionalTestRunner {
 
 
 
-    
-// *************************************************************************** //
-//
-//
-//      0.      "ActionComposer" TYPES...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
 
 // *************************************************************************** //
-//      ACTION TYPE LAYER...
+//
+//
+//
+//      "ActionExecutor" IMPLEMENTATION...
+// *************************************************************************** //
 // *************************************************************************** //
 
-//  "ComposerState"
+//  "start_cursor_move"
 //
-enum class ComposerState : uint8_t {
-    None = 0,
-    Run,
-    Capture,
-    COUNT
-};
-
-static constexpr std::array<const char *, static_cast<size_t>(ComposerState::COUNT)>
-DEF_COMPOSER_STATE_NAMES = {
-    "None", "Running", "Capturing"
-};
-
-
-
-// *************************************************************************** //
-//      ACTION TYPE LAYER...
-// *************************************************************************** //
-
-//  "ActionType"
-//
-enum class ActionType {
-    CursorMove,
-    Hotkey,
-//
-    COUNT
-};
-
-
-//  "DEF_ACTION_TYPE_NAMES"
-static constexpr std::array<const char *, static_cast<size_t>( ActionType::COUNT )>
-DEF_ACTION_TYPE_NAMES = {
-    "CursorMove", "Hotkey"
-};
-
-
-
-// *************************************************************************** //
-//      ACTION DATA LAYER...
-// *************************************************************************** //
-
-//  "CursorMoveParams"
-//
-struct CursorMoveParams {
-    ImVec2              first           {};
-    ImVec2              last            {};
-    float               duration        {1.f};
-};
-
-
-//  "HotkeyParams"
-//
-struct HotkeyParams {
-    ImGuiKey            key             {ImGuiKey_C};
-    bool                ctrl            {true};
-    bool                shift           {false};
-    bool                alt             {false};
-};
-
-
-//  "Action"
-//
-struct Action {
-    std::string         name            = "new action";
-    std::string         descr           = "description...";
-    ActionType          type            = ActionType::CursorMove;
-//
-    CursorMoveParams    cursor;
-    HotkeyParams        hotkey;
-//
-    bool                enabled         = true;
-};
-
-
-
-// *************************************************************************** //
-//      ACTION EXECUTION LAYER...
-// *************************************************************************** //
-    
-//  "ExecutorState"
-//
-enum class ExecutionState : uint8_t {
-    None = 0,
-    Move,
-    ButtonDown,
-    ButtonUp,
-    COUNT
-};
-
-static constexpr std::array<const char *, static_cast<size_t>(ExecutionState::COUNT)>
-DEF_EXEC_STATE_NAMES = {
-    "None", "Move", "Button Down", "Button Up"
-};
-    
-    
-//  "ActionExecutor"
-//      Runs one primitive at a time.
-//
-struct ActionExecutor
+void ActionExecutor::start_cursor_move(GLFWwindow* window, ImVec2 first, ImVec2 last, float duration_s)
 {
-    using                       State                   = ExecutionState;
+    m_window      = window;
+    m_first_pos   = first;
+    m_last_pos    = last;
+    m_duration_s  = std::max(duration_s, ms_MIN_DURATION_S);
+    m_elapsed_s   = 0.0f;
 
-    /*--------------------------------------------------------------------*/
-    /*  data members                                                      */
-    /*--------------------------------------------------------------------*/
-    State                       m_state                 { State::None };
-    ImVec2                      m_first_pos             {  };                /* starting mouse-cursor position   */
-    ImVec2                      m_last_pos              {  };                /* destination mouse-cursor pos.    */
-    float                       m_duration_s            { 0.0f };          /* total time for Move              */
-    float                       m_elapsed_s             { 0.0f };          /* accumulated time                 */
-    GLFWwindow *                m_window                { nullptr };       /* target OS window                 */
+    /* immediately warp OS cursor to starting point -----------------------*/
+    glfwSetCursorPos(m_window, m_first_pos.x, m_first_pos.y);
+    ImGui::GetIO().AddMousePosEvent(m_first_pos.x, m_first_pos.y);
 
-    static constexpr float      ms_MIN_DURATION_S       = 0.001f;
+    m_state = State::Move;
+    return;
+}
 
-    /*--------------------------------------------------------------------*/
-    /*  public API                                                        */
-    /*--------------------------------------------------------------------*/
 
-    //  "start_cursor_move"
-    //
-    void start_cursor_move(GLFWwindow* window,
-                                           ImVec2      first,
-                                           ImVec2      last,
-                                           float       duration_s)
+//  "start_button_action"
+//
+void ActionExecutor::start_button_action(GLFWwindow* window,
+                                         ImGuiKey   key,
+                                         bool       with_ctrl,
+                                         bool       with_shift,
+                                         bool       with_alt)
+{
+    m_window = window;
+
+    ImGuiIO& io = ImGui::GetIO();
+    if (with_ctrl)  io.AddKeyEvent(ImGuiKey_LeftCtrl,  true);
+    if (with_shift) io.AddKeyEvent(ImGuiKey_LeftShift, true);
+    if (with_alt)   io.AddKeyEvent(ImGuiKey_LeftAlt,   true);
+
+    io.AddKeyEvent(key, true);
+    io.AddKeyEvent(key, false);
+
+    if (with_ctrl)  io.AddKeyEvent(ImGuiKey_LeftCtrl,  false);
+    if (with_shift) io.AddKeyEvent(ImGuiKey_LeftShift, false);
+    if (with_alt)   io.AddKeyEvent(ImGuiKey_LeftAlt,   false);
+
+    m_state = State::None;            /* completes immediately                */
+}
+
+
+//  "abort"
+//
+void ActionExecutor::abort()
+{
+    m_state = State::None;
+}
+
+
+//  "busy"
+//
+bool ActionExecutor::busy() const
+{
+    return m_state != State::None;
+}
+
+
+//  "update"
+//
+void ActionExecutor::update()
+{
+    if (m_state == State::None || m_window == nullptr)
+        return;
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    switch (m_state)
     {
-        m_window      = window;
-        m_first_pos   = first;
-        m_last_pos    = last;
-        m_duration_s  = std::max(duration_s, ms_MIN_DURATION_S);
-        m_elapsed_s   = 0.0f;
-
-        /* immediately warp OS cursor to starting point -----------------------*/
-        glfwSetCursorPos(m_window, m_first_pos.x, m_first_pos.y);
-        ImGui::GetIO().AddMousePosEvent(m_first_pos.x, m_first_pos.y);
-
-        m_state = State::Move;
-    }
-
-
-    //  "start_button_action"
-    //
-    void start_button_action(GLFWwindow* window,
-                                             ImGuiKey   key,
-                                             bool       with_ctrl,
-                                             bool       with_shift,
-                                             bool       with_alt)
-    {
-        m_window = window;
-
-        ImGuiIO& io = ImGui::GetIO();
-        if (with_ctrl)  io.AddKeyEvent(ImGuiKey_LeftCtrl,  true);
-        if (with_shift) io.AddKeyEvent(ImGuiKey_LeftShift, true);
-        if (with_alt)   io.AddKeyEvent(ImGuiKey_LeftAlt,   true);
-
-        io.AddKeyEvent(key, true);
-        io.AddKeyEvent(key, false);
-
-        if (with_ctrl)  io.AddKeyEvent(ImGuiKey_LeftCtrl,  false);
-        if (with_shift) io.AddKeyEvent(ImGuiKey_LeftShift, false);
-        if (with_alt)   io.AddKeyEvent(ImGuiKey_LeftAlt,   false);
-
-        m_state = State::None;            /* completes immediately                */
-    }
-
-
-    //  "abort"
-    //
-    void abort()
-    {
-        m_state = State::None;
-    }
-
-
-    //  "busy"
-    //
-    bool busy() const
-    {
-        return m_state != State::None;
-    }
-
-
-    //  "update"
-    //
-    void update()
-    {
-        if (m_state == State::None || m_window == nullptr)
-            return;
-
-        ImGuiIO& io = ImGui::GetIO();
-
-        switch (m_state)
+        case State::Move:
         {
-            case State::Move:
-            {
-                m_elapsed_s += io.DeltaTime;
-                float t = std::clamp(m_elapsed_s / m_duration_s, 0.0f, 1.0f);
-                ImVec2 pos = ImLerp(m_first_pos, m_last_pos, t);
+            m_elapsed_s += io.DeltaTime;
+            float t = std::clamp(m_elapsed_s / m_duration_s, 0.0f, 1.0f);
+            ImVec2 pos = ImLerp(m_first_pos, m_last_pos, t);
 
-                glfwSetCursorPos(m_window, pos.x, pos.y);
-                io.AddMousePosEvent(pos.x, pos.y);
+            glfwSetCursorPos(m_window, pos.x, pos.y);
+            io.AddMousePosEvent(pos.x, pos.y);
 
-                if (t >= 1.0f)
-                    m_state = State::ButtonDown;
-            } break;
+            if (t >= 1.0f)
+                m_state = State::ButtonDown;
+        } break;
 
-            case State::ButtonDown:
-                io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
-                m_state = State::ButtonUp;
-                break;
+        case State::ButtonDown:
+            io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
+            m_state = State::ButtonUp;
+            break;
 
-            case State::ButtonUp:
-                io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
-                m_state = State::None;
-                break;
+        case State::ButtonUp:
+            io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+            m_state = State::None;
+            break;
 
-            default:  /* fall-through to satisfy compiler */
-                break;
-        }
+        default:  /* fall-through to satisfy compiler */
+            break;
     }
+}
+
+
+// 
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "ActionExecutor".
 
 
 
-};
+
+
+
+
+
+
+
+
 
 
 
@@ -1285,8 +1172,8 @@ public:
     //
     inline void _load_actions_from_comp(void) {
         /* copy actions out of selected composition */
-        comp_index              = std::clamp(comp_index, 0, static_cast<int>(m_compositions.size()) - 1);
-        m_comp_sel              = comp_index;
+        //  comp_index              = std::clamp(comp_index, 0, static_cast<int>(m_compositions.size()) - 1);
+        //  m_comp_sel              = comp_index;
     
         m_actions               = &m_compositions[m_comp_sel].actions;
         m_sel                   = -1;          // clear action selection

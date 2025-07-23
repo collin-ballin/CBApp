@@ -1286,8 +1286,8 @@ public:
     //
     inline void _load_actions_from_comp(void) {
         /* copy actions out of selected composition */
-        comp_index              = std::clamp(comp_index, 0, static_cast<int>(m_compositions.size()) - 1);
-        m_comp_sel              = comp_index;
+        //  comp_index              = std::clamp(comp_index, 0, static_cast<int>(m_compositions.size()) - 1);
+        //  m_comp_sel              = comp_index;
     
         m_actions               = &m_compositions[m_comp_sel].actions;
         m_sel                   = -1;          // clear action selection
