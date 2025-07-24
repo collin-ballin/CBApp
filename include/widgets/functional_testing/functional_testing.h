@@ -138,7 +138,7 @@ struct ActionExecutor
     // *************************************************************************** //
     //      IMPORTANT DATA-MEMBERS.
     // *************************************************************************** //
-    GLFWwindow*                         m_window                        { nullptr };
+    GLFWwindow *                        m_window                        { nullptr };
     
     // *************************************************************************** //
     //
@@ -187,9 +187,13 @@ struct ActionExecutor
     // *************************************************************************** //
     //      MAIN API.                       |   "interface.cpp" ...
     // *************************************************************************** //
-    void                                Begin                               (const char * id = "##EditorCanvas");
     void                                start_cursor_move                   (GLFWwindow * window, ImVec2 first, ImVec2 last, float duration_s);
+    //
+    void                                start_mouse_press                   (bool left_button);
+    void                                start_mouse_release                 (bool left_button);
+    //
     void                                start_button_action                 (GLFWwindow * window, ImGuiKey key, bool ctrl, bool shift, bool alt);
+    //
     //
     //
     void                                abort                               (void);
@@ -215,9 +219,13 @@ struct ActionExecutor
     //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
     
-    //
-    //                                      ...
-    //
+    //  "_local_to_global"
+    inline ImVec2 _local_to_global(GLFWwindow* w, ImVec2 local)
+    {
+        int wx, wy;
+        glfwGetWindowPos(w, &wx, &wy);
+        return { local.x + (float)wx, local.y + (float)wy };
+    }
     
     // *************************************************************************** //
     
@@ -336,6 +344,7 @@ public:
     static constexpr auto &             ms_COMPOSER_STATE_NAMES                 = DEF_COMPOSER_STATE_NAMES;
     static constexpr auto &             ms_ACTION_TYPE_NAMES                    = DEF_ACTION_TYPE_NAMES;
     static constexpr auto &             ms_EXEC_STATE_NAMES                     = DEF_EXEC_STATE_NAMES;
+    static constexpr auto &             ms_CLICK_PARAM_NAMES                    = DEF_CLICK_PARAM_NAMES;
     
 //
 //
@@ -606,7 +615,7 @@ protected:
     // *************************************************************************** //
     //      MISC. UTILITY FUNCTIONS.
     // *************************************************************************** //
-    
+
     //  "get_cursor_pos"
     inline ImVec2                       get_cursor_pos                  (void)
     { double cx = -1.0f; double cy = -1.0f; glfwGetCursorPos(m_glfw_window, &cx, &cy);  return ImVec2(cx, cy); }

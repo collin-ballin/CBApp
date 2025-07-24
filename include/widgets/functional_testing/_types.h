@@ -172,6 +172,13 @@ struct CursorMoveParams {
 //
 struct ClickParams { bool left_button{true};  };
 
+//  "DEF_CLICK_PARAM_NAMES"
+static constexpr std::array<const char *, static_cast<size_t>( ActionType::COUNT )>
+DEF_CLICK_PARAM_NAMES = {
+    "Left Mouse",       "Right Mouse"
+};
+
+
 
 //  "DragParams"
 //
@@ -198,14 +205,18 @@ struct HotkeyParams {
 //  "Action"
 //
 struct Action {
-    std::string         name            = "new action";
-    std::string         descr           = "description...";
-    ActionType          type            = ActionType::CursorMove;
+    std::string             name            = "new action";
+    std::string             descr           = "description...";
+    ActionType              type            = ActionType::CursorMove;
 //
-    CursorMoveParams    cursor;
-    HotkeyParams        hotkey;
+    CursorMoveParams        cursor;             //  <   for CursorMove
+    ClickParams             click;              //  <   for MouseClick
+    ClickParams             press;              //  <   for MousePress
+    ClickParams             release;            //  <   for MouseRelease
+    DragParams              drag;               //  <   for MouseDrag
+    HotkeyParams            hotkey;             //  <   for Hotkey
 //
-    bool                enabled         = true;
+    bool                    enabled         = true;
 };
 
 

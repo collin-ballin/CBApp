@@ -47,6 +47,8 @@ struct FunctionalTestRunner {
         ImGui::GetIO().AddMousePosEvent(start_pos.x, start_pos.y);
 
         phase = Phase::Move;
+        
+        return;
     }
 
     // abort immediately --------------------------------------------------------
@@ -60,41 +62,58 @@ struct FunctionalTestRunner {
             ImGui::GetIO().AddMousePosEvent(static_cast<float>(cx),
                                             static_cast<float>(cy));
         }
+        
+        return;
     }
 
     // one-frame update ---------------------------------------------------------
     void update()
     {
-        if (phase == Phase::Idle || !window) return;
+        if ( phase == Phase::Idle || !window )      { return; }
 
-        ImGuiIO& io = ImGui::GetIO();
-        elapsed += io.DeltaTime;
+        ImGuiIO &   io          = ImGui::GetIO();
+        elapsed                += io.DeltaTime;
+        ImVec2      desired     = io.MousePos;        // default
 
-        ImVec2 desired = io.MousePos;        // default
 
-        switch (phase) {
+        switch (phase)
+        {
             case Phase::Move: {
                 float t = std::clamp(elapsed / duration, 0.0f, 1.0f);
                 desired = ImLerp(start_pos, target_pos, t);
                 if (t >= 1.0f) { phase = Phase::Down; elapsed = 0.0f; }
                 break;
             }
-            case Phase::Down: io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
-                              phase = Phase::Up;
-                              break;
-            case Phase::Up:   io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
-                              phase = Phase::Idle;
-                              break;
-            default: break;
+            
+            case Phase::Down: {
+                io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
+                phase = Phase::Up;
+                break;
+            }
+            
+            case Phase::Up: {
+                io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+                phase = Phase::Idle;
+                break;
+            }
+            
+            default: { break; }
         }
 
         // Override hardware + ImGui each frame
         glfwSetCursorPos(window, desired.x, desired.y);
         io.AddMousePosEvent(desired.x, desired.y);
+        return;
     }
 
     bool running() const { return phase != Phase::Idle; }
 };
+
+
+
+
+
+
 
 
 
@@ -119,14 +138,38 @@ void ActionExecutor::start_cursor_move(GLFWwindow* window, ImVec2 first, ImVec2 
     m_duration_s  = std::max(duration_s, ms_MIN_DURATION_S);
     m_elapsed_s   = 0.0f;
 
-    /* immediately warp OS cursor to starting point -----------------------*/
+    /* warp OS cursor (LOCAL coords) */
     glfwSetCursorPos(m_window, m_first_pos.x, m_first_pos.y);
-    ImGui::GetIO().AddMousePosEvent(m_first_pos.x, m_first_pos.y);
+
+    /* feed ImGui GLOBAL coords so hover works */
+    ImVec2 global_start = _local_to_global(m_window, m_first_pos);
+    ImGui::GetIO().AddMousePosEvent(global_start.x, global_start.y);
 
     m_state = State::Move;
+}
+
+
+//  "start_mouse_press"
+//
+void ActionExecutor::start_mouse_press(bool left_button)
+{
+    ImGui::GetIO().AddMouseButtonEvent( left_button ? ImGuiMouseButton_Left : ImGuiMouseButton_Right, true );
+    m_state = State::None;   // completes instantly
     return;
 }
 
+
+//  "start_mouse_release"
+//
+void ActionExecutor::start_mouse_release(bool left_button)
+{
+    ImGui::GetIO().AddMouseButtonEvent( left_button ? ImGuiMouseButton_Left : ImGuiMouseButton_Right, false );
+    m_state = State::None;
+    return;
+}
+
+    
+    
 
 //  "start_button_action"
 //
@@ -174,25 +217,28 @@ bool ActionExecutor::busy() const
 //
 void ActionExecutor::update()
 {
-    if (m_state == State::None || m_window == nullptr)
-        return;
+    if ( m_state == State::None || m_window == nullptr )    { return; }
 
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO &   io      = ImGui::GetIO();
 
     switch (m_state)
     {
         case State::Move:
         {
-            m_elapsed_s += io.DeltaTime;
-            float t = std::clamp(m_elapsed_s / m_duration_s, 0.0f, 1.0f);
-            ImVec2 pos = ImLerp(m_first_pos, m_last_pos, t);
+            m_elapsed_s                += io.DeltaTime;
+            float       t               = std::clamp(m_elapsed_s / m_duration_s, 0.0f, 1.0f);
+            ImVec2      pos             = ImLerp(m_first_pos, m_last_pos, t);
 
+            /* move OS cursor (LOCAL) */
             glfwSetCursorPos(m_window, pos.x, pos.y);
-            io.AddMousePosEvent(pos.x, pos.y);
 
-            if (t >= 1.0f)
-                m_state = State::ButtonDown;
-        } break;
+            /* echo GLOBAL position to ImGui */
+            ImVec2      global_pos      = _local_to_global(m_window, pos);
+            io.AddMousePosEvent(global_pos.x, global_pos.y);
+
+            if (t >= 1.0f)      { m_state = State::ButtonDown; }
+            break;
+        }
 
         case State::ButtonDown:
             io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);

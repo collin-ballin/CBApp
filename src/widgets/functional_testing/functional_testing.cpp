@@ -742,8 +742,30 @@ inline void ActionComposer::_dispatch_execution(Action & act)
             );
             break;
         }
+        
+        //  2.  SINGLE MOUSE CLICK...
+        case ActionType::MouseClick: {
+            break;
+        }
+        
+        //  3.  MOUSE PRESS...
+        case ActionType::MousePress: {
+            m_executor.start_mouse_press( act.press.left_button );
+            break;
+        }
+        
+        //  4.  MOUSE RELEASE...
+        case ActionType::MouseRelease: {
+            m_executor.start_mouse_release( act.release.left_button );
+            break;
+        }
+        
+        //  5.  MOUSE DRAG...
+        case ActionType::MouseDrag: {
+            break;
+        }
 
-        //  2.  HOTKEY PRESS...
+        //  6.  HOTKEY PRESS...
         case ActionType::Hotkey: {
             m_executor.start_button_action(
                 m_glfw_window,
@@ -755,7 +777,7 @@ inline void ActionComposer::_dispatch_execution(Action & act)
             break;
         }
 
-        //  3.  DEFAULT...
+        //  ?.  DEFAULT...
         default: {
             break;
         }
@@ -837,6 +859,12 @@ inline void ActionComposer::_ui_cursor_move(Action & a)
 //
 inline void ActionComposer::_ui_mouse_click(Action & a)
 {
+    label("Button:");
+    const char * btn_names[]{"Left", "Right"};
+    int b = a.click.left_button ? 0 : 1;
+    if (ImGui::Combo("##btn", &b, btn_names, 2))
+        a.click.left_button = (b == 0);
+
     return;
 }
 
@@ -845,7 +873,11 @@ inline void ActionComposer::_ui_mouse_click(Action & a)
 //
 inline void ActionComposer::_ui_mouse_press(Action & a)
 {
-    return;
+    label("Button:");
+    const char* names[]{"Left","Right"};
+    int b = a.press.left_button ? 0 : 1;
+    if (ImGui::Combo("##press_btn", &b, names, 2))
+        a.press.left_button = (b==0);
 }
 
 
@@ -853,7 +885,11 @@ inline void ActionComposer::_ui_mouse_press(Action & a)
 //
 inline void ActionComposer::_ui_mouse_release(Action & a)
 {
-    return;
+    label("Button:");
+    const char* names[]{"Left","Right"};
+    int b = a.release.left_button ? 0 : 1;
+    if (ImGui::Combo("##rel_btn", &b, names, 2))
+        a.release.left_button = (b==0);
 }
 
 
@@ -861,7 +897,26 @@ inline void ActionComposer::_ui_mouse_release(Action & a)
 //
 inline void ActionComposer::_ui_mouse_drag(Action & a)
 {
-    return;
+    label("Begin:");
+    ImGui::DragFloat2("##drag_from", (float*)&a.drag.from, 1.f, 0.f, FLT_MAX, "%.0f");
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Auto##drag_from"))
+        _begin_cursor_capture(&a.drag.from);
+
+    label("End:");
+    ImGui::DragFloat2("##drag_to", (float*)&a.drag.to, 1.f, 0.f, FLT_MAX, "%.0f");
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Auto##drag_to"))
+        _begin_cursor_capture(&a.drag.to);
+
+    label("Duration:");
+    ImGui::DragFloat("##drag_dur", &a.drag.duration, 0.05f, 0.f, 10.f, "%.2f s");
+
+    label("Button:");
+    const char* btn[]{"Left", "Right"};
+    int b = a.drag.left_button ? 0 : 1;
+    if (ImGui::Combo("##drag_btn", &b, btn, 2))
+        a.drag.left_button = (b == 0);
 }
 
 
