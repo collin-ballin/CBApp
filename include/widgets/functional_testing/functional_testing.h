@@ -56,6 +56,7 @@
 
 
 //  0.3     "DEAR IMGUI" HEADERS...
+#include "json.hpp"
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "imgui_internal.h"
@@ -79,6 +80,13 @@
 #ifdef __EMSCRIPTEN__
 # include "../../libs/emscripten/emscripten_mainloop_stub.h"
 #endif
+
+
+
+
+
+
+namespace                       cb                         { namespace app { class AppState; } }
 
 
 
@@ -150,6 +158,7 @@ struct ActionExecutor
     ImVec2                              m_last_pos                      {  };        // destination mouse-cursor pos
     float                               m_duration_s                    { 0.0f };  // total move time
     float                               m_elapsed_s                     { 0.0f };  // accumulated time
+    bool                                m_drag_button_left              { true };
     
     // *************************************************************************** //
     //
@@ -189,8 +198,10 @@ struct ActionExecutor
     // *************************************************************************** //
     void                                start_cursor_move                   (GLFWwindow * window, ImVec2 first, ImVec2 last, float duration_s);
     //
-    void                                start_mouse_press                   (bool left_button);
-    void                                start_mouse_release                 (bool left_button);
+    void                                start_mouse_click                   (GLFWwindow * window, bool left_button);
+    void                                start_mouse_press                   (GLFWwindow * window, bool left_button);
+    void                                start_mouse_release                 (GLFWwindow * window, bool left_button);
+    void                                start_mouse_drag                    (GLFWwindow * window, ImVec2 from, ImVec2 to, float  dur_s, bool left_button);
     //
     void                                start_button_action                 (GLFWwindow * window, ImGuiKey key, bool ctrl, bool shift, bool alt);
     //
@@ -220,11 +231,12 @@ struct ActionExecutor
     // *************************************************************************** //
     
     //  "_local_to_global"
-    inline ImVec2 _local_to_global(GLFWwindow* w, ImVec2 local)
+    inline ImVec2 _local_to_global(GLFWwindow * win, ImVec2 local)
     {
-        int wx, wy;
-        glfwGetWindowPos(w, &wx, &wy);
-        return { local.x + (float)wx, local.y + (float)wy };
+        int wx{}, wy{};
+        glfwGetWindowPos(win, &wx, &wy);
+        return { local.x + static_cast<float>(wx),
+                 local.y + static_cast<float>(wy) };
     }
     
     // *************************************************************************** //
@@ -361,6 +373,7 @@ public:
 // *************************************************************************** //
 protected:
     //                              IMPORTANT DATA:
+    app::AppState &                     CBAPP_STATE_NAME;
     GLFWwindow *                        m_glfw_window;
     ActionExecutor                      m_executor                              {  };
     std::vector<Composition>            m_compositions                          { 1 };
@@ -406,8 +419,9 @@ public:
     // *************************************************************************** //
     //      INITIALIZATION METHODS.         |   "init.cpp" ...
     // *************************************************************************** //
-                                        ActionComposer          (void)      = default;
     explicit                            ActionComposer          (GLFWwindow *);
+    explicit                            ActionComposer          (app::AppState & src);
+    //explicit                            ActionComposer          (::app::AppState & src, GLFWwindow *);
                                         ~ActionComposer         (void)      = default;
     // *************************************************************************** //
     //
@@ -461,6 +475,9 @@ protected:
     void                                _overlay_ui_none                    (void);
     void                                _overlay_ui_run                     (void);
     void                                _overlay_ui_capture                 (void);
+    //
+    //                              MISC UI CONTENT:
+    void                                _draw_settings_menu                 (void);
     
     
     
@@ -503,10 +520,13 @@ protected:
     //      UTILITY FUNCTIONS...
     // *************************************************************************** //
     
-    inline bool                         _begin_cursor_capture           (ImVec2 * destination);
+    inline bool                         _begin_cursor_capture           (Action & act, ImVec2 * destination);
     inline void                         _update_capture                 (void);
     inline void                         _refresh_monitor_cache          (ImVec2);
-    
+    //
+    //                              SERIALIZATION:
+    bool                                save_to_file                    (const std::string & path) const;
+    bool                                load_from_file                  (const std::string & path);
     
     
     
@@ -570,17 +590,16 @@ protected:
         
     //  "_load_actions_from_comp"
     //
-    inline void _load_actions_from_comp(void) {
-        /* copy actions out of selected composition */
-        //  comp_index              = std::clamp(comp_index, 0, static_cast<int>(m_compositions.size()) - 1);
-        //  m_comp_sel              = comp_index;
-    
-        m_actions               = &m_compositions[m_comp_sel].actions;
-        m_sel                   = -1;          // clear action selection
-        m_play_index            = -1;          // reset executor position
+    inline void _load_actions_from_comp(int comp_index)
+    {
+        if ( m_compositions.empty() )   { return; }
 
-
+        comp_index              = std::clamp( comp_index, 0, static_cast<int>(m_compositions.size()) - 1 );
         this->reset_all();
+        
+        m_comp_sel              = comp_index;
+        m_actions               = &m_compositions[m_comp_sel].actions;
+        
         return;
     }
 

@@ -29,8 +29,8 @@
 #include "utility/utility.h"
 #include "utility/pystream/pystream.h"
 #include "widgets/widgets.h"
-//  //  #include "app/_init.h"
 #include "app/state/state.h"
+//  #include "widgets/functional_testing/functional_testing.h"
 //
 #include "app/c_counter/c_counter.h"        //  Seperate Application Classes.
 #include "app/editor_app/editor_app.h"

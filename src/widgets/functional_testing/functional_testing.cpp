@@ -10,6 +10,7 @@
 **************************************************************************************
 **************************************************************************************/
 #include "widgets/functional_testing/functional_testing.h"
+#include "app/state/state.h"
 
 
 namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
@@ -35,12 +36,20 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 
 //  Default Constructor.
 //
-ActionComposer::ActionComposer(GLFWwindow * window)     : m_glfw_window(window)
+ActionComposer::ActionComposer(GLFWwindow * window)
+    : m_glfw_window(window)
+    , CBAPP_STATE_NAME(app::AppState::instance())          // ← initialise the reference
 {
     m_actions = &m_compositions.front().actions;   // initial seat
 }
 
 
+ActionComposer::ActionComposer(app::AppState & src)
+    : CBAPP_STATE_NAME(src)          // ← initialise the reference
+{
+    m_glfw_window   = S.m_glfw_window;
+    m_actions       = &m_compositions.front().actions;   // initial seat
+}
 
 
 
@@ -145,19 +154,21 @@ void ActionComposer::_draw_composition_selector(void)
 {
     //  1.  ADD A NEW COMPOSITION...
     if ( ImGui::Button("+ Add Composition") ) {
-    
-        m_compositions.emplace_back();
-        m_comp_sel = static_cast<int>(m_compositions.size()) - 1;
-        _load_actions_from_comp();     // already resets pointers & executor
+        _save_actions_to_comp();                       // persist current comp
+        m_compositions.emplace_back();                 // push default
+        int new_idx = static_cast<int>(m_compositions.size()) - 1;
+        _load_actions_from_comp(new_idx);              // select & reset state
     }
     
     ImGui::SameLine();
     
     ImGui::BeginDisabled(m_compositions.size() < 1);
-        if ( ImGui::Button("- Delete") ) {
+        if ( ImGui::Button("- Delete") )
+        {
+            _save_actions_to_comp();                       // persist before erase
             m_compositions.erase(m_compositions.begin() + m_comp_sel);
-            m_comp_sel = std::clamp(m_comp_sel, 0, (int)m_compositions.size() - 1);
-            _load_actions_from_comp();
+            int next = std::clamp( m_comp_sel, 0, static_cast<int>(m_compositions.size()) - 1 );
+            _load_actions_from_comp(next);
         }
     ImGui::EndDisabled();
 
@@ -171,10 +182,8 @@ void ActionComposer::_draw_composition_selector(void)
         bool selected = (i == m_comp_sel);
         if (ImGui::Selectable(m_compositions[i].name.c_str(), selected))
         {
-            // store previous comp, then load new //
-            _save_actions_to_comp();
-            m_comp_sel = i;
-            _load_actions_from_comp();
+            _save_actions_to_comp();       // save previous selection
+            _load_actions_from_comp(i);    // switch to new selection
         }
         ImGui::PopID();
     }
@@ -389,41 +398,66 @@ void ActionComposer::_draw_action_inspector(void)
 //
 void ActionComposer::_draw_renderer_visuals(void)
 {
-    ImDrawList *        dl                  = ImGui::GetForegroundDrawList();
-    int                 wx{},   wy{};
-    auto                draw_rect_marker    = [&](ImVec2 p) {
-        ImVec2 p_min = { p.x - ms_VIS_RECT_HALF, p.y - ms_VIS_RECT_HALF };
-        ImVec2 p_max = { p.x + ms_VIS_RECT_HALF, p.y + ms_VIS_RECT_HALF };
+    if (!m_render_visuals || m_glfw_window == nullptr)
+        return;
+
+    if (m_sel < 0 || m_sel >= static_cast<int>(m_actions->size()))
+        return;
+
+    const Action& act = (*m_actions)[m_sel];
+    if (act.type != ActionType::CursorMove &&
+        act.type != ActionType::MouseDrag)
+        return;
+
+    /* choose the two points we need to mark */
+    ImVec2 local_a{}, local_b{};
+    if (act.type == ActionType::CursorMove) {
+        local_a = act.cursor.first;
+        local_b = act.cursor.last;
+    } else {                                // MouseDrag
+        local_a = act.drag.from;
+        local_b = act.drag.to;
+    }
+
+    /* convert to GLOBAL screen coords */
+    int wx{}, wy{};
+    glfwGetWindowPos(m_glfw_window, &wx, &wy);
+    ImVec2 global_a = { local_a.x + wx, local_a.y + wy };
+    ImVec2 global_b = { local_b.x + wx, local_b.y + wy };
+
+    /* helper: find viewport that contains point */
+    auto viewport_for = [](ImVec2 p) -> ImGuiViewport*
+    {
+        const ImGuiPlatformIO& pio = ImGui::GetPlatformIO();
+        for (ImGuiViewport* vp : pio.Viewports)
+            if (p.x >= vp->Pos.x && p.x < vp->Pos.x + vp->Size.x &&
+                p.y >= vp->Pos.y && p.y < vp->Pos.y + vp->Size.y)
+                return vp;
+        return ImGui::GetMainViewport();     // fallback
+    };
+
+    ImGuiViewport* vp_a = viewport_for(global_a);
+    ImGuiViewport* vp_b = viewport_for(global_b);
+
+    auto draw_rect = [](ImDrawList* dl, ImVec2 center)
+    {
+        const float HALF = ms_VIS_RECT_HALF;
+        ImVec2 p_min = { center.x - HALF, center.y - HALF };
+        ImVec2 p_max = { center.x + HALF, center.y + HALF };
         dl->AddRect(p_min, p_max, ms_VIS_COLOR, 0.0f, 0, ms_VIS_THICK);
     };
 
+    /* draw on each relevant viewport’s foreground list */
+    ImDrawList* dl_a = ImGui::GetForegroundDrawList(vp_a);
+    ImDrawList* dl_b = (vp_b == vp_a) ? dl_a
+                                      : ImGui::GetForegroundDrawList(vp_b);
 
-    //  CASE 0 :    EARLY OUT IF:   (1) VISIBILITY IS DISABLED.     (2) NO ACTION SELECTED...
-    //
-    if ( !m_render_visuals )                                             { return; }
-    if ( m_sel < 0 || m_sel >= static_cast<int>(m_actions->size()) )    { return; }
+    /* connecting line (draw only once if both in same viewport) */
+    dl_a->AddLine(global_a, global_b, ms_VIS_COLOR, ms_VIS_THICK);
 
-
-    //  CASE 1 :    EARLY OUT IF ACTION IS NOT A CURSOR-MOTION...
-    const Action &      act             = (*m_actions)[m_sel];
-    if ( act.type != ActionType::CursorMove )                           { return; }
-
-
-
-    //  1.  CONVERT GUI-COORDS. TO SCREEN-COORDS.
-    glfwGetWindowPos(m_glfw_window, &wx, &wy);
-    ImVec2              begin           = { act.cursor.first.x + wx,    act.cursor.first.y + wy };
-    ImVec2              end             = { act.cursor.last.x  + wx,    act.cursor.last.y  + wy };
-        
-
-    //  2.  RENDER THE VISUALS...
-    dl->AddLine( begin, end, ms_VIS_COLOR, ms_VIS_THICK );
-    //
-    draw_rect_marker( begin );
-    draw_rect_marker( end   );
-    
-    
-    return;
+    draw_rect(dl_a, global_a);
+    if (dl_b != dl_a)   draw_rect(dl_b, global_b);
+    else                draw_rect(dl_a, global_b);
 }
 
 
@@ -443,13 +477,15 @@ void ActionComposer::_draw_renderer_visuals(void)
 //
 void ActionComposer::_draw_controlbar(void)
 {
-    static constexpr const char *   uuid            = "##Editor_Controls_Columns";
-    static constexpr int            NC              = 8;
-    static ImGuiOldColumnFlags      COLUMN_FLAGS    = ImGuiOldColumnFlags_None;
-    static ImVec2                   WIDGET_SIZE     = ImVec2( -1,  32 );
-    static ImVec2                   BUTTON_SIZE     = ImVec2( 22,   WIDGET_SIZE.y );
+    static constexpr const char *   uuid                    = "##Editor_Controls_Columns";
+    static constexpr int            NC                      = 9;
+    static constexpr const char *   SETTINGS_MENU_UUID      = "ActionComposer_SettingsMenu";
     //
-    constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
+    static ImGuiOldColumnFlags      COLUMN_FLAGS            = ImGuiOldColumnFlags_None;
+    static ImVec2                   WIDGET_SIZE             = ImVec2( -1,  32 );
+    static ImVec2                   BUTTON_SIZE             = ImVec2( 22,   WIDGET_SIZE.y );
+    //
+    constexpr ImGuiButtonFlags      BUTTON_FLAGS            = ImGuiOldColumnFlags_NoPreserveWidths;
     
     //this->S.PushFont( Font::Small );
    
@@ -535,20 +571,37 @@ void ActionComposer::_draw_controlbar(void)
         //
         if ( this->is_running() )       { ImGui::Text("running: %d / %zu", m_play_index + 1, m_actions->size()); }
         else                            { ImGui::Text("idle"); }
-        
-        
 
 
 
+        //  7.  SETTINGS MENU...
+        ImGui::NextColumn();
+        ImGui::TextDisabled("Settings:");
         
-        //  7.  EMPTY SPACES FOR LATER...
+        if ( ImGui::Button("+") )       { ImGui::OpenPopup("ActionsPopup"); }
+
+        if ( ImGui::BeginPopup("ActionsPopup") )              // draw the popup
+        {
+            ImGui::SeparatorText("Action Composer Settings...");         // header
+
+            this->_draw_settings_menu();
+
+            ImGui::EndPopup();
+        }
+
+
+
+
+
+        
+        //  8.  EMPTY SPACES FOR LATER...
         for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
             ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
         }
 
 
         //  X.  MOUSE COORDINATES...
-        ImGui::TextDisabled("Mouse Position:");
+        ImGui::TextDisabled("Global Position:");
         //ImVec2 mpos = ImGui::GetMousePos();
         ImVec2 mpos = this->get_cursor_pos();
         
@@ -581,9 +634,12 @@ void ActionComposer::_draw_overlay(void)
     ImVec2                                  mpos            = ImGui::GetMousePos();
     ImVec2                                  pos             = mpos + ms_OVERLAY_OFFSET;
 
-    if ( !m_show_overlay )                                          { return; }
-    if ( glfwGetWindowAttrib(m_glfw_window, GLFW_FOCUSED) == 0 )    { return; }
-
+    if ( !m_show_overlay )                  { return; }
+    if ( ImGui::GetIO().AppFocusLost )
+    {
+        return;
+    }
+    //if ( glfwGetWindowAttrib(m_glfw_window, GLFW_FOCUSED) == 0 )    { return; }
 
     //  1.  CACHE CURRENT MONITOR DATA...
     _refresh_monitor_cache(mpos);
@@ -599,13 +655,16 @@ void ActionComposer::_draw_overlay(void)
     ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
     //  ImGuiViewport * vp = ImGui::GetMainViewport();
     //  ImGui::SetNextWindowViewport(vp->ID);               //  pin to main viewport
-        if ( ImGui::Begin("##ac_overlay", nullptr, flags) )
+    
+        //if ( ImGui::Begin("##ac_overlay", nullptr, flags) )
+        if ( ImGui::BeginTooltip() )
         {
             this->_dispatch_overlay_content();
             m_overlay_size  = ImGui::GetWindowSize();
         }
         
-    ImGui::End();
+    //ImGui::End();
+    ImGui::EndTooltip();
     return;
 }
 
@@ -639,7 +698,7 @@ inline void ActionComposer::_dispatch_overlay_content(void)
 //  "_overlay_ui_none"
 inline void ActionComposer::_overlay_ui_none(void)
 {
-    static constexpr const char *   FMT_STRING              = "State: %s. \t Mouse: (%.0f, %.0f)";
+    static constexpr const char *   FMT_STRING              = "%s. \t Local: (%.0f, %.0f)";
     //
     static const char *             state_str               = nullptr;
     static State                    state_cache             = static_cast<State>( static_cast<int>(this->m_state) - 1 );
@@ -750,13 +809,13 @@ inline void ActionComposer::_dispatch_execution(Action & act)
         
         //  3.  MOUSE PRESS...
         case ActionType::MousePress: {
-            m_executor.start_mouse_press( act.press.left_button );
+            m_executor.start_mouse_press( m_glfw_window, act.press.left_button );
             break;
         }
         
         //  4.  MOUSE RELEASE...
         case ActionType::MouseRelease: {
-            m_executor.start_mouse_release( act.release.left_button );
+            m_executor.start_mouse_release( m_glfw_window, act.release.left_button );
             break;
         }
         
@@ -834,7 +893,7 @@ inline void ActionComposer::_ui_cursor_move(Action & a)
     ImGui::PushID("ActionComposed_CursorMove_Begin");
         ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
         ImGui::SameLine();
-        if ( ImGui::SmallButton("auto") )           { _begin_cursor_capture(&a.cursor.first); }     // start capture for Begin
+        if ( ImGui::SmallButton("auto") )           { _begin_cursor_capture(a, &a.cursor.first); }     // start capture for Begin
     ImGui::PopID();
     
     
@@ -842,7 +901,7 @@ inline void ActionComposer::_ui_cursor_move(Action & a)
     ImGui::PushID("ActionComposed_CursorMove_End");
         ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
         ImGui::SameLine();
-        if ( ImGui::SmallButton("auto") )           { _begin_cursor_capture(&a.cursor.last); }     // start capture for Begin
+        if ( ImGui::SmallButton("auto") )           { _begin_cursor_capture(a, &a.cursor.last); }     // start capture for Begin
     ImGui::PopID();
     
     
@@ -900,23 +959,25 @@ inline void ActionComposer::_ui_mouse_drag(Action & a)
     label("Begin:");
     ImGui::DragFloat2("##drag_from", (float*)&a.drag.from, 1.f, 0.f, FLT_MAX, "%.0f");
     ImGui::SameLine();
-    if (ImGui::SmallButton("Auto##drag_from"))
-        _begin_cursor_capture(&a.drag.from);
+    if ( ImGui::SmallButton("Auto##drag_from") )
+        { _begin_cursor_capture(a, &a.drag.from); }
 
     label("End:");
     ImGui::DragFloat2("##drag_to", (float*)&a.drag.to, 1.f, 0.f, FLT_MAX, "%.0f");
     ImGui::SameLine();
-    if (ImGui::SmallButton("Auto##drag_to"))
-        _begin_cursor_capture(&a.drag.to);
+    if ( ImGui::SmallButton("Auto##drag_to") )
+        { _begin_cursor_capture(a, &a.drag.to); }
 
     label("Duration:");
     ImGui::DragFloat("##drag_dur", &a.drag.duration, 0.05f, 0.f, 10.f, "%.2f s");
 
     label("Button:");
-    const char* btn[]{"Left", "Right"};
-    int b = a.drag.left_button ? 0 : 1;
+    const char *    btn[]   {"Left", "Right"};
+    int             b       = a.drag.left_button ? 0 : 1;
     if (ImGui::Combo("##drag_btn", &b, btn, 2))
-        a.drag.left_button = (b == 0);
+        { a.drag.left_button = (b == 0); }
+
+    return;
 }
 
 
@@ -948,12 +1009,15 @@ inline void ActionComposer::_ui_hotkey(Action & a)
 
 //  "_begin_cursor_capture"
 //
-inline bool ActionComposer::_begin_cursor_capture(ImVec2 * destination)
+inline bool ActionComposer::_begin_cursor_capture(Action & act, ImVec2 * destination)
 {
     if (m_state == State::Run)  { return false; }
-    
-    m_state             = State::Capture;
+        
+    /* detect current backend window under cursor ------------------------*/
+    GLFWwindow* hovered = glfwGetCurrentContext();   // set by ImGui backend
+    act.target          = (hovered) ? hovered : m_glfw_window;
     m_capture_dest      = destination;
+    m_state             = State::Capture;
     return true;
 }
 
@@ -1022,6 +1086,55 @@ inline void ActionComposer::_refresh_monitor_cache(ImVec2 global)
     }
 }
 
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                      OTHER UTILITY FUNCTIONS...
+// *************************************************************************** //
+
+
+//  "_draw_settings_menu"
+//
+void ActionComposer::_draw_settings_menu(void)
+{
+
+    return;
+}
+    
+    
+//  "save_to_file"
+//
+bool ActionComposer::save_to_file(const std::string & path) const
+{
+    nlohmann::json j = { {"compositions", m_compositions} };
+    std::ofstream f(path);
+    if (!f) return false;
+    f << j.dump(2);
+    return true;
+}
+
+
+//  "load_from_file"
+//
+bool ActionComposer::load_from_file(const std::string & path)
+{
+    std::ifstream f(path);
+    if (!f) return false;
+    nlohmann::json j; f >> j;
+    j.at("compositions").get_to(m_compositions);
+
+    /* refresh internal pointers / selections */
+    m_comp_sel = std::clamp(m_comp_sel, 0, static_cast<int>(m_compositions.size())-1);
+    _load_actions_from_comp(m_comp_sel);
+    return true;
+}
 
 
 

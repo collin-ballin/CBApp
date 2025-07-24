@@ -54,6 +54,7 @@
 
 
 //  0.3     "DEAR IMGUI" HEADERS...
+#include "json.hpp"
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "imgui_internal.h"
@@ -167,16 +168,43 @@ struct CursorMoveParams {
     float               duration        {1.f};
 };
 
+inline void to_json (nlohmann::json & j, const CursorMoveParams & p)
+{
+    j = { {"first", p.first},
+          {"last",  p.last},
+          {"duration", p.duration} };
+}
+
+inline void from_json(const nlohmann::json & j, CursorMoveParams & p)
+{
+    j.at("first").get_to(p.first);
+    j.at("last").get_to(p.last);
+    j.at("duration").get_to(p.duration);
+}
+
+
+
+
+
 
 //  "ClickParams"
 //
 struct ClickParams { bool left_button{true};  };
+
+inline void to_json(nlohmann::json& j, const ClickParams& p)
+{ j = { {"left", p.left_button} }; }
+inline void from_json(const nlohmann::json& j, ClickParams& p)
+{ j.at("left").get_to(p.left_button); }
+
 
 //  "DEF_CLICK_PARAM_NAMES"
 static constexpr std::array<const char *, static_cast<size_t>( ActionType::COUNT )>
 DEF_CLICK_PARAM_NAMES = {
     "Left Mouse",       "Right Mouse"
 };
+
+
+
 
 
 
@@ -190,6 +218,26 @@ struct DragParams
     bool    left_button{true};
 };
 
+inline void to_json(nlohmann::json & j, const DragParams & p)
+{
+    j = {
+        {"from",    p.from},
+        {"to",      p.to},
+        {"duration",p.duration},
+        {"left",    p.left_button}
+    };
+}
+inline void from_json(const nlohmann::json & j, DragParams & p)
+{
+    j.at("from").get_to(p.from);
+    j.at("to"  ).get_to(p.to  );
+    j.at("duration").get_to(p.duration);
+    j.at("left").get_to(p.left_button);
+}
+
+
+
+
 
 
 //  "HotkeyParams"
@@ -200,6 +248,25 @@ struct HotkeyParams {
     bool                shift           {false};
     bool                alt             {false};
 };
+
+inline void to_json(nlohmann::json& j, const HotkeyParams& p)
+{
+    j = { {"key",   p.key},
+          {"ctrl",  p.ctrl},
+          {"shift", p.shift},
+          {"alt",   p.alt} };
+}
+inline void from_json(const nlohmann::json& j, HotkeyParams& p)
+{
+    j.at("key").get_to(p.key);
+    j.at("ctrl" ).get_to(p.ctrl );
+    j.at("shift").get_to(p.shift);
+    j.at("alt"  ).get_to(p.alt  );
+}
+
+
+
+
 
 
 //  "Action"
@@ -216,8 +283,42 @@ struct Action {
     DragParams              drag;               //  <   for MouseDrag
     HotkeyParams            hotkey;             //  <   for Hotkey
 //
+    GLFWwindow *            target          = nullptr;
     bool                    enabled         = true;
 };
+
+inline void to_json(nlohmann::json& j, const Action& a)
+{
+    j = {
+        {"name",    a.name},
+        {"descr",   a.descr},
+        {"type",    static_cast<uint8_t>(a.type)},
+        {"cursor",  a.cursor},
+        {"click",   a.click},
+        {"press",   a.press},
+        {"release", a.release},
+        {"drag",    a.drag},
+        {"hotkey",  a.hotkey},
+        {"enabled", a.enabled}
+    };
+}
+
+inline void from_json(const nlohmann::json& j, Action& a)
+{
+    j.at("name").get_to(a.name);
+    j.at("descr").get_to(a.descr);
+    uint8_t t; j.at("type").get_to(t); a.type = static_cast<ActionType>(t);
+    j.at("cursor" ).get_to(a.cursor );
+    j.at("click"  ).get_to(a.click  );
+    j.at("press"  ).get_to(a.press  );
+    j.at("release").get_to(a.release);
+    j.at("drag"   ).get_to(a.drag   );
+    j.at("hotkey" ).get_to(a.hotkey );
+    j.at("enabled").get_to(a.enabled);
+}
+
+
+
 
 
 
@@ -255,8 +356,14 @@ struct Composition_t {
     std::string             description     { "description..." };
 };
 
+inline void to_json(nlohmann::json& j, const Composition_t& c)
+{ j = { {"name", c.name}, {"actions", c.actions} }; }
 
-
+inline void from_json(const nlohmann::json& j, Composition_t& c)
+{
+    j.at("name").get_to(c.name);
+    j.at("actions").get_to(c.actions);
+}
 
 
 

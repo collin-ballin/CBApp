@@ -138,10 +138,10 @@ void ActionExecutor::start_cursor_move(GLFWwindow* window, ImVec2 first, ImVec2 
     m_duration_s  = std::max(duration_s, ms_MIN_DURATION_S);
     m_elapsed_s   = 0.0f;
 
-    /* warp OS cursor (LOCAL coords) */
+    /* warp to start (LOCAL) */
     glfwSetCursorPos(m_window, m_first_pos.x, m_first_pos.y);
 
-    /* feed ImGui GLOBAL coords so hover works */
+    /* echo GLOBAL position to ImGui */
     ImVec2 global_start = _local_to_global(m_window, m_first_pos);
     ImGui::GetIO().AddMousePosEvent(global_start.x, global_start.y);
 
@@ -149,25 +149,52 @@ void ActionExecutor::start_cursor_move(GLFWwindow* window, ImVec2 first, ImVec2 
 }
 
 
+//  "start_mouse_click"
+//
+void ActionExecutor::start_mouse_click(GLFWwindow * window, bool left_button)
+{
+    m_window        = window;
+    ImGuiIO & io    = ImGui::GetIO();
+    io.AddMouseButtonEvent(left_button ? 0 : 1, true);
+    io.AddMouseButtonEvent(left_button ? 0 : 1, false);
+    m_state         = State::None;
+    return;
+}
+
+
 //  "start_mouse_press"
 //
-void ActionExecutor::start_mouse_press(bool left_button)
+void ActionExecutor::start_mouse_press(GLFWwindow * window, bool left_button)
 {
-    ImGui::GetIO().AddMouseButtonEvent( left_button ? ImGuiMouseButton_Left : ImGuiMouseButton_Right, true );
-    m_state = State::None;   // completes instantly
+    m_window    = window;
+    ImGui::GetIO().AddMouseButtonEvent(left_button ? 0 : 1, true);
+    m_state     = State::None;
     return;
 }
 
 
 //  "start_mouse_release"
 //
-void ActionExecutor::start_mouse_release(bool left_button)
+void ActionExecutor::start_mouse_release(GLFWwindow * window, bool left_button)
 {
-    ImGui::GetIO().AddMouseButtonEvent( left_button ? ImGuiMouseButton_Left : ImGuiMouseButton_Right, false );
-    m_state = State::None;
+    m_window    = window;
+    ImGui::GetIO().AddMouseButtonEvent(left_button ? 0 : 1, false);
+    m_state     = State::None;
     return;
 }
 
+
+//  "start_mouse_drag"
+//
+void ActionExecutor::start_mouse_drag(GLFWwindow * window, ImVec2 from, ImVec2 to, float  dur_s, bool left_button)
+{
+    start_cursor_move(window, from, to, dur_s); // sets Move phase
+    /* Begin with button held */
+    ImGui::GetIO().AddMouseButtonEvent(left_button ? 0 : 1, true);
+    m_state = State::Move;                      // will auto-release in update()
+    m_drag_button_left = left_button;           // store which button to release
+    return;
+}
     
     
 
@@ -215,7 +242,7 @@ bool ActionExecutor::busy() const
 
 //  "update"
 //
-void ActionExecutor::update()
+void ActionExecutor::update(void)
 {
     if ( m_state == State::None || m_window == nullptr )    { return; }
 
@@ -223,8 +250,7 @@ void ActionExecutor::update()
 
     switch (m_state)
     {
-        case State::Move:
-        {
+        case State::Move: {
             m_elapsed_s                += io.DeltaTime;
             float       t               = std::clamp(m_elapsed_s / m_duration_s, 0.0f, 1.0f);
             ImVec2      pos             = ImLerp(m_first_pos, m_last_pos, t);
@@ -240,19 +266,24 @@ void ActionExecutor::update()
             break;
         }
 
-        case State::ButtonDown:
+        case State::ButtonDown: {
             io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
             m_state = State::ButtonUp;
             break;
-
-        case State::ButtonUp:
+        }
+        
+        case State::ButtonUp: {
             io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
             m_state = State::None;
             break;
+        }
 
-        default:  /* fall-through to satisfy compiler */
+        default:  {/* fall-through to satisfy compiler */
             break;
+        }
     }
+    
+    return;
 }
 
 // 
