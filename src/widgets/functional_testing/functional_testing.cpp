@@ -18,220 +18,6 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 
 
 
-// ──────────────────────────────────────────────────────────────
-//  FunctionalTestRunner
-//      • owns its own state
-//      • called once per frame from the testing window
-// ──────────────────────────────────────────────────────────────
-struct FunctionalTestRunner {
-    enum class Phase { Idle, Move, Down, Up };
-    Phase       phase      = Phase::Idle;
-    ImVec2      start_pos  {}, target_pos {};
-    float       duration   = 0.0f, elapsed = 0.0f;
-    GLFWwindow* window     = nullptr;
-
-    // start a new script -------------------------------------------------------
-    void start(GLFWwindow* win, ImVec2 target, float seconds)
-    {
-        window     = win;
-        target_pos = target;
-        duration   = std::max(0.001f, seconds);
-        elapsed    = 0.0f;
-
-        // **real HW position**
-        double cx, cy;
-        glfwGetCursorPos(window, &cx, &cy);
-        start_pos = ImVec2(static_cast<float>(cx), static_cast<float>(cy));
-
-        // sync ImGui so both views agree
-        ImGui::GetIO().AddMousePosEvent(start_pos.x, start_pos.y);
-
-        phase = Phase::Move;
-    }
-
-    // abort immediately --------------------------------------------------------
-    void abort()
-    {
-        phase   = Phase::Idle;
-        elapsed = 0.0f;
-        // also resync ImGui with wherever the OS cursor sits now
-        if (window) {
-            double cx, cy;  glfwGetCursorPos(window, &cx, &cy);
-            ImGui::GetIO().AddMousePosEvent(static_cast<float>(cx),
-                                            static_cast<float>(cy));
-        }
-    }
-
-    // one-frame update ---------------------------------------------------------
-    void update()
-    {
-        if (phase == Phase::Idle || !window) return;
-
-        ImGuiIO& io = ImGui::GetIO();
-        elapsed += io.DeltaTime;
-
-        ImVec2 desired = io.MousePos;        // default
-
-        switch (phase) {
-            case Phase::Move: {
-                float t = std::clamp(elapsed / duration, 0.0f, 1.0f);
-                desired = ImLerp(start_pos, target_pos, t);
-                if (t >= 1.0f) { phase = Phase::Down; elapsed = 0.0f; }
-                break;
-            }
-            case Phase::Down: io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
-                              phase = Phase::Up;
-                              break;
-            case Phase::Up:   io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
-                              phase = Phase::Idle;
-                              break;
-            default: break;
-        }
-
-        // Override hardware + ImGui each frame
-        glfwSetCursorPos(window, desired.x, desired.y);
-        io.AddMousePosEvent(desired.x, desired.y);
-    }
-
-    bool running() const { return phase != Phase::Idle; }
-};
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//      1.      "ActionExecutor" IMPLEMENTATION...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "start_cursor_move"
-//
-void ActionExecutor::start_cursor_move(GLFWwindow* window, ImVec2 first, ImVec2 last, float duration_s)
-{
-    m_window      = window;
-    m_first_pos   = first;
-    m_last_pos    = last;
-    m_duration_s  = std::max(duration_s, ms_MIN_DURATION_S);
-    m_elapsed_s   = 0.0f;
-
-    /* immediately warp OS cursor to starting point -----------------------*/
-    glfwSetCursorPos(m_window, m_first_pos.x, m_first_pos.y);
-    ImGui::GetIO().AddMousePosEvent(m_first_pos.x, m_first_pos.y);
-
-    m_state = State::Move;
-    return;
-}
-
-
-//  "start_button_action"
-//
-void ActionExecutor::start_button_action(GLFWwindow* window,
-                                         ImGuiKey   key,
-                                         bool       with_ctrl,
-                                         bool       with_shift,
-                                         bool       with_alt)
-{
-    m_window = window;
-
-    ImGuiIO& io = ImGui::GetIO();
-    if (with_ctrl)  io.AddKeyEvent(ImGuiKey_LeftCtrl,  true);
-    if (with_shift) io.AddKeyEvent(ImGuiKey_LeftShift, true);
-    if (with_alt)   io.AddKeyEvent(ImGuiKey_LeftAlt,   true);
-
-    io.AddKeyEvent(key, true);
-    io.AddKeyEvent(key, false);
-
-    if (with_ctrl)  io.AddKeyEvent(ImGuiKey_LeftCtrl,  false);
-    if (with_shift) io.AddKeyEvent(ImGuiKey_LeftShift, false);
-    if (with_alt)   io.AddKeyEvent(ImGuiKey_LeftAlt,   false);
-
-    m_state = State::None;            /* completes immediately                */
-}
-
-
-//  "abort"
-//
-void ActionExecutor::abort()
-{
-    m_state = State::None;
-}
-
-
-//  "busy"
-//
-bool ActionExecutor::busy() const
-{
-    return m_state != State::None;
-}
-
-
-//  "update"
-//
-void ActionExecutor::update()
-{
-    if (m_state == State::None || m_window == nullptr)
-        return;
-
-    ImGuiIO& io = ImGui::GetIO();
-
-    switch (m_state)
-    {
-        case State::Move:
-        {
-            m_elapsed_s += io.DeltaTime;
-            float t = std::clamp(m_elapsed_s / m_duration_s, 0.0f, 1.0f);
-            ImVec2 pos = ImLerp(m_first_pos, m_last_pos, t);
-
-            glfwSetCursorPos(m_window, pos.x, pos.y);
-            io.AddMousePosEvent(pos.x, pos.y);
-
-            if (t >= 1.0f)
-                m_state = State::ButtonDown;
-        } break;
-
-        case State::ButtonDown:
-            io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
-            m_state = State::ButtonUp;
-            break;
-
-        case State::ButtonUp:
-            io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
-            m_state = State::None;
-            break;
-
-        default:  /* fall-through to satisfy compiler */
-            break;
-    }
-}
-
-// 
-// 
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "ActionExecutor".
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // *************************************************************************** //
 //
 //
@@ -281,6 +67,7 @@ void ActionComposer::Begin(void)
     //  3.  DRIVE EXECUTION OF THE ACTION COMPOSITION...
     this->_drive_execution();
     this->_draw_overlay();
+    this->_draw_renderer_visuals();
     
     return;
 }
@@ -598,6 +385,51 @@ void ActionComposer::_draw_action_inspector(void)
 }
 
 
+//  "_draw_renderer_visuals"
+//
+void ActionComposer::_draw_renderer_visuals(void)
+{
+    ImDrawList *        dl                  = ImGui::GetForegroundDrawList();
+    int                 wx{},   wy{};
+    auto                draw_rect_marker    = [&](ImVec2 p) {
+        ImVec2 p_min = { p.x - ms_VIS_RECT_HALF, p.y - ms_VIS_RECT_HALF };
+        ImVec2 p_max = { p.x + ms_VIS_RECT_HALF, p.y + ms_VIS_RECT_HALF };
+        dl->AddRect(p_min, p_max, ms_VIS_COLOR, 0.0f, 0, ms_VIS_THICK);
+    };
+
+
+    //  CASE 0 :    EARLY OUT IF:   (1) VISIBILITY IS DISABLED.     (2) NO ACTION SELECTED...
+    //
+    if ( !m_render_visuals )                                             { return; }
+    if ( m_sel < 0 || m_sel >= static_cast<int>(m_actions->size()) )    { return; }
+
+
+    //  CASE 1 :    EARLY OUT IF ACTION IS NOT A CURSOR-MOTION...
+    const Action &      act             = (*m_actions)[m_sel];
+    if ( act.type != ActionType::CursorMove )                           { return; }
+
+
+
+    //  1.  CONVERT GUI-COORDS. TO SCREEN-COORDS.
+    glfwGetWindowPos(m_glfw_window, &wx, &wy);
+    ImVec2              begin           = { act.cursor.first.x + wx,    act.cursor.first.y + wy };
+    ImVec2              end             = { act.cursor.last.x  + wx,    act.cursor.last.y  + wy };
+        
+
+    //  2.  RENDER THE VISUALS...
+    dl->AddLine( begin, end, ms_VIS_COLOR, ms_VIS_THICK );
+    //
+    draw_rect_marker( begin );
+    draw_rect_marker( end   );
+    
+    
+    return;
+}
+
+
+
+
+
 
 // *************************************************************************** //
 //
@@ -607,7 +439,6 @@ void ActionComposer::_draw_action_inspector(void)
 //          SECONDARY UI FUNCTIONS...
 // *************************************************************************** //
 
-
 //  "_draw_controlbar"
 //
 void ActionComposer::_draw_controlbar(void)
@@ -616,7 +447,7 @@ void ActionComposer::_draw_controlbar(void)
     static constexpr int            NC              = 8;
     static ImGuiOldColumnFlags      COLUMN_FLAGS    = ImGuiOldColumnFlags_None;
     static ImVec2                   WIDGET_SIZE     = ImVec2( -1,  32 );
-    static ImVec2                   BUTTON_SIZE     = ImVec2( 32,   WIDGET_SIZE.y );
+    static ImVec2                   BUTTON_SIZE     = ImVec2( 22,   WIDGET_SIZE.y );
     //
     constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
     
@@ -642,7 +473,7 @@ void ActionComposer::_draw_controlbar(void)
                 if ( ImGui::Button("Run All", WIDGET_SIZE) ) {
                     m_play_index        = (m_sel >= 0           ? m_sel             : 0);
                     m_is_running        = !m_actions->empty();
-                    m_state             = (m_actions->empty())   ? State::None       : State::Run;
+                    m_state             = (m_actions->empty())   ? State::Idle       : State::Run;
                 }
             }
             else
@@ -670,7 +501,7 @@ void ActionComposer::_draw_controlbar(void)
     
         //  3.  STEP BUTTON...
         ImGui::NextColumn();        ImGui::NewLine();
-        ImGui::BeginDisabled( !this->is_running() || m_actions->size() < 2 );
+        ImGui::BeginDisabled( !this->is_running() || m_actions->size() < 1 );
             if ( ImGui::Button("Step", WIDGET_SIZE) )
             {
                 m_play_index    = (m_play_index + 1) % (int)m_actions->size();
@@ -680,7 +511,7 @@ void ActionComposer::_draw_controlbar(void)
 
 
 
-        //  4.  OVERVIEW...
+        //  4.  [TOGGLE]    OVERVIEW...
         ImGui::NextColumn();
         ImGui::TextDisabled("Overlay:");
         //
@@ -689,7 +520,16 @@ void ActionComposer::_draw_controlbar(void)
 
 
 
-        //  5.  INFO...
+        //  5.  [TOGGLE]    RENDER VISUALS...
+        ImGui::NextColumn();
+        ImGui::TextDisabled("Render Visuals:");
+        //
+        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::Checkbox("##ActionComposer_RenderVisualsToggle",     &m_render_visuals);
+
+
+
+        //  6.  INFO...
         ImGui::NextColumn();
         ImGui::TextDisabled("Info:");
         //
@@ -701,7 +541,7 @@ void ActionComposer::_draw_controlbar(void)
 
 
         
-        //  6.  EMPTY SPACES FOR LATER...
+        //  7.  EMPTY SPACES FOR LATER...
         for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
             ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
         }
@@ -729,8 +569,6 @@ void ActionComposer::_draw_controlbar(void)
 //
 void ActionComposer::_draw_toolbar(void)
 {
-
-
     return;
 }
 
@@ -740,20 +578,33 @@ void ActionComposer::_draw_toolbar(void)
 void ActionComposer::_draw_overlay(void)
 {
     static constexpr ImGuiWindowFlags       flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-    ImVec2                                  cursor_pos      = ImGui::GetMousePos();
-    ImVec2                                  win_pos         = cursor_pos + ms_OVERLAY_OFFSET;
-
+    ImVec2                                  mpos            = ImGui::GetMousePos();
+    ImVec2                                  pos             = mpos + ms_OVERLAY_OFFSET;
 
     if ( !m_show_overlay )                                          { return; }
     if ( glfwGetWindowAttrib(m_glfw_window, GLFW_FOCUSED) == 0 )    { return; }
 
 
-    ImGui::SetNextWindowBgAlpha(0.5f);   // semi-transparent
-    ImGui::SetNextWindowPos(win_pos, ImGuiCond_Always);
+    //  1.  CACHE CURRENT MONITOR DATA...
+    _refresh_monitor_cache(mpos);
+
+
+    //  2.  CLAMP INSIDE CACHED MONITOR WORKSPACE...
+    pos.x       = std::clamp( pos.x,        m_monitor_bounds.Min.x,       m_monitor_bounds.Max.x - m_overlay_size.x );
+    pos.y       = std::clamp( pos.y,        m_monitor_bounds.Min.y,       m_monitor_bounds.Max.y - m_overlay_size.y );
+
+
+
+    ImGui::SetNextWindowBgAlpha(ms_OVERLAY_ALPHA);
+    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+    //  ImGuiViewport * vp = ImGui::GetMainViewport();
+    //  ImGui::SetNextWindowViewport(vp->ID);               //  pin to main viewport
         if ( ImGui::Begin("##ac_overlay", nullptr, flags) )
         {
             this->_dispatch_overlay_content();
+            m_overlay_size  = ImGui::GetWindowSize();
         }
+        
     ImGui::End();
     return;
 }
@@ -844,7 +695,7 @@ void ActionComposer::_drive_execution(void)
     if ( !m_executor.busy() && this->is_running() )
     {
         if ( m_play_index < 0 || m_play_index >= static_cast<int>(m_actions->size()) ) {
-            m_state         = State::None;
+            m_state         = State::Idle;
             m_is_running    = false;
             m_step_req      = false;
             m_play_index    = -1;
@@ -862,7 +713,7 @@ void ActionComposer::_drive_execution(void)
         else                            { ++m_play_index;       }               //  RUNNING **ALL** ACTIONS...
             
         if ( this->is_running() && m_play_index >= static_cast<int>(m_actions->size()) ) {
-            m_state         = State::None;
+            m_state         = State::Idle;
             m_is_running    = false;
             m_play_index    = -1;
         }
@@ -934,10 +785,19 @@ inline void ActionComposer::_dispatch_action_ui(Action & a)
     
     switch(a.type)
     {
-        case ActionType::CursorMove:        { this->_ui_cursor_move(a); break;       }
-        case ActionType::Hotkey:            { this->_ui_cursor_move(a); break;       }
+        case ActionType::CursorMove:        { this->_ui_cursor_move(a);         break;       }
+        //
+        case ActionType::MouseClick:        { this->_ui_mouse_click(a);         break;       }
+        case ActionType::MousePress:        { this->_ui_mouse_press(a);         break;       }
+        case ActionType::MouseRelease:      { this->_ui_mouse_release(a);       break;       }
+        case ActionType::MouseDrag:         { this->_ui_mouse_drag(a);          break;       }
+        //
+        case ActionType::Hotkey:            { this->_ui_hotkey(a);              break;       }
         default:                            { break; }
     }
+    
+    
+    
     
     return;
 }
@@ -969,6 +829,38 @@ inline void ActionComposer::_ui_cursor_move(Action & a)
     
     
     
+    return;
+}
+
+
+//  "_ui_mouse_click"
+//
+inline void ActionComposer::_ui_mouse_click(Action & a)
+{
+    return;
+}
+
+
+//  "_ui_mouse_press"
+//
+inline void ActionComposer::_ui_mouse_press(Action & a)
+{
+    return;
+}
+
+
+//  "_ui_mouse_release"
+//
+inline void ActionComposer::_ui_mouse_release(Action & a)
+{
+    return;
+}
+
+
+//  "_ui_mouse_drag"
+//
+inline void ActionComposer::_ui_mouse_drag(Action & a)
+{
     return;
 }
 
@@ -1024,7 +916,7 @@ inline void ActionComposer::_update_capture(void)
     //  ESC key ends capture...
     if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )
     {
-        m_state             = State::None;
+        m_state             = State::Idle;
         m_capture_dest      = nullptr;
         return;
     }
@@ -1037,6 +929,43 @@ inline void ActionComposer::_update_capture(void)
 }
 
 
+//  "_refresh_monitor_cache"
+//
+//      Update m_active_monitor / m_monitor_bounds when the cursor enters a new
+//      monitor.  Expects |global| = screen-space cursor coordinates.
+//
+inline void ActionComposer::_refresh_monitor_cache(ImVec2 global)
+{
+    int mon_count;
+    GLFWmonitor** monitors = glfwGetMonitors(&mon_count);
+
+    for (int i = 0; i < mon_count; ++i)
+    {
+        int mx, my, mw, mh;
+        glfwGetMonitorWorkarea(monitors[i], &mx, &my, &mw, &mh);
+        if (global.x >= mx && global.x < mx + mw &&
+            global.y >= my && global.y < my + mh)
+        {
+            if (monitors[i] != m_active_monitor)      // changed monitor
+            {
+                m_active_monitor = monitors[i];
+                m_monitor_bounds = ImRect({(float)mx,        (float)my},
+                                          {(float)(mx+mw),   (float)(my+mh)});
+            }
+            return;
+        }
+    }
+    
+    /* fallback: first monitor if none matched */
+    if (m_active_monitor == nullptr && mon_count > 0)
+    {
+        int mx, my, mw, mh;
+        glfwGetMonitorWorkarea(monitors[0], &mx, &my, &mw, &mh);
+        m_active_monitor = monitors[0];
+        m_monitor_bounds = ImRect({(float)mx,        (float)my},
+                                  {(float)(mx+mw),   (float)(my+mh)});
+    }
+}
 
 
 

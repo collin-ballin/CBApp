@@ -89,6 +89,20 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 // *************************************************************************** //
 //
 //
+//
+//      STATIC HELPER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+
+
+
+    
+// *************************************************************************** //
+//
+//
 //      0.      "ActionComposer" TYPES...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -100,7 +114,7 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 //  "ComposerState"
 //
 enum class ComposerState : uint8_t {
-    None = 0,
+    Idle = 0,
     Run,
     Capture,
     COUNT
@@ -108,7 +122,7 @@ enum class ComposerState : uint8_t {
 
 static constexpr std::array<const char *, static_cast<size_t>(ComposerState::COUNT)>
 DEF_COMPOSER_STATE_NAMES = {
-    "None", "Running", "Capturing"
+    "Idle", "Running", "Capturing"
 };
 
 
@@ -119,8 +133,14 @@ DEF_COMPOSER_STATE_NAMES = {
 
 //  "ActionType"
 //
-enum class ActionType {
+enum class ActionType : uint8_t {
     CursorMove,
+//
+    MouseClick,      // press + release immediately
+    MousePress,      // press and keep held
+    MouseRelease,    // release previously held
+    MouseDrag,       // full drag in one action (press–move–release)
+//
     Hotkey,
 //
     COUNT
@@ -130,7 +150,7 @@ enum class ActionType {
 //  "DEF_ACTION_TYPE_NAMES"
 static constexpr std::array<const char *, static_cast<size_t>( ActionType::COUNT )>
 DEF_ACTION_TYPE_NAMES = {
-    "CursorMove", "Hotkey"
+    "CursorMove",       "Mouse Click",      "Mouse Press",      "Mouse Release",        "Mouse Drag",       "Hotkey"
 };
 
 
@@ -146,6 +166,23 @@ struct CursorMoveParams {
     ImVec2              last            {};
     float               duration        {1.f};
 };
+
+
+//  "ClickParams"
+//
+struct ClickParams { bool left_button{true};  };
+
+
+//  "DragParams"
+//
+struct DragParams
+{
+    ImVec2  from{};
+    ImVec2  to{};
+    float   duration{1.f};
+    bool    left_button{true};
+};
+
 
 
 //  "HotkeyParams"

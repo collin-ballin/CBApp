@@ -109,6 +109,44 @@ void glfw_error_callback(int error, const char * description)
 }
 
 
+//  "GetActiveMonitorBounds"
+//
+[[nodiscard]] ImRect GetActiveMonitorBounds(GLFWwindow * window)
+{
+    GLFWmonitor **      monitors            = nullptr;
+    int                 monitor_count       = -1;
+    ImVec2              center              = ImVec2(-1.0f, -1.0f);
+    int                 win_x{-1},  win_y{-1},  win_w{-1},  win_h{-1};
+    int                 mx{-1},     my{-1},     mw{-1},     mh{-1};
+    
+    
+    
+    glfwGetWindowPos(   window,     &win_x,     &win_y );
+    glfwGetWindowSize(  window,     &win_w,     &win_h );
+    center                                  = { win_x + win_w * 0.5f, win_y + win_h * 0.5f };
+    monitors                                = glfwGetMonitors(&monitor_count);
+
+
+    //  CASE 1 :    ...
+    for (int i = 0; i < monitor_count; ++i)
+    {
+        glfwGetMonitorWorkarea( monitors[i], &mx, &my, &mw, &mh );
+        if ( center.x >= mx && center.x < mx + mw &&
+             center.y >= my && center.y < my + mh ) {
+            return ImRect( ImVec2((float)mx,        (float)my),
+                           ImVec2((float)(mx + mw), (float)(my + mh)) );
+        }
+    }
+    //
+    //  CASE 2 :    FALL-BACK TO FIRST MONITOR...
+    glfwGetMonitorWorkarea(monitors[0], &mx, &my, &mw, &mh);
+    
+    return ImRect( ImVec2((float)mx,            (float)my),
+                   ImVec2((float)(mx + mw),     (float)(my + mh)) );
+                  
+}
+
+
 //  "GetDPIScaling"
 //
 [[nodiscard]] float GetDPIScaling(GLFWwindow * window) {

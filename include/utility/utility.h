@@ -328,6 +328,7 @@ void                            glfw_error_callback         (int error, const ch
 // *************************************************************************** //
 [[nodiscard]]
 std::tuple<int,int>             GetMonitorDimensions        (GLFWwindow * window);
+[[nodiscard]] ImRect            GetActiveMonitorBounds      (GLFWwindow * window);
 [[nodiscard]] float             GetDPIScaling               (GLFWwindow * window);
 [[nodiscard]] float             GetDPIFontScaling           (GLFWwindow * window);
 

@@ -291,8 +291,14 @@ public:
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    //                              MISC. CONSTANTS:
+    //                              OVERLAY CONSTANTS:
     static constexpr ImVec2             ms_OVERLAY_OFFSET                       = ImVec2( 20.0f, 20.0f );
+    static constexpr float              ms_OVERLAY_ALPHA                        = 0.5f;
+    //
+    //                              RENDERER HELPER CONSTANTS:
+    static constexpr ImU32              ms_VIS_COLOR                            = 0xFF453AFF;
+    static constexpr float              ms_VIS_RECT_HALF                        = 6.0f;
+    static constexpr float              ms_VIS_THICK                            = 2.0f;
     //
     //                              WIDGET CONSTANTS:
     static constexpr size_t             ms_COMPOSITION_NAME_LIMIT               = 64ULL;
@@ -317,6 +323,9 @@ public:
     static constexpr float              ms_CONTROLBAR_SELECTABLE_SEP            = 16.0f;    //  controlbar offset.
     static constexpr float              ms_TOOLBAR_SELECTABLE_SEP               = 16.0f;    //  sep for  "+ Add",  "Prev",  etc...
     static constexpr float              ms_BROWSER_SELECTABLE_SEP               = 16.0f;    //  offset for buttons ontop of each selectable
+    //
+    //                              MISC. CONSTANTS:
+    //                                  ...
     
     // *************************************************************************** //
     //
@@ -352,16 +361,20 @@ protected:
     int                                 m_sel                                   = -1;           // current selection
     int                                 m_play_index                            = -1;           // current action being executed, -1 = idle
     //
-    //
     //                              STATE:
-    State                               m_state                                 = State::None;
+    State                               m_state                                 = State::Idle;
+    bool                                m_show_overlay                          = true;
+    bool                                m_render_visuals                        = true;
+    //
+    //                              MUTABLE STATE VARIABLES:
     bool                                m_is_running                            = false;
     bool                                m_step_req                              = false;
-    bool                                m_show_overlay                          = true;
     bool                                m_capture_is_active                     = false;        //  < true while “Auto” sampling.
     //
-    //
     //                              UTILITY:
+    ImVec2                              m_overlay_size                          = { 150.f, 30.f };
+    GLFWmonitor *                       m_active_monitor                        = nullptr;
+    ImRect                              m_monitor_bounds                        {};
     ImGuiTextFilter                     m_filter;
     ImVec2 *                            m_capture_dest                          = nullptr;      //  < pointer to coord being written
     
@@ -419,6 +432,7 @@ protected:
     void                                _draw_action_selector               (void);
     void                                _draw_selector_table                (void);
     void                                _draw_action_inspector              (void);
+    void                                _draw_renderer_visuals              (void);
     
     
     
@@ -462,6 +476,12 @@ protected:
     // *************************************************************************** //
     inline void                         _dispatch_action_ui                 (Action & a);
     inline void                         _ui_cursor_move                     (Action & a);
+    //
+    inline void                         _ui_mouse_click                     (Action & a);
+    inline void                         _ui_mouse_press                     (Action & a);
+    inline void                         _ui_mouse_release                   (Action & a);
+    inline void                         _ui_mouse_drag                      (Action & a);
+    //
     inline void                         _ui_hotkey                          (Action & a);
     
     
@@ -476,6 +496,7 @@ protected:
     
     inline bool                         _begin_cursor_capture           (ImVec2 * destination);
     inline void                         _update_capture                 (void);
+    inline void                         _refresh_monitor_cache          (ImVec2);
     
     
     
@@ -508,7 +529,7 @@ protected:
     
     //  "reset_state"
     inline void                         reset_state                     (void)          {
-        m_state                 = State::None;
+        m_state                 = State::Idle;
         m_is_running            = false;
         m_capture_is_active     = false;
         return;
