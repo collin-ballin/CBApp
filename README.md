@@ -32,17 +32,28 @@
 
 
 
-- [1. Synopsis](#SYNOPSIS)
+- [1. SYNOPSIS](#SYNOPSIS)
+- [2. PURPOSE & DESIGN](#purpose-and-objectives)
+- [3. DESIGN](#design)
+  - [User Interface](#user-interface)
+    - [Overview](#overview)
   - [Theoretical Aims](#theoretical-aims)
   - [Implementation Aims](#implementation-aims)
-- [2. Purpose, Goals, and Objectives](#purpose-goals-objectives)
-  - [...](#theoretical-aims)
-- [3. Project Development Status](#project-development-status)
-- [4. The Technicalities...](#the-technicalities)
+- [4. FEATURES](#features)
+  - [The `Editor` Application](#the-editor-application)
+  - [The `Graph` Application](#the-graph-application)
+  - [The `CCounter` Application](#the-ccounter-application)
+  - [Additional Tools and Utilities](#additional-tools-and-utilities)
+    - [Functional Testing Tool](#functional-testing-tool)
+    - [Color Tool](#color-tool)
+    - [ImGui Tools](#imgui-tools)
+- [5. IMPLEMENTATION DETAILS](#implementation-details)
   - [Build System](#build-system)
-  - [macOS (Xcode)](#mac-OS)
-  - [Windows (VSCode)](#windows)
-- [5. Other](#other)
+    - [macOS (Xcode)](#mac-OS)
+    - [Windows (VSCode)](#windows)
+- [6. CURRENT STATUS](#current-status)
+- [7. OTHER](#other)
+  - [Legacy & Archive](#archive)
   - [License](#license)
   - [Author](#author)
 
@@ -56,69 +67,85 @@
 
 ## 1. SYNOPSIS
 
-### The crux of this project is to develop a cross-platform, GUI-based desktop application to serve as a tool for computational electrodynamic modeling and simulation using modern `C++`, the *docking branch* of `Dear ImGui`, `GLFW`, and `OpenGL`.  Complicit in this aim is the need to produce animated and interactive plots, graphs, and other data visualizations to convey the results of each simulation. 
+### [**This project seeks to develop a cross-platform, GUI-based desktop application for performing computational physics simulations.  Our project is built using modern C++ (cpp-20+), the *docking branch* of `Dear ImGui`, `OpenGL`, and `GLFW`.**]()
+
+
+### Our application is built using `CMake`; `minGW` is used as a cross-platform toolchain to build the project for Windows.  The set of third-party dependencies is kept to a minimum to maximize the compatibility our application for use across a variety of different machines that may/may-not have access to certain installations.  Currently, these dependencies are limited to the `ImPlot` extension for Dear ImGui and `nlohmann`'s JSON for modern C++.
+
+
+### The scope of this project is primarily focused on simulations of electrodynamic systems and specifically those using using the Finite-Difference Time-Domain method (FDTD). 
 
 
 
 
 
-*In this pursuit, the following items are of particular importance for this design:*
+
+
+
+---
+---
+
+## 2. PURPOSE & OBJECTIVES
+
+*Fundamentally, our application must facilitate each of the following tasks:*
+- (1) Create and design an electrodynamic system along with the relevant parameters for each item within,
+- (2) Perform a simulation of the conditions we specified within the system we created, 
+- (3) Present a visualization of the simulation results and allow the user to interact with and analyze the data. 
+
+
+
+
+
+
+---
+
+---
+
+## 3. DESIGN
+
+*In this pursuit, our design has been structured in a manner as to adhere to the following goals:*
+
+
+### ***USER INTERFACE.***
 >
-> ### ***THEORETICAL AIMS***
-> > - Implementation of the Finite-Difference Time-Domain (FDTD) method to model and simulate electrodynamic phenomena.
+> Implementing a highly funcitonal user-interface is often an extremely time consuming and potentially frustrating task.  What's more---this is further pronounced when maintaining, refactoring, or extending an existing UI that is poorly thought-out.  At the penalty of increased complexity and initial development time, our goal has been to establish a robust and extensible UI that is accomodating to change, additions, or extensions.
+>
+>
+>
+>  #### UI Overview:
 > >
-> > - Model inhomogenaities 
->
->
->
->
-> ### ***IMPLEMENTATION AIMS***
-> > - Developing a robust and versitile tool to accompany those working in areas related to electrodyanmics.
-> >
-> > - Modular framework that can be easily reorganized to facilitate different simulation tasks.
-> >
-> > - Careful consideration of numerical error and particularly that attributed due to finite-precision floating point truncation error.
-> >
-> > - Maintaining a high standard of runtime performance by optimizing algorithm design and implementing > efficient numerical methods and tecnhiques. 
+> > *The overal layout of the UI design is inspired by the desigon of the Ableton Live application:*
+> >   - **Menu Bar:**         The bar at the very top of the application containing the "File", "Window", "Help", etc, drop-down menus.
+> >   - **Control Bar:**      The 'banner-style' panel that is found below the Menu Bar and spans the entire width of the main window. 
+> >   - **Browser:**      The collapsible window pane found on the left hand side of the main window and spanning its entire height.
+> >   - **Main Section:**     The primary window pane located beneath the Control Bar and to the right of the Browser. 
+> >   - **Detail View:**      A second collapsible window pane located below the Main Section. 
 > >
 > >
 > 
-
-
-
-
-
-
----
----
-
-## 2. GOALS AND OBJECTIVES FOR THIS PROJECT
-
 >
-> ### ***USER-INTERFACE DESIGN***
-> > - Implementation of the Finite-Difference Time-Domain (FDTD) method to model and simulate electrodynamic phenomena.
+>
+> > #### UI Features:
 > >
->
-
-
-
-> ### ***FDTD FEATURES***
->
-> > #### [**Media and Materials:**]()
-> > - BEGIN BY Simulating $\vec{\bm{ E }}$ and $\vec{\bm{ B }}$ waves inside a homogenous, source-free region of free space ($\epsilon_{0}$)
-> > - text
->
->
-> > - Careful consideration of numerical stability and convergence---specifically the Courant-Fredrichs-Lewy ([CFL](https://en.wikipedia.org/wiki/Courant%E2%80%93Friedrichs%E2%80%93Lewy_condition)) required for solutions to converge under the [FDTD](https://www.ansys.com/blog/what-is-fdtd#:~:text=The%20finite%2Ddifference%20time%2Ddomain,devices%2C%20processes%2C%20and%20materials.) method.
->
->
->
->
-> ### *IMPLEMENTATION AIMS*
-> > - Developing a robust and versitile tool to accompany those working in areas related to electrodyanmics.
+> >  - Taking advantage of the `viewports` and `docking` features of Dear ImGui---the user is able to rearrange and customize the appearance and window layout of each part of the main application to suit their needs and preferences.  
+> > 
+> > 
+> > - Each window of the application can be undocked and moved to a different docing location or even set aside to serve as an entirely seperate, stand-alone window. 
+> >
+> > 
+> > - The colors, geometry, and fonts of the application can be customized, saved/loaded to an external file, overriden as the default settings of the app, and so forth.  
+> >
 > >
 > >
 > 
+>
+>
+> #### Delegator Classes:
+> > - Each major responsibility of the application is allocated to a `delegator` class in order to prevent the central `App` class from becoming bloated and cumbersome and, instead, delegating away certain responsibilities, as the name suggests.
+> >
+> > - This is a modular system that allows for additional windows, tools, and other features to be easily integrated into the core application services.
+>
+>
 
 
 
@@ -126,18 +153,56 @@
 
 
 ---
+
 ---
 
-## 3. PROJECT DEVELOPMENT STATUS
+## 4. FEATURES
 
-<p align="center">
-  <img src="docs/My_Docs/gifs/slideshow_1.gif"
-       alt="heatmap-1"
-       width="97.5%" />
-  <br>
-  <em>Figure 1. In development of a real-time 'Heat Map' plotting engine to serve as a core aspect of plotting data from FDTD simulations.</em>
-</p>
 
+
+### ***THE `EDITOR` APPLICATION***
+>
+> Text
+>
+>  #### Sub-Item 1:
+> > Some more text...
+
+
+
+### ***THE `GRAPH` APPLICATION***
+>
+> Text
+>
+>  #### Sub-Item 1:
+> > Some more text...
+
+
+
+### ***THE `CCOUNTER` APPLICATION***
+>
+> Text
+>
+>  #### Sub-Item 1:
+> > Some more text...
+
+
+
+### ***ADDITIONAL TOOLS AND UTILITIES***
+>
+> A number of smaller utility tools have been created in order to solve certain problems that arose over the course of our development.  These tools remain accessible to the end user in the event that they should perhaps ever find them to be useful.  
+>
+>  #### Functional Testing Tool:
+> > Some more text...
+>
+>
+>
+>  #### The Color Tool:
+> > Some more text...
+>
+>
+>
+>  #### Dear ImGui Tools
+> > Some more text...
 
 
 
@@ -190,7 +255,7 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 ---
 
-## 3. THE TECHNICALITIES...
+## 5. IMPLEMENTATION DETAILS
 
 >
 > ### *3.1.  Build System (CMake)*
@@ -205,9 +270,11 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 
 >
-> ### *3.2 macOS (Xcode)*
+> ### *5.2 macOS (Xcode)*
 > > 
 > > ```bash
+> > #   OUT-OF-DATE   ---   I NEED TO UPDATE THIS INFORMATION (July 25, 2025)...
+> > 
 > > git clone https://github.com/your-username/CBApp.git
 > > cd CBApp && mkdir build && cd build
 > > cmake -G "Xcode" ..             # or use "Unix Makefiles"
@@ -221,9 +288,11 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 
 >
-> ### *3.3 Windows (Visual Studio)*
+> ### *5.3 Windows (Visual Studio)*
 > > 
 > > ```powershell
+> > #   OUT-OF-DATE   ---   I NEED TO UPDATE THIS INFORMATION (July 25, 2025)...
+> >
 > > git clone https://github.com/your-username/CBApp.git
 > > cd CBApp
 > > cmake -G "Visual Studio 17 2022" .
@@ -237,17 +306,19 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 
 >
-> ### *3.4 Project Directory Structure*
+> ### *5.4 Project Directory Structure*
 > > 
 > > ```text
+> > #   OUT-OF-DATE   ---   I NEED TO UPDATE THIS INFORMATION (July 25, 2025)...
+> >
 > > CBApp/
-├── CMakeLists.txt           # CMake entry
-> > ├── src/                     # App core & render loop
-> > ├── include/                 # Public headers (app/, utility/)
-> > ├── imgui/                   # ImGui + ImPlot + backends
-> > ├── assets/                  # JSON config, TTF fonts
-> > ├── libs/                    # Third-party libs (GLFW, JSON, cblib)
-> > ├── docs/                    # Markdown + change logs
+> >   ├── src/                      # *MY* Source Code...
+> >   ├── include/                  # *MY* Header Files...
+> >   ├── imgui/                    # Source Code for ImGui, ImPlot, and Backends...
+> >   ├
+> >   ├── assets/                   # User Data, ".ini" and ".json" for ImGui, TTF Font FIles, etc... 
+> >   ├── libs/                     # Third-party libs (GLFW, JSON, cblib)
+> >   ├── docs/                     # Markdown + change logs
 > > ```
 
 
@@ -255,6 +326,24 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 
 
+---
+---
+
+## 6. CURRENT STATUS
+
+<p align="center">
+  <img src="docs/My_Docs/gifs/slideshow_1.gif"
+       alt="heatmap-1"
+       width="97.5%" />
+  <br>
+  <em>Figure 1. In development of a real-time 'Heat Map' plotting engine to serve as a core aspect of plotting data from FDTD simulations.</em>
+</p>
+
+
+
+
+
+
 
 
 
@@ -262,13 +351,19 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 ---
 
-## 4. OTHER
+## 7. OTHER
+
+
+
+### Archive
+
+[![CBAppSlideshow](docs/My_Docs/gifs/slideshow_1.gif)](https://github.com/nlohmann/json/releases)
 
 
 
 
 
-## License
+### License
 
 Distributed under the **MIT License**.
 See `LICENSE.txt` for details.
@@ -280,7 +375,7 @@ See `LICENSE.txt` for details.
 
 
 
-## Author
+### Author
 
 > **Collin A. Bond**
 >
@@ -311,7 +406,7 @@ See `LICENSE.txt` for details.
 ---
 ---
 
-## MISC
+### MISC
 
 
 
