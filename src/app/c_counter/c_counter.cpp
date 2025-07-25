@@ -247,13 +247,14 @@ void CCounterApp::_draw_control_bar(void)
         //  CASE 2 :    SCRIPT  **IS**  RUNNING...
         else
         {
-            ImGui::PushStyleColor(ImGuiCol_Button,          ImVec4(0.800f, 0.216f, 0.180f, 1.00f) );
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   app::DEF_APPLE_RED );
-            if ( ImGui::Button("Stop Process") ) {
+            //      ImGui::PushStyleColor(ImGuiCol_Button,          ImVec4(0.800f, 0.216f, 0.180f, 1.00f) );
+            //      ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   app::DEF_APPLE_RED );
+            //if ( ImGui::Button("Stop Process") ) {
+            if ( utl::CButton("Stop Process", app::DEF_APPLE_RED) ) {
                 m_python.stop();
                 m_process_running = false;
             }
-            ImGui::PopStyleColor(2);
+            //      ImGui::PopStyleColor(2);
         }
         
         

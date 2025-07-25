@@ -109,6 +109,44 @@ void glfw_error_callback(int error, const char * description)
 }
 
 
+//  "GetActiveMonitorBounds"
+//
+[[nodiscard]] ImRect GetActiveMonitorBounds(GLFWwindow * window)
+{
+    GLFWmonitor **      monitors            = nullptr;
+    int                 monitor_count       = -1;
+    ImVec2              center              = ImVec2(-1.0f, -1.0f);
+    int                 win_x{-1},  win_y{-1},  win_w{-1},  win_h{-1};
+    int                 mx{-1},     my{-1},     mw{-1},     mh{-1};
+    
+    
+    
+    glfwGetWindowPos(   window,     &win_x,     &win_y );
+    glfwGetWindowSize(  window,     &win_w,     &win_h );
+    center                                  = { win_x + win_w * 0.5f, win_y + win_h * 0.5f };
+    monitors                                = glfwGetMonitors(&monitor_count);
+
+
+    //  CASE 1 :    ...
+    for (int i = 0; i < monitor_count; ++i)
+    {
+        glfwGetMonitorWorkarea( monitors[i], &mx, &my, &mw, &mh );
+        if ( center.x >= mx && center.x < mx + mw &&
+             center.y >= my && center.y < my + mh ) {
+            return ImRect( ImVec2((float)mx,        (float)my),
+                           ImVec2((float)(mx + mw), (float)(my + mh)) );
+        }
+    }
+    //
+    //  CASE 2 :    FALL-BACK TO FIRST MONITOR...
+    glfwGetMonitorWorkarea(monitors[0], &mx, &my, &mw, &mh);
+    
+    return ImRect( ImVec2((float)mx,            (float)my),
+                   ImVec2((float)(mx + mw),     (float)(my + mh)) );
+                  
+}
+
+
 //  "GetDPIScaling"
 //
 [[nodiscard]] float GetDPIScaling(GLFWwindow * window) {
@@ -440,90 +478,6 @@ bool file_exists(const char * path) {
 //          1.4C     MISC. WIDGET FUNCTIONS [CONTD.] ...
 // *************************************************************************** //
 // *************************************************************************** //
-
-//  "LeftLabelSimple"
-//
-void LeftLabelSimple(const char * text) {
-    ImGui::AlignTextToFramePadding();   ImGui::TextUnformatted(text);
-    ImGui::SameLine();                  ImGui::SameLine();
-    return;
-}
-
-
-//  "LeftLabel2"
-//
-void LeftLabel2(const char * text, const float l_width)
-{
-    const float         filled              = l_width * ImGui::GetContentRegionAvail().x;
-    const float         diff                = filled - ImGui::CalcTextSize(text).x;
-    ImVec2              padding             = ImVec2( diff,  0.0f );
-    if (diff <= 0.0f)
-        padding.x   = 1.0f;
-        
-    ImGui::AlignTextToFramePadding();   ImGui::TextUnformatted(text);   ImGui::SameLine();
-    ImGui::Dummy(padding);              ImGui::SameLine();              ImGui::SetNextItemWidth( -1.0f );
-    return;
-}
-
-
-//  "LeftLabel2"
-//
-void LeftLabel2(const char * text, const float l_width, const float w_width) {
-    const float         filled              = l_width * ImGui::GetContentRegionAvail().x;
-    const float         diff                = filled - ImGui::CalcTextSize(text).x;
-    ImVec2              padding             = ImVec2( diff,  0.0f );
-    if (diff <= 0.0f)
-        padding.x   = 0.0f;
-        
-    ImGui::AlignTextToFramePadding();   ImGui::TextUnformatted(text);   ImGui::SameLine();
-    ImGui::Dummy(padding);              ImGui::SameLine();
-    ImGui::SetNextItemWidth( w_width * ImGui::GetContentRegionAvail().x );
-    return;
-}
-
-
-
-
-//  "LeftLabel"
-//
-void LeftLabel(const char * text, const float l_width, const float w_width)
-{
-    const ImVec2        padding             = ImVec2( l_width - ImGui::CalcTextSize(text).x,  0.0f );
-    ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_width);
-    ImGui::TextUnformatted(text);           ImGui::SameLine();
-    ImGui::Dummy(padding);
-    ImGui::SetNextItemWidth(w_width);       ImGui::SameLine();
-    return;
-}
-
-
-//  Overload 1.
-//
-void LeftLabel(const char * text, const ImVec2 & l_dims, const float w_width)
-{
-    const ImVec2        dims                = ImGui::CalcTextSize(text);
-    const ImVec2        padding             = ImVec2( l_dims.x - dims.x, l_dims.y + dims.y );
-    
-    ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_dims.x);
-    ImGui::TextUnformatted(text);           ImGui::SameLine();
-    ImGui::Dummy(padding);
-    ImGui::SetNextItemWidth(w_width);       ImGui::SameLine();
-    return;
-}
-
-//  Overload 2.
-//
-void LeftLabel(const char * text, const ImVec2 & l_dims, const ImVec2 & w_dims)
-{
-    const ImVec2        dims                = ImGui::CalcTextSize(text);
-    const ImVec2        padding             = ImVec2( l_dims.x - dims.x, l_dims.y + dims.y );
-    
-    ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_dims.x);
-    ImGui::TextUnformatted(text);           ImGui::SameLine();
-    ImGui::Dummy(padding);
-    ImGui::SetNextItemWidth(w_dims.x);      ImGui::SameLine();
-    return;
-}
 
 
 

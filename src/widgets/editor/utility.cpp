@@ -354,6 +354,7 @@ void Editor::_draw_controls(void)
         ImGui::NextColumn();
         ImGui::Text("Snap-To-Grid:");
         //
+        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
         ImGui::Checkbox("##Editor_Controls_SnapToGrid",         &m_grid.snap_on);
         
         

@@ -123,31 +123,28 @@ void Editor::_render_lines(ImDrawList* dl, const ImVec2& origin) const
 //  "_render_paths"
 //
 //void Editor::_draw_paths(ImDrawList* dl, const ImVec2& origin) const
-void Editor::_render_paths(ImDrawList* dl) const
+void Editor::_render_paths(ImDrawList * dl) const
 {
-    // ---------------------------------------------------------------------
-    // 1. Build draw list: visible paths only
-    // ---------------------------------------------------------------------
-    std::vector<const Path*> draw_vec;
+    //  1.  BUILD THE DRAW-LIST (USE VISIBLE PATHS ONLY)...
+    std::vector<const Path*>    draw_vec;
     draw_vec.reserve(m_paths.size());
 
-    for (const Path& p : m_paths)
-        if (p.visible)                    // NEW visibility filter
-            draw_vec.push_back(&p);
 
-    // ---------------------------------------------------------------------
-    // 2. Stable-sort by z-index (background → foreground)
-    // ---------------------------------------------------------------------
-    std::stable_sort(draw_vec.begin(), draw_vec.end(),
-        [](const Path* a, const Path* b) { return a->z_index < b->z_index; });
+    for (const Path & p : m_paths) {
+        if (p.visible)              { draw_vec.push_back(&p); }// NEW visibility filter
+    }
 
-    // ---------------------------------------------------------------------
-    // 3. Draw each path in order
-    // ---------------------------------------------------------------------
-    for (const Path* pp : draw_vec)
+
+    //  2.  STABLE-SORT BY Z-INDEX (Low Z: Background → High Z: Foreground)...
+    std::stable_sort( draw_vec.begin(), draw_vec.end(),
+                      [](const Path* a, const Path* b) { return a->z_index < b->z_index; } );
+
+
+    //  3.  DRAW EACH PATH IN SORTED ORDER...
+    for (const Path * pp : draw_vec)
     {
-        const Path& p = *pp;
-        const size_t N = p.verts.size();
+        const Path &    p   = *pp;
+        const size_t    N   = p.verts.size();
         if (N < 2) continue;
 
         // ───── Filled-area pass (only for closed paths with non-transparent fill)
@@ -177,7 +174,7 @@ void Editor::_render_paths(ImDrawList* dl) const
         }
 
         // ───── Lambda to draw one segment (straight or cubic)
-        auto draw_seg = [&](const Vertex* a, const Vertex* b)
+        auto draw_seg = [&](const Vertex * a, const Vertex * b)
         {
             const bool curved = is_curved<VertexID>(a, b);
 
@@ -201,17 +198,21 @@ void Editor::_render_paths(ImDrawList* dl) const
         };
 
         // ───── Stroke contiguous segments
-        for (size_t i = 0; i < N - 1; ++i)
-            if (const Vertex* a = find_vertex(m_vertices, p.verts[i]))
-                if (const Vertex* b = find_vertex(m_vertices, p.verts[i + 1]))
-                    draw_seg(a, b);
+        for ( size_t i = 0; i < N - 1; ++i ) {
+            if ( const Vertex* a = find_vertex(m_vertices, p.verts[i]) ) {
+                if ( const Vertex* b = find_vertex(m_vertices, p.verts[i + 1]) )    { draw_seg(a, b); }
+            }
+        }
 
         // Close the loop if required
-        if (p.closed)
-            if (const Vertex* a = find_vertex(m_vertices, p.verts.back()))
-                if (const Vertex* b = find_vertex(m_vertices, p.verts.front()))
-                    draw_seg(a, b);
+        if (p.closed) {
+            if ( const Vertex* a = find_vertex(m_vertices, p.verts.back()) ) {
+                if ( const Vertex* b = find_vertex(m_vertices, p.verts.front()) )   { draw_seg(a, b); }
+            }
+        }
     }
+    
+    return;
 }
 
 

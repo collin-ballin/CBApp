@@ -916,6 +916,10 @@ struct Path_t {
 
         return verts.size() >= 2;
     }
+    
+    inline typename std::vector<VID>::iterator
+    insert_vertex_after(size_t seg_idx, VID new_vid)
+    { return verts.insert(verts.begin() + seg_idx + 1, new_vid); }
                                     
                                     
                                     
@@ -954,7 +958,7 @@ struct Path_t {
     { return visible && !locked; }
         
     //  "set_label"
-    inline void                     set_label               (const char * src) noexcept
+    inline void                     set_label                       (const char * src) noexcept
     { this->label = std::string(src); this->_truncate_label(); }
     
     //  "set_default_label"

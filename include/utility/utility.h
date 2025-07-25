@@ -71,9 +71,173 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 
 
 
-
-//  0.1     INLINE DEFINITIONS (HEADER ONLY)        |   WIDGETS & WINDOW STRUCTS...
 // *************************************************************************** //
+//
+//
+//
+//      0.1.    INLINE DEFINITIONS (HEADER ONLY)        |   WIDGETS & WINDOW STRUCTS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+// *************************************************************************** //
+//              LEFT - LABELS...
+// *************************************************************************** //
+
+
+//  "LeftLabelSimple"
+//
+inline void LeftLabelSimple(const char * text) {
+    ImGui::AlignTextToFramePadding();   ImGui::TextUnformatted(text);
+    ImGui::SameLine();                  ImGui::SameLine();
+    return;
+}
+
+
+//  "LeftLabel2"
+//
+inline void LeftLabel2(const char * text, const float l_width)
+{
+    const float         filled              = l_width * ImGui::GetContentRegionAvail().x;
+    const float         diff                = filled - ImGui::CalcTextSize(text).x;
+    ImVec2              padding             = ImVec2( diff,  0.0f );
+    if (diff <= 0.0f)
+        padding.x   = 1.0f;
+        
+    ImGui::AlignTextToFramePadding();   ImGui::TextUnformatted(text);   ImGui::SameLine();
+    ImGui::Dummy(padding);              ImGui::SameLine();              ImGui::SetNextItemWidth( -1.0f );
+    return;
+}
+
+
+//  "LeftLabel2"
+//
+inline void LeftLabel2(const char * text, const float l_width, const float w_width) {
+    const float         filled              = l_width * ImGui::GetContentRegionAvail().x;
+    const float         diff                = filled - ImGui::CalcTextSize(text).x;
+    ImVec2              padding             = ImVec2( diff,  0.0f );
+    if (diff <= 0.0f)
+        padding.x   = 0.0f;
+        
+    ImGui::AlignTextToFramePadding();   ImGui::TextUnformatted(text);   ImGui::SameLine();
+    ImGui::Dummy(padding);              ImGui::SameLine();
+    ImGui::SetNextItemWidth( w_width * ImGui::GetContentRegionAvail().x );
+    return;
+}
+
+
+
+
+//  "LeftLabel"
+//
+inline void LeftLabel(const char * text, const float l_width=150.0f, const float w_width=250.0f)
+{
+    const ImVec2        padding             = ImVec2( l_width - ImGui::CalcTextSize(text).x,  0.0f );
+    ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_width);
+    ImGui::TextUnformatted(text);           ImGui::SameLine();
+    ImGui::Dummy(padding);
+    ImGui::SetNextItemWidth(w_width);       ImGui::SameLine();
+    return;
+}
+
+
+//  Overload 1.
+//
+inline void LeftLabel(const char * text, const ImVec2 & l_dims, const float w_width)
+{
+    const ImVec2        dims                = ImGui::CalcTextSize(text);
+    const ImVec2        padding             = ImVec2( l_dims.x - dims.x, l_dims.y + dims.y );
+    
+    ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_dims.x);
+    ImGui::TextUnformatted(text);           ImGui::SameLine();
+    ImGui::Dummy(padding);
+    ImGui::SetNextItemWidth(w_width);       ImGui::SameLine();
+    return;
+}
+
+//  Overload 2.
+//
+inline void LeftLabel(const char * text, const ImVec2 & l_dims, const ImVec2 & w_dims)
+{
+    const ImVec2        dims                = ImGui::CalcTextSize(text);
+    const ImVec2        padding             = ImVec2( l_dims.x - dims.x, l_dims.y + dims.y );
+    
+    ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_dims.x);
+    ImGui::TextUnformatted(text);           ImGui::SameLine();
+    ImGui::Dummy(padding);
+    ImGui::SetNextItemWidth(w_dims.x);      ImGui::SameLine();
+    return;
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//              COLOR BUTTONS...
+// *************************************************************************** //
+
+//  "CButton"
+//
+inline bool CButton (const char * label, const ImU32 & color=0xFF453AFF, const ImVec2 & size=ImVec2(0, 0))
+{
+    constexpr float     shade       = 0.0484;
+    bool                dirty       = false;
+    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade) );
+    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color );
+        dirty           = ImGui::Button(label, size);   // button
+    ImGui::PopStyleColor(2);
+    return dirty;
+}
+
+//  "CButton"
+//
+inline bool CButton (const char * label, const ImVec4 & color, const ImVec2 & size=ImVec2(0, 0))
+{
+    constexpr float     shade       = 0.0484;
+    bool                dirty       = false;
+    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade) );
+    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color );
+        dirty           = ImGui::Button(label, size);   // button
+    ImGui::PopStyleColor(2);
+    return dirty;
+}
+
+
+
+
+//  "SmallCButton"
+//
+inline bool SmallCButton (const char * label, const ImU32 & color=0xFF453AFF)
+{
+    constexpr float     shade       = 0.0484;
+    bool                dirty       = false;
+    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade) );
+    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color );
+        dirty           = ImGui::SmallButton(label);   // button
+    ImGui::PopStyleColor(2);
+    return dirty;
+}
+
+//  "SmallCButton"
+//
+inline bool SmallCButton (const char * label, const ImVec4 & color)
+{
+    constexpr float     shade       = 0.0484;
+    bool                dirty       = false;
+    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade) );
+    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color );
+        dirty           = ImGui::SmallButton(label);   // button
+    ImGui::PopStyleColor(2);
+    return dirty;
+}
+
+
+
+
+
+// *************************************************************************** //
+//              OTHER INLINE STUFF...
 // *************************************************************************** //
 
 //  "RightHandJustify"
@@ -116,6 +280,22 @@ inline void RightHandJustify(const ImVec2 & size) {
 
 
 
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+
+
+
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
@@ -148,6 +328,7 @@ void                            glfw_error_callback         (int error, const ch
 // *************************************************************************** //
 [[nodiscard]]
 std::tuple<int,int>             GetMonitorDimensions        (GLFWwindow * window);
+[[nodiscard]] ImRect            GetActiveMonitorBounds      (GLFWwindow * window);
 [[nodiscard]] float             GetDPIScaling               (GLFWwindow * window);
 [[nodiscard]] float             GetDPIFontScaling           (GLFWwindow * window);
 
@@ -184,14 +365,14 @@ bool                            file_exists                 (const char * );
 
 
 //              1.4C    GENERAL WIDGET FUNCTIONS...
-void                            LeftLabelSimple             (const char * );
-void                            LeftLabel2                  (const char * , const float );
-void                            LeftLabel2                  (const char * , const float, const float );
-void                            LeftLabel                   (const char * ,
-                                                             const float label_width = 150.0f,
-                                                             const float widget_width = 250.0f);
-void                            LeftLabel                   (const char * ,   const ImVec2 & ,  const float );
-void                            LeftLabel                   (const char * ,   const ImVec2 & ,  const ImVec2 & );
+    //  void                            LeftLabelSimple             (const char * );
+    //  void                            LeftLabel2                  (const char * , const float );
+    //  void                            LeftLabel2                  (const char * , const float, const float );
+    //  void                            LeftLabel                   (const char * ,
+    //                                                               const float label_width = 150.0f,
+    //                                                               const float widget_width = 250.0f);
+    //  void                            LeftLabel                   (const char * ,   const ImVec2 & ,  const float );
+    //  void                            LeftLabel                   (const char * ,   const ImVec2 & ,  const ImVec2 & );
 
 
 //      1.5     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
