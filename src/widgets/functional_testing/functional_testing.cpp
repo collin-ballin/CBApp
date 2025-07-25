@@ -41,7 +41,6 @@ ActionComposer::ActionComposer(app::AppState & src)
     : CBAPP_STATE_NAME(src)
     , m_detview_window( std::make_unique<app::WinInfo>() )
 {
-    m_glfw_window   = S.m_glfw_window;
     m_actions       = &m_compositions.front().actions;   // initial seat
 }
 
@@ -56,7 +55,7 @@ void ActionComposer::initialize(void)
     
     
     win_info                        = {
-        "Editor Controls",
+        "Functional Testing",
         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
         true,
         nullptr
@@ -98,19 +97,26 @@ void ActionComposer::Begin_IMPL(void)
     const bool      busy    = m_saving || m_loading;
     
     
-    //  1.  DRAW THE "CONTROL-BAR" UI-INTERFACE...
-    this->_update_capture();
+    //  1.  UPDATE INPUT-QUERY FUNCTIONS...
+    this->_update_mouse_capture();
+    this->_update_key_capture();
+    
+    
+    //  2.  DRAW THE "CONTROL-BAR" UI-INTERFACE...
     this->_draw_controlbar();
     
-    //  2.  DRAW THE "BROWSER" UI-INTERFACE...
+    
+    //  3.  DRAW THE "BROWSER" UI-INTERFACE...
     this->draw_all();
     
-    //  3.  DRIVE EXECUTION OF THE ACTION COMPOSITION...
+    
+    //  4.  DRIVE EXECUTION OF THE ACTION COMPOSITION...
     this->_drive_execution();
     this->_draw_overlay();
     this->_draw_renderer_visuals();
     
     
+    //  5.  QUERY FILE DIALOG MENUS...
     if (busy) {
         this->_file_dialog_handler();
     }
@@ -435,7 +441,7 @@ void ActionComposer::_draw_action_inspector(void)
 //
 void ActionComposer::_draw_renderer_visuals(void)
 {
-    if (!m_render_visuals || m_glfw_window == nullptr)
+    if (!m_render_visuals || S.m_glfw_window == nullptr)
         return;
 
     if (m_sel < 0 || m_sel >= static_cast<int>(m_actions->size()))
@@ -458,7 +464,7 @@ void ActionComposer::_draw_renderer_visuals(void)
 
     /* convert to GLOBAL screen coords */
     int wx{}, wy{};
-    glfwGetWindowPos(m_glfw_window, &wx, &wy);
+    glfwGetWindowPos(S.m_glfw_window, &wx, &wy);
     ImVec2 global_a = { local_a.x + wx, local_a.y + wy };
     ImVec2 global_b = { local_b.x + wx, local_b.y + wy };
 
@@ -502,534 +508,163 @@ void ActionComposer::_draw_renderer_visuals(void)
 
 
 
+
+
+
+
 // *************************************************************************** //
 //
 //
 //
 // *************************************************************************** //
-//          SECONDARY UI FUNCTIONS...
+//                      CAPTURE FUNCTIONS...
 // *************************************************************************** //
 
-//  "_draw_controlbar"
+
+// *************************************************************************** //
+//      1.  CURSOR CAPTURE...
+// *************************************************************************** //
+
+//  "get_cursor_pos"
 //
-void ActionComposer::_draw_controlbar(void)
+ImVec2 ActionComposer::get_cursor_pos(void) {
+    double cx = -1.0f;  double cy = -1.0f;
+    glfwGetCursorPos(S.m_glfw_window, &cx, &cy);
+    return ImVec2(cx, cy);
+}
+    
+    
+//  "_begin_mouse_capture"
+//
+bool ActionComposer::_begin_mouse_capture(Action & act, ImVec2 * destination)
 {
-    static constexpr const char *   uuid                    = "##Editor_Controls_Columns";
-    static constexpr int            NC                      = 9;
-    static constexpr const char *   SETTINGS_MENU_UUID      = "ActionComposer_SettingsMenu";
-    //
-    static ImGuiOldColumnFlags      COLUMN_FLAGS            = ImGuiOldColumnFlags_None;
-    static ImVec2                   WIDGET_SIZE             = ImVec2( -1,  32 );
-    static ImVec2                   BUTTON_SIZE             = ImVec2( 22,   WIDGET_SIZE.y );
-    //
-    constexpr ImGuiButtonFlags      BUTTON_FLAGS            = ImGuiOldColumnFlags_NoPreserveWidths;
-    
-    //this->S.PushFont( Font::Small );
-   
-    
-    
-   
-   
-    //  BEGIN COLUMNS...
-    //
-    ImGui::Columns(NC, uuid, COLUMN_FLAGS);
-    //
-    //
-    //
-        //  1.  PLAY / PAUSE...
-        ImGui::TextDisabled("Controls:");
-        //
-        ImGui::SetNextItemWidth( WIDGET_SIZE.x );
-        ImGui::BeginDisabled( m_actions->empty() );
-            if ( !this->is_running() )
-            {
-                if ( ImGui::Button("Run All", WIDGET_SIZE) ) {
-                    m_play_index        = (m_sel >= 0           ? m_sel             : 0);
-                    m_is_running        = !m_actions->empty();
-                    m_state             = (m_actions->empty())   ? State::Idle       : State::Run;
-                }
-            }
-            else
-            {
-                if ( utl::CButton("Stop", 0xFF453AFF, WIDGET_SIZE) ) {
-                    this->reset_all();
-                }
-            }
-        ImGui::EndDisabled();
-    
-    
-    
-        //  2.  RUN ONCE...
-        ImGui::NextColumn();        ImGui::NewLine();
-        ImGui::SetNextItemWidth( WIDGET_SIZE.x );
-        ImGui::BeginDisabled( !this->is_running() && m_actions->empty() && (m_sel < 0) );
-            if ( ImGui::Button("Run Once", WIDGET_SIZE) ) {
-                m_play_index = m_sel;
-                m_step_req   = true;             // drive exactly one action
-            }
-        ImGui::EndDisabled();
+    if (m_state == State::Run)  { return false; }
         
-
-
-    
-        //  3.  STEP BUTTON...
-        ImGui::NextColumn();        ImGui::NewLine();
-        ImGui::BeginDisabled( !this->is_running() || m_actions->size() < 1 );
-            if ( ImGui::Button("Step", WIDGET_SIZE) )
-            {
-                m_play_index    = (m_play_index + 1) % (int)m_actions->size();
-                m_sel           = m_play_index;          // highlight row that will run next
-            }
-        ImGui::EndDisabled();
-
-
-
-        //  4.  [TOGGLE]    OVERVIEW...
-        ImGui::NextColumn();
-        ImGui::TextDisabled("Overlay:");
-        //
-        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
-        ImGui::Checkbox("##ActionComposer_OverlayToggle",           &m_show_overlay);
-
-
-
-        //  5.  [TOGGLE]    RENDER VISUALS...
-        ImGui::NextColumn();
-        ImGui::TextDisabled("Render Visuals:");
-        //
-        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
-        ImGui::Checkbox("##ActionComposer_RenderVisualsToggle",     &m_render_visuals);
-
-
-
-        //  6.  INFO...
-        ImGui::NextColumn();
-        ImGui::TextDisabled("Info:");
-        //
-        if ( this->is_running() )       { ImGui::Text("running: %d / %zu", m_play_index + 1, m_actions->size()); }
-        else                            { ImGui::Text("idle"); }
-
-
-
-        //  7.  SETTINGS MENU...
-        ImGui::NextColumn();
-        ImGui::TextDisabled("Settings:");
-        
-        if ( ImGui::Button("+") )       { ImGui::OpenPopup("ActionsPopup"); }
-
-        if ( ImGui::BeginPopup("ActionsPopup") )              // draw the popup
-        {
-            ImGui::SeparatorText("Action Composer Settings...");         // header
-
-            this->_draw_settings_menu();
-
-            ImGui::EndPopup();
-        }
-
-
-
-
-
-        
-        //  8.  EMPTY SPACES FOR LATER...
-        for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
-            ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
-        }
-
-
-        //  X.  MOUSE COORDINATES...
-        ImGui::TextDisabled("Global Position:");
-        //ImVec2 mpos = ImGui::GetMousePos();
-        ImVec2 mpos = this->get_cursor_pos();
-        
-        ImGui::Text("(%.1f , %.1f)",    mpos.x, mpos.y);     //  Live cursor read-out in the same units we feed to glfwSetCursorPos...
-    //
-    //
-    //
-    ImGui::Columns(1);      //  END COLUMNS...
-    
-    
-    //this->S.PopFont();
-   
-    return;
+    /* detect current backend window under cursor ------------------------*/
+    GLFWwindow *    hovered     = glfwGetCurrentContext();   // set by ImGui backend
+    act.target                  = (hovered) ? hovered : S.m_glfw_window;
+    m_m_capture_dest            = destination;
+    m_state                     = State::MouseCapture;
+    return true;
 }
 
 
-//  "_draw_toolbar"
+//  "_update_mouse_capture"
 //
-void ActionComposer::_draw_toolbar(void)
+inline void ActionComposer::_update_mouse_capture(void)
 {
-    return;
-}
+    ImVec2          mpos        = ImVec2(-1.0f, -1.0f);
+    ImGuiIO &       io          = ImGui::GetIO();
+    
+    if ( m_state != State::MouseCapture || m_m_capture_dest == nullptr )   { return; }
 
 
-//  "_draw_overlay"
-//
-void ActionComposer::_draw_overlay(void)
-{
-    static constexpr ImGuiWindowFlags       flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-    ImVec2                                  mpos            = ImGui::GetMousePos();
-    ImVec2                                  pos             = mpos + ms_OVERLAY_OFFSET;
-
-    if ( !m_show_overlay )                  { return; }
-    if ( ImGui::GetIO().AppFocusLost )
+    //  ESC key ends capture...
+    if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )
     {
+        m_state             = State::Idle;
+        m_m_capture_dest    = nullptr;
         return;
     }
-    //if ( glfwGetWindowAttrib(m_glfw_window, GLFW_FOCUSED) == 0 )    { return; }
 
-    //  1.  CACHE CURRENT MONITOR DATA...
-    _refresh_monitor_cache(mpos);
-
-
-    //  2.  CLAMP INSIDE CACHED MONITOR WORKSPACE...
-    pos.x       = std::clamp( pos.x,        m_monitor_bounds.Min.x,       m_monitor_bounds.Max.x - m_overlay_size.x );
-    pos.y       = std::clamp( pos.y,        m_monitor_bounds.Min.y,       m_monitor_bounds.Max.y - m_overlay_size.y );
+    // Query GLFW for window-relative cursor coordinates --------------------//
+    mpos                        = this->get_cursor_pos();
+    m_m_capture_dest->x         = static_cast<float>(mpos.x);
+    m_m_capture_dest->y         = static_cast<float>(mpos.y);
+    return;
+}
 
 
 
-    ImGui::SetNextWindowBgAlpha(ms_OVERLAY_ALPHA);
-    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-    //  ImGuiViewport * vp = ImGui::GetMainViewport();
-    //  ImGui::SetNextWindowViewport(vp->ID);               //  pin to main viewport
+
+
+
+
+
+
+// *************************************************************************** //
+//      KEYBOARD INPUT CAPTURE...
+// *************************************************************************** //
+
+//  "_begin_key_capture"
+//
+bool ActionComposer::_begin_key_capture(HotkeyParams * dest)
+{
+    if (m_state == State::Run)  { return false; }
     
-        //if ( ImGui::Begin("##ac_overlay", nullptr, flags) )
-        if ( ImGui::BeginTooltip() )
+    m_key_capture      = {};          // reset all
+    m_key_capture.active = true;
+    m_key_capture.dest   = dest;
+    m_key_capture.backup = *dest;      // keep previous binding
+    ImGui::SetNextFrameWantCaptureKeyboard(true);
+    return true;
+}
+
+
+//  "_update_key_capture"
+//
+inline void ActionComposer::_update_key_capture(void)
+{
+    if (!m_key_capture.active)
+        return;
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    // Detect first key press (ignore repeats)
+    for (ImGuiKey k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k = (ImGuiKey)(k + 1))
+        if (ImGui::IsKeyPressed(k, false))
         {
-            this->_dispatch_overlay_content();
-            m_overlay_size  = ImGui::GetWindowSize();
+            m_key_capture.key_current = k;
+            m_key_capture.ctrl  = io.KeyCtrl;
+            m_key_capture.shift = io.KeyShift;
+            m_key_capture.alt   = io.KeyAlt;
+            m_key_capture.super = io.KeySuper;
         }
-        
-    //ImGui::End();
-    ImGui::EndTooltip();
-    return;
-}
 
-
-//  "_dispatch_overlay_content"
-inline void ActionComposer::_dispatch_overlay_content(void)
-{
-    this->_overlay_ui_none();
-
-    switch (m_state)
+    // Accept when that key goes UP or user hits Enter
+    if ((m_key_capture.key_current != ImGuiKey_None &&
+         !ImGui::IsKeyDown(m_key_capture.key_current)) ||
+        ImGui::IsKeyPressed(ImGuiKey_Enter))
     {
-        //  1.  "Run" STATE...
-        case State::Run :  {
-            this->_overlay_ui_run();
-            break;
-        }
-        
-        //  2.  "Capture" STATE...
-        case State::Capture :  {
-            this->_overlay_ui_capture();
-            break;
-        }
-        
-        //  DEFAULT...
-        default :   { break; }
+        _accept_key_capture();
     }
-    
-    return;
-}
-
-//  "_overlay_ui_none"
-inline void ActionComposer::_overlay_ui_none(void)
-{
-    static constexpr const char *   FMT_STRING              = "%s. \t Local: (%.0f, %.0f)";
-    //
-    static const char *             state_str               = nullptr;
-    static State                    state_cache             = static_cast<State>( static_cast<int>(this->m_state) - 1 );
-    //const ImVec2                    mpos                    = ImGui::GetMousePos();
-    const ImVec2                    mpos                    = this->get_cursor_pos();
-            
-    if ( state_cache != this->m_state ) {
-        state_cache     = static_cast<State>( this->m_state );
-        state_str       = ms_COMPOSER_STATE_NAMES[ static_cast<size_t>(this->m_state) ];
-    }
-    
-    ImGui::Text(FMT_STRING, state_str, mpos.x, mpos.y);
-    ImGui::Separator();
-    
-    return;
-}
-
-//  "_overlay_ui_run"
-inline void ActionComposer::_overlay_ui_run(void)
-{
-    ImGui::TextUnformatted("Running test... (press ESC to CANCEL)");
-    return;
-}
-
-//  "_overlay_ui_capture"
-inline void ActionComposer::_overlay_ui_capture(void)
-{
-    ImGui::TextUnformatted("Capturing... (press ESC to ENTER)");
-    return;
-}
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                                  GENERAL FUNCTIONS...
-// *************************************************************************** //
-
-//  "_drive_execution"
-//
-void ActionComposer::_drive_execution(void)
-{
-    //  1.  ADVANCE TO THE CURRENT ACTION...
-    m_executor.update();
-
-    //  2.  CHECK IF WE ARE READY TO PROCEED...
-    if ( !m_executor.busy() && this->is_running() )
+    // Cancel on Esc
+    else if (ImGui::IsKeyPressed(ImGuiKey_Escape))
     {
-        if ( m_play_index < 0 || m_play_index >= static_cast<int>(m_actions->size()) ) {
-            m_state         = State::Idle;
-            m_is_running    = false;
-            m_step_req      = false;
-            m_play_index    = -1;
-            return;
-        }
-
-        Action &    act     = (*m_actions)[m_play_index];
-        this->_dispatch_execution(act);
-
-
-        //  3.  PREPARE FOR THE NEXT INDEX...=
-        //  ++m_play_index;
-        //
-        if ( !this->is_running() )      { m_play_index = -1;    }               //  RUNNING ONLY ONCE...
-        else                            { ++m_play_index;       }               //  RUNNING **ALL** ACTIONS...
-            
-        if ( this->is_running() && m_play_index >= static_cast<int>(m_actions->size()) ) {
-            m_state         = State::Idle;
-            m_is_running    = false;
-            m_play_index    = -1;
-        }
-        m_step_req = false;
-        m_sel      = m_play_index;
+        _cancel_key_capture();
     }
-    
-    return;
 }
 
 
-//  "_dispatch_execution"
+//  "_accept_key_capture"
 //
-inline void ActionComposer::_dispatch_execution(Action & act)
+inline void ActionComposer::_accept_key_capture(void)
 {
-    
-    switch (act.type)
+    if (m_key_capture.dest && m_key_capture.key_current != ImGuiKey_None)
     {
-        //  1.  CURSOR MOVEMENT...
-        case ActionType::CursorMove: {
-            m_executor.start_cursor_move(
-                m_glfw_window,
-                act.cursor.first,           // <- use stored begin coordinate
-                act.cursor.last,
-                act.cursor.duration
-            );
-            break;
-        }
-        
-        //  2.  SINGLE MOUSE CLICK...
-        case ActionType::MouseClick: {
-            break;
-        }
-        
-        //  3.  MOUSE PRESS...
-        case ActionType::MousePress: {
-            m_executor.start_mouse_press( m_glfw_window, act.press.left_button );
-            break;
-        }
-        
-        //  4.  MOUSE RELEASE...
-        case ActionType::MouseRelease: {
-            m_executor.start_mouse_release( m_glfw_window, act.release.left_button );
-            break;
-        }
-        
-        //  5.  MOUSE DRAG...
-        case ActionType::MouseDrag: {
-            break;
-        }
-
-        //  6.  HOTKEY PRESS...
-        case ActionType::Hotkey: {
-            m_executor.start_button_action(
-                m_glfw_window,
-                act.hotkey.key,
-                act.hotkey.ctrl,
-                act.hotkey.shift,
-                act.hotkey.alt
-            );
-            break;
-        }
-
-        //  ?.  DEFAULT...
-        default: {
-            break;
-        }
+        m_key_capture.dest->key   = m_key_capture.key_current;
+        m_key_capture.dest->ctrl  = m_key_capture.ctrl;
+        m_key_capture.dest->shift = m_key_capture.shift;
+        m_key_capture.dest->alt   = m_key_capture.alt;
     }
-        
-    
-    return;
+    m_key_capture.active = false;
 }
 
 
-
-
-
-
-// *************************************************************************** //
+//  "_cancel_key_capture"
 //
-//
-//
-// *************************************************************************** //
-//      ACTION-UI FUNCTIONS...
-// *************************************************************************** //
-
-//  "_dispatch_action_ui"
-//
-inline void ActionComposer::_dispatch_action_ui(Action & a)
+inline void ActionComposer::_cancel_key_capture(void)
 {
-    
-    switch(a.type)
-    {
-        case ActionType::CursorMove:        { this->_ui_cursor_move(a);         break;       }
-        //
-        case ActionType::MouseClick:        { this->_ui_mouse_click(a);         break;       }
-        case ActionType::MousePress:        { this->_ui_mouse_press(a);         break;       }
-        case ActionType::MouseRelease:      { this->_ui_mouse_release(a);       break;       }
-        case ActionType::MouseDrag:         { this->_ui_mouse_drag(a);          break;       }
-        //
-        case ActionType::Hotkey:            { this->_ui_hotkey(a);              break;       }
-        default:                            { break; }
-    }
-    
-    
-    
-    
-    return;
-}
-    
-    
-//  "_ui_cursor_move"
-//
-inline void ActionComposer::_ui_cursor_move(Action & a)
-{
-
-    this->label("Begin:");
-    ImGui::PushID("ActionComposed_CursorMove_Begin");
-        ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("auto") )           { _begin_cursor_capture(a, &a.cursor.first); }     // start capture for Begin
-    ImGui::PopID();
-    
-    
-    this->label("End:");
-    ImGui::PushID("ActionComposed_CursorMove_End");
-        ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("auto") )           { _begin_cursor_capture(a, &a.cursor.last); }     // start capture for Begin
-    ImGui::PopID();
-    
-    
-    this->label("Duration:");
-    ImGui::DragFloat    ("##duration",      &a.cursor.duration,             0.05f,      0.0f,       10,             "%.2f s");
-    
-    
-    
-    return;
+    if (m_key_capture.dest)
+        *m_key_capture.dest = m_key_capture.backup;
+    m_key_capture.active = false;
 }
 
 
-//  "_ui_mouse_click"
-//
-inline void ActionComposer::_ui_mouse_click(Action & a)
-{
-    label("Button:");
-    const char * btn_names[]{"Left", "Right"};
-    int b = a.click.left_button ? 0 : 1;
-    if (ImGui::Combo("##btn", &b, btn_names, 2))
-        a.click.left_button = (b == 0);
-
-    return;
-}
 
 
-//  "_ui_mouse_press"
-//
-inline void ActionComposer::_ui_mouse_press(Action & a)
-{
-    label("Button:");
-    const char* names[]{"Left","Right"};
-    int b = a.press.left_button ? 0 : 1;
-    if (ImGui::Combo("##press_btn", &b, names, 2))
-        a.press.left_button = (b==0);
-}
 
 
-//  "_ui_mouse_release"
-//
-inline void ActionComposer::_ui_mouse_release(Action & a)
-{
-    label("Button:");
-    const char* names[]{"Left","Right"};
-    int b = a.release.left_button ? 0 : 1;
-    if (ImGui::Combo("##rel_btn", &b, names, 2))
-        a.release.left_button = (b==0);
-}
-
-
-//  "_ui_mouse_drag"
-//
-inline void ActionComposer::_ui_mouse_drag(Action & a)
-{
-    label("Begin:");
-    ImGui::DragFloat2("##drag_from", (float*)&a.drag.from, 1.f, 0.f, FLT_MAX, "%.0f");
-    ImGui::SameLine();
-    if ( ImGui::SmallButton("Auto##drag_from") )
-        { _begin_cursor_capture(a, &a.drag.from); }
-
-    label("End:");
-    ImGui::DragFloat2("##drag_to", (float*)&a.drag.to, 1.f, 0.f, FLT_MAX, "%.0f");
-    ImGui::SameLine();
-    if ( ImGui::SmallButton("Auto##drag_to") )
-        { _begin_cursor_capture(a, &a.drag.to); }
-
-    label("Duration:");
-    ImGui::DragFloat("##drag_dur", &a.drag.duration, 0.05f, 0.f, 10.f, "%.2f s");
-
-    label("Button:");
-    const char *    btn[]   {"Left", "Right"};
-    int             b       = a.drag.left_button ? 0 : 1;
-    if (ImGui::Combo("##drag_btn", &b, btn, 2))
-        { a.drag.left_button = (b == 0); }
-
-    return;
-}
-
-
-//  "_ui_hotkey"
-//
-inline void ActionComposer::_ui_hotkey(Action & a)
-{
-    ImGui::Text(        "Key: %d",      a.hotkey.key);      //  Quick placeholder
-    //
-    ImGui::Checkbox(    "Ctrl",         &a.hotkey.ctrl);    ImGui::SameLine();
-    ImGui::Checkbox(    "Shift",        &a.hotkey.shift);   ImGui::SameLine();
-    ImGui::Checkbox(    "Alt",          &a.hotkey.alt);
-    
-    return;
-}
 
 
 
@@ -1044,53 +679,12 @@ inline void ActionComposer::_ui_hotkey(Action & a)
 //                      OTHER UTILITY FUNCTIONS...
 // *************************************************************************** //
 
-//  "_begin_cursor_capture"
-//
-inline bool ActionComposer::_begin_cursor_capture(Action & act, ImVec2 * destination)
-{
-    if (m_state == State::Run)  { return false; }
-        
-    /* detect current backend window under cursor ------------------------*/
-    GLFWwindow* hovered = glfwGetCurrentContext();   // set by ImGui backend
-    act.target          = (hovered) ? hovered : m_glfw_window;
-    m_capture_dest      = destination;
-    m_state             = State::Capture;
-    return true;
-}
-
-
-//  "_update_capture"
-//
-inline void ActionComposer::_update_capture(void)
-{
-    ImVec2          mpos        = ImVec2(-1.0f, -1.0f);
-    ImGuiIO &       io          = ImGui::GetIO();
-    
-    if ( m_state != State::Capture || m_capture_dest == nullptr )   { return; }
-
-
-    //  ESC key ends capture...
-    if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )
-    {
-        m_state             = State::Idle;
-        m_capture_dest      = nullptr;
-        return;
-    }
-
-    // Query GLFW for window-relative cursor coordinates --------------------//
-    mpos                        = this->get_cursor_pos();
-    m_capture_dest->x           = static_cast<float>(mpos.x);
-    m_capture_dest->y           = static_cast<float>(mpos.y);
-    return;
-}
-
-
 //  "_refresh_monitor_cache"
 //
 //      Update m_active_monitor / m_monitor_bounds when the cursor enters a new
 //      monitor.  Expects |global| = screen-space cursor coordinates.
 //
-inline void ActionComposer::_refresh_monitor_cache(ImVec2 global)
+void ActionComposer::_refresh_monitor_cache(ImVec2 global)
 {
     int mon_count;
     GLFWmonitor** monitors = glfwGetMonitors(&mon_count);

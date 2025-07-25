@@ -389,7 +389,6 @@ protected:
     std::unique_ptr<app::WinInfo>       m_detview_window;
     bool                                m_initialized                           = false;
     //
-    GLFWwindow *                        m_glfw_window;
     ActionExecutor                      m_executor                              {  };
     std::vector<Composition>            m_compositions                          { 1 };
     std::vector<Action> *               m_actions                               = nullptr;
@@ -400,6 +399,7 @@ protected:
     //
     //                              STATE:
     State                               m_state                                 = State::Idle;
+    CaptureState                        m_key_capture                           = {  };
     bool                                m_show_overlay                          = true;
     bool                                m_render_visuals                        = true;
     //
@@ -407,6 +407,7 @@ protected:
     bool                                m_is_running                            = false;
     bool                                m_step_req                              = false;
     bool                                m_capture_is_active                     = false;        //  < true while “Auto” sampling.
+    bool                                m_key_capture_is_active                 = false;        //  < true while “Auto” sampling.
     //
     bool                                m_saving                                = false;
     bool                                m_loading                               = false;
@@ -417,7 +418,8 @@ protected:
     GLFWmonitor *                       m_active_monitor                        = nullptr;
     ImRect                              m_monitor_bounds                        {};
     ImGuiTextFilter                     m_filter;
-    ImVec2 *                            m_capture_dest                          = nullptr;      //  < pointer to coord being written
+    ImVec2 *                            m_m_capture_dest                        = nullptr;      //  < pointer to coord being written
+    HotkeyParams *                      m_k_capture_key_dest                    = nullptr;
     
 //
 //
@@ -479,14 +481,12 @@ protected:
     void                                _draw_action_inspector              (void);
     void                                _draw_renderer_visuals              (void);
     
-    
-    
     // *************************************************************************** //
     //
     //
     //
     // *************************************************************************** //
-    //      SECONDARY UI FUNCTIONS...
+    //      OVERLAY UI CONTENT.             |   "interface.cpp" ...
     // *************************************************************************** //
     void                                _draw_controlbar                    (void);
     void                                _draw_toolbar                       (void);
@@ -496,34 +496,37 @@ protected:
     void                                _dispatch_overlay_content           (void);
     void                                _overlay_ui_none                    (void);
     void                                _overlay_ui_run                     (void);
-    void                                _overlay_ui_capture                 (void);
+    void                                _overlay_ui_mouse_capture           (void);
+    void                                _overlay_ui_key_capture             (void);
+    
+    // *************************************************************************** //
     //
-    //                              MISC UI CONTENT:
+    //
+    //
+    // *************************************************************************** //
+    //      OTHER UTILITY FUNCTIONS.        |   "functional_testing.cpp" ...
+    // *************************************************************************** //
     void                                _draw_settings_menu                 (void);
     void                                _file_dialog_handler                (void);
     
-    
-    
     // *************************************************************************** //
     //
     //
     //
     // *************************************************************************** //
-    //      GENERAL FUNCTIONS...
+    //      GENERAL FUNCTIONS.              |   "action.cpp" ...
     // *************************************************************************** //
-    inline void                         _drive_execution                    (void);
+    void                                _drive_execution                    (void);
     inline void                         _dispatch_execution                 (Action & act);
     
-    
-    
     // *************************************************************************** //
     //
     //
     //
     // *************************************************************************** //
-    //      ACTION-UI FUNCTIONS...
+    //      ACTION-UI FUNCTIONS.            |   "action.cpp" ...
     // *************************************************************************** //
-    inline void                         _dispatch_action_ui                 (Action & a);
+    void                                _dispatch_action_ui                 (Action & a);
     inline void                         _ui_cursor_move                     (Action & a);
     //
     inline void                         _ui_mouse_click                     (Action & a);
@@ -533,8 +536,23 @@ protected:
     //
     inline void                         _ui_hotkey                          (Action & a);
     
-    
-    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      CAPTURE FUNCTIONS...
+    // *************************************************************************** //
+    //                              CURSOR CAPTURE:
+    ImVec2                              get_cursor_pos                  (void);
+    bool                                _begin_mouse_capture            (Action & act, ImVec2 * destination);
+    inline void                         _update_mouse_capture           (void);
+    //
+    //                              KEYBOARD CAPTURE:
+    bool                                _begin_key_capture              (HotkeyParams * dest);
+    inline void                         _update_key_capture             (void);
+    inline void                         _accept_key_capture             (void);
+    inline void                         _cancel_key_capture             (void);
     // *************************************************************************** //
     //
     //
@@ -542,10 +560,7 @@ protected:
     // *************************************************************************** //
     //      UTILITY FUNCTIONS...
     // *************************************************************************** //
-    
-    inline bool                         _begin_cursor_capture           (Action & act, ImVec2 * destination);
-    inline void                         _update_capture                 (void);
-    inline void                         _refresh_monitor_cache          (ImVec2);
+    void                                _refresh_monitor_cache          (ImVec2);
     //
     //                              SERIALIZATION:
     bool                                save_to_file                    (const std::filesystem::path & path) const;
@@ -581,9 +596,10 @@ protected:
     
     //  "reset_state"
     inline void                         reset_state                     (void)          {
-        m_state                 = State::Idle;
-        m_is_running            = false;
-        m_capture_is_active     = false;
+        m_state                     = State::Idle;
+        m_is_running                = false;
+        m_capture_is_active         = false;
+        m_key_capture_is_active     = false;
         return;
     }
     
@@ -592,7 +608,8 @@ protected:
         m_sel                   = -1;
         m_comp_sel              = -1;
         m_play_index            = -1;
-        m_capture_dest          = nullptr;
+        m_m_capture_dest        = nullptr;
+        m_k_capture_key_dest    = nullptr;
         m_executor.abort();
         return;
     }
@@ -657,14 +674,26 @@ protected:
     // *************************************************************************** //
     //      MISC. UTILITY FUNCTIONS.
     // *************************************************************************** //
-
-    //  "get_cursor_pos"
-    inline ImVec2                       get_cursor_pos                  (void)
-    { double cx = -1.0f; double cy = -1.0f; glfwGetCursorPos(m_glfw_window, &cx, &cy);  return ImVec2(cx, cy); }
     
     //  "label"
     inline void                         label                           (const char * text)
     { utl::LeftLabel(text, this->ms_LABEL_WIDTH, this->ms_WIDGET_WIDTH); ImGui::SameLine(); };
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      PUBLIC INLINE UTILITY FUNCTIONS...
+    // *************************************************************************** //
+public:
+
+    //  "get_detview_window"
+    [[nodiscard]]
+    inline app::WinInfo *               get_detview_window              (void)
+    {  return this->m_detview_window.get(); }
     
     
     

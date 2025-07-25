@@ -10,6 +10,8 @@
 **************************************************************************************
 **************************************************************************************/
 #include "widgets/functional_testing/functional_testing.h"
+#include "app/state/state.h"
+#include "app/state/_types.h"
 
 
 namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
@@ -293,6 +295,297 @@ void ActionExecutor::update(void)
 // *************************************************************************** //
 // *************************************************************************** //   END "ActionExecutor".
 
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                                  GENERAL FUNCTIONS...
+// *************************************************************************** //
+
+//  "_drive_execution"
+//
+void ActionComposer::_drive_execution(void)
+{
+    //  1.  ADVANCE TO THE CURRENT ACTION...
+    m_executor.update();
+
+    //  2.  CHECK IF WE ARE READY TO PROCEED...
+    if ( !m_executor.busy() && this->is_running() )
+    {
+        if ( m_play_index < 0 || m_play_index >= static_cast<int>(m_actions->size()) ) {
+            m_state         = State::Idle;
+            m_is_running    = false;
+            m_step_req      = false;
+            m_play_index    = -1;
+            return;
+        }
+
+        Action &    act     = (*m_actions)[m_play_index];
+        this->_dispatch_execution(act);
+
+
+        //  3.  PREPARE FOR THE NEXT INDEX...=
+        //  ++m_play_index;
+        //
+        if ( !this->is_running() )      { m_play_index = -1;    }               //  RUNNING ONLY ONCE...
+        else                            { ++m_play_index;       }               //  RUNNING **ALL** ACTIONS...
+            
+        if ( this->is_running() && m_play_index >= static_cast<int>(m_actions->size()) ) {
+            m_state         = State::Idle;
+            m_is_running    = false;
+            m_play_index    = -1;
+        }
+        m_step_req = false;
+        m_sel      = m_play_index;
+    }
+    
+    return;
+}
+
+
+//  "_dispatch_execution"
+//
+inline void ActionComposer::_dispatch_execution(Action & act)
+{
+    
+    switch (act.type)
+    {
+        //  1.  CURSOR MOVEMENT...
+        case ActionType::CursorMove: {
+            m_executor.start_cursor_move(
+                S.m_glfw_window,
+                act.cursor.first,           // <- use stored begin coordinate
+                act.cursor.last,
+                act.cursor.duration
+            );
+            break;
+        }
+        
+        //  2.  SINGLE MOUSE CLICK...
+        case ActionType::MouseClick: {
+            m_executor.start_mouse_click( S.m_glfw_window, act.press.left_button );
+            break;
+        }
+        
+        //  3.  MOUSE PRESS...
+        case ActionType::MousePress: {
+            m_executor.start_mouse_press( S.m_glfw_window, act.press.left_button );
+            break;
+        }
+        
+        //  4.  MOUSE RELEASE...
+        case ActionType::MouseRelease: {
+            m_executor.start_mouse_release( S.m_glfw_window, act.release.left_button );
+            break;
+        }
+        
+        //  5.  MOUSE DRAG...
+        case ActionType::MouseDrag: {
+            break;
+        }
+
+        //  6.  HOTKEY PRESS...
+        case ActionType::Hotkey: {
+            m_executor.start_button_action(
+                S.m_glfw_window,
+                act.hotkey.key,
+                act.hotkey.ctrl,
+                act.hotkey.shift,
+                act.hotkey.alt
+            );
+            break;
+        }
+
+        //  ?.  DEFAULT...
+        default: {
+            break;
+        }
+    }
+        
+    
+    return;
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//      ACTION-UI FUNCTIONS...
+// *************************************************************************** //
+
+//  "_dispatch_action_ui"
+//
+void ActionComposer::_dispatch_action_ui(Action & a)
+{
+    
+    switch(a.type)
+    {
+        case ActionType::CursorMove:        { this->_ui_cursor_move(a);         break;       }
+        //
+        case ActionType::MouseClick:        { this->_ui_mouse_click(a);         break;       }
+        case ActionType::MousePress:        { this->_ui_mouse_press(a);         break;       }
+        case ActionType::MouseRelease:      { this->_ui_mouse_release(a);       break;       }
+        case ActionType::MouseDrag:         { this->_ui_mouse_drag(a);          break;       }
+        //
+        case ActionType::Hotkey:            { this->_ui_hotkey(a);              break;       }
+        default:                            { break; }
+    }
+    
+    
+    
+    
+    return;
+}
+    
+    
+//  "_ui_cursor_move"
+//
+inline void ActionComposer::_ui_cursor_move(Action & a)
+{
+
+    this->label("Begin:");
+    ImGui::PushID("ActionComposed_CursorMove_Begin");
+        ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
+        ImGui::SameLine();
+    if ( ImGui::SmallButton("auto") )               { _begin_mouse_capture(a, &a.cursor.first); }     // start capture for Begin
+    ImGui::PopID();
+    
+    
+    this->label("End:");
+    ImGui::PushID("ActionComposed_CursorMove_End");
+        ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
+        ImGui::SameLine();
+        if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.last); }     // start capture for Begin
+    ImGui::PopID();
+    
+    
+    this->label("Duration:");
+    ImGui::DragFloat    ("##duration",      &a.cursor.duration,             0.05f,      0.0f,       10,             "%.2f s");
+    
+    
+    
+    return;
+}
+
+
+//  "_ui_mouse_click"
+//
+inline void ActionComposer::_ui_mouse_click(Action & a)
+{
+    label("Button:");
+    const char * btn_names[]{"Left", "Right"};
+    int b = a.click.left_button ? 0 : 1;
+    if (ImGui::Combo("##btn", &b, btn_names, 2))
+        a.click.left_button = (b == 0);
+
+    return;
+}
+
+
+//  "_ui_mouse_press"
+//
+inline void ActionComposer::_ui_mouse_press(Action & a)
+{
+    label("Button:");
+    const char* names[]{"Left","Right"};
+    int b = a.press.left_button ? 0 : 1;
+    if (ImGui::Combo("##press_btn", &b, names, 2))
+        a.press.left_button = (b==0);
+}
+
+
+//  "_ui_mouse_release"
+//
+inline void ActionComposer::_ui_mouse_release(Action & a)
+{
+    label("Button:");
+    const char* names[]{"Left","Right"};
+    int b = a.release.left_button ? 0 : 1;
+    if (ImGui::Combo("##rel_btn", &b, names, 2))
+        a.release.left_button = (b==0);
+}
+
+
+//  "_ui_mouse_drag"
+//
+inline void ActionComposer::_ui_mouse_drag(Action & a)
+{
+    static constexpr int    NUM_CLICKS      = ms_CLICK_PARAM_NAMES.size();
+    
+    label("Begin:");
+    ImGui::DragFloat2("##drag_from", (float*)&a.drag.from, 1.f, 0.f, FLT_MAX, "%.0f");
+    ImGui::SameLine();
+    if ( ImGui::SmallButton("Auto##drag_from") )        { _begin_mouse_capture(a, &a.drag.from); }
+
+
+    label("End:");
+    ImGui::DragFloat2("##drag_to", (float*)&a.drag.to, 1.f, 0.f, FLT_MAX, "%.0f");
+    ImGui::SameLine();
+    if ( ImGui::SmallButton("Auto##drag_to") )          { _begin_mouse_capture(a, &a.drag.to); }
+
+
+    label("Duration:");
+    ImGui::DragFloat("##drag_dur", &a.drag.duration, 0.05f, 0.f, 10.f, "%.2f s");
+
+
+    label("Button:");
+    int             b           = (a.drag.left_button) ? 0 : 1;
+    if ( ImGui::Combo("##drag_btn", &b, ms_CLICK_PARAM_NAMES.data(), NUM_CLICKS) )      { a.drag.left_button = (b == 0); }
+
+    return;
+}
+
+
+//  "_ui_hotkey"
+//
+inline void ActionComposer::_ui_hotkey(Action & a)
+{
+    // show current / live key name
+    const HotkeyParams view =
+        (m_key_capture.active && m_key_capture.dest == &a.hotkey)
+            ? HotkeyParams{ m_key_capture.key_current,
+                            m_key_capture.ctrl,
+                            m_key_capture.shift,
+                            m_key_capture.alt }
+            : a.hotkey;
+
+    const char* key_name = ImGui::GetKeyName(view.key);
+    if (!key_name) key_name = "None";
+
+    label("Key:");
+    ImGui::Text("%s", key_name);
+    ImGui::SameLine();
+    if ( !m_key_capture.active ) {
+        if ( ImGui::SmallButton("Set") )  { _begin_key_capture(&a.hotkey); }
+    }
+
+    label("Mods:");
+    ImGui::Text("[%s%s%s]",
+        view.ctrl  ? "Ctrl "  : "",
+        view.shift ? "Shift " : "",
+        view.alt   ? "Alt "   : "");
+
+    if (m_key_capture.active && m_key_capture.dest == &a.hotkey)
+        ImGui::TextColored(ImVec4(1,1,0,1), "Press key, Enter=accept, Esc=cancel");
+}
 
 
 

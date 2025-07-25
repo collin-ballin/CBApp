@@ -165,7 +165,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
     #define _CBAPP_OPTIONAL_WINDOWS(X)                                                                                                      \
 /*| NAME.                       TITLE.                      DEFAULT OPEN.       FLAGS.                                                  */  \
 /*|========================================================================================================================|            */  \
-    X(CBFunctionalTesting,      "Functional Tests",         true,               _CBAPP_CORE_WINDOW_FLAGS                                )
+    X(CBFunctionalTesting,      "##Functional Tests",       true,               _CBAPP_CORE_WINDOW_FLAGS                                )
 //
 //
 //

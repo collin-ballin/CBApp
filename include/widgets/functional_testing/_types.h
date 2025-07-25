@@ -117,13 +117,14 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 enum class ComposerState : uint8_t {
     Idle = 0,
     Run,
-    Capture,
+    MouseCapture,
+    KeyCapture,
     COUNT
 };
 
 static constexpr std::array<const char *, static_cast<size_t>(ComposerState::COUNT)>
 DEF_COMPOSER_STATE_NAMES = {
-    "Idle", "Running", "Capturing"
+    "Idle", "Running", "Mouse Capture", "Keyboard Capture"
 };
 
 
@@ -170,9 +171,11 @@ struct CursorMoveParams {
 
 inline void to_json (nlohmann::json & j, const CursorMoveParams & p)
 {
-    j = { {"first", p.first},
-          {"last",  p.last},
-          {"duration", p.duration} };
+    j = {
+            {"first",       p.first},
+            {"last",        p.last},
+            {"duration",    p.duration}
+    };
 }
 
 inline void from_json(const nlohmann::json & j, CursorMoveParams & p)
@@ -192,9 +195,16 @@ inline void from_json(const nlohmann::json & j, CursorMoveParams & p)
 struct ClickParams { bool left_button{true};  };
 
 inline void to_json(nlohmann::json& j, const ClickParams& p)
-{ j = { {"left", p.left_button} }; }
+{
+    j = {
+            {"left",    p.left_button}
+    };
+}
+
 inline void from_json(const nlohmann::json& j, ClickParams& p)
-{ j.at("left").get_to(p.left_button); }
+{
+    j.at("left").get_to(p.left_button);
+}
 
 
 //  "DEF_CLICK_PARAM_NAMES"
@@ -212,27 +222,27 @@ DEF_CLICK_PARAM_NAMES = {
 //
 struct DragParams
 {
-    ImVec2  from{};
-    ImVec2  to{};
-    float   duration{1.f};
-    bool    left_button{true};
+    ImVec2          from                    {};
+    ImVec2          to                      {};
+    float           duration                {1.f};
+    bool            left_button             {true};
 };
 
 inline void to_json(nlohmann::json & j, const DragParams & p)
 {
     j = {
-        {"from",    p.from},
-        {"to",      p.to},
-        {"duration",p.duration},
-        {"left",    p.left_button}
+            {"from",                p.from                          },
+            {"to",                  p.to                            },
+            {"duration",            p.duration                      },
+            {"left",                p.left_button                   }
     };
 }
 inline void from_json(const nlohmann::json & j, DragParams & p)
 {
-    j.at("from").get_to(p.from);
-    j.at("to"  ).get_to(p.to  );
-    j.at("duration").get_to(p.duration);
-    j.at("left").get_to(p.left_button);
+    j.at("from"                     ).get_to(p.from                 );
+    j.at("to"                       ).get_to(p.to                   );
+    j.at("duration"                 ).get_to(p.duration             );
+    j.at("left"                     ).get_to(p.left_button          );
 }
 
 
@@ -251,17 +261,21 @@ struct HotkeyParams {
 
 inline void to_json(nlohmann::json& j, const HotkeyParams& p)
 {
-    j = { {"key",   p.key},
-          {"ctrl",  p.ctrl},
-          {"shift", p.shift},
-          {"alt",   p.alt} };
+    j = {
+            {"key",                 p.key                           },
+            {"ctrl",                p.ctrl                          },
+            {"shift",               p.shift                         },
+            {"alt",                 p.alt                           }
+    };
 }
+
+
 inline void from_json(const nlohmann::json& j, HotkeyParams& p)
 {
-    j.at("key").get_to(p.key);
-    j.at("ctrl" ).get_to(p.ctrl );
-    j.at("shift").get_to(p.shift);
-    j.at("alt"  ).get_to(p.alt  );
+    j.at("key"                      ).get_to(p.key                  );
+    j.at("ctrl"                     ).get_to(p.ctrl                 );
+    j.at("shift"                    ).get_to(p.shift                );
+    j.at("alt"                      ).get_to(p.alt                  );
 }
 
 
@@ -287,34 +301,44 @@ struct Action {
     bool                    enabled         = true;
 };
 
+
 inline void to_json(nlohmann::json& j, const Action& a)
 {
+    uint8_t     type    = static_cast<uint8_t>( a.type );
+    
     j = {
-        {"name",    a.name},
-        {"descr",   a.descr},
-        {"type",    static_cast<uint8_t>(a.type)},
-        {"cursor",  a.cursor},
-        {"click",   a.click},
-        {"press",   a.press},
-        {"release", a.release},
-        {"drag",    a.drag},
-        {"hotkey",  a.hotkey},
-        {"enabled", a.enabled}
+            {"name",                a.name                          },
+            {"descr",               a.descr                         },
+            {"type",                type                            },
+    //
+            {"cursor",              a.cursor                        },
+            {"click",               a.click                         },
+            {"press",               a.press                         },
+            {"release",             a.release                       },
+            {"drag",                a.drag                          },
+            {"hotkey",              a.hotkey                        },
+    //
+            {"enabled",             a.enabled                       }
     };
 }
 
-inline void from_json(const nlohmann::json& j, Action& a)
+
+inline void from_json(const nlohmann::json & j, Action & a)
 {
-    j.at("name").get_to(a.name);
-    j.at("descr").get_to(a.descr);
-    uint8_t t; j.at("type").get_to(t); a.type = static_cast<ActionType>(t);
-    j.at("cursor" ).get_to(a.cursor );
-    j.at("click"  ).get_to(a.click  );
-    j.at("press"  ).get_to(a.press  );
-    j.at("release").get_to(a.release);
-    j.at("drag"   ).get_to(a.drag   );
-    j.at("hotkey" ).get_to(a.hotkey );
-    j.at("enabled").get_to(a.enabled);
+    uint8_t     type;
+    
+    j.at("name"                     ).get_to(a.name                 );
+    j.at("descr"                    ).get_to(a.descr                );
+    j.at("type"                     ).get_to(type                   );
+    j.at("cursor"                   ).get_to(a.cursor               );
+    j.at("click"                    ).get_to(a.click                );
+    j.at("press"                    ).get_to(a.press                );
+    j.at("release"                  ).get_to(a.release              );
+    j.at("drag"                     ).get_to(a.drag                 );
+    j.at("hotkey"                   ).get_to(a.hotkey               );
+    j.at("enabled"                  ).get_to(a.enabled              );
+    
+    a.type      = static_cast<ActionType>(type);
 }
 
 
@@ -352,17 +376,24 @@ DEF_EXEC_STATE_NAMES = {
 struct Composition_t {
 //
     std::vector<Action>     actions;
-    std::string             name            { "New Composition" };
-    std::string             description     { "description..." };
+    std::string             name            { "New Composition"     };
+    std::string             description     { "description..."      };
 };
 
-inline void to_json(nlohmann::json& j, const Composition_t& c)
-{ j = { {"name", c.name}, {"actions", c.actions} }; }
-
-inline void from_json(const nlohmann::json& j, Composition_t& c)
+inline void to_json(nlohmann::json & j, const Composition_t & c)
 {
-    j.at("name").get_to(c.name);
-    j.at("actions").get_to(c.actions);
+    j = {
+            {"actions",             c.actions                       },
+            {"name",                c.name                          },
+            {"description",         c.description                   }
+    };
+}
+
+inline void from_json(const nlohmann::json & j, Composition_t & c)
+{
+    j.at("actions"                  ).get_to(c.actions              );
+    j.at("name"                     ).get_to(c.name                 );
+    j.at("description"              ).get_to(c.description          );
 }
 
 
@@ -373,6 +404,25 @@ inline void from_json(const nlohmann::json& j, Composition_t& c)
 
 
 
+// *************************************************************************** //
+//      MORE STATE TYPES...
+// *************************************************************************** //
+
+struct CaptureState
+{
+    bool            active          { false };   ///< in capture mode?
+    HotkeyParams*   dest            { nullptr }; ///< where to write on accept
+
+    // Temporary/live data while user is pressing keys
+    ImGuiKey        key_current     { ImGuiKey_None };
+    bool            ctrl            { false };
+    bool            shift           { false };
+    bool            alt             { false };
+    bool            super           { false };
+
+    // Previous binding (for cancel)
+    HotkeyParams    backup          {};
+};
 
 
 

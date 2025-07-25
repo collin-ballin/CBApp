@@ -258,11 +258,11 @@ void App::init_appstate(void)
     
     
     //      6.      INITIALIZE OTHER MEMBERS INSIDE APPSTATE...
-    S.m_detview_windows.push_back( std::addressof( this->m_graph_app.m_detview_window )     );  //  TODO:   THIS SUCKS.
-    S.m_detview_windows.push_back( std::addressof( this->m_editor_app.m_detview_window )    );  //      Fix it w/ forward declarations.
-    S.m_detview_windows.push_back( std::addressof( this->m_counter_app.m_detview_window )   );
+    S.m_detview_windows.push_back(      std::addressof( this->m_graph_app.m_detview_window      )   );  //  TODO:   THIS SUCKS.
+    S.m_detview_windows.push_back(      std::addressof( this->m_editor_app.m_detview_window     )   );  //      Fix it w/ forward declarations.
+    S.m_detview_windows.push_back(      std::addressof( this->m_counter_app.m_detview_window    )   );
 #ifdef CBAPP_ENABLE_FUNCTIONAL_TESTING
-    //S.m_detview_windows.push_back( std::addressof( this->m_composer.m_detview_window )   );
+    S.m_detview_windows.push_back(      this->m_composer.get_detview_window()                       );
 #endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
     
     
