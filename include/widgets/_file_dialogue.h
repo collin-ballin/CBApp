@@ -204,6 +204,9 @@ public:
     [[nodiscard]] std::optional<std::filesystem::path>
                                         result                      (void) const noexcept;
 
+    //  "get_last_path"
+    [[nodiscard]] std::optional<std::filesystem::path>
+                                        get_last_path               (void) noexcept     { return m_state->selected_path; }
 
 
 // *************************************************************************** //
@@ -285,10 +288,6 @@ private:
         std::snprintf(buf, sizeof(buf), (idx == 0) ? "%.0f %s" : "%.1f %s", value, units[idx]);
         return buf;
     };
-    
-    //  "get_last_path"
-    [[nodiscard]] std::optional<std::filesystem::path>
-                                        get_last_path               (void) noexcept     { return m_state->selected_path; }
     
     // *************************************************************************** //
     // *************************************************************************** //

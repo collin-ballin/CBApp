@@ -393,6 +393,10 @@ protected:
     bool                                m_step_req                              = false;
     bool                                m_capture_is_active                     = false;        //  < true while “Auto” sampling.
     //
+    bool                                m_saving                                = false;
+    bool                                m_loading                               = false;
+    //
+    //
     //                              UTILITY:
     ImVec2                              m_overlay_size                          = { 150.f, 30.f };
     GLFWmonitor *                       m_active_monitor                        = nullptr;
@@ -478,6 +482,7 @@ protected:
     //
     //                              MISC UI CONTENT:
     void                                _draw_settings_menu                 (void);
+    void                                _file_dialog_handler                (void);
     
     
     
@@ -525,8 +530,8 @@ protected:
     inline void                         _refresh_monitor_cache          (ImVec2);
     //
     //                              SERIALIZATION:
-    bool                                save_to_file                    (const std::string & path) const;
-    bool                                load_from_file                  (const std::string & path);
+    bool                                save_to_file                    (const std::filesystem::path & path) const;
+    bool                                load_from_file                  (const std::filesystem::path & path);
     
     
     

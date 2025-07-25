@@ -37,15 +37,17 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 //  Default Constructor.
 //
 ActionComposer::ActionComposer(GLFWwindow * window)
-    : m_glfw_window(window)
-    , CBAPP_STATE_NAME(app::AppState::instance())          // ← initialise the reference
+    : CBAPP_STATE_NAME(app::AppState::instance())
+    , m_glfw_window(window)
 {
     m_actions = &m_compositions.front().actions;   // initial seat
 }
 
 
+//  Default Constructor.
+//
 ActionComposer::ActionComposer(app::AppState & src)
-    : CBAPP_STATE_NAME(src)          // ← initialise the reference
+    : CBAPP_STATE_NAME(src)
 {
     m_glfw_window   = S.m_glfw_window;
     m_actions       = &m_compositions.front().actions;   // initial seat
@@ -66,6 +68,8 @@ ActionComposer::ActionComposer(app::AppState & src)
 //
 void ActionComposer::Begin(void)
 {
+    const bool      busy    = m_saving || m_loading;
+    
     //  1.  DRAW THE "CONTROL-BAR" UI-INTERFACE...
     this->_update_capture();
     this->_draw_controlbar();
@@ -77,6 +81,11 @@ void ActionComposer::Begin(void)
     this->_drive_execution();
     this->_draw_overlay();
     this->_draw_renderer_visuals();
+    
+    
+    if (busy) {
+        this->_file_dialog_handler();
+    }
     
     return;
 }
@@ -1105,13 +1114,109 @@ inline void ActionComposer::_refresh_monitor_cache(ImVec2 global)
 void ActionComposer::_draw_settings_menu(void)
 {
 
+    //  1.  SAVE DIALOGUE...
+    if ( ImGui::Button("Save") )    {
+        
+        if ( !S.m_dialog_queued )
+        {
+            S.m_dialog_queued       = true;
+            m_saving                = true;
+            S.m_dialog_settings     = {
+                /* type               = */  cb::FileDialog::Type::Save,
+                /* window_name        = */  "Open Testing Suite",
+                /* default_filename   = */  "functional_test",
+                /* required_extension = */  ".json",
+                /* valid_extensions   = */  {  },
+                /* starting_dir       = */  std::filesystem::current_path()
+            };
+        }
+    }
+
+
+    ImGui::SameLine(0, 20);
+    
+    
+    //  2.  LOAD DIALOGUE...
+    if ( ImGui::Button("Load") )    {
+        
+        if ( !S.m_dialog_queued )
+        {
+            S.m_dialog_queued       = true;
+            m_loading               = true;
+            S.m_dialog_settings     = {
+                /* type               = */  cb::FileDialog::Type::Open,
+                /* window_name        = */  "Save Testing Suite",
+                /* default_filename   = */  "",
+                /* required_extension = */  "",
+                /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
+                /* starting_dir       = */  std::filesystem::current_path()
+            };
+        }
+    }
+    
+    
+    
     return;
 }
+
+
+//  "_file_dialog_handler"
+//
+void ActionComposer::_file_dialog_handler(void)
+{
+    namespace                   fs              = std::filesystem;
+    std::optional<fs::path>     filepath        = std::nullopt;
     
+    if ( m_saving )
+    {
+        //      DIALOG IS OPEN...
+        if ( S.m_file_dialog.is_open() )        { return; }
+        //
+        //      FINISHED SAVING...
+        else {
+            m_saving        = false;
+            filepath        = S.m_file_dialog.get_last_path().value_or("");
+            if ( filepath )   {
+                S.m_logger.info( std::format("Saved to file \"{}\"", filepath->string()) );
+                this->save_to_file( filepath.value() );
+            }
+            else    { S.m_logger.warning("Failed to save file."); }
+        }
+    }
     
+    if ( m_loading )
+    {
+        //      DIALOG IS OPEN...
+        if ( S.m_file_dialog.is_open() )        { return; }
+        //
+        //      FINISHED SAVING...
+        else {
+            m_loading           = false;
+            filepath            = S.m_file_dialog.get_last_path().value_or("");
+            if ( filepath )   {
+                S.m_logger.info( std::format("Loaded from file \"{}\"", filepath->string()) );
+                this->save_to_file( filepath.value() );
+            }
+            else    { S.m_logger.warning("Failed to open file."); }
+        }
+    }
+    
+
+    return;
+}
+
+
+
+
+
+
+
+
+
+
 //  "save_to_file"
 //
-bool ActionComposer::save_to_file(const std::string & path) const
+bool ActionComposer::save_to_file(const std::filesystem::path & path) const
 {
     nlohmann::json j = { {"compositions", m_compositions} };
     std::ofstream f(path);
@@ -1123,7 +1228,7 @@ bool ActionComposer::save_to_file(const std::string & path) const
 
 //  "load_from_file"
 //
-bool ActionComposer::load_from_file(const std::string & path)
+bool ActionComposer::load_from_file(const std::filesystem::path & path)
 {
     std::ifstream f(path);
     if (!f) return false;

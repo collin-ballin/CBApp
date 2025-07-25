@@ -191,8 +191,8 @@ void ActionExecutor::start_mouse_drag(GLFWwindow * window, ImVec2 from, ImVec2 t
     start_cursor_move(window, from, to, dur_s); // sets Move phase
     /* Begin with button held */
     ImGui::GetIO().AddMouseButtonEvent(left_button ? 0 : 1, true);
-    m_state = State::Move;                      // will auto-release in update()
-    m_drag_button_left = left_button;           // store which button to release
+    m_state             = State::Move;                      // will auto-release in update()
+    m_drag_button_left  = left_button;           // store which button to release
     return;
 }
     
@@ -200,33 +200,34 @@ void ActionExecutor::start_mouse_drag(GLFWwindow * window, ImVec2 from, ImVec2 t
 
 //  "start_button_action"
 //
-void ActionExecutor::start_button_action(GLFWwindow* window,
-                                         ImGuiKey   key,
-                                         bool       with_ctrl,
-                                         bool       with_shift,
-                                         bool       with_alt)
+void ActionExecutor::start_button_action( GLFWwindow *  window,
+                                          ImGuiKey      key,
+                                          bool          with_ctrl,
+                                          bool          with_shift,
+                                          bool          with_alt )
 {
-    m_window = window;
-
-    ImGuiIO& io = ImGui::GetIO();
-    if (with_ctrl)  io.AddKeyEvent(ImGuiKey_LeftCtrl,  true);
-    if (with_shift) io.AddKeyEvent(ImGuiKey_LeftShift, true);
-    if (with_alt)   io.AddKeyEvent(ImGuiKey_LeftAlt,   true);
+    m_window        = window;
+    ImGuiIO &   io  = ImGui::GetIO();
+    
+    if (with_ctrl)      { io.AddKeyEvent(ImGuiKey_LeftCtrl,     true);      }
+    if (with_shift)     { io.AddKeyEvent(ImGuiKey_LeftShift,    true);      }
+    if (with_alt)       { io.AddKeyEvent(ImGuiKey_LeftAlt,      true);      }
 
     io.AddKeyEvent(key, true);
     io.AddKeyEvent(key, false);
 
-    if (with_ctrl)  io.AddKeyEvent(ImGuiKey_LeftCtrl,  false);
-    if (with_shift) io.AddKeyEvent(ImGuiKey_LeftShift, false);
-    if (with_alt)   io.AddKeyEvent(ImGuiKey_LeftAlt,   false);
+    if (with_ctrl)      { io.AddKeyEvent(ImGuiKey_LeftCtrl,     false);     }
+    if (with_shift)     { io.AddKeyEvent(ImGuiKey_LeftShift,    false);     }
+    if (with_alt)       { io.AddKeyEvent(ImGuiKey_LeftAlt,      false);     }
 
-    m_state = State::None;            /* completes immediately                */
+    m_state         = State::None;            /* completes immediately                */
+    return;
 }
 
 
 //  "abort"
 //
-void ActionExecutor::abort()
+void ActionExecutor::abort(void)
 {
     m_state = State::None;
 }
@@ -234,7 +235,7 @@ void ActionExecutor::abort()
 
 //  "busy"
 //
-bool ActionExecutor::busy() const
+bool ActionExecutor::busy(void) const
 {
     return m_state != State::None;
 }
