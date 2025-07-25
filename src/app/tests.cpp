@@ -30,6 +30,7 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //
 void App::BeginFunctionalTesting([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
+/*
     using namespace                     ui;
     // static ActionComposer               composer            (S.m_glfw_window);
     static ActionComposer               composer            (S);
@@ -45,7 +46,7 @@ void App::BeginFunctionalTesting([[maybe_unused]] const char * uuid, [[maybe_unu
     //
     ImGui::End();
 
-
+*/
 
     return;
 }

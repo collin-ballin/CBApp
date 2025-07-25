@@ -325,6 +325,9 @@ protected:
     CCounterApp                 m_counter_app;
     EditorApp                   m_editor_app;
     GraphApp                    m_graph_app;
+#ifdef CBAPP_ENABLE_FUNCTIONAL_TESTING
+    ui::ActionComposer          m_composer;
+#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
 #ifdef CBAPP_ENABLE_CB_DEMO
     CBDemo                      m_cb_demo                       = CBDemo();
 #endif  //  CBAPP_ENABLE_CB_DEMO  //

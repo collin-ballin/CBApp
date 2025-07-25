@@ -34,8 +34,11 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 App::App(void)
-    : m_menubar(S),         m_controlbar(S),            m_browser(S),       m_detview(S),
-      m_counter_app(S),     m_editor_app(S),            m_graph_app(S)
+    : m_menubar(S)          , m_controlbar(S)           , m_browser(S)          , m_detview(S),
+      m_counter_app(S)      , m_editor_app(S)           , m_graph_app(S)
+#ifdef CBAPP_ENABLE_FUNCTIONAL_TESTING
+    , m_composer(S)
+#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
 {
     this->install_signal_handlers();
     
@@ -76,6 +79,9 @@ void App::init(void)
     this->m_counter_app.initialize();
     this->m_editor_app.initialize();
     this->m_graph_app.initialize();
+#ifdef CBAPP_ENABLE_FUNCTIONAL_TESTING
+    this->m_composer.initialize();
+#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
        
        
     //  4.      PERFORM ALL RUNTIME ASSERTION STATEMENTS AND
@@ -255,6 +261,11 @@ void App::init_appstate(void)
     S.m_detview_windows.push_back( std::addressof( this->m_graph_app.m_detview_window )     );  //  TODO:   THIS SUCKS.
     S.m_detview_windows.push_back( std::addressof( this->m_editor_app.m_detview_window )    );  //      Fix it w/ forward declarations.
     S.m_detview_windows.push_back( std::addressof( this->m_counter_app.m_detview_window )   );
+#ifdef CBAPP_ENABLE_FUNCTIONAL_TESTING
+    //S.m_detview_windows.push_back( std::addressof( this->m_composer.m_detview_window )   );
+#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+    
+    
     
     //          6.1.    Make sure these windows cannot LEAVE the DetView Dockspace...
     for (auto & win : S.m_detview_windows) {
@@ -428,10 +439,13 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
             break;
         }
 #elif defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
-        case Window::CBFunctionalTesting:   {
+        case Window::CBFunctionalTesting:
+        {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->BeginFunctionalTesting(n, o, f); };
-            //  this->ShowImGuiDemoWindow(      w.uuid.c_str(),     &w.open,        w.flags);
+                          { this->m_composer.Begin(n, o, f); };
+                          
+            //  render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+            //                { this->BeginFunctionalTesting(n, o, f); };
             break;
         }
 #endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //

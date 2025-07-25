@@ -11,6 +11,7 @@
 **************************************************************************************/
 #include "widgets/functional_testing/functional_testing.h"
 #include "app/state/state.h"
+#include "app/state/_types.h"
 
 
 namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
@@ -36,23 +37,34 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 
 //  Default Constructor.
 //
-ActionComposer::ActionComposer(GLFWwindow * window)
-    : CBAPP_STATE_NAME(app::AppState::instance())
-    , m_glfw_window(window)
-{
-    m_actions = &m_compositions.front().actions;   // initial seat
-}
-
-
-//  Default Constructor.
-//
 ActionComposer::ActionComposer(app::AppState & src)
     : CBAPP_STATE_NAME(src)
+    , m_detview_window( std::make_unique<app::WinInfo>() )
 {
     m_glfw_window   = S.m_glfw_window;
     m_actions       = &m_compositions.front().actions;   // initial seat
 }
 
+
+//  "initialize"
+//
+void ActionComposer::initialize(void)
+{
+    app::WinInfo &      win_info    = *m_detview_window;
+    
+    if ( this->m_initialized )          { return; }
+    
+    
+    win_info                        = {
+        "Editor Controls",
+        ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
+        true,
+        nullptr
+    };
+    
+    this->m_initialized             = true;
+    return;
+}
 
 
 
@@ -66,9 +78,25 @@ ActionComposer::ActionComposer(app::AppState & src)
 
 //  "Begin"
 //
-void ActionComposer::Begin(void)
+void ActionComposer::Begin([[maybe_unused]] const char * ,     [[maybe_unused]] bool * ,    [[maybe_unused]] ImGuiWindowFlags )
+{
+
+    if ( m_detview_window->open ) {
+        ImGui::Begin( m_detview_window->uuid.c_str(), nullptr, m_detview_window->flags );
+            this->Begin_IMPL();
+        ImGui::End();
+    }
+    
+    return;
+}
+
+
+//  "Begin_IMPL"
+//
+void ActionComposer::Begin_IMPL(void)
 {
     const bool      busy    = m_saving || m_loading;
+    
     
     //  1.  DRAW THE "CONTROL-BAR" UI-INTERFACE...
     this->_update_capture();

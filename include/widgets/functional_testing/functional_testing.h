@@ -85,8 +85,20 @@
 
 
 
+//  FORWARD DECLARATION...
+//
+namespace cb { namespace app { //     BEGINNING NAMESPACE "cb::app"...
+// *************************************************************************** //
+// *************************************************************************** //
+    class       AppState;
+    struct      WinInfo;
 
-namespace                       cb                         { namespace app { class AppState; } }
+// *************************************************************************** //
+// *************************************************************************** //
+} } //   END OF "cb::app" NAMESPACE.
+
+
+
 
 
 
@@ -374,6 +386,9 @@ public:
 protected:
     //                              IMPORTANT DATA:
     app::AppState &                     CBAPP_STATE_NAME;
+    std::unique_ptr<app::WinInfo>       m_detview_window;
+    bool                                m_initialized                           = false;
+    //
     GLFWwindow *                        m_glfw_window;
     ActionExecutor                      m_executor                              {  };
     std::vector<Composition>            m_compositions                          { 1 };
@@ -423,18 +438,21 @@ public:
     // *************************************************************************** //
     //      INITIALIZATION METHODS.         |   "init.cpp" ...
     // *************************************************************************** //
-    explicit                            ActionComposer          (GLFWwindow *);
     explicit                            ActionComposer          (app::AppState & src);
-    //explicit                            ActionComposer          (::app::AppState & src, GLFWwindow *);
                                         ~ActionComposer         (void)      = default;
+    //
+    //                              INITIALIZATION METHODS:
+    void                                initialize              (void);
     // *************************************************************************** //
     //
     //
     // *************************************************************************** //
     //      MAIN API.                       |   "interface.cpp" ...
     // *************************************************************************** //
-    void                                Begin                               (void);
+    void                                Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                                draw_all                            (void);
+protected:
+    void                                Begin_IMPL                          (void);
     
 //
 //

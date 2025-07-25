@@ -56,6 +56,9 @@
 //      2.1     CRITICAL BUILD SETTINGS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+#define         CBAPP_ENABLE_FUNCTIONAL_TESTING             1                   //  Compiles with procedure to enact FUNCTIONAL TESTING...
+
 //#define         __CBAPP_DEBUG__                             1                 //  Enable delay before starting int main (bug-fix for X-Code IDE issue).
 //  #define         __CBAPP_BUILD_CCOUNTER_APP__                    1               //  BUILD FOR COINCIDENCE COUNTER...
 //  #define         __CBAPP_BUILD_FDTD_APP__                        1               //  BUILD FOR FDTD APP...
@@ -94,7 +97,6 @@
 // *************************************************************************** //
 // *************************************************************************** //
 
-#define     CBAPP_ENABLE_FUNCTIONAL_TESTING                 1               //  Compiles with procedure to enact FUNCTIONAL TESTING...
 #define     CBAPP_ENABLE_MOVE_AND_RESIZE                    1           //  Allow user to moving / resizing core windows.
 //  #define     CBAPP_DISABLE_SAVE_WINDOW_SIZE                      1           //  Prevent windows from saving/loading from "ini".     //  ImGuiWindowFlags_NoSavedSettings
 #define     CBAPP_USE_FONTSCALE_DPI                         1           //  Use "S.m_dpi_fontscale" SEPERATE FROM "S.m_dpi_scale".
