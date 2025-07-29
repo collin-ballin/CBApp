@@ -31,6 +31,7 @@
 //  #include "app/_init.h"
 #include "utility/_types.h"
 #include "utility/_constants.h"
+#include "utility/_json.h"          //  <==|    NEW.  July 29, 2025.
 #include "utility/_templates.h"
 #include "utility/_logger.h"
 #ifdef _WIN32

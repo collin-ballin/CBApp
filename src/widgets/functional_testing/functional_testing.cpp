@@ -827,28 +827,35 @@ void ActionComposer::_file_dialog_handler(void)
     return;
 }
 
-
-
-
-
-
-
-//  static_assert(!std::is_same_v<
-//      nlohmann::detail::detected_t<
-//          decltype(&nlohmann::adl_serializer<ImVec2>::from_json),
-//          nlohmann::json,const nlohmann::json&, ImVec2&
-//      >, void>,
-//      "ImVec2 serializer NOT visible in this TU");
     
-
+    
+static_assert( utl::has_from_json<ImVec2>::value,
+               "ImVec2 serializer NOT visible in this translation unit" );
+    
+static_assert( utl::has_from_json<CursorMoveParams>::value,
+               "CursorMoveParams serializer NOT visible" );
+               
+static_assert( utl::has_from_json<Action>::value,
+               "Action serializer NOT visible" );
+               
+static_assert( utl::has_from_json<Composition_t>::value,
+               "Composition_t serializer NOT visible" );
+              
+              
 
 //  "save_to_file"
 //
 bool ActionComposer::save_to_file(const std::filesystem::path & path) const
 {
-    nlohmann::json j = { {"compositions", m_compositions} };
-    std::ofstream f(path);
-    if (!f) return false;
+    std::ofstream       f(path);
+    nlohmann::json      j = { {"compositions", m_compositions} };
+    
+    //  CASE 0 :    FAILURE TO OPEN  "ifstream" OBJECT...
+    if ( !f ) {
+        S.m_logger.error( std::format("ActionComposer | failed to save JSON file: failed to create std::ofstream object from provided path \"{}\".", path.string()) );
+        return false;
+    }
+    
     f << j.dump(2);
     return true;
 }
@@ -858,14 +865,22 @@ bool ActionComposer::save_to_file(const std::filesystem::path & path) const
 //
 bool ActionComposer::load_from_file(const std::filesystem::path & path)
 {
-    std::ifstream f(path);
-    if (!f) return false;
+    std::ifstream   f(path);
+    
+    //  CASE 0 :    FAILURE TO OPEN  "ifstream" OBJECT...
+    if ( !f ) {
+        S.m_logger.error( std::format("ActionComposer | failed to load JSON file: failed to create std::ifstream object from provided path \"{}\".", path.string()) );
+        return false;
+    }
+
+
 
     try {
         nlohmann::json j; f >> j;
         j.at("compositions").get_to(m_compositions);
-    } catch (const std::exception& e) {
-        std::fprintf(stderr, "[Composer] JSON load failed: %s\n", e.what());
+    }
+    catch (const std::exception & e) {
+        S.m_logger.exception( std::format("ActionComposer | failed to load JSON file: caught std::exception while loading file.  TRACEBACK: \"{}\".", e.what()) );
         return false;
     }
 
