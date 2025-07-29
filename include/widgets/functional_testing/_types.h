@@ -257,6 +257,7 @@ struct HotkeyParams {
     bool                ctrl            {true};
     bool                shift           {false};
     bool                alt             {false};
+    bool                super           {false};
 };
 
 inline void to_json(nlohmann::json& j, const HotkeyParams& p)
@@ -265,7 +266,8 @@ inline void to_json(nlohmann::json& j, const HotkeyParams& p)
             {"key",                 p.key                           },
             {"ctrl",                p.ctrl                          },
             {"shift",               p.shift                         },
-            {"alt",                 p.alt                           }
+            {"alt",                 p.alt                           },
+            {"super",               p.super                         }
     };
 }
 
@@ -276,6 +278,7 @@ inline void from_json(const nlohmann::json& j, HotkeyParams& p)
     j.at("ctrl"                     ).get_to(p.ctrl                 );
     j.at("shift"                    ).get_to(p.shift                );
     j.at("alt"                      ).get_to(p.alt                  );
+    j.at("super"                    ).get_to(p.super                );
 }
 
 

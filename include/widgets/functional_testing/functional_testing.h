@@ -171,6 +171,7 @@ struct ActionExecutor
     float                               m_duration_s                    { 0.0f };  // total move time
     float                               m_elapsed_s                     { 0.0f };  // accumulated time
     bool                                m_drag_button_left              { true };
+    bool                                m_is_drag                       { false };   // ← NEW
     
     // *************************************************************************** //
     //
@@ -215,7 +216,7 @@ struct ActionExecutor
     void                                start_mouse_release                 (GLFWwindow * window, bool left_button);
     void                                start_mouse_drag                    (GLFWwindow * window, ImVec2 from, ImVec2 to, float  dur_s, bool left_button);
     //
-    void                                start_button_action                 (GLFWwindow * window, ImGuiKey key, bool ctrl, bool shift, bool alt);
+    void                                start_button_action                 (GLFWwindow * window, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super);
     //
     //
     //
@@ -630,7 +631,7 @@ protected:
         
     //  "_load_actions_from_comp"
     //
-    inline void _load_actions_from_comp(int comp_index)
+    inline void                         _load_actions_from_comp         (int comp_index)
     {
         if ( m_compositions.empty() )   { return; }
 
@@ -646,14 +647,14 @@ protected:
 
     //  "_save_actions_to_comp"
     //
-    void _save_actions_to_comp(void) {
+    inline void                         _save_actions_to_comp           (void) {
         m_compositions[m_comp_sel].actions = *m_actions;
         return;
     }
     
     
     //  "_reorder"
-    void                                _reorder                        (int from, int to)
+    inline void                         _reorder                        (int from, int to)
     {
         if( from == to )    { return; }
         
@@ -664,6 +665,10 @@ protected:
         
         return;
     }
+    
+    
+    //  "need_step"
+    inline bool                         need_step                       (void) const    { return m_step_req; }
     
     
     

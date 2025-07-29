@@ -169,7 +169,7 @@
 
 
 
-### ***THE `GRAPH` APPLICATION***
+### ***THE `GRAPH` APPLICATION (THIS WILL LATER BE RENAMED...)***
 >
 > Text
 >
@@ -189,7 +189,7 @@
 
 ### ***ADDITIONAL TOOLS AND UTILITIES***
 >
-> A number of smaller utility tools have been created in order to solve certain problems that arose over the course of our development.  These tools remain accessible to the end user in the event that they should perhaps ever find them to be useful.  
+> *A number of smaller utility tools have been created in order to solve certain problems that have arisen over the development of this project.  These tools remain accessible to the end user in the event that they should perhaps ever find them to be useful.*
 >
 >  #### Functional Testing Tool:
 > > Some more text...
@@ -202,8 +202,7 @@
 >
 >
 >  #### Dear ImGui Tools
-> > Some more text...
-
+> > Each of the tools provided by the Dear ImGui demos can be accessed from the "Window > Show" menu in the Menu Bar.  This includes the Dear ImGui Demo and Style Editor, the ImPlot Demo and Style Editor, and etc.  Using these tools, the user can customize the appearance of the paplication to their requirements and subequently save these settings for future useage. 
 
 
 

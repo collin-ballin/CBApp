@@ -37,22 +37,46 @@
 // *************************************************************************** //
 // *************************************************************************** //
 
-template <>
-struct nlohmann::adl_serializer<ImVec2>
+namespace nlohmann { //     BEGINNING NAMESPACE "nlohmann"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+template<>
+struct adl_serializer<ImVec2>
 {
     static void to_json(json& j, const ImVec2& v)
     {
-        j = json{ {"x", v.x}, {"y", v.y} };
+        j = json::array({ v.x, v.y });          // -> [x, y]
     }
+
     static void from_json(const json& j, ImVec2& v)
     {
-        j.at("x").get_to(v.x);
-        j.at("y").get_to(v.y);
+        if (!j.is_array() || j.size() != 2)
+            throw std::runtime_error("ImVec2 expects JSON array [x, y]");
+
+        v.x = j[0].get<float>();
+        v.y = j[1].get<float>();
     }
 };
 
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //
+}//   END OF "nlohmann" NAMESPACE.
+
+
+
+
+
+
 
 
 

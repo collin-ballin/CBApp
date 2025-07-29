@@ -134,13 +134,14 @@ struct FunctionalTestRunner {
 //
 void ActionExecutor::start_cursor_move(GLFWwindow* window, ImVec2 first, ImVec2 last, float duration_s)
 {
-    m_window      = window;
-    m_first_pos   = first;
-    m_last_pos    = last;
-    m_duration_s  = std::max(duration_s, ms_MIN_DURATION_S);
-    m_elapsed_s   = 0.0f;
+    m_window        = window;
+    m_first_pos     = first;
+    m_last_pos      = last;
+    m_duration_s    = std::max(duration_s, ms_MIN_DURATION_S);
+    m_elapsed_s     = 0.0f;
+    m_is_drag       = false;                    // ← pure move
 
-    /* warp to start (LOCAL) */
+    /* warp OS cursor (LOCAL) */
     glfwSetCursorPos(m_window, m_first_pos.x, m_first_pos.y);
 
     /* echo GLOBAL position to ImGui */
@@ -190,12 +191,12 @@ void ActionExecutor::start_mouse_release(GLFWwindow * window, bool left_button)
 //
 void ActionExecutor::start_mouse_drag(GLFWwindow * window, ImVec2 from, ImVec2 to, float  dur_s, bool left_button)
 {
-    start_cursor_move(window, from, to, dur_s); // sets Move phase
-    /* Begin with button held */
+    start_cursor_move(window, from, to, dur_s);   // sets Move phase
     ImGui::GetIO().AddMouseButtonEvent(left_button ? 0 : 1, true);
-    m_state             = State::Move;                      // will auto-release in update()
-    m_drag_button_left  = left_button;           // store which button to release
-    return;
+
+    m_drag_button_left = left_button;
+    m_is_drag          = true;                    // ← drag mode
+    /* state already Move */
 }
     
     
@@ -206,24 +207,26 @@ void ActionExecutor::start_button_action( GLFWwindow *  window,
                                           ImGuiKey      key,
                                           bool          with_ctrl,
                                           bool          with_shift,
-                                          bool          with_alt )
+                                          bool          with_alt,
+                                          bool          with_super )
 {
-    m_window        = window;
-    ImGuiIO &   io  = ImGui::GetIO();
-    
-    if (with_ctrl)      { io.AddKeyEvent(ImGuiKey_LeftCtrl,     true);      }
-    if (with_shift)     { io.AddKeyEvent(ImGuiKey_LeftShift,    true);      }
-    if (with_alt)       { io.AddKeyEvent(ImGuiKey_LeftAlt,      true);      }
+    m_window = window;
+    ImGuiIO& io = ImGui::GetIO();
+
+    if (with_ctrl)   io.AddKeyEvent(ImGuiKey_LeftCtrl,  true);
+    if (with_shift)  io.AddKeyEvent(ImGuiKey_LeftShift, true);
+    if (with_alt)    io.AddKeyEvent(ImGuiKey_LeftAlt,   true);
+    if (with_super)  io.AddKeyEvent(ImGuiKey_LeftSuper, true);
 
     io.AddKeyEvent(key, true);
     io.AddKeyEvent(key, false);
 
-    if (with_ctrl)      { io.AddKeyEvent(ImGuiKey_LeftCtrl,     false);     }
-    if (with_shift)     { io.AddKeyEvent(ImGuiKey_LeftShift,    false);     }
-    if (with_alt)       { io.AddKeyEvent(ImGuiKey_LeftAlt,      false);     }
+    if (with_ctrl)   io.AddKeyEvent(ImGuiKey_LeftCtrl,  false);
+    if (with_shift)  io.AddKeyEvent(ImGuiKey_LeftShift, false);
+    if (with_alt)    io.AddKeyEvent(ImGuiKey_LeftAlt,   false);
+    if (with_super)  io.AddKeyEvent(ImGuiKey_LeftSuper, false);
 
-    m_state         = State::None;            /* completes immediately                */
-    return;
+    m_state = State::None;   // completes immediately
 }
 
 
@@ -231,7 +234,16 @@ void ActionExecutor::start_button_action( GLFWwindow *  window,
 //
 void ActionExecutor::abort(void)
 {
-    m_state = State::None;
+    /* release a button that may still be held during a drag */
+    if (m_state != State::None && m_is_drag)
+    {
+        ImGui::GetIO().AddMouseButtonEvent(m_drag_button_left ? 0 : 1, false);
+    }
+
+    /* reset local state */
+    m_state     = State::None;
+    m_is_drag   = false;
+    m_window    = nullptr;
 }
 
 
@@ -254,18 +266,19 @@ void ActionExecutor::update(void)
     switch (m_state)
     {
         case State::Move: {
-            m_elapsed_s                += io.DeltaTime;
-            float       t               = std::clamp(m_elapsed_s / m_duration_s, 0.0f, 1.0f);
-            ImVec2      pos             = ImLerp(m_first_pos, m_last_pos, t);
+            m_elapsed_s += io.DeltaTime;
+            float  t     = std::clamp(m_elapsed_s / m_duration_s, 0.0f, 1.0f);
+            ImVec2 pos   = ImLerp(m_first_pos, m_last_pos, t);
 
-            /* move OS cursor (LOCAL) */
-            glfwSetCursorPos(m_window, pos.x, pos.y);
+            glfwSetCursorPos(m_window, pos.x, pos.y);                 // local
+            ImVec2 global = _local_to_global(m_window, pos);
+            io.AddMousePosEvent(global.x, global.y);                  // global echo
 
-            /* echo GLOBAL position to ImGui */
-            ImVec2      global_pos      = _local_to_global(m_window, pos);
-            io.AddMousePosEvent(global_pos.x, global_pos.y);
-
-            if (t >= 1.0f)      { m_state = State::ButtonDown; }
+            if (t >= 1.0f)
+            {
+                if (m_is_drag)  m_state = State::ButtonUp;  // release only
+                else            m_state = State::None;      // pure move done
+            }
             break;
         }
 
@@ -276,7 +289,7 @@ void ActionExecutor::update(void)
         }
         
         case State::ButtonUp: {
-            io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+            io.AddMouseButtonEvent(m_drag_button_left ? 0 : 1, false);
             m_state = State::None;
             break;
         }
@@ -318,40 +331,52 @@ void ActionExecutor::update(void)
 //
 void ActionComposer::_drive_execution(void)
 {
-    //  1.  ADVANCE TO THE CURRENT ACTION...
+    /* === 0. global abort shortcut ===================================== */
+    if (m_state == State::Run && ImGui::IsKeyPressed(ImGuiKey_Escape))
+    {
+        m_executor.abort();
+        reset_all();                    // idle, flags cleared
+        return;                         // skip further processing this frame
+    }
+
+    /* === 1. advance current action ==================================== */
     m_executor.update();
 
-    //  2.  CHECK IF WE ARE READY TO PROCEED...
-    if ( !m_executor.busy() && this->is_running() )
+    /* === 2. should we dispatch the next? ============================== */
+    const bool ready_to_start = !m_executor.busy();
+    const bool want_action    = is_running() || need_step();
+    if (!ready_to_start || !want_action)
+        return;
+
+    /* === 3. index bounds check ======================================== */
+    if (m_play_index < 0 || m_play_index >= static_cast<int>(m_actions->size()))
     {
-        if ( m_play_index < 0 || m_play_index >= static_cast<int>(m_actions->size()) ) {
-            m_state         = State::Idle;
-            m_is_running    = false;
-            m_step_req      = false;
-            m_play_index    = -1;
-            return;
-        }
-
-        Action &    act     = (*m_actions)[m_play_index];
-        this->_dispatch_execution(act);
-
-
-        //  3.  PREPARE FOR THE NEXT INDEX...=
-        //  ++m_play_index;
-        //
-        if ( !this->is_running() )      { m_play_index = -1;    }               //  RUNNING ONLY ONCE...
-        else                            { ++m_play_index;       }               //  RUNNING **ALL** ACTIONS...
-            
-        if ( this->is_running() && m_play_index >= static_cast<int>(m_actions->size()) ) {
-            m_state         = State::Idle;
-            m_is_running    = false;
-            m_play_index    = -1;
-        }
-        m_step_req = false;
-        m_sel      = m_play_index;
+        reset_state();
+        m_play_index = -1;
+        return;
     }
-    
-    return;
+
+    /* === 4. run the indexed action ==================================== */
+    Action& act = (*m_actions)[m_play_index];
+    m_sel        = m_play_index;               // visuals stay in sync
+    _dispatch_execution(act);
+
+    /* === 5. advance or finish ========================================= */
+    if (need_step())                           // Run‑Once
+    {
+        m_step_req   = false;
+        reset_state();
+        m_play_index = -1;
+    }
+    else                                       // Run‑All
+    {
+        ++m_play_index;
+        if (m_play_index >= static_cast<int>(m_actions->size()))
+        {
+            reset_state();
+            m_play_index = -1;
+        }
+    }
 }
 
 
@@ -365,46 +390,56 @@ inline void ActionComposer::_dispatch_execution(Action & act)
         //  1.  CURSOR MOVEMENT...
         case ActionType::CursorMove: {
             m_executor.start_cursor_move(
-                S.m_glfw_window,
-                act.cursor.first,           // <- use stored begin coordinate
+                act.target ? act.target : S.m_glfw_window,
+                act.cursor.first,
                 act.cursor.last,
-                act.cursor.duration
-            );
+                act.cursor.duration);
             break;
         }
         
         //  2.  SINGLE MOUSE CLICK...
         case ActionType::MouseClick: {
-            m_executor.start_mouse_click( S.m_glfw_window, act.press.left_button );
+            m_executor.start_mouse_click(
+                act.target ? act.target : S.m_glfw_window,
+                act.click.left_button);
             break;
         }
         
         //  3.  MOUSE PRESS...
         case ActionType::MousePress: {
-            m_executor.start_mouse_press( S.m_glfw_window, act.press.left_button );
+            m_executor.start_mouse_press(
+                act.target ? act.target : S.m_glfw_window,
+                act.press.left_button);
             break;
         }
         
         //  4.  MOUSE RELEASE...
         case ActionType::MouseRelease: {
-            m_executor.start_mouse_release( S.m_glfw_window, act.release.left_button );
+            m_executor.start_mouse_release(
+                act.target ? act.target : S.m_glfw_window,
+                act.release.left_button);
             break;
         }
         
         //  5.  MOUSE DRAG...
         case ActionType::MouseDrag: {
-            break;
+            m_executor.start_mouse_drag(
+                act.target ? act.target : S.m_glfw_window,
+                act.drag.from,
+                act.drag.to,
+                act.drag.duration,
+                act.drag.left_button);
         }
 
         //  6.  HOTKEY PRESS...
         case ActionType::Hotkey: {
             m_executor.start_button_action(
-                S.m_glfw_window,
+                act.target ? act.target : S.m_glfw_window,
                 act.hotkey.key,
                 act.hotkey.ctrl,
                 act.hotkey.shift,
-                act.hotkey.alt
-            );
+                act.hotkey.alt,
+                act.hotkey.super);
             break;
         }
 

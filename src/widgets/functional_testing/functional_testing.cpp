@@ -833,7 +833,13 @@ void ActionComposer::_file_dialog_handler(void)
 
 
 
-
+//  static_assert(!std::is_same_v<
+//      nlohmann::detail::detected_t<
+//          decltype(&nlohmann::adl_serializer<ImVec2>::from_json),
+//          nlohmann::json,const nlohmann::json&, ImVec2&
+//      >, void>,
+//      "ImVec2 serializer NOT visible in this TU");
+    
 
 
 //  "save_to_file"
@@ -854,12 +860,16 @@ bool ActionComposer::load_from_file(const std::filesystem::path & path)
 {
     std::ifstream f(path);
     if (!f) return false;
-    nlohmann::json j; f >> j;
-    j.at("compositions").get_to(m_compositions);
 
-    /* refresh internal pointers / selections */
-    m_comp_sel = std::clamp(m_comp_sel, 0, static_cast<int>(m_compositions.size())-1);
-    _load_actions_from_comp(m_comp_sel);
+    try {
+        nlohmann::json j; f >> j;
+        j.at("compositions").get_to(m_compositions);
+    } catch (const std::exception& e) {
+        std::fprintf(stderr, "[Composer] JSON load failed: %s\n", e.what());
+        return false;
+    }
+
+    _load_actions_from_comp(0);
     return true;
 }
 

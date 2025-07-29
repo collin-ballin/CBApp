@@ -83,7 +83,8 @@ void ActionComposer::_draw_controlbar(void)
         ImGui::BeginDisabled( !this->is_running() && m_actions->empty() && (m_sel < 0) );
             if ( ImGui::Button("Run Once", WIDGET_SIZE) ) {
                 m_play_index = m_sel;
-                m_step_req   = true;             // drive exactly one action
+                m_step_req   = true;                       // flag for single action
+                m_state      = State::Run;
             }
         ImGui::EndDisabled();
         
@@ -92,12 +93,12 @@ void ActionComposer::_draw_controlbar(void)
     
         //  3.  STEP BUTTON...
         ImGui::NextColumn();        ImGui::NewLine();
-        ImGui::BeginDisabled( !this->is_running() || m_actions->size() < 1 );
-            if ( ImGui::Button("Step", WIDGET_SIZE) )
-            {
-                m_play_index    = (m_play_index + 1) % (int)m_actions->size();
-                m_sel           = m_play_index;          // highlight row that will run next
-            }
+        ImGui::BeginDisabled(m_sel < 0);               // usable while *not* running
+        if ( ImGui::Button("Step", WIDGET_SIZE) ) {
+            m_play_index = m_sel;
+            m_step_req   = true;                       // identical to Run Once
+            m_state      = State::Run;
+        }
         ImGui::EndDisabled();
 
 
