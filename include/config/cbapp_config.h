@@ -327,6 +327,7 @@
 #define                 _CBAPP_APPSTATE_ALIAS_API                                                               \
 public:                                                                                                         \
     using               CBSignalFlags                   = std::uint32_t;                                        \
+    using               SystemColor                     = app::AppleSystemColors_;                              \
                                                                                                                 \
     using               Window                          = app::Window_t;                                        \
     using               Applet                          = app::Applet_t;                                        \

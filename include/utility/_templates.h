@@ -444,9 +444,8 @@ inline bool MakePlotCFG(PlotCFG & cfg)
 template<typename E, typename T, std::size_t N = static_cast<std::size_t>(E::Count)>
 struct EnumArray {
     std::array<T, N> data;
-
-    T& operator[](E e) noexcept               { return data[static_cast<std::size_t>(e)]; }
-    const T& operator[](E e) const noexcept  { return data[static_cast<std::size_t>(e)]; }
+    T &                 operator []         (E e) noexcept              { return data[static_cast<std::size_t>(e)]; }
+    const T &           operator []         (E e) const noexcept        { return data[static_cast<std::size_t>(e)]; }
 };
 //
 //  OLD IMPLEMENTATION BELOW...

@@ -44,7 +44,7 @@
 #include "templates/utility/_tags.h"
 #include "templates/utility/_strings.h"
 #include "templates/utility/_timestamp.h"
-#include "templates/utility/helper.h"
+#include "templates/utility/_helper.h"
 
 
 
@@ -79,7 +79,7 @@ struct RingBuffer
     using value_type        = T;
     using size_type         = std::size_t;
     using difference_type   = std::ptrdiff_t;
-    using reference         = T &;              // ‼️ now _mutable_
+    using reference         = T &;              //  now _mutable_
     using const_reference   = const T &;
     using pointer           = T *;
     using const_pointer     = const T *;

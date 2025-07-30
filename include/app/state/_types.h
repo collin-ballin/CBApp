@@ -226,7 +226,34 @@ enum CBSignalFlags_ {
 
 
 // *************************************************************************** //
-//      3.  COLORMAP TYPES...
+//      3.  COLOR AND STYLE TYPES...
+// *************************************************************************** //
+
+//  "AppleSystemColors_"
+//
+enum class AppleSystemColors_ : uint8_t {
+    Gray = 0,       Pink,           Red,            Orange,         Yellow,
+    Green,          Brown,          Blue,           Purple,         Count
+};
+//
+//  "DEF_APPLE_SYSTEM_COLORS"
+static constexpr utl::EnumArray<AppleSystemColors_, ImU32>
+DEF_APPLE_SYSTEM_COLORS = {
+    /*  sys_gray    =   */      0x98989DFF,
+    /*  sys_pink    =   */      0xFF375FFF,
+    /*  sys_red     =   */      0xFF453AFF,
+    /*  sys_orange  =   */      0xFF9F0AFF,
+    /*  sys_yellow  =   */      0xFFD60AFF,
+    /*  sys_green   =   */      0x32D74BFF,
+    /*  sys_brown   =   */      0xAC8E68FF,
+    /*  sys_blue    =   */      0x0A84FFFF,
+    /*  sys_purple  =   */      0xBF5AF2FF,
+};
+
+
+
+// *************************************************************************** //
+//      4.  COLORMAP TYPES...
 // *************************************************************************** //
 
 /*

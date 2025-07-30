@@ -665,56 +665,121 @@ inline void ActionComposer::_cancel_key_capture(void)
 
 
 
-
-
-
-
-
-
 // *************************************************************************** //
 //
 //
 //
 // *************************************************************************** //
-//                      OTHER UTILITY FUNCTIONS...
+//                      SERIALIZER FUNCTIONS...
 // *************************************************************************** //
 
-//  "_refresh_monitor_cache"
+//  SERIALIZER ASSERTIONS...
 //
-//      Update m_active_monitor / m_monitor_bounds when the cursor enters a new
-//      monitor.  Expects |global| = screen-space cursor coordinates.
+//      1.      ImVec2.
+static_assert( utl::has_from_json<ImVec2>::value,               "ImVec2 \"from_json\" NOT visible."                 );
+static_assert( utl::has_to_json<ImVec2>::value,                 "ImVec2 \"to_json\" NOT visible."                   );
 //
-void ActionComposer::_refresh_monitor_cache(ImVec2 global)
+//      2.      CursorMoveParams.
+static_assert( utl::has_from_json<CursorMoveParams>::value,     "CursorMoveParams \"from_json\" NOT visible."       );
+static_assert( utl::has_to_json<CursorMoveParams>::value,       "CursorMoveParams \"to_json\" NOT visible."         );
+//
+//      3.      Action.
+static_assert( utl::has_from_json<Action>::value,               "Action \"from_json\" NOT visible."                 );
+static_assert( utl::has_to_json<Action>::value,                 "Action \"to_json\" NOT visible."                   );
+//
+//      4.      Composition_t.
+static_assert( utl::has_from_json<Composition_t>::value,        "Composition_t \"from_json\" NOT visible."          );
+static_assert( utl::has_to_json<Composition_t>::value,          "Composition_t \"to_json\" NOT visible."            );
+               
+               
+               
+//  "_file_dialog_handler"
+//
+void ActionComposer::_file_dialog_handler(void)
 {
-    int mon_count;
-    GLFWmonitor** monitors = glfwGetMonitors(&mon_count);
-
-    for (int i = 0; i < mon_count; ++i)
+    namespace                   fs              = std::filesystem;
+    std::optional<fs::path>     filepath        = std::nullopt;
+    
+    if ( m_saving )
     {
-        int mx, my, mw, mh;
-        glfwGetMonitorWorkarea(monitors[i], &mx, &my, &mw, &mh);
-        if (global.x >= mx && global.x < mx + mw &&
-            global.y >= my && global.y < my + mh)
-        {
-            if (monitors[i] != m_active_monitor)      // changed monitor
-            {
-                m_active_monitor = monitors[i];
-                m_monitor_bounds = ImRect({(float)mx,        (float)my},
-                                          {(float)(mx+mw),   (float)(my+mh)});
+        //      DIALOG IS OPEN...
+        if ( S.m_file_dialog.is_open() )        { return; }
+        //
+        //      FINISHED SAVING...
+        else {
+            m_saving        = false;
+            filepath        = S.m_file_dialog.get_last_path().value_or("");
+            if ( filepath )   {
+                S.m_logger.info( std::format("Saved to file \"{}\"", filepath->string()) );
+                this->save_to_file( filepath.value() );
             }
-            return;
+            else    { S.m_logger.warning("Failed to save file."); }
         }
     }
     
-    /* fallback: first monitor if none matched */
-    if (m_active_monitor == nullptr && mon_count > 0)
+    if ( m_loading )
     {
-        int mx, my, mw, mh;
-        glfwGetMonitorWorkarea(monitors[0], &mx, &my, &mw, &mh);
-        m_active_monitor = monitors[0];
-        m_monitor_bounds = ImRect({(float)mx,        (float)my},
-                                  {(float)(mx+mw),   (float)(my+mh)});
+        //      DIALOG IS OPEN...
+        if ( S.m_file_dialog.is_open() )        { return; }
+        //
+        //      FINISHED SAVING...
+        else {
+            m_loading           = false;
+            filepath            = S.m_file_dialog.get_last_path().value_or("");
+            if ( filepath )   {
+                S.m_logger.info( std::format("Loaded from file \"{}\"", filepath->string()) );
+                this->load_from_file( filepath.value() );
+            }
+            else    { S.m_logger.warning("Failed to open file."); }
+        }
     }
+    
+
+    return;
+}
+              
+
+//  "save_to_file"
+//
+bool ActionComposer::save_to_file(const std::filesystem::path & path) const
+{
+    std::ofstream       f(path);
+    nlohmann::json      j = { {"compositions", m_compositions} };
+    
+    //  CASE 0 :    FAILURE TO OPEN  "ifstream" OBJECT...
+    if ( !f ) {
+        S.m_logger.error( std::format("ActionComposer | failed to save JSON file: failed to create std::ofstream object from provided path \"{}\".", path.string()) );
+        return false;
+    }
+    
+    f << j.dump(2);
+    return true;
+}
+
+
+//  "load_from_file"
+//
+bool ActionComposer::load_from_file(const std::filesystem::path & path)
+{
+    std::ifstream   f(path);
+    
+    //  CASE 0 :    FAILURE TO OPEN  "ifstream" OBJECT...
+    if ( !f ) {
+        S.m_logger.error( std::format("ActionComposer | failed to load JSON file: failed to create std::ifstream object from provided path \"{}\".", path.string()) );
+        return false;
+    }
+
+    try {
+        nlohmann::json j; f >> j;
+        j.at("compositions").get_to(m_compositions);
+    }
+    catch (const std::exception & e) {
+        S.m_logger.exception( std::format("ActionComposer | failed to load JSON file: caught std::exception while loading file.  TRACEBACK: \"{}\".", e.what()) );
+        return false;
+    }
+
+    _load_actions_from_comp(0);
+    return true;
 }
 
 
@@ -722,6 +787,7 @@ void ActionComposer::_refresh_monitor_cache(ImVec2 global)
 
 
 
+
 // *************************************************************************** //
 //
 //
@@ -729,7 +795,6 @@ void ActionComposer::_refresh_monitor_cache(ImVec2 global)
 // *************************************************************************** //
 //                      OTHER UTILITY FUNCTIONS...
 // *************************************************************************** //
-
 
 //  "_draw_settings_menu"
 //
@@ -782,115 +847,50 @@ void ActionComposer::_draw_settings_menu(void)
 }
 
 
-//  "_file_dialog_handler"
+//  "_refresh_monitor_cache"
 //
-void ActionComposer::_file_dialog_handler(void)
+//      Update m_active_monitor / m_monitor_bounds when the cursor enters a new
+//      monitor.  Expects |global| = screen-space cursor coordinates.
+//
+void ActionComposer::_refresh_monitor_cache(ImVec2 global)
 {
-    namespace                   fs              = std::filesystem;
-    std::optional<fs::path>     filepath        = std::nullopt;
-    
-    if ( m_saving )
+    int mon_count;
+    GLFWmonitor** monitors = glfwGetMonitors(&mon_count);
+
+    for (int i = 0; i < mon_count; ++i)
     {
-        //      DIALOG IS OPEN...
-        if ( S.m_file_dialog.is_open() )        { return; }
-        //
-        //      FINISHED SAVING...
-        else {
-            m_saving        = false;
-            filepath        = S.m_file_dialog.get_last_path().value_or("");
-            if ( filepath )   {
-                S.m_logger.info( std::format("Saved to file \"{}\"", filepath->string()) );
-                this->save_to_file( filepath.value() );
+        int mx, my, mw, mh;
+        glfwGetMonitorWorkarea(monitors[i], &mx, &my, &mw, &mh);
+        if (global.x >= mx && global.x < mx + mw &&
+            global.y >= my && global.y < my + mh)
+        {
+            if (monitors[i] != m_active_monitor)      // changed monitor
+            {
+                m_active_monitor = monitors[i];
+                m_monitor_bounds = ImRect({(float)mx,        (float)my},
+                                          {(float)(mx+mw),   (float)(my+mh)});
             }
-            else    { S.m_logger.warning("Failed to save file."); }
+            return;
         }
     }
     
-    if ( m_loading )
+    /* fallback: first monitor if none matched */
+    if (m_active_monitor == nullptr && mon_count > 0)
     {
-        //      DIALOG IS OPEN...
-        if ( S.m_file_dialog.is_open() )        { return; }
-        //
-        //      FINISHED SAVING...
-        else {
-            m_loading           = false;
-            filepath            = S.m_file_dialog.get_last_path().value_or("");
-            if ( filepath )   {
-                S.m_logger.info( std::format("Loaded from file \"{}\"", filepath->string()) );
-                this->save_to_file( filepath.value() );
-            }
-            else    { S.m_logger.warning("Failed to open file."); }
-        }
+        int mx, my, mw, mh;
+        glfwGetMonitorWorkarea(monitors[0], &mx, &my, &mw, &mh);
+        m_active_monitor = monitors[0];
+        m_monitor_bounds = ImRect({(float)mx,        (float)my},
+                                  {(float)(mx+mw),   (float)(my+mh)});
     }
-    
-
-    return;
 }
 
-    
-    
-static_assert( utl::has_from_json<ImVec2>::value,
-               "ImVec2 serializer NOT visible in this translation unit" );
-    
-static_assert( utl::has_from_json<CursorMoveParams>::value,
-               "CursorMoveParams serializer NOT visible" );
-               
-static_assert( utl::has_from_json<Action>::value,
-               "Action serializer NOT visible" );
-               
-static_assert( utl::has_from_json<Composition_t>::value,
-               "Composition_t serializer NOT visible" );
-              
-              
 
-//  "save_to_file"
+
+
+
+
 //
-bool ActionComposer::save_to_file(const std::filesystem::path & path) const
-{
-    std::ofstream       f(path);
-    nlohmann::json      j = { {"compositions", m_compositions} };
-    
-    //  CASE 0 :    FAILURE TO OPEN  "ifstream" OBJECT...
-    if ( !f ) {
-        S.m_logger.error( std::format("ActionComposer | failed to save JSON file: failed to create std::ofstream object from provided path \"{}\".", path.string()) );
-        return false;
-    }
-    
-    f << j.dump(2);
-    return true;
-}
-
-
-//  "load_from_file"
-//
-bool ActionComposer::load_from_file(const std::filesystem::path & path)
-{
-    std::ifstream   f(path);
-    
-    //  CASE 0 :    FAILURE TO OPEN  "ifstream" OBJECT...
-    if ( !f ) {
-        S.m_logger.error( std::format("ActionComposer | failed to load JSON file: failed to create std::ifstream object from provided path \"{}\".", path.string()) );
-        return false;
-    }
-
-
-
-    try {
-        nlohmann::json j; f >> j;
-        j.at("compositions").get_to(m_compositions);
-    }
-    catch (const std::exception & e) {
-        S.m_logger.exception( std::format("ActionComposer | failed to load JSON file: caught std::exception while loading file.  TRACEBACK: \"{}\".", e.what()) );
-        return false;
-    }
-
-    _load_actions_from_comp(0);
-    return true;
-}
-
-
-
-// 
 // 
 //
 // *************************************************************************** //

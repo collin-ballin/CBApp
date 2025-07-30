@@ -269,6 +269,7 @@ public:
                                         m_applets                       = {};   //  window names EXACTLY in case we ever rename them.
     static constexpr auto &             m_app_color_style_names         = APPLICATION_COLOR_STYLE_NAMES;
     static constexpr auto &             m_plot_color_style_names        = APPLICATION_PLOT_COLOR_STYLE_NAMES;
+    static constexpr auto &             ms_SYSTEM_COLORS                = app::DEF_APPLE_SYSTEM_COLORS;
     
     
     // *************************************************************************** //

@@ -23,6 +23,20 @@ namespace cblib {   //     BEGINNING NAMESPACE "cblib"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "EnumArray"
+//      Simple Struct/Class to use Indices based off Enum Class-Members Specifically (no need for static casting).
+//
+template<typename E, typename T, std::size_t N = static_cast<std::size_t>(E::Count)>    /*  We may need to change from (E::Count) to (E::COUNT)  */
+struct EnumArray {
+    std::array<T, N>        data;
+    T &                     operator []         (E e) noexcept              { return data[static_cast<std::size_t>(e)]; }
+    const T &               operator []         (E e) const noexcept        { return data[static_cast<std::size_t>(e)]; }
+};
+
+//  "enum_index_t"
+//
+template <typename E>
+using enum_index_t = std::underlying_type_t<E>;
 
 
 
@@ -90,4 +104,4 @@ inline constexpr const char * strcat_constexpr = join_ptr<ParPtrs...>::c_str;
 
 // *************************************************************************** //
 // *************************************************************************** //
-#endif  //  _CBLIB_MATRIX_DRIVER_H  //
+#endif  //  _CBLIB_HELPER_H  //

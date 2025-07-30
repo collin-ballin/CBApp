@@ -505,16 +505,6 @@ protected:
     //
     //
     // *************************************************************************** //
-    //      OTHER UTILITY FUNCTIONS.        |   "functional_testing.cpp" ...
-    // *************************************************************************** //
-    void                                _draw_settings_menu                 (void);
-    void                                _file_dialog_handler                (void);
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
     //      GENERAL FUNCTIONS.              |   "action.cpp" ...
     // *************************************************************************** //
     void                                _drive_execution                    (void);
@@ -545,15 +535,15 @@ protected:
     //      CAPTURE FUNCTIONS...
     // *************************************************************************** //
     //                              CURSOR CAPTURE:
-    ImVec2                              get_cursor_pos                  (void);
-    bool                                _begin_mouse_capture            (Action & act, ImVec2 * destination);
-    inline void                         _update_mouse_capture           (void);
+    ImVec2                              get_cursor_pos                      (void);
+    bool                                _begin_mouse_capture                (Action & act, ImVec2 * destination);
+    inline void                         _update_mouse_capture               (void);
     //
     //                              KEYBOARD CAPTURE:
-    bool                                _begin_key_capture              (HotkeyParams * dest);
-    inline void                         _update_key_capture             (void);
-    inline void                         _accept_key_capture             (void);
-    inline void                         _cancel_key_capture             (void);
+    bool                                _begin_key_capture                  (HotkeyParams * dest);
+    inline void                         _update_key_capture                 (void);
+    inline void                         _accept_key_capture                 (void);
+    inline void                         _cancel_key_capture                 (void);
     // *************************************************************************** //
     //
     //
@@ -561,11 +551,13 @@ protected:
     // *************************************************************************** //
     //      UTILITY FUNCTIONS...
     // *************************************************************************** //
-    void                                _refresh_monitor_cache          (ImVec2);
+    void                                _draw_settings_menu                 (void);
+    void                                _refresh_monitor_cache              (ImVec2);
     //
     //                              SERIALIZATION:
-    bool                                save_to_file                    (const std::filesystem::path & path) const;
-    bool                                load_from_file                  (const std::filesystem::path & path);
+    void                                _file_dialog_handler                (void);
+    bool                                save_to_file                        (const std::filesystem::path & path) const;
+    bool                                load_from_file                      (const std::filesystem::path & path);
     
     
     

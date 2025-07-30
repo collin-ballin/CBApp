@@ -295,6 +295,8 @@ inline void ActionComposer::_overlay_ui_none(void)
         state_str       = ms_COMPOSER_STATE_NAMES[ static_cast<size_t>(this->m_state) ];
     }
     
+    //  void ImGui::TextColored(const ImVec4& col, const char* fmt, ...)
+    //  ImGui::TextColored(FMT_STRING, state_str, mpos.x, mpos.y);
     ImGui::Text(FMT_STRING, state_str, mpos.x, mpos.y);
     ImGui::Separator();
     
