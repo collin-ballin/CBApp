@@ -290,7 +290,7 @@ inline void from_json(const nlohmann::json& j, HotkeyParams& p)
 //
 struct Action {
     std::string             name            = "new action";
-    std::string             descr           = "description...";
+    std::string             descr           = "";
     ActionType              type            = ActionType::CursorMove;
 //
     CursorMoveParams        cursor;             //  <   for CursorMove
@@ -365,7 +365,7 @@ enum class ExecutionState : uint8_t {
 
 static constexpr std::array<const char *, static_cast<size_t>(ExecutionState::COUNT)>
 DEF_EXEC_STATE_NAMES = {
-    "None", "Move", "Button Down", "Button Up"
+    "None",     "Move",     "Button Down",      "Button Up"
 };
 
 
@@ -411,21 +411,124 @@ inline void from_json(const nlohmann::json & j, Composition_t & c)
 //      MORE STATE TYPES...
 // *************************************************************************** //
 
-struct CaptureState
+//  "KeyCaptureState"
+//
+struct KeyCaptureState
 {
-    bool            active          { false };   ///< in capture mode?
-    HotkeyParams*   dest            { nullptr }; ///< where to write on accept
+    inline void reset(void) { *this = KeyCaptureState{}; }
+//
+//
+    bool                active              { false };   ///< in capture mode?
+    HotkeyParams *      dest                { nullptr }; ///< where to write on accept
 
     // Temporary/live data while user is pressing keys
-    ImGuiKey        key_current     { ImGuiKey_None };
-    bool            ctrl            { false };
-    bool            shift           { false };
-    bool            alt             { false };
-    bool            super           { false };
+    ImGuiKey            key_current         { ImGuiKey_None };
+    bool                ctrl                { false };
+    bool                shift               { false };
+    bool                alt                 { false };
+    bool                super               { false };
 
     // Previous binding (for cancel)
-    HotkeyParams    backup          {};
+    HotkeyParams        backup              {  };
 };
+
+
+
+//  "MouseCaptureState"
+//
+struct MouseCaptureState {
+    inline void reset(void) { *this = MouseCaptureState{}; }
+//
+//
+    bool                active              { false };          //  <   capturing?
+    ImVec2 *            dest                { nullptr };        //  <   where result is written
+    ImVec2 *            alt_dest            { nullptr };        //  <   the “other” endpoint
+//
+    GLFWwindow *        target_window       { nullptr };        //  <   window the user hovered
+//
+    ImVec2              live_local          {  };               //  <   live coords (local win)
+    ImVec2              backup              {  };               //  <   previous value (cancel)
+//
+    bool                snapped_to_grid     { false };          //  <   future: grid / step
+    bool                double_clicked      { false };          //  <   future: detect dbl‑click
+};
+
+
+
+//  "OverlayCache"
+//
+struct OverlayCache
+{
+    //  "update_cache"
+    inline bool     update_cache        (const int action, const int composition, Action * & current)
+    {
+        if ( !this->is_invalid(action, composition, current) )   { return false; }
+    
+        m_action_sel            = action;
+        m_composition_sel       = composition;
+        m_action                = current;
+        return true;
+    }
+    
+    
+    //  "is_valid"
+    inline bool     is_valid            (const int action, const int composition, const Action * current=nullptr)
+    { return ( (this->m_action_sel == action) && (this->m_composition_sel == composition) && (this->m_action == current) ); }
+    
+    //  "is_invalid"
+    inline bool     is_invalid          (const int action, const int composition, const Action * current=nullptr)
+    { return ( (this->m_action_sel != action) || (this->m_composition_sel != composition) || (this->m_action != current) ); }
+    
+    
+    //  "reset"
+    inline void     reset               (void)
+    { m_action_sel = -1;    m_composition_sel = -1;    m_action = nullptr;   return; }
+//
+//
+//
+    int             m_action_sel            = -1;
+    int             m_composition_sel       = -1;
+    Action *        m_action                = nullptr;
+};
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//      STATIC FUNCTIONS...
+// *************************************************************************** //
+
+//  "want_capture_mouse_next_frame"
+//
+static inline void want_capture_mouse_next_frame(const bool state=true)
+{ ImGui::SetNextFrameWantCaptureMouse(state); }      // tell Dear ImGui backend
+
+
+//  "want_capture_keyboard_next_frame"
+//
+static inline void want_capture_keyboard_next_frame(const bool state=true)
+{ ImGui::SetNextFrameWantCaptureKeyboard(state); }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -33,7 +33,7 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 void ActionComposer::_draw_controlbar(void)
 {
     static constexpr const char *   uuid                    = "##Editor_Controls_Columns";
-    static constexpr int            NC                      = 9;
+    static constexpr int            NC                      = 7;
     static constexpr const char *   SETTINGS_MENU_UUID      = "ActionComposer_SettingsMenu";
     //
     static ImGuiOldColumnFlags      COLUMN_FLAGS            = ImGuiOldColumnFlags_None;
@@ -46,8 +46,6 @@ void ActionComposer::_draw_controlbar(void)
    
     
     
-   
-   
     //  BEGIN COLUMNS...
     //
     ImGui::Columns(NC, uuid, COLUMN_FLAGS);
@@ -103,25 +101,7 @@ void ActionComposer::_draw_controlbar(void)
 
 
 
-        //  4.  [TOGGLE]    OVERVIEW...
-        ImGui::NextColumn();
-        ImGui::TextDisabled("Overlay:");
-        //
-        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
-        ImGui::Checkbox("##ActionComposer_OverlayToggle",           &m_show_overlay);
-
-
-
-        //  5.  [TOGGLE]    RENDER VISUALS...
-        ImGui::NextColumn();
-        ImGui::TextDisabled("Render Visuals:");
-        //
-        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
-        ImGui::Checkbox("##ActionComposer_RenderVisualsToggle",     &m_render_visuals);
-
-
-
-        //  6.  INFO...
+        //  4.  INFO...
         ImGui::NextColumn();
         ImGui::TextDisabled("Info:");
         //
@@ -130,13 +110,13 @@ void ActionComposer::_draw_controlbar(void)
 
 
 
-        //  7.  SETTINGS MENU...
+        //  5.  SETTINGS MENU...
         ImGui::NextColumn();
         ImGui::TextDisabled("Settings:");
         
-        if ( ImGui::Button("+") )       { ImGui::OpenPopup("ActionsPopup"); }
+        if ( ImGui::Button("Settings") )       { ImGui::OpenPopup(SETTINGS_MENU_UUID); }
 
-        if ( ImGui::BeginPopup("ActionsPopup") )              // draw the popup
+        if ( ImGui::BeginPopup(SETTINGS_MENU_UUID) )              // draw the popup
         {
             ImGui::SeparatorText("Action Composer Settings...");         // header
 
@@ -150,7 +130,7 @@ void ActionComposer::_draw_controlbar(void)
 
 
         
-        //  8.  EMPTY SPACES FOR LATER...
+        //  6.  EMPTY SPACES FOR LATER...
         for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
             ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
         }
@@ -224,21 +204,21 @@ void ActionComposer::_draw_overlay(void)
     pos.y       = std::clamp( pos.y,        m_monitor_bounds.Min.y,       m_monitor_bounds.Max.y - m_overlay_size.y );
 
 
+    //  3.  INPUT-BLOCKER WINDOW...
+    if ( (this->m_allow_input_blocker) && (m_state == State::MouseCapture || m_state == State::KeyCapture) )
+    { _draw_input_blocker(); }
+    
 
+    //  4.  OVERLAY WINDOW...
     ImGui::SetNextWindowBgAlpha(ms_OVERLAY_ALPHA);
     ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-    //  ImGuiViewport * vp = ImGui::GetMainViewport();
-    //  ImGui::SetNextWindowViewport(vp->ID);               //  pin to main viewport
-    
-        //if ( ImGui::Begin("##ac_overlay", nullptr, flags) )
         if ( ImGui::BeginTooltip() )
         {
             this->_dispatch_overlay_content();
             m_overlay_size  = ImGui::GetWindowSize();
         }
-        
-    //ImGui::End();
     ImGui::EndTooltip();
+    
     return;
 }
 
@@ -281,23 +261,29 @@ inline void ActionComposer::_dispatch_overlay_content(void)
 //
 inline void ActionComposer::_overlay_ui_none(void)
 {
-    static constexpr const char *   FMT_STRING              = "%s. \t Local: (%.0f, %.0f)";
+    static constexpr const char *   FMT_STRING              = "\t Local: (%.0f, %.0f)";
     //
     static const char *             state_str               = nullptr;
     static State                    state_cache             = static_cast<State>( static_cast<int>(this->m_state) - 1 );
-    //const ImVec2                    mpos                    = ImGui::GetMousePos();
+    //
+    static ImVec4                   color                   = S.SystemColor.Gray;
     const ImVec2                    mpos                    = this->get_cursor_pos();
             
-            
-        //ImGui::TextColored(ImVec4(1,1,0,1), "Press key, Enter=accept, Esc=cancel");
-    if ( state_cache != this->m_state ) {
+    if ( state_cache != this->m_state )
+    {
         state_cache     = static_cast<State>( this->m_state );
         state_str       = ms_COMPOSER_STATE_NAMES[ static_cast<size_t>(this->m_state) ];
+        
+        switch ( this->m_state ) {
+            case State::Run             : { color = S.SystemColor.Green;    break;  }    //  1.  "Run" STATE...
+            case State::MouseCapture    : { color = S.SystemColor.Red;      break;  }    //  2.  "Mouse Capture" STATE...
+            case State::KeyCapture      : { color = S.SystemColor.Orange;   break;  }    //  3.  "Keyboard Capture" STATE...
+            default                     : { color = S.SystemColor.Gray;     break;  }    //  4.  DEFAULT...
+        }
     }
-    
-    //  void ImGui::TextColored(const ImVec4& col, const char* fmt, ...)
-    //  ImGui::TextColored(FMT_STRING, state_str, mpos.x, mpos.y);
-    ImGui::Text(FMT_STRING, state_str, mpos.x, mpos.y);
+    ImGui::TextColored( color,   "%s",   state_str);
+    ImGui::SameLine();
+    ImGui::Text(FMT_STRING, mpos.x, mpos.y);
     ImGui::Separator();
     
     return;
@@ -308,7 +294,19 @@ inline void ActionComposer::_overlay_ui_none(void)
 //
 inline void ActionComposer::_overlay_ui_run(void)
 {
-    ImGui::TextUnformatted("Running test... (press ESC to CANCEL)");
+    static constexpr const char *   FMT         = "Description: %s";
+    Action *                        act         = &(*m_actions)[m_play_index];
+    
+    const bool                      updated     = this->m_overlay_cache.update_cache( m_play_index, m_comp_sel, act );
+    Action *                        proxy       = this->m_overlay_cache.m_action;
+    
+    
+    if ( proxy != nullptr && !proxy->descr.empty() ) {
+        ImGui::TextColored( S.SystemColor.Gray,     FMT,    proxy->descr.c_str() );
+    }
+    
+
+    ImGui::TextColored( S.SystemColor.Yellow,   "%s",   "([ESC] to exit)");
     return;
 }
 
@@ -317,7 +315,7 @@ inline void ActionComposer::_overlay_ui_run(void)
 //
 inline void ActionComposer::_overlay_ui_mouse_capture(void)
 {
-    ImGui::TextUnformatted("Capturing... (press ESC to ENTER)");
+    ImGui::TextColored( S.SystemColor.Yellow,   "%s",   "([ENTER] or [LMB] to acccept,  [ESC] to cancel,  [TAB] to switch end-points)");
     return;
 }
 
@@ -326,7 +324,7 @@ inline void ActionComposer::_overlay_ui_mouse_capture(void)
 //
 inline void ActionComposer::_overlay_ui_key_capture(void)
 {
-    ImGui::TextUnformatted("Capturing... (press ESC to ENTER)");
+    ImGui::TextColored( S.SystemColor.Yellow,   "%s",   "([ENTER] to acccept,  [ESC] to cancel)");
     return;
 }
 

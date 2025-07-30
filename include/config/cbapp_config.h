@@ -327,7 +327,6 @@
 #define                 _CBAPP_APPSTATE_ALIAS_API                                                               \
 public:                                                                                                         \
     using               CBSignalFlags                   = std::uint32_t;                                        \
-    using               SystemColor                     = app::AppleSystemColors_;                              \
                                                                                                                 \
     using               Window                          = app::Window_t;                                        \
     using               Applet                          = app::Applet_t;                                        \
@@ -335,8 +334,8 @@ public:                                                                         
     using               Cmap                            = app::Colormap_t;                                      \
     using               Timestamp_t                     = std::chrono::time_point<std::chrono::system_clock>;   \
                                                                                                                 \
-    using               ImFonts                         = utl::EnumArray<Font, ImFont *>;                       \
-    using               ImWindows                       = utl::EnumArray<Window, WinInfo>;                      \
+    using               ImFonts                         = cblib::EnumArray<Font, ImFont *>;                     \
+    using               ImWindows                       = cblib::EnumArray<Window, WinInfo>;                    \
     using               Anchor                          = utl::Anchor;                                          \
                                                                                                                 \
     using               Logger                          = utl::Logger;                                          \

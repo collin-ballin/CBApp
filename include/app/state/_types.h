@@ -230,25 +230,43 @@ enum CBSignalFlags_ {
 // *************************************************************************** //
 
 //  "AppleSystemColors_"
-//
+/*
 enum class AppleSystemColors_ : uint8_t {
     Gray = 0,       Pink,           Red,            Orange,         Yellow,
     Green,          Brown,          Blue,           Purple,         Count
 };
 //
 //  "DEF_APPLE_SYSTEM_COLORS"
-static constexpr utl::EnumArray<AppleSystemColors_, ImU32>
+static constexpr cblib::EnumArray<AppleSystemColors_, ImU32>
 DEF_APPLE_SYSTEM_COLORS = {
-    /*  sys_gray    =   */      0x98989DFF,
-    /*  sys_pink    =   */      0xFF375FFF,
-    /*  sys_red     =   */      0xFF453AFF,
-    /*  sys_orange  =   */      0xFF9F0AFF,
-    /*  sys_yellow  =   */      0xFFD60AFF,
-    /*  sys_green   =   */      0x32D74BFF,
-    /*  sys_brown   =   */      0xAC8E68FF,
-    /*  sys_blue    =   */      0x0A84FFFF,
-    /*  sys_purple  =   */      0xBF5AF2FF,
+    0x98989DFF,     //  sys_gray
+    0xFF375FFF,     //  sys_pink
+    0xFF453AFF,     //  sys_red
+    0xFF9F0AFF,     //  sys_orange
+    0xFFD60AFF,     //  sys_yellow
+    0x32D74BFF,     //  sys_green
+    0xAC8E68FF,     //  sys_brown
+    0x0A84FFFF,     //  sys_blue
+    0xBF5AF2FF,     //  sys_purple
+};*/
+
+
+//  "AppleSystemColors_t"
+//
+struct AppleSystemColors_t {
+    static constexpr ImVec4     Gray        = ImVec4(   0.596f,     0.596f,     0.616f,     1.000f      );
+    static constexpr ImVec4     Pink        = ImVec4(   1.000f,     0.216f,     0.373f,     1.000f      );
+    static constexpr ImVec4     Red         = ImVec4(   1.000f,     0.271f,     0.227f,     1.000f      );
+    static constexpr ImVec4     Orange      = ImVec4(   1.000f,     0.624f,     0.039f,     1.000f      );
+    static constexpr ImVec4     Yellow      = ImVec4(   1.000f,     0.839f,     0.039f,     1.000f      );
+    static constexpr ImVec4     Green       = ImVec4(   0.196f,     0.843f,     0.294f,     1.000f      );
+    static constexpr ImVec4     Brown       = ImVec4(   0.675f,     0.557f,     0.408f,     1.000f      );
+    static constexpr ImVec4     Blue        = ImVec4(   0.039f,     0.518f,     1.000f,     1.000f      );
+    static constexpr ImVec4     Purple      = ImVec4(   0.749f,     0.353f,     0.949f,     1.000f      );
 };
+
+
+
 
 
 

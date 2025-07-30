@@ -98,8 +98,34 @@ void ActionComposer::Begin_IMPL(void)
     
     
     //  1.  UPDATE INPUT-QUERY FUNCTIONS...
-    this->_update_mouse_capture();
-    this->_update_key_capture();
+    switch (this->m_state)
+    {
+        case State::Idle : {                  //  1.  IDLE...
+            break;
+        }
+    
+        case State::Run : {                   //  2.  RUNNING...
+            break;
+        }
+    
+        case State::MouseCapture : {          //  3.  MOUSE-CAPTURING...
+            this->_update_mouse_capture();
+            break;
+        }
+    
+        case State::KeyCapture : {            //  4.  KEY-CAPTURING...
+            this->_update_key_capture();
+            break;
+        }
+        
+        //  DEFAULT CASE...
+        default : { break; }
+    }
+    
+    
+    //  this->_update_mouse_capture();
+    //  this->_update_key_capture();
+    
     
     
     //  2.  DRAW THE "CONTROL-BAR" UI-INTERFACE...
@@ -324,9 +350,8 @@ inline void ActionComposer::_draw_selector_table(void)
         ImGui::TableSetupColumn( "H",       C0_FLAGS,     ImGui::GetFrameHeight()   );      // ~ square
         ImGui::TableSetupColumn( "Name",    C1_FLAGS                                );
         ImGui::TableSetupColumn( "Del",     C2_FLAGS,     ImGui::GetFrameHeight()   );
-        //  ImGui::TableHeadersRow();        // optional – draws thin top line
 
-        clip.Begin(static_cast<int>(m_actions->size()));
+        clip.Begin( static_cast<int>(m_actions->size()) );
         while ( clip.Step() )
         {
             for (int i = clip.DisplayStart; i < clip.DisplayEnd; ++i)
@@ -339,28 +364,37 @@ inline void ActionComposer::_draw_selector_table(void)
                 ImGui::PushID(i);
                 ImGui::TableNextRow();
 
+
                 //      3.1.    DRAG / DROP HANDLE...
                 ImGui::TableSetColumnIndex(0);
-                //if ( ImGui::SmallButton(this->ms_DRAG_DROP_HANDLE) ) {}   // larger hit-box
                 utl::SmallCButton(this->ms_DRAG_DROP_HANDLE, 0x00000000);
-                
-                if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) )
-                {
+                if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) ) {
                     ImGui::SetDragDropPayload("ACTION_ROW", &i, sizeof i);
                     ImGui::EndDragDropSource();
                 }
-                if ( ImGui::BeginDragDropTarget() )
-                {
+                if ( ImGui::BeginDragDropTarget() ) {
                     if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("ACTION_ROW") )
                         { _reorder(*(int*)p->Data, i); }
                     ImGui::EndDragDropTarget();
                 }
 
 
-                //      3.2.    SELECTIBLE WIDGET...
+
+                //      3.2A.   SELECTIBLE WIDGET...
                 ImGui::TableSetColumnIndex(1);
                 if ( ImGui::Selectable((*m_actions)[i].name.c_str(), selected, SELECTABLE_FLAGS) )     { m_sel = i; }
-
+                //
+                //      3.2B.   RIGHT-CLICK CONTEXT MENU...
+                if ( ImGui::BeginPopupContextItem("##ActionComposer_ActionRowContextMenu") ) {        // opens on RMB...
+                    if ( ImGui::MenuItem("Duplicate") ) {   // duplicate current element and insert right below...
+                        Action copy               = (*m_actions)[i];           // deep copy
+                        m_actions->insert(m_actions->begin() + i + 1, copy);
+                        m_sel                     = i + 1;                     // highlight new row
+                    }
+                    ImGui::EndPopup();
+                }
+                
+                
 
                 //      3.3.    DELETE BUTTON...
                 ImGui::TableSetColumnIndex(2);
@@ -375,8 +409,6 @@ inline void ActionComposer::_draw_selector_table(void)
                 }
             
             
-            
-
                 ImGui::PopID();
             }
         }
@@ -399,7 +431,14 @@ void ActionComposer::_draw_action_inspector(void)
     int             type_int    = static_cast<int>( a.type );
 
     
-    //  1.  ACTION NAME...
+    //  1.  ACTION TYPE...
+    {
+        this->label("Type:");
+        if ( ImGui::Combo("##type", &type_int, ms_ACTION_TYPE_NAMES.data(), static_cast<int>( ActionType::COUNT )) )
+            { a.type    = static_cast<ActionType>(type_int); }
+    }
+    
+    //  2.  ACTION NAME...
     {
         this->label("Name:");
         if ( ImGui::InputText("##Action_Name", &a.name, ImGuiInputTextFlags_None) )
@@ -408,7 +447,7 @@ void ActionComposer::_draw_action_inspector(void)
         }
     }
     
-    //  2.  ACTION DESCRIPTION...
+    //  3.  ACTION DESCRIPTION...
     {
         this->label("Description:");
         if ( ImGui::InputTextMultiline("##Action_Description", &a.descr, { -FLT_MIN, ms_ACTION_DESCRIPTION_FIELD_HEIGHT }) )
@@ -416,14 +455,6 @@ void ActionComposer::_draw_action_inspector(void)
             if ( a.descr.size() > ms_ACTION_DESCRIPTION_LIMIT )     { a.descr.resize(ms_ACTION_DESCRIPTION_LIMIT); }
         }
     }
-    
-    //  3.  ACTION TYPE...
-    {
-        this->label("Type:");
-        if ( ImGui::Combo("##type", &type_int, ms_ACTION_TYPE_NAMES.data(), static_cast<int>( ActionType::COUNT )) )
-            { a.type    = static_cast<ActionType>(type_int); }
-    }
-
 
     ImGui::Separator();
     
@@ -441,66 +472,96 @@ void ActionComposer::_draw_action_inspector(void)
 //
 void ActionComposer::_draw_renderer_visuals(void)
 {
-    if (!m_render_visuals || S.m_glfw_window == nullptr)
-        return;
-
-    if (m_sel < 0 || m_sel >= static_cast<int>(m_actions->size()))
-        return;
-
-    const Action& act = (*m_actions)[m_sel];
-    if (act.type != ActionType::CursorMove &&
-        act.type != ActionType::MouseDrag)
-        return;
-
-    /* choose the two points we need to mark */
-    ImVec2 local_a{}, local_b{};
-    if (act.type == ActionType::CursorMove) {
-        local_a = act.cursor.first;
-        local_b = act.cursor.last;
-    } else {                                // MouseDrag
-        local_a = act.drag.from;
-        local_b = act.drag.to;
-    }
-
-    /* convert to GLOBAL screen coords */
-    int wx{}, wy{};
-    glfwGetWindowPos(S.m_glfw_window, &wx, &wy);
-    ImVec2 global_a = { local_a.x + wx, local_a.y + wy };
-    ImVec2 global_b = { local_b.x + wx, local_b.y + wy };
-
-    /* helper: find viewport that contains point */
-    auto viewport_for = [](ImVec2 p) -> ImGuiViewport*
+    constexpr float         HALF                = ms_VIS_RECT_HALF;
+    constexpr float         THICK               = ms_VIS_THICK;
+    constexpr ImU32         COL                 = ms_VIS_COLOR;
+    //
+    //  "viewport_for"
+    auto                    viewport_for        = [](ImVec2 p) -> ImGuiViewport *
     {
         const ImGuiPlatformIO& pio = ImGui::GetPlatformIO();
         for (ImGuiViewport* vp : pio.Viewports)
             if (p.x >= vp->Pos.x && p.x < vp->Pos.x + vp->Size.x &&
                 p.y >= vp->Pos.y && p.y < vp->Pos.y + vp->Size.y)
                 return vp;
-        return ImGui::GetMainViewport();     // fallback
+        return ImGui::GetMainViewport();
     };
-
-    ImGuiViewport* vp_a = viewport_for(global_a);
-    ImGuiViewport* vp_b = viewport_for(global_b);
-
-    auto draw_rect = [](ImDrawList* dl, ImVec2 center)
+    //
+    //  "draw_rect"
+    auto                    draw_rect           = [&] (ImDrawList * dl, ImVec2 c)
     {
-        const float HALF = ms_VIS_RECT_HALF;
-        ImVec2 p_min = { center.x - HALF, center.y - HALF };
-        ImVec2 p_max = { center.x + HALF, center.y + HALF };
-        dl->AddRect(p_min, p_max, ms_VIS_COLOR, 0.0f, 0, ms_VIS_THICK);
+        dl->AddRect({c.x - HALF, c.y - HALF},
+                    {c.x + HALF, c.y + HALF}, COL, 0.0f, 0, THICK);
     };
+    
+    
+    
+    //  CASE 0 :    NOTHING-TO-SEE / NOTHING-TO-DRAW...
+    if ( !m_render_visuals || S.m_glfw_window == nullptr )                              { return; }
+    if ( m_sel < 0 || m_sel >= static_cast<int>(m_actions->size()) )                    { return; }
 
-    /* draw on each relevant viewport’s foreground list */
-    ImDrawList* dl_a = ImGui::GetForegroundDrawList(vp_a);
-    ImDrawList* dl_b = (vp_b == vp_a) ? dl_a
-                                      : ImGui::GetForegroundDrawList(vp_b);
+    const Action &          act                 = (*m_actions)[m_sel];
+    if ( act.type != ActionType::CursorMove && act.type != ActionType::MouseDrag )      { return; }
 
-    /* connecting line (draw only once if both in same viewport) */
-    dl_a->AddLine(global_a, global_b, ms_VIS_COLOR, ms_VIS_THICK);
 
+
+    //  1.  FIGURE OUT LOCAL POINTS : A / B...
+    int                     wx{},               wy{};
+    ImVec2                  local_a             {};
+    ImVec2                  local_b             {};
+    ImVec2                  global_a{},         global_b{};
+    ImGuiViewport *         vp_a                = nullptr;
+    ImGuiViewport *         vp_b                = nullptr;
+    ImDrawList *            dl_a                = nullptr;
+    ImDrawList *            dl_b                = nullptr;
+    const ImVec2 *          cap_ptr             = m_mouse_capture.dest;           // convenience alias
+
+
+    if ( act.type == ActionType::CursorMove )
+    {
+        local_a = (&act.cursor.first  == cap_ptr && m_mouse_capture.active)
+                    ? m_mouse_capture.live_local
+                    : act.cursor.first;
+
+        local_b = (&act.cursor.last   == cap_ptr && m_mouse_capture.active)
+                    ? m_mouse_capture.live_local
+                    : act.cursor.last;
+    }
+    else /* MouseDrag */
+    {
+        local_a = (&act.drag.from     == cap_ptr && m_mouse_capture.active)
+                    ? m_mouse_capture.live_local
+                    : act.drag.from;
+
+        local_b = (&act.drag.to       == cap_ptr && m_mouse_capture.active)
+                    ? m_mouse_capture.live_local
+                    : act.drag.to;
+    }
+
+
+    //  2.  CONVERT     LOCAL   ===>    GLOBAL      COORDINATES...
+    glfwGetWindowPos(S.m_glfw_window, &wx, &wy);
+    global_a        = { local_a.x + wx, local_a.y + wy };
+    global_b        = { local_b.x + wx, local_b.y + wy };
+    
+    
+    //  3.  PICK VIEWPORTS AND GET DRAW-LISTS...
+    vp_a            = viewport_for(global_a);
+    vp_b            = viewport_for(global_b);
+    dl_a            = ImGui::GetForegroundDrawList(vp_a);
+    dl_b            = (vp_b == vp_a) ? dl_a : ImGui::GetForegroundDrawList(vp_b);
+
+
+    //  4.  RENDER LINES AND RECTANGLES...
+    dl_a->AddLine(global_a, global_b, COL, THICK);
     draw_rect(dl_a, global_a);
-    if (dl_b != dl_a)   draw_rect(dl_b, global_b);
-    else                draw_rect(dl_a, global_b);
+    
+    if ( dl_b != dl_a )     { draw_rect(dl_b, global_b); }
+    else                    { draw_rect(dl_a, global_b); }
+    
+    
+    
+    return;
 }
 
 
@@ -536,15 +597,26 @@ ImVec2 ActionComposer::get_cursor_pos(void) {
     
 //  "_begin_mouse_capture"
 //
-bool ActionComposer::_begin_mouse_capture(Action & act, ImVec2 * destination)
+bool ActionComposer::_begin_mouse_capture([[maybe_unused]] Action & act, ImVec2 * destination)
 {
-    if (m_state == State::Run)  { return false; }
-        
-    /* detect current backend window under cursor ------------------------*/
-    GLFWwindow *    hovered     = glfwGetCurrentContext();   // set by ImGui backend
-    act.target                  = (hovered) ? hovered : S.m_glfw_window;
-    m_m_capture_dest            = destination;
-    m_state                     = State::MouseCapture;
+    if ( m_state == State::Run )    { return false; }
+
+    m_state                         = State::MouseCapture;
+    m_mouse_capture.reset();                      // reset all fields
+    
+    GLFWwindow * hovered            = glfwGetCurrentContext();
+    m_mouse_capture.active          = true;
+    m_mouse_capture.dest            = destination;
+    m_mouse_capture.target_window   = hovered ? hovered : S.m_glfw_window;
+    
+    if (act.type == ActionType::CursorMove) {
+        m_mouse_capture.alt_dest    = (destination == &act.cursor.first)    ? &act.cursor.last     : &act.cursor.first;
+    }
+    else { // MouseDrag
+        m_mouse_capture.alt_dest    = (destination == &act.drag.from)       ? &act.drag.to          : &act.drag.from;
+    }
+    
+    m_mouse_capture.backup          = *destination;         // save for cancel
     return true;
 }
 
@@ -553,24 +625,45 @@ bool ActionComposer::_begin_mouse_capture(Action & act, ImVec2 * destination)
 //
 inline void ActionComposer::_update_mouse_capture(void)
 {
-    ImVec2          mpos        = ImVec2(-1.0f, -1.0f);
-    ImGuiIO &       io          = ImGui::GetIO();
-    
-    if ( m_state != State::MouseCapture || m_m_capture_dest == nullptr )   { return; }
+    if ( m_state != State::MouseCapture || !m_mouse_capture.active )   { return; }
 
 
-    //  ESC key ends capture...
-    if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )
-    {
-        m_state             = State::Idle;
-        m_m_capture_dest    = nullptr;
-        return;
+
+    want_capture_mouse_next_frame();                //  ← NEW (blocks UI input)
+    m_mouse_capture.live_local = get_cursor_pos();
+
+    //  1.  USE TAB TO SWITCH ENDPOINTS...
+    if ( ImGui::IsKeyPressed(ImGuiKey_Tab, false) && m_mouse_capture.alt_dest ) {
+        //  1.  commit current pos to the endpoint we were editing
+        *m_mouse_capture.dest   = m_mouse_capture.live_local;
+
+        //  2.  swap pointers so the other endpoint is now active
+        std::swap(m_mouse_capture.dest, m_mouse_capture.alt_dest);
+
+        //  3.  update backup for Esc‑cancel on the new endpoint
+        m_mouse_capture.backup  = *m_mouse_capture.dest;
+
+        //  4.  fall through: continue real‑time capture on new point
     }
 
-    // Query GLFW for window-relative cursor coordinates --------------------//
-    mpos                        = this->get_cursor_pos();
-    m_m_capture_dest->x         = static_cast<float>(mpos.x);
-    m_m_capture_dest->y         = static_cast<float>(mpos.y);
+
+    //  2.  ACCEPT...
+    if ( ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsMouseClicked(ImGuiMouseButton_Left) ) {
+        *m_mouse_capture.dest   = m_mouse_capture.live_local;
+        m_mouse_capture.active  = false;
+        m_state                 = State::Idle;
+        return;
+    }
+    
+
+    //  3.  CANCEL...
+    if ( ImGui::IsKeyPressed(ImGuiKey_Escape) ) {
+        *m_mouse_capture.dest   = m_mouse_capture.backup;
+        m_mouse_capture.active  = false;
+        m_state                 = State::Idle;
+        return;
+    }
+    
     return;
 }
 
@@ -590,12 +683,13 @@ inline void ActionComposer::_update_mouse_capture(void)
 //
 bool ActionComposer::_begin_key_capture(HotkeyParams * dest)
 {
-    if (m_state == State::Run)  { return false; }
+    if (m_state == State::Run)      { return false; }
     
-    m_key_capture      = {};          // reset all
-    m_key_capture.active = true;
-    m_key_capture.dest   = dest;
-    m_key_capture.backup = *dest;      // keep previous binding
+    m_state                 = State::KeyCapture;
+    m_key_capture           = {};          // reset all
+    m_key_capture.active    = true;
+    m_key_capture.dest      = dest;
+    m_key_capture.backup    = *dest;      // keep previous binding
     ImGui::SetNextFrameWantCaptureKeyboard(true);
     return true;
 }
@@ -605,13 +699,16 @@ bool ActionComposer::_begin_key_capture(HotkeyParams * dest)
 //
 inline void ActionComposer::_update_key_capture(void)
 {
-    if (!m_key_capture.active)
-        return;
+    if (!m_key_capture.active)      { return; }
 
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO & io = ImGui::GetIO();
+    
+    
+    want_capture_keyboard_next_frame();
 
-    // Detect first key press (ignore repeats)
-    for (ImGuiKey k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k = (ImGuiKey)(k + 1))
+    //  Detect first key press (ignore repeats)
+    for ( ImGuiKey k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k = (ImGuiKey)(k + 1) )
+    {
         if (ImGui::IsKeyPressed(k, false))
         {
             m_key_capture.key_current = k;
@@ -620,19 +717,23 @@ inline void ActionComposer::_update_key_capture(void)
             m_key_capture.alt   = io.KeyAlt;
             m_key_capture.super = io.KeySuper;
         }
+    }
 
-    // Accept when that key goes UP or user hits Enter
-    if ((m_key_capture.key_current != ImGuiKey_None &&
+    //  Accept when that key goes UP or user hits Enter
+    if ( (m_key_capture.key_current != ImGuiKey_None &&
          !ImGui::IsKeyDown(m_key_capture.key_current)) ||
-        ImGui::IsKeyPressed(ImGuiKey_Enter))
+        ImGui::IsKeyPressed(ImGuiKey_Enter) )
     {
         _accept_key_capture();
     }
-    // Cancel on Esc
+    //
+    //  Cancel on Esc
     else if (ImGui::IsKeyPressed(ImGuiKey_Escape))
     {
         _cancel_key_capture();
     }
+    
+    return;
 }
 
 
@@ -647,7 +748,9 @@ inline void ActionComposer::_accept_key_capture(void)
         m_key_capture.dest->shift = m_key_capture.shift;
         m_key_capture.dest->alt   = m_key_capture.alt;
     }
-    m_key_capture.active = false;
+    m_key_capture.active    = false;
+    m_state                 = State::Idle;
+    return;
 }
 
 
@@ -655,9 +758,10 @@ inline void ActionComposer::_accept_key_capture(void)
 //
 inline void ActionComposer::_cancel_key_capture(void)
 {
-    if (m_key_capture.dest)
-        *m_key_capture.dest = m_key_capture.backup;
-    m_key_capture.active = false;
+    if ( m_key_capture.dest )   { *m_key_capture.dest = m_key_capture.backup; }
+    m_key_capture.active    = false;
+    m_state                 = State::Idle;
+    return;
 }
 
 
@@ -800,7 +904,35 @@ bool ActionComposer::load_from_file(const std::filesystem::path & path)
 //
 void ActionComposer::_draw_settings_menu(void)
 {
+    static ImVec2                   WIDGET_SIZE             = ImVec2( -1,  32 );
+    static ImVec2                   BUTTON_SIZE             = ImVec2( 22,   WIDGET_SIZE.y );
 
+
+
+    //  1.  [TOGGLE]    OVERVIEW...
+    this->label("Overlay Window:");
+    ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+    ImGui::Checkbox("##ActionComposer_OverlayToggle",           &m_show_overlay);
+
+    //  2.  [TOGGLE]    RENDER VISUALS...
+    this->label("Render Helper Visuals:");
+    //
+    ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+    ImGui::Checkbox("##ActionComposer_RenderVisualsToggle",     &m_render_visuals);
+
+    //  3.  [TOGGLE]    INPUT BLOCKER...
+    this->label("Enable Input-Blocker:");
+    //
+    ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+    ImGui::Checkbox("##ActionComposer_EnableInputBlocker",      &m_allow_input_blocker);
+
+
+
+    ImGui::NewLine();
+    ImGui::SeparatorText("Serialization...");
+    
+    
+    
     //  1.  SAVE DIALOGUE...
     if ( ImGui::Button("Save") )    {
         
@@ -843,6 +975,34 @@ void ActionComposer::_draw_settings_menu(void)
     
     
     
+    return;
+}
+
+
+//  "_draw_input_blocker"
+//
+void ActionComposer::_draw_input_blocker(void)
+{
+    static constexpr ImGuiWindowFlags       FLAGS       = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav;// | ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGuiViewport *                         vp          = ImGui::GetMainViewport();
+    
+    ImGui::SetNextWindowPos(vp->Pos);
+    ImGui::SetNextWindowSize(vp->Size);
+    ImGui::SetNextWindowViewport(vp->ID);
+    ImGui::SetNextWindowFocus();
+
+    ImGui::PushStyleVar(    ImGuiStyleVar_WindowBorderSize, 0.0f        );
+    ImGui::PushStyleVar(    ImGuiStyleVar_WindowRounding,   0.0f        );
+    ImGui::PushStyleColor(  ImGuiCol_WindowBg,              0x00000000  );               // fully transparent
+    //
+    ImGui::Begin("##ActionComposer_InputBlocker", nullptr, FLAGS);
+
+        ImGui::InvisibleButton("##blocker_btn", vp->Size);  //  One giant invisible button consumes all clicks...
+
+    ImGui::End();
+    //
+    ImGui::PopStyleColor();
+    ImGui::PopStyleVar(2);
     return;
 }
 

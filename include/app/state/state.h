@@ -149,13 +149,20 @@ public:
     // *************************************************************************** //
     void                                log_startup_info            (void) noexcept;
     void                                log_shutdown_info           (void) noexcept;
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //  1.4     INLINE HELPER FUNCTIONS...
-    // *************************************************************************** //
+    
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "FUNCTIONS".
+
+    
+   
+// *************************************************************************** //
+//
+//
+//  1.4                 INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //=
 
     //  "current_task"
     inline const char *                 current_task                (void) const
@@ -168,7 +175,10 @@ public:
     //  "current_plot_color_style"
     inline const char *                 current_plot_color_style    (void) const
     {  return this->m_plot_color_style_names[ static_cast<size_t>(this->m_current_plot_color_style) ];  }
-    
+
+    //  "SysColor"
+    //      inline ImU32                        SysColor                    (const SystemColor idx) const
+    //      {  return this->ms_SYSTEM_COLORS[idx]; }
 
 
 
@@ -198,13 +208,23 @@ public:
         
         return;
     }
+    
+    
+    
+    // *************************************************************************** //
+    
 //
 //
 //
 // *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+// *************************************************************************** //
 //
 //
-//      2.  CLASS DATA-MEMBER...
+//  2.              CLASS DATA-MEMBERS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -215,10 +235,10 @@ public:
     //                      GROUPS / SUB-CLASSES OF "APPSTATE":
     utl::Logger &                       m_logger;                                                   //  1.      LOGGER...
     ImWindows                           m_windows;                                                  //  2.      APPLICATION WINDOW STATE...
-    std::vector<WinInfo *>              m_detview_windows           = {};                           //  2.1     WINDOWS INSIDE DETAIL VIEW...
+    std::vector<WinInfo *>              m_detview_windows               = {};                       //  2.1     WINDOWS INSIDE DETAIL VIEW...
     ImFonts                             m_fonts;                                                    //  3.      APPLICATION FONTS...
     std::vector< std::pair<Timestamp_t, std::string> >
-                                        m_notes                     = {};
+                                        m_notes                         = {};
     Timestamp_t                         m_timestamp_spawn;
     Timestamp_t                         m_timestamp_start;
     // *************************************************************************** //
@@ -269,7 +289,9 @@ public:
                                         m_applets                       = {};   //  window names EXACTLY in case we ever rename them.
     static constexpr auto &             m_app_color_style_names         = APPLICATION_COLOR_STYLE_NAMES;
     static constexpr auto &             m_plot_color_style_names        = APPLICATION_PLOT_COLOR_STYLE_NAMES;
-    static constexpr auto &             ms_SYSTEM_COLORS                = app::DEF_APPLE_SYSTEM_COLORS;
+    //  static constexpr auto &             ms_SYSTEM_COLORS                = app::DEF_APPLE_SYSTEM_COLORS;
+    static constexpr AppleSystemColors_t
+                                        SystemColor                     = {};
     
     
     // *************************************************************************** //
@@ -364,7 +386,6 @@ public:
     // *************************************************************************** //
     //  2.6             DIMENSIONS...
     // *************************************************************************** //
-    //
     //                      SYSTEM:
     int                                 m_system_w                  = -1;       //  Sys. Display Dims.
     int                                 m_system_h                  = -1;
@@ -393,7 +414,6 @@ public:
     // *************************************************************************** //
     //  2.7             SPECIFICS...
     // *************************************************************************** //
-    //
     //                      MAIN DOCKINGSPACE:
     const char *                        m_dock_name                 = "##RootDockspace";
     ImGuiID                             m_dockspace_id              = 0;
@@ -428,14 +448,18 @@ public:
     ImGuiID                             m_detview_dockspace_id      = 0;
     ImGuiDockNodeFlags                  m_detview_dockspace_flags   = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoCloseButton;// | ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_NoSplit
     ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_HiddenTabBar; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
+    //
+    //                      ADD MORE SHARED STATE DATA MEMBERS HERE:
+    //
+    //                              SubCategory.
+    //                                  ...
+    //
     
-
-
-    //  99.     ADD MORE SHARED STATE DATA MEMBERS HERE...
-    //
-    //              1.1     SubCategory.
-    //                          ...
-    //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CLASS DATA-MEMBERS".
 
 
 

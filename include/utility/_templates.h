@@ -50,6 +50,22 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "ColorConvertU32ToFloat4_constexpr"
+//      constexpr equivalent of the "ImGui::ColorConvertU32ToFloat4( ... )" function.
+//      0xAABBGGRR      →       (r,g,b,a)  ∈  [0,1]
+//
+inline constexpr ImVec4 ColorConvertU32ToFloat4_constexpr(const ImU32 c) noexcept
+{
+    constexpr float inv255 = 1.0f / 255.0f;
+    return {
+        static_cast<float>(( c        ) & 0xFF) * inv255,   // R
+        static_cast<float>(( c >>  8 )  & 0xFF) * inv255,   // G
+        static_cast<float>(( c >> 16 )  & 0xFF) * inv255,   // B
+        static_cast<float>(( c >> 24 )  & 0xFF) * inv255    // A
+    };
+}
+
+
 //  "compute_shade"
 //
 //      shade >  0 : → darker (percentage)          e.g. 0.20 :     → 20 % darker
@@ -441,12 +457,12 @@ inline bool MakePlotCFG(PlotCFG & cfg)
 
 //  "EnumArray"
 //      Simple Struct/Class to use Indices based off Enum Class-Members Specifically.
-template<typename E, typename T, std::size_t N = static_cast<std::size_t>(E::Count)>
-struct EnumArray {
-    std::array<T, N> data;
-    T &                 operator []         (E e) noexcept              { return data[static_cast<std::size_t>(e)]; }
-    const T &           operator []         (E e) const noexcept        { return data[static_cast<std::size_t>(e)]; }
-};
+//  template<typename E, typename T, std::size_t N = static_cast<std::size_t>(E::Count)>
+//  struct EnumArray {
+//      std::array<T, N> data;
+//      T &                 operator []         (E e) noexcept              { return data[static_cast<std::size_t>(e)]; }
+//      const T &           operator []         (E e) const noexcept        { return data[static_cast<std::size_t>(e)]; }
+//  };
 //
 //  OLD IMPLEMENTATION BELOW...
 //      template<typename E, typename T, std::size_t N>
@@ -459,8 +475,8 @@ struct EnumArray {
 
 //  "enum_index_t"
 //
-template <typename E>
-using enum_index_t = std::underlying_type_t<E>;
+//  template <typename E>
+//  using enum_index_t = std::underlying_type_t<E>;
 
 
 

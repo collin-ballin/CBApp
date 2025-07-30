@@ -352,6 +352,7 @@ public:
     static constexpr float              ms_SELECTOR_COLUMN_WIDTH                = 340.0f;
     static constexpr const char *       ms_DRAG_DROP_HANDLE                     = "=";
     static constexpr const char *       ms_DELETE_BUTTON_HANDLE                 = "-";
+    static constexpr const char *       ms_EMPTY_HOTKEY_NAME                    = "UNASSIGNED";      // Used when Hotkey is UNASSIGNED...
     //
     static constexpr float              ms_CONTROLBAR_SELECTABLE_SEP            = 16.0f;    //  controlbar offset.
     static constexpr float              ms_TOOLBAR_SELECTABLE_SEP               = 16.0f;    //  sep for  "+ Add",  "Prev",  etc...
@@ -400,11 +401,17 @@ protected:
     //
     //                              STATE:
     State                               m_state                                 = State::Idle;
-    CaptureState                        m_key_capture                           = {  };
-    bool                                m_show_overlay                          = true;
-    bool                                m_render_visuals                        = true;
+    //
+    //                              SUB-STATES:
+    KeyCaptureState                     m_key_capture                           = {  };
+    MouseCaptureState                   m_mouse_capture                         = {  };
+    OverlayCache                        m_overlay_cache                         = {  };
+    
     //
     //                              MUTABLE STATE VARIABLES:
+    bool                                m_show_overlay                          = true;
+    bool                                m_render_visuals                        = true;
+    bool                                m_allow_input_blocker                   = true;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
     bool                                m_is_running                            = false;
     bool                                m_step_req                              = false;
     bool                                m_capture_is_active                     = false;        //  < true while “Auto” sampling.
@@ -417,10 +424,10 @@ protected:
     //                              UTILITY:
     ImVec2                              m_overlay_size                          = { 150.f, 30.f };
     GLFWmonitor *                       m_active_monitor                        = nullptr;
-    ImRect                              m_monitor_bounds                        {};
+    ImRect                              m_monitor_bounds                        {  };
     ImGuiTextFilter                     m_filter;
     ImVec2 *                            m_m_capture_dest                        = nullptr;      //  < pointer to coord being written
-    HotkeyParams *                      m_k_capture_key_dest                    = nullptr;
+    //HotkeyParams *                      m_k_capture_key_dest                    = nullptr;
     
 //
 //
@@ -536,7 +543,7 @@ protected:
     // *************************************************************************** //
     //                              CURSOR CAPTURE:
     ImVec2                              get_cursor_pos                      (void);
-    bool                                _begin_mouse_capture                (Action & act, ImVec2 * destination);
+    bool                                _begin_mouse_capture                ([[maybe_unused]] Action & act, ImVec2 * destination);
     inline void                         _update_mouse_capture               (void);
     //
     //                              KEYBOARD CAPTURE:
@@ -552,6 +559,7 @@ protected:
     //      UTILITY FUNCTIONS...
     // *************************************************************************** //
     void                                _draw_settings_menu                 (void);
+    void                                _draw_input_blocker                 (void);
     void                                _refresh_monitor_cache              (ImVec2);
     //
     //                              SERIALIZATION:
@@ -588,7 +596,11 @@ protected:
     inline bool                         is_running                      (void) const    { return ( this->m_is_running  &&  (this->m_state == State::Run) ); }
     
     //  "reset_state"
-    inline void                         reset_state                     (void)          {
+    inline void                         reset_state                     (void) {
+        m_key_capture               .reset();
+        m_mouse_capture             .reset();
+        m_overlay_cache             .reset();
+        //
         m_state                     = State::Idle;
         m_is_running                = false;
         m_capture_is_active         = false;
@@ -598,11 +610,10 @@ protected:
     
     //  "reset_data"
     inline void                         reset_data                      (void)          {
-        m_sel                   = -1;
-        m_comp_sel              = -1;
-        m_play_index            = -1;
-        m_m_capture_dest        = nullptr;
-        m_k_capture_key_dest    = nullptr;
+        m_sel                       = -1;
+        m_comp_sel                  = -1;
+        m_play_index                = -1;
+        m_m_capture_dest            = nullptr;
         m_executor.abort();
         return;
     }
@@ -632,7 +643,6 @@ protected:
         
         m_comp_sel              = comp_index;
         m_actions               = &m_compositions[m_comp_sel].actions;
-        
         return;
     }
 

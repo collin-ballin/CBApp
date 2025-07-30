@@ -526,10 +526,9 @@ inline void ActionComposer::_ui_cursor_move(Action & a)
 inline void ActionComposer::_ui_mouse_click(Action & a)
 {
     label("Button:");
-    const char * btn_names[]{"Left", "Right"};
     int b = a.click.left_button ? 0 : 1;
-    if (ImGui::Combo("##btn", &b, btn_names, 2))
-        a.click.left_button = (b == 0);
+    if ( ImGui::Combo("##btn", &b, ms_CLICK_PARAM_NAMES.data(), ms_CLICK_PARAM_NAMES.size()) )
+        { a.click.left_button = (b == 0); }
 
     return;
 }
@@ -540,10 +539,9 @@ inline void ActionComposer::_ui_mouse_click(Action & a)
 inline void ActionComposer::_ui_mouse_press(Action & a)
 {
     label("Button:");
-    const char* names[]{"Left","Right"};
     int b = a.press.left_button ? 0 : 1;
-    if (ImGui::Combo("##press_btn", &b, names, 2))
-        a.press.left_button = (b==0);
+    if ( ImGui::Combo("##press_btn", &b, ms_CLICK_PARAM_NAMES.data(), ms_CLICK_PARAM_NAMES.size()) )
+        { a.press.left_button = (b==0); }
 }
 
 
@@ -552,10 +550,9 @@ inline void ActionComposer::_ui_mouse_press(Action & a)
 inline void ActionComposer::_ui_mouse_release(Action & a)
 {
     label("Button:");
-    const char* names[]{"Left","Right"};
     int b = a.release.left_button ? 0 : 1;
-    if (ImGui::Combo("##rel_btn", &b, names, 2))
-        a.release.left_button = (b==0);
+    if ( ImGui::Combo("##release_btn", &b, ms_CLICK_PARAM_NAMES.data(), ms_CLICK_PARAM_NAMES.size()) )
+        { a.release.left_button = (b==0); }
 }
 
 
@@ -594,32 +591,40 @@ inline void ActionComposer::_ui_mouse_drag(Action & a)
 inline void ActionComposer::_ui_hotkey(Action & a)
 {
     // show current / live key name
-    const HotkeyParams view =
-        (m_key_capture.active && m_key_capture.dest == &a.hotkey)
+    const HotkeyParams      view        = ( m_key_capture.active && m_key_capture.dest == &a.hotkey )
             ? HotkeyParams{ m_key_capture.key_current,
-                            m_key_capture.ctrl,
-                            m_key_capture.shift,
-                            m_key_capture.alt }
+                            m_key_capture.ctrl,         m_key_capture.shift,
+                            m_key_capture.alt,          m_key_capture.super }
             : a.hotkey;
+    const char *            key_name    = ImGui::GetKeyName(view.key);
+    
+    
+    if ( !key_name )    { key_name = this->ms_EMPTY_HOTKEY_NAME; }
 
-    const char* key_name = ImGui::GetKeyName(view.key);
-    if (!key_name) key_name = "None";
 
     label("Key:");
     ImGui::Text("%s", key_name);
-    ImGui::SameLine();
-    if ( !m_key_capture.active ) {
-        if ( ImGui::SmallButton("Set") )  { _begin_key_capture(&a.hotkey); }
+    //ImGui::SameLine();
+    if ( !m_key_capture.active )
+    {
+        if ( ImGui::SmallButton("Set") )  {
+            ImGui::SameLine();
+            _begin_key_capture(&a.hotkey);
+        }
     }
 
-    label("Mods:");
-    ImGui::Text("[%s%s%s]",
-        view.ctrl  ? "Ctrl "  : "",
-        view.shift ? "Shift " : "",
-        view.alt   ? "Alt "   : "");
 
-    if (m_key_capture.active && m_key_capture.dest == &a.hotkey)
-        ImGui::TextColored(ImVec4(1,1,0,1), "Press key, Enter=accept, Esc=cancel");
+    label("Modifiers:");
+    ImGui::Text( "[%s%s%s%s]",
+                 view.ctrl   ? "Ctrl "       : "",
+                 view.shift  ? "Shift "      : "",
+                 view.alt    ? "Alt "        : "",
+                 view.alt    ? "Super"       : "" );
+
+    if ( m_key_capture.active && m_key_capture.dest == &a.hotkey )
+        { ImGui::TextColored(ImVec4(1,1,0,1), "Press key, Enter=accept, Esc=cancel"); }
+        
+    return;
 }
 
 
