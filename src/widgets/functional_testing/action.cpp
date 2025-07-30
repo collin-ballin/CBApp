@@ -500,7 +500,9 @@ inline void ActionComposer::_ui_cursor_move(Action & a)
     ImGui::PushID("ActionComposed_CursorMove_Begin");
         ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
         ImGui::SameLine();
-    if ( ImGui::SmallButton("auto") )               { _begin_mouse_capture(a, &a.cursor.first); }     // start capture for Begin
+        if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.first); }   // start capture for Begin
+        ImGui::SameLine();
+        if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
     ImGui::PopID();
     
     
@@ -508,7 +510,9 @@ inline void ActionComposer::_ui_cursor_move(Action & a)
     ImGui::PushID("ActionComposed_CursorMove_End");
         ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
         ImGui::SameLine();
-        if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.last); }     // start capture for Begin
+        if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.last); }        // start capture for End...
+        ImGui::SameLine();
+        if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
     ImGui::PopID();
     
     

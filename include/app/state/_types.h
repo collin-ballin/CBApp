@@ -239,15 +239,15 @@ enum class AppleSystemColors_ : uint8_t {
 //  "DEF_APPLE_SYSTEM_COLORS"
 static constexpr cblib::EnumArray<AppleSystemColors_, ImU32>
 DEF_APPLE_SYSTEM_COLORS = {
-    0x98989DFF,     //  sys_gray
-    0xFF375FFF,     //  sys_pink
-    0xFF453AFF,     //  sys_red
-    0xFF9F0AFF,     //  sys_orange
-    0xFFD60AFF,     //  sys_yellow
-    0x32D74BFF,     //  sys_green
-    0xAC8E68FF,     //  sys_brown
-    0x0A84FFFF,     //  sys_blue
-    0xBF5AF2FF,     //  sys_purple
+    0xFF98989D,     //  sys_gray
+    0xFFFF375F,     //  sys_pink
+    0xFFFF453A,     //  sys_red
+    0xFFFF9F0A,     //  sys_orange
+    0xFFFFD60A,     //  sys_yellow
+    0xFF32D74B,     //  sys_green
+    0xFFAC8E68,     //  sys_brown
+    0xFF0A84FF,     //  sys_blue
+    0xFFBF5AF2,     //  sys_purple
 };*/
 
 

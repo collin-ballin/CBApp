@@ -244,21 +244,44 @@ void ActionComposer::_draw_composition_selector(void)
     ImGui::Separator();
 
 
-    // listbox
+    //  BEGIN COMPOSITION LISTBOX / SELECTOR...
     for (int i = 0; i < (int)m_compositions.size(); ++i)
     {
+        bool    selected       = (i == m_comp_sel);
+        
         ImGui::PushID(i);
-        bool selected = (i == m_comp_sel);
-        if (ImGui::Selectable(m_compositions[i].name.c_str(), selected))
-        {
+        
+        //  1A.     SELECTABLE ITEM...
+        if ( ImGui::Selectable(m_compositions[i].name.c_str(), selected) ) {
             _save_actions_to_comp();       // save previous selection
             _load_actions_from_comp(i);    // switch to new selection
         }
+        //
+        //  1B.     RIGHT-CLICK CONTEXT MENU...
+        if (ImGui::BeginPopupContextItem("##CompMenu"))
+        {
+            if (ImGui::MenuItem("Duplicate"))
+            {
+                _save_actions_to_comp();                         // 1️⃣  still valid
+
+                Composition_t copy = m_compositions[i];          // deep copy
+                m_compositions.insert(m_compositions.begin() + i + 1, copy);
+
+                _load_actions_from_comp(i + 1);                  // select duplicate
+
+                ImGui::EndPopup();
+                ImGui::PopID();                                  // balance stack
+                return;                                          // 2️⃣  abort loop
+            }
+            ImGui::EndPopup();
+        }
+    
         ImGui::PopID();
     }
     
+    
+    
     auto &      comp    = m_compositions[m_comp_sel];
-
 
     //  2.  COMPOSITION NAME...
     {
@@ -379,7 +402,6 @@ inline void ActionComposer::_draw_selector_table(void)
                 }
 
 
-
                 //      3.2A.   SELECTIBLE WIDGET...
                 ImGui::TableSetColumnIndex(1);
                 if ( ImGui::Selectable((*m_actions)[i].name.c_str(), selected, SELECTABLE_FLAGS) )     { m_sel = i; }
@@ -393,7 +415,6 @@ inline void ActionComposer::_draw_selector_table(void)
                     }
                     ImGui::EndPopup();
                 }
-                
                 
 
                 //      3.3.    DELETE BUTTON...
@@ -472,10 +493,6 @@ void ActionComposer::_draw_action_inspector(void)
 //
 void ActionComposer::_draw_renderer_visuals(void)
 {
-    constexpr float         HALF                = ms_VIS_RECT_HALF;
-    constexpr float         THICK               = ms_VIS_THICK;
-    constexpr ImU32         COL                 = ms_VIS_COLOR;
-    //
     //  "viewport_for"
     auto                    viewport_for        = [](ImVec2 p) -> ImGuiViewport *
     {
@@ -488,10 +505,10 @@ void ActionComposer::_draw_renderer_visuals(void)
     };
     //
     //  "draw_rect"
-    auto                    draw_rect           = [&] (ImDrawList * dl, ImVec2 c)
+    auto                    draw_rect           = [&] (ImDrawList * dl, ImVec2 c, const ImU32 color)
     {
-        dl->AddRect({c.x - HALF, c.y - HALF},
-                    {c.x + HALF, c.y + HALF}, COL, 0.0f, 0, THICK);
+        dl->AddRect({c.x - ms_VIS_RECT_HALF, c.y - ms_VIS_RECT_HALF},
+                    {c.x + ms_VIS_RECT_HALF, c.y + ms_VIS_RECT_HALF}, color, 0.0f, 0, ms_VIS_THICK);
     };
     
     
@@ -553,11 +570,11 @@ void ActionComposer::_draw_renderer_visuals(void)
 
 
     //  4.  RENDER LINES AND RECTANGLES...
-    dl_a->AddLine(global_a, global_b, COL, THICK);
-    draw_rect(dl_a, global_a);
+    dl_a->AddLine(global_a, global_b, ms_VIS_LINE_COLOR, ms_VIS_THICK);
+    draw_rect(dl_a, global_a, ms_VIS_COLOR_A);
     
-    if ( dl_b != dl_a )     { draw_rect(dl_b, global_b); }
-    else                    { draw_rect(dl_a, global_b); }
+    if ( dl_b != dl_a )     { draw_rect(dl_b, global_b, ms_VIS_COLOR_B); }
+    else                    { draw_rect(dl_a, global_b, ms_VIS_COLOR_B); }
     
     
     

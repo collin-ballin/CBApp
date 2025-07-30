@@ -289,6 +289,12 @@ inline void from_json(const nlohmann::json& j, HotkeyParams& p)
 //  "Action"
 //
 struct Action {
+//
+    inline void swap(void)
+    { if ( type == ActionType::CursorMove )   { std::swap(cursor.first, cursor.last); } }
+//
+//
+//
     std::string             name            = "new action";
     std::string             descr           = "";
     ActionType              type            = ActionType::CursorMove;

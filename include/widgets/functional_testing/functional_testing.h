@@ -326,12 +326,14 @@ public:
     // *************************************************************************** //
     //                              OVERLAY CONSTANTS:
     static constexpr ImVec2             ms_OVERLAY_OFFSET                       = ImVec2( 20.0f, 20.0f );
-    static constexpr float              ms_OVERLAY_ALPHA                        = 0.5f;
+    static constexpr float              ms_OVERLAY_ALPHA                        = 0.65f;
     //
     //                              RENDERER HELPER CONSTANTS:
-    static constexpr ImU32              ms_VIS_COLOR                            = 0xFF453AFF;
-    static constexpr float              ms_VIS_RECT_HALF                        = 6.0f;
-    static constexpr float              ms_VIS_THICK                            = 2.0f;
+    static constexpr ImU32              ms_VIS_LINE_COLOR                       = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.800f      )  );
+    static constexpr ImU32              ms_VIS_COLOR_A                          = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   0.196f,     0.843f,     0.294f,     1.000f      )  );
+    static constexpr ImU32              ms_VIS_COLOR_B                          = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     1.000f      )  );
+    static constexpr float              ms_VIS_RECT_HALF                        = 8.0f;
+    static constexpr float              ms_VIS_THICK                            = 3.0f;
     //
     //                              WIDGET CONSTANTS:
     static constexpr size_t             ms_COMPOSITION_NAME_LIMIT               = 64ULL;
