@@ -41,6 +41,7 @@
 #include <string_view>
 #include <format>
 #include <vector>           //  <======| std::vector, ...
+#include <unordered_set>
 #include <stdexcept>        //  <======| ...
 #include <limits.h>
 #include <math.h>
@@ -91,9 +92,82 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 //
 //
 //
-//      STATIC HELPER FUNCTIONS...
+//      0.      "KeyHoldManager" TYPE...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "KeyHoldManager"
+//
+class KeyHoldManager {
+public:
+
+    //  "Begin"
+    //      Call ONCE each frame, *before* ImGui::NewFrame()...
+    //
+    inline void             Begin               (void)
+    {
+        ImGuiIO & io = ImGui::GetIO();
+
+        //      1.   Emit scheduled releases (up edge exactly once)
+        for (ImGuiKey key : m_release)      { io.AddKeyEvent(key, false); }
+        
+        m_release.clear();                      // done with them
+
+        //      2.  Re-emit down edge for currently held keys
+        for ( ImGuiKey key : m_active )     { io.AddKeyEvent(key, true); }
+    }
+
+
+    //  "Push"
+    //      Start holding a key (idempotent)
+    //
+    inline void             Push                (ImGuiKey key)
+    {
+        if (key == ImGuiKey_None) return;
+        if (m_active.insert(key).second)        // newly inserted?
+            ImGui::GetIO().AddKeyEvent(key, true);  // initial press (processed next frame)
+    }
+
+
+    //  "Pop"
+    //      Stop holding a key: release happens on the next Begin()
+    //
+    inline void             Pop                 (ImGuiKey key)
+    {
+        if (key == ImGuiKey_None) return;
+        if (m_active.erase(key))                // was it active?
+            m_release.insert(key);              // queue one-time release
+    }
+    
+
+    //  "PopAll"
+    //      Convenience helper
+    //
+    inline void             PopAll              (void)
+    {
+        for (ImGuiKey key : m_active)
+            m_release.insert(key);
+        m_active.clear();
+    }
+    
+    
+    //  "IsActive"
+    //
+    inline bool             IsActive            (ImGuiKey key) const { return m_active.contains(key); }
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+private:
+    std::unordered_set<ImGuiKey> m_active;   // keys we want held
+    std::unordered_set<ImGuiKey> m_release;  // keys to release on next Begin()
+    
+
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "KeyHoldManager" INLINE CLASS DEFINITION.
+
+
 
 
 
@@ -104,7 +178,8 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 // *************************************************************************** //
 //
 //
-//      0.      "ActionComposer" TYPES...
+//
+//      1.      "ActionComposer" TYPES...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -587,19 +662,18 @@ struct OverlayCache
 }
 
 
-//  "push_key_event"
+//  "InjectKey"
 //
-[[maybe_unused]] inline void push_key_event(ImGuiKey key, bool down)
+[[maybe_unused]] inline void InjectKey(ImGuiKey key, bool down)
 {
     ImGuiIO& io = ImGui::GetIO();
-    const bool prev = io.AppAcceptingEvents;
-    io.AppAcceptingEvents = true;             // allow AddKeyEvent() now
-    io.AddKeyEvent(key, down);
-    io.AppAcceptingEvents = prev;
 
-    /* Legacy KeysDown[512] support (only if index < 512) */
-    //if (static_cast<int>(key) < IM_ARRAYSIZE(io.KeysDown))
-    //    io.KeysDown[static_cast<int>(key)] = down;
+    // Allow AddKeyEvent() even though NewFrame() has already started
+    const bool prev = io.AppAcceptingEvents;
+    io.AppAcceptingEvents = true;
+    io.AddKeyEvent(key, down);          // down == true  → press
+                                        // down == false → release
+    io.AppAcceptingEvents = prev;
 }
 
 

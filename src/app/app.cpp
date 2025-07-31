@@ -251,6 +251,37 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
         
         ImGui::NewLine();
         
+        {
+            static ui::KeyHoldManager khm;      // lives for the whole program
+
+            // 1) Queue synthetic key events for this frame
+            khm.Begin();                    // <-- must run before NewFrame()
+
+            // 2) Build a tiny UI to drive it
+            ImGui::Begin("KeyHoldManager Test");
+
+            auto key_toggle_button = [&](ImGuiKey key, const char* label_held, const char* label_released)
+            {
+                const bool is_held = khm.IsActive(key);                 // convenience accessor
+                const char* label  = is_held ? label_released : label_held;
+                if (ImGui::Button(label))
+                {
+                    if (is_held)   khm.Pop(key);                        // schedule release
+                    else           khm.Push(key);                       // start hold
+                }
+                ImGui::SameLine();
+                ImGui::TextUnformatted(is_held ? "Held" : "Released");
+            };
+
+            key_toggle_button(ImGuiKey_O, "Hold O", "Release O");
+            key_toggle_button(ImGuiKey_S, "Hold S", "Release S");
+
+            ImGui::End();
+        }
+        
+        
+        
+        
         //  4.  TESTING COLUMNS...
         //  {
         //      this->Test_Editor();

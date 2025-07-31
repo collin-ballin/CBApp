@@ -394,12 +394,12 @@ void MenuBar::disp_show_windows_menubar(void)
     ImGui::TextDisabled("Extra");
         for (idx = S.ms_EXTRA_WINDOWS_BEGIN; idx < S.ms_EXTRA_WINDOWS_END; ++idx)
         {
-            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
-                                 nullptr,
-                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
-            {
-                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
-            }
+            std::string       name          = this->S.m_windows[ static_cast<Window>(idx) ].uuid;
+            if (name[0] == '#' && name[1] == '#')           { name = name.erase(0, 2);       }
+            else if (name[0] == '#')                        { name = name.erase(0, 1);       }
+            
+            if ( ImGui::MenuItem(name.c_str(), nullptr, &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+                { ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id ); }
         }
     //  END "Extra" SUB-MENU.
 #endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //

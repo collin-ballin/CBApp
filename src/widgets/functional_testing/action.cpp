@@ -204,8 +204,21 @@ void ActionExecutor::start_mouse_drag(GLFWwindow * window, ImVec2 from, ImVec2 t
    
 //  "start_key_press"
 //
-void ActionExecutor::start_key_press(GLFWwindow * win, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
+void ActionExecutor::start_key_press([[maybe_unused]] GLFWwindow * win, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
 {
+    m_window = win;
+    ImGuiIO& io = ImGui::GetIO();
+
+    if ( key == ImGuiKey_None )     { return; }
+
+    if ( !ImGui::IsKeyDown(key) )   { io.AddKeyEvent(key, true); }         // queue 1-frame edge → key is now held
+
+
+
+    m_state = State::None;   // completes immediately
+}
+
+/*{
     m_window = win;
     ImGuiIO& io = ImGui::GetIO();
 
@@ -216,16 +229,31 @@ void ActionExecutor::start_key_press(GLFWwindow * win, ImGuiKey key, bool ctrl, 
 
     push_key_event(key, true);            // key DOWN
 
-    /* occupy the rest of this frame so ImGui sees the hold next frame */
+    // occupy the rest of this frame so ImGui sees the hold next frame /
     m_wait_one_frame = true;
     m_state = State::None;
-}
-
-   
+}*/
+        
+        
 //  "start_key_release"
 //
 void ActionExecutor::start_key_release(GLFWwindow * win, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
 {
+    m_window = win;
+    ImGuiIO& io = ImGui::GetIO();
+    
+    io.AddKeyEvent(key, false);
+
+    if (ctrl)   io.AddKeyEvent(ImGuiKey_LeftCtrl,  false);
+    if (shift)  io.AddKeyEvent(ImGuiKey_LeftShift, false);
+    if (alt)    io.AddKeyEvent(ImGuiKey_LeftAlt,   false);
+    if (super)  io.AddKeyEvent(ImGuiKey_LeftSuper, false);
+
+    InjectKey(key, /*down=*/false);
+
+    m_state = State::None;   // completes immediately
+}
+/*{
     m_window = win;
     ImGuiIO& io = ImGui::GetIO();
 
@@ -238,7 +266,7 @@ void ActionExecutor::start_key_release(GLFWwindow * win, ImGuiKey key, bool ctrl
 
     m_wait_one_frame = true;                  // one frame so release is flushed
     m_state = State::None;
-}
+}*/
 
 
 //  "start_button_action"
