@@ -735,7 +735,7 @@ inline void ActionComposer::_update_key_capture(void)
     ImGuiIO & io = ImGui::GetIO();
     
     
-    want_capture_keyboard_next_frame();
+    //want_capture_keyboard_next_frame();
 
     //  Detect first key press (ignore repeats)
     for ( ImGuiKey k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k = (ImGuiKey)(k + 1) )

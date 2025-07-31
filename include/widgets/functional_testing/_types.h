@@ -540,26 +540,67 @@ struct OverlayCache
 
 //  "want_capture_mouse_next_frame"
 //
-static inline void want_capture_mouse_next_frame(const bool state=true)
+[[maybe_unused]] static inline void want_capture_mouse_next_frame(const bool state=true)
 { ImGui::SetNextFrameWantCaptureMouse(state); }      // tell Dear ImGui backend
 
 
 //  "want_capture_keyboard_next_frame"
 //
-static inline void want_capture_keyboard_next_frame(const bool state=true)
+[[maybe_unused]] static inline void want_capture_keyboard_next_frame(const bool state=true)
 { ImGui::SetNextFrameWantCaptureKeyboard(state); }
 
 
+//  "set_mod"
+//
+[[maybe_unused]] static void set_mod(ImGuiIO& io, ImGuiKey key, bool down)
+{
+    io.AddKeyEvent(key, down);                 // physical LeftAlt etc.
+    switch (key)
+    {
+        case ImGuiKey_LeftCtrl:   io.KeyCtrl  = down; break;
+        case ImGuiKey_LeftShift:  io.KeyShift = down; break;
+        case ImGuiKey_LeftAlt:    io.KeyAlt   = down; break;
+        case ImGuiKey_LeftSuper:  io.KeySuper = down; break;
+        default: break;
+    }
+}
 
 
+//  "enqueue_key_event"
+//
+[[maybe_unused]] inline void enqueue_key_event(ImGuiKey key, bool down)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    const bool prev = io.AppAcceptingEvents;
+    io.AppAcceptingEvents = true;          // allow queuing in mid-frame
+    io.AddKeyEvent(key, down);
+    io.AppAcceptingEvents = prev;
+}
 
 
+//  "enqueue_modifier"
+//
+[[maybe_unused]] inline void enqueue_modifier(ImGuiKey left_key, bool down)
+{
+    enqueue_key_event(left_key, down);        // physical key
+    // io.KeyCtrl / KeyAlt … will be updated by ImGui internals next frame
+}
 
 
+//  "push_key_event"
+//
+[[maybe_unused]] inline void push_key_event(ImGuiKey key, bool down)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    const bool prev = io.AppAcceptingEvents;
+    io.AppAcceptingEvents = true;             // allow AddKeyEvent() now
+    io.AddKeyEvent(key, down);
+    io.AppAcceptingEvents = prev;
 
-
-
-
+    /* Legacy KeysDown[512] support (only if index < 512) */
+    //if (static_cast<int>(key) < IM_ARRAYSIZE(io.KeysDown))
+    //    io.KeysDown[static_cast<int>(key)] = down;
+}
 
 
 

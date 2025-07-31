@@ -175,6 +175,7 @@ struct ActionExecutor
     float                               m_elapsed_s                     { 0.0f };       //  accumulated time
     bool                                m_drag_button_left              { true };
     bool                                m_is_drag                       { false };   // ← NEW
+    bool                                m_wait_one_frame                = false;
     
     // *************************************************************************** //
     //

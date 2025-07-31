@@ -6903,12 +6903,57 @@
           "enabled": true,
           "hotkey": {
             "alt": false,
+            "ctrl": false,
+            "key": 664,
+            "shift": true,
+            "super": false
+          },
+          "name": "Shift DOWN",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 6
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "duration": 1.0,
+            "from": [
+              0.0,
+              0.0
+            ],
+            "left": true,
+            "to": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
             "ctrl": true,
             "key": 548,
             "shift": false,
             "super": false
           },
-          "name": "Drag BEGIN",
+          "name": "LMB DOWN",
           "press": {
             "left": true
           },
@@ -6953,7 +6998,7 @@
             "shift": false,
             "super": false
           },
-          "name": "move object",
+          "name": "DRAG",
           "press": {
             "left": true
           },
@@ -6998,7 +7043,7 @@
             "shift": false,
             "super": false
           },
-          "name": "Drag END",
+          "name": "LMB RELEASE",
           "press": {
             "left": true
           },
@@ -7006,6 +7051,51 @@
             "left": true
           },
           "type": 3
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "duration": 1.0,
+            "from": [
+              0.0,
+              0.0
+            ],
+            "left": true,
+            "to": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 664,
+            "shift": true,
+            "super": false
+          },
+          "name": "Shift RELEASE",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 7
         }
       ],
       "description": "description...",

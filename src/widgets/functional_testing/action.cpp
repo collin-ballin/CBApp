@@ -204,38 +204,39 @@ void ActionExecutor::start_mouse_drag(GLFWwindow * window, ImVec2 from, ImVec2 t
    
 //  "start_key_press"
 //
-void ActionExecutor::start_key_press(GLFWwindow * window, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
+void ActionExecutor::start_key_press(GLFWwindow * win, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
 {
-    m_window = window;
+    m_window = win;
     ImGuiIO& io = ImGui::GetIO();
 
-    if (ctrl)   io.AddKeyEvent(ImGuiKey_LeftCtrl,  true);
-    if (shift)  io.AddKeyEvent(ImGuiKey_LeftShift, true);
-    if (alt)    io.AddKeyEvent(ImGuiKey_LeftAlt,   true);
-    if (super)  io.AddKeyEvent(ImGuiKey_LeftSuper, true);
+    if (ctrl)  { push_key_event(ImGuiKey_LeftCtrl,  true); io.KeyCtrl  = true; }
+    if (shift) { push_key_event(ImGuiKey_LeftShift, true); io.KeyShift = true; }
+    if (alt)   { push_key_event(ImGuiKey_LeftAlt,   true); io.KeyAlt   = true; }
+    if (super) { push_key_event(ImGuiKey_LeftSuper, true); io.KeySuper = true; }
 
-    if (key != ImGuiKey_None)           // <─ modifiers-only press is legal
-        io.AddKeyEvent(key, true);
+    push_key_event(key, true);            // key DOWN
 
-    m_state = State::None;              // instantaneous
+    /* occupy the rest of this frame so ImGui sees the hold next frame */
+    m_wait_one_frame = true;
+    m_state = State::None;
 }
 
    
 //  "start_key_release"
 //
-void ActionExecutor::start_key_release(GLFWwindow * window, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
+void ActionExecutor::start_key_release(GLFWwindow * win, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
 {
-    m_window = window;
+    m_window = win;
     ImGuiIO& io = ImGui::GetIO();
 
-    if (key != ImGuiKey_None)
-        io.AddKeyEvent(key, false);
+    push_key_event(key, false);           // key UP
 
-    if (ctrl)   io.AddKeyEvent(ImGuiKey_LeftCtrl,  false);
-    if (shift)  io.AddKeyEvent(ImGuiKey_LeftShift, false);
-    if (alt)    io.AddKeyEvent(ImGuiKey_LeftAlt,   false);
-    if (super)  io.AddKeyEvent(ImGuiKey_LeftSuper, false);
+    if (ctrl)  { push_key_event(ImGuiKey_LeftCtrl,  false); io.KeyCtrl  = false; }
+    if (shift) { push_key_event(ImGuiKey_LeftShift, false); io.KeyShift = false; }
+    if (alt)   { push_key_event(ImGuiKey_LeftAlt,   false); io.KeyAlt   = false; }
+    if (super) { push_key_event(ImGuiKey_LeftSuper, false); io.KeySuper = false; }
 
+    m_wait_one_frame = true;                  // one frame so release is flushed
     m_state = State::None;
 }
 
