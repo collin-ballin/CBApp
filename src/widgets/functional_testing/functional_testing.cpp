@@ -14,6 +14,7 @@
 #include "app/state/_types.h"
 
 
+
 namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -49,11 +50,14 @@ ActionComposer::ActionComposer(app::AppState & src)
 //
 void ActionComposer::initialize(void)
 {
+    namespace           fs          = std::filesystem;
     app::WinInfo &      win_info    = *m_detview_window;
     
-    if ( this->m_initialized )          { return; }
+    if ( this->m_initialized )          { return;                       }
+    else                                { this->m_initialized = true;   }
     
     
+    //  1.  CREATE WinInfo OBJECT TO STORE WINDOW IN DETVIEW...
     win_info                        = {
         "Functional Testing",
         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
@@ -61,7 +65,17 @@ void ActionComposer::initialize(void)
         nullptr
     };
     
-    this->m_initialized             = true;
+    
+    //  2.  LOAD DEFAULT TESTS FROM FILE...
+    if ( !this->m_filepath.empty() && fs::exists(this->m_filepath) && fs::is_regular_file(this->m_filepath) )
+    {
+        this->S.m_logger.debug( std::format("ActionComposer | loading from default file, \"{}\"", this->m_filepath.string()) );
+        this->load_from_file(this->m_filepath);
+    }
+    else {
+        this->S.m_logger.debug( std::format("ActionComposer | unable to load default file, \"{}\"", this->m_filepath.string()) );
+    }
+    
     return;
 }
 
@@ -726,7 +740,7 @@ inline void ActionComposer::_update_key_capture(void)
     //  Detect first key press (ignore repeats)
     for ( ImGuiKey k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k = (ImGuiKey)(k + 1) )
     {
-        if (ImGui::IsKeyPressed(k, false))
+        if ( ImGui::IsKeyPressed(k, false) )
         {
             m_key_capture.key_current = k;
             m_key_capture.ctrl  = io.KeyCtrl;
@@ -737,9 +751,9 @@ inline void ActionComposer::_update_key_capture(void)
     }
 
     //  Accept when that key goes UP or user hits Enter
-    if ( (m_key_capture.key_current != ImGuiKey_None &&
-         !ImGui::IsKeyDown(m_key_capture.key_current)) ||
-        ImGui::IsKeyPressed(ImGuiKey_Enter) )
+    if ( (m_key_capture.key_current != ImGuiKey_None    &&
+         !ImGui::IsKeyDown(m_key_capture.key_current))  ||
+         ImGui::IsKeyPressed(ImGuiKey_Enter) )
     {
         _accept_key_capture();
     }

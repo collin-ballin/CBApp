@@ -144,16 +144,35 @@ enum class ActionType : uint8_t {
     MouseDrag,       // full drag in one action (press–move–release)
 //
     Hotkey,
+    KeyPress,            // NEW : press & hold
+    KeyRelease,          // NEW : release key
 //
     COUNT
 };
-
-
+//
 //  "DEF_ACTION_TYPE_NAMES"
 static constexpr std::array<const char *, static_cast<size_t>( ActionType::COUNT )>
 DEF_ACTION_TYPE_NAMES = {
-    "CursorMove",       "Mouse Click",      "Mouse Press",      "Mouse Release",        "Mouse Drag",       "Hotkey"
+    "Move Cursor",
+    "Mouse Click",      "Mouse Press",      "Mouse Release",        "Mouse Drag",
+    "Hotkey",           "Key Press",        "Key Release"
 };
+
+
+
+
+//  "ClickType"
+//
+enum class ClickType : uint8_t {
+    Click=0, Press, Release, COUNT
+};
+//
+//  "DEF_ACTION_TYPE_NAMES"
+static constexpr std::array<const char *, static_cast<size_t>( ActionType::COUNT )>
+DEF_CLICK_TYPE_NAMES = {
+    "Click",    "Press",    "Release"
+};
+
 
 
 
@@ -194,22 +213,28 @@ inline void from_json(const nlohmann::json & j, CursorMoveParams & p)
 //
 struct ClickParams { bool left_button{true};  };
 
-inline void to_json(nlohmann::json& j, const ClickParams& p)
+inline void to_json(nlohmann::json & j, const ClickParams & p)
 {
     j = {
             {"left",    p.left_button}
     };
 }
 
-inline void from_json(const nlohmann::json& j, ClickParams& p)
+inline void from_json(const nlohmann::json & j, ClickParams & p)
 {
     j.at("left").get_to(p.left_button);
 }
 
 
+//  "MouseClickTypes"
+//
+enum class MouseClickTypes : uint8_t {
+    Left, Right, COUNT
+};
+//
 //  "DEF_CLICK_PARAM_NAMES"
-static constexpr std::array<const char *, static_cast<size_t>( ActionType::COUNT )>
-DEF_CLICK_PARAM_NAMES = {
+static constexpr std::array<const char *, static_cast<size_t>( MouseClickTypes::COUNT )>
+DEF_MOUSE_CLICK_TYPES_NAMES = {
     "Left Mouse",       "Right Mouse"
 };
 

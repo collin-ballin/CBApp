@@ -34,6 +34,9 @@
 
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
+#include <filesystem>
+#include <system_error>
+//
 #include <cstdlib>          // C-Headers...
 #include <stdio.h>
 #include <unistd.h>
@@ -166,10 +169,10 @@ struct ActionExecutor
     // *************************************************************************** //
     //      OTHER DATA MEMBERS.
     // *************************************************************************** //
-    ImVec2                              m_first_pos                     {  };        // starting mouse-cursor pos
-    ImVec2                              m_last_pos                      {  };        // destination mouse-cursor pos
-    float                               m_duration_s                    { 0.0f };  // total move time
-    float                               m_elapsed_s                     { 0.0f };  // accumulated time
+    ImVec2                              m_first_pos                     {  };           //  starting mouse-cursor pos
+    ImVec2                              m_last_pos                      {  };           //  destination mouse-cursor pos
+    float                               m_duration_s                    { 0.0f };       //  total move time
+    float                               m_elapsed_s                     { 0.0f };       //  accumulated time
     bool                                m_drag_button_left              { true };
     bool                                m_is_drag                       { false };   // ← NEW
     
@@ -215,6 +218,9 @@ struct ActionExecutor
     void                                start_mouse_press                   (GLFWwindow * window, bool left_button);
     void                                start_mouse_release                 (GLFWwindow * window, bool left_button);
     void                                start_mouse_drag                    (GLFWwindow * window, ImVec2 from, ImVec2 to, float  dur_s, bool left_button);
+    //
+    void                                start_key_press                     (GLFWwindow * window, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super);
+    void                                start_key_release                   (GLFWwindow * window, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super);
     //
     void                                start_button_action                 (GLFWwindow * window, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super);
     //
@@ -372,7 +378,8 @@ public:
     static constexpr auto &             ms_COMPOSER_STATE_NAMES                 = DEF_COMPOSER_STATE_NAMES;
     static constexpr auto &             ms_ACTION_TYPE_NAMES                    = DEF_ACTION_TYPE_NAMES;
     static constexpr auto &             ms_EXEC_STATE_NAMES                     = DEF_EXEC_STATE_NAMES;
-    static constexpr auto &             ms_CLICK_PARAM_NAMES                    = DEF_CLICK_PARAM_NAMES;
+    static constexpr auto &             ms_CLICK_PARAM_NAMES                    = DEF_MOUSE_CLICK_TYPES_NAMES;
+    static constexpr auto &             ms_CLICK_TYPE_NAMES                     = DEF_CLICK_TYPE_NAMES;
     
 //
 //
@@ -396,6 +403,7 @@ protected:
     ActionExecutor                      m_executor                              {  };
     std::vector<Composition>            m_compositions                          { 1 };
     std::vector<Action> *               m_actions                               = nullptr;
+    std::filesystem::path               m_filepath                              = {"/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/assets/.cbapp/debug/functional_testing1.json"};
     //
     int                                 m_comp_sel                              = 0;            // current composition selection
     int                                 m_sel                                   = -1;           // current selection

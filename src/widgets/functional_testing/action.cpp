@@ -198,17 +198,51 @@ void ActionExecutor::start_mouse_drag(GLFWwindow * window, ImVec2 from, ImVec2 t
     m_is_drag          = true;                    // ← drag mode
     /* state already Move */
 }
-    
-    
+   
+   
+   
+   
+//  "start_key_press"
+//
+void ActionExecutor::start_key_press(GLFWwindow * window, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
+{
+    m_window = window;
+    ImGuiIO& io = ImGui::GetIO();
+
+    if (ctrl)   io.AddKeyEvent(ImGuiKey_LeftCtrl,  true);
+    if (shift)  io.AddKeyEvent(ImGuiKey_LeftShift, true);
+    if (alt)    io.AddKeyEvent(ImGuiKey_LeftAlt,   true);
+    if (super)  io.AddKeyEvent(ImGuiKey_LeftSuper, true);
+
+    if (key != ImGuiKey_None)           // <─ modifiers-only press is legal
+        io.AddKeyEvent(key, true);
+
+    m_state = State::None;              // instantaneous
+}
+
+   
+//  "start_key_release"
+//
+void ActionExecutor::start_key_release(GLFWwindow * window, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
+{
+    m_window = window;
+    ImGuiIO& io = ImGui::GetIO();
+
+    if (key != ImGuiKey_None)
+        io.AddKeyEvent(key, false);
+
+    if (ctrl)   io.AddKeyEvent(ImGuiKey_LeftCtrl,  false);
+    if (shift)  io.AddKeyEvent(ImGuiKey_LeftShift, false);
+    if (alt)    io.AddKeyEvent(ImGuiKey_LeftAlt,   false);
+    if (super)  io.AddKeyEvent(ImGuiKey_LeftSuper, false);
+
+    m_state = State::None;
+}
+
 
 //  "start_button_action"
 //
-void ActionExecutor::start_button_action( GLFWwindow *  window,
-                                          ImGuiKey      key,
-                                          bool          with_ctrl,
-                                          bool          with_shift,
-                                          bool          with_alt,
-                                          bool          with_super )
+void ActionExecutor::start_button_action(GLFWwindow * window, ImGuiKey key, bool with_ctrl, bool with_shift, bool with_alt, bool with_super)
 {
     m_window = window;
     ImGuiIO& io = ImGui::GetIO();
@@ -332,7 +366,7 @@ void ActionExecutor::update(void)
 void ActionComposer::_drive_execution(void)
 {
     /* === 0. global abort shortcut ===================================== */
-    if (m_state == State::Run && ImGui::IsKeyPressed(ImGuiKey_Escape))
+    if ( m_state == State::Run && ImGui::IsKeyPressed(ImGuiKey_Escape) )
     {
         m_executor.abort();
         reset_all();                    // idle, flags cleared
@@ -343,13 +377,13 @@ void ActionComposer::_drive_execution(void)
     m_executor.update();
 
     /* === 2. should we dispatch the next? ============================== */
-    const bool ready_to_start = !m_executor.busy();
-    const bool want_action    = is_running() || need_step();
+    const bool  ready_to_start      = !m_executor.busy();
+    const bool  want_action         = is_running() || need_step();
     if (!ready_to_start || !want_action)
         return;
 
     /* === 3. index bounds check ======================================== */
-    if (m_play_index < 0 || m_play_index >= static_cast<int>(m_actions->size()))
+    if ( m_play_index < 0 || m_play_index >= static_cast<int>(m_actions->size()) )
     {
         reset_state();
         m_play_index = -1;
@@ -357,12 +391,12 @@ void ActionComposer::_drive_execution(void)
     }
 
     /* === 4. run the indexed action ==================================== */
-    Action& act = (*m_actions)[m_play_index];
-    m_sel        = m_play_index;               // visuals stay in sync
+    Action &    act     = (*m_actions)[m_play_index];
+    m_sel               = m_play_index;               // visuals stay in sync
     _dispatch_execution(act);
 
     /* === 5. advance or finish ========================================= */
-    if (need_step())                           // Run‑Once
+    if ( need_step() )                           // Run‑Once
     {
         m_step_req   = false;
         reset_state();
@@ -387,7 +421,7 @@ inline void ActionComposer::_dispatch_execution(Action & act)
     
     switch (act.type)
     {
-        //  1.  CURSOR MOVEMENT...
+        //  A1.     CURSOR MOVEMENT...
         case ActionType::CursorMove: {
             m_executor.start_cursor_move(
                 act.target ? act.target : S.m_glfw_window,
@@ -396,32 +430,32 @@ inline void ActionComposer::_dispatch_execution(Action & act)
                 act.cursor.duration);
             break;
         }
-        
-        //  2.  SINGLE MOUSE CLICK...
+        //
+        //  A2.     SINGLE MOUSE CLICK...
         case ActionType::MouseClick: {
             m_executor.start_mouse_click(
                 act.target ? act.target : S.m_glfw_window,
                 act.click.left_button);
             break;
         }
-        
-        //  3.  MOUSE PRESS...
+        //
+        //  A3.     MOUSE PRESS...
         case ActionType::MousePress: {
             m_executor.start_mouse_press(
                 act.target ? act.target : S.m_glfw_window,
                 act.press.left_button);
             break;
         }
-        
-        //  4.  MOUSE RELEASE...
+        //
+        //  A4.     MOUSE RELEASE...
         case ActionType::MouseRelease: {
             m_executor.start_mouse_release(
                 act.target ? act.target : S.m_glfw_window,
                 act.release.left_button);
             break;
         }
-        
-        //  5.  MOUSE DRAG...
+        //
+        //  A5.     MOUSE DRAG...
         case ActionType::MouseDrag: {
             m_executor.start_mouse_drag(
                 act.target ? act.target : S.m_glfw_window,
@@ -430,8 +464,10 @@ inline void ActionComposer::_dispatch_execution(Action & act)
                 act.drag.duration,
                 act.drag.left_button);
         }
-
-        //  6.  HOTKEY PRESS...
+        //
+        //
+        //
+        //  B1.     HOTKEY...
         case ActionType::Hotkey: {
             m_executor.start_button_action(
                 act.target ? act.target : S.m_glfw_window,
@@ -442,7 +478,26 @@ inline void ActionComposer::_dispatch_execution(Action & act)
                 act.hotkey.super);
             break;
         }
-
+        //
+        //  B2.     KEY PRESS...
+        case ActionType::KeyPress: {
+            m_executor.start_key_press(
+                act.target ? act.target : S.m_glfw_window,
+                act.hotkey.key, act.hotkey.ctrl, act.hotkey.shift,
+                act.hotkey.alt, act.hotkey.super
+            );
+        }
+        //
+        //  B3.     KEY RELEASE...
+        case ActionType::KeyRelease: {
+            m_executor.start_key_release(
+                act.target ? act.target : S.m_glfw_window,
+                act.hotkey.key, act.hotkey.ctrl, act.hotkey.shift,
+                act.hotkey.alt, act.hotkey.super
+            );
+        }
+        //
+        //
         //  ?.  DEFAULT...
         default: {
             break;
@@ -480,6 +535,8 @@ void ActionComposer::_dispatch_action_ui(Action & a)
         case ActionType::MouseRelease:      { this->_ui_mouse_release(a);       break;       }
         case ActionType::MouseDrag:         { this->_ui_mouse_drag(a);          break;       }
         //
+        case ActionType::KeyPress:
+        case ActionType::KeyRelease:
         case ActionType::Hotkey:            { this->_ui_hotkey(a);              break;       }
         default:                            { break; }
     }
@@ -594,6 +651,25 @@ inline void ActionComposer::_ui_mouse_drag(Action & a)
 //
 inline void ActionComposer::_ui_hotkey(Action & a)
 {
+    int         mode_idx        = 0;
+    
+    this->label("Mode:");
+    switch (a.type)
+    {
+        case ActionType::Hotkey :           { mode_idx = 0;     break; }
+        case ActionType::KeyPress :         { mode_idx = 1;     break; }
+        case ActionType::KeyRelease :       { mode_idx = 2;     break; }
+        default :                           { break; }
+    }
+    
+    if ( ImGui::Combo("##ActionComposer_Hotkey_Mode", &mode_idx, ms_CLICK_TYPE_NAMES.data(), ms_CLICK_TYPE_NAMES.size()) ) {
+        a.type = (mode_idx == 0) ? ActionType::Hotkey
+               : (mode_idx == 1) ? ActionType::KeyPress
+                                 : ActionType::KeyRelease;
+    }
+
+
+
     // show current / live key name
     const HotkeyParams      view        = ( m_key_capture.active && m_key_capture.dest == &a.hotkey )
             ? HotkeyParams{ m_key_capture.key_current,
@@ -601,17 +677,18 @@ inline void ActionComposer::_ui_hotkey(Action & a)
                             m_key_capture.alt,          m_key_capture.super }
             : a.hotkey;
     const char *            key_name    = ImGui::GetKeyName(view.key);
-    
-    
+
+
+
     if ( !key_name )    { key_name = this->ms_EMPTY_HOTKEY_NAME; }
 
 
     label("Key:");
     ImGui::Text("%s", key_name);
-    //ImGui::SameLine();
     if ( !m_key_capture.active )
     {
-        if ( ImGui::SmallButton("Set") )  {
+        ImGui::SameLine();
+        if ( ImGui::SmallButton("Assign") )  {
             ImGui::SameLine();
             _begin_key_capture(&a.hotkey);
         }
