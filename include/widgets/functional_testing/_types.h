@@ -358,26 +358,30 @@ DEF_MOUSE_CLICK_TYPES_NAMES = {
 struct DragParams
 {
     ImVec2          from                    {};
-    ImVec2          to                      {};
-    float           duration                {1.f};
-    bool            left_button             {true};
+    //  ImVec2          to                      {};
+    //  float           duration                {1.f};
+    //  bool            left_button             {true};
 };
 
 inline void to_json(nlohmann::json & j, const DragParams & p)
 {
     j = {
-            {"from",                p.from                          },
-            {"to",                  p.to                            },
-            {"duration",            p.duration                      },
-            {"left",                p.left_button                   }
+        {"from",                p.from                          }
     };
+    
+    //      j = {
+    //              {"from",                p.from                          },
+    //              {"to",                  p.to                            },
+    //              {"duration",            p.duration                      },
+    //              {"left",                p.left_button                   }
+    //      };
 }
 inline void from_json(const nlohmann::json & j, DragParams & p)
 {
     j.at("from"                     ).get_to(p.from                 );
-    j.at("to"                       ).get_to(p.to                   );
-    j.at("duration"                 ).get_to(p.duration             );
-    j.at("left"                     ).get_to(p.left_button          );
+    //  j.at("to"                       ).get_to(p.to                   );
+    //  j.at("duration"                 ).get_to(p.duration             );
+    //  j.at("left"                     ).get_to(p.left_button          );
 }
 
 
@@ -426,7 +430,7 @@ inline void from_json(const nlohmann::json& j, HotkeyParams& p)
 struct Action {
 //
     inline void swap(void)
-    { if ( type == ActionType::CursorMove )   { std::swap(cursor.first, cursor.last); } }
+    { std::swap(cursor.first, cursor.last); }
 //
 //
 //

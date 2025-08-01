@@ -172,6 +172,9 @@ void ActionComposer::Begin_IMPL(void)
 //
 void ActionComposer::draw_all(void)
 {
+    using   Font    = app::AppState::Font;
+    
+    
     ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER1);
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    ms_CHILD_ROUND1);
     ImGui::PushStyleColor(ImGuiCol_ChildBg,             ms_CHILD_FRAME_BG1L);
@@ -189,6 +192,7 @@ void ActionComposer::draw_all(void)
     
     
     //  2.  DRAW THE "BROWSER" UI-INTERFACE...
+    S.PushFont(Font::Small);
     ImGui::BeginChild("##ActionComposer_Action_Browser",  {0, 0}, ImGuiChildFlags_Borders);
         //
         ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER1);
@@ -215,9 +219,9 @@ void ActionComposer::draw_all(void)
         ImGui::PopStyleVar(2);  //  ImGuiStyleVar_ChildBorderSize, ImGuiStyleVar_ChildRounding
         //
     ImGui::EndChild();
+    S.PopFont();
     
-
-
+    
     return;
 }
 
@@ -551,7 +555,7 @@ void ActionComposer::_draw_renderer_visuals(void)
     const ImVec2 *          cap_ptr             = m_mouse_capture.dest;           // convenience alias
 
 
-    if ( act.type == ActionType::CursorMove )
+    if ( act.type == ActionType::CursorMove || act.type == ActionType::MouseDrag )
     {
         local_a = (&act.cursor.first  == cap_ptr && m_mouse_capture.active)
                     ? m_mouse_capture.live_local
@@ -561,16 +565,16 @@ void ActionComposer::_draw_renderer_visuals(void)
                     ? m_mouse_capture.live_local
                     : act.cursor.last;
     }
-    else /* MouseDrag */
-    {
-        local_a = (&act.drag.from     == cap_ptr && m_mouse_capture.active)
-                    ? m_mouse_capture.live_local
-                    : act.drag.from;
+    //  else /* MouseDrag */
+    //  {
+    //      local_a = (&act.drag.from     == cap_ptr && m_mouse_capture.active)
+    //                  ? m_mouse_capture.live_local
+    //                  : act.drag.from;
 
-        local_b = (&act.drag.to       == cap_ptr && m_mouse_capture.active)
-                    ? m_mouse_capture.live_local
-                    : act.drag.to;
-    }
+    //      local_b = (&act.drag.to       == cap_ptr && m_mouse_capture.active)
+    //                  ? m_mouse_capture.live_local
+    //                  : act.drag.to;
+    //  }
 
 
     //  2.  CONVERT     LOCAL   ===>    GLOBAL      COORDINATES...
@@ -643,12 +647,12 @@ bool ActionComposer::_begin_mouse_capture([[maybe_unused]] Action & act, ImVec2 
     m_mouse_capture.dest            = destination;
     m_mouse_capture.target_window   = hovered ? hovered : S.m_glfw_window;
     
-    if (act.type == ActionType::CursorMove) {
+    if ( act.type == ActionType::CursorMove || act.type == ActionType::MouseDrag ) {
         m_mouse_capture.alt_dest    = (destination == &act.cursor.first)    ? &act.cursor.last     : &act.cursor.first;
     }
-    else { // MouseDrag
-        m_mouse_capture.alt_dest    = (destination == &act.drag.from)       ? &act.drag.to          : &act.drag.from;
-    }
+    //  else { // MouseDrag
+    //      m_mouse_capture.alt_dest    = (destination == &act.drag.from)       ? &act.drag.to          : &act.drag.from;
+    //  }
     
     m_mouse_capture.backup          = *destination;         // save for cancel
     return true;

@@ -256,13 +256,26 @@ struct ActionExecutor
     // *************************************************************************** //
     
     //  "_local_to_global"
-    inline ImVec2 _local_to_global(GLFWwindow * win, ImVec2 local)
+    inline ImVec2       _local_to_global        (GLFWwindow * win, ImVec2 local)
     {
         int wx{}, wy{};
         glfwGetWindowPos(win, &wx, &wy);
         return { local.x + static_cast<float>(wx),
                  local.y + static_cast<float>(wy) };
     }
+    
+    //  "queue_mouse_button"
+    inline void         queue_mouse_button      (int button, bool down)
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        bool prev   = io.AppAcceptingEvents;
+        io.AppAcceptingEvents = true;          // force backend to accept
+        io.AddMouseButtonEvent(button, down);
+        io.AppAcceptingEvents = prev;
+        return;
+    };
+    
+    
     
     // *************************************************************************** //
     
@@ -410,7 +423,7 @@ protected:
     ActionExecutor                      m_executor                              {  };
     std::vector<Composition>            m_compositions                          { 1 };
     std::vector<Action> *               m_actions                               = nullptr;
-    std::filesystem::path               m_filepath                              = {"/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/assets/.cbapp/debug/functional_testing1.json"};
+    std::filesystem::path               m_filepath                              = {"/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/assets/.cbapp/debug/editor_tests_1.json"};
     //
     int                                 m_comp_sel                              = 0;            // current composition selection
     int                                 m_sel                                   = -1;           // current selection
@@ -553,6 +566,7 @@ protected:
     //
     //                              GENERIC UI FUNCTIONS:
     inline void                         _ui_movement_widgets                (Action & a);
+    inline void                         _ui_duration_widgets                (Action & a);
     
     // *************************************************************************** //
     //
@@ -657,6 +671,28 @@ protected:
         m_executor.abort();
         return;
     }
+    
+    
+    //  "abort_test"
+    inline void                         abort_test                      (void)           {
+        //m_sel               = -1;        // no action selected
+        this->exit_test();
+        m_executor          .abort();
+        m_key_capture       .reset();
+        return;
+    }
+    
+    
+    //  "exit_test"
+    inline void                         exit_test                       (void)           {
+        //  m_step_req   = false;
+        //  reset_state();
+        //  m_play_index = -1;
+        reset_state();
+        m_play_index = -1;
+        return;
+    }
+    
     
     //  "reset_all"
     inline void                         reset_all                       (void)

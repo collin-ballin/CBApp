@@ -32,6 +32,7 @@ namespace cb { namespace ui { //     BEGINNING NAMESPACE "cb::ui"...
 //
 void ActionComposer::_draw_controlbar(void)
 {
+    using                           Font                    = app::AppState::Font;
     static constexpr const char *   uuid                    = "##Editor_Controls_Columns";
     static constexpr int            NC                      = 7;
     static constexpr const char *   SETTINGS_MENU_UUID      = "ActionComposer_SettingsMenu";
@@ -43,12 +44,11 @@ void ActionComposer::_draw_controlbar(void)
     //
     constexpr ImGuiButtonFlags      BUTTON_FLAGS            = ImGuiOldColumnFlags_NoPreserveWidths;
     
-    //this->S.PushFont( Font::Small );
-    
     
     
     //  BEGIN COLUMNS...
     //
+    S.PushFont(Font::Small);
     ImGui::Columns(NC, uuid, COLUMN_FLAGS);
     //
     //
@@ -118,9 +118,7 @@ void ActionComposer::_draw_controlbar(void)
         if ( ImGui::SliderScalar( "##ActionComposer_PlaybackSpeed",         ImGuiDataType_Double,
                                   &m_executor.m_playback_speed.value,       &m_executor.m_playback_speed.limits.min,       &m_executor.m_playback_speed.limits.max,
                                   "%.1f", SLIDER_FLAGS ) )
-        {
-            
-        }
+        { }
 
 
 
@@ -138,9 +136,6 @@ void ActionComposer::_draw_controlbar(void)
 
 
 
-
-
-        
         //  6.  EMPTY SPACES FOR LATER...
         for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
             ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
@@ -159,8 +154,7 @@ void ActionComposer::_draw_controlbar(void)
     ImGui::Columns(1);      //  END COLUMNS...
     
     
-    //this->S.PopFont();
-   
+    S.PopFont();
     return;
 }
 

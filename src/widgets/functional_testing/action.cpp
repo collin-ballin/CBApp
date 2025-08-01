@@ -191,12 +191,37 @@ void ActionExecutor::start_mouse_release(GLFWwindow * window, bool left_button)
 //
 void ActionExecutor::start_mouse_drag(GLFWwindow * window, ImVec2 from, ImVec2 to, float  dur_s, bool left_button)
 {
-    start_cursor_move(window, from, to, dur_s);   // sets Move phase
-    ImGui::GetIO().AddMouseButtonEvent(left_button ? 0 : 1, true);
+    /* helper: inject a mouse-button edge even if ImGui already decided
+       it isn’t accepting events this frame                                         */
 
-    m_drag_button_left = left_button;
-    m_is_drag          = true;                    // ← drag mode
-    /* state already Move */
+
+    /* 0️⃣   House-keeping -------------------------------------------------- */
+    m_window            = window;
+    m_drag_button_left  = left_button;
+    m_is_drag           = true;            // so update() knows to release later
+
+
+    /* 1️⃣   Warp cursor to the **start** position (local coords) ---------- */
+    glfwSetCursorPos(m_window, from.x, from.y);
+
+    /*      Also send a global echo so Dear ImGui back-end is in sync       */
+    {
+        ImVec2 global_start = _local_to_global(m_window, from);
+        ImGui::GetIO().AddMousePosEvent(global_start.x, global_start.y);
+    }
+
+    /* 2️⃣   Press & hold the requested button ----------------------------- */
+    queue_mouse_button(left_button ? 0 : 1, /*down=*/true);
+
+    /* 3️⃣   Prime the interpolation variables ----------------------------- */
+    m_first_pos   = from;
+    m_last_pos    = to;
+    m_duration_s  = std::max(static_cast<float>(1.0f / m_playback_speed.value) * dur_s,
+                              ms_MIN_DURATION_S);
+    m_elapsed_s   = 0.0f;
+
+    /*      The executor’s update() now runs in State::Move until finished  */
+    m_state = State::Move;
 }
    
    
@@ -253,18 +278,18 @@ void ActionExecutor::start_button_action(GLFWwindow * window, ImGuiKey key, bool
     m_window = window;
     ImGuiIO& io = ImGui::GetIO();
 
-    if (with_ctrl)   io.AddKeyEvent(ImGuiKey_LeftCtrl,  true);
-    if (with_shift)  io.AddKeyEvent(ImGuiKey_LeftShift, true);
-    if (with_alt)    io.AddKeyEvent(ImGuiKey_LeftAlt,   true);
-    if (with_super)  io.AddKeyEvent(ImGuiKey_LeftSuper, true);
+    if (with_ctrl)   { io.AddKeyEvent(ImGuiKey_LeftCtrl,  true);        io.AddKeyEvent(ImGuiKey_ReservedForModCtrl,  true);     }
+    if (with_shift)  { io.AddKeyEvent(ImGuiKey_LeftShift, true);        io.AddKeyEvent(ImGuiKey_ReservedForModShift, true);     }
+    if (with_alt)    { io.AddKeyEvent(ImGuiKey_LeftAlt,   true);        io.AddKeyEvent(ImGuiKey_ReservedForModAlt,   true);     }
+    if (with_super)  { io.AddKeyEvent(ImGuiKey_LeftSuper, true);        io.AddKeyEvent(ImGuiKey_ReservedForModSuper, true);     }
 
     io.AddKeyEvent(key, true);
     io.AddKeyEvent(key, false);
 
-    if (with_ctrl)   io.AddKeyEvent(ImGuiKey_LeftCtrl,  false);
-    if (with_shift)  io.AddKeyEvent(ImGuiKey_LeftShift, false);
-    if (with_alt)    io.AddKeyEvent(ImGuiKey_LeftAlt,   false);
-    if (with_super)  io.AddKeyEvent(ImGuiKey_LeftSuper, false);
+    if (with_ctrl)   { io.AddKeyEvent(ImGuiKey_LeftCtrl,  false);       io.AddKeyEvent(ImGuiKey_ReservedForModCtrl,  false);    }
+    if (with_shift)  { io.AddKeyEvent(ImGuiKey_LeftShift, false);       io.AddKeyEvent(ImGuiKey_ReservedForModShift, false);    }
+    if (with_alt)    { io.AddKeyEvent(ImGuiKey_LeftAlt,   false);       io.AddKeyEvent(ImGuiKey_ReservedForModAlt,   false);    }
+    if (with_super)  { io.AddKeyEvent(ImGuiKey_LeftSuper, false);       io.AddKeyEvent(ImGuiKey_ReservedForModSuper, false);    }
 
     m_state = State::None;   // completes immediately
 }
@@ -332,7 +357,8 @@ void ActionExecutor::update(void)
         }
         
         case State::ButtonUp: {
-            io.AddMouseButtonEvent(m_drag_button_left ? 0 : 1, false);
+            queue_mouse_button(m_drag_button_left ? 0 : 1, false);
+            // io.AddMouseButtonEvent(m_drag_button_left ? 0 : 1, false);
             m_state = State::None;
             break;
         }
@@ -377,8 +403,9 @@ void ActionComposer::_drive_execution(void)
     /* === 0. global abort shortcut ===================================== */
     if ( m_state == State::Run && ImGui::IsKeyPressed(ImGuiKey_Escape) )
     {
-        m_executor.abort();
-        reset_all();                    // idle, flags cleared
+        abort_test();
+        //m_executor.abort();
+        //reset_all();                    // idle, flags cleared
         return;                         // skip further processing this frame
     }
 
@@ -394,8 +421,7 @@ void ActionComposer::_drive_execution(void)
     /* === 3. index bounds check ======================================== */
     if ( m_play_index < 0 || m_play_index >= static_cast<int>(m_actions->size()) )
     {
-        reset_state();
-        m_play_index = -1;
+        this->exit_test();
         return;
     }
 
@@ -468,10 +494,10 @@ inline void ActionComposer::_dispatch_execution(Action & act)
         case ActionType::MouseDrag: {
             m_executor.start_mouse_drag(
                 act.target ? act.target : S.m_glfw_window,
-                act.drag.from,
-                act.drag.to,
-                act.drag.duration,
-                act.drag.left_button);
+                act.cursor.first,
+                act.cursor.last,
+                act.cursor.duration,
+                act.press.left_button);
             break;
         }
         //
@@ -565,11 +591,7 @@ void ActionComposer::_dispatch_action_ui(Action & a)
 inline void ActionComposer::_ui_cursor_move(Action & a)
 {
     this->_ui_movement_widgets(a);
-    
-    this->label("Duration:");
-    ImGui::DragFloat    ("##ActionComposer_Duration",      &a.cursor.duration,             0.05f,      0.0f,       10,             "%.2f sec");
-    
-    
+    this->_ui_duration_widgets(a);
     
     return;
 }
@@ -614,29 +636,21 @@ inline void ActionComposer::_ui_mouse_release(Action & a)
 //
 inline void ActionComposer::_ui_mouse_drag(Action & a)
 {
-    static constexpr int    NUM_CLICKS      = ms_CLICK_PARAM_NAMES.size();
+    static constexpr int NUM_CLICKS = ms_CLICK_PARAM_NAMES.size();
+
+    /* 1️⃣  Begin / End coordinate widgets (reuse CursorMove block) */
+    _ui_movement_widgets(a);
+
+
+    _ui_duration_widgets(a);
     
-    label("Begin:");
-    ImGui::DragFloat2("##drag_from", (float*)&a.drag.from, 1.f, 0.f, FLT_MAX, "%.0f");
-    ImGui::SameLine();
-    if ( ImGui::SmallButton("Auto##drag_from") )        { _begin_mouse_capture(a, &a.drag.from); }
 
-
-    label("End:");
-    ImGui::DragFloat2("##drag_to", (float*)&a.drag.to, 1.f, 0.f, FLT_MAX, "%.0f");
-    ImGui::SameLine();
-    if ( ImGui::SmallButton("Auto##drag_to") )          { _begin_mouse_capture(a, &a.drag.to); }
-
-
-    label("Duration:");
-    ImGui::DragFloat("##drag_dur", &a.drag.duration, 0.05f, 0.f, 10.f, "%.2f s");
-
-
+    /* ── 4.  Button chooser (Left / Right) ────────────────────────────── */
     label("Button:");
-    int             b           = (a.drag.left_button) ? 0 : 1;
-    if ( ImGui::Combo("##drag_btn", &b, ms_CLICK_PARAM_NAMES.data(), NUM_CLICKS) )      { a.drag.left_button = (b == 0); }
-
-    return;
+    int b = a.press.left_button ? 0 : 1;
+    if ( ImGui::Combo("##press_btn", &b, ms_CLICK_PARAM_NAMES.data(), ms_CLICK_PARAM_NAMES.size()) )
+        { a.press.left_button = (b==0); }
+        
 }
 
 
@@ -714,29 +728,46 @@ inline void ActionComposer::_ui_hotkey(Action & a)
 //
 inline void ActionComposer::_ui_movement_widgets(Action & a)
 {
-    this->label("Begin:");
-    ImGui::PushID("ActionComposed_CursorMove_Begin");
-        ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.first); }   // start capture for Begin
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
+    ImGui::PushStyleColor(  ImGuiCol_Text,                  ms_VIS_COLOR_A  );
+    //
+        ImGui::PushID("ActionComposed_CursorMove_Begin");
+            this->label("Begin:");
+            ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
+        ImGui::PopStyleColor();
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.first); }   // start capture for Begin
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
+    //
     ImGui::PopID();
     
     
-    this->label("End:");
-    ImGui::PushID("ActionComposed_CursorMove_End");
-        ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.last); }        // start capture for End...
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
+    
+    ImGui::PushStyleColor(  ImGuiCol_Text,                  ms_VIS_COLOR_B  );
+    //
+        ImGui::PushID("ActionComposed_CursorMove_End");
+            this->label("End:");
+            ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
+        ImGui::PopStyleColor();
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.last); }
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("swap") )           { a.swap(); }
+    //
     ImGui::PopID();
     
     return;
 }
 
-
+//  "_ui_duration_widgets"
+//
+inline void ActionComposer::_ui_duration_widgets(Action & a)
+{
+    this->label("Duration:");
+    ImGui::DragFloat    ("##ActionComposer_Duration",      &a.cursor.duration,             0.05f,      0.0f,       10,             "%.2f sec");
+    
+    return;
+}
 
 
 
