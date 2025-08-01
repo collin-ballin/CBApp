@@ -939,7 +939,7 @@ bool ActionComposer::load_from_file(const std::filesystem::path & path)
 void ActionComposer::_draw_settings_menu(void)
 {
     static ImVec2                   WIDGET_SIZE             = ImVec2( -1,  32 );
-    static ImVec2                   BUTTON_SIZE             = ImVec2( 22,   WIDGET_SIZE.y );
+    static ImVec2                   BUTTON_SIZE             = ImVec2( 45,   WIDGET_SIZE.y );
     ImGui::NewLine();
 
 

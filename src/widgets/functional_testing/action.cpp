@@ -137,7 +137,7 @@ void ActionExecutor::start_cursor_move(GLFWwindow* window, ImVec2 first, ImVec2 
     m_window        = window;
     m_first_pos     = first;
     m_last_pos      = last;
-    m_duration_s    = std::max(duration_s, ms_MIN_DURATION_S);
+    m_duration_s    = std::max( static_cast<float>(1.0f / m_playback_speed.value) * duration_s, ms_MIN_DURATION_S);
     m_elapsed_s     = 0.0f;
     m_is_drag       = false;                    // ← pure move
 
@@ -689,10 +689,10 @@ inline void ActionComposer::_ui_hotkey(Action & a)
         check_button            ("super",       view.super          );
     }
     else {
-        check_button            ("CTRL",        m_key_capture.ctrl  );      ImGui::SameLine();
-        check_button            ("shift",       m_key_capture.shift );      ImGui::SameLine();
-        check_button            ("alt",         m_key_capture.alt   );      ImGui::SameLine();
-        check_button            ("super",       m_key_capture.super );
+        check_button            ("CTRL",        a.hotkey.ctrl       );      ImGui::SameLine();
+        check_button            ("shift",       a.hotkey.shift      );      ImGui::SameLine();
+        check_button            ("alt",         a.hotkey.alt        );      ImGui::SameLine();
+        check_button            ("super",       a.hotkey.super      );
     }
     
         

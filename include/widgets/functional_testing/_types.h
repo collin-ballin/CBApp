@@ -170,12 +170,12 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //
 protected:
-    static constexpr std::array<ImGuiKey, 5>        ms_INVALID_KEYS     = {
+    static constexpr std::array<ImGuiKey, 1>        ms_INVALID_KEYS     = {
         ImGuiKey_None,
-        ImGuiKey_ReservedForModCtrl,
-        ImGuiKey_ReservedForModShift,
-        ImGuiKey_ReservedForModAlt,
-        ImGuiKey_ReservedForModSuper
+        //  ImGuiKey_ReservedForModCtrl,
+        //  ImGuiKey_ReservedForModShift,
+        //  ImGuiKey_ReservedForModAlt,
+        //  ImGuiKey_ReservedForModSuper
     };
     
     
