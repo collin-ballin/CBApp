@@ -940,70 +940,95 @@ void ActionComposer::_draw_settings_menu(void)
 {
     static ImVec2                   WIDGET_SIZE             = ImVec2( -1,  32 );
     static ImVec2                   BUTTON_SIZE             = ImVec2( 22,   WIDGET_SIZE.y );
-
-
-
-    //  1.  [TOGGLE]    OVERVIEW...
-    this->label("Overlay Window:");
-    ImGui::SetNextItemWidth( BUTTON_SIZE.x );
-    ImGui::Checkbox("##ActionComposer_OverlayToggle",           &m_show_overlay);
-
-    //  2.  [TOGGLE]    RENDER VISUALS...
-    this->label("Render Helper Visuals:");
-    //
-    ImGui::SetNextItemWidth( BUTTON_SIZE.x );
-    ImGui::Checkbox("##ActionComposer_RenderVisualsToggle",     &m_render_visuals);
-
-    //  3.  [TOGGLE]    INPUT BLOCKER...
-    this->label("Enable Input-Blocker:");
-    //
-    ImGui::SetNextItemWidth( BUTTON_SIZE.x );
-    ImGui::Checkbox("##ActionComposer_EnableInputBlocker",      &m_allow_input_blocker);
-
-
-
     ImGui::NewLine();
-    ImGui::SeparatorText("Serialization...");
-    
-    
-    
-    //  1.  SAVE DIALOGUE...
-    if ( ImGui::Button("Save") )    {
+
+
+
+
+    //  1.  ACTIONS...
+    ImGui::SeparatorText("Actions...");
+    {
+        //  1A.     RESET STATE.
+        this->label("Reset State:");
+        if ( ImGui::Button("State", BUTTON_SIZE) )      { this->reset_state(); }
         
-        if ( !S.m_dialog_queued )
-        {
-            S.m_dialog_queued       = true;
-            m_saving                = true;
-            S.m_dialog_settings     = {
-                /* type               = */  cb::FileDialog::Type::Save,
-                /* window_name        = */  "Open Testing Suite",
-                /* default_filename   = */  "functional_test",
-                /* required_extension = */  ".json",
-                /* valid_extensions   = */  {  },
-                /* starting_dir       = */  std::filesystem::current_path()
-            };
-        }
+        //  1B.     RESET DATA.
+        this->label("Reset State:");
+        if ( ImGui::Button("Data", BUTTON_SIZE) )       { this->reset_data(); }
+        
+        //  1C.     RESET ALL.
+        this->label("Reset All:");
+        if ( ImGui::Button("All", BUTTON_SIZE) )        { this->reset_all(); }
+    }
+    
+    
+
+    //  2.  I/O OPERATIONS...
+    ImGui::NewLine();
+    ImGui::SeparatorText("Settings...");
+    {
+        //  1.  [TOGGLE]    OVERVIEW...
+        this->label("Overlay Window:");
+        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::Checkbox("##ActionComposer_OverlayToggle",           &m_show_overlay);
+
+        //  2.  [TOGGLE]    RENDER VISUALS...
+        this->label("Render Helper Visuals:");
+        //
+        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::Checkbox("##ActionComposer_RenderVisualsToggle",     &m_render_visuals);
+
+        //  3.  [TOGGLE]    INPUT BLOCKER...
+        this->label("Enable Input-Blocker:");
+        //
+        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::Checkbox("##ActionComposer_EnableInputBlocker",      &m_allow_input_blocker);
     }
 
 
-    ImGui::SameLine(0, 20);
-    
-    
-    //  2.  LOAD DIALOGUE...
-    if ( ImGui::Button("Load") )    {
+
+    //  3.  I/O OPERATIONS...
+    ImGui::NewLine();
+    ImGui::SeparatorText("Serialization...");
+    {
+        //      1.      SAVE DIALOGUE...
+        this->label("Save To File:");
+        if ( ImGui::Button("Save") )    {
+            
+            if ( !S.m_dialog_queued )
+            {
+                S.m_dialog_queued       = true;
+                m_saving                = true;
+                S.m_dialog_settings     = {
+                    /* type               = */  cb::FileDialog::Type::Save,
+                    /* window_name        = */  "Open Testing Suite",
+                    /* default_filename   = */  "functional_test",
+                    /* required_extension = */  ".json",
+                    /* valid_extensions   = */  {  },
+                    /* starting_dir       = */  std::filesystem::current_path()
+                };
+            }
+        }
+
+        //  ImGui::SameLine(0, 20);
         
-        if ( !S.m_dialog_queued )
-        {
-            S.m_dialog_queued       = true;
-            m_loading               = true;
-            S.m_dialog_settings     = {
-                /* type               = */  cb::FileDialog::Type::Open,
-                /* window_name        = */  "Save Testing Suite",
-                /* default_filename   = */  "",
-                /* required_extension = */  "",
-                /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
-                /* starting_dir       = */  std::filesystem::current_path()
-            };
+        //      2.      LOAD DIALOGUE...
+        this->label("Load From File:");
+        if ( ImGui::Button("Load") )    {
+            
+            if ( !S.m_dialog_queued )
+            {
+                S.m_dialog_queued       = true;
+                m_loading               = true;
+                S.m_dialog_settings     = {
+                    /* type               = */  cb::FileDialog::Type::Open,
+                    /* window_name        = */  "Save Testing Suite",
+                    /* default_filename   = */  "",
+                    /* required_extension = */  "",
+                    /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
+                    /* starting_dir       = */  std::filesystem::current_path()
+                };
+            }
         }
     }
     

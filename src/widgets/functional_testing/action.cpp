@@ -238,6 +238,8 @@ void ActionExecutor::start_key_release(GLFWwindow * win, ImGuiKey key, bool ctrl
     if ( shift  &&  m_key_manager.IsActive(ImGuiKey_LeftShift)   )      { m_key_manager.Pop(ImGuiKey_LeftShift);    }
     if ( alt    &&  m_key_manager.IsActive(ImGuiKey_LeftAlt)     )      { m_key_manager.Pop(ImGuiKey_LeftAlt);      }
     if ( super  &&  m_key_manager.IsActive(ImGuiKey_LeftSuper)   )      { m_key_manager.Pop(ImGuiKey_LeftSuper);    }
+    //
+    if ( m_key_manager.IsActive(key) )                                  { m_key_manager.Pop(key); }         // queue 1-frame edge → key is now held
 
     m_state             = State::None;   // completes immediately
     return;
@@ -308,7 +310,7 @@ void ActionExecutor::update(void)
     {
         case State::Move: {
             m_elapsed_s += io.DeltaTime;
-            float  t     = std::clamp(m_elapsed_s / m_duration_s, 0.0f, 1.0f);
+            float  t     = std::clamp( m_elapsed_s / m_duration_s, 0.0f, 1.0f);
             ImVec2 pos   = ImLerp(m_first_pos, m_last_pos, t);
 
             glfwSetCursorPos(m_window, pos.x, pos.y);                 // local
@@ -470,6 +472,7 @@ inline void ActionComposer::_dispatch_execution(Action & act)
                 act.drag.to,
                 act.drag.duration,
                 act.drag.left_button);
+            break;
         }
         //
         //
@@ -555,35 +558,16 @@ void ActionComposer::_dispatch_action_ui(Action & a)
     
     return;
 }
-    
-    
+
+
 //  "_ui_cursor_move"
 //
 inline void ActionComposer::_ui_cursor_move(Action & a)
 {
-
-    this->label("Begin:");
-    ImGui::PushID("ActionComposed_CursorMove_Begin");
-        ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.first); }   // start capture for Begin
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
-    ImGui::PopID();
-    
-    
-    this->label("End:");
-    ImGui::PushID("ActionComposed_CursorMove_End");
-        ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.last); }        // start capture for End...
-        ImGui::SameLine();
-        if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
-    ImGui::PopID();
-    
+    this->_ui_movement_widgets(a);
     
     this->label("Duration:");
-    ImGui::DragFloat    ("##duration",      &a.cursor.duration,             0.05f,      0.0f,       10,             "%.2f s");
+    ImGui::DragFloat    ("##ActionComposer_Duration",      &a.cursor.duration,             0.05f,      0.0f,       10,             "%.2f sec");
     
     
     
@@ -660,32 +644,19 @@ inline void ActionComposer::_ui_mouse_drag(Action & a)
 //
 inline void ActionComposer::_ui_hotkey(Action & a)
 {
-    int         mode_idx        = 0;
-    
-    this->label("Mode:");
-    switch (a.type)
-    {
-        case ActionType::Hotkey :           { mode_idx = 0;     break; }
-        case ActionType::KeyPress :         { mode_idx = 1;     break; }
-        case ActionType::KeyRelease :       { mode_idx = 2;     break; }
-        default :                           { break; }
-    }
-    
-    if ( ImGui::Combo("##ActionComposer_Hotkey_Mode", &mode_idx, ms_CLICK_TYPE_NAMES.data(), ms_CLICK_TYPE_NAMES.size()) ) {
-        a.type = (mode_idx == 0) ? ActionType::Hotkey
-               : (mode_idx == 1) ? ActionType::KeyPress
-                                 : ActionType::KeyRelease;
-    }
-
-
-
-    // show current / live key name
-    const HotkeyParams      view        = ( m_key_capture.active && m_key_capture.dest == &a.hotkey )
-            ? HotkeyParams{ m_key_capture.key_current,
-                            m_key_capture.ctrl,         m_key_capture.shift,
+    static constexpr ImVec4     ENABLE_COLOR        = ImVec4(   0.196f,     0.843f,     0.294f,     1.000f      );
+    static constexpr ImVec4     DISABLE_COLOR       = ImVec4(   0.596f,     0.596f,     0.616f,     1.000f      );
+    auto                        check_button        = [&](const char * label, bool & value) -> void {
+        if (value)      { if ( utl::SmallCButton(label, ENABLE_COLOR ) )       { value = false; }          }
+        else            { if ( utl::SmallCButton(label, DISABLE_COLOR) )       { value = true;  }          }
+    };
+    //
+    const bool                  recording           = ( m_key_capture.active && m_key_capture.dest == &a.hotkey );
+    HotkeyParams                view                = ( recording )// show current / live key name
+            ? HotkeyParams{ m_key_capture.key_current,  m_key_capture.ctrl,         m_key_capture.shift,
                             m_key_capture.alt,          m_key_capture.super }
             : a.hotkey;
-    const char *            key_name    = ImGui::GetKeyName(view.key);
+    const char *                key_name            = ImGui::GetKeyName(view.key);
 
 
 
@@ -694,8 +665,14 @@ inline void ActionComposer::_ui_hotkey(Action & a)
 
     label("Key:");
     ImGui::Text("%s", key_name);
-    if ( !m_key_capture.active )
-    {
+    ImGui::SameLine();
+    ImGui::Text( "[%s%s%s%s]",
+                  view.ctrl     ? "Ctrl "       : "",
+                  view.shift    ? "Shift "      : "",
+                  view.alt      ? "Alt "        : "",
+                  view.super    ? "Super"       : ""
+    );
+    if ( !m_key_capture.active ) {
         ImGui::SameLine();
         if ( ImGui::SmallButton("Assign") )  {
             ImGui::SameLine();
@@ -705,14 +682,19 @@ inline void ActionComposer::_ui_hotkey(Action & a)
 
 
     label("Modifiers:");
-    ImGui::Text( "[%s%s%s%s]",
-                 view.ctrl   ? "Ctrl "       : "",
-                 view.shift  ? "Shift "      : "",
-                 view.alt    ? "Alt "        : "",
-                 view.alt    ? "Super"       : "" );
-
-    if ( m_key_capture.active && m_key_capture.dest == &a.hotkey )
-        { ImGui::TextColored(ImVec4(1,1,0,1), "Press key, Enter=accept, Esc=cancel"); }
+    if ( recording ) {
+        check_button            ("CTRL",        view.ctrl           );      ImGui::SameLine();
+        check_button            ("shift",       view.shift          );      ImGui::SameLine();
+        check_button            ("alt",         view.alt            );      ImGui::SameLine();
+        check_button            ("super",       view.super          );
+    }
+    else {
+        check_button            ("CTRL",        m_key_capture.ctrl  );      ImGui::SameLine();
+        check_button            ("shift",       m_key_capture.shift );      ImGui::SameLine();
+        check_button            ("alt",         m_key_capture.alt   );      ImGui::SameLine();
+        check_button            ("super",       m_key_capture.super );
+    }
+    
         
     return;
 }
@@ -721,10 +703,38 @@ inline void ActionComposer::_ui_hotkey(Action & a)
 
 
 
+// *************************************************************************** //
+//
+//
+//      GENERIC UI FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
 
-
-
-
+//  "_ui_movement_widgets"
+//
+inline void ActionComposer::_ui_movement_widgets(Action & a)
+{
+    this->label("Begin:");
+    ImGui::PushID("ActionComposed_CursorMove_Begin");
+        ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
+        ImGui::SameLine();
+        if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.first); }   // start capture for Begin
+        ImGui::SameLine();
+        if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
+    ImGui::PopID();
+    
+    
+    this->label("End:");
+    ImGui::PushID("ActionComposed_CursorMove_End");
+        ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
+        ImGui::SameLine();
+        if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.last); }        // start capture for End...
+        ImGui::SameLine();
+        if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
+    ImGui::PopID();
+    
+    return;
+}
 
 
 

@@ -37,13 +37,14 @@ void ActionComposer::_draw_controlbar(void)
     static constexpr const char *   SETTINGS_MENU_UUID      = "ActionComposer_SettingsMenu";
     //
     static ImGuiOldColumnFlags      COLUMN_FLAGS            = ImGuiOldColumnFlags_None;
+    static ImGuiSliderFlags         SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
     static ImVec2                   WIDGET_SIZE             = ImVec2( -1,  32 );
     static ImVec2                   BUTTON_SIZE             = ImVec2( 22,   WIDGET_SIZE.y );
     //
     constexpr ImGuiButtonFlags      BUTTON_FLAGS            = ImGuiOldColumnFlags_NoPreserveWidths;
     
     //this->S.PushFont( Font::Small );
-   
+    
     
     
     //  BEGIN COLUMNS...
@@ -57,12 +58,11 @@ void ActionComposer::_draw_controlbar(void)
         //
         ImGui::SetNextItemWidth( WIDGET_SIZE.x );
         ImGui::BeginDisabled( m_actions->empty() );
+        {
             if ( !this->is_running() )
             {
                 if ( ImGui::Button("Run All", WIDGET_SIZE) ) {
-                    m_play_index        = (m_sel >= 0           ? m_sel             : 0);
-                    m_is_running        = !m_actions->empty();
-                    m_state             = (m_actions->empty())   ? State::Idle       : State::Run;
+                    this->_run_all();
                 }
             }
             else
@@ -71,6 +71,7 @@ void ActionComposer::_draw_controlbar(void)
                     this->reset_all();
                 }
             }
+        }
         ImGui::EndDisabled();
     
     
@@ -110,6 +111,19 @@ void ActionComposer::_draw_controlbar(void)
 
 
 
+        //  5.  SPEED...
+        ImGui::NextColumn();
+        ImGui::TextDisabled("Playback Speed:");
+        //
+        if ( ImGui::SliderScalar( "##ActionComposer_PlaybackSpeed",         ImGuiDataType_Double,
+                                  &m_executor.m_playback_speed.value,       &m_executor.m_playback_speed.limits.min,       &m_executor.m_playback_speed.limits.max,
+                                  "%.1f", SLIDER_FLAGS ) )
+        {
+            
+        }
+
+
+
         //  5.  SETTINGS MENU...
         ImGui::NextColumn();
         ImGui::TextDisabled("Settings:");
@@ -118,10 +132,7 @@ void ActionComposer::_draw_controlbar(void)
 
         if ( ImGui::BeginPopup(SETTINGS_MENU_UUID) )              // draw the popup
         {
-            ImGui::SeparatorText("Action Composer Settings...");         // header
-
             this->_draw_settings_menu();
-
             ImGui::EndPopup();
         }
 

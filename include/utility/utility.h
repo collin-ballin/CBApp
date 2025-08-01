@@ -184,8 +184,8 @@ inline bool CButton (const char * label, const ImU32 & color=0xFF453AFF, const I
 {
     constexpr float     shade       = 0.0484;
     bool                dirty       = false;
-    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade) );
-    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color );
+    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade)    );
+    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color                          );
         dirty           = ImGui::Button(label, size);   // button
     ImGui::PopStyleColor(2);
     return dirty;
@@ -197,8 +197,8 @@ inline bool CButton (const char * label, const ImVec4 & color, const ImVec2 & si
 {
     constexpr float     shade       = 0.0484;
     bool                dirty       = false;
-    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade) );
-    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color );
+    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade)    );
+    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color                          );
         dirty           = ImGui::Button(label, size);   // button
     ImGui::PopStyleColor(2);
     return dirty;
@@ -213,8 +213,8 @@ inline bool SmallCButton (const char * label, const ImU32 & color=0xFF453AFF)
 {
     constexpr float     shade       = 0.0484;
     bool                dirty       = false;
-    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade) );
-    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color );
+    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade)    );
+    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color                          );
         dirty           = ImGui::SmallButton(label);   // button
     ImGui::PopStyleColor(2);
     return dirty;
@@ -226,8 +226,8 @@ inline bool SmallCButton (const char * label, const ImVec4 & color)
 {
     constexpr float     shade       = 0.0484;
     bool                dirty       = false;
-    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade) );
-    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color );
+    ImGui::PushStyleColor( ImGuiCol_Button,          compute_shade(color, shade)    );
+    ImGui::PushStyleColor( ImGuiCol_ButtonHovered,   color                          );
         dirty           = ImGui::SmallButton(label);   // button
     ImGui::PopStyleColor(2);
     return dirty;

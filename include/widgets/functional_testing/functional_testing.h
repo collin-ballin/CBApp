@@ -128,6 +128,7 @@ struct ActionExecutor
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
     using                               State                           = ExecutionState;
+    CBAPP_CBLIB_TYPES_API
     
     // *************************************************************************** //
     //
@@ -163,6 +164,7 @@ struct ActionExecutor
     // *************************************************************************** //
     GLFWwindow *                        m_window                        { nullptr };
     KeyHoldManager                      m_key_manager                   {  };
+    Param<double>                       m_playback_speed                { 1.0f,  {0.10f, 4.0f} };
     
     // *************************************************************************** //
     //
@@ -306,6 +308,7 @@ public:
     // *************************************************************************** //
     using                               State                                   = ComposerState;
     using                               Composition                             = Composition_t;
+    CBAPP_CBLIB_TYPES_API
     
     // *************************************************************************** //
     //
@@ -547,6 +550,9 @@ protected:
     inline void                         _ui_mouse_drag                      (Action & a);
     //
     inline void                         _ui_hotkey                          (Action & a);
+    //
+    //                              GENERIC UI FUNCTIONS:
+    inline void                         _ui_movement_widgets                (Action & a);
     
     // *************************************************************************** //
     //
@@ -602,6 +608,24 @@ protected:
 // *************************************************************************** //
 protected:
 
+
+    // *************************************************************************** //
+    //      CENTRALIZED OPERATION FUNCTIONS.
+    // *************************************************************************** //
+    
+    inline void                         _run_all                        (void) {
+        this->m_executor.reset();
+        this->m_sel         = -1;
+        m_play_index        = (m_sel >= 0               ? m_sel             : 0);
+        m_is_running        = !m_actions->empty();
+        m_state             = (m_actions->empty())      ? State::Idle       : State::Run;
+        return;
+    }
+
+    // *************************************************************************** //
+    //
+    //
+    //
     // *************************************************************************** //
     //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
