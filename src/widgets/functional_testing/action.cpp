@@ -206,67 +206,42 @@ void ActionExecutor::start_mouse_drag(GLFWwindow * window, ImVec2 from, ImVec2 t
 //
 void ActionExecutor::start_key_press([[maybe_unused]] GLFWwindow * win, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
 {
-    m_window = win;
-    ImGuiIO& io = ImGui::GetIO();
-
-    if ( key == ImGuiKey_None )     { return; }
-
-    if ( !ImGui::IsKeyDown(key) )   { io.AddKeyEvent(key, true); }         // queue 1-frame edge → key is now held
+    m_window            = win;
+    ImGuiIO &   io      = ImGui::GetIO();
 
 
+    //  if ( key == ImGuiKey_None )                                         { return; }
+
+    if ( ctrl   && !m_key_manager.IsActive(ImGuiKey_LeftCtrl)    )      { m_key_manager.Push(ImGuiKey_LeftCtrl);    }
+    if ( shift  && !m_key_manager.IsActive(ImGuiKey_LeftShift)   )      { m_key_manager.Push(ImGuiKey_LeftShift);   }
+    if ( alt    && !m_key_manager.IsActive(ImGuiKey_LeftAlt)     )      { m_key_manager.Push(ImGuiKey_LeftAlt);     }
+    if ( super  && !m_key_manager.IsActive(ImGuiKey_LeftSuper)   )      { m_key_manager.Push(ImGuiKey_LeftSuper);   }
+    //
+    if ( !m_key_manager.IsActive(key) )                                 { m_key_manager.Push(key); }         // queue 1-frame edge → key is now held
 
     m_state = State::None;   // completes immediately
+    return;
 }
-
-/*{
-    m_window = win;
-    ImGuiIO& io = ImGui::GetIO();
-
-    if (ctrl)  { push_key_event(ImGuiKey_LeftCtrl,  true); io.KeyCtrl  = true; }
-    if (shift) { push_key_event(ImGuiKey_LeftShift, true); io.KeyShift = true; }
-    if (alt)   { push_key_event(ImGuiKey_LeftAlt,   true); io.KeyAlt   = true; }
-    if (super) { push_key_event(ImGuiKey_LeftSuper, true); io.KeySuper = true; }
-
-    push_key_event(key, true);            // key DOWN
-
-    // occupy the rest of this frame so ImGui sees the hold next frame /
-    m_wait_one_frame = true;
-    m_state = State::None;
-}*/
         
         
 //  "start_key_release"
 //
 void ActionExecutor::start_key_release(GLFWwindow * win, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
 {
-    m_window = win;
-    ImGuiIO& io = ImGui::GetIO();
+    m_window            = win;
+    ImGuiIO &   io      = ImGui::GetIO();
     
-    io.AddKeyEvent(key, false);
+    
+    if ( m_key_manager.IsActive(key) )                                  { m_key_manager.Pop(key); }         // queue 1-frame edge → key is now held
+    //
+    if ( ctrl   &&  m_key_manager.IsActive(ImGuiKey_LeftCtrl)    )      { m_key_manager.Pop(ImGuiKey_LeftCtrl);     }
+    if ( shift  &&  m_key_manager.IsActive(ImGuiKey_LeftShift)   )      { m_key_manager.Pop(ImGuiKey_LeftShift);    }
+    if ( alt    &&  m_key_manager.IsActive(ImGuiKey_LeftAlt)     )      { m_key_manager.Pop(ImGuiKey_LeftAlt);      }
+    if ( super  &&  m_key_manager.IsActive(ImGuiKey_LeftSuper)   )      { m_key_manager.Pop(ImGuiKey_LeftSuper);    }
 
-    if (ctrl)   io.AddKeyEvent(ImGuiKey_LeftCtrl,  false);
-    if (shift)  io.AddKeyEvent(ImGuiKey_LeftShift, false);
-    if (alt)    io.AddKeyEvent(ImGuiKey_LeftAlt,   false);
-    if (super)  io.AddKeyEvent(ImGuiKey_LeftSuper, false);
-
-    InjectKey(key, /*down=*/false);
-
-    m_state = State::None;   // completes immediately
+    m_state             = State::None;   // completes immediately
+    return;
 }
-/*{
-    m_window = win;
-    ImGuiIO& io = ImGui::GetIO();
-
-    push_key_event(key, false);           // key UP
-
-    if (ctrl)  { push_key_event(ImGuiKey_LeftCtrl,  false); io.KeyCtrl  = false; }
-    if (shift) { push_key_event(ImGuiKey_LeftShift, false); io.KeyShift = false; }
-    if (alt)   { push_key_event(ImGuiKey_LeftAlt,   false); io.KeyAlt   = false; }
-    if (super) { push_key_event(ImGuiKey_LeftSuper, false); io.KeySuper = false; }
-
-    m_wait_one_frame = true;                  // one frame so release is flushed
-    m_state = State::None;
-}*/
 
 
 //  "start_button_action"
@@ -307,6 +282,9 @@ void ActionExecutor::abort(void)
     m_state     = State::None;
     m_is_drag   = false;
     m_window    = nullptr;
+    this->reset();
+    
+    return;
 }
 
 
@@ -515,6 +493,7 @@ inline void ActionComposer::_dispatch_execution(Action & act)
                 act.hotkey.key, act.hotkey.ctrl, act.hotkey.shift,
                 act.hotkey.alt, act.hotkey.super
             );
+            break;
         }
         //
         //  B3.     KEY RELEASE...
@@ -524,6 +503,7 @@ inline void ActionComposer::_dispatch_execution(Action & act)
                 act.hotkey.key, act.hotkey.ctrl, act.hotkey.shift,
                 act.hotkey.alt, act.hotkey.super
             );
+            break;
         }
         //
         //

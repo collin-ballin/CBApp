@@ -251,6 +251,9 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
         
         ImGui::NewLine();
         
+        
+//#define CBAPP_TEST_KEYHOLD
+#ifdef CBAPP_TEST_KEYHOLD
         {
             static ui::KeyHoldManager khm;      // lives for the whole program
 
@@ -258,7 +261,6 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
             khm.Begin();                    // <-- must run before NewFrame()
 
             // 2) Build a tiny UI to drive it
-            ImGui::Begin("KeyHoldManager Test");
 
             auto key_toggle_button = [&](ImGuiKey key, const char* label_held, const char* label_released)
             {
@@ -276,8 +278,8 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
             key_toggle_button(ImGuiKey_O, "Hold O", "Release O");
             key_toggle_button(ImGuiKey_S, "Hold S", "Release S");
 
-            ImGui::End();
         }
+#endif //  CBAPP_TEST_KEYHOLD  //
         
         
         

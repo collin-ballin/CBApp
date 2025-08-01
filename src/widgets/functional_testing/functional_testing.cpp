@@ -119,6 +119,7 @@ void ActionComposer::Begin_IMPL(void)
         }
     
         case State::Run : {                   //  2.  RUNNING...
+            m_executor.m_key_manager.Begin();
             break;
         }
     
@@ -136,6 +137,8 @@ void ActionComposer::Begin_IMPL(void)
         default : { break; }
     }
     
+    //  print m_executor.m_key_manager.m_active
+    //  print m_key_manager.m_active
     
     //  this->_update_mouse_capture();
     //  this->_update_key_capture();

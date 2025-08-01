@@ -162,6 +162,7 @@ struct ActionExecutor
     //      IMPORTANT DATA-MEMBERS.
     // *************************************************************************** //
     GLFWwindow *                        m_window                        { nullptr };
+    KeyHoldManager                      m_key_manager                   {  };
     
     // *************************************************************************** //
     //
@@ -230,6 +231,8 @@ struct ActionExecutor
     void                                abort                               (void);
     bool                                busy                                (void) const;
     void                                update                              (void);
+    inline void                         reset                               (void)
+    { m_key_manager.clear(); }
     
 //
 //
@@ -346,7 +349,7 @@ public:
     static constexpr size_t             ms_COMPOSITION_NAME_LIMIT               = 64ULL;
     static constexpr size_t             ms_COMPOSITION_DESCRIPTION_LIMIT        = 512ULL;
     static constexpr size_t             ms_ACTION_NAME_LIMIT                    = 64ULL;
-    static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT             = 512ULL;
+    static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT             = 256ULL;
     //
     //                              INDIVIDUAL WIDGET DIMENSIONS:
     static constexpr float              ms_COMPOSITION_DESCRIPTION_FIELD_HEIGHT = 110.0f;
@@ -616,6 +619,8 @@ protected:
         m_is_running                = false;
         m_capture_is_active         = false;
         m_key_capture_is_active     = false;
+        //
+        m_executor.reset();
         return;
     }
     

@@ -123,9 +123,13 @@ public:
     //
     inline void             Push                (ImGuiKey key)
     {
-        if (key == ImGuiKey_None) return;
-        if (m_active.insert(key).second)        // newly inserted?
-            ImGui::GetIO().AddKeyEvent(key, true);  // initial press (processed next frame)
+        if ( key == ImGuiKey_None ) return;
+        if ( !this->sieve(key) )
+        {
+            if ( m_active.insert(key).second )        // newly inserted?
+                { ImGui::GetIO().AddKeyEvent(key, true); } // initial press (processed next frame)
+        }
+        return;
     }
 
 
@@ -155,12 +159,43 @@ public:
     //
     inline bool             IsActive            (ImGuiKey key) const { return m_active.contains(key); }
 
+    
+    //  "clear"
+    //
+    inline void             clear               (void)
+    { m_active.clear();   m_release.clear(); }
+    
+    
 
 // *************************************************************************** //
 // *************************************************************************** //
-private:
-    std::unordered_set<ImGuiKey> m_active;   // keys we want held
-    std::unordered_set<ImGuiKey> m_release;  // keys to release on next Begin()
+protected:
+    static constexpr std::array<ImGuiKey, 5>        ms_INVALID_KEYS     = {
+        ImGuiKey_None,
+        ImGuiKey_ReservedForModCtrl,
+        ImGuiKey_ReservedForModShift,
+        ImGuiKey_ReservedForModAlt,
+        ImGuiKey_ReservedForModSuper
+    };
+    
+    
+    //  "sieve"
+    //
+    inline bool             sieve               (const ImGuiKey key) {
+        bool    block   = false;
+        for (const auto & item : ms_INVALID_KEYS)
+        { if ( (block = (key == item)) ) { break; } }
+    
+        return block;
+    }
+    
+    
+
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+    std::unordered_set<ImGuiKey>                    m_active;   // keys we want held
+    std::unordered_set<ImGuiKey>                    m_release;  // keys to release on next Begin()
     
 
 // *************************************************************************** //

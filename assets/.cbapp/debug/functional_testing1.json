@@ -7180,8 +7180,8 @@
           "hotkey": {
             "alt": false,
             "ctrl": false,
-            "key": 664,
-            "shift": true,
+            "key": 546,
+            "shift": false,
             "super": false
           },
           "name": "Key Press",
@@ -7198,7 +7198,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 1.0,
+            "duration": 5.0,
             "first": [
               0.0,
               0.0
@@ -7237,55 +7237,10 @@
             "left": true
           },
           "type": 0
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 1.0,
-            "first": [
-              0.0,
-              0.0
-            ],
-            "last": [
-              0.0,
-              0.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "duration": 1.0,
-            "from": [
-              0.0,
-              0.0
-            ],
-            "left": true,
-            "to": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": false,
-            "key": 664,
-            "shift": true,
-            "super": false
-          },
-          "name": "Key Release",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 6
         }
       ],
       "description": "description...",
-      "name": "New Composition"
+      "name": "KEY HOLD TEST"
     }
   ]
 }
