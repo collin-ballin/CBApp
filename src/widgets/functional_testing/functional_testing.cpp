@@ -241,6 +241,12 @@ void ActionComposer::draw_all(void)
 //          MAIN UI FUNCTIONS...
 // *************************************************************************** //
 
+
+
+// *************************************************************************** //
+//          COMPOSITION UI...
+// *************************************************************************** //
+
 //  "_draw_composition_selector"
 //
 void ActionComposer::_draw_composition_selector(void)
@@ -332,6 +338,19 @@ void ActionComposer::_draw_composition_selector(void)
 }
 
 
+//  "_draw_composition_table"
+//
+void ActionComposer::_draw_composition_table(void)
+{
+    return;
+}
+
+
+
+// *************************************************************************** //
+//          ACTION UI...
+// *************************************************************************** //
+
 //  "_draw_action_selector"
 //
 void ActionComposer::_draw_action_selector(void)
@@ -370,16 +389,16 @@ void ActionComposer::_draw_action_selector(void)
     ImGui::Separator();
     
     
-    this->_draw_selector_table();
+    this->_draw_action_table();
     
     
     return;
 }
 
 
-//  "_draw_selector_table"
+//  "_draw_action_table"
 //
-inline void ActionComposer::_draw_selector_table(void)
+inline void ActionComposer::_draw_action_table(void)
 {
     static constexpr ImGuiTableFlags            TABLE_FLAGS         = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
     static constexpr ImGuiTableColumnFlags      C0_FLAGS            = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;

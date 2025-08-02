@@ -172,9 +172,6 @@ void ActionComposer::_draw_controlbar(void)
     return;
 }
 
-// I want to discuss the UI design behind how I draw the "Selector" columns for certain items on the interface for our ActionComposer.  I have attached a screenshot of the application as it appears in its current state.  Take a look at the code that I have created to draw the "Action Selector Column":
-
-
 
 //  "_draw_toolbar"
 //

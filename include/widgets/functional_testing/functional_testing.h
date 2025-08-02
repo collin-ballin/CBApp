@@ -520,10 +520,16 @@ protected:
     // *************************************************************************** //
     //      MAIN UI FUNCTIONS...
     // *************************************************************************** //
+    //                              COMPOSITION UI:
     void                                _draw_composition_selector          (void);
+    void                                _draw_composition_table             (void);
+    //
+    //                              ACTION UI:
     void                                _draw_action_selector               (void);
-    void                                _draw_selector_table                (void);
+    void                                _draw_action_table                  (void);
     void                                _draw_action_inspector              (void);
+    //
+    //                              OTHER:
     void                                _draw_renderer_visuals              (void);
     
     // *************************************************************************** //
