@@ -735,7 +735,7 @@ inline void ActionComposer::_ui_movement_widgets(Action & a)
             ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
         ImGui::PopStyleColor();
             ImGui::SameLine();
-            if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.first); }   // start capture for Begin
+            if ( ImGui::SmallButton("assign") )         { _begin_mouse_capture(a, &a.cursor.first); }   // start capture for Begin
             ImGui::SameLine();
             if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
     //
@@ -750,9 +750,7 @@ inline void ActionComposer::_ui_movement_widgets(Action & a)
             ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
         ImGui::PopStyleColor();
             ImGui::SameLine();
-            if ( ImGui::SmallButton("auto") )           { _begin_mouse_capture(a, &a.cursor.last); }
-            ImGui::SameLine();
-            if ( ImGui::SmallButton("swap") )           { a.swap(); }
+            if ( ImGui::SmallButton("assign") )         { _begin_mouse_capture(a, &a.cursor.last); }
     //
     ImGui::PopID();
     

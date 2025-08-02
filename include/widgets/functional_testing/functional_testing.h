@@ -373,8 +373,13 @@ public:
     static constexpr ImVec2             ms_DELETE_BUTTON_DIMS                   = ImVec2( 18.0f, 0.0f );
     //
     //                              UI BROWSER DIMENSIONS:
-    static constexpr float              ms_LABEL_WIDTH                          = 150.0f;
+    static constexpr float              ms_LABEL_WIDTH                          = 100.0f;
     static constexpr float              ms_WIDGET_WIDTH                         = 300.0f;
+    //
+    static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE                 = ImVec2( 55,   25 );
+    static constexpr float              ms_SETTINGS_LABEL_WIDTH                 = 180.0f;
+    static constexpr float              ms_SETTINGS_WIDGET_WIDTH                = 300.0f;
+    //
     //
     static constexpr float              ms_COMPOSITION_COLUMN_WIDTH             = 340.0f;
     static constexpr float              ms_SELECTOR_COLUMN_WIDTH                = 340.0f;
@@ -436,12 +441,14 @@ protected:
     KeyCaptureState                     m_key_capture                           = {  };
     MouseCaptureState                   m_mouse_capture                         = {  };
     OverlayCache                        m_overlay_cache                         = {  };
-    
     //
-    //                              MUTABLE STATE VARIABLES:
+    //                              SETTINGS VARIABLES:
     bool                                m_show_overlay                          = true;
     bool                                m_render_visuals                        = true;
     bool                                m_allow_input_blocker                   = true;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
+    bool                                m_show_composition_browser              = true;
+    //
+    //                              MUTABLE STATE VARIABLES:
     bool                                m_is_running                            = false;
     bool                                m_step_req                              = false;
     bool                                m_capture_is_active                     = false;        //  < true while “Auto” sampling.
@@ -759,8 +766,8 @@ protected:
     // *************************************************************************** //
     
     //  "label"
-    inline void                         label                           (const char * text)
-    { utl::LeftLabel(text, this->ms_LABEL_WIDTH, this->ms_WIDGET_WIDTH); ImGui::SameLine(); };
+    inline void                         label                           (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
+    { utl::LeftLabel(text, l_width, w_width); ImGui::SameLine(); };
     
     
     

@@ -34,27 +34,44 @@ void ActionComposer::_draw_controlbar(void)
 {
     using                           Font                    = app::AppState::Font;
     static constexpr const char *   uuid                    = "##Editor_Controls_Columns";
-    static constexpr int            NC                      = 7;
     static constexpr const char *   SETTINGS_MENU_UUID      = "ActionComposer_SettingsMenu";
+    static constexpr int            NC                      = 8;
+    static constexpr int            NUM_ENTRIES_AT_END      = 3;
     //
     static ImGuiOldColumnFlags      COLUMN_FLAGS            = ImGuiOldColumnFlags_None;
     static ImGuiSliderFlags         SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
-    static ImVec2                   WIDGET_SIZE             = ImVec2( -1,  32 );
-    static ImVec2                   BUTTON_SIZE             = ImVec2( 22,   WIDGET_SIZE.y );
+    //  constexpr ImGuiButtonFlags      BUTTON_FLAGS            = ImGuiOldColumnFlags_NoPreserveWidths;
     //
-    constexpr ImGuiButtonFlags      BUTTON_FLAGS            = ImGuiOldColumnFlags_NoPreserveWidths;
+    static ImVec2                   WIDGET_SIZE             = ImVec2( -1,               32 );
+    static ImVec2                   BUTTON_SIZE             = ImVec2( WIDGET_SIZE.y,    WIDGET_SIZE.y );
+    //
+    //  "column_label"
+    auto                            column_label            = [&](const char * label) -> void
+    { S.PushFont(Font::FootNote);     ImGui::TextDisabled("%s", label);     S.PopFont(); };
     
+    
+    ImGuiIO &                       io                      = ImGui::GetIO();
+    const ImVec2                    mpos                    = ImVec2(io.MousePos.x, io.MousePos.y);     // this->get_cursor_pos();    // glfwGetCursorPos(S.m_glfw_window, &cx, &cy);
+    S.PushFont(Font::Small);
+        
     
     
     //  BEGIN COLUMNS...
-    //
-    S.PushFont(Font::Small);
     ImGui::Columns(NC, uuid, COLUMN_FLAGS);
     //
     //
     //
-        //  1.  PLAY / PAUSE...
-        ImGui::TextDisabled("Controls:");
+        //      1.      OPEN / CLOSE SIDEBAR WINDOW...
+        column_label("Browser:");
+        //
+        if ( ImGui::ArrowButtonEx("##ActionComposer_ToggleCompositionBrowser",     (this->m_show_composition_browser) ? ImGuiDir_Left : ImGuiDir_Right,
+                                  BUTTON_SIZE,                      ImGuiButtonFlags_None) )
+        { this->m_show_composition_browser = !this->m_show_composition_browser; }
+        
+        
+    
+        //  2.  PLAY / PAUSE...
+        ImGui::NextColumn();        column_label("Controls:");
         //
         ImGui::SetNextItemWidth( WIDGET_SIZE.x );
         ImGui::BeginDisabled( m_actions->empty() );
@@ -76,8 +93,8 @@ void ActionComposer::_draw_controlbar(void)
     
     
     
-        //  2.  RUN ONCE...
-        ImGui::NextColumn();        ImGui::NewLine();
+        //  3.  RUN ONCE...
+        ImGui::NextColumn();        column_label("");
         ImGui::SetNextItemWidth( WIDGET_SIZE.x );
         ImGui::BeginDisabled( !this->is_running() && m_actions->empty() && (m_sel < 0) );
             if ( ImGui::Button("Run Once", WIDGET_SIZE) ) {
@@ -90,31 +107,22 @@ void ActionComposer::_draw_controlbar(void)
 
 
     
-        //  3.  STEP BUTTON...
-        ImGui::NextColumn();        ImGui::NewLine();
-        ImGui::BeginDisabled(m_sel < 0);               // usable while *not* running
-        if ( ImGui::Button("Step", WIDGET_SIZE) ) {
-            m_play_index = m_sel;
-            m_step_req   = true;                       // identical to Run Once
-            m_state      = State::Run;
-        }
-        ImGui::EndDisabled();
+        //      //  4.  STEP BUTTON...
+        //      ImGui::NextColumn();        ImGui::NewLine();
+        //      ImGui::BeginDisabled(m_sel < 0);               // usable while *not* running
+        //      if ( ImGui::Button("Step", WIDGET_SIZE) ) {
+        //          m_play_index = m_sel;
+        //          m_step_req   = true;                       // identical to Run Once
+        //          m_state      = State::Run;
+        //      }
+        //      ImGui::EndDisabled();
 
 
 
-        //  4.  INFO...
-        ImGui::NextColumn();
-        ImGui::TextDisabled("Info:");
+        //      5.      PLAYBACK SPEED...
+        ImGui::NextColumn();        column_label("Playback Speed:");
         //
-        if ( this->is_running() )       { ImGui::Text("running: %d / %zu", m_play_index + 1, m_actions->size()); }
-        else                            { ImGui::Text("idle"); }
-
-
-
-        //  5.  SPEED...
-        ImGui::NextColumn();
-        ImGui::TextDisabled("Playback Speed:");
-        //
+        ImGui::SetNextItemWidth(WIDGET_SIZE.x);
         if ( ImGui::SliderScalar( "##ActionComposer_PlaybackSpeed",         ImGuiDataType_Double,
                                   &m_executor.m_playback_speed.value,       &m_executor.m_playback_speed.limits.min,       &m_executor.m_playback_speed.limits.max,
                                   "%.1f", SLIDER_FLAGS ) )
@@ -122,41 +130,50 @@ void ActionComposer::_draw_controlbar(void)
 
 
 
-        //  5.  SETTINGS MENU...
-        ImGui::NextColumn();
-        ImGui::TextDisabled("Settings:");
-        
-        if ( ImGui::Button("Settings") )       { ImGui::OpenPopup(SETTINGS_MENU_UUID); }
+        //      ?.      EMPTY SPACES FOR LATER...
+        for (int i = ImGui::GetColumnIndex(); i < NC - NUM_ENTRIES_AT_END; ++i) {
+            ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
+        }
 
+
+
+        //      X.      INFO...
+        column_label("Info:");
+        //
+        if ( this->is_running() )                   { ImGui::Text("running: %d / %zu", m_play_index + 1, m_actions->size()); }
+        else                                        { ImGui::Text("idle"); }
+        
+        
+        
+        //      XX.     MOUSE COORDINATES...
+        ImGui::NextColumn();        column_label("Global Position:");
+        //
+        ImGui::Text("(%.1f , %.1f)",    mpos.x, mpos.y);     //  Live cursor read-out in the same units we feed to glfwSetCursorPos...
+                
+
+
+        //      XXX.    SETTINGS MENU...
+        ImGui::NextColumn();        column_label("Settings:");
+        //
+        if ( ImGui::Button("+", BUTTON_SIZE) )      { ImGui::OpenPopup(SETTINGS_MENU_UUID); }
         if ( ImGui::BeginPopup(SETTINGS_MENU_UUID) )              // draw the popup
         {
             this->_draw_settings_menu();
             ImGui::EndPopup();
         }
-
-
-
-        //  6.  EMPTY SPACES FOR LATER...
-        for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
-            ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
-        }
-
-
-        //  X.  MOUSE COORDINATES...
-        ImGui::TextDisabled("Global Position:");
-        //ImVec2 mpos = ImGui::GetMousePos();
-        ImVec2 mpos = this->get_cursor_pos();
-        
-        ImGui::Text("(%.1f , %.1f)",    mpos.x, mpos.y);     //  Live cursor read-out in the same units we feed to glfwSetCursorPos...
     //
     //
     //
     ImGui::Columns(1);      //  END COLUMNS...
     
     
+    
     S.PopFont();
     return;
 }
+
+// I want to discuss the UI design behind how I draw the "Selector" columns for certain items on the interface for our ActionComposer.  I have attached a screenshot of the application as it appears in its current state.  Take a look at the code that I have created to draw the "Action Selector Column":
+
 
 
 //  "_draw_toolbar"

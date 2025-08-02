@@ -175,20 +175,23 @@ void ActionComposer::draw_all(void)
     using   Font    = app::AppState::Font;
     
     
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER1);
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    ms_CHILD_ROUND1);
-    ImGui::PushStyleColor(ImGuiCol_ChildBg,             ms_CHILD_FRAME_BG1L);
-        
-        //  1.  DRAW THE TOP-MOST "COMPOSITION" BAR...
-        ImGui::BeginChild("##ActionComposer_CompositionSelector", {ms_COMPOSITION_COLUMN_WIDTH, 0.0f}, ImGuiChildFlags_Borders);
-            this->_draw_composition_selector();
-        ImGui::EndChild();
+    if ( m_show_composition_browser )
+    {
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER1);
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    ms_CHILD_ROUND1);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg,             ms_CHILD_FRAME_BG1L);
+            
+            //  1.  DRAW THE TOP-MOST "COMPOSITION" BAR...
+            ImGui::BeginChild("##ActionComposer_CompositionSelector", {ms_COMPOSITION_COLUMN_WIDTH, 0.0f}, ImGuiChildFlags_Borders);
+                this->_draw_composition_selector();
+            ImGui::EndChild();
 
-    ImGui::PopStyleColor();
-    ImGui::PopStyleVar(2);  //  ImGuiStyleVar_ChildBorderSize, ImGuiStyleVar_ChildRounding
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar(2);  //  ImGuiStyleVar_ChildBorderSize, ImGuiStyleVar_ChildRounding
 
-
-    ImGui::SameLine();
+        ImGui::SameLine();
+    }
+    
     
     
     //  2.  DRAW THE "BROWSER" UI-INTERFACE...
@@ -942,51 +945,51 @@ bool ActionComposer::load_from_file(const std::filesystem::path & path)
 //
 void ActionComposer::_draw_settings_menu(void)
 {
-    static ImVec2                   WIDGET_SIZE             = ImVec2( -1,  32 );
-    static ImVec2                   BUTTON_SIZE             = ImVec2( 45,   WIDGET_SIZE.y );
-    ImGui::NewLine();
-
-
-
 
     //  1.  ACTIONS...
     ImGui::SeparatorText("Actions...");
     {
         //  1A.     RESET STATE.
-        this->label("Reset State:");
-        if ( ImGui::Button("State", BUTTON_SIZE) )      { this->reset_state(); }
+        this->label("Reset State:", this->ms_SETTINGS_LABEL_WIDTH, this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( ImGui::Button("State", ms_SETTINGS_BUTTON_SIZE) )      { this->reset_state(); }
         
         //  1B.     RESET DATA.
-        this->label("Reset State:");
-        if ( ImGui::Button("Data", BUTTON_SIZE) )       { this->reset_data(); }
+        this->label("Reset State:", this->ms_SETTINGS_LABEL_WIDTH, this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( ImGui::Button("Data", ms_SETTINGS_BUTTON_SIZE) )       { this->reset_data(); }
         
         //  1C.     RESET ALL.
-        this->label("Reset All:");
-        if ( ImGui::Button("All", BUTTON_SIZE) )        { this->reset_all(); }
+        this->label("Reset All:", this->ms_SETTINGS_LABEL_WIDTH, this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( ImGui::Button("All", ms_SETTINGS_BUTTON_SIZE) )        { this->reset_all(); }
     }
     
     
 
-    //  2.  I/O OPERATIONS...
+    //  2.  APP SETTINGS...
     ImGui::NewLine();
     ImGui::SeparatorText("Settings...");
     {
         //  1.  [TOGGLE]    OVERVIEW...
-        this->label("Overlay Window:");
-        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        this->label("Overlay Window:",              this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        ImGui::SetNextItemWidth( ms_SETTINGS_BUTTON_SIZE.x );
         ImGui::Checkbox("##ActionComposer_OverlayToggle",           &m_show_overlay);
 
         //  2.  [TOGGLE]    RENDER VISUALS...
-        this->label("Render Helper Visuals:");
+        this->label("Render Helper Visuals:",       this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
         //
-        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::SetNextItemWidth( ms_SETTINGS_BUTTON_SIZE.x );
         ImGui::Checkbox("##ActionComposer_RenderVisualsToggle",     &m_render_visuals);
 
         //  3.  [TOGGLE]    INPUT BLOCKER...
-        this->label("Enable Input-Blocker:");
+        this->label("Enable Input-Blocker:",        this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
         //
-        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::SetNextItemWidth( ms_SETTINGS_BUTTON_SIZE.x );
         ImGui::Checkbox("##ActionComposer_EnableInputBlocker",      &m_allow_input_blocker);
+
+        //  4.  [TOGGLE]    SHOW COMPOSITION BROWSER...
+        this->label("Show Composition Browser:",    this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        //
+        ImGui::SetNextItemWidth( ms_SETTINGS_BUTTON_SIZE.x );
+        ImGui::Checkbox("##ActionComposer_ShowCompositionBrowser",  &m_show_composition_browser);
     }
 
 
@@ -996,8 +999,8 @@ void ActionComposer::_draw_settings_menu(void)
     ImGui::SeparatorText("Serialization...");
     {
         //      1.      SAVE DIALOGUE...
-        this->label("Save To File:");
-        if ( ImGui::Button("Save") )    {
+        this->label("Save To File:",                this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( ImGui::Button("Save", ms_SETTINGS_BUTTON_SIZE) )    {
             
             if ( !S.m_dialog_queued )
             {
@@ -1006,7 +1009,7 @@ void ActionComposer::_draw_settings_menu(void)
                 S.m_dialog_settings     = {
                     /* type               = */  cb::FileDialog::Type::Save,
                     /* window_name        = */  "Open Testing Suite",
-                    /* default_filename   = */  "functional_test",
+                    /* default_filename   = */  "functional_test.json",
                     /* required_extension = */  ".json",
                     /* valid_extensions   = */  {  },
                     /* starting_dir       = */  std::filesystem::current_path()
@@ -1014,11 +1017,11 @@ void ActionComposer::_draw_settings_menu(void)
             }
         }
 
-        //  ImGui::SameLine(0, 20);
-        
+
+
         //      2.      LOAD DIALOGUE...
-        this->label("Load From File:");
-        if ( ImGui::Button("Load") )    {
+        this->label("Load From File:",              this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( ImGui::Button("Load", ms_SETTINGS_BUTTON_SIZE) )    {
             
             if ( !S.m_dialog_queued )
             {
