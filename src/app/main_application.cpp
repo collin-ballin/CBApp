@@ -177,11 +177,18 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
 
         if ( about::show_verbose_info )
         {
-            about::copy_to_clipboard    = ImGui::Button("Copy-To-Clipboard");
+            ImGui::BeginDisabled(true);
+                about::copy_to_clipboard    = false;
+                if ( ImGui::Button("Copy-To-Clipboard") ) {
+                    about::copy_to_clipboard    = true;
+                }
+            ImGui::EndDisabled();//  TO-DO:     Copy-To-Clipboard FAILS.
+            //                                  The copy acts correctly, but when the user PASTES the data somewhere else, it crashes the application.
         
-            ImGui::SameLine();
+        
+            ImGui::SameLine(0, 25);
             
-            ImGui::TextUnformatted("Text Format:");
+            ImGui::TextUnformatted("Copy Format:");
             ImGui::SameLine();
             if ( ImGui::Combo("##App_About_CopyFormatType",             &copy_format_int,
                               about::DEF_FORMAT_TYPE_NAMES.data(),      static_cast<int>(CopyFormatType::COUNT)) )
@@ -227,7 +234,7 @@ void App::show_about_info(void) const
     {
         ImGui::SetNextWindowPos(ImGui::GetMousePos());
         ImGui::BeginTooltip();
-            ImGui::TextUnformatted("Copied textbox info to clipboard!");
+            ImGui::TextUnformatted("Copied info to clipboard!");
         ImGui::EndTooltip();
     }
     else { about::copy_time    = -1.0f; }
@@ -266,7 +273,7 @@ void App::show_about_info(void) const
         }
         //
         //  3.  CONFIGURATION INFORMATION...
-        if ( about::show_build_info ) {
+        if ( about::show_config_info ) {
             this->get_config_info();
         }
         //
@@ -296,7 +303,7 @@ void App::show_about_info(void) const
 //
 void App::get_cbapp_info(void) const
 {
-
+    ImGui::Text("%s", "CBApp Info (TO-DO)...");
     return;
 }
 
