@@ -203,7 +203,6 @@ void ActionComposer::_draw_toolbar(void)
 //
 void ActionComposer::_draw_overlay(void)
 {
-    static constexpr ImGuiWindowFlags       flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
     ImVec2                                  mpos            = ImGui::GetMousePos();
     ImVec2                                  pos             = mpos + ms_OVERLAY_OFFSET;
 

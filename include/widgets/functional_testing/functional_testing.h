@@ -367,7 +367,7 @@ public:
     static constexpr size_t             ms_ACTION_NAME_LIMIT                    = 64ULL;
     static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT             = 256ULL;
     //
-    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                  = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   0.500f,     0.271f,     0.227f,     1.000f      )  );
+    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                  = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
     //
     //                              INDIVIDUAL WIDGET DIMENSIONS:
     static constexpr float              ms_COMPOSITION_DESCRIPTION_FIELD_HEIGHT = 110.0f;
@@ -383,8 +383,13 @@ public:
     static constexpr float              ms_SETTINGS_WIDGET_WIDTH                = 300.0f;
     //
     //
-    static constexpr float              ms_COMPOSITION_COLUMN_WIDTH             = 340.0f;
-    static constexpr float              ms_SELECTOR_COLUMN_WIDTH                = 340.0f;
+    ImGuiChildFlags                     ms_COMPOSER_SELECTOR_FLAGS              = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
+    ImVec2                              ms_COMPOSER_SELECTOR_DIMS               = ImVec2(400.0f,    -1.0f);
+    ImGuiChildFlags                     ms_ACTION_SELECTOR_FLAGS                = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
+    ImVec2                              ms_ACTION_SELECTOR_DIMS                 = ImVec2(500.0f,    -1.0f);
+    //
+    //  static constexpr float              ms_COMPOSITION_COLUMN_WIDTH             = 340.0f;
+    //  static constexpr float              ms_SELECTOR_COLUMN_WIDTH                = 340.0f;
     static constexpr const char *       ms_DRAG_DROP_HANDLE                     = "=";
     static constexpr const char *       ms_DELETE_BUTTON_HANDLE                 = "-";
     static constexpr const char *       ms_EMPTY_HOTKEY_NAME                    = "UNASSIGNED";      // Used when Hotkey is UNASSIGNED...
@@ -449,6 +454,7 @@ protected:
     bool                                m_render_visuals                        = true;
     bool                                m_allow_input_blocker                   = true;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
     bool                                m_show_composition_browser              = true;
+    bool                                m_show_composition_inspector            = false;
     //
     //                              MUTABLE STATE VARIABLES:
     bool                                m_is_running                            = false;
@@ -676,16 +682,17 @@ protected:
     
     //  "reset_state"
     inline void                         reset_state                     (void) {
-        m_key_capture               .reset();
-        m_mouse_capture             .reset();
-        m_overlay_cache             .reset();
+        m_key_capture                       .reset();
+        m_mouse_capture                     .reset();
+        m_overlay_cache                     .reset();
         //
-        m_state                     = State::Idle;
-        m_is_running                = false;
-        m_capture_is_active         = false;
-        m_key_capture_is_active     = false;
+        m_state                             = State::Idle;
+        m_is_running                        = false;
+        m_capture_is_active                 = false;
+        m_key_capture_is_active             = false;
+        m_show_composition_inspector        = false;
         //
-        m_executor.reset();
+        m_executor                          .reset();
         return;
     }
     

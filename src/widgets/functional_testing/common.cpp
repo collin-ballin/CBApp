@@ -61,7 +61,7 @@ void ActionComposer::_duplicate_composition(const int index)
 
 //  "_delete_action"
 //
-void ActionComposer::_delete_action(const int index)
+void ActionComposer::_delete_action(const int /*index*/)
 {
     return;
 }
@@ -69,7 +69,7 @@ void ActionComposer::_delete_action(const int index)
 
 //  "_duplicate_action"
 //
-void ActionComposer::_duplicate_action(const int index)
+void ActionComposer::_duplicate_action(const int /*index*/)
 {
     return;
 }

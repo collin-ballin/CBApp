@@ -515,7 +515,7 @@ void Editor::_draw_single_obj_inspector(void)
     constexpr ImGuiChildFlags       P1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     constexpr ImGuiChildFlags       C0_FLAGS            = ImGuiChildFlags_ResizeX       | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     constexpr ImGuiChildFlags       C1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
-    const ImGuiStyle &              style               = ImGui::GetStyle();
+    //  const ImGuiStyle &              style               = ImGui::GetStyle();
 
     const size_t                    sel_idx             = *m_sel.paths.begin();   // only element
     Path &                          path                = m_paths[sel_idx];
@@ -523,8 +523,6 @@ void Editor::_draw_single_obj_inspector(void)
     
     //  Compute adaptive column widths BEFORE we emit any child windows
     const ImVec2                    Avail               = ImGui::GetContentRegionAvail();
-    const float                     TOTAL_W             = Avail.x;            // free width right now
-    const float                     PADDING             = 2 * style.ItemSpacing.x;
     //const float                     P0_w                = TOTAL_W * m_style.OBJ_PROPERTIES_REL_WIDTH - PADDING;
     const float                     P0_w                = 0.65f * ImGui::GetContentRegionAvail().x;
     

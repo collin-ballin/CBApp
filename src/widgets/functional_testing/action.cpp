@@ -232,7 +232,7 @@ void ActionExecutor::start_mouse_drag(GLFWwindow * window, ImVec2 from, ImVec2 t
 void ActionExecutor::start_key_press([[maybe_unused]] GLFWwindow * win, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
 {
     m_window            = win;
-    ImGuiIO &   io      = ImGui::GetIO();
+    //  ImGuiIO &   io      = ImGui::GetIO();
 
 
     //  if ( key == ImGuiKey_None )                                         { return; }
@@ -254,7 +254,7 @@ void ActionExecutor::start_key_press([[maybe_unused]] GLFWwindow * win, ImGuiKey
 void ActionExecutor::start_key_release(GLFWwindow * win, ImGuiKey key, bool ctrl, bool shift, bool alt, bool super)
 {
     m_window            = win;
-    ImGuiIO &   io      = ImGui::GetIO();
+    //  ImGuiIO &   io      = ImGui::GetIO();
     
     
     if ( m_key_manager.IsActive(key) )                                  { m_key_manager.Pop(key); }         // queue 1-frame edge → key is now held
@@ -636,16 +636,15 @@ inline void ActionComposer::_ui_mouse_release(Action & a)
 //
 inline void ActionComposer::_ui_mouse_drag(Action & a)
 {
-    static constexpr int NUM_CLICKS = ms_CLICK_PARAM_NAMES.size();
 
-    /* 1️⃣  Begin / End coordinate widgets (reuse CursorMove block) */
+    //      1.      Begin / End coordinate widgets (reuse CursorMove block)
     _ui_movement_widgets(a);
 
 
     _ui_duration_widgets(a);
     
 
-    /* ── 4.  Button chooser (Left / Right) ────────────────────────────── */
+    //      4.      Button chooser (Left / Right)
     label("Button:");
     int b = a.press.left_button ? 0 : 1;
     if ( ImGui::Combo("##press_btn", &b, ms_CLICK_PARAM_NAMES.data(), ms_CLICK_PARAM_NAMES.size()) )

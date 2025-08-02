@@ -408,6 +408,7 @@ std::pair<ImVec2, ImVec2> OverlayManager::_anchor_to_pos(
         case OverlayPlacement::CanvasTR:        { pos = { plot_rect.Max.x - ax, plot_rect.Min.y + ay }; break; }
         case OverlayPlacement::CanvasBL:        { pos = { plot_rect.Min.x + ax, plot_rect.Max.y - ay }; break; }
         case OverlayPlacement::CanvasBR:        { pos = { plot_rect.Max.x - ax, plot_rect.Max.y - ay }; break; }
+        default :                               { break; }
     //
     }
     

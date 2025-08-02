@@ -886,7 +886,7 @@ struct Path_t {
     }
     
     //  "ui_kind"
-    [[nodiscard]] inline bool       ui_kind                         (void)
+    inline bool                     ui_kind                         (void)
     {
         bool    modified    = false;
         int     kind_idx    = static_cast<int>(this->kind);

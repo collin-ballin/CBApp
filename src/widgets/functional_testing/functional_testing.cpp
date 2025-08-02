@@ -172,9 +172,24 @@ void ActionComposer::Begin_IMPL(void)
 //
 void ActionComposer::draw_all(void)
 {
-    using   Font    = app::AppState::Font;
+    using                       Font                            = app::AppState::Font;
+    const bool                  allow_resize                    = ImGui::GetCurrentWindow()->DockTabIsVisible;
     
     
+    
+    //  0.  ALLOW / PREVENT RESIZING CHILD WINDOWS...
+    if (allow_resize) {
+        ms_COMPOSER_SELECTOR_FLAGS      = ms_COMPOSER_SELECTOR_FLAGS    | ImGuiChildFlags_ResizeX;
+        ms_ACTION_SELECTOR_FLAGS        = ms_ACTION_SELECTOR_FLAGS      | ImGuiChildFlags_ResizeX;
+    }
+    else {
+        ms_COMPOSER_SELECTOR_FLAGS      = ms_COMPOSER_SELECTOR_FLAGS    & ~ImGuiChildFlags_ResizeX;
+        ms_ACTION_SELECTOR_FLAGS        = ms_ACTION_SELECTOR_FLAGS      & ~ImGuiChildFlags_ResizeX;
+    }
+    
+    
+    
+    //  1.  COMPOSITION SELECTOR COLUMN...
     if ( m_show_composition_browser )
     {
         ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER1);
@@ -182,8 +197,9 @@ void ActionComposer::draw_all(void)
         ImGui::PushStyleColor(ImGuiCol_ChildBg,             ms_CHILD_FRAME_BG1L);
             
             //  1.  DRAW THE TOP-MOST "COMPOSITION" BAR...
-            ImGui::BeginChild("##ActionComposer_CompositionSelector", {ms_COMPOSITION_COLUMN_WIDTH, 0.0f}, ImGuiChildFlags_Borders);
+            ImGui::BeginChild("##ActionComposer_CompositionSelector", ms_COMPOSER_SELECTOR_DIMS, ms_COMPOSER_SELECTOR_FLAGS);
                 this->_draw_composition_selector();
+                ms_COMPOSER_SELECTOR_DIMS.x     = ImGui::GetItemRectSize().x;
             ImGui::EndChild();
 
         ImGui::PopStyleColor();
@@ -204,8 +220,10 @@ void ActionComposer::draw_all(void)
         //
         //
         //
-            ImGui::BeginChild("##ActionComposer_Action_Selector",  {ms_SELECTOR_COLUMN_WIDTH, 0}, ImGuiChildFlags_Borders);
+            //  ImGui::BeginChild("##ActionComposer_Action_Selector",  {ms_SELECTOR_COLUMN_WIDTH, 0}, ImGuiChildFlags_Borders);
+            ImGui::BeginChild("##ActionComposer_Action_Selector",  ms_ACTION_SELECTOR_DIMS, ms_ACTION_SELECTOR_FLAGS);
                 this->_draw_action_selector();
+                ms_ACTION_SELECTOR_DIMS.x       = ImGui::GetItemRectSize().x;
             ImGui::EndChild();
             ImGui::PopStyleColor();
             
@@ -251,37 +269,71 @@ void ActionComposer::draw_all(void)
 //
 void ActionComposer::_draw_composition_selector(void)
 {
-    //  1.  ADD A NEW COMPOSITION...
-    if ( ImGui::Button("+ Add Composition") ) {
-        _save_actions_to_comp();                       // persist current comp
-        m_compositions.emplace_back();                 // push default
-        int new_idx = static_cast<int>(m_compositions.size()) - 1;
-        _load_actions_from_comp(new_idx);              // select & reset state
-    }
-    
-    ImGui::SameLine();
-    
-    ImGui::BeginDisabled(m_compositions.size() < 1);
-        if ( ImGui::Button("- Delete") )
-        {
-            _save_actions_to_comp();                       // persist before erase
-            m_compositions.erase(m_compositions.begin() + m_comp_sel);
-            int next = std::clamp( m_comp_sel, 0, static_cast<int>(m_compositions.size()) - 1 );
-            _load_actions_from_comp(next);
-        }
-    ImGui::EndDisabled();
+    if ( m_comp_sel < 0 )       { m_show_composition_inspector = false; }
 
+
+
+    //  3A.     SWITCH FROM  "INSPECTOR"    ===>    "TABLE"...
+    if (m_show_composition_inspector)
+    {
+        if ( ImGui::Button("Back To Table") )
+        {
+            m_show_composition_inspector = false;
+        }
+    }
+    //
+    //
+    //  3B.     SWITCH FROM  "TABLE"    ===>    "INSPECTOR"...
+    else
+    {
+        //  1.  ADD A NEW COMPOSITION...
+        if ( ImGui::Button("+ Add Composition") ) {
+            _save_actions_to_comp();                       // persist current comp
+            m_compositions.emplace_back();                 // push default
+            int new_idx = static_cast<int>(m_compositions.size()) - 1;
+            _load_actions_from_comp(new_idx);              // select & reset state
+        }
+        //
+        //  ImGui::SameLine();
+        //
+        //  2.  DELETE CURRENT COMPOSITION...
+        //      ImGui::BeginDisabled(m_compositions.size() < 1);
+        //          if ( ImGui::Button("- Delete") )
+        //          {
+        //              _save_actions_to_comp();                       // persist before erase
+        //              m_compositions.erase(m_compositions.begin() + m_comp_sel);
+        //              int next = std::clamp( m_comp_sel, 0, static_cast<int>(m_compositions.size()) - 1 );
+        //              _load_actions_from_comp(next);
+        //          }
+        //      ImGui::EndDisabled();
+        //
+        ImGui::SameLine();
+        
+        //  3.  EDIT THE CURRENT COMPOSITION...
+        ImGui::BeginDisabled( m_comp_sel < 0 );
+            if ( ImGui::Button("Edit") )
+            {
+                m_show_composition_inspector = true;
+            }
+        ImGui::EndDisabled();
+    
+    }
     ImGui::Separator();
 
 
-    //  2.  COMPOSITION TABLE...
-    _draw_composition_table();
-    
-    
-    
-    auto &      comp    = m_compositions[m_comp_sel];
 
-    
+    //  2.  COMPOSITION INSPECTOR...
+    if ( m_show_composition_inspector )
+    {
+        auto &      comp    = m_compositions[m_comp_sel];
+        this->_draw_composition_inspector(comp);
+    }
+    //
+    //  3.  COMPOSITION TABLE...
+    else {
+        _draw_composition_table();
+    }
+
     
     
     return;

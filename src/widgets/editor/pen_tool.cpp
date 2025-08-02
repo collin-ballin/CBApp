@@ -119,7 +119,7 @@ void Editor::_pen_update_handle_drag(const Interaction& /*it*/)
 
 //  "_pen_begin_path_if_click_empty"
 //
-void Editor::_pen_begin_path_if_click_empty(const Interaction & it)
+void Editor::_pen_begin_path_if_click_empty(const Interaction & /*it*/ )
 {
 /*
     // 1. Ignore if the click actually hit something
