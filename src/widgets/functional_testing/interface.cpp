@@ -40,10 +40,6 @@ void ActionComposer::_draw_controlbar(void)
     //
     static ImGuiOldColumnFlags      COLUMN_FLAGS            = ImGuiOldColumnFlags_None;
     static ImGuiSliderFlags         SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
-    //  constexpr ImGuiButtonFlags      BUTTON_FLAGS            = ImGuiOldColumnFlags_NoPreserveWidths;
-    //
-    static ImVec2                   WIDGET_SIZE             = ImVec2( -1,               32 );
-    static ImVec2                   BUTTON_SIZE             = ImVec2( WIDGET_SIZE.y,    WIDGET_SIZE.y );
     //
     //  "column_label"
     auto                            column_label            = [&](const char * label) -> void
@@ -51,12 +47,18 @@ void ActionComposer::_draw_controlbar(void)
     
     
     ImGuiIO &                       io                      = ImGui::GetIO();
+    ImGuiStyle &                    style                   = ImGui::GetStyle();
+    //
+    const ImVec2                    SPACING                 = ImVec2( 0.0f,             style.ItemSpacing.y + style.FramePadding.y      );
+    const ImVec2                    WIDGET_SIZE             = ImVec2( -1,               ImGui::GetFrameHeight()                         );
+    const ImVec2                    BUTTON_SIZE             = ImVec2( WIDGET_SIZE.y,    WIDGET_SIZE.y                                   );
+    //
     const ImVec2                    mpos                    = ImVec2(io.MousePos.x, io.MousePos.y);     // this->get_cursor_pos();    // glfwGetCursorPos(S.m_glfw_window, &cx, &cy);
     S.PushFont(Font::Small);
-        
     
-    
-    //  BEGIN COLUMNS...
+
+
+    //      1.      BEGIN COLUMNS...
     ImGui::Columns(NC, uuid, COLUMN_FLAGS);
     //
     //
@@ -67,10 +69,10 @@ void ActionComposer::_draw_controlbar(void)
         if ( ImGui::ArrowButtonEx("##ActionComposer_ToggleCompositionBrowser",     (this->m_show_composition_browser) ? ImGuiDir_Left : ImGuiDir_Right,
                                   BUTTON_SIZE,                      ImGuiButtonFlags_None) )
         { this->m_show_composition_browser = !this->m_show_composition_browser; }
-        
-        
     
-        //  2.  PLAY / PAUSE...
+    
+    
+        //      2.      PLAY / PAUSE...
         ImGui::NextColumn();        column_label("Controls:");
         //
         ImGui::SetNextItemWidth( WIDGET_SIZE.x );
@@ -93,7 +95,7 @@ void ActionComposer::_draw_controlbar(void)
     
     
     
-        //  3.  RUN ONCE...
+        //      3.      RUN ONCE...
         ImGui::NextColumn();        column_label("");
         ImGui::SetNextItemWidth( WIDGET_SIZE.x );
         ImGui::BeginDisabled( !this->is_running() && m_actions->empty() && (m_sel < 0) );
@@ -148,7 +150,7 @@ void ActionComposer::_draw_controlbar(void)
         //      XX.     MOUSE COORDINATES...
         ImGui::NextColumn();        column_label("Global Position:");
         //
-        ImGui::Text("(%.1f , %.1f)",    mpos.x, mpos.y);     //  Live cursor read-out in the same units we feed to glfwSetCursorPos...
+        ImGui::Text("(%.0f , %.0f)",    mpos.x, mpos.y);     //  Live cursor read-out in the same units we feed to glfwSetCursorPos...
                 
 
 
@@ -166,6 +168,8 @@ void ActionComposer::_draw_controlbar(void)
     //
     ImGui::Columns(1);      //  END COLUMNS...
     
+    
+    ImGui::Dummy( SPACING );
     
     
     S.PopFont();
@@ -207,10 +211,7 @@ void ActionComposer::_draw_overlay(void)
     ImVec2                                  pos             = mpos + ms_OVERLAY_OFFSET;
 
     if ( !m_show_overlay )                  { return; }
-    if ( ImGui::GetIO().AppFocusLost )
-    {
-        return;
-    }
+    if ( ImGui::GetIO().AppFocusLost )      { return; }
     //if ( glfwGetWindowAttrib(S.m_glfw_window, GLFW_FOCUSED) == 0 )    { return; }
 
     //  1.  CACHE CURRENT MONITOR DATA...
@@ -312,19 +313,28 @@ inline void ActionComposer::_overlay_ui_none(void)
 //
 inline void ActionComposer::_overlay_ui_run(void)
 {
-    static constexpr const char *   FMT         = "Description: %s";
-    Action *                        act         = &(*m_actions)[m_play_index];
-    
-    const bool                      updated     = this->m_overlay_cache.update_cache( m_play_index, m_comp_sel, act );
-    Action *                        proxy       = this->m_overlay_cache.m_action;
-    
-    
-    if ( proxy != nullptr && !proxy->descr.empty() ) {
-        ImGui::TextColored( S.SystemColor.Gray,     FMT,    proxy->descr.c_str() );
-    }
+    static constexpr const char *   FMT                 = "%s";
+    const bool                      first_action        = m_play_index < 0;
+    Action *                        act                 = (first_action) ? nullptr : &(*m_actions)[m_play_index - 1];       //  _drive_execution increments the counter,
+    static std::string              cache_descr         = "";                                                               //  ...so we need to grab the PREVIOUS action...
+    //
+    [[maybe_unused]] const bool     updated             = this->m_overlay_cache.update_cache( m_play_index, m_comp_sel, act );
+    Action *                        proxy               = this->m_overlay_cache.m_action;
     
 
-    ImGui::TextColored( S.SystemColor.Yellow,   "%s",   "([ESC] to exit)");
+    if (first_action)                                   { cache_descr.clear(); }                                    //  1.  CLEAR CACHE ON FIRST FRAME...
+    if ( proxy != nullptr && !proxy->descr.empty() )    { cache_descr = std::string( proxy->descr.c_str() );  }     //  2.  CACHE THE NEXT DESCRIPTION FIELD THAT WE FIND...
+    
+    
+    
+    //  3.  IF WE HAVE A NON-EMPTY DESCR. CACHE, PRINT IT TO THE OVERLAY...
+    if ( !cache_descr.empty() ) {
+        ImGui::TextColored( S.SystemColor.Gray,     FMT,    cache_descr.c_str() );
+    }
+    
+    
+    //  4.  REMAINING ELEMENTS OF THE OVERLAY...
+    ImGui::TextColored( S.SystemColor.Yellow,   "%s",   "(Press [ESC] to abort)");
     return;
 }
 

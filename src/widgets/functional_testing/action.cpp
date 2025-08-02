@@ -415,8 +415,7 @@ void ActionComposer::_drive_execution(void)
     /* === 2. should we dispatch the next? ============================== */
     const bool  ready_to_start      = !m_executor.busy();
     const bool  want_action         = is_running() || need_step();
-    if (!ready_to_start || !want_action)
-        return;
+    if ( !ready_to_start || !want_action )      { return; }
 
     /* === 3. index bounds check ======================================== */
     if ( m_play_index < 0 || m_play_index >= static_cast<int>(m_actions->size()) )
@@ -430,12 +429,14 @@ void ActionComposer::_drive_execution(void)
     m_sel               = m_play_index;               // visuals stay in sync
     _dispatch_execution(act);
 
+
     /* === 5. advance or finish ========================================= */
     if ( need_step() )                           // Run‑Once
     {
-        m_step_req   = false;
-        reset_state();
-        m_play_index = -1;
+        this->exit_test();
+        //  m_step_req   = false;
+        //  reset_state();
+        //  m_play_index = -1;
     }
     else                                       // Run‑All
     {

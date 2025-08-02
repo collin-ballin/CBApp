@@ -154,13 +154,15 @@ void ActionComposer::Begin_IMPL(void)
     
     
     //  4.  DRIVE EXECUTION OF THE ACTION COMPOSITION...
-    this->_drive_execution();
+    if (m_state == State::Run) {
+        this->_drive_execution();
+    }
     this->_draw_overlay();
     this->_draw_renderer_visuals();
     
     
     //  5.  QUERY FILE DIALOG MENUS...
-    if (busy) {
+    if ( busy && !(this->m_state != State::Run) ) {
         this->_file_dialog_handler();
     }
     

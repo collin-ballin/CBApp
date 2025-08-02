@@ -687,6 +687,8 @@ protected:
         m_overlay_cache                     .reset();
         //
         m_state                             = State::Idle;
+        //  this->m_sel                         = -1;
+        //  this->m_play_index                  = -1;
         m_is_running                        = false;
         m_capture_is_active                 = false;
         m_key_capture_is_active             = false;
@@ -706,7 +708,6 @@ protected:
         return;
     }
     
-    
     //  "abort_test"
     inline void                         abort_test                      (void)           {
         //m_sel               = -1;        // no action selected
@@ -716,17 +717,16 @@ protected:
         return;
     }
     
-    
     //  "exit_test"
     inline void                         exit_test                       (void)           {
         //  m_step_req   = false;
         //  reset_state();
         //  m_play_index = -1;
         reset_state();
-        m_play_index = -1;
+        m_step_req          = false;
+        m_play_index        = -1;
         return;
     }
-    
     
     //  "reset_all"
     inline void                         reset_all                       (void)
