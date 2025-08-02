@@ -213,9 +213,12 @@ protected:
     //
     //                      UTILITIES FOR MAIN GUI FUNCTIONS:
     void                        run_IMPL                    (void);
+    void                        show_about_info             (void) const;
+    //
+    void                        get_cbapp_info              (void) const;
     void                        get_build_info              (void) const;
-    void                        get_info1                   (void) const;
-    void                        get_info2                   (void) const;
+    void                        get_config_info             (void) const;
+    void                        get_imgui_info              (void) const;
     // *************************************************************************** //
     //
     //

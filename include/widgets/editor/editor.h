@@ -154,7 +154,7 @@ public:
 //
 // *************************************************************************** //
 // *************************************************************************** //
-    static constexpr float              ms_LIST_COLUMN_WIDTH            = 240.0f;   // px width of point‑list column
+    static constexpr float              ms_LIST_COLUMN_WIDTH            = 340.0f;   // px width of point‑list column
 
 
 

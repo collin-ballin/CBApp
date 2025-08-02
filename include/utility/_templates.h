@@ -68,19 +68,21 @@ inline constexpr ImVec4 ColorConvertU32ToFloat4_constexpr(const ImU32 c) noexcep
 
 //  "ColorConvertFloat4ToU32_constexpr"
 //
-constexpr ImU32 ColorConvertFloat4ToU32_constexpr(const ImVec4& v) noexcept
+[[nodiscard]]
+constexpr ImU32 ColorConvertFloat4ToU32_constexpr(const ImVec4 & col) noexcept
 {
-    auto to_u8 = [](float f) constexpr -> ImU32
+    constexpr auto to_u8 = [](float f) constexpr -> ImU32
     {
-        return static_cast<ImU32>(f <= 0.0f ? 0 :
-                                  f >= 1.0f ? 255 :
-                                  f * 255.0f + 0.5f);     // round to nearest
+        return static_cast<ImU32>(
+            f <= 0.0f ? 0u :
+            f >= 1.0f ? 255u :
+            f * 255.0f + 0.5f);          // round-to-nearest
     };
 
-    return  (to_u8(v.w) << 24) |   // A
-            (to_u8(v.z) << 16) |   // B
-            (to_u8(v.y) <<  8) |   // G
-             to_u8(v.x);           // R
+    return (to_u8(col.x) << IM_COL32_R_SHIFT) |
+           (to_u8(col.y) << IM_COL32_G_SHIFT) |
+           (to_u8(col.z) << IM_COL32_B_SHIFT) |
+           (to_u8(col.w) << IM_COL32_A_SHIFT);
 }
 
 

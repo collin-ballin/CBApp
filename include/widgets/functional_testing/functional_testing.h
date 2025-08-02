@@ -367,6 +367,8 @@ public:
     static constexpr size_t             ms_ACTION_NAME_LIMIT                    = 64ULL;
     static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT             = 256ULL;
     //
+    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                  = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   0.500f,     0.271f,     0.227f,     1.000f      )  );
+    //
     //                              INDIVIDUAL WIDGET DIMENSIONS:
     static constexpr float              ms_COMPOSITION_DESCRIPTION_FIELD_HEIGHT = 110.0f;
     static constexpr float              ms_ACTION_DESCRIPTION_FIELD_HEIGHT      = 65.0f;
@@ -523,6 +525,7 @@ protected:
     //                              COMPOSITION UI:
     void                                _draw_composition_selector          (void);
     void                                _draw_composition_table             (void);
+    void                                _draw_composition_inspector         (Composition & );
     //
     //                              ACTION UI:
     void                                _draw_action_selector               (void);
@@ -613,9 +616,20 @@ protected:
     void                                _file_dialog_handler                (void);
     bool                                save_to_file                        (const std::filesystem::path & path) const;
     bool                                load_from_file                      (const std::filesystem::path & path);
-    
-    
-    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      CENTRALIZED FUNCTIONS.          |   "common.cpp" ...
+    // *************************************************************************** //
+    //                              CENTRALIZED COMPOSITION FUNCTIONS:
+    void                                _delete_composition                 (const int index);
+    void                                _duplicate_composition              (const int index);
+    //
+    //                              CENTRALIZED ACTION FUNCTIONS:
+    void                                _delete_action                      (const int index);
+    void                                _duplicate_action                   (const int index);
     
     
     
@@ -755,6 +769,25 @@ protected:
         m_sel                   = to;
         
         return;
+    }
+    
+    
+    //  "_reorder_composition"
+    inline void                         _reorder_composition            (int from, int to)
+    {
+        if (from == to) { return; }
+
+        /* persist edits to currently open composition before we shuffle */
+        _save_actions_to_comp();
+
+        /* move the element -------------------------------------------------- */
+        Composition_t tmp = std::move(m_compositions[static_cast<size_t>(from)]);
+        m_compositions.erase(m_compositions.begin() + from);
+        m_compositions.insert(m_compositions.begin() + to, std::move(tmp));
+
+        /* update selection & action pointer -------------------------------- */
+        m_comp_sel = to;
+        _load_actions_from_comp(m_comp_sel);      // resets m_actions to new slot
     }
     
     

@@ -22,10 +22,76 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 
 
+namespace about { //     BEGINNING NAMESPACE "about"...
+// *************************************************************************** //
+// *************************************************************************** //
+    enum class CopyFormatType : uint8_t {
+        None = 0, Github, COUNT
+    };
+    static constexpr std::array<const char *, static_cast<size_t>( CopyFormatType::COUNT )>
+                                        DEF_FORMAT_TYPE_NAMES       = { "Plain Text", "GitHub" };
+    //
+    //                              CONSTANTS:
+    static constexpr unsigned int       NUM_LINES                   = 18;
+    static constexpr float              CHILD_SCALE_X               = 0.5f;
+    static constexpr float              SUCCESS_MESSAGE_DURATION    = 5.0f;
+    //
+    //
+    //                              VARIABLES:
+    static CopyFormatType               copy_format                 = CopyFormatType::Github;
+    static bool                         copy_to_clipboard           = false;
+    static float                        copy_time                   = -1.0f;
+    
+    
+    static bool                         show_verbose_info           = false;
+    //
+    static bool                         show_cbapp_info             = true;
+    static bool                         show_build_info             = false;
+    static bool                         show_config_info            = false;
+    static bool                         show_imgui_info             = false;
+
+
+
+    //  "begin_log"
+    inline static void begin_log(void)
+    {
+        ImGui::LogToClipboard();
+        switch (about::copy_format) {
+            case CopyFormatType::Github     : { ImGui::LogText("```\n"); break; }   //  Back quotes will make text appears without formatting when pasting on GitHub...
+            default                         : { break; }
+        }
+        return;
+    }
+
+    //  "finish_log"
+    inline static void finish_log(void)
+    {
+        switch (about::copy_format) {
+            case CopyFormatType::Github     : { ImGui::LogText("\n```\n"); break; }
+            default                         : { break; }
+        }
+        ImGui::LogFinish();
+        copy_to_clipboard = false;
+        return;
+    }
+    
+    
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}//   END OF "about" NAMESPACE.
+
+
+
+
+
 
 // *************************************************************************** //
 // *************************************************************************** //
-
 
 //  "ShowAboutWindow"
 //
@@ -33,24 +99,25 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
                           [[maybe_unused]]   bool *              p_open,
                           [[maybe_unused]]   ImGuiWindowFlags    flags)
 {
-    static bool                     show_config_info    = false;
-
-    if (*p_open) {
-        ImGui::OpenPopup(uuid);
-    }
+    using           CopyFormatType          = about::CopyFormatType;
+    int             copy_format_int         = static_cast<int>(about::copy_format);
+    ImVec2          center                  = ImGui::GetMainViewport()->GetCenter();
+    
+    if (*p_open)    { ImGui::OpenPopup(uuid); }
     
     
-    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    //ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ));
+    
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2( 0.5f, 0.5f ));
-    if (ImGui::BeginPopupModal(uuid, p_open, ImGuiWindowFlags_AlwaysAutoResize))
+    if ( ImGui::BeginPopupModal(uuid, p_open, ImGuiWindowFlags_AlwaysAutoResize) )
     {
+    
 
         //  1.  If [ESC], CLOSE WINDOW...
-        //if ( ImGui::IsKeyPressed( ImGuiKey_Escape ) )       { *p_open = false; }
+        if ( ImGui::IsKeyPressed( ImGuiKey_Escape ) )       { *p_open = false; }
         
         
-        ImGui::Text("CBApp Version v%s [%s] WIP", __CBAPP_VERSION__, __CBAPP_BUILD__);
+ 
+        ImGui::Text("CBApp %s (Build %s, WIP)", __CBAPP_VERSION__, __CBAPP_BUILD__);
         ImGui::Text("Developed by Collin Andrew Bond  (c)  2024-2025");
 
 
@@ -82,40 +149,94 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
             ImGui::TreePop();
         }
         
-        
-        
-        ImGui::Separator();
-        ImGui::Checkbox("Config/Build Information", &show_config_info);
-        if (show_config_info)
-        {
-            this->get_build_info();
-        }
     
+    
+        ImGui::Separator();
+        ImGui::Checkbox("Show Verbose Information", &about::show_verbose_info);
+        if ( about::show_verbose_info )
+        {
+            ImGui::Indent();
+            
+                ImGui::Checkbox("Show CBApp Information",           &about::show_cbapp_info);
+                ImGui::Checkbox("Show Build Information",           &about::show_build_info);
+                ImGui::Checkbox("Show Configuration Information",   &about::show_config_info);
+                //
+                if ( ImGui::Checkbox("Show Default ImGui Information",   &about::show_imgui_info) )
+                {
+                    about::show_cbapp_info = false;     about::show_build_info = false;     about::show_config_info = false;
+                }
+                if ( ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) )
+                { ImGui::SetTooltip("Use this option when posting a feature request, bug report, etc, to the Dear ImGui GitHub page!"); }
+                
+                
+            ImGui::Unindent();
+        
+            this->show_about_info();
+        }
+
+
+        if ( about::show_verbose_info )
+        {
+            about::copy_to_clipboard    = ImGui::Button("Copy-To-Clipboard");
+        
+            ImGui::SameLine();
+            
+            ImGui::TextUnformatted("Text Format:");
+            ImGui::SameLine();
+            if ( ImGui::Combo("##App_About_CopyFormatType",             &copy_format_int,
+                              about::DEF_FORMAT_TYPE_NAMES.data(),      static_cast<int>(CopyFormatType::COUNT)) )
+            { about::copy_format  = static_cast<CopyFormatType>(copy_format_int); }
+        }
+
+
 
         ImGui::EndPopup();
     }// END POP-UP.
+    
+    
+        
+    
+        
+        
     
     
     return;
 }
 
 
-//  "get_build_info"
+
+
+
+
+
+
+//  "show_about_info"
 //
-void App::get_build_info(void) const
+void App::show_about_info(void) const
 {
-    constexpr unsigned int              NUM_LINES       = 18;
-    [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO();
-    [[maybe_unused]] ImGuiStyle &       style           = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &          io                  = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &       style               = ImGui::GetStyle();
+    //
+    const ImVec2                        CHILD_SIZE          = ImVec2( about::CHILD_SCALE_X * ImGui::GetMainViewport()->Size.x,
+                                                                      about::NUM_LINES * ImGui::GetTextLineHeightWithSpacing() );
+    const float                         current_time        = ImGui::GetTime();
 
-
-
+    
+    //  0.  SHOW TOOLTIP TO INDICATE COPY-TO-CLIPBOARD SUCCESS...
+    if ( about::copy_time > 0.0f && current_time - about::copy_time < about::SUCCESS_MESSAGE_DURATION )
+    {
+        ImGui::SetNextWindowPos(ImGui::GetMousePos());
+        ImGui::BeginTooltip();
+            ImGui::TextUnformatted("Copied textbox info to clipboard!");
+        ImGui::EndTooltip();
+    }
+    else { about::copy_time    = -1.0f; }
 
 
     ImGui::BulletText("Your current configuration is:");
     ImGui::Indent();
-    ImGui::BulletText("ImDrawIdx: %d-bit", (int)(sizeof(ImDrawIdx) * 8));
-    ImGui::BulletText("ImGuiBackendFlags_RendererHasVtxOffset: %s", (ImGui::GetIO().BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset) ? "True" : "False");
+        ImGui::BulletText("ImDrawIdx: %d-bit", (int)(sizeof(ImDrawIdx) * 8));
+        ImGui::BulletText("ImGuiBackendFlags_RendererHasVtxOffset: %s", (ImGui::GetIO().BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset) ? "True" : "False");
     ImGui::Unindent();
 
 
@@ -124,63 +245,244 @@ void App::get_build_info(void) const
 
 
     //  1.  CREATE A CHILD WINDOW TO HOST ALL THE INFORMATION...
+    ImGui::BeginChild( ImGui::GetID("cfg_info_1"), CHILD_SIZE, ImGuiChildFlags_FrameStyle );
     //
-    bool        copy_to_clipboard   = ImGui::Button("Copy to clipboard");
-    ImVec2      child_size          = ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * NUM_LINES );
-    
-    ImGui::BeginChild(ImGui::GetID("cfg_info_1"), child_size, ImGuiChildFlags_FrameStyle);
-    if (copy_to_clipboard) {
-        ImGui::LogToClipboard();
-        ImGui::LogText("```\n");    //  Back quotes will make text appears without formatting when pasting on GitHub
-    }
-    
-    
-        this->get_info1();
-    
+    //
+    //
+    //  COPY INFORMATION TO CLIP-BOARD...
+        if ( about::copy_to_clipboard ) {
+            about::begin_log();
+        }
+        
+        
+        //  1.  CBAPP INFORMATION...
+        if ( about::show_cbapp_info ) {
+            this->get_cbapp_info();
+        }
+        //
+        //  2.  BUILD INFORMATION...
+        if ( about::show_build_info ) {
+            this->get_build_info();
+        }
+        //
+        //  3.  CONFIGURATION INFORMATION...
+        if ( about::show_build_info ) {
+            this->get_config_info();
+        }
+        //
+        //  4.  DEFAULT IMGUI INFORMATION...
+        if ( about::show_imgui_info ) {
+            this->get_imgui_info();
+        }
+        
 
-    //  END CHILD WINDOW.   COPY INFORMATION TO CLIPBOARD.
-    if (copy_to_clipboard) {
-        ImGui::LogText("\n```\n");
-        ImGui::LogFinish();
-    }
+        //  END CHILD WINDOW.   COPY INFORMATION TO CLIPBOARD.
+        if ( about::copy_to_clipboard ) {
+            about::finish_log();
+            about::copy_time    = ImGui::GetTime(); 
+        }
+    //
+    //
+    //
     ImGui::EndChild();
     
-    
-    
-    //  WINDOW #2...
+    return;
+}
+
+
+
+
+//  "get_cbapp_info"
+//
+void App::get_cbapp_info(void) const
+{
+
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+//  "get_build_info"
+//
+void App::get_build_info(void) const
+{
+    using                               namespace       about;
+    [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &       style           = ImGui::GetStyle();
+
+
+
+    ImGui::Text("Dear ImGui %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
+    ImGui::Separator();
+    ImGui::Text("sizeof(size_t): %d, sizeof(ImDrawIdx): %d, sizeof(ImDrawVert): %d", (int)sizeof(size_t), (int)sizeof(ImDrawIdx), (int)sizeof(ImDrawVert));
+    ImGui::Text("define: __cplusplus=%d", (int)__cplusplus);
+#ifdef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_OBSOLETE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_WIN32_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_WIN32_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_FILE_FUNCTIONS
+    ImGui::Text("define: IMGUI_DISABLE_FILE_FUNCTIONS");
+#endif
+#ifdef IMGUI_DISABLE_DEFAULT_ALLOCATORS
+    ImGui::Text("define: IMGUI_DISABLE_DEFAULT_ALLOCATORS");
+#endif
+#ifdef IMGUI_USE_BGRA_PACKED_COLOR
+    ImGui::Text("define: IMGUI_USE_BGRA_PACKED_COLOR");
+#endif
+#ifdef _WIN32
+    ImGui::Text("define: _WIN32");
+#endif
+#ifdef _WIN64
+    ImGui::Text("define: _WIN64");
+#endif
+#ifdef __linux__
+    ImGui::Text("define: __linux__");
+#endif
+#ifdef __APPLE__
+    ImGui::Text("define: __APPLE__");
+#endif
+#ifdef _MSC_VER
+    ImGui::Text("define: _MSC_VER=%d", _MSC_VER);
+#endif
+#ifdef _MSVC_LANG
+    ImGui::Text("define: _MSVC_LANG=%d", (int)_MSVC_LANG);
+#endif
+#ifdef __MINGW32__
+    ImGui::Text("define: __MINGW32__");
+#endif
+#ifdef __MINGW64__
+    ImGui::Text("define: __MINGW64__");
+#endif
+#ifdef __GNUC__
+    ImGui::Text("define: __GNUC__=%d", (int)__GNUC__);
+#endif
+#ifdef __clang_version__
+    ImGui::Text("define: __clang_version__=%s", __clang_version__);
+#endif
+
+
+
+#ifdef __EMSCRIPTEN__
+    ImGui::Text("define: __EMSCRIPTEN__");
+    ImGui::Text("Emscripten: %d.%d.%d", __EMSCRIPTEN_major__, __EMSCRIPTEN_minor__, __EMSCRIPTEN_tiny__);
+#endif
+#ifdef IMGUI_HAS_VIEWPORT
+    ImGui::Text("define: IMGUI_HAS_VIEWPORT");
+#endif
+#ifdef IMGUI_HAS_DOCK
+    ImGui::Text("define: IMGUI_HAS_DOCK");
+#endif
+
+    return;
+}
+
+
+
+//  "get_config_info"
+//
+void App::get_config_info(void) const
+{
+    using                               namespace       about;
+    [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &       style           = ImGui::GetStyle();
+
+
+
+    //  3.  IMGUI CONFIG STUFF...
     //
-    //ImGui::SameLine();
-    ImGui::BeginChild(ImGui::GetID("cfg_info_2"), child_size, ImGuiChildFlags_FrameStyle);
+    ImGui::Text("io.BackendPlatformName: %s", io.BackendPlatformName ? io.BackendPlatformName : "NULL");
+    ImGui::Text("io.BackendRendererName: %s", io.BackendRendererName ? io.BackendRendererName : "NULL");
+    ImGui::Text("io.ConfigFlags: 0x%08X", io.ConfigFlags);
+    if (io.ConfigFlags & ImGuiConfigFlags_NavEnableKeyboard)        ImGui::Text(" NavEnableKeyboard");
+    if (io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad)         ImGui::Text(" NavEnableGamepad");
+    if (io.ConfigFlags & ImGuiConfigFlags_NoMouse)                  ImGui::Text(" NoMouse");
+    if (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)      ImGui::Text(" NoMouseCursorChange");
+    if (io.ConfigFlags & ImGuiConfigFlags_NoKeyboard)               ImGui::Text(" NoKeyboard");
+    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)            ImGui::Text(" DockingEnable");
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)          ImGui::Text(" ViewportsEnable");
+    if (io.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)  ImGui::Text(" DpiEnableScaleViewports");
+    if (io.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleFonts)      ImGui::Text(" DpiEnableScaleFonts");
+    if (io.MouseDrawCursor)                                         ImGui::Text("io.MouseDrawCursor");
+    if (io.ConfigViewportsNoAutoMerge)                              ImGui::Text("io.ConfigViewportsNoAutoMerge");
+    if (io.ConfigViewportsNoTaskBarIcon)                            ImGui::Text("io.ConfigViewportsNoTaskBarIcon");
+    if (io.ConfigViewportsNoDecoration)                             ImGui::Text("io.ConfigViewportsNoDecoration");
+    if (io.ConfigViewportsNoDefaultParent)                          ImGui::Text("io.ConfigViewportsNoDefaultParent");
+    if (io.ConfigDockingNoSplit)                                    ImGui::Text("io.ConfigDockingNoSplit");
+    if (io.ConfigDockingWithShift)                                  ImGui::Text("io.ConfigDockingWithShift");
+    if (io.ConfigDockingAlwaysTabBar)                               ImGui::Text("io.ConfigDockingAlwaysTabBar");
+    if (io.ConfigDockingTransparentPayload)                         ImGui::Text("io.ConfigDockingTransparentPayload");
+    if (io.ConfigMacOSXBehaviors)                                   ImGui::Text("io.ConfigMacOSXBehaviors");
+    if (io.ConfigNavMoveSetMousePos)                                ImGui::Text("io.ConfigNavMoveSetMousePos");
+    if (io.ConfigNavCaptureKeyboard)                                ImGui::Text("io.ConfigNavCaptureKeyboard");
+    if (io.ConfigInputTextCursorBlink)                              ImGui::Text("io.ConfigInputTextCursorBlink");
+    if (io.ConfigWindowsResizeFromEdges)                            ImGui::Text("io.ConfigWindowsResizeFromEdges");
+    if (io.ConfigWindowsMoveFromTitleBarOnly)                       ImGui::Text("io.ConfigWindowsMoveFromTitleBarOnly");
+    if (io.ConfigMemoryCompactTimer >= 0.0f)                        ImGui::Text("io.ConfigMemoryCompactTimer = %.1f", io.ConfigMemoryCompactTimer);
+    ImGui::Text("io.BackendFlags: 0x%08X", io.BackendFlags);
+    if (io.BackendFlags & ImGuiBackendFlags_HasGamepad)             ImGui::Text(" HasGamepad");
+    if (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors)        ImGui::Text(" HasMouseCursors");
+    if (io.BackendFlags & ImGuiBackendFlags_HasSetMousePos)         ImGui::Text(" HasSetMousePos");
+    if (io.BackendFlags & ImGuiBackendFlags_PlatformHasViewports)   ImGui::Text(" PlatformHasViewports");
+    if (io.BackendFlags & ImGuiBackendFlags_HasMouseHoveredViewport)ImGui::Text(" HasMouseHoveredViewport");
+    if (io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset)   ImGui::Text(" RendererHasVtxOffset");
+    if (io.BackendFlags & ImGuiBackendFlags_RendererHasViewports)   ImGui::Text(" RendererHasViewports");
     
-        //this->get_info1();
     
-
-    ImGui::EndChild();  //  END CHILD WINDOW.
+    ImGui::Separator();
     
     
-    
-
+    ImGui::Text("io.Fonts: %d fonts, Flags: 0x%08X, TexSize: %d,%d", io.Fonts->Fonts.Size, io.Fonts->Flags, io.Fonts->TexWidth, io.Fonts->TexHeight);
+    ImGui::Text("io.DisplaySize: %.2f,%.2f", io.DisplaySize.x, io.DisplaySize.y);
+    ImGui::Text("io.DisplayFramebufferScale: %.2f,%.2f", io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+    ImGui::Separator();
+    ImGui::Text("style.WindowPadding: %.2f,%.2f", style.WindowPadding.x, style.WindowPadding.y);
+    ImGui::Text("style.WindowBorderSize: %.2f", style.WindowBorderSize);
+    ImGui::Text("style.FramePadding: %.2f,%.2f", style.FramePadding.x, style.FramePadding.y);
+    ImGui::Text("style.FrameRounding: %.2f", style.FrameRounding);
+    ImGui::Text("style.FrameBorderSize: %.2f", style.FrameBorderSize);
+    ImGui::Text("style.ItemSpacing: %.2f,%.2f", style.ItemSpacing.x, style.ItemSpacing.y);
+    ImGui::Text("style.ItemInnerSpacing: %.2f,%.2f", style.ItemInnerSpacing.x, style.ItemInnerSpacing.y);
 
 
     return;
 }
 
 
-//  "get_info2"
+
+
+//  "get_imgui_info"
 //
-void App::get_info2(void) const
+void App::get_imgui_info(void) const
 {
-    return;
-}
-
-
-
-
-//  "get_info1"
-//
-void App::get_info1(void) const
-{
-    //  constexpr unsigned int              NUM_LINES       = 18;
+    using                               namespace       about;
     [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO();
     [[maybe_unused]] ImGuiStyle &       style           = ImGui::GetStyle();
 
@@ -321,11 +623,6 @@ void App::get_info1(void) const
     ImGui::Text("style.FrameBorderSize: %.2f", style.FrameBorderSize);
     ImGui::Text("style.ItemSpacing: %.2f,%.2f", style.ItemSpacing.x, style.ItemSpacing.y);
     ImGui::Text("style.ItemInnerSpacing: %.2f,%.2f", style.ItemInnerSpacing.x, style.ItemInnerSpacing.y);
-
-
-
-
-
 
     return;
 }

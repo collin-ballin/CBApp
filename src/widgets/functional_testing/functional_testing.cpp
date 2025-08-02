@@ -274,44 +274,134 @@ void ActionComposer::_draw_composition_selector(void)
     ImGui::Separator();
 
 
-    //  BEGIN COMPOSITION LISTBOX / SELECTOR...
-    for (int i = 0; i < (int)m_compositions.size(); ++i)
-    {
-        bool    selected       = (i == m_comp_sel);
-        
-        ImGui::PushID(i);
-        
-        //  1A.     SELECTABLE ITEM...
-        if ( ImGui::Selectable(m_compositions[i].name.c_str(), selected) ) {
-            _save_actions_to_comp();       // save previous selection
-            _load_actions_from_comp(i);    // switch to new selection
-        }
-        //
-        //  1B.     RIGHT-CLICK CONTEXT MENU...
-        if (ImGui::BeginPopupContextItem("##CompMenu"))
-        {
-            if (ImGui::MenuItem("Duplicate"))
-            {
-                _save_actions_to_comp();                         // 1️⃣  still valid
-
-                Composition_t copy = m_compositions[i];          // deep copy
-                m_compositions.insert(m_compositions.begin() + i + 1, copy);
-
-                _load_actions_from_comp(i + 1);                  // select duplicate
-
-                ImGui::EndPopup();
-                ImGui::PopID();                                  // balance stack
-                return;                                          // 2️⃣  abort loop
-            }
-            ImGui::EndPopup();
-        }
-    
-        ImGui::PopID();
-    }
+    //  2.  COMPOSITION TABLE...
+    _draw_composition_table();
     
     
     
     auto &      comp    = m_compositions[m_comp_sel];
+
+    
+    
+    
+    return;
+}
+
+
+//  "_draw_composition_table"
+//
+void ActionComposer::_draw_composition_table(void)
+{
+    static constexpr const char *           COMPOSITION_DRAGDROP_ID     = "COMP_PAYLOAD";
+    
+    /// column & table flags
+    static constexpr ImGuiTableFlags        TABLE_FLAGS                 = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
+    static constexpr ImGuiTableColumnFlags  COL_HANDLE                  = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    static constexpr ImGuiTableColumnFlags  COL_NAME                    = ImGuiTableColumnFlags_WidthStretch;
+    static constexpr ImGuiTableColumnFlags  COL_DELETE                  = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    static constexpr ImGuiSelectableFlags   SELECT_FLAGS                = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
+
+
+
+    if ( !ImGui::BeginTable("##ActionComposer_Composition_Table", 3, TABLE_FLAGS, ImVec2(0, -1)) )      { return; }
+
+
+    ImGui::TableSetupColumn( "Handle",      COL_HANDLE, ImGui::GetFrameHeight()     );
+    ImGui::TableSetupColumn( "Name",        COL_NAME                                );
+    ImGui::TableSetupColumn( "Delete",      COL_DELETE, ImGui::GetFrameHeight()     );
+
+    ImGuiListClipper clip;
+    clip.Begin( static_cast<int>(m_compositions.size()) );
+    while ( clip.Step() )
+    {
+        for (int row = clip.DisplayStart; row < clip.DisplayEnd; ++row)
+        {
+            const bool is_selected = (row == m_comp_sel);
+
+            ImGui::PushID(row);
+            ImGui::TableNextRow();
+
+            //  1.  DRAG/DROP HANDLE...
+            ImGui::TableSetColumnIndex(0);
+            utl::SmallCButton(ms_DRAG_DROP_HANDLE, 0x00000000);
+            //
+            if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) ) {
+                ImGui::SetDragDropPayload(COMPOSITION_DRAGDROP_ID, &row, sizeof row);
+                ImGui::EndDragDropSource();
+            }
+            if ( ImGui::BeginDragDropTarget() ) {
+                if ( const ImGuiPayload* p = ImGui::AcceptDragDropPayload(COMPOSITION_DRAGDROP_ID) )
+                {
+                    _reorder_composition(*static_cast<const int*>(p->Data), row);
+
+                    /* ── abort drawing after the vector changed ────────────────── */
+                    ImGui::EndDragDropTarget();
+                    ImGui::PopID();
+                    clip.End();
+                    ImGui::EndTable();
+                    return;                      // ← exit the function safely
+                }
+                ImGui::EndDragDropTarget();
+            }
+
+
+            //  2.  COMPOSITION SELECTABLE...
+            ImGui::TableSetColumnIndex(1);
+            if ( ImGui::Selectable(m_compositions[row].name.c_str(), is_selected, SELECT_FLAGS) )
+            {
+                _save_actions_to_comp();
+                _load_actions_from_comp(row);
+            }
+
+            //  3.  RIGHT-CLICK CONTEXT MENU...
+            if ( ImGui::BeginPopupContextItem("##ActionComposer_Composition_ContextMenu") )
+            {
+                //  3A.     "DUPLICATE" BUTTON.
+                if ( ImGui::MenuItem("Duplicate") )
+                {
+                    _save_actions_to_comp();
+                    m_compositions.insert(m_compositions.begin() + row + 1,
+                                          m_compositions[row]);          // deep copy
+                    _load_actions_from_comp(row + 1);
+                    ImGui::EndPopup();
+                    ImGui::PopID();
+                    clip.End();
+                    ImGui::EndTable();
+                    return;
+                }
+                ImGui::EndPopup();
+            }
+
+            //  3.  DELETE BUTTON...
+            ImGui::TableSetColumnIndex(2);
+            if ( utl::SmallCButton(ms_DELETE_BUTTON_HANDLE, this->ms_DELETE_BUTTON_COLOR) )
+            {
+                _save_actions_to_comp();
+                m_compositions.erase(m_compositions.begin() + row);
+                _load_actions_from_comp(std::clamp(
+                    row, 0, static_cast<int>(m_compositions.size()) - 1));
+                ImGui::PopID();
+                clip.End();
+                ImGui::EndTable();
+                return;
+            }
+
+            ImGui::PopID();
+        }
+    }
+
+    clip.End();
+    ImGui::EndTable();
+    
+    
+    return;
+}
+
+
+//  "_draw_composition_inspector"
+//
+void ActionComposer::_draw_composition_inspector(Composition & comp)
+{
 
     //  2.  COMPOSITION NAME...
     {
@@ -331,17 +421,11 @@ void ActionComposer::_draw_composition_selector(void)
             if ( comp.description.size() > ms_COMPOSITION_DESCRIPTION_LIMIT )    { comp.description.resize(ms_COMPOSITION_DESCRIPTION_LIMIT); }
         }
     }
-    
-    
-    
-    return;
-}
 
 
-//  "_draw_composition_table"
-//
-void ActionComposer::_draw_composition_table(void)
-{
+
+
+
     return;
 }
 
@@ -462,7 +546,7 @@ inline void ActionComposer::_draw_action_table(void)
 
                 //      3.3.    DELETE BUTTON...
                 ImGui::TableSetColumnIndex(2);
-                if ( utl::SmallCButton(this->ms_DELETE_BUTTON_HANDLE) ) //  if ( ImGui::SmallButton("X") )
+                if ( utl::SmallCButton(ms_DELETE_BUTTON_HANDLE, this->ms_DELETE_BUTTON_COLOR) )
                 {
                     m_actions->erase(m_actions->begin() + i);
                     if ( m_sel >= i )       { m_sel = std::max(m_sel - 1, (int)m_actions->size() - 1); }

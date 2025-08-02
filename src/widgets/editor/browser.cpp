@@ -153,7 +153,15 @@ void Editor::_dispatch_resident_draw_fn(Resident idx)
 //
 void Editor::DrawBrowser(void)
 {
+    static ImGuiChildFlags      SELECTOR_FLAGS      = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
+    static ImVec2               SELECTOR_DIMS       = ImVec2( this->ms_LIST_COLUMN_WIDTH, 0 ); // initial width
+    //
+    const bool                  allow_resize        = ( ImGui::GetCurrentWindow()->DockTabIsVisible );
+                                SELECTOR_FLAGS      = (allow_resize)
+                                                        ? (SELECTOR_FLAGS | ImGuiChildFlags_ResizeX)
+                                                        : (SELECTOR_FLAGS & ~ImGuiChildFlags_ResizeX);
     S.PushFont(Font::Small);
+    
     
     
     //  2.  LEFTHAND BROWSER SELECTION MENU...
@@ -164,8 +172,9 @@ void Editor::DrawBrowser(void)
     //
     //
         //  2.  OBJECT BROWSER'S SELECTOR COLUMN    (MAIN, LEFT-HAND MENU OF THE ENTIRE BROWSER)...
-        ImGui::BeginChild("##Editor_Browser_Left", ImVec2(this->ms_LIST_COLUMN_WIDTH, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+        ImGui::BeginChild("##Editor_Browser_ObjSelector", SELECTOR_DIMS, SELECTOR_FLAGS);
             _draw_obj_selector_column();
+            SELECTOR_DIMS.x   = ImGui::GetItemRectSize().x;
         ImGui::EndChild();
         ImGui::PopStyleColor();
         //
@@ -174,7 +183,7 @@ void Editor::DrawBrowser(void)
         //
         //  3.  OBJECT BROWSER'S INSPECTOR COLUMN   (MAIN, RIGHT-HAND MENU OF THE ENTIRE BROWSER)...
         ImGui::PushStyleColor(ImGuiCol_ChildBg,         m_style.ms_CHILD_FRAME_BG1R);
-        ImGui::BeginChild("##Editor_Browser_Right", ImVec2(0, 0), ImGuiChildFlags_Borders);
+        ImGui::BeginChild("##Editor_Browser_ObjInspector", ImVec2(0, 0), ImGuiChildFlags_Borders);
             _dispatch_obj_inspector_column();
         ImGui::EndChild();
     //
