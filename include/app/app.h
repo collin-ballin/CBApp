@@ -216,7 +216,6 @@ protected:
     void                        show_about_info             (void) const;
     //
     void                        get_cbapp_info              (void) const;
-    void                        get_cbapp_info_ALT          (void) const;
     void                        get_build_info              (void) const;
     void                        get_config_info             (void) const;
     void                        get_imgui_info              (void) const;

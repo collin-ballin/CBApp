@@ -58,6 +58,127 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
     MAKE_GMAIL_COMPOSE_URL_IMPL(TO, "", "", SUBJECT, BODY)
     
     
+    
+    
+    
+    
+namespace about { //     BEGINNING NAMESPACE "about"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+/*
+//  "AboutRow"
+//
+struct AboutRow {
+    const char* label;        // points to static / literal text
+    std::string value;        // non-static values we must build at run time
+};
+
+
+//  "AboutCache"
+//
+struct AboutCache               // lives only while the window is open
+{
+    std::vector<AboutRow>       build_settings;
+    std::vector<AboutRow>       dep_versions;
+    // add more sections here …
+
+
+
+    // helper ----------------------------------------------------- //
+    static AboutCache create()           // called on first open
+    {
+        AboutCache c;
+
+        /* --- Build-settings section ---------------------------- //
+#       ifdef __CBAPP_DEBUG__                     c.build_settings.push_back({"__CBAPP_DEBUG__", {}});
+#endif
+#       ifdef __CBLIB_RELEASE_WITH_DEBUG_INFO__   c.build_settings.push_back({"__CBLIB_RELEASE_WITH_DEBUG_INFO__", {}});
+#endif
+#       ifdef __CBAPP_RELEASE__                   c.build_settings.push_back({"__CBAPP_RELEASE__", {}});
+#endif
+#       ifdef __CBLIB_MIN_SIZE_RELEASE__          c.build_settings.push_back({"__CBLIB_MIN_SIZE_RELEASE__", {}});
+#endif
+
+        // --- Dependency-versions section ----------------------- //
+        c.dep_versions = {
+            { "Dear ImGui",  fmt::format("{} ({})", IMGUI_VERSION, IMGUI_VERSION_NUM) },
+            { "ImPlot",      IMPLOT_VERSION },
+            { "OpenGL",      about::OPENGL_VERSION },
+            { "GLFW",        fmt::format("{}.{}.{}", GLFW_VERSION_MAJOR,
+                                                       GLFW_VERSION_MINOR,
+                                                       GLFW_VERSION_REVISION) }
+        };
+        return c;
+    }
+};
+
+
+
+
+
+    //  "render_about_section"
+    //
+    [[maybe_unused]]
+    static void render_about_section(const char* title, const std::vector<AboutRow>& rows)
+    {
+        static constexpr ImGuiTableFlags    FLAGS       = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit;
+        
+        
+        ImGui::TextUnformatted(title);
+        if ( !ImGui::BeginTable(title, 2, FLAGS) )  { return; }
+        
+        
+        //  1.  BEGIN THE TABLE...
+        {
+            ImGui::TableSetupColumn("Label",    ImGuiTableColumnFlags_WidthStretch,     0.45f);
+            ImGui::TableSetupColumn("Value",    ImGuiTableColumnFlags_WidthStretch,     0.55f);
+            ImGui::TableHeadersRow();
+
+
+            for (const auto& r : rows)
+            {
+                if ( !r.show )          { continue; }                // honour check-box filters
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn(); ImGui::TextUnformatted(r.label);
+                ImGui::TableNextColumn(); ImGui::TextUnformatted(r.value.c_str());
+            }
+            
+            ImGui::EndTable();
+        }
+        
+        
+        ImGui::Spacing(); // visual air between sections
+        
+        
+        return;
+    }
+    
+    
+*/
+
+    
+    
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}//   END OF "about" NAMESPACE.
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 namespace about { //     BEGINNING NAMESPACE "about"...
@@ -347,10 +468,20 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
 
 
 
+// *************************************************************************** //
+// *************************************************************************** //
 
 
 
 
+
+
+
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "show_about_info"
 //
@@ -434,22 +565,6 @@ void App::show_about_info(void) const
 void App::get_cbapp_info(void) const
 {
 
-
-
-    return;
-}
-
-
-
-
-
-
-//  "get_cbapp_info_ALT"
-//
-void App::get_cbapp_info_ALT(void) const
-{
-    
-    
     //      1.      CBAPP INFO...
     ImGui::SeparatorText("CBApp Information...");
     //
