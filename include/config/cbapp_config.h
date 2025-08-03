@@ -33,7 +33,6 @@
 
 //  #define     IMPLOT_DISABLE_OBSOLETE_FUNCTIONS           1
 //  #define     IMGUI_DISABLE_OBSOLETE_FUNCTIONS            1
-
 // IMGUI_DISABLE_DEBUG_TOOLS   //  Used to be named "IMGUI_DISABLE_METRICS_WINDOW"
 
 // *************************************************************************** //
@@ -56,7 +55,6 @@
 //      2.1     CRITICAL BUILD SETTINGS...
 // *************************************************************************** //
 // *************************************************************************** //
-
 #define         CBAPP_ENABLE_FUNCTIONAL_TESTING             1                   //  Compiles with procedure to enact FUNCTIONAL TESTING...
 
 //#define         __CBAPP_DEBUG__                             1                 //  Enable delay before starting int main (bug-fix for X-Code IDE issue).
@@ -87,8 +85,6 @@
 //      2.3     DEBUGGING UTILITIES...
 // *************************************************************************** //
 // *************************************************************************** //
-//  #define     CBAPP_USE_VIEWPORT                                  1           //  Debug util.  | Should be removed soon (as of 25th/04/2025).
-//  #define     CBAPP_USE_DOCKSPACE                                 1           //  Debug util.  | Should be removed soon (as of 25th/04/2025).
 #define     CBAPP_NEW_DOCKSPACE                             1
 
 

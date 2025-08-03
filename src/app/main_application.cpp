@@ -22,27 +22,117 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 
 
+
+//  "MAKE_GMAIL_COMPOSE_URL_IMPL"
+//
+/// @def        MAKE_GMAIL_COMPOSE_URL_FULL(TO, CC, BCC, SUBJECT, BODY)
+/// @brief      Helper to build a full Gmail “compose”-style URL with all recipient fields.
+/// @note       USAGE:          MAKE_GMAIL_COMPOSE_URL_FULL("friend@example.com", "cc@example.com", "bcc@example.com",      \
+///                                                         "Subject%20Of%20Email", "Body%20of%20email...")
+///
+/// @details    EXPANDS TO:     "https://mail.google.com/mail/?view=cm&fs=1&to=friend@example.com&cc=cc@example.com"        \
+///                             "&bcc=bcc@example.com&su=Subject%20Of%20Email&body=Body%20of%20email..."
+///
+///             REQUIREMENTS:   •   All arguments must be C-string literals and URL-encoded:
+///                             •   Use “%20” for spaces
+///                             •   Encode any “&”, “=”, “?”, etc., in SUBJECT and BODY
+//
+#define MAKE_GMAIL_COMPOSE_URL_IMPL(TO, CC, BCC, SUBJECT, BODY)                                 \
+    "https://mail.google.com/mail/?view=cm&fs=1"                                                \
+    "&to="          TO                                                                          \
+    "&cc="          CC                                                                          \
+    "&bcc="         BCC                                                                         \
+    "&su="          "CBApp " __CBAPP_VERSION__ " (Build "                                       \
+                    __CBAPP_BUILD__ ") | "                                                      \
+                    SUBJECT                                                                     \
+    "&body="        BODY;
+
+
+//  "MAKE_GMAIL_URL"
+//
+/// @def        MAKE_GMAIL_URL(TO, SUBJECT, BODY)
+/// @brief      Shorthand helper of this macro that removed the CC and BCC arguments.
+/// @see        MAKE_GMAIL_COMPOSE_URL_FULL(TO, CC, BCC, SUBJECT, BODY)
+//
+#define MAKE_GMAIL_URL(TO, SUBJECT, BODY)                            \
+    MAKE_GMAIL_COMPOSE_URL_IMPL(TO, "", "", SUBJECT, BODY)
+    
+    
+
+
 namespace about { //     BEGINNING NAMESPACE "about"...
 // *************************************************************************** //
 // *************************************************************************** //
+
+// *************************************************************************** //
+//
+//          1.      ENUMS, TYPES, STATIC CONSTEXPR...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    //  "CopyFormatType"
     enum class CopyFormatType : uint8_t {
         None = 0, Github, COUNT
     };
+    
+    //  "get_imgui_color_order"
+    //      Return "RGBA" (default) or "BGRA" when the build
+    //      was compiled with IMGUI_USE_BGRA_PACKED_COLOR.
+    //
+    [[nodiscard]]
+    inline static constexpr const char * get_imgui_color_order(void) noexcept
+    {
+        if constexpr (IM_COL32_R_SHIFT == 0 && IM_COL32_B_SHIFT == 16)
+            { return "RGBA"; }           // packed as 0xAABBGGRR
+        else
+            { return "BGRA"; }           // packed as 0xAARRGGBB
+    }
+
+    //  "get_imgui_packing_format"
+    //      Return the exact byte-pattern string used in ImU32.
+    //
+    [[nodiscard]]
+    inline static constexpr const char * get_imgui_packing_format(void) noexcept
+    {
+        if constexpr (IM_COL32_R_SHIFT == 0 && IM_COL32_B_SHIFT == 16)
+            { return "0xAABBGGRR"; }
+        else
+            { return "0xAARRGGBB"; }
+    }
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//          2.      DATA MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    //
+    //                              STATIC CONSTEXPR:
     static constexpr std::array<const char *, static_cast<size_t>( CopyFormatType::COUNT )>
                                         DEF_FORMAT_TYPE_NAMES       = { "Plain Text", "GitHub" };
+    //
+    static constexpr const char *       GMAIL_COMPOSE_URL           = MAKE_GMAIL_COMPOSE_URL_IMPL("collin.bond.d@gmail.com",    "",     "",                             "Subject",      "Your App sucks."   )
+    static constexpr const char *       EDU_COMPOSE_URL             = MAKE_GMAIL_COMPOSE_URL_IMPL("collin23@pdx.edu",           "",     "collin.bond.d@gmail.com",      "Subject",      "Your App sucks."   )
+    //
+    static constexpr const char *       IMGUI_COLOR_ORDER           = get_imgui_color_order();
+    static constexpr const char *       IMGUI_PACKING_FORMAT        = get_imgui_packing_format();
     //
     //                              CONSTANTS:
     static constexpr unsigned int       NUM_LINES                   = 18;
     static constexpr float              CHILD_SCALE_X               = 0.5f;
     static constexpr float              SUCCESS_MESSAGE_DURATION    = 5.0f;
     //
-    //
     //                              VARIABLES:
     static CopyFormatType               copy_format                 = CopyFormatType::Github;
     static bool                         copy_to_clipboard           = false;
     static float                        copy_time                   = -1.0f;
-    
-    
+    //
+    //
+    //                              MUTABLE STATE STUFF:
     static bool                         show_verbose_info           = false;
     //
     static bool                         show_cbapp_info             = true;
@@ -51,6 +141,14 @@ namespace about { //     BEGINNING NAMESPACE "about"...
     static bool                         show_imgui_info             = false;
 
 
+
+// *************************************************************************** //
+//
+//
+//
+//          3.      FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
 
     //  "begin_log"
     inline static void begin_log(void)
@@ -72,6 +170,16 @@ namespace about { //     BEGINNING NAMESPACE "about"...
         }
         ImGui::LogFinish();
         copy_to_clipboard = false;
+        return;
+    }
+    
+    //  "first_frame_cache"
+    //
+    inline static void first_frame_cache(void)
+    {
+        //  static constexpr const char *       IMGUI_COLOR_ORDER       = about::get_imgui_color_order();
+        //  static constexpr const char *       IMGUI_PACKING_FORMAT    = about::get_imgui_packing_format();
+    
         return;
     }
     
@@ -100,12 +208,18 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
                           [[maybe_unused]]   ImGuiWindowFlags    flags)
 {
     using           CopyFormatType          = about::CopyFormatType;
+    static bool     first_frame             = true;
     int             copy_format_int         = static_cast<int>(about::copy_format);
     ImVec2          center                  = ImGui::GetMainViewport()->GetCenter();
     
+    //  0.  COMPUTE CACHED INFO ON FIRST-FRAME...
+    if (first_frame) {
+        about::first_frame_cache();
+    }
+    
+    
+    
     if (*p_open)    { ImGui::OpenPopup(uuid); }
-    
-    
     
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2( 0.5f, 0.5f ));
     if ( ImGui::BeginPopupModal(uuid, p_open, ImGuiWindowFlags_AlwaysAutoResize) )
@@ -113,24 +227,30 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
     
 
         //  1.  If [ESC], CLOSE WINDOW...
-        if ( ImGui::IsKeyPressed( ImGuiKey_Escape ) )       { *p_open = false; }
+        if ( ImGui::IsKeyPressed( ImGuiKey_Escape ) )       { *p_open = false; ImGui::EndPopup(); return; }     // { *p_open = false; }
         
         
  
-        ImGui::Text("CBApp %s (Build %s, WIP)", __CBAPP_VERSION__, __CBAPP_BUILD__);
-        ImGui::Text("Developed by Collin Andrew Bond  (c)  2024-2025");
+        ImGui::Text                 ("CBApp %s (Build %s, WIP)", __CBAPP_VERSION__, __CBAPP_BUILD__);
+        ImGui::TextUnformatted      ("Developed by Collin Andrew Bond  (c)  2024-2025");
+        ImGui::TextUnformatted      ("Contact me at");                                          ImGui::SameLine();
+        //
+        ImGui::TextLinkOpenURL      ("collin.bond.d@gmail.com", about::GMAIL_COMPOSE_URL);      ImGui::SameLine();
+        ImGui::TextUnformatted      ("or");                                                     ImGui::SameLine();
+        ImGui::TextLinkOpenURL      ("collin23@pdx.edu",        about::EDU_COMPOSE_URL);
+        
+        
 
-
-
+        ImGui::NewLine();
         ImGui::TextLinkOpenURL("Repository", "https://github.com/collin-ballin/CBApp");
         //  ImGui::SameLine();
-        //  ImGui::TextLinkOpenURL("FAQ", "https://github.com/ocornut/imgui/blob/master/docs/FAQ.md");
+        //  ImGui::TextLinkOpenURL(     "FAQ",              "https://github.com/ocornut/imgui/blob/master/docs/FAQ.md"      );
         //  ImGui::SameLine();
-        //  ImGui::TextLinkOpenURL("Wiki", "https://github.com/ocornut/imgui/wiki");
+        //  ImGui::TextLinkOpenURL(     "Wiki",             "https://github.com/ocornut/imgui/wiki"                         );
         //  ImGui::SameLine();
-        //  ImGui::TextLinkOpenURL("Releases", "https://github.com/ocornut/imgui/releases");
+        //  ImGui::TextLinkOpenURL(     "Releases",         "https://github.com/ocornut/imgui/releases"                     );
         //  ImGui::SameLine();
-        //  ImGui::TextLinkOpenURL("Funding", "https://github.com/ocornut/imgui/wiki/Funding");
+        //  ImGui::TextLinkOpenURL(     "Funding",          "https://github.com/ocornut/imgui/wiki/Funding"                 );
 
 
 
@@ -145,14 +265,13 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
             ImGui::Text("Dear ImGui %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
             ImGui::Text("ImPlot %s", IMPLOT_VERSION);
         
-        
             ImGui::TreePop();
         }
         
     
     
         ImGui::Separator();
-        ImGui::Checkbox("Show Verbose Information", &about::show_verbose_info);
+        ImGui::Checkbox("More Info...", &about::show_verbose_info);
         if ( about::show_verbose_info )
         {
             ImGui::Indent();
@@ -201,11 +320,6 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
     }// END POP-UP.
     
     
-        
-    
-        
-        
-    
     
     return;
 }
@@ -240,11 +354,6 @@ void App::show_about_info(void) const
     else { about::copy_time    = -1.0f; }
 
 
-    ImGui::BulletText("Your current configuration is:");
-    ImGui::Indent();
-        ImGui::BulletText("ImDrawIdx: %d-bit", (int)(sizeof(ImDrawIdx) * 8));
-        ImGui::BulletText("ImGuiBackendFlags_RendererHasVtxOffset: %s", (ImGui::GetIO().BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset) ? "True" : "False");
-    ImGui::Unindent();
 
 
 
@@ -253,6 +362,7 @@ void App::show_about_info(void) const
 
     //  1.  CREATE A CHILD WINDOW TO HOST ALL THE INFORMATION...
     ImGui::BeginChild( ImGui::GetID("cfg_info_1"), CHILD_SIZE, ImGuiChildFlags_FrameStyle );
+    S.PushFont(Font::Small);
     //
     //
     //
@@ -291,6 +401,7 @@ void App::show_about_info(void) const
     //
     //
     //
+    S.PopFont();
     ImGui::EndChild();
     
     return;
@@ -303,7 +414,98 @@ void App::show_about_info(void) const
 //
 void App::get_cbapp_info(void) const
 {
-    ImGui::Text("%s", "CBApp Info (TO-DO)...");
+    
+    
+    //      1.      CBAPP INFO...
+    ImGui::SeparatorText("CBApp Information...");
+    //
+    //
+        //      1.1.    BUILD SETTINGS...
+        ImGui::TextUnformatted("1.  Build Settings:");
+        ImGui::Indent();
+        //
+        //
+        #ifdef __CBAPP_DEBUG__
+            ImGui::TextUnformatted(    "#define \t __CBAPP_DEBUG__"                             );
+        #endif  //  __CBAPP_LOG__  //
+        #ifdef __CBLIB_RELEASE_WITH_DEBUG_INFO__
+            ImGui::TextUnformatted(    "#define \t __CBLIB_RELEASE_WITH_DEBUG_INFO__"           );
+        #endif  //  __CBLIB_RELEASE_WITH_DEBUG_INFO__  //
+        #ifdef __CBAPP_RELEASE__
+            ImGui::TextUnformatted(    "#define \t __CBAPP_RELEASE__"                           );
+        #endif  //  __CBAPP_RELEASE__  //
+        #ifdef __CBLIB_MIN_SIZE_RELEASE__
+            ImGui::TextUnformatted(    "#define \t __CBLIB_MIN_SIZE_RELEASE__"                  );
+        #endif  //  __CBLIB_MIN_SIZE_RELEASE__  //
+        //
+        //
+        ImGui::Unindent();
+
+
+        //      1.2.    BUILD SETTINGS...
+        ImGui::NewLine();
+        ImGui::TextUnformatted("2.  Compile-Time Options:");
+        ImGui::Indent();
+        //
+        //
+        #ifdef __CBAPP_LOG__
+            ImGui::TextUnformatted(    "#define \t __CBAPP_LOG__"                               );
+        #endif  //  __CBAPP_LOG__  //
+        //
+        //
+        ImGui::Unindent();
+    //
+    //
+    //  END "CBAPP INFO"...
+    
+    
+    
+    
+    
+    //      2.      THIRD-PARTY DEPENDENCIES...
+    ImGui::NewLine();
+    ImGui::SeparatorText("Third-Party Dependencies...");
+    //
+    //
+        //      2.1.    DEPENDENCY VERSIONS...
+        ImGui::TextUnformatted("1.  Dependency Versions:");
+        ImGui::Indent();
+        //
+        //
+            ImGui::Text(                "Dear ImGui \t %s (%d)",                    IMGUI_VERSION, IMGUI_VERSION_NUM            );
+            ImGui::Text(                "ImPlot     \t %s",                         IMPLOT_VERSION                              );
+            
+            
+        #ifdef __CBLIB_RELEASE_WITH_DEBUG_INFO__
+            ImGui::TextUnformatted(    "#define \t __CBLIB_RELEASE_WITH_DEBUG_INFO__"           );
+        #endif  //  __CBLIB_RELEASE_WITH_DEBUG_INFO__  //
+        //
+        //
+        ImGui::Unindent();
+    //
+    //
+    //  END "THIRD-PARTY"...
+    
+    
+    
+    
+    
+    
+            
+    
+    ImGui::BulletText("Your current configuration is:");
+    ImGui::Indent();
+        ImGui::BulletText("ImDrawIdx: %d-bit", (int)(sizeof(ImDrawIdx) * 8));
+        ImGui::BulletText("ImGuiBackendFlags_RendererHasVtxOffset: %s", (ImGui::GetIO().BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset) ? "True" : "False");
+    ImGui::Unindent();
+    
+    
+    
+    ImGui::Text     ("IMGUI_COLOR_ORDER:\t\t%s",            about::IMGUI_COLOR_ORDER        );
+    ImGui::Text     ("IMGUI_PACKING_FORMAT:\t\t%s",         about::IMGUI_PACKING_FORMAT     );
+    
+
+
     return;
 }
 
@@ -1515,12 +1717,17 @@ void App::Test_Editor(void)
 
 
 
-
-
-
-
-
-// *************************************************************************** //
-// *************************************************************************** //
+//  UNDEF THE MACROS WE USED EARLIER...
 //
-//  END.
+#ifdef MAKE_GMAIL_COMPOSE_URL_IMPL
+#  undef MAKE_GMAIL_COMPOSE_URL_IMPL
+#endif
+
+#ifdef MAKE_GMAIL_URL
+#  undef MAKE_GMAIL_URL
+#endif
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //  END.

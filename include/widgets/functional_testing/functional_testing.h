@@ -438,7 +438,7 @@ protected:
     std::filesystem::path               m_filepath                              = {"/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/assets/.cbapp/debug/editor_tests_1.json"};
     //
     int                                 m_comp_sel                              = 0;            // current composition selection
-    int                                 m_sel                                   = -1;           // current selection
+    int                                 m_sel                                   = -1;           // current action selection
     int                                 m_play_index                            = -1;           // current action being executed, -1 = idle
     //
     //                              STATE:
@@ -450,7 +450,7 @@ protected:
     OverlayCache                        m_overlay_cache                         = {  };
     //
     //                              SETTINGS VARIABLES:
-    bool                                m_show_overlay                          = false;
+    bool                                m_show_overlay                          = true;
     bool                                m_render_visuals                        = true;
     bool                                m_allow_input_blocker                   = true;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
     bool                                m_show_composition_browser              = true;

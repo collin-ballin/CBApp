@@ -725,16 +725,6 @@ void ActionComposer::_draw_renderer_visuals(void)
                     ? m_mouse_capture.live_local
                     : act.cursor.last;
     }
-    //  else /* MouseDrag */
-    //  {
-    //      local_a = (&act.drag.from     == cap_ptr && m_mouse_capture.active)
-    //                  ? m_mouse_capture.live_local
-    //                  : act.drag.from;
-
-    //      local_b = (&act.drag.to       == cap_ptr && m_mouse_capture.active)
-    //                  ? m_mouse_capture.live_local
-    //                  : act.drag.to;
-    //  }
 
 
     //  2.  CONVERT     LOCAL   ===>    GLOBAL      COORDINATES...

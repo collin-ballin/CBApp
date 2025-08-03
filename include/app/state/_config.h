@@ -165,7 +165,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
     #define _CBAPP_OPTIONAL_WINDOWS(X)                                                                                                      \
 /*| NAME.                       TITLE.                      DEFAULT OPEN.       FLAGS.                                                  */  \
 /*|========================================================================================================================|            */  \
-    X(CBFunctionalTesting,      "##Functional Tests",       false,               _CBAPP_CORE_WINDOW_FLAGS                                )
+    X(CBFunctionalTesting,      "##Functional Tests",       true,               _CBAPP_CORE_WINDOW_FLAGS                                )
 //
 //
 //
@@ -250,7 +250,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 /*  3.  BASIC TOOLS...                                                                                                                      */      \
     X(ImGuiStyleEditor,     "Style Editor (ImGui)",         false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(ImPlotStyleEditor,    "Style Editor (ImPlot)",        false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImGuiMetrics,         "Dear ImGui Metrics/Debugger",  false,                   _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImGuiMetrics,         "Dear ImGui Metrics/Debugger",  true,                   _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(ImPlotMetrics,        "ImPlot Metrics",               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
 /*                                                                                                                                          */      \
     X(Logs,                 "Logs",                         false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
