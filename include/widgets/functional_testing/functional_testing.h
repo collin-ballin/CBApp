@@ -450,7 +450,7 @@ protected:
     OverlayCache                        m_overlay_cache                         = {  };
     //
     //                              SETTINGS VARIABLES:
-    bool                                m_show_overlay                          = true;
+    bool                                m_show_overlay                          = false;
     bool                                m_render_visuals                        = true;
     bool                                m_allow_input_blocker                   = true;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
     bool                                m_show_composition_browser              = true;

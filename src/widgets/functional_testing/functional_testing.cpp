@@ -162,7 +162,7 @@ void ActionComposer::Begin_IMPL(void)
     
     
     //  5.  QUERY FILE DIALOG MENUS...
-    if ( busy && !(this->m_state != State::Run) ) {
+    if ( busy && (this->m_state != State::Run) ) {
         this->_file_dialog_handler();
     }
     
