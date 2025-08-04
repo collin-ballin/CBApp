@@ -319,8 +319,8 @@ public:
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    using                               State                                   = ComposerState;
-    using                               Composition                             = Composition_t;
+    using                               State                                       = ComposerState;
+    using                               Composition                                 = Composition_t;
     CBAPP_CBLIB_TYPES_API
     
     // *************************************************************************** //
@@ -330,20 +330,20 @@ public:
     //  0.2.                            BROWSER CONSTANTS...
     // *************************************************************************** //
     //                              BROWSER CHILD-WINDOW COLORS:
-    ImVec4                              ms_CHILD_FRAME_BG1                      = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
-    ImVec4                              ms_CHILD_FRAME_BG1L                     = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
-    ImVec4                              ms_CHILD_FRAME_BG1R                     = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
+    ImVec4                              ms_CHILD_FRAME_BG1                          = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
+    ImVec4                              ms_CHILD_FRAME_BG1L                         = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
+    ImVec4                              ms_CHILD_FRAME_BG1R                         = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
     
-    ImVec4                              ms_CHILD_FRAME_BG2                      = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
-    ImVec4                              ms_CHILD_FRAME_BG2L                     = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
-    ImVec4                              ms_CHILD_FRAME_BG2R                     = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
+    ImVec4                              ms_CHILD_FRAME_BG2                          = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
+    ImVec4                              ms_CHILD_FRAME_BG2L                         = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
+    ImVec4                              ms_CHILD_FRAME_BG2R                         = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
     //
     //                              BROWSER CHILD-WINDOW STYLE:
-    float                               ms_VERTEX_SUBBROWSER_HEIGHT             = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
-    float                               ms_CHILD_BORDER1                        = 2.0f;     //  ms_CHILD_BORDER1
-    float                               ms_CHILD_BORDER2                        = 1.0f;     //  ms_CHILD_BORDER2
-    float                               ms_CHILD_ROUND1                         = 8.0f;     //  ms_CHILD_ROUND1
-    float                               ms_CHILD_ROUND2                         = 4.0f;     //  ms_CHILD_ROUND2
+    float                               ms_VERTEX_SUBBROWSER_HEIGHT                 = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
+    float                               ms_CHILD_BORDER1                            = 2.0f;     //  ms_CHILD_BORDER1
+    float                               ms_CHILD_BORDER2                            = 1.0f;     //  ms_CHILD_BORDER2
+    float                               ms_CHILD_ROUND1                             = 8.0f;     //  ms_CHILD_ROUND1
+    float                               ms_CHILD_ROUND2                             = 4.0f;     //  ms_CHILD_ROUND2
     // *************************************************************************** //
     //
     //
@@ -351,52 +351,54 @@ public:
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
     //                              OVERLAY CONSTANTS:
-    static constexpr ImVec2             ms_OVERLAY_OFFSET                       = ImVec2( 20.0f, 20.0f );
-    static constexpr float              ms_OVERLAY_ALPHA                        = 0.65f;
+    static constexpr ImVec2             ms_OVERLAY_OFFSET                           = ImVec2( 20.0f, 20.0f );
+    static constexpr float              ms_OVERLAY_ALPHA                            = 0.65f;
     //
     //                              RENDERER HELPER CONSTANTS:
-    static constexpr ImU32              ms_VIS_LINE_COLOR                       = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.800f      )  );
-    static constexpr ImU32              ms_VIS_COLOR_A                          = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   0.196f,     0.843f,     0.294f,     1.000f      )  );
-    static constexpr ImU32              ms_VIS_COLOR_B                          = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     1.000f      )  );
-    static constexpr float              ms_VIS_RECT_HALF                        = 8.0f;
-    static constexpr float              ms_VIS_THICK                            = 3.0f;
+    static constexpr ImU32              ms_VIS_LINE_COLOR                           = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.800f      )  );
+    static constexpr ImU32              ms_VIS_COLOR_A                              = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   0.196f,     0.843f,     0.294f,     1.000f      )  );
+    static constexpr ImU32              ms_VIS_COLOR_B                              = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     1.000f      )  );
+    static constexpr float              ms_VIS_RECT_HALF                            = 8.0f;
+    static constexpr float              ms_VIS_THICK                                = 3.0f;
     //
     //                              WIDGET CONSTANTS:
-    static constexpr size_t             ms_COMPOSITION_NAME_LIMIT               = 64ULL;
-    static constexpr size_t             ms_COMPOSITION_DESCRIPTION_LIMIT        = 512ULL;
-    static constexpr size_t             ms_ACTION_NAME_LIMIT                    = 64ULL;
-    static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT             = 256ULL;
+    static constexpr size_t             ms_COMPOSITION_NAME_LIMIT                   = 64ULL;
+    static constexpr size_t             ms_COMPOSITION_DESCRIPTION_LIMIT            = 512ULL;
+    static constexpr size_t             ms_ACTION_NAME_LIMIT                        = 64ULL;
+    static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT                 = 256ULL;
     //
-    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                  = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
+    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                      = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
     //
     //                              INDIVIDUAL WIDGET DIMENSIONS:
-    static constexpr float              ms_COMPOSITION_DESCRIPTION_FIELD_HEIGHT = 110.0f;
-    static constexpr float              ms_ACTION_DESCRIPTION_FIELD_HEIGHT      = 65.0f;
-    static constexpr ImVec2             ms_DELETE_BUTTON_DIMS                   = ImVec2( 18.0f, 0.0f );
+    static constexpr float              ms_COMPOSITION_DESCRIPTION_FIELD_HEIGHT     = 110.0f;
+    static constexpr float              ms_ACTION_DESCRIPTION_FIELD_HEIGHT          = 65.0f;
+    static constexpr ImVec2             ms_DELETE_BUTTON_DIMS                       = ImVec2( 18.0f, 0.0f );
     //
     //                              UI BROWSER DIMENSIONS:
-    static constexpr float              ms_LABEL_WIDTH                          = 100.0f;
-    static constexpr float              ms_WIDGET_WIDTH                         = 300.0f;
+    static constexpr float              ms_LABEL_WIDTH                              = 90.0f;
+    static constexpr float              ms_WIDGET_WIDTH                             = 250.0f;
     //
-    static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE                 = ImVec2( 55,   25 );
-    static constexpr float              ms_SETTINGS_LABEL_WIDTH                 = 180.0f;
-    static constexpr float              ms_SETTINGS_WIDGET_WIDTH                = 300.0f;
+    static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE                     = ImVec2( 55,   25 );
+    static constexpr float              ms_SETTINGS_LABEL_WIDTH                     = 180.0f;
+    static constexpr float              ms_SETTINGS_WIDGET_WIDTH                    = 300.0f;
     //
     //
-    ImGuiChildFlags                     ms_COMPOSER_SELECTOR_FLAGS              = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
-    ImVec2                              ms_COMPOSER_SELECTOR_DIMS               = ImVec2(400.0f,    -1.0f);
-    ImGuiChildFlags                     ms_ACTION_SELECTOR_FLAGS                = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
-    ImVec2                              ms_ACTION_SELECTOR_DIMS                 = ImVec2(500.0f,    -1.0f);
+    ImGuiChildFlags                     ms_COMPOSER_SELECTOR_FLAGS                  = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
+    Param<ImVec2>                       ms_COMPOSER_SELECTOR_DIMS                   = {     {400.0f, -1.0f},        { {150.0f, 1.0f},   {FLT_MAX, FLT_MAX} }   };
+    //
+    ImGuiChildFlags                     ms_ACTION_SELECTOR_FLAGS                    = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
+    Param<ImVec2>                       ms_ACTION_SELECTOR_DIMS                     = {     {500.0f, -1.0f},        { {200.0f, 1.0f},   {FLT_MAX, FLT_MAX} }   };
     //
     //  static constexpr float              ms_COMPOSITION_COLUMN_WIDTH             = 340.0f;
     //  static constexpr float              ms_SELECTOR_COLUMN_WIDTH                = 340.0f;
-    static constexpr const char *       ms_DRAG_DROP_HANDLE                     = "=";
-    static constexpr const char *       ms_DELETE_BUTTON_HANDLE                 = "-";
-    static constexpr const char *       ms_EMPTY_HOTKEY_NAME                    = "UNASSIGNED";      // Used when Hotkey is UNASSIGNED...
+    static constexpr const char *       ms_DRAG_DROP_HANDLE                         = "=";
+    static constexpr const char *       ms_DELETE_BUTTON_HANDLE                     = "-";
+    static constexpr const char *       ms_EMPTY_HOTKEY_NAME                        = "UNASSIGNED";      // Used when Hotkey is UNASSIGNED...
+    static constexpr const char *       ms_NO_ASSIGNED_FILE_STRING                  = "UNASSIGNED";      // Used when there is no "File > Save As..." assigned to app...
     //
-    static constexpr float              ms_CONTROLBAR_SELECTABLE_SEP            = 16.0f;    //  controlbar offset.
-    static constexpr float              ms_TOOLBAR_SELECTABLE_SEP               = 16.0f;    //  sep for  "+ Add",  "Prev",  etc...
-    static constexpr float              ms_BROWSER_SELECTABLE_SEP               = 16.0f;    //  offset for buttons ontop of each selectable
+    static constexpr float              ms_CONTROLBAR_SELECTABLE_SEP                = 16.0f;    //  controlbar offset.
+    static constexpr float              ms_TOOLBAR_SELECTABLE_SEP                   = 16.0f;    //  sep for  "+ Add",  "Prev",  etc...
+    static constexpr float              ms_BROWSER_SELECTABLE_SEP                   = 16.0f;    //  offset for buttons ontop of each selectable
     //
     //                              MISC. CONSTANTS:
     //                                  ...
@@ -407,11 +409,11 @@ public:
     // *************************************************************************** //
     //      REFERENCES TO GLOBAL ARRAYS.
     // *************************************************************************** //
-    static constexpr auto &             ms_COMPOSER_STATE_NAMES                 = DEF_COMPOSER_STATE_NAMES;
-    static constexpr auto &             ms_ACTION_TYPE_NAMES                    = DEF_ACTION_TYPE_NAMES;
-    static constexpr auto &             ms_EXEC_STATE_NAMES                     = DEF_EXEC_STATE_NAMES;
-    static constexpr auto &             ms_CLICK_PARAM_NAMES                    = DEF_MOUSE_CLICK_TYPES_NAMES;
-    static constexpr auto &             ms_CLICK_TYPE_NAMES                     = DEF_CLICK_TYPE_NAMES;
+    static constexpr auto &             ms_COMPOSER_STATE_NAMES                     = DEF_COMPOSER_STATE_NAMES;
+    static constexpr auto &             ms_ACTION_TYPE_NAMES                        = DEF_ACTION_TYPE_NAMES;
+    static constexpr auto &             ms_EXEC_STATE_NAMES                         = DEF_EXEC_STATE_NAMES;
+    static constexpr auto &             ms_CLICK_PARAM_NAMES                        = DEF_MOUSE_CLICK_TYPES_NAMES;
+    static constexpr auto &             ms_CLICK_TYPE_NAMES                         = DEF_CLICK_TYPE_NAMES;
     
 //
 //
@@ -430,49 +432,49 @@ protected:
     //                              IMPORTANT DATA:
     app::AppState &                     CBAPP_STATE_NAME;
     std::unique_ptr<app::WinInfo>       m_detview_window;
-    bool                                m_initialized                           = false;
+    bool                                m_initialized                               = false;
     //
-    ActionExecutor                      m_executor                              {  };
-    std::vector<Composition>            m_compositions                          { 1 };
-    std::vector<Action> *               m_actions                               = nullptr;
-    std::filesystem::path               m_filepath                              = {"/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/assets/.cbapp/debug/editor_tests_1.json"};
+    ActionExecutor                      m_executor                                  {  };
+    std::vector<Composition>            m_compositions                              { 1 };
+    std::vector<Action> *               m_actions                                   = nullptr;
+    std::filesystem::path               m_filepath                                  = {"/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/assets/.cbapp/debug/editor_tests_1.json"};
     //
-    int                                 m_comp_sel                              = 0;            // current composition selection
-    int                                 m_sel                                   = -1;           // current action selection
-    int                                 m_play_index                            = -1;           // current action being executed, -1 = idle
+    int                                 m_comp_sel                                  = 0;            // current composition selection
+    int                                 m_sel                                       = -1;           // current action selection
+    int                                 m_play_index                                = -1;           // current action being executed, -1 = idle
     //
     //                              STATE:
-    State                               m_state                                 = State::Idle;
+    State                               m_state                                     = State::Idle;
     //
     //                              SUB-STATES:
-    KeyCaptureState                     m_key_capture                           = {  };
-    MouseCaptureState                   m_mouse_capture                         = {  };
-    OverlayCache                        m_overlay_cache                         = {  };
+    KeyCaptureState                     m_key_capture                               = {  };
+    MouseCaptureState                   m_mouse_capture                             = {  };
+    OverlayCache                        m_overlay_cache                             = {  };
     //
     //                              SETTINGS VARIABLES:
-    bool                                m_show_overlay                          = true;
-    bool                                m_render_visuals                        = true;
-    bool                                m_allow_input_blocker                   = true;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
-    bool                                m_show_composition_browser              = true;
-    bool                                m_show_composition_inspector            = false;
+    bool                                m_show_overlay                              = true;
+    bool                                m_render_visuals                            = true;
+    bool                                m_allow_input_blocker                       = true;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
+    bool                                m_show_composition_browser                  = true;
+    bool                                m_show_composition_inspector                = false;
     //
     //                              MUTABLE STATE VARIABLES:
-    bool                                m_is_running                            = false;
-    bool                                m_step_req                              = false;
-    bool                                m_capture_is_active                     = false;        //  < true while “Auto” sampling.
-    bool                                m_key_capture_is_active                 = false;        //  < true while “Auto” sampling.
+    bool                                m_is_running                                = false;
+    bool                                m_step_req                                  = false;
+    bool                                m_capture_is_active                         = false;        //  < true while “Auto” sampling.
+    bool                                m_key_capture_is_active                     = false;        //  < true while “Auto” sampling.
     //
-    bool                                m_saving                                = false;
-    bool                                m_loading                               = false;
+    bool                                m_saving                                    = false;
+    bool                                m_loading                                   = false;
     //
     //
     //                              UTILITY:
-    ImVec2                              m_overlay_size                          = { 150.f, 30.f };
-    GLFWmonitor *                       m_active_monitor                        = nullptr;
-    ImRect                              m_monitor_bounds                        {  };
+    ImVec2                              m_overlay_size                              = { 150.f, 30.f };
+    GLFWmonitor *                       m_active_monitor                            = nullptr;
+    ImRect                              m_monitor_bounds                            {  };
     ImGuiTextFilter                     m_filter;
-    ImVec2 *                            m_m_capture_dest                        = nullptr;      //  < pointer to coord being written
-    //HotkeyParams *                      m_k_capture_key_dest                    = nullptr;
+    ImVec2 *                            m_m_capture_dest                            = nullptr;      //  < pointer to coord being written
+    //HotkeyParams *                      m_k_capture_key_dest                          = nullptr;
     
 //
 //
@@ -621,6 +623,7 @@ protected:
     //                              SERIALIZATION:
     void                                _file_dialog_handler                (void);
     bool                                save_to_file                        (const std::filesystem::path & path) const;
+    bool                                save_to_file_IMPL                   (const std::filesystem::path & path) const;
     bool                                load_from_file                      (const std::filesystem::path & path);
     // *************************************************************************** //
     //
@@ -778,7 +781,6 @@ protected:
         return;
     }
     
-    
     //  "_reorder_composition"
     inline void                         _reorder_composition            (int from, int to)
     {
@@ -797,9 +799,11 @@ protected:
         _load_actions_from_comp(m_comp_sel);      // resets m_actions to new slot
     }
     
-    
     //  "need_step"
     inline bool                         need_step                       (void) const    { return m_step_req; }
+    
+    //  "has_file"
+    inline bool                         has_file                        (void) const    { return ( std::filesystem::exists( m_filepath ) ); }
     
     
     

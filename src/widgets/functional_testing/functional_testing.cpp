@@ -199,9 +199,10 @@ void ActionComposer::draw_all(void)
         ImGui::PushStyleColor(ImGuiCol_ChildBg,             ms_CHILD_FRAME_BG1L);
             
             //  1.  DRAW THE TOP-MOST "COMPOSITION" BAR...
-            ImGui::BeginChild("##ActionComposer_CompositionSelector", ms_COMPOSER_SELECTOR_DIMS, ms_COMPOSER_SELECTOR_FLAGS);
+            ImGui::SetNextWindowSizeConstraints( ms_COMPOSER_SELECTOR_DIMS.limits.min, ms_COMPOSER_SELECTOR_DIMS.limits.max );
+            ImGui::BeginChild("##ActionComposer_CompositionSelector", ms_COMPOSER_SELECTOR_DIMS.value, ms_COMPOSER_SELECTOR_FLAGS);
                 this->_draw_composition_selector();
-                ms_COMPOSER_SELECTOR_DIMS.x     = ImGui::GetItemRectSize().x;
+                ms_COMPOSER_SELECTOR_DIMS.value.x     = ImGui::GetItemRectSize().x;
             ImGui::EndChild();
 
         ImGui::PopStyleColor();
@@ -222,10 +223,10 @@ void ActionComposer::draw_all(void)
         //
         //
         //
-            //  ImGui::BeginChild("##ActionComposer_Action_Selector",  {ms_SELECTOR_COLUMN_WIDTH, 0}, ImGuiChildFlags_Borders);
-            ImGui::BeginChild("##ActionComposer_Action_Selector",  ms_ACTION_SELECTOR_DIMS, ms_ACTION_SELECTOR_FLAGS);
+            ImGui::SetNextWindowSizeConstraints( ms_ACTION_SELECTOR_DIMS.limits.min, ms_ACTION_SELECTOR_DIMS.limits.max );
+            ImGui::BeginChild("##ActionComposer_Action_Selector",  ms_ACTION_SELECTOR_DIMS.value, ms_ACTION_SELECTOR_FLAGS);
                 this->_draw_action_selector();
-                ms_ACTION_SELECTOR_DIMS.x       = ImGui::GetItemRectSize().x;
+                ms_ACTION_SELECTOR_DIMS.value.x       = ImGui::GetItemRectSize().x;
             ImGui::EndChild();
             ImGui::PopStyleColor();
             
@@ -1031,9 +1032,97 @@ void ActionComposer::_file_dialog_handler(void)
 }
               
 
+
+
 //  "save_to_file"
 //
 bool ActionComposer::save_to_file(const std::filesystem::path & path) const
+{
+    namespace                       fs              = std::filesystem;
+    std::error_code                 ec;
+
+
+
+    std::pair<bool,bool>            exists          = {false, false};
+    bool                            success         = true;
+
+    
+
+
+    //  0.  PRE-SAVE CONDITIONS...
+    const bool existed_before  = fs::exists(path, ec);
+    const auto prev_write_time = existed_before
+                               ? fs::last_write_time(path, ec)
+                               : fs::file_time_type::min();
+
+
+
+    //  1.  ENSURE PARENT DIRECTORIES EXIST...
+    if ( auto parent = path.parent_path(); !parent.empty() && !fs::exists(parent, ec) )
+    {
+        if ( !fs::create_directories(parent, ec) || ec )
+        {
+            S.m_logger.error(std::format( "ActionComposer | failed to create parent dirs while attempting to save file \"{}\".  ERROR_CODE: \"{}\"",
+                                          path.string(), ec.message()) );
+            return false;
+        }
+    }
+
+
+    //  2.  PERFORM THE SAVE-OPERATION WITH THE WRAPP-ED FUNCTION...
+    if ( !save_to_file_IMPL(path) ) {        // ← your original implementation
+        return false;                       //   already logs its own errors
+    }
+    
+
+
+    //  3.  POST-SAVE VALIDATION...
+    if ( !fs::exists(path, ec) )
+    {
+        S.m_logger.error(std::format( "ActionComposer | save verification failed: \"{}\" does not exist after write.",
+                                      path.string()) );
+        return false;
+    }
+    
+
+    const std::uintmax_t sz = fs::file_size(path, ec);
+    
+    if (sz == 0 || ec)
+    {
+        S.m_logger.error(std::format(
+            "ActionComposer | save verification failed: \"{}\" size is {} bytes.",
+            path.string(), sz));
+        return false;
+    }
+
+
+    if (existed_before)
+    {
+        const auto new_write_time = fs::last_write_time(path, ec);
+        using namespace std::chrono_literals;
+        if (new_write_time <= prev_write_time + 1s)   // 1 s tolerance for FS granularity
+        {
+            S.m_logger.error(std::format(
+                "ActionComposer | save verification failed: last-write-time for \"{}\" "
+                "did not advance (old {}, new {}).",
+                path.string(),
+                prev_write_time.time_since_epoch().count(),
+                new_write_time.time_since_epoch().count()));
+            return false;
+        }
+    }
+
+
+
+    return success;        // all checks passed
+}
+              
+
+
+
+//  "save_to_file_IMPL"
+//
+bool ActionComposer::save_to_file_IMPL(const std::filesystem::path & path) const
 {
     std::ofstream       f(path);
     nlohmann::json      j = { {"compositions", m_compositions} };
@@ -1047,6 +1136,10 @@ bool ActionComposer::save_to_file(const std::filesystem::path & path) const
     f << j.dump(2);
     return true;
 }
+
+
+
+
 
 
 //  "load_from_file"
@@ -1092,7 +1185,6 @@ bool ActionComposer::load_from_file(const std::filesystem::path & path)
 //
 void ActionComposer::_draw_settings_menu(void)
 {
-
     //  1.  ACTIONS...
     ImGui::SeparatorText("Actions...");
     {
@@ -1145,9 +1237,28 @@ void ActionComposer::_draw_settings_menu(void)
     ImGui::NewLine();
     ImGui::SeparatorText("Serialization...");
     {
-        //      1.      SAVE DIALOGUE...
-        this->label("Save To File:",                this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        const bool      has_file            = this->has_file();
+        bool            force_save_as       = false;
+    
+    
+        //      1.      CURRENT FILE...
+        this->label("Current File:",                this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        ImGui::TextDisabled( "%s", (has_file) ? this->m_filepath.string().c_str() : ms_NO_ASSIGNED_FILE_STRING );
+    
+    
+        //      2.      SAVE DIALOGUE...
+        this->label("Save:",                        this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
         if ( ImGui::Button("Save", ms_SETTINGS_BUTTON_SIZE) )    {
+            
+            if (has_file)       { this->save_to_file( this->m_filepath ); }
+            else                { force_save_as = true; }
+
+        }
+        
+        
+        //      3.      "SAVE AS..." DIALOGUE...
+        this->label("Save As...:",                  this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( force_save_as || ImGui::Button("Save As...", ms_SETTINGS_BUTTON_SIZE) )    {
             
             if ( !S.m_dialog_queued )
             {
@@ -1165,8 +1276,7 @@ void ActionComposer::_draw_settings_menu(void)
         }
 
 
-
-        //      2.      LOAD DIALOGUE...
+        //      4.      LOAD DIALOGUE...
         this->label("Load From File:",              this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
         if ( ImGui::Button("Load", ms_SETTINGS_BUTTON_SIZE) )    {
             

@@ -134,12 +134,20 @@ public:
     // *************************************************************************** //
     //  1.3B    APPLICATION OPERATION HELPER FUNCTIONS...
     // *************************************************************************** //
+    //
+    //                              APPLICATION UTILITIES:
     void                                DockAtHome                  (const Window &);
     void                                DockAtHome                  (const char *);
     void                                DockAtDetView               (const Window &);
     void                                DockAtDetView               (const char *);
-    void                                PushFont                    ([[maybe_unused]] const Font & );
-    void                                PopFont                     (void);
+    //
+    //                              SERIALIZATION ITEMS:
+    template<typename Callback>
+    bool                                SaveWithValidation          ( const std::filesystem::path & ,   Callback &,
+                                                                      const std::string_view &      ,   const std::string_view & msg="callback function returned failure");
+    
+    
+    
     // *************************************************************************** //
     //
     //
@@ -162,8 +170,15 @@ public:
 //
 //  1.4                 INLINE FUNCTIONS...
 // *************************************************************************** //
-// *************************************************************************** //=
+// *************************************************************************** //
 
+    //  "PushFont"
+    inline void                         PushFont                    ([[maybe_unused]] const Font & which)
+    { ImGui::PushFont( this->m_fonts[which] ); return; }
+
+    //  "PopFont"
+    inline void                         PopFont                     (void)      { ImGui::PopFont(); return; }
+    
     //  "current_task"
     inline const char *                 current_task                (void) const
     {  return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str();  }

@@ -50,7 +50,7 @@ namespace cblib { namespace math {   //     BEGINNING NAMESPACE "cblib" :: "math
 //      - 1.
 template<typename T>
 struct Range {
-    T min, max;
+    T               min, max;
 };
 
 
@@ -58,12 +58,19 @@ struct Range {
 //      - 2.    A parameter that carries both a value and its valid range
 template<typename T>
 struct Param {
-    inline T Value      (void)      { return value;         }
-    inline T RangeMin   (void)      { return limits.min;    }
-    inline T RangeMax   (void)      { return limits.max;    }
 //
-    T           value;
-    Range<T>    limits;
+//                          INITIALIZATION FUNCTIONS...
+//
+//
+//                          OVERLOADED OPERATORS...
+    inline T &                  Value                   (void)      { return value;         }
+    inline T &                  RangeMin                (void)      { return limits.min;    }
+    inline T &                  RangeMax                (void)      { return limits.max;    }
+//
+//
+//                          DATA MEMBERS...
+    T                           value;
+    Range<T>                    limits;
 };
 
 

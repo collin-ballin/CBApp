@@ -167,6 +167,40 @@ inline constexpr const char *           strcat_cx_cstr      = strcat_string_view
 //
 //
 //
+//      4.      STRING UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "fmt_file_size"
+//
+[[nodiscard]] inline std::string    fmt_file_size               (const std::uintmax_t bytes) {
+    static constexpr const char *   units[]         = { "B", "KB", "MB", "GB", "TB" };
+    static constexpr size_t         SIZE            = 64;
+    //
+    char                            buf[SIZE]       = {};
+    double                          value           = static_cast<double>(bytes);
+    int                             idx             = 0;
+    
+    while ( value >= 1024.0 && idx < 4 )            { value /= 1024.0; ++idx; }
+    std::snprintf(buf, sizeof(buf), (idx == 0) ? "%.0f %s" : "%.1f %s", value, units[idx]);
+    return buf;
+};
+    
+    
+    
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //
 } }//   END OF "cblib" :: "utl" NAMESPACE.

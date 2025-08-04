@@ -10,6 +10,11 @@
 **************************************************************************************/
 #include "app/app.h"
 #include "app/state/state.h"
+//
+#include <filesystem>
+#include <system_error>
+#include <chrono>
+#include <format>
 
 
 
@@ -108,18 +113,126 @@ void AppState::DockAtDetView(const Window & idx) {
 }
 //
 void AppState::DockAtDetView(const char * uuid)                 { ImGui::DockBuilderDockWindow( uuid, m_detview_dockspace_id ); }
-    
-    
-    
-    
-//  "PushFont"
-//
-void AppState::PushFont( [[maybe_unused]] const Font & which)   { ImGui::PushFont( this->m_fonts[which] ); return; }
 
 
-//  "PopFont"
+
+// *************************************************************************** //
+//      SERIALIZATION...
+// *************************************************************************** //
+
+//  "SaveWithValidation"
 //
-void AppState::PopFont(void)                                    { ImGui::PopFont(); return; }
+template<typename Callback>
+bool AppState::SaveWithValidation(const std::filesystem::path & path, Callback & callback, const std::string_view & caller_tag, const std::string_view & failure_msg)
+{
+    namespace                                   fs              = std::filesystem;
+    using                                       time_type       = fs::file_time_type;   //    std::chrono::time_point<std::filesystem::_FilesystemClock>;
+    using                                       size_type       = std::uintmax_t;
+    
+    std::error_code                             ec              {  };
+    //
+    std::pair<bool,bool>                        exists          = {false, false};
+    std::pair<time_type,time_type>              timestamp       = {  };
+    std::pair<size_type,size_type>              filesize        = {  };
+    //
+    std::string                                 log             = {  };
+    bool                                        success         = true;
+
+
+
+    //      0.      MAKE A SNAPSHOT OF THE INITIAL STATE OF THE FILE...
+    {
+        std::error_code         EC  { };
+        exists.first                = fs::exists(path, EC);
+        timestamp.first             = ( exists.first ) ? fs::last_write_time(path,  EC)     : time_type::min();
+        filesize.first              = ( exists.first ) ? fs::file_size(path,        EC)     : -1;
+        //
+        if (EC) {
+            m_logger.critical( std::format( "{} | UNKNOWN ERROR: ERROR_CODE FAILURE INSIDE \"SaveWithValidation()\" FOR PATH \"{}\"", caller_tag, path.generic_string() ) );
+        }
+    }
+
+
+
+    //      1.      MAIN-LOOP OF PERFORMING EACH CHECK...
+    do {
+    //
+    //
+    //              1.1.    ENSURE THE PARENT DIR. EXISTS.
+        if ( auto parent = path.parent_path(); !parent.empty() && !fs::exists(parent, ec) )
+        {
+            if ( !fs::create_directories(parent, ec) || ec ) {
+                log                 = std::format( "{} | failed to create parent dirs. while attempting to save file \"{}\"; error_code: {}", caller_tag, parent.generic_string(), ec.message() );
+                success             = false;    break;
+            }
+        }
+        //
+        //          1.2.    INVOKE THE USER-SUPPLIED CALLBACK FUNCTION.
+        if ( !callback(path) ) {
+            log                 = std::format( "{} | validation failure: {} \"{}\"", caller_tag, failure_msg, path.filename().string() );
+            success             = false;    break;
+        }
+        exists.second       = fs::exists(path, ec);
+        filesize.second     = fs::file_size(path, ec);
+        timestamp.second    = fs::last_write_time(path, ec);
+        
+        
+        
+        //          2.1.    [ EXISTS ]          POST-SAVE VALIDATION.
+        if ( !exists.second ) {
+            log                 = std::format( "{} | validation failure: file not found after write: \"{}\"", caller_tag, path.generic_string() );
+            success             = false;    break;
+        }
+        //
+        //          2.2.    [ FILE SIZE ]       POST-SAVE VALIDATION.
+        if ( filesize.second == 0 ) {
+            log                 = std::format( "{} | validation failure: file \"{}\" was written with a size of zero-bytes", caller_tag, path.generic_string() );
+            success             = false;    break;
+        }
+        //
+        //          2.3.    [ TIMESTAMP ]       POST-SAVE VALIDATION.
+        if ( exists.first ) {
+            using   namespace   std::chrono_literals;
+            
+            if ( timestamp.second <= timestamp.first + 1s ) {
+                log                 = std::format( "{} | verification: timestamp of written file unchanged for \"{}\"", caller_tag, path.filename().string() );
+                success             = false;    break;
+            }
+        }
+    //
+    //
+    } while (false);
+    
+    
+    //  CASE 1 :    FAILURE...
+    if (!success)       { m_logger.error( log ); }
+    //
+    //  CASE 2 :    SUCCESS...
+    else
+    {
+        //  1.  CREATED THE FILE.
+        if ( exists.first ) {
+            log = std::format( "{} | created file \"{}\" ({}) ", caller_tag, path.filename().string(), cblib::utl::fmt_file_size(filesize.second) );
+        }
+        //
+        //  2.  OVERWROTE THE FILE.
+        else {
+            log = std::format( "{} | overwrote file \"{}\" ({}) ", caller_tag, path.filename().string(), cblib::utl::fmt_file_size(filesize.second) );
+        }
+    
+    }
+
+
+
+    m_logger.info( log );
+    
+    return success;            // all checks passed
+}
+                                                                      
+
+
+
+
 
 
 
