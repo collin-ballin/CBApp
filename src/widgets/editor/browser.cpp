@@ -153,37 +153,38 @@ void Editor::_dispatch_resident_draw_fn(Resident idx)
 //
 void Editor::DrawBrowser(void)
 {
-    static ImGuiChildFlags      SELECTOR_FLAGS      = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
-    static ImVec2               SELECTOR_DIMS       = ImVec2( this->ms_LIST_COLUMN_WIDTH, 0 ); // initial width
+    BrowserStyle &              BStyle                          = this->m_style.browser_style;
     //
-    const bool                  allow_resize        = ( ImGui::GetCurrentWindow()->DockTabIsVisible );
-                                SELECTOR_FLAGS      = (allow_resize)
-                                                        ? (SELECTOR_FLAGS | ImGuiChildFlags_ResizeX)
-                                                        : (SELECTOR_FLAGS & ~ImGuiChildFlags_ResizeX);
+    const bool                  allow_resize                    = ( ImGui::GetCurrentWindow()->DockTabIsVisible );
+                                BStyle.DYNAMIC_CHILD_FLAGS      = (allow_resize)
+                                                                    ? (BStyle.DYNAMIC_CHILD_FLAGS  | ImGuiChildFlags_ResizeX)
+                                                                    : (BStyle.DYNAMIC_CHILD_FLAGS  & ~ImGuiChildFlags_ResizeX);
     S.PushFont(Font::Small);
     
     
     
     //  2.  LEFTHAND BROWSER SELECTION MENU...
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  m_style.ms_CHILD_BORDER1);
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    m_style.ms_CHILD_ROUND1);
-    ImGui::PushStyleColor(ImGuiCol_ChildBg,             m_style.ms_CHILD_FRAME_BG1L);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  BStyle.ms_CHILD_BORDER1);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    BStyle.ms_CHILD_ROUND1);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg,             BStyle.ms_CHILD_FRAME_BG1L);
     //
     //
     //
         //  2.  OBJECT BROWSER'S SELECTOR COLUMN    (MAIN, LEFT-HAND MENU OF THE ENTIRE BROWSER)...
-        ImGui::BeginChild("##Editor_Browser_ObjSelector", SELECTOR_DIMS, SELECTOR_FLAGS);
+        ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_SELECTOR_DIMS.limits.min, BStyle.OBJ_SELECTOR_DIMS.limits.max );
+        ImGui::BeginChild("##Editor_Browser_ObjSelector", BStyle.OBJ_SELECTOR_DIMS.value, BStyle.DYNAMIC_CHILD_FLAGS);
             _draw_obj_selector_column();
-            SELECTOR_DIMS.x   = ImGui::GetItemRectSize().x;
+            BStyle.OBJ_SELECTOR_DIMS.value.x     = ImGui::GetItemRectSize().x;
         ImGui::EndChild();
         ImGui::PopStyleColor();
+        //
         //
         ImGui::SameLine();
         //
         //
         //  3.  OBJECT BROWSER'S INSPECTOR COLUMN   (MAIN, RIGHT-HAND MENU OF THE ENTIRE BROWSER)...
-        ImGui::PushStyleColor(ImGuiCol_ChildBg,         m_style.ms_CHILD_FRAME_BG1R);
-        ImGui::BeginChild("##Editor_Browser_ObjInspector", ImVec2(0, 0), ImGuiChildFlags_Borders);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg,         BStyle.ms_CHILD_FRAME_BG1R);
+        ImGui::BeginChild("##Editor_Browser_ObjInspector", ImVec2(0, 0), BStyle.STATIC_CHILD_FLAGS);
             _dispatch_obj_inspector_column();
         ImGui::EndChild();
     //
@@ -213,6 +214,168 @@ void Editor::DrawBrowser(void)
 //
 void Editor::_draw_obj_selector_column(void)
 {
+    using                                       namespace               icon;
+    static constexpr ImGuiTableFlags            TABLE_FLAGS             = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
+    static constexpr ImGuiTableColumnFlags      C_EYE                   = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    static constexpr ImGuiTableColumnFlags      C_LOCK                  = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    static constexpr ImGuiTableColumnFlags      C_NAME                  = ImGuiTableColumnFlags_WidthStretch;
+    static constexpr ImGuiTableColumnFlags      C_DEL                   = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    static constexpr ImGuiSelectableFlags       SELECTABLE_FLAGS        = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick;
+    //
+    static constexpr ImU32                      ms_DELETE_BUTTON_COLOR  = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
+    //
+    const ImU32                                 col_text                = ImGui::GetColorU32(ImGuiCol_Text);
+    const ImU32                                 col_dim                 = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+    const ImU32                                 col_frame               = ImGui::GetColorU32(ImGuiCol_FrameBg);
+    //
+    //
+    BrowserStyle &                              BStyle                  = this->m_style.browser_style;
+    BrowserState &                              BState                  = m_browser_S;                    // rename / focus state
+    ImDrawList *                                dl                      = ImGui::GetWindowDrawList();
+    ImGuiListClipper                            clipper;
+
+
+
+    //  1.  SEARCH-QUERY BOX...
+    S.PushFont(Font::Main);
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    if ( ImGui::InputTextWithHint("##Editor_ObjSelector_ObjFilter", "filter", BState.m_obj_filter.InputBuf, IM_ARRAYSIZE( BState.m_obj_filter.InputBuf )) )
+    { BState.m_obj_filter.Build(); }
+    
+    S.PopFont();
+        
+    ImGui::Separator();
+    //clipper.Begin(static_cast<int>(m_paths.size()), -1);
+
+
+    //  2.  BEGIN THE TABLE TO PRESENT EACH OBJECT...
+    if ( ImGui::BeginTable("##Editor_ObjSelector_ObjTable", 4, TABLE_FLAGS, ImVec2(0, -1)) )
+    {
+        ImGui::TableSetupColumn ("Eye",         C_EYE,          CELL_SZ             );
+        ImGui::TableSetupColumn ("Lock",        C_LOCK,         CELL_SZ             );
+        ImGui::TableSetupColumn ("Name",        C_NAME                              );
+        ImGui::TableSetupColumn ("Del",         C_DEL,          1.2f * CELL_SZ      );
+
+
+
+        clipper.Begin( static_cast<int>(m_paths.size()), -1 );
+
+        //  3.  DRAWING EACH OBJECT IN THE LEFT-HAND SELECTION COLUMN OF THE BROWSER...
+        while ( clipper.Step() )
+        {
+            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+            {
+                Path &                  path            = m_paths[i];
+                const bool              selected        = m_sel.paths.count(static_cast<size_t>(i));
+                const bool              mutable_path    = path.is_mutable();
+                //  const bool          renaming       = (BState.m_renaming_idx == i);
+                ImGuiSelectableFlags    sel_flags       = (!mutable_path) ? ImGuiSelectableFlags_Disabled | ImGuiSelectableFlags_AllowDoubleClick
+                                                                          : ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick;
+                
+                
+                //  CASE 0 :    EARLY-OUT IF FILTER REMOVES OBJ.
+                if ( !BState.m_obj_filter.PassFilter(path.label.c_str()) )      { continue; }
+
+
+                //  4.  BEGIN THE ROW...
+                ImGui::PushID(i);
+                //  ImGui::BeginGroup();
+                ImGui::TableNextRow();
+
+
+                //      4.1.        "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY).
+                ImGui::TableSetColumnIndex(0);
+                ImGui::InvisibleButton("##Editor_Browser_VisibilityButton", { CELL_SZ, CELL_SZ });
+                if ( ImGui::IsItemClicked() )       { path.visible = !path.visible; _prune_selection_mutability(); }
+                //
+                //  Draw EYE or CLOSED-EYE Icon.
+                (path.visible ? draw_eye_icon : draw_eye_off_icon)
+                        ( dl, ImGui::GetItemRectMin(), {CELL_SZ, CELL_SZ},
+                          path.visible ? col_text : col_dim );
+
+
+                //      4.2.        "LOCK" BUTTON (TO TOGGLE OBJECT'S LOCKED-STATE).
+                ImGui::TableSetColumnIndex(1);
+                ImGui::InvisibleButton("##Editor_Browser_LockButton", { CELL_SZ, CELL_SZ });
+                if ( ImGui::IsItemClicked() )       { path.locked = !path.locked; _prune_selection_mutability(); }
+                //
+                //  Draw LOCK or UNLOCK Icon.
+                //      draw_icon_background(dl, ImGui::GetItemRectMin(), {CELL_SZ, CELL_SZ}, selected ? col_frame : 0);
+                (path.locked ? draw_lock_icon : draw_unlock_icon)
+                        ( dl, ImGui::GetItemRectMin(), {CELL_SZ, CELL_SZ},
+                          path.locked ? col_text : col_dim );
+
+
+            
+                //      4.4.        EDITING THE NAME FOR THE PATH...
+                ImGui::TableSetColumnIndex(2);
+                ImGui::PushStyleColor( ImGuiCol_Text, (!mutable_path ? col_dim : col_text) ); // NEW – dim on invisible too
+                //
+                //
+                //  ImGui::SetNextItemWidth(select_w);
+                //  if ( ImGui::Selectable(path.label.c_str(), selected, sel_flags, {select_w, 0.0f}) )
+                if ( ImGui::Selectable(path.label.c_str(), selected, sel_flags, {0.0f, 1.05f * CELL_SZ}) )
+                {
+                    const bool ctrl  = ImGui::GetIO().KeyCtrl;
+                    const bool shift = ImGui::GetIO().KeyShift;
+
+                    if (!ctrl && !shift) {
+                        this->reset_selection();
+                        if (mutable_path) m_sel.paths.insert(i);
+                        m_browser_S.m_browser_anchor = i;
+                    }
+                    else if (shift && m_browser_S.m_browser_anchor >= 0) {
+                        int lo = std::min(m_browser_S.m_browser_anchor, i);
+                        int hi = std::max(m_browser_S.m_browser_anchor, i);
+                        if (!ctrl) this->reset_selection();
+                        for (int k = lo; k <= hi; ++k)
+                            if (m_paths[k].is_mutable())
+                                m_sel.paths.insert(k);
+                    }
+                    else if (ctrl && mutable_path) {
+                        if (!m_sel.paths.erase(i)) m_sel.paths.insert(i);
+                        m_browser_S.m_browser_anchor = i;
+                    }
+                    _rebuild_vertex_selection();
+                }
+                ImGui::PopStyleColor();
+
+
+                //── 2.4 delete button (only when selected & unlocked) --------------
+                ImGui::TableSetColumnIndex(3);
+                if (!path.locked && selected)
+                {
+                    utl::SmallCButton(BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR);
+                    if (ImGui::IsItemClicked())
+                    {
+                        _erase_path_and_orphans(static_cast<PathID>(i));
+                        this->reset_selection();
+                        m_browser_S.m_inspector_vertex_idx = -1;
+                        _prune_selection_mutability();
+
+                        ImGui::PopID();
+                        clipper.End();
+                        ImGui::EndTable();
+                        return;                         // safe early exit
+                    }
+                }
+
+                ImGui::PopID();
+            }// END "for-loop" [ROWS]
+            
+        }// END "while-loop" [CLIPPER]
+        
+        clipper.End();
+        ImGui::EndTable();
+    }
+    
+    
+    return;
+}
+
+
+/*
+{
     using namespace icon;                      // pull in CELL_SZ, etc.
     //
     //  COLORS FROM CURRENT STYLE (Non-icon constants)
@@ -230,8 +393,8 @@ void Editor::_draw_obj_selector_column(void)
     ImGui::SetNextItemWidth(-FLT_MIN);
     if ( ImGui::InputTextWithHint("##Editor_Browser_LeftFilter", "filter",
                                  m_browser_filter.InputBuf,
-                                 IM_ARRAYSIZE(m_browser_filter.InputBuf)) )
-        { m_browser_filter.Build(); }
+                                 IM_ARRAYSIZE(m_obj_filter.InputBuf)) )
+        { m_obj_filter.Build(); }
     S.PopFont();
         
     ImGui::Separator();
@@ -252,7 +415,7 @@ void Editor::_draw_obj_selector_column(void)
             
             
             //  CASE 0 :    EARLY-OUT IF FILTER REMOVES OBJ...
-            if ( !m_browser_filter.PassFilter(path.label.c_str()) )      { continue; }
+            if ( !m_obj_filter.PassFilter(path.label.c_str()) )      { continue; }
 
 
             //  3.    BEGIN ROW...
@@ -361,114 +524,11 @@ void Editor::_draw_obj_selector_column(void)
     
     clipper.End();
     return;
-}
-
-/* {
-//  "_draw_obj_selector_column"
-//
-void Editor::_draw_obj_selector_column(void)
-{
-    using namespace icon;
-    const ImU32 col_text  = ImGui::GetColorU32(ImGuiCol_Text);
-    const ImU32 col_dim   = ImGui::GetColorU32(ImGuiCol_TextDisabled);
-    const ImU32 col_frame = ImGui::GetColorU32(ImGuiCol_FrameBg);
-
-    //–––– rename-mode state (static, survives frames) ––––//
-    static int  rename_idx   = -1;          // -1 → no row in rename
-    static char rename_buf[64] = {};
-
-    //–––– filter box ––––//
-    ImGui::SetNextItemWidth(-FLT_MIN);
-    if (ImGui::InputTextWithHint("##Editor_Browser_LeftFilter", "filter",
-                                 m_browser_filter.InputBuf,
-                                 IM_ARRAYSIZE(m_browser_filter.InputBuf)))
-        m_browser_filter.Build();
-    ImGui::Separator();
-
-    ImGuiListClipper clipper;
-    clipper.Begin(static_cast<int>(m_paths.size()), -1);
-
-    while (clipper.Step())
-        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
-        {
-            Path&  path          = m_paths[i];
-            bool   selected      = m_sel.paths.count(static_cast<size_t>(i));
-            bool   mutable_path  = path.is_mutable();
-            auto   sel_flags     = mutable_path
-                                   ? ImGuiSelectableFlags_SpanAllColumns
-                                     | ImGuiSelectableFlags_AllowDoubleClick
-                                   : ImGuiSelectableFlags_Disabled
-                                     | ImGuiSelectableFlags_AllowDoubleClick;
-
-            if (!m_browser_filter.PassFilter(path.label.c_str()))
-                continue;
-
-            ImGui::PushID(i);
-            ImGui::BeginGroup();                 // full row
-
-            // eye toggle //
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImGui::InvisibleButton("##eye", {CELL_SZ, CELL_SZ});
-            if (ImGui::IsItemClicked()) { path.visible = !path.visible; _prune_selection_mutability(); }
-            draw_icon_background(ImGui::GetWindowDrawList(), pos, {CELL_SZ, CELL_SZ}, selected ? col_frame : 0);
-            (path.visible ? draw_eye_icon : draw_eye_off_icon)
-                (ImGui::GetWindowDrawList(), pos, {CELL_SZ, CELL_SZ}, path.visible ? col_text : col_dim);
-            ImGui::SameLine(0.0f, m_style.ms_BROWSER_BUTTON_SEP);
-
-            // lock toggle //
-            pos = ImGui::GetCursorScreenPos();
-            ImGui::InvisibleButton("##lock", {CELL_SZ, CELL_SZ});
-            if (ImGui::IsItemClicked()) { path.locked = !path.locked; _prune_selection_mutability(); }
-            ImGui::SameLine(0.0f, m_style.ms_BROWSER_SELECTABLE_SEP);
-            draw_icon_background(ImGui::GetWindowDrawList(), pos, {CELL_SZ, CELL_SZ}, selected ? col_frame : 0);
-            (path.locked ? draw_lock_icon : draw_unlock_icon)
-                (ImGui::GetWindowDrawList(), pos, {CELL_SZ, CELL_SZ}, path.locked ? col_text : col_dim);
-
-            ImGui::SameLine(0.0f, m_style.ms_BROWSER_SELECTABLE_SEP);
-
-            // label or rename field //
-            bool row_in_rename = (rename_idx == i);
-            if (row_in_rename)
-            {
-                ImGui::PushItemWidth(-FLT_MIN);
-                if (ImGui::InputText("##ren", rename_buf, IM_ARRAYSIZE(rename_buf),
-                                     ImGuiInputTextFlags_EnterReturnsTrue
-                                     | ImGuiInputTextFlags_AutoSelectAll))
-                {                       // commit on Enter
-                    path.label = rename_buf;
-                    rename_idx = -1;
-                }
-                if (!ImGui::IsItemActive() && ImGui::IsItemDeactivated())
-                    rename_idx = -1;     // commit on focus loss
-                if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-                    rename_idx = -1;     // cancel
-                ImGui::PopItemWidth();
-            }
-            else
-            {
-                ImGui::PushStyleColor(ImGuiCol_Text,
-                                      mutable_path ? col_text : col_dim);
-                if (ImGui::Selectable(path.label.c_str(), selected, sel_flags))
-                    _handle_selection_click(i, mutable_path);      // ← your existing helper
-                ImGui::PopStyleColor();
-
-                // start rename on double-click //
-                if (mutable_path && ImGui::IsItemHovered()
-                    && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-                {
-                    rename_idx = i;
-                    std::strncpy(rename_buf, path.label.c_str(),
-                                 IM_ARRAYSIZE(rename_buf));
-                }
-            }
-
-            ImGui::EndGroup();
-            ImGui::PopID();
-        }
-
-    clipper.End();
-}
 }*/
+
+
+
+
 
 
 
@@ -510,13 +570,80 @@ void Editor::_dispatch_obj_inspector_column(void)
 //
 void Editor::_draw_single_obj_inspector(void)
 {
-    //constexpr ImGuiChildFlags       P0_FLAGS            = ImGuiChildFlags_ResizeX       | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoScrollbar;
+
+
+    constexpr ImGuiChildFlags       P1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
+    constexpr ImGuiChildFlags       C1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
+    //
+    BrowserStyle &                  BStyle              = this->m_style.browser_style;
+    const size_t                    sel_idx             = *m_sel.paths.begin();   // only element
+    Path &                          path                = m_paths[sel_idx];
+    
+    
+    //  Compute adaptive column widths BEFORE we emit any child windows
+    
+    
+    //  4.  "VERTEX BROWSER" FOR THE OBJECT...
+    float                           sub_h               = 0.0f; // availY * m_style.ms_VERTEX_SUBBROWSER_HEIGHT;
+
+
+
+    //  4A.     OBJECT PROPERTIES PANEL.
+        ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.min, BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.max );
+    ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value,     BStyle.DYNAMIC_CHILD_FLAGS);
+        _draw_obj_properties_panel(path, sel_idx);     // <-- NEW helper you just wrote
+        BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value.x       = ImGui::GetItemRectSize().x;
+    ImGui::EndChild();
+    ImGui::SameLine( 0.0f );
+    //
+    //
+    //
+    //  //  //  4B.     VERTEX SUB-BROWSER...
+    const float                     P1_w                = ImGui::GetContentRegionAvail().x;
+    ImGui::BeginChild("##Editor_Browser_VertexSubBrowser",      ImVec2(P1_w, 0.0f),     P1_FLAGS);
+        //
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  BStyle.ms_CHILD_BORDER2);
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    BStyle.ms_CHILD_ROUND2);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg,             BStyle.ms_CHILD_FRAME_BG2L);
+        //
+        //
+        //  //  4B.1.    LEFT-HAND VERTEX BROWSER.
+            ImGui::SetNextWindowSizeConstraints( BStyle.VERTEX_SELECTOR_DIMS.limits.min, BStyle.VERTEX_SELECTOR_DIMS.limits.max );
+            ImGui::BeginChild("##Editor_Browser_VertexSelectorColumn",      BStyle.VERTEX_SELECTOR_DIMS.value,    BStyle.DYNAMIC_CHILD_FLAGS);
+                _draw_vertex_selector_column(path);
+                BStyle.VERTEX_SELECTOR_DIMS.value.x        = ImGui::GetItemRectSize().x;
+            ImGui::EndChild();
+            ImGui::PopStyleColor();
+            //
+            //
+            ImGui::SameLine(0.0f );
+            //
+            //
+            //  4B.2.   RIGHT-HAND VERTEX BROWSER.
+            const float             P1C1_w              = ImGui::GetContentRegionAvail().x;
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, BStyle.ms_CHILD_FRAME_BG2R);
+            ImGui::BeginChild("##Editor_Browser_VertexInspectorColumn",     ImVec2(P1C1_w, sub_h),    C1_FLAGS);
+                _draw_vertex_inspector_column(path);
+            ImGui::EndChild();
+            ImGui::PopStyleColor();
+        //
+        ImGui::PopStyleVar(2);   // border size, rounding
+    //
+    //
+    //
+    ImGui::EndChild();
+    
+    
+    return;
+}
+
+/*{
     constexpr ImGuiChildFlags       P0_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoScrollbar;
     constexpr ImGuiChildFlags       P1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     constexpr ImGuiChildFlags       C0_FLAGS            = ImGuiChildFlags_ResizeX       | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     constexpr ImGuiChildFlags       C1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
-    //  const ImGuiStyle &              style               = ImGui::GetStyle();
-
+    //
+    BrowserStyle &                  BStyle             = this->m_style.browser_style;
     const size_t                    sel_idx             = *m_sel.paths.begin();   // only element
     Path &                          path                = m_paths[sel_idx];
     
@@ -544,9 +671,9 @@ void Editor::_draw_single_obj_inspector(void)
     const float                     P1_w                = ImGui::GetContentRegionAvail().x;
     ImGui::BeginChild("##Editor_Browser_VertexSubBrowser",      ImVec2(P1_w, 0.0f),     P1_FLAGS);
         //
-        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  m_style.ms_CHILD_BORDER2);
-        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    m_style.ms_CHILD_ROUND2);
-        ImGui::PushStyleColor(ImGuiCol_ChildBg,             m_style.ms_CHILD_FRAME_BG2L);
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  BStyle.ms_CHILD_BORDER2);
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    BStyle.ms_CHILD_ROUND2);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg,             BStyle.ms_CHILD_FRAME_BG2L);
         //
         //
         //  //  4B.1.    LEFT-HAND VERTEX BROWSER.
@@ -559,7 +686,7 @@ void Editor::_draw_single_obj_inspector(void)
             //
             //  4B.2.   RIGHT-HAND VERTEX BROWSER.
             const float             P1C1_w              = ImGui::GetContentRegionAvail().x;
-            ImGui::PushStyleColor(ImGuiCol_ChildBg, m_style.ms_CHILD_FRAME_BG2R);
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, BStyle.ms_CHILD_FRAME_BG2R);
             ImGui::BeginChild("##Editor_Browser_VertexInspectorColumn",     ImVec2(P1C1_w, sub_h),    C1_FLAGS);
                 _draw_vertex_inspector_column(path);
             ImGui::EndChild();
@@ -573,7 +700,8 @@ void Editor::_draw_single_obj_inspector(void)
     
     
     return;
-}
+}*/
+
 /*{
     constexpr ImGuiColorEditFlags   COLOR_FLAGS     = ImGuiColorEditFlags_NoInputs;
     const ImGuiStyle &              style           = ImGui::GetStyle();
@@ -759,6 +887,7 @@ void Editor::_draw_vertex_selector_column(Path & path)
     ImGuiListClipper clipper; clipper.Begin(total, -1);
 
     while ( clipper.Step() )
+    {
         for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
         {
             char lbl[8]; std::snprintf(lbl, sizeof(lbl), Vertex::ms_DEF_VERTEX_SELECTOR_FMT_STRING, row);
@@ -766,7 +895,10 @@ void Editor::_draw_vertex_selector_column(Path & path)
             if (ImGui::Selectable(lbl, selected))
                 m_browser_S.m_inspector_vertex_idx = (selected ? -1 : row);      // toggle
         }
+    }
+    
     clipper.End();
+    return;
 }
 
 
@@ -776,8 +908,9 @@ void Editor::_draw_vertex_selector_column(Path & path)
 void Editor::_draw_vertex_inspector_column(Path & path)
 {
     static constexpr size_t     TITLE_SIZE      = 32ULL;
-    const float &               LABEL_W         = m_style.ms_BROWSER_OBJ_LABEL_WIDTH;
-    const float &               WIDGET_W        = m_style.ms_BROWSER_OBJ_WIDGET_WIDTH;
+    BrowserStyle &              BStyle          = this->m_style.browser_style;
+    const float &               LABEL_W         = BStyle.ms_BROWSER_OBJ_LABEL_WIDTH;
+    const float &               WIDGET_W        = BStyle.ms_BROWSER_OBJ_WIDGET_WIDTH;
     
     
     //  CASE 0 :    NO VALID SELECTION...
@@ -1036,9 +1169,10 @@ void Editor::_draw_obj_properties_panel(Path & path, const PathID pidx)
 {
     constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
     //
+    BrowserStyle &                  BStyle              = this->m_style.browser_style;
     const bool                      is_area             = path.is_area();
-    const float &                   LABEL_W             = m_style.ms_BROWSER_VERTEX_LABEL_WIDTH;
-    const float &                   WIDGET_W            = m_style.ms_BROWSER_VERTEX_WIDGET_WIDTH;
+    const float &                   LABEL_W             = BStyle.ms_BROWSER_VERTEX_LABEL_WIDTH;
+    const float &                   WIDGET_W            = BStyle.ms_BROWSER_VERTEX_WIDGET_WIDTH;
     //
     static constexpr size_t         TITLE_SIZE          = 128;
     static char                     title [TITLE_SIZE];   // safe head-room

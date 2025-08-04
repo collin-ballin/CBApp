@@ -462,17 +462,18 @@ void Editor::_clear_all(void)
 
 
     //  Next ID counter back to 1 so new vertices/path IDs start fresh
-    m_next_id                           = 1;
+    m_next_id                               = 1;
 
 
     // ─── 3.  Browser & filter housekeeping ────────────────────────────
     //  Force filter to rebuild so the clipper sees an empty list.
-    m_browser_filter.Build();
-    m_browser_S.m_browser_anchor        = -1;
+    this->m_browser_state.clear();
 
 
     // ─── 4.  Inspector / overlay clean-up (if any live) ───────────────
-    m_browser_S.m_inspector_vertex_idx  = -1;        // no vertex selected in inspector
+    m_browser_S.m_inspector_vertex_idx      = -1;        // no vertex selected in inspector
+    
+    
     _prune_selection_mutability();      // ensures nothing stale lingers
 
     //  Resident overlays such as selection HUD will auto-hide

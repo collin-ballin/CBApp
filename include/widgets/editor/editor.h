@@ -926,7 +926,7 @@ protected:
     ImGuiWindowClass                    m_window_class;
     //
     BrowserState                        m_browser_state                 {  };
-    ImGuiTextFilter                     m_browser_filter;                           // search box text filter
+    //  ImGuiTextFilter                     m_browser_filter;                           // search box text filter
     //  int                                 m_browser_anchor                = -1;       // anchor index for Shift‑range select
     //  int                                 m_inspector_vertex_idx          = -1;       // anchor index for Shift‑range select
     // *************************************************************************** //

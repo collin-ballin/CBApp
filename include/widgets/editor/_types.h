@@ -392,11 +392,25 @@ struct BrowserState_t {
     // *************************************************************************** //
     
     //  "reset"
-    inline void                 reset(void) {
+    inline void                 reset(void) { this->clear(); }
+    
+    //  "clear"
+    inline void                 clear(void)
+    {
+        m_renaming_layer            = false;
+        m_renaming_obj              = false;
+        m_layer_filter              .Build();   //  Force filter to rebuild so the clipper sees an empty list.
+        m_obj_filter                .Build();   //  Force filter to rebuild so the clipper sees an empty list.
+          
+    
+    
+        m_layer_browser_anchor      = -1;
         m_browser_anchor            = -1;
         m_inspector_vertex_idx      = -1;
-        rename_idx                  = -1;
-        renaming                    = false;
+        
+        m_layer_rename_idx          = -1;
+        m_obj_rename_idx            = -1;
+        
         return;
     }
     
@@ -406,14 +420,34 @@ struct BrowserState_t {
     // *************************************************************************** //
     //      3.      DATA MEMBERS...
     // *************************************************************************** //
-    int                         m_browser_anchor                        = -1;       //  anchor index for Shift‑range select
-    int                         m_inspector_vertex_idx                  = -1;       //  anchor index for Shift‑range select
+//                          PERSISTENT STATE VARIABLES:
+    bool                        m_show_vertex_browser                       = true;
+    bool                        m_renaming_layer                            = false;    //  true while an InputText for rename is active
+    bool                        m_renaming_obj                              = false;    //  true while an InputText for rename is active
 //
-    int                         rename_idx                              = -1;       //  row currently in rename-mode (–1 = none)
-    bool                        renaming                                = false;    //  true while an InputText for rename is active
-    char                        rename_buf[ms_PATH_TITLE_BUFFER_SIZE]   = {};       //  scratch text
+//
+//                          MUTABLE STATE ITEMS / INDICES:
+    int                         m_layer_browser_anchor                      = -1;       //  ?? currently selected LAYER ??
+    int                         m_browser_anchor                            = -1;       //  ?? anchor index for Shift‑range select ??
+    int                         m_inspector_vertex_idx                      = -1;       //  ...
+    //
+    int                         m_layer_rename_idx                          = -1;       //  row currently in rename-mode (–1 = none)
+    int                         m_obj_rename_idx                            = -1;       //  row currently in rename-mode (–1 = none)
+//
+//
+//                          CACHE AND MISC. DATA:
+    char                        m_name_buffer[ms_PATH_TITLE_BUFFER_SIZE]    = {};       //  scratch text
+//
+//
+//
+//                          OTHER DATA ITEMS:
+    ImGuiTextFilter             m_layer_filter;                                         //  search box for "LAYER" browser.
+    ImGuiTextFilter             m_obj_filter;                                           //  search box for "OBJECT" browser.
+    
+    
     
     // *************************************************************************** //
+
 
 
 // *************************************************************************** //
@@ -758,7 +792,6 @@ struct EditorState
     //                              MISC:
     //
     //                              SELECTION / BROWSER STATE:
-    ImGuiTextFilter                     m_browser_filter;                           // search box text filter
     int                                 m_browser_anchor                = -1;       // anchor index for Shift‑range select
     int                                 m_inspector_vertex_idx          = -1;       // anchor index for Shift‑range select
 // *************************************************************************** //
@@ -792,10 +825,111 @@ struct EditorState
 
 
 
+//  "BrowserStyle"
+//
+struct BrowserStyle
+{
+    CBAPP_CBLIB_TYPES_API
+    
+// *************************************************************************** //
+//                                      BROWSER WINDOW STYLE...
+// *************************************************************************** //
+    //
+    //                              BROWSER CHILD-WINDOW FLAGS:
+    ImGuiChildFlags                     DYNAMIC_CHILD_FLAGS                         = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
+    ImGuiChildFlags                     STATIC_CHILD_FLAGS                          = ImGuiChildFlags_Borders;
+    //
+    //                              BROWSER CHILD-WINDOW DIMENSIONS:
+    Param<ImVec2>                       OBJ_SELECTOR_DIMS                           = {     {300.0f,    -1.0f},     { {100.0f,      1.0f},      {550.0f,    FLT_MAX} }   };
+    Param<ImVec2>                       OBJ_PROPERTIES_INSPECTOR_DIMS               = {     {500.0f,    -1.0f},     { {150.0f,      1.0f},      {FLT_MAX,   FLT_MAX} }   };
+    Param<ImVec2>                       VERTEX_SELECTOR_DIMS                        = {     {100.0f,    -1.0f},     { {50.0f,       1.0f},      {200.0f,    FLT_MAX} }   };
+    //
+    //
+    //
+    //                              BROWSER CHILD-WINDOW COLORS:
+    ImVec4                              ms_CHILD_FRAME_BG1                          = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
+    ImVec4                              ms_CHILD_FRAME_BG1L                         = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
+    ImVec4                              ms_CHILD_FRAME_BG1R                         = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
+    
+    ImVec4                              ms_CHILD_FRAME_BG2                          = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
+    ImVec4                              ms_CHILD_FRAME_BG2L                         = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
+    ImVec4                              ms_CHILD_FRAME_BG2R                         = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
+    //
+    //                              BROWSER CHILD-WINDOW STYLE:
+    float                               ms_VERTEX_SUBBROWSER_HEIGHT                 = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
+    float                               ms_CHILD_BORDER1                            = 2.0f;     //  ms_CHILD_BORDER1
+    float                               ms_CHILD_BORDER2                            = 1.0f;     //  ms_CHILD_BORDER2
+    float                               ms_CHILD_ROUND1                             = 8.0f;     //  ms_CHILD_ROUND1
+    float                               ms_CHILD_ROUND2                             = 4.0f;     //  ms_CHILD_ROUND2
+    //
+    //                              BROWSER CHILD-WINDOW DIMENSIONS:
+    float                               OBJ_PROPERTIES_REL_WIDTH                    = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
+    float                               VERTEX_SELECTOR_REL_WIDTH                   = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
+    float                               VERTEX_INSPECTOR_REL_WIDTH                  = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                                      GENERAL WIDGET STUFF...
+// *************************************************************************** //
+    //                              BROWSER **ALL** WIDGET STUFF:
+    float                               ms_BROWSER_BUTTON_SEP                       = 8.0f;
+    float                               ms_BROWSER_SELECTABLE_SEP                   = 16.0f;
+    //
+    //                              BROWSER PATH WIDGET STUFF:
+    float                               ms_BROWSER_OBJ_LABEL_WIDTH                  = 55.0f;
+    float                               ms_BROWSER_OBJ_WIDGET_WIDTH                 = 256.0f;
+    //
+    //                              BROWSER VERTEX WIDGET STUFF:
+    float                               ms_BROWSER_VERTEX_LABEL_WIDTH               = 55.0f;
+    float                               ms_BROWSER_VERTEX_WIDGET_WIDTH              = 196.0f;
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                                      SPECIFIC WIDGET STUFF...
+// *************************************************************************** //
+    //                              DELETE BUTTON:
+    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                      = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
+    static constexpr const char *       ms_DELETE_BUTTON_HANDLE                     = "=";
+    static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT                 = 256ULL;
+    //
+    //                              DRAG/DROP STUFF:
+
+
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //   END "EditorBrowserStyle"
+};
+
+
+
+
+
+
 //  "EditorStyle"
+//
 struct EditorStyle
 {
-    static constexpr size_t     DEF_HISTORY_CAP                 = 64;
+// *************************************************************************** //
+//                              STATIC CONSTEXPR CONSTANTS...
+// *************************************************************************** //
+    static constexpr size_t             DEF_HISTORY_CAP                             = 64;
+    
+// *************************************************************************** //
+//                              SUBSIDIARY STYLE OBJECTS...
+// *************************************************************************** //
+    BrowserStyle                        browser_style                               = { };
+    
+    
+    
 // *************************************************************************** //
 // *************************************************************************** //
 //
@@ -884,48 +1018,52 @@ struct EditorStyle
 //
 //
 // *************************************************************************** //
+//                              BROWSER STYLE...
+// *************************************************************************** //
+    //                      BROWSER CHILD-WINDOW COLORS:
+    //      ImVec4                      ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
+    //      ImVec4                      ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
+    //      ImVec4                      ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
+    //
+    //      ImVec4                      ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
+    //      ImVec4                      ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
+    //      ImVec4                      ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
+    //      //
+    //      //                      BROWSER CHILD-WINDOW STYLE:
+    //      float                       ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
+    //      float                       ms_CHILD_BORDER1                = 2.0f;     //  ms_CHILD_BORDER1
+    //      float                       ms_CHILD_BORDER2                = 1.0f;     //  ms_CHILD_BORDER2
+    //      float                       ms_CHILD_ROUND1                 = 8.0f;     //  ms_CHILD_ROUND1
+    //      float                       ms_CHILD_ROUND2                 = 4.0f;     //  ms_CHILD_ROUND2
+    //      //
+    //      //                      BROWSER CHILD-WINDOW DIMENSIONS:
+    //      float                       OBJ_PROPERTIES_REL_WIDTH        = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
+    //      float                       VERTEX_SELECTOR_REL_WIDTH       = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
+    //      float                       VERTEX_INSPECTOR_REL_WIDTH      = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
+    //      //
+    //      //                      BROWSER **ALL** WIDGET STUFF:
+    //      float                       ms_BROWSER_BUTTON_SEP           = 8.0f;
+    //      float                       ms_BROWSER_SELECTABLE_SEP       = 16.0f;
+    //      //
+    //      //                      BROWSER PATH WIDGET STUFF:
+    //      float                       ms_BROWSER_OBJ_LABEL_WIDTH      = 55.0f;
+    //      float                       ms_BROWSER_OBJ_WIDGET_WIDTH     = 256.0f;
+    //      //
+    //      //                      BROWSER VERTEX WIDGET STUFF:
+    //      float                       ms_BROWSER_VERTEX_LABEL_WIDTH   = 55.0f;
+    //      float                       ms_BROWSER_VERTEX_WIDGET_WIDTH  = 196.0f;
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
 //                              WIDGETS / UI-CONSTANTS / APP-APPEARANCE...
 // *************************************************************************** //
-    //
-    //                      BROWSER CHILD-WINDOW COLORS:
-    ImVec4                      ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
-    ImVec4                      ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
-    ImVec4                      ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
-    
-    ImVec4                      ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
-    ImVec4                      ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
-    ImVec4                      ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
-    //
-    //                      BROWSER CHILD-WINDOW STYLE:
-    float                       ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
-    float                       ms_CHILD_BORDER1                = 2.0f;     //  ms_CHILD_BORDER1
-    float                       ms_CHILD_BORDER2                = 1.0f;     //  ms_CHILD_BORDER2
-    float                       ms_CHILD_ROUND1                 = 8.0f;     //  ms_CHILD_ROUND1
-    float                       ms_CHILD_ROUND2                 = 4.0f;     //  ms_CHILD_ROUND2
-    //
-    //                      BROWSER CHILD-WINDOW DIMENSIONS:
-    float                       OBJ_PROPERTIES_REL_WIDTH        = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
-    float                       VERTEX_SELECTOR_REL_WIDTH       = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
-    float                       VERTEX_INSPECTOR_REL_WIDTH      = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
-    //
-    //                      BROWSER **ALL** WIDGET STUFF:
-    float                       ms_BROWSER_BUTTON_SEP           = 8.0f;
-    float                       ms_BROWSER_SELECTABLE_SEP       = 16.0f;
-    //
-    //                      BROWSER PATH WIDGET STUFF:
-    float                       ms_BROWSER_OBJ_LABEL_WIDTH      = 55.0f;
-    float                       ms_BROWSER_OBJ_WIDGET_WIDTH     = 256.0f;
-    //
-    //                      BROWSER VERTEX WIDGET STUFF:
-    float                       ms_BROWSER_VERTEX_LABEL_WIDTH   = 55.0f;
-    float                       ms_BROWSER_VERTEX_WIDGET_WIDTH  = 196.0f;
-    //
-    //
-    //
     //                      SYSTEM PREFERENCES WIDGETS:
     float                       ms_SETTINGS_LABEL_WIDTH         = 196.0f;
     float                       ms_SETTINGS_WIDGET_WIDTH        = 256.0f;
-    //
+    
 // *************************************************************************** //
 //
 //
@@ -940,6 +1078,7 @@ struct EditorStyle
     int                         ms_BEZIER_SEGMENTS              = 0;        //  ms_BEZIER_SEGMENTS
     int                         ms_BEZIER_HIT_STEPS             = 20;       //  ms_BEZIER_HIT_STEPS
     int                         ms_BEZIER_FILL_STEPS            = 24;       //  ms_BEZIER_FILL_STEPS
+    
 // *************************************************************************** //
 //
 //
@@ -950,6 +1089,7 @@ struct EditorStyle
                                 //
                                 //  ...
                                 //
+                                
 // *************************************************************************** //
 //
 //

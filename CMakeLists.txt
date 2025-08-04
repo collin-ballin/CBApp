@@ -17,7 +17,7 @@
 ########################################################################
 ########################################################################
 
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/system/cbapp_cmake.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/system/main.cmake)
 #
 # include(${CMAKE_CURRENT_LIST_DIR}/cmake/project_meta.cmake)
 # include(${CMAKE_CURRENT_LIST_DIR}/cmake/utility.cmake)
