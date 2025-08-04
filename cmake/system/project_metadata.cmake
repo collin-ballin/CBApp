@@ -10,7 +10,7 @@
 #   PURPOSE:
 #           Central file to store all project metadata so it is common
 #       for the CMakeLists.txt files that are used for both the macOS and
-#       MinGW/Windows
+#       MinGW/Windows builds of my application.
 #
 #
 ####################################################################################
@@ -36,8 +36,13 @@ set(    CB_MINIMUM_CMAKE_VERSION        3.15)
 #   2.      APPLICATION METADATA...
 ####################################################################################
 ####################################################################################
+
+#           2.1.        IMPORTANT ITEMS:
 set(    CBAPP_NAME                      "CBApp"                                 CACHE INTERNAL "")
 set(    CBAPP_VERSION                   "0.4.4"                                 CACHE INTERNAL "")
+#
+#
+#           2.2.        DETAILS / ADDITIONAL INFO:
 set(    CBAPP_COMPANY                   "Acme Labs"                             CACHE INTERNAL "")
 set(    CBAPP_LEGAL_COPYRIGHT           "Collin Andrew Bond  (c)  2024-2025"    CACHE INTERNAL "")
 

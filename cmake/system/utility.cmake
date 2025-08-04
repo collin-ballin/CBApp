@@ -16,7 +16,7 @@
 
 
 
-#   2.          HELPER FUNCTIONS / UTILITIES...
+#   1.          HELPER FUNCTIONS / UTILITIES...
 ####################################################################################
 ####################################################################################
 
@@ -101,6 +101,30 @@ endfunction()
 
 
 
+
+
+####################################################################################
+#
+#
+#
+#   2.          BUILDING / OPERATION FUNCTIONS...
+####################################################################################
+####################################################################################
+
+# ---------------------------------------------------------------------------
+#   CB_Apply_Preset(<TARGET> <LIBRARY>)
+#
+# ---------------------------------------------------------------------------
+function(CB_Apply_Preset target preset_lib)
+    #   Simple guard so typos fail fast
+    if(NOT TARGET "${preset_lib}")
+        message(FATAL_ERROR
+            "cb_apply_preset(): '${preset_lib}' is not a known target")
+    endif()
+
+    #   Link the interface library → target inherits all its compile / link flags
+    target_link_libraries("${target}" PRIVATE "${preset_lib}")
+endfunction()
 
 
 
