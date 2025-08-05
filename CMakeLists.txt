@@ -98,9 +98,6 @@ CB_Log(STATUS "\nOTHER DIRECTORIES...")
 #
 CB_Log(STATUS "CB_CMAKE_DIR                         : ${CB_CMAKE_DIR}")
 
-
-
-CB_Log(STATUS "\n\nBEGINNING BUILD...\n")
     
     
     
@@ -113,6 +110,8 @@ CB_Log(STATUS "\n\nBEGINNING BUILD...\n")
 #   4.      TRANSFERING CONTROL TO SUBSIDIARY CMAKE FILES...
 ########################################################################
 ########################################################################
+
+CB_Log(STATUS "\n\nBEGINNING BUILD...\n")
 
 #   add_subdirectory(macos)      # later: add_subdirectory(windows)
 include(${CMAKE_SOURCE_DIR}/macos/CMakeLists.txt)

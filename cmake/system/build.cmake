@@ -24,12 +24,12 @@ set(    CB_MINIMUM_CMAKE_VERSION        3.15)
 
 #   "LIB_preprocessor_definitions"
 #
-add_library(LIB_preprocessor_definitions INTERFACE)
+add_library(LIB_preprocessor_defines INTERFACE)
 target_compile_definitions(LIB_preprocessor_defines INTERFACE
     #
     #   1.1     CONFIG FILES...
-    IMGUI_USER_CONFIG=\"my_imconfig.h\"         #   SET FILENAME OF THE CUSTOM IMGUI CONFIG FILE...
-    CBAPP_USER_CONFIG=\"cbapp_config.h\"        #   SPECIFY CBAPP CONFIG FILE...
+    IMGUI_USER_CONFIG=\"my_imconfig.h\"     #   SET FILENAME OF THE CUSTOM IMGUI CONFIG FILE...
+    CBAPP_USER_CONFIG=\"cbapp_config.h\"         #   SPECIFY CBAPP CONFIG FILE...
     #
     #   1.2     MACROS FOR  "ALL"  BUILD TYPES...UILD TYPES...
     _CBLIB_LOG
@@ -88,13 +88,41 @@ set(    CMAKE_OSX_DEPLOYMENT_TARGET         "13.3"              CACHE STRING    
 #   3.          PROJECT-WIDE COMPILER FLAGS...
 ####################################################################################
 ####################################################################################
-add_library(CB_WARNINGS INTERFACE)
 
-target_compile_options(CB_WARNINGS INTERFACE
-    # common flags
-    -Wall -Wextra -Wpedantic -Wshadow
-    # pick & choose extra noise reducers
+#   "LIB_cxx_error_flags"
+#
+add_library(LIB_cxx_error_flags INTERFACE)
+target_compile_options(LIB_cxx_error_flags INTERFACE
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wshadow
+    -Wcomments
     -Wno-sign-compare
+#
+#   -Wdocumentation
+#   -Wcomma
+#   -Wheader-hygiene
+#   -Wweak-vtables
+#
+#   -Wconversion
+#   -Wsign-conversion
+)
+
+
+#   "LIB_cxx_warning_flags"
+#
+add_library(LIB_cxx_warning_flags INTERFACE)
+target_compile_options(LIB_cxx_warning_flags INTERFACE
+    -Werror
+)
+
+
+#   "LIB_cxx_debug_flags"
+#
+add_library(LIB_cxx_debug_flags INTERFACE)
+target_compile_options(LIB_cxx_warning_flags INTERFACE
+    #
 )
 
 
