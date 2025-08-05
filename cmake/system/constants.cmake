@@ -27,7 +27,9 @@ if(APPLE)
 #
 #
     set(        RESET                       "${ESC}[0m")
+#
     set(        BOLD                        "${ESC}[1m")
+    set(        DIM                         "${ESC}[2m")
 #
     set(        BLACK                       "${ESC}[30m")
     set(        RED                         "${ESC}[31m")
@@ -37,6 +39,15 @@ if(APPLE)
     set(        MAGENTA                     "${ESC}[35m")
     set(        CYAN                        "${ESC}[36m")
     set(        WHITE                       "${ESC}[37m")
+#
+    set(        BLACK_BRIGHT                "${ESC}[90m")
+    set(        RED_BRIGHT                  "${ESC}[91m")
+    set(        GREEN_BRIGHT                "${ESC}[92m")
+    set(        YELLOW_BRIGHT               "${ESC}[93m")
+    set(        BLUE_BRIGHT                 "${ESC}[94m")
+    set(        MAGENTA_BRIGHT              "${ESC}[95m")
+    set(        CYAN_BRIGHT                 "${ESC}[96m")
+    set(        WHITE_BRIGHT                "${ESC}[97m")
 #
 #
 #

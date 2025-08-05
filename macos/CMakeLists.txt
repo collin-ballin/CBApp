@@ -60,68 +60,15 @@ set(BUILD_NUMBER ${GIT_COMMIT_COUNT})
 
 
 
-message(DEBUG "CMAKE_SOURCE_DIR                = ${CMAKE_SOURCE_DIR}")
-message(DEBUG "CMAKE_CURRENT_SOURCE_DIR        = ${CMAKE_CURRENT_SOURCE_DIR}")
-message(DEBUG "CMAKE_SOURCE_DIR                = ${CMAKE_SOURCE_DIR}")
-message(DEBUG "CMAKE_BINARY_DIR                = ${CMAKE_BINARY_DIR}")
-message(DEBUG "CMAKE_CURRENT_BINARY_DIR        = ${CMAKE_CURRENT_BINARY_DIR}")
+#   message(DEBUG "CMAKE_SOURCE_DIR                = ${CMAKE_SOURCE_DIR}")
+#   message(DEBUG "CMAKE_CURRENT_SOURCE_DIR        = ${CMAKE_CURRENT_SOURCE_DIR}")
+#   message(DEBUG "CMAKE_SOURCE_DIR                = ${CMAKE_SOURCE_DIR}")
+#   message(DEBUG "CMAKE_BINARY_DIR                = ${CMAKE_BINARY_DIR}")
+#   message(DEBUG "CMAKE_CURRENT_BINARY_DIR        = ${CMAKE_CURRENT_BINARY_DIR}")
 
 if(NOT EXISTS "${CB_CMAKE_DIR}/version.hpp.in")
     message(FATAL_ERROR "Template not found: ${CB_CMAKE_DIR}/version.hpp.in")
 endif()
-
-
-
-
-
-########################################################################
-#
-#
-#
-#   1.  PREPROCESSOR MACRO DEFINITIONS PER CONFIGURATION...
-########################################################################
-########################################################################
-add_library(cb_defines INTERFACE)
-target_compile_definitions(cb_defines INTERFACE
-    #
-    #   1.1     CONFIG FILES...
-    IMGUI_USER_CONFIG=\"my_imconfig.h\"     #   SET FILENAME OF THE CUSTOM IMGUI CONFIG FILE...
-    CBAPP_USER_CONFIG=\"cbapp_config.h\"         #   SPECIFY CBAPP CONFIG FILE...
-    #
-    #   1.2     MACROS FOR  "ALL"  BUILD TYPES...UILD TYPES...
-    _CBLIB_LOG
-    # CBAPP_USE_VIEWPORT
-    # CBAPP_USE_DOCKSPACE
-        #   ...Add additional GENERIC macros here...
-
-
-    #   1.A     MACROS FOR  "DEBUG"  BUILD TYPES...
-    $<$<CONFIG:Debug>:__CBAPP_DEBUG__>
-    $<$<CONFIG:Debug>:_CBAPP_LOG>
-        #   ...Add additional Debug-only macros here...
-
-
-    #   2.B     MACROS FOR  "RELEASE"  BUILD TYPES...
-    $<$<CONFIG:Release>:NDEBUG>
-    $<$<CONFIG:Release>:__CBAPP_RELEASE__>
-        #   ...Add additional Release-only macros here...
-
-
-    #   3.C     MACROS FOR  "RelWithDebInfo"  BUILD TYPES...
-    $<$<CONFIG:RelWithDebInfo>:__CBLIB_RELEASE_WITH_DEBUG_INFO__>
-        #   ...Add additional RelWithDebInfo-only macros here...
-
-
-    #   4.D     MACROS FOR  "MinSizeRel"  BUILD TYPES...
-    $<$<CONFIG:MinSizeRel>:__CBLIB_MIN_SIZE_RELEASE__>
-        #   ...Add additional MinSizeRel-only macros here...
-)
-
-#   Third party included libraries...
-set(THIRD_PARTY_INCLUDE_DIR
-    ${CB_THIRD_PARTY_DIR}/cblib/include
-    ${CB_THIRD_PARTY_DIR}/nlohmann/include
-)
 
 
 
@@ -216,14 +163,19 @@ add_executable(${PROJECT_NAME}
     ${APP_HEADERS}
 )
 
+
+
 #       5.3     Link necessary libraries: OpenGL, GLFW, and warnings interface.
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         ${OPENGL_gl_LIBRARY}
         glfw
-        LIB_cxx_error_flags
         LIB_preprocessor_defines
+        LIB_cxx_error_flags
+        LIB_cxx_warning_flags
+        LIB_cxx_debug_flags
 )
+#
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${CB_INCLUDE_DIR}
@@ -236,7 +188,7 @@ target_include_directories(${PROJECT_NAME}
         ${THIRD_PARTY_INCLUDE_DIR}
         ${CB_VERSION_HEADER_DIR}
 )
-
+#
 #       5.4     Xcode‑specific attributes **including version info**
 set_target_properties(${PROJECT_NAME} PROPERTIES
     XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "13.3"
@@ -270,7 +222,7 @@ endif()
 ########################################################################
 
 
-# print_file_list(APP_HEADERS)
+#   print_file_list(APP_HEADERS)
 
 
 
@@ -309,16 +261,14 @@ configure_file(
     @ONLY)
 
 
-#       5.7     Organize source files in Xcode
-# source_group(TREE ${CB_SRC_DIR} PREFIX "src" FILES ${APP_SRCS})
-# source_group(TREE ${CB_IMGUI_DIR} PREFIX "imgui" FILES ${IMGUI_SRCS})
-
+#       5.7     Organize source files in Xcode...
 source_group(TREE ${CB_SRC_DIR} PREFIX "src" FILES ${APP_SRCS})
 source_group(
     TREE   ${CB_IMGUI_DIR}
     PREFIX "imgui"
     FILES  ${IMGUI_CORE_SRCS} ${IMGUI_BACKEND_SRCS}
 )
+#
 #               Extra group just for the misc file
 source_group(
     TREE   ${CB_MISC_DIR}/          # its real location
@@ -341,9 +291,9 @@ source_group(
 #           --THIS BRANCH IS NEVER TAKEN.  IT IS A PLACEGOLDER ITEM.        - AUGUST 5th, 2025.
 ########################################################################
 ########################################################################
-if (BUILD_CB_LIB)
+if (BUILD_CBLIB)
     
-    CB_Log(STATUS "\n\nBUILDING \"BUILD_CB_LIB\"...")
+    CB_Log(STATUS "\n\nBUILDING \"CBLIB\"...")
     
     #   Gather all .cpp test drivers under libs/cblib/tests/
     file(GLOB_RECURSE LIBCBAPP_USE_VIEWPORT_SRCS ${CB_THIRD_PARTY_DIR}/cblib/tests/*.cpp)

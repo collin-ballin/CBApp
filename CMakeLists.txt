@@ -7,6 +7,9 @@
 #              AUTHOR:      Collin A. Bond
 #               DATED:      July 02, 2025.
 #
+#       USAGE:
+#           >:      cd root/build/
+#           >:      cmake --log-level=DEBUG -G "Xcode" ..
 #
 ########################################################################
 ########################################################################
@@ -18,10 +21,8 @@
 ########################################################################
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/system/main.cmake)
-#
-# include(${CMAKE_CURRENT_LIST_DIR}/cmake/project_meta.cmake)
-# include(${CMAKE_CURRENT_LIST_DIR}/cmake/utility.cmake)
-# include(${CMAKE_CURRENT_LIST_DIR}/cmake/build.cmake)
+
+#   CB_Test_Logging()
 
 
 
@@ -68,6 +69,13 @@ set(        CB_CMAKE_DIR                "${CB_ROOT_DIR}/cmake"
 #
 set(        CB_VERSION_HEADER_DIR       ${CMAKE_BINARY_DIR}/generated)      #   Directory of the "version.hpp"
     
+
+#           2.3.    SOURCE FILES:
+#               APP_SRCS
+#
+#           2.4.    HEADER FILES:
+#               APP_HEADERS
+    
     
     
     
@@ -81,22 +89,32 @@ set(        CB_VERSION_HEADER_DIR       ${CMAKE_BINARY_DIR}/generated)      #   
 ########################################################################
 ########################################################################
 
-CB_Log(STATUS "\n\n\nCENTRAL CMAKE FILE.  BUILDING \"${CBAPP_NAME} VERSION ${CBAPP_VERSION}\"...")
+CB_newline(1)
+CB_Log(NOTIFY   "BUILDING ${CBAPP_NAME} ${CBAPP_VERSION}...")
+CB_newline()
+
+
+
+CB_Log(NOTIFY   "INITIALIZING...")
+
+
+
+CB_Log(DEBUG    "Current CMake Version              : ${CMAKE_VERSION}  (${CMAKE_COMMAND})")
+CB_Log(DEBUG    "Minimum CMake Version Required     : ${CB_MINIMUM_CMAKE_VERSION}")
 #
-CB_Log(STATUS "Current CMake Version                : ${CMAKE_VERSION}  (${CMAKE_COMMAND})")
-CB_Log(STATUS "Minimum CMake Version Required       : ${CB_MINIMUM_CMAKE_VERSION}")
+#
+CB_newline()
+CB_Log(INFO     "Main Directory Variables:")
+CB_Log(INFO     "CB_ROOT_DIR                        : ${CB_ROOT_DIR}")
+CB_Log(INFO     "CB_SRC_DIR                         : ${CB_SRC_DIR}")
+CB_Log(INFO     "CB_MISC_DIR                        : ${CB_MISC_DIR}")
+CB_Log(INFO     "CB_MISC_CPP_DIR                    : ${CB_MISC_CPP_DIR}")
 #
 #
-CB_Log(STATUS "\nMAIN DIRECTORIES...")
-CB_Log(STATUS "CB_ROOT_DIR                          : ${CB_ROOT_DIR}")
-CB_Log(STATUS "CB_SRC_DIR                           : ${CB_SRC_DIR}")
-CB_Log(STATUS "CB_MISC_DIR                          : ${CB_MISC_DIR}")
-CB_Log(STATUS "CB_MISC_CPP_DIR                      : ${CB_MISC_CPP_DIR}")
+CB_newline()
+CB_Log(INFO     "Other Directory Variables:")
 #
-#
-CB_Log(STATUS "\nOTHER DIRECTORIES...")
-#
-CB_Log(STATUS "CB_CMAKE_DIR                         : ${CB_CMAKE_DIR}")
+CB_Log(INFO     "CB_CMAKE_DIR                       : ${CB_CMAKE_DIR}")
 
     
     
@@ -111,8 +129,10 @@ CB_Log(STATUS "CB_CMAKE_DIR                         : ${CB_CMAKE_DIR}")
 ########################################################################
 ########################################################################
 
-CB_Log(STATUS "\n\nBEGINNING BUILD...\n")
-
+CB_newline()
+CB_Log(NOTIFY   "TRANSFERING CONTROL TO SECONDARY CMAKELISTS FILE...")
+#
+#
 #   add_subdirectory(macos)      # later: add_subdirectory(windows)
 include(${CMAKE_SOURCE_DIR}/macos/CMakeLists.txt)
     
@@ -141,6 +161,29 @@ include(${CMAKE_SOURCE_DIR}/macos/CMakeLists.txt)
 #   elseif(CB_TARGET_OS STREQUAL "windows")
 #     add_subdirectory(win64)        # MinGW-w64 cross-build
 #   endif()
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+########################################################################
+#
+#
+#   5.      BUILD RESULTS AND END-MESSAGING...
+########################################################################
+########################################################################
+
+CB_newline(1)
+CB_Log(NOTIFY   "POST-BUILD DIAGNOSTICS...")
+
+CB_file_list_info(STATUS APP_HEADERS)
+CB_file_list_info(STATUS APP_SRCS)
 
 
 
@@ -153,7 +196,8 @@ include(${CMAKE_SOURCE_DIR}/macos/CMakeLists.txt)
 
 
 
-
-
+CB_newline()
+CB_Log(NOTIFY   "Done.")
+CB_newline(2)
 ########################################################################
 ########################################################################   END...

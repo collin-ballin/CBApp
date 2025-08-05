@@ -15,17 +15,29 @@ TEXT="Hello, World!"
 log()       { printf "%s\n"   "$1"; }
 
 
+#   TEST...
+test_0()   { printf "Black      : \e[30m %s \e[0m.      \e[90m %s \e[0m. \n"   "$1" "$1"; }
+test_1()   { printf "Red        : \e[31m %s \e[0m.      \e[91m %s \e[0m. \n"   "$1" "$1"; }
+test_2()   { printf "Green      : \e[32m %s \e[0m.      \e[92m %s \e[0m. \n"   "$1" "$1"; }
+test_3()   { printf "Yellow     : \e[33m %s \e[0m.      \e[93m %s \e[0m. \n"   "$1" "$1"; }
+test_4()   { printf "Blue       : \e[34m %s \e[0m.      \e[94m %s \e[0m. \n"   "$1" "$1"; }
+test_5()   { printf "Purple     : \e[35m %s \e[0m.      \e[95m %s \e[0m. \n"   "$1" "$1"; }
+test_6()   { printf "Cyan       : \e[36m %s \e[0m.      \e[96m %s \e[0m. \n"   "$1" "$1"; }
+test_7()   { printf "White      : \e[37m %s \e[0m.      \e[97m %s \e[0m. \n"   "$1" "$1"; }
+
+
+
 #   BATCH #1A       (NORMAL FOREGROUND)...
-log_10A()   { printf "ESC[30m       : \e[30m %s \e[0m \n"   "$1"; }
-log_11A()   { printf "ESC[31m       : \e[31m %s \e[0m \n"   "$1"; }
-log_12A()   { printf "ESC[32m       : \e[32m %s \e[0m \n"   "$1"; }
-log_13A()   { printf "ESC[33m       : \e[33m %s \e[0m \n"   "$1"; }
-log_14A()   { printf "ESC[34m       : \e[34m %s \e[0m \n"   "$1"; }
-log_15A()   { printf "ESC[35m       : \e[35m %s \e[0m \n"   "$1"; }
-log_16A()   { printf "ESC[36m       : \e[36m %s \e[0m \n"   "$1"; }
-log_17A()   { printf "ESC[37m       : \e[37m %s \e[0m \n"   "$1"; }
-log_18A()   { printf "ESC[38m       : \e[38m %s \e[0m \n"   "$1"; }
-log_19A()   { printf "ESC[39m       : \e[39m %s \e[0m \n"   "$1"; }
+log_10A()   { printf "ESC[30m       Black       : \e[30m %s \e[0m \n"   "$1"; }
+log_11A()   { printf "ESC[31m       Red         : \e[31m %s \e[0m \n"   "$1"; }
+log_12A()   { printf "ESC[32m       Green       : \e[32m %s \e[0m \n"   "$1"; }
+log_13A()   { printf "ESC[33m       Yellow      : \e[33m %s \e[0m \n"   "$1"; }
+log_14A()   { printf "ESC[34m       Blue        : \e[34m %s \e[0m \n"   "$1"; }
+log_15A()   { printf "ESC[35m       Purple      : \e[35m %s \e[0m \n"   "$1"; }
+log_16A()   { printf "ESC[36m       Cyan        : \e[36m %s \e[0m \n"   "$1"; }
+log_17A()   { printf "ESC[37m       White       : \e[37m %s \e[0m \n"   "$1"; }
+log_18A()   { printf "ESC[38m                   : \e[38m %s \e[0m \n"   "$1"; }
+log_19A()   { printf "ESC[39m                   : \e[39m %s \e[0m \n"   "$1"; }
 
 
 #   BATCH #1B.      (NORMAL BACKGROUND)...
@@ -42,14 +54,14 @@ log_19B()   { printf "ESC[49m       : \e[49m %s \e[0m \n"   "$1"; }
 
 
 #   BATCH #2A.      (BRIGHT FOREGROUND)...
-log_20A()   { printf "ESC[90m       : \e[90m %s \e[0m \n"   "$1"; }
-log_21A()   { printf "ESC[91m       : \e[91m %s \e[0m \n"   "$1"; }
-log_22A()   { printf "ESC[92m       : \e[92m %s \e[0m \n"   "$1"; }
-log_23A()   { printf "ESC[93m       : \e[93m %s \e[0m \n"   "$1"; }
-log_24A()   { printf "ESC[94m       : \e[94m %s \e[0m \n"   "$1"; }
-log_25A()   { printf "ESC[95m       : \e[95m %s \e[0m \n"   "$1"; }
-log_26A()   { printf "ESC[96m       : \e[96m %s \e[0m \n"   "$1"; }
-log_27A()   { printf "ESC[97m       : \e[97m %s \e[0m \n"   "$1"; }
+log_20A()   { printf "ESC[90m       Black   : \e[90m %s \e[0m \n"   "$1"; }
+log_21A()   { printf "ESC[91m       Red     : \e[91m %s \e[0m \n"   "$1"; }
+log_22A()   { printf "ESC[92m       Green   : \e[92m %s \e[0m \n"   "$1"; }
+log_23A()   { printf "ESC[93m       Yellow  : \e[93m %s \e[0m \n"   "$1"; }
+log_24A()   { printf "ESC[94m       Blue    : \e[94m %s \e[0m \n"   "$1"; }
+log_25A()   { printf "ESC[95m       Purple  : \e[95m %s \e[0m \n"   "$1"; }
+log_26A()   { printf "ESC[96m       Cyan    : \e[96m %s \e[0m \n"   "$1"; }
+log_27A()   { printf "ESC[97m       White   : \e[97m %s \e[0m \n"   "$1"; }
 
 
 #   BATCH #2B.      (BRIGHT BACKGROUND)...
@@ -146,6 +158,21 @@ log_ok      "OKAY logging message..."
 log_info    "INFO logging message..."
 log_err     "ERROR logging message..."
 log_notify  "NOTICE logging message..."
+
+
+
+echo ""
+log "TESTING COLORS..."
+test_0 "$TEXT"
+test_1 "$TEXT"
+test_2 "$TEXT"
+test_3 "$TEXT"
+test_4 "$TEXT"
+test_5 "$TEXT"
+test_6 "$TEXT"
+test_7 "$TEXT"
+echo ""
+echo ""
 
 
 
