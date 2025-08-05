@@ -89,9 +89,9 @@ set(        CB_VERSION_HEADER_DIR       ${CMAKE_BINARY_DIR}/generated)      #   
 ########################################################################
 ########################################################################
 
-CB_newline(1)
+#   CB_newline(2)
 CB_Log(NOTIFY   "BUILDING ${CBAPP_NAME} ${CBAPP_VERSION}...")
-CB_newline()
+CB_newline(2)
 
 
 
@@ -103,7 +103,6 @@ CB_Log(DEBUG    "Current CMake Version              : ${CMAKE_VERSION}  (${CMAKE
 CB_Log(DEBUG    "Minimum CMake Version Required     : ${CB_MINIMUM_CMAKE_VERSION}")
 #
 #
-CB_newline()
 CB_Log(INFO     "Main Directory Variables:")
 CB_Log(INFO     "CB_ROOT_DIR                        : ${CB_ROOT_DIR}")
 CB_Log(INFO     "CB_SRC_DIR                         : ${CB_SRC_DIR}")
@@ -111,7 +110,6 @@ CB_Log(INFO     "CB_MISC_DIR                        : ${CB_MISC_DIR}")
 CB_Log(INFO     "CB_MISC_CPP_DIR                    : ${CB_MISC_CPP_DIR}")
 #
 #
-CB_newline()
 CB_Log(INFO     "Other Directory Variables:")
 #
 CB_Log(INFO     "CB_CMAKE_DIR                       : ${CB_CMAKE_DIR}")
@@ -129,7 +127,7 @@ CB_Log(INFO     "CB_CMAKE_DIR                       : ${CB_CMAKE_DIR}")
 ########################################################################
 ########################################################################
 
-CB_newline()
+CB_newline(2)
 CB_Log(NOTIFY   "TRANSFERING CONTROL TO SECONDARY CMAKELISTS FILE...")
 #
 #
@@ -179,11 +177,13 @@ include(${CMAKE_SOURCE_DIR}/macos/CMakeLists.txt)
 ########################################################################
 ########################################################################
 
-CB_newline(1)
+CB_newline(2)
 CB_Log(NOTIFY   "POST-BUILD DIAGNOSTICS...")
 
-CB_file_list_info(STATUS APP_HEADERS)
-CB_file_list_info(STATUS APP_SRCS)
+CB_file_list_info(STATUS    APP_SRCS        "\t"      "CBApp Header Files")
+CB_file_list_info(STATUS    APP_HEADERS     "\t"      "CBApp Source Files")
+#   CB_file_list_info(DEBUG     IMGUI_SRCS      "\t\t")
+#   CB_file_list_info(DEBUG     IMGUI_SRCS      "\t\t")
 
 
 
@@ -196,8 +196,8 @@ CB_file_list_info(STATUS APP_SRCS)
 
 
 
-CB_newline()
-CB_Log(NOTIFY   "Done.")
 CB_newline(2)
+CB_Log(NOTIFY   "done.")
+#   CB_newline(2)
 ########################################################################
 ########################################################################   END...

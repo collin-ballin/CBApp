@@ -93,24 +93,18 @@ set(    CMAKE_OSX_DEPLOYMENT_TARGET         "13.3"              CACHE STRING    
 #
 add_library(LIB_cxx_error_flags INTERFACE)
 target_compile_options(LIB_cxx_error_flags INTERFACE
+#
+#   ERROR FLAGS...
     -Werror=Wcomments
     -Werror=Wunknown-warning-option
 #
 #
+#   DISABLED...
     -Wall
     -Wextra
     -Wpedantic
     -Wshadow
     -Wno-sign-compare
-#
-#
-#   -Wdocumentation
-#   -Wcomma
-#   -Wheader-hygiene
-#   -Wweak-vtables
-#
-#   -Wconversion
-#   -Wsign-conversion
 )
 
 
@@ -118,7 +112,13 @@ target_compile_options(LIB_cxx_error_flags INTERFACE
 #
 add_library(LIB_cxx_warning_flags INTERFACE)
 target_compile_options(LIB_cxx_warning_flags INTERFACE
-    #-Werror
+#   -Wdocumentation
+#   -Wcomma
+#   -Wheader-hygiene
+#   -Wweak-vtables
+#
+#   -Wconversion
+#   -Wsign-conversion
 )
 
 

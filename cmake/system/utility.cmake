@@ -219,7 +219,7 @@ endfunction()
 #  • Sums the total number of text-lines across all existing files.
 #  • Emits one STATUS message with both figures.
 # ---------------------------------------------------------------------------
-function(CB_file_list_info level list_var)
+function(CB_file_list_info level list_var sep)
     set(_root "${CMAKE_SOURCE_DIR}")
     cmake_parse_arguments(ARG "" "" "BASE_DIR" ${ARGN})
     if(ARG_BASE_DIR)
@@ -259,8 +259,17 @@ function(CB_file_list_info level list_var)
     endforeach()
 
 
-    # ---------- summary ----------
-    set(_msg "'${list_var}'     : contains ${_file_count} file(s)"
+
+
+    #   LOG MESSAGE...
+    #
+    if(ARGC GREATER 3)            # user provided a 4th positional argument
+        set(_list_name "${ARGV3}")
+    else()
+        set(_list_name "'${list_var}'")
+    endif()
+    #
+    set(_msg "${_list_name}${sep}: contains ${_file_count} file(s)"
              " (${_total_lines} lines"
              " ${_total_chars} characters")
     CB_Log(${level} "${_msg})")

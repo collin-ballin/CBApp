@@ -26,7 +26,6 @@
 ########################################################################
 ########################################################################
 cmake_minimum_required(VERSION ${CB_MINIMUM_CMAKE_VERSION} FATAL_ERROR)
-# project(CBApp)
 
 
 
@@ -34,17 +33,13 @@ cmake_minimum_required(VERSION ${CB_MINIMUM_CMAKE_VERSION} FATAL_ERROR)
 ########################################################################
 ########################################################################
 
-#   Bump the semantic version here when you cut a *feature* release.
-#   project(CBApp VERSION ${CBAPP_VERSION} LANGUAGES CXX)
-
 if(NOT PROJECT_NAME STREQUAL "CBApp")
     project(CBApp VERSION ${CBAPP_VERSION} LANGUAGES CXX)
 endif()
 
 
-
 #   Derive a monotonically increasing build number (Git commit count).
-#   Fallback to 1 if Git is unavailable (e.g. first CI checkout).
+#       - Fallback to 1 if Git is unavailable (e.g. first CI checkout).
 execute_process(
     COMMAND git rev-list --count HEAD
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -55,16 +50,6 @@ if(GIT_COMMIT_COUNT STREQUAL "")
 endif()
 set(BUILD_NUMBER ${GIT_COMMIT_COUNT})
 
-
-
-
-
-
-#   message(DEBUG "CMAKE_SOURCE_DIR                = ${CMAKE_SOURCE_DIR}")
-#   message(DEBUG "CMAKE_CURRENT_SOURCE_DIR        = ${CMAKE_CURRENT_SOURCE_DIR}")
-#   message(DEBUG "CMAKE_SOURCE_DIR                = ${CMAKE_SOURCE_DIR}")
-#   message(DEBUG "CMAKE_BINARY_DIR                = ${CMAKE_BINARY_DIR}")
-#   message(DEBUG "CMAKE_CURRENT_BINARY_DIR        = ${CMAKE_CURRENT_BINARY_DIR}")
 
 if(NOT EXISTS "${CB_CMAKE_DIR}/version.hpp.in")
     message(FATAL_ERROR "Template not found: ${CB_CMAKE_DIR}/version.hpp.in")
@@ -88,6 +73,8 @@ endif()
 
 
 
+
+
 ########################################################################
 #
 #
@@ -95,6 +82,7 @@ endif()
 #   4.  GETTING ALL THE FILES / "DEAR IMGUI" - SPECIFIC STUFF...
 ########################################################################
 ########################################################################
+
 #       4.1     Find required packages: OpenGL and GLFW.
 find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
@@ -150,10 +138,11 @@ source_group(TREE ${CB_INCLUDE_DIR} PREFIX "include" FILES ${APP_HEADERS})
 ########################################################################
 ########################################################################
 
-
-#   print_file_list(APP_SRCS)
-#   print_file_list(APP_HEADERS)
-#   print_file_list(IMGUI_SRCS)
+#       5.1.    Third party included libraries...
+set(THIRD_PARTY_INCLUDE_DIR
+    ${CB_THIRD_PARTY_DIR}/cblib/include
+    ${CB_THIRD_PARTY_DIR}/nlohmann/include
+)
 
 
 #       5.2     Create the executable from your application and ImGui source files
@@ -162,7 +151,6 @@ add_executable(${PROJECT_NAME}
     ${IMGUI_SRCS}
     ${APP_HEADERS}
 )
-
 
 
 #       5.3     Link necessary libraries: OpenGL, GLFW, and warnings interface.
@@ -188,7 +176,8 @@ target_include_directories(${PROJECT_NAME}
         ${THIRD_PARTY_INCLUDE_DIR}
         ${CB_VERSION_HEADER_DIR}
 )
-#
+
+
 #       5.4     Xcode‑specific attributes **including version info**
 set_target_properties(${PROJECT_NAME} PROPERTIES
     XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "13.3"
@@ -198,9 +187,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-"
     XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME "NO")
 
+
 #       5.5     Auto‑increment build number during local Xcode builds (optional)
 option(USE_AGVTOOL_AUTO_BUMP "Run agvtool before each Xcode build" OFF)
-
+#
 if(CMAKE_GENERATOR STREQUAL "Xcode" AND USE_AGVTOOL_AUTO_BUMP)
     add_custom_command(TARGET ${PROJECT_NAME}
         PRE_BUILD
@@ -210,49 +200,7 @@ if(CMAKE_GENERATOR STREQUAL "Xcode" AND USE_AGVTOOL_AUTO_BUMP)
 endif()
 
 
-
-
-
-
-########################################################################
-#
-#
-#   TESTING...
-########################################################################
-########################################################################
-
-
-#   print_file_list(APP_HEADERS)
-
-
-
-#   CB_Log(STATUS   "Variable CB_INCLUDE_DIR    = ${CB_INCLUDE_DIR}")
-#   CB_Log(STATUS   "Variable APP_HEADERS       = ${APP_HEADERS}")
-
-
-
-
-
-
-########################################################################
-########################################################################
-
-
-
-
-
-
-
-
-
 #       5.6     Generate `version.hpp` so code can query the version
-#   set(VERSION_HEADER_DIR ${CMAKE_BINARY_DIR}/generated)
-#   file(MAKE_DIRECTORY ${VERSION_HEADER_DIR})
-#   configure_file(
-#       ${CB_CMAKE_DIR}/version.hpp.in          # ← always correct
-#       ${VERSION_HEADER_DIR}/version.hpp
-#       @ONLY)
-#
 set(CB_VERSION_HEADER_DIR ${CMAKE_BINARY_DIR}/generated)
 file(MAKE_DIRECTORY ${CB_VERSION_HEADER_DIR})
 configure_file(
