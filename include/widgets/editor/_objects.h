@@ -359,8 +359,8 @@ struct GenericPayload {
     {
         static constexpr float          ms_LABEL_WIDTH          = 196.0f;
         static constexpr float          ms_WIDGET_WIDTH         = 300.0f;
-        auto                            label                   = [&](const char * label) -> void
-        { utl::LeftLabel(label, ms_LABEL_WIDTH, ms_WIDGET_WIDTH);   ImGui::SameLine(); };
+        auto                            label                   = [&](const char * text) -> void
+        { utl::LeftLabel(text, ms_LABEL_WIDTH, ms_WIDGET_WIDTH);   ImGui::SameLine(); };
         
         
         label("Double #1:");

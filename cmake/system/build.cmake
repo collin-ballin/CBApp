@@ -89,31 +89,72 @@ set(    CMAKE_OSX_DEPLOYMENT_TARGET         "13.3"              CACHE STRING    
 ####################################################################################
 ####################################################################################
 
+
+#############################################################
+#       CLANG COMPILER FLAGS:
+#############################################################
+#                               |
+#   -ferror-limit=123           |
+#                               |
+#                               |
+#                               |
+#   -Werror=foo                 | ENABLE ERRORS for the warning flag "foo".
+#   -Wno-error=foo              | DISABLE ERRORS for the flag "foo" **even if** "-Werror" has been specified.
+#                               |
+#   -Wfoo                       | ENABLE WARNINGS for the flag "foo".
+#   -Wno-foo                    | DISABLE WARNINGS for the flag "foo".
+#                               |
+#                               |
+#                               |
+#############################################################
+
+
+
+
 #   "LIB_cxx_error_flags"
 #
 add_library(LIB_cxx_error_flags INTERFACE)
 target_compile_options(LIB_cxx_error_flags INTERFACE
-#
-#   ERROR FLAGS...
-    -Werror=Wcomments
-    -Werror=Wunknown-warning-option
-#
-#
-#   DISABLED...
     -Wall
     -Wextra
     -Wpedantic
-    -Wshadow
-    -Wno-sign-compare
+#
+#
+#   ENABLED ERRORS...
+    -Werror=unknown-warning-option          #   ERROR if using an unknown "-W" flag to compiler.
+    -Werror=comment
+    -Werror=tautological-compare            #   When using comaprisons that are ALWAYS true ( e.g., unsigned x; if (x < 0) { ... } ).
+    -Werror=uninitialized                   #   Using an uninitialized, local variable.
+    -Wimplicit-fallthrough                  #   Missing [[fallthrough]] between switch statements.
+#
+#
+#   DISABLED ERRORS...
+    #-Wno-error=
+    #-Wno-sign-compare
 )
+
 
 
 #   "LIB_cxx_warning_flags"
 #
 add_library(LIB_cxx_warning_flags INTERFACE)
 target_compile_options(LIB_cxx_warning_flags INTERFACE
-#   -Wdocumentation
-#   -Wcomma
+#
+#
+#   ENABLED WARNINGS...
+    -Wshadow
+    -Wcomma
+    -Wunused-variable -Wunused-parameter -Wunused-result    #   Unused variable, func. argument, return value, etc...
+#
+#
+#   DISABLED WARNINGS...
+    -Wno-shadow
+    -Wno-float-equal                #   Warning if comparing floats for equality.
+#
+    -Wno-documentation              #   DOxygen Errors.
+#
+#
+#
 #   -Wheader-hygiene
 #   -Wweak-vtables
 #

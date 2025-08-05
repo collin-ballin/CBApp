@@ -220,13 +220,10 @@ void Editor::_draw_obj_selector_column(void)
     static constexpr ImGuiTableColumnFlags      C_LOCK                  = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
     static constexpr ImGuiTableColumnFlags      C_NAME                  = ImGuiTableColumnFlags_WidthStretch;
     static constexpr ImGuiTableColumnFlags      C_DEL                   = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
-    static constexpr ImGuiSelectableFlags       SELECTABLE_FLAGS        = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick;
-    //
-    static constexpr ImU32                      ms_DELETE_BUTTON_COLOR  = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
+    //  static constexpr ImGuiSelectableFlags       SELECTABLE_FLAGS        = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick;
     //
     const ImU32                                 col_text                = ImGui::GetColorU32(ImGuiCol_Text);
     const ImU32                                 col_dim                 = ImGui::GetColorU32(ImGuiCol_TextDisabled);
-    const ImU32                                 col_frame               = ImGui::GetColorU32(ImGuiCol_FrameBg);
     //
     //
     BrowserStyle &                              BStyle                  = this->m_style.browser_style;
@@ -1165,7 +1162,7 @@ void Editor::_draw_vertex_inspector_column(Path & path)
 
 //  "_draw_obj_properties_panel"
 //
-void Editor::_draw_obj_properties_panel(Path & path, const PathID pidx)
+void Editor::_draw_obj_properties_panel(Path & path, const size_t pidx)
 {
     constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
     //
@@ -1199,7 +1196,7 @@ void Editor::_draw_obj_properties_panel(Path & path, const PathID pidx)
     
     //      0.1.    UPDATE TITLE IF SELECTION CHANGED...
     if (cache_id != pidx )           {
-        cache_id        = pidx;
+        cache_id        = static_cast<PathID>( pidx );
         int retcode     = std::snprintf( title, TITLE_SIZE, Path::ms_DEF_PATH_TITLE_FMT_STRING, path.label.c_str(), path.id );
         
         if (retcode < 0) [[unlikely]] {//  Log a warning message if truncation takes place.

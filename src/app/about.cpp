@@ -27,10 +27,10 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 /// @def        MAKE_GMAIL_COMPOSE_URL_FULL(TO, CC, BCC, SUBJECT, BODY)
 /// @brief      Helper to build a full Gmail “compose”-style URL with all recipient fields.
-/// @note       USAGE:          MAKE_GMAIL_COMPOSE_URL_FULL("friend@example.com", "cc@example.com", "bcc@example.com",      \
+/// @note       USAGE:          MAKE_GMAIL_COMPOSE_URL_FULL("friend@example.com", "cc@example.com", "bcc@example.com",
 ///                                                         "Subject%20Of%20Email", "Body%20of%20email...")
 ///
-/// @details    EXPANDS TO:     "https://mail.google.com/mail/?view=cm&fs=1&to=friend@example.com&cc=cc@example.com"        \
+/// @details    EXPANDS TO:     "https://mail.google.com/mail/?view=cm&fs=1&to=friend@example.com&cc=cc@example.com"
 ///                             "&bcc=bcc@example.com&su=Subject%20Of%20Email&body=Body%20of%20email..."
 ///
 ///             REQUIREMENTS:   •   All arguments must be C-string literals and URL-encoded:
@@ -90,7 +90,7 @@ struct AboutCache               // lives only while the window is open
     {
         AboutCache c;
 
-        /* --- Build-settings section ---------------------------- //
+        // --- Build-settings section ---------------------------- //
 #       ifdef __CBAPP_DEBUG__                     c.build_settings.push_back({"__CBAPP_DEBUG__", {}});
 #endif
 #       ifdef __CBLIB_RELEASE_WITH_DEBUG_INFO__   c.build_settings.push_back({"__CBLIB_RELEASE_WITH_DEBUG_INFO__", {}});
@@ -308,7 +308,11 @@ namespace about { //     BEGINNING NAMESPACE "about"...
     {
         BUTTON_SIZE                             = ImVec2( 1.8f * ImGui::CalcTextSize("More Info...").x, ImGui::GetFrameHeight() );
         OPENGL_VERSION                          = std::string( reinterpret_cast<const char *>( glGetString(GL_VERSION)                   )  );
+    #ifdef __APPLE__
         GLSL_VERSION                            = std::string( reinterpret_cast<const char *>( glGetString(GL_SHADING_LANGUAGE_VERSION)  )  );
+    #else
+        GLSL_VERSION                            = "TO-DO: Use GLAD to obtain this on WINDOWS";
+    #endif  //  __APPLE__  //
         
         
         

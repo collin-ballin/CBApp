@@ -628,7 +628,7 @@ inline void ActionComposer::_draw_action_table(void)
 //
 void ActionComposer::_draw_action_inspector(void)
 {
-    if ( m_sel < 0 || m_sel >= m_actions->size() )         { ImGui::TextDisabled("No Selection..."); return; }
+    if ( m_sel < 0 || m_sel >= static_cast<int>( m_actions->size() ) )      { ImGui::TextDisabled("No Selection..."); return; }
     
     Action &        a           = (*m_actions)[m_sel];
     int             type_int    = static_cast<int>( a.type );
@@ -1038,92 +1038,6 @@ void ActionComposer::_file_dialog_handler(void)
 //
 bool ActionComposer::save_to_file(const std::filesystem::path & path) const
 {
-    namespace                       fs              = std::filesystem;
-    std::error_code                 ec;
-
-
-
-    std::pair<bool,bool>            exists          = {false, false};
-    bool                            success         = true;
-
-    
-
-
-    //  0.  PRE-SAVE CONDITIONS...
-    const bool existed_before  = fs::exists(path, ec);
-    const auto prev_write_time = existed_before
-                               ? fs::last_write_time(path, ec)
-                               : fs::file_time_type::min();
-
-
-
-    //  1.  ENSURE PARENT DIRECTORIES EXIST...
-    if ( auto parent = path.parent_path(); !parent.empty() && !fs::exists(parent, ec) )
-    {
-        if ( !fs::create_directories(parent, ec) || ec )
-        {
-            S.m_logger.error(std::format( "ActionComposer | failed to create parent dirs while attempting to save file \"{}\".  ERROR_CODE: \"{}\"",
-                                          path.string(), ec.message()) );
-            return false;
-        }
-    }
-
-
-    //  2.  PERFORM THE SAVE-OPERATION WITH THE WRAPP-ED FUNCTION...
-    if ( !save_to_file_IMPL(path) ) {        // ← your original implementation
-        return false;                       //   already logs its own errors
-    }
-    
-
-
-    //  3.  POST-SAVE VALIDATION...
-    if ( !fs::exists(path, ec) )
-    {
-        S.m_logger.error(std::format( "ActionComposer | save verification failed: \"{}\" does not exist after write.",
-                                      path.string()) );
-        return false;
-    }
-    
-
-    const std::uintmax_t sz = fs::file_size(path, ec);
-    
-    if (sz == 0 || ec)
-    {
-        S.m_logger.error(std::format(
-            "ActionComposer | save verification failed: \"{}\" size is {} bytes.",
-            path.string(), sz));
-        return false;
-    }
-
-
-    if (existed_before)
-    {
-        const auto new_write_time = fs::last_write_time(path, ec);
-        using namespace std::chrono_literals;
-        if (new_write_time <= prev_write_time + 1s)   // 1 s tolerance for FS granularity
-        {
-            S.m_logger.error(std::format(
-                "ActionComposer | save verification failed: last-write-time for \"{}\" "
-                "did not advance (old {}, new {}).",
-                path.string(),
-                prev_write_time.time_since_epoch().count(),
-                new_write_time.time_since_epoch().count()));
-            return false;
-        }
-    }
-
-
-
-    return success;        // all checks passed
-}
-              
-
-
-
-//  "save_to_file_IMPL"
-//
-bool ActionComposer::save_to_file_IMPL(const std::filesystem::path & path) const
-{
     std::ofstream       f(path);
     nlohmann::json      j = { {"compositions", m_compositions} };
     
@@ -1136,10 +1050,6 @@ bool ActionComposer::save_to_file_IMPL(const std::filesystem::path & path) const
     f << j.dump(2);
     return true;
 }
-
-
-
-
 
 
 //  "load_from_file"

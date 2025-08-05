@@ -34,13 +34,12 @@
 #ifdef _WIN32
 #include <windows.h>
 
-extern "C" int main(int, char ** );   //    Forward declaration *real* main.
-
 //  "WinMain"
 //
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-    return main(__argc, __argv);   // __argc/argv supplied by CRT
+    int     status      = cb::run_application(__argc, __argv);  // __argc / __argv supplied by CRT
+    return status;
 }
 //
 // *************************************************************************** //

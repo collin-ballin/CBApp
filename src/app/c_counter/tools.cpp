@@ -76,7 +76,7 @@ void CCounterApp::ShowCCPlots(void)
         if (auto pkt = utl::parse_packet(raw, m_use_mutex_count))
         {
             const auto &counts = pkt->counts;
-            for (int i = 0; i < ms_NUM; ++i)
+            for (int i = 0; i < static_cast<int>(ms_NUM); ++i)
             {
                 const size_t ch         = ms_channels[i].idx;
                 const float   v         = static_cast<float>(counts[ch]);
@@ -155,7 +155,7 @@ void CCounterApp::ShowCCPlots(void)
             ImPlot::SetupAxisLimits(ImAxis_X1, xmin, xmax, ImGuiCond_Always);
 
 
-            for (int k = 0; k < ms_NUM; ++k)
+            for (int k = 0; k < static_cast<int>(ms_NUM); ++k)
             {
                 const auto &        buf         = m_buffers[k];
                 const auto &        avg         = m_avg_counts[k];

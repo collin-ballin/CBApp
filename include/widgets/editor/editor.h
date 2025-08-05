@@ -328,7 +328,7 @@ protected:
     void                                _draw_vertex_inspector_column           (Path & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
     //
     //                              PANELS FOR EACH OBJECT TYPE:
-    void                                _draw_obj_properties_panel              (Path & , const PathID );
+    void                                _draw_obj_properties_panel              (Path & , const size_t );
     void                                _draw_vertex_properties_panel           (void);
     //
     //                              BROWSER HELPERS:
