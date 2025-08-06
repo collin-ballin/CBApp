@@ -32,8 +32,9 @@ cmake_minimum_required(VERSION ${CB_MINIMUM_CMAKE_VERSION} FATAL_ERROR)
 #   0.  INITIAL PROJECT SETUP...
 ########################################################################
 ########################################################################
-if(NOT PROJECT_NAME STREQUAL "CBApp")
-    project(CBApp VERSION ${CBAPP_VERSION} LANGUAGES CXX)
+if(NOT PROJECT_NAME STREQUAL ${CBAPP_NAME})
+    CB_Log(FATAL_ERROR "Project initiation \"project(${CBAPP_NAME}, ...)\" was NOT performed by the central CMakeLists.txt file.")
+    project(${CBAPP_NAME} VERSION ${CBAPP_VERSION} LANGUAGES CXX)
 endif()
 
 
@@ -414,6 +415,11 @@ source_group(
     PREFIX "imgui/misc"             # how it should appear
     FILES  ${IMGUI_MISC_SRCS}
 )
+
+
+
+
+
 
 #
 #

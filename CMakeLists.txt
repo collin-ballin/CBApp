@@ -37,7 +37,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/cmake/system/main.cmake)
 ########################################################################
 ########################################################################
 cmake_minimum_required(VERSION ${CB_MINIMUM_CMAKE_VERSION} FATAL_ERROR)
-project(PROJECT_NAME VERSION ${CBAPP_VERSION} LANGUAGES CXX)
+project(${CBAPP_NAME} VERSION ${CBAPP_VERSION} LANGUAGES CXX)
 
 
 
@@ -80,7 +80,20 @@ set(        CB_VERSION_HEADER_DIR       ${CMAKE_BINARY_DIR}/generated       CACH
 #           2B.1.   ASSIGNING LIST-OF-FILES FOR THE CMAKE BUILD SYSTEM:
 set(        CB_BUILD_SYSTEM_FILES
                 ${CMAKE_SOURCE_DIR}/CMakeLists.txt
+            #
+                ${CB_CMAKE_LIB_DIR}/main.cmake
+                ${CB_CMAKE_LIB_DIR}/constants.cmake
+                ${CB_CMAKE_LIB_DIR}/project_metadata.cmake
+                ${CB_CMAKE_LIB_DIR}/utility.cmake
+                ${CB_CMAKE_LIB_DIR}/build.cmake
+            #
+                ${CB_CMAKE_LIB_DIR}/build.cmake
 )
+
+
+
+
+
 
 
 
@@ -105,12 +118,12 @@ set(        CB_BUILD_SYSTEM_FILES
 ########################################################################
 
 #   CB_newline(2)
-CB_Log(NOTIFY   "BUILDING ${CBAPP_NAME} ${CBAPP_VERSION}...")
+CB_Log(NOTIFY   "Building \"${CBAPP_NAME}\" version ${CBAPP_VERSION}...")
 CB_newline(2)
 
 
 
-CB_Log(NOTIFY   "INITIALIZING...")
+CB_Log(STATUS   "INITIALIZING...")
 
 
 
@@ -118,14 +131,14 @@ CB_Log(DEBUG    "Current CMake Version              : ${CMAKE_VERSION}  (${CMAKE
 CB_Log(DEBUG    "Minimum CMake Version Required     : ${CB_MINIMUM_CMAKE_VERSION}")
 #
 #
-CB_Log(INFO     "Main Directory Variables:")
+CB_Log(OUTFO    "Main Directory Variables:")
 CB_Log(VERBOSE  "CB_ROOT_DIR                        : ${CB_ROOT_DIR}")
 CB_Log(VERBOSE  "CB_SRC_DIR                         : ${CB_SRC_DIR}")
 CB_Log(VERBOSE  "CB_MISC_DIR                        : ${CB_MISC_DIR}")
 CB_Log(VERBOSE  "CB_MISC_CPP_DIR                    : ${CB_MISC_CPP_DIR}")
 #
 #
-CB_Log(INFO     "Other Directory Variables:")
+CB_Log(OUTFO    "Other Directory Variables:")
 #
 CB_Log(VERBOSE  "CB_CMAKE_DIR                       : ${CB_CMAKE_DIR}")
 
@@ -193,10 +206,10 @@ include(${CMAKE_SOURCE_DIR}/macos/CMakeLists.txt)
 ########################################################################
 
 CB_newline(2)
-CB_Log(NOTIFY   "POST-BUILD DIAGNOSTICS...")
+CB_Log(STATUS   "POST-BUILD DIAGNOSTICS...")
 
-CB_file_list_info(STATUS    APP_SRCS        "\t"      "CBApp Header Files")
-CB_file_list_info(STATUS    APP_HEADERS     "\t"      "CBApp Source Files")
+CB_file_list_info(INFO      APP_SRCS        "\t"      "CBApp Header Files")
+CB_file_list_info(INFO      APP_HEADERS     "\t"      "CBApp Source Files")
 
 
 #
@@ -219,6 +232,6 @@ print_file_list(CB_BUILD_SYSTEM_FILES)
 
 
 CB_newline(2)
-CB_Log(NOTIFY   "done")
+CB_Log(NOTIFY   "build complete")
 ########################################################################
 ########################################################################   END...

@@ -66,7 +66,7 @@ function(CB_Log level fmt)
     #   1.      NORMALIZE MESSAGE AND VALIDATE...
     string(TOUPPER "${level}" _lvl)
     if(NOT _lvl MATCHES
-       "^(FATAL_ERROR|SEND_ERROR|NOTIFY|WARNING|AUTHOR_WARNING|STATUS|INFO|VERBOSE|DEBUG)$")
+       "^(FATAL_ERROR|SEND_ERROR|NOTIFY|WARNING|AUTHOR_WARNING|STATUS|OUTFO|INFO|VERBOSE|DEBUG)$")
         message(FATAL_ERROR "CB_Log(): invalid message level '${level}'")
     endif()
 
@@ -97,31 +97,37 @@ function(CB_Log level fmt)
         string(PREPEND fmt "${WHITE}")
     #
     #
-    #           3.3.        "INFO.
+    #           3.3.        "INFO".
     elseif(_lvl STREQUAL "INFO")
         set(_tag    "${BOLD}${GREEN}INFO")
-        # string(PREPEND fmt "${WHITE_BRIGHT}")
+        string(PREPEND fmt "${WHITE_BRIGHT}")
     #
     #
-    #           3.4.        "STATUS".
-    elseif(_lvl STREQUAL "STATUS")
-        set(_tag    "${BOLD}${GREEN}STATUS")
+    #           3.4.        "OUTFO".
+    elseif(_lvl STREQUAL "OUTFO")
+        set(_tag    "${BOLD}${GREEN}INFO")
         string(PREPEND fmt "${GREEN}")
     #
     #
-    #           3.5.        "WARNING" / "AUTHOR WARNING".
+    #           3.5.        "STATUS".
+    elseif(_lvl STREQUAL "STATUS")
+        set(_tag    "${BOLD}${BLUE}STATUS")
+        string(PREPEND fmt "${BLUE}")
+    #
+    #
+    #           3.6.        "WARNING" / "AUTHOR WARNING".
     elseif(_lvl STREQUAL "WARNING" OR _lvl STREQUAL "AUTHOR_WARNING")
         set(_tag    "${BOLD}${YELLOW}WARN")
         string(PREPEND fmt "${YELLOW}")
     #
     #
-    #           3.6.        "NOTIFY".
+    #           3.7.        "NOTIFY".
     elseif(_lvl STREQUAL "NOTIFY")
         set(_tag    "${BOLD}${UNDERLINE}${BLACK_BG}${CYAN_BRIGHT}NOTIFY")
         string(PREPEND fmt "${UNDERLINE}${BLACK_BG}${CYAN_BRIGHT}")
     #
     #
-    #           3.7.        "FATAL ERROR".
+    #           3.8.        "FATAL ERROR".
     elseif(_lvl STREQUAL "FATAL_ERROR" OR _lvl STREQUAL "SEND_ERROR")
         set(_tag    "${BOLD}${RED}ERROR")
         string(PREPEND fmt "${RED}")
@@ -129,7 +135,8 @@ function(CB_Log level fmt)
     #
     #           3.?.        DEFAULT.
     else()
-        set(_tag "${_lvl}")                 # fallback: raw level text
+        set(_tag    "${BOLD}???")
+        #   set(_tag "${_lvl}")                 # fallback: raw level text
     #
     #
     #
