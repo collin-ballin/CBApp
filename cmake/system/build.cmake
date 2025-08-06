@@ -160,14 +160,16 @@ target_compile_options(LIB_cxx_warning_flags INTERFACE
 #   ENABLED WARNINGS...
     -Wshadow
     -Wcomma
-    -Wunused-variable -Wunused-parameter -Wunused-result    #   Unused variable, func. argument, return value, etc...
+    -Wunused-variable           #
+    -Wunused-parameter          #
+    -Wunused-result             #   Unused variable, func. argument, return value, etc...
+#
+    -Wfloat-equal               #   Warning if comparing floats for equality.
     -Wdocumentation
 #
 #
 #   DISABLED WARNINGS...
-    -Wno-float-equal                #   Warning if comparing floats for equality.
-#
-    -Wno-documentation              #   DOxygen Errors.
+    #   -Wno-documentation              #   DOxygen Errors.
 #
 #
 #
