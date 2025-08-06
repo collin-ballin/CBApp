@@ -52,7 +52,7 @@ project(CBApp VERSION ${CBAPP_VERSION} LANGUAGES CXX)
 ########################################################################
 ########################################################################
 
-#           2.1.    CORE DIRECTORIES:
+#           2A.1.   CORE DIRECTORIES:
 set(        CB_ROOT_DIR                 "${CMAKE_SOURCE_DIR}"               CACHE PATH "")
 set(        CB_SRC_DIR                  "${CB_ROOT_DIR}/src"                CACHE PATH "")
 set(        CB_INCLUDE_DIR              "${CB_ROOT_DIR}/include"            CACHE PATH "")
@@ -63,17 +63,33 @@ set(        CB_MISC_DIR                 "${CB_ROOT_DIR}/misc"               CACH
 set(        CB_MISC_CPP_DIR             "${CB_MISC_DIR}/cpp"                CACHE PATH "")
 #
 #
-#           2.2.    ADDITIONAL DIRECTORIES:
-set(        CB_CMAKE_DIR                "${CB_ROOT_DIR}/cmake"
-            CACHE PATH                  "Path to shared cmake templates (version.hpp.in, version.rc.in)")
 #
-set(        CB_VERSION_HEADER_DIR       ${CMAKE_BINARY_DIR}/generated)      #   Directory of the "version.hpp"
-    
+#           2A.2.   CMAKE / BUILD-SYSTEM DIRECTORIES:
+set(        CB_CMAKE_DIR                "${CB_ROOT_DIR}/cmake"              CACHE PATH  "Path to main CMake resource directory (version.hpp.in, version.rc.in)"             )
+set(        CB_CMAKE_LIB_DIR            "${CB_ROOT_DIR}/cmake/system"       CACHE PATH  "Directory containing the \"*.cmake\" files used for the CBApp build system."       )
+set(        CB_CMAKE_MACOS_DIR          "${CB_ROOT_DIR}/cmake/system"       CACHE PATH  "Directory containing *.cmake for MacOS build system."                              )
+set(        CB_CMAKE_WINDOWS_DIR        "${CMAKE_SOURCE_DIR}/macos"         CACHE PATH  "Directory containing *.cmake for Windows/MinGW build system."                      )
+#
+#
+#
+#           2A.3.   ADDITIONAL DIRECTORIES:
+set(        CB_VERSION_HEADER_DIR       ${CMAKE_BINARY_DIR}/generated       CACHE PATH  "Directory containing \"version.hpp\" file.")
 
-#           2.3.    SOURCE FILES:
+
+
+
+#           2B.1.   ASSIGNING LIST-OF-FILES FOR THE CMAKE BUILD SYSTEM:
+set(        CB_BUILD_SYSTEM_FILES
+                ${CMAKE_SOURCE_DIR}/CMakeLists.txt
+)
+
+
+
+
+#           2.4.    SOURCE FILES:
 #               APP_SRCS
 #
-#           2.4.    HEADER FILES:
+#           2.5.    HEADER FILES:
 #               APP_HEADERS
     
     
@@ -117,8 +133,8 @@ CB_Log(INFO     "CB_CMAKE_DIR                       : ${CB_CMAKE_DIR}")
     
     
     
-    
-    
+
+
 ########################################################################
 #
 #
@@ -182,10 +198,17 @@ CB_Log(NOTIFY   "POST-BUILD DIAGNOSTICS...")
 
 CB_file_list_info(STATUS    APP_SRCS        "\t"      "CBApp Header Files")
 CB_file_list_info(STATUS    APP_HEADERS     "\t"      "CBApp Source Files")
-#   CB_file_list_info(DEBUG     IMGUI_SRCS      "\t\t")
-#   CB_file_list_info(DEBUG     IMGUI_SRCS      "\t\t")
 
 
+#
+#
+#   CB_file_list_info(DEBUG     IMGUI_SRCS      "\t\t")
+#   CB_file_list_info(DEBUG     IMGUI_SRCS      "\t\t")
+#
+#
+
+
+print_file_list(CB_BUILD_SYSTEM_FILES)
 
 
 
@@ -197,7 +220,6 @@ CB_file_list_info(STATUS    APP_HEADERS     "\t"      "CBApp Source Files")
 
 
 CB_newline(2)
-CB_Log(NOTIFY   "done.")
-#   CB_newline(2)
+CB_Log(NOTIFY   "done")
 ########################################################################
 ########################################################################   END...

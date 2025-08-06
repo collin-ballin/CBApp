@@ -29,7 +29,7 @@ cmake_minimum_required(VERSION ${CB_MINIMUM_CMAKE_VERSION} FATAL_ERROR)
 
 
 
-#   0.  PROJECT + GLOBAL VERSION...
+#   0.  INITIAL PROJECT SETUP...
 ########################################################################
 ########################################################################
 
@@ -55,21 +55,12 @@ if(NOT EXISTS "${CB_CMAKE_DIR}/version.hpp.in")
     message(FATAL_ERROR "Template not found: ${CB_CMAKE_DIR}/version.hpp.in")
 endif()
 
+#
+#
+#
+########################################################################
+########################################################################    END "INITIAL PROJECT SETUP".
 
-
-########################################################################
-#
-#
-#
-#   2.  COMPILER FLAGS, GLOBAL SETTINGS, VERSION REQUIREMENTS, ETC...
-########################################################################
-########################################################################
-#   #       2.1     Set the C++ standard (adjust if needed)
-#   set(CMAKE_CXX_STANDARD 20)
-#   set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#   #
-#   #       2.2     Set the Minimum MacOSX Version...
-#   set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3" CACHE STRING "Minimum macOS deployment version")
 
 
 
@@ -79,91 +70,158 @@ endif()
 #
 #
 #
-#   4.  GETTING ALL THE FILES / "DEAR IMGUI" - SPECIFIC STUFF...
+#   2.  GATHER PROJECT FILES AND RESOURCES...
 ########################################################################
 ########################################################################
 
-#       4.1     Find required packages: OpenGL and GLFW.
+#       2.1     Find required packages: OpenGL and GLFW.
 find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
-#
-#
-#       4.2     Collect ImGui core source files from the imgui/directory.
+
+
+#       2.2     Collect ImGui core source files from the imgui/directory.
 set(IMGUI_CORE_SRCS
-    ${CB_IMGUI_DIR}/imgui.cpp             #   ImGui...
+    ${CB_IMGUI_DIR}/imgui.cpp                   #     ImGui...
     ${CB_IMGUI_DIR}/imgui_draw.cpp
     ${CB_IMGUI_DIR}/imgui_widgets.cpp
     ${CB_IMGUI_DIR}/imgui_tables.cpp
-    ${CB_IMGUI_DIR}/implot.cpp            #   ImPlot...
+    ${CB_IMGUI_DIR}/implot.cpp                  #     ImPlot...
     ${CB_IMGUI_DIR}/implot_items.cpp
-    ${CB_IMGUI_DIR}/implot_demo.cpp       # Optional
-    ${CB_IMGUI_DIR}/imgui_demo.cpp        # Optional
+    ${CB_IMGUI_DIR}/implot_demo.cpp             #     Optional.
+    ${CB_IMGUI_DIR}/imgui_demo.cpp              #     Optional.
 )
-#
-#       4.3     Collect Misc ImGui source files.
+
+
+#       2.3     Collect Misc ImGui source files.
 set(IMGUI_MISC_SRCS
     ${CB_MISC_CPP_DIR}/imgui_stdlib.cpp
 )
-#
-#       4.4     Collect only the backends you need (GLFW and OpenGL3).
+
+
+#       2.4     Collect only the backends you need (GLFW and OpenGL3).
 set(IMGUI_BACKEND_SRCS
     ${CB_IMGUI_DIR}/backends/imgui_impl_glfw.cpp
     ${CB_IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
-#
-#       4.5     Combine all ImGui source files.
+
+
+#       2.5     Combine all ImGui source files.
 set(IMGUI_SRCS ${IMGUI_CORE_SRCS} ${IMGUI_MISC_SRCS} ${IMGUI_BACKEND_SRCS})
+
+
+#       2.6.    Aggregate each include directory path.
+set(CBAPP_INCLUDE_DIRS
+    ${CB_INCLUDE_DIR}
+    ${CB_INCLUDE_DIR}/config
+    ${CB_INCLUDE_DIR}/app
+    ${CB_INCLUDE_DIR}/imgui_extensions
+    ${CB_IMGUI_DIR}
+    ${CB_IMGUI_DIR}/backends
+    ${CB_MISC_CPP_DIR}
+    ${THIRD_PARTY_INCLUDE_DIR}
+    ${CB_VERSION_HEADER_DIR}
+)
+
 #
-#       4.6     Recursively gather source files.
+#
+#
+########################################################################
+########################################################################    END "GATHERING RESOURCES".
+
+
+
+
+
+
+########################################################################
+#
+#
+#
+#   3.  LIBRARY #1.     DEAR IMGUI SOURCE CODE...
+########################################################################
+########################################################################
+
+#       3.1.    Compile Dear ImGui Source-Code SEPERATELY.
+add_library(ImGui STATIC ${IMGUI_SRCS})
+
+
+#       3.2.    Treat ImGui’s own headers as “system” and silence warnings.
+target_include_directories(ImGui PRIVATE ${CBAPP_INCLUDE_DIRS})     #   Add GLFW inside Dear ImGui build...
+
+
+#       3.3.    Add GLFW inside Dear ImGui build.
+#                   - Provide compiler flag for "my_imconfig.h" to ImGui Source code.
+#                   - Set the "-w" compiler flag to disable all compiler flags (compile as "system").
+target_link_libraries(ImGui
+    PUBLIC glfw LIB_cbapp_config_defines -w
+)
+
+
+#       3.4.    Set MacOS Minimum Version for ImGui Source Code Build.
+set_target_properties(ImGui PROPERTIES
+    XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET                "${CBAPP_MIN_MACOS_VERSION}"
+)
+
+#
+#
+#
+########################################################################
+########################################################################    END "LIBRARY #1".
+
+
+
+
+
+
+########################################################################
+#
+#
+#
+#   3.  CREATE TARGET FOR MAIN APPLICATION (MAPPING ATTRIBUTES, INCLUDE-DIRECTORES, PROPERTIES, ETC)...
+########################################################################
+########################################################################
+
+#       3.1.    Recursively Gather Source Files.
 file(GLOB_RECURSE APP_SRCS
     CONFIGURE_DEPENDS
     ${CB_SRC_DIR}/*.cpp
 )
-#
-#       4.7     Recursively gather header files.
+
+#       3.2.    Recursively Gather Header Files.
 file(GLOB_RECURSE APP_HEADERS
     ${CB_INCLUDE_DIR}/*.h
     ${CB_INCLUDE_DIR}/**/*.h
 )
-source_group(TREE ${CB_INCLUDE_DIR} PREFIX "include" FILES ${APP_HEADERS})
 
-
-
-
-########################################################################
-#
-#
-#
-#   5.  FINAL OPERATIONS (DEFINE EXE, LINKING BINARIES, ETC)...
-########################################################################
-########################################################################
-
-#       5.1.    Third party included libraries...
+#       3.3.    Third party included libraries...
 set(THIRD_PARTY_INCLUDE_DIR
     ${CB_THIRD_PARTY_DIR}/cblib/include
     ${CB_THIRD_PARTY_DIR}/nlohmann/include
 )
 
 
-#       5.2     Create the executable from your application and ImGui source files
+#       3.4.    Create the executable from your application and ImGui source files
 add_executable(${PROJECT_NAME}
     ${APP_SRCS}
-    ${IMGUI_SRCS}
     ${APP_HEADERS}
 )
 
 
-#       5.3     Link necessary libraries: OpenGL, GLFW, and warnings interface.
+#       3.5.    Link necessary libraries:   OpenGL, GLFW, ImGui, Compiler-Flags.
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         ${OPENGL_gl_LIBRARY}
         glfw
+        ImGui
+    #
         LIB_preprocessor_defines
         LIB_cxx_error_flags
         LIB_cxx_warning_flags
         LIB_cxx_debug_flags
 )
-#
+
+
+#       3.6.    Link necessary libraries:   OpenGL, GLFW, ImGui, Compiler-Flags.
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${CB_INCLUDE_DIR}
@@ -178,14 +236,22 @@ target_include_directories(${PROJECT_NAME}
 )
 
 
-#       5.4     Xcode‑specific attributes **including version info**
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "13.3"
-    XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.example.cbapp"
-    XCODE_ATTRIBUTE_MARKETING_VERSION ${PROJECT_VERSION}
-    XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION ${BUILD_NUMBER}
-    XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-"
-    XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME "NO")
+
+
+
+
+#       3.7     Xcode‑specific attributes **including version info**
+CB_apply_xcode_target_properties(${PROJECT_NAME})
+
+
+
+
+
+
+
+
+
+
 
 
 #       5.5     Auto‑increment build number during local Xcode builds (optional)
@@ -209,7 +275,41 @@ configure_file(
     @ONLY)
 
 
-#       5.7     Organize source files in Xcode...
+
+
+
+
+
+
+
+########################################################################
+#
+#
+#
+#   6.  CREATE / FORMAT XCODE PROJECT FILE...
+########################################################################
+########################################################################
+
+
+#       6.1.    Create Folder for "CBApp Source Code" in Xcode.
+source_group(
+    TREE   ${CB_SRC_DIR}
+    PREFIX "src"
+    FILES  ${APP_SRCS}
+)
+
+
+#       6.2.    Create Folder for "CBApp Included Code" in Xcode.
+source_group(
+    TREE   ${CB_INCLUDE_DIR}
+    PREFIX "include"
+    FILES  ${APP_HEADERS}
+)
+
+
+
+
+#       6.3.    Create "src" File Group in Xcode.
 source_group(TREE ${CB_SRC_DIR} PREFIX "src" FILES ${APP_SRCS})
 source_group(
     TREE   ${CB_IMGUI_DIR}
@@ -223,6 +323,9 @@ source_group(
     PREFIX "imgui/misc"             # how it should appear
     FILES  ${IMGUI_MISC_SRCS}
 )
+
+
+
 
 
 

@@ -22,14 +22,34 @@ set(    CB_MINIMUM_CMAKE_VERSION        3.15)
 ########################################################################
 ########################################################################
 
-#   "LIB_preprocessor_definitions"
+#   "LIB_cbapp_config_defines"
+#
+add_library(LIB_cbapp_config_defines INTERFACE)
+target_compile_definitions(LIB_cbapp_config_defines
+    INTERFACE
+        #   1.1     CONFIG FILES...
+        IMGUI_USER_CONFIG=\"my_imconfig.h\"         #   SET FILENAME OF THE CUSTOM IMGUI CONFIG FILE...
+        CBAPP_USER_CONFIG=\"cbapp_config.h\"        #   SPECIFY CBAPP CONFIG FILE...
+)
+
+
+
+#   "LIB_preprocessor_defines"
 #
 add_library(LIB_preprocessor_defines INTERFACE)
+#   Inherit all items in "LIB_cbapp_config_defines"...
+target_link_libraries(LIB_cbapp_config_defines
+   INTERFACE
+       LIB_preprocessor_defines
+)
+
+
+#       Now, add the additional items...
 target_compile_definitions(LIB_preprocessor_defines INTERFACE
     #
     #   1.1     CONFIG FILES...
-    IMGUI_USER_CONFIG=\"my_imconfig.h\"     #   SET FILENAME OF THE CUSTOM IMGUI CONFIG FILE...
-    CBAPP_USER_CONFIG=\"cbapp_config.h\"         #   SPECIFY CBAPP CONFIG FILE...
+    #   IMGUI_USER_CONFIG=\"my_imconfig.h\"         #   SET FILENAME OF THE CUSTOM IMGUI CONFIG FILE...
+    #   CBAPP_USER_CONFIG=\"cbapp_config.h\"        #   SPECIFY CBAPP CONFIG FILE...
     #
     #   1.2     MACROS FOR  "ALL"  BUILD TYPES...UILD TYPES...
     _CBLIB_LOG
@@ -72,9 +92,9 @@ target_compile_definitions(LIB_preprocessor_defines INTERFACE
 #   2.          LANGUAGE AND PLATFORM DEFAULTS...
 ####################################################################################
 ####################################################################################
-set(    CMAKE_CXX_STANDARD                  20                  CACHE STRING    ""              )
-set(    CMAKE_CXX_STANDARD_REQUIRED         YES                 CACHE BOOL      ""              )
-set(    CMAKE_OSX_DEPLOYMENT_TARGET         "13.3"              CACHE STRING    ""              )  # ignored on non-macOS
+set(    CMAKE_CXX_STANDARD                  20                                  CACHE STRING    ""              )
+set(    CMAKE_CXX_STANDARD_REQUIRED         YES                                 CACHE BOOL      ""              )
+set(    CMAKE_OSX_DEPLOYMENT_TARGET         "${CBAPP_MIN_MACOS_VERSION}"        CACHE STRING    ""              )  # ignored on non-macOS
 
 
 
@@ -89,25 +109,21 @@ set(    CMAKE_OSX_DEPLOYMENT_TARGET         "13.3"              CACHE STRING    
 ####################################################################################
 ####################################################################################
 
-
-#############################################################
-#       CLANG COMPILER FLAGS:
-#############################################################
-#                               |
-#   -ferror-limit=123           |
-#                               |
-#                               |
-#                               |
-#   -Werror=foo                 | ENABLE ERRORS for the warning flag "foo".
-#   -Wno-error=foo              | DISABLE ERRORS for the flag "foo" **even if** "-Werror" has been specified.
-#                               |
-#   -Wfoo                       | ENABLE WARNINGS for the flag "foo".
-#   -Wno-foo                    | DISABLE WARNINGS for the flag "foo".
-#                               |
-#                               |
-#                               |
-#############################################################
-
+#   CLANG COMPILER FLAGS:
+    #####################################################################################################################
+    #   FLAG.                       |   DESCRIPTION.                                                                    #
+    ####################################|################################################################################
+    #                               |                                                                                   #
+    #   -Werror=foo                 | ENABLE ERRORS for the warning flag "foo".                                         #
+    #   -Wno-error=foo              | DISABLE ERRORS for the flag "foo" **even if** "-Werror" has been specified.       #
+    #                               |                                                                                   #
+    #   -Wfoo                       | ENABLE WARNINGS for the flag "foo".                                               #
+    #   -Wno-foo                    | DISABLE WARNINGS for the flag "foo".                                              #
+    #                               |                                                                                   #
+    #                               |                                                                                   #
+    #   -ferror-limit=123           |                                                                                   #
+    #                               |                                                                                   #
+    #####################################################################################################################
 
 
 
@@ -142,9 +158,9 @@ target_compile_options(LIB_cxx_warning_flags INTERFACE
 #
 #
 #   ENABLED WARNINGS...
-    -Wshadow
-    -Wcomma
-    -Wunused-variable -Wunused-parameter -Wunused-result    #   Unused variable, func. argument, return value, etc...
+    #-Wshadow
+    #-Wcomma
+    #-Wunused-variable -Wunused-parameter -Wunused-result    #   Unused variable, func. argument, return value, etc...
 #
 #
 #   DISABLED WARNINGS...
@@ -169,6 +185,54 @@ add_library(LIB_cxx_debug_flags INTERFACE)
 target_compile_options(LIB_cxx_warning_flags INTERFACE
     #
 )
+
+
+
+
+
+
+####################################################################################
+#
+#
+#
+#   4.          TARGET PROPERTIES FOR MACOS...
+####################################################################################
+####################################################################################
+
+#   "CB_apply_xcode_target_properties"
+#
+function(CB_apply_xcode_target_properties target)
+
+    #   1.  CORE PROPERTIES...
+    set_target_properties(${target} PROPERTIES
+        XCODE_ATTRIBUTE_MARKETING_VERSION                       ${PROJECT_VERSION}
+        XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION                 ${BUILD_NUMBER}
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER               "com.example.cbapp"
+        XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET                "${CBAPP_MIN_MACOS_VERSION}"
+        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY                      "-"
+        XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME                 "NO"
+    #
+    #
+        #   XCODE_ATTRIBUTE_INFOPLIST_FILE                          "Path to your custom Info.plist"
+        #   XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME      "Name of the App Icon set"
+        #   XCODE_ATTRIBUTE_ENTITLEMENTS_PLIST                      "Path to *.entitlements"
+        #
+        #   XCODE_ATTRIBUTE_CODE_SIGN_STYLE                         "Manual" or "Automatic"
+    #
+    )
+
+
+    #   2.  **KWARGS:   EXTRA (KEY, VALUE) PAIRS    [OPTIONAL]...
+    #           USAGE:  CB_apply_xcode_target_properties(target EXTRA XCODE_ATTRIBUTE_* value …)
+    #
+    cmake_parse_arguments(X "" "" "EXTRA" ${ARGN})
+    if(X_EXTRA)
+        set_target_properties(${target} PROPERTIES ${X_EXTRA})
+    endif()
+endfunction()
+
+
+
 
 
 

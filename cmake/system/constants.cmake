@@ -23,7 +23,7 @@
 #   1.1.    DEFINE ANSI COLORS FOR macOS BUILDS...
 if(APPLE)
     string(ASCII 27 ESC)                    #     ESC = '\x1B'
-    
+#
 #
 #
     set(        RESET                       "${ESC}[0m")
