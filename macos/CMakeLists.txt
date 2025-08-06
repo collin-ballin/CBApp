@@ -32,7 +32,6 @@ cmake_minimum_required(VERSION ${CB_MINIMUM_CMAKE_VERSION} FATAL_ERROR)
 #   0.  INITIAL PROJECT SETUP...
 ########################################################################
 ########################################################################
-
 if(NOT PROJECT_NAME STREQUAL "CBApp")
     project(CBApp VERSION ${CBAPP_VERSION} LANGUAGES CXX)
 endif()
@@ -74,12 +73,39 @@ endif()
 ########################################################################
 ########################################################################
 
-#       2.1     Find required packages: OpenGL and GLFW.
+################################################################
+#       2.1.    GATHER FILES FOR ALL USAGE (Common)...
+################################################################
+#               1.  Find required packages: OpenGL and GLFW.
 find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
 
+#               2.  Aggregate each include directory path.
+set(CBAPP_INCLUDE_DIRS
+    ${CB_INCLUDE_DIR}
+    ${CB_INCLUDE_DIR}/config
+    ${CB_INCLUDE_DIR}/app
+    ${CB_INCLUDE_DIR}/imgui_extensions
+    ${CB_IMGUI_DIR}
+    ${CB_IMGUI_DIR}/backends
+    ${CB_MISC_CPP_DIR}
+    ${THIRD_PARTY_INCLUDE_DIR}
+    ${CB_VERSION_HEADER_DIR}
+)
 
-#       2.2     Collect ImGui core source files from the imgui/directory.
+
+#
+#
+################################################################
+################################################################    END 2.1.
+
+
+
+
+################################################################
+#       2.2.    FILES FOR LIB #1 (Dear ImGui)...
+################################################################
+#                   Collect ImGui core source files from the imgui/directory.
 set(IMGUI_CORE_SRCS
     ${CB_IMGUI_DIR}/imgui.cpp                   #     ImGui...
     ${CB_IMGUI_DIR}/imgui_draw.cpp
@@ -92,35 +118,74 @@ set(IMGUI_CORE_SRCS
 )
 
 
-#       2.3     Collect Misc ImGui source files.
+#                   Collect Misc ImGui source files.
 set(IMGUI_MISC_SRCS
     ${CB_MISC_CPP_DIR}/imgui_stdlib.cpp
 )
 
 
-#       2.4     Collect only the backends you need (GLFW and OpenGL3).
+#                   Collect only the backends you need (GLFW and OpenGL3).
 set(IMGUI_BACKEND_SRCS
     ${CB_IMGUI_DIR}/backends/imgui_impl_glfw.cpp
     ${CB_IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
 
-#       2.5     Combine all ImGui source files.
+#                   Combine all ImGui source files.
 set(IMGUI_SRCS ${IMGUI_CORE_SRCS} ${IMGUI_MISC_SRCS} ${IMGUI_BACKEND_SRCS})
 
+#
+#
+################################################################
+################################################################    END 2.2.
 
-#       2.6.    Aggregate each include directory path.
-set(CBAPP_INCLUDE_DIRS
-    ${CB_INCLUDE_DIR}
-    ${CB_INCLUDE_DIR}/config
-    ${CB_INCLUDE_DIR}/app
-    ${CB_INCLUDE_DIR}/imgui_extensions
-    ${CB_IMGUI_DIR}
-    ${CB_IMGUI_DIR}/backends
-    ${CB_MISC_CPP_DIR}
-    ${THIRD_PARTY_INCLUDE_DIR}
-    ${CB_VERSION_HEADER_DIR}
+
+
+
+################################################################
+#       2.3.    FILES FOR LIB #2 (CBLib)...
+################################################################
+#   #
+#   #   ...
+#   #
+
+#
+#
+################################################################
+################################################################    END 2.3.
+
+
+
+
+################################################################
+#       2.X.    FILES FOR MAIN EXECUTABLE (CBApp)...
+################################################################
+#               Recursively Gather CBApp Source Files.
+file(GLOB_RECURSE APP_SRCS
+    CONFIGURE_DEPENDS
+        ${CB_SRC_DIR}/*.cpp
 )
+
+
+#               Recursively Gather CBApp Header Files.
+file(GLOB_RECURSE APP_HEADERS
+    ${CB_INCLUDE_DIR}/*.h
+    ${CB_INCLUDE_DIR}/**/*.h
+)
+
+
+#               Third party included libraries...
+set(THIRD_PARTY_INCLUDE_DIR
+    ${CB_THIRD_PARTY_DIR}/cblib/include
+    ${CB_THIRD_PARTY_DIR}/nlohmann/include
+)
+
+#
+#
+################################################################
+################################################################    END 2.X.
+
+
 
 #
 #
@@ -177,37 +242,68 @@ set_target_properties(ImGui PROPERTIES
 #
 #
 #
-#   3.  CREATE TARGET FOR MAIN APPLICATION (MAPPING ATTRIBUTES, INCLUDE-DIRECTORES, PROPERTIES, ETC)...
+#   4.  LIBRARY #2.     CBLIB TEMPLATE LIBRARY...
 ########################################################################
 ########################################################################
 
-#       3.1.    Recursively Gather Source Files.
-file(GLOB_RECURSE APP_SRCS
-    CONFIGURE_DEPENDS
-    ${CB_SRC_DIR}/*.cpp
-)
-
-#       3.2.    Recursively Gather Header Files.
-file(GLOB_RECURSE APP_HEADERS
-    ${CB_INCLUDE_DIR}/*.h
-    ${CB_INCLUDE_DIR}/**/*.h
-)
-
-#       3.3.    Third party included libraries...
-set(THIRD_PARTY_INCLUDE_DIR
-    ${CB_THIRD_PARTY_DIR}/cblib/include
-    ${CB_THIRD_PARTY_DIR}/nlohmann/include
-)
+#   NEED:
+#       - CBLIB_SRCS
+#       - CBLIB_HEADERS
+#       - CBLIB_INCLUDE_DIRS
+#
 
 
-#       3.4.    Create the executable from your application and ImGui source files
+#       4.1.    Compile Dear ImGui Source-Code SEPERATELY.
+#   #   add_library(CBLib STATIC ${CBLIB_SRCS})
+
+
+#       4.2.    Treat ImGui’s own headers as “system” and silence warnings.
+#   #   target_include_directories(ImGui PRIVATE ${CBAPP_INCLUDE_DIRS})     #   Add GLFW inside Dear ImGui build...
+
+
+#       4.3.    Add GLFW inside Dear ImGui build.
+#                   - Provide compiler flag for "my_imconfig.h" to ImGui Source code.
+#                   - Set the "-w" compiler flag to disable all compiler flags (compile as "system").
+#   #   target_link_libraries(ImGui
+#   #       PUBLIC glfw LIB_cbapp_config_defines -w
+#   #   )
+
+
+#       4.4.    Set MacOS Minimum Version for ImGui Source Code Build.
+#   #   set_target_properties(ImGui PROPERTIES
+#   #       XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET                "${CBAPP_MIN_MACOS_VERSION}"
+#   #   )
+
+#
+#
+#
+########################################################################
+########################################################################    END "LIBRARY #2".
+
+
+
+
+
+
+########################################################################
+#
+#
+#
+#   X.  CREATE MAIN EXECUTIBLE
+#       (MAP ATTRIBUTES, ADD INCLUDE-DIRECTORES, SET PROPERTIES, ETC)...
+########################################################################
+########################################################################
+
+
+
+#       X.4.    Create the executable from your application and ImGui source files
 add_executable(${PROJECT_NAME}
     ${APP_SRCS}
     ${APP_HEADERS}
 )
 
 
-#       3.5.    Link necessary libraries:   OpenGL, GLFW, ImGui, Compiler-Flags.
+#       X.5.    Link necessary libraries:   OpenGL, GLFW, ImGui, Compiler-Flags.
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         ${OPENGL_gl_LIBRARY}
@@ -221,7 +317,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 
-#       3.6.    Link necessary libraries:   OpenGL, GLFW, ImGui, Compiler-Flags.
+#       X.6.    Link necessary libraries:   OpenGL, GLFW, ImGui, Compiler-Flags.
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${CB_INCLUDE_DIR}
@@ -236,13 +332,14 @@ target_include_directories(${PROJECT_NAME}
 )
 
 
-
-
-
-
-#       3.7     Xcode‑specific attributes **including version info**
+#       X.7     Xcode‑specific attributes **including version info**
 CB_apply_xcode_target_properties(${PROJECT_NAME})
 
+#
+#
+#
+########################################################################
+########################################################################    END "MAIN EXECUTABLE".
 
 
 
@@ -254,7 +351,17 @@ CB_apply_xcode_target_properties(${PROJECT_NAME})
 
 
 
-#       5.5     Auto‑increment build number during local Xcode builds (optional)
+
+
+########################################################################
+#
+#
+#
+#   I.  CONFIGURE THE GENERATED XCODE PROJECT FILE...
+########################################################################
+########################################################################
+
+#       I.i.    Auto‑increment build number during local Xcode builds (optional).
 option(USE_AGVTOOL_AUTO_BUMP "Run agvtool before each Xcode build" OFF)
 #
 if(CMAKE_GENERATOR STREQUAL "Xcode" AND USE_AGVTOOL_AUTO_BUMP)
@@ -266,7 +373,7 @@ if(CMAKE_GENERATOR STREQUAL "Xcode" AND USE_AGVTOOL_AUTO_BUMP)
 endif()
 
 
-#       5.6     Generate `version.hpp` so code can query the version
+#       I.ii.   Generate `version.hpp` so code can query the version.
 set(CB_VERSION_HEADER_DIR ${CMAKE_BINARY_DIR}/generated)
 file(MAKE_DIRECTORY ${CB_VERSION_HEADER_DIR})
 configure_file(
@@ -277,21 +384,7 @@ configure_file(
 
 
 
-
-
-
-
-
-########################################################################
-#
-#
-#
-#   6.  CREATE / FORMAT XCODE PROJECT FILE...
-########################################################################
-########################################################################
-
-
-#       6.1.    Create Folder for "CBApp Source Code" in Xcode.
+#       II.i.   Create Folder for "CBApp Source Code" in Xcode.
 source_group(
     TREE   ${CB_SRC_DIR}
     PREFIX "src"
@@ -299,7 +392,7 @@ source_group(
 )
 
 
-#       6.2.    Create Folder for "CBApp Included Code" in Xcode.
+#       II.ii.  Create Folder for "CBApp Included Code" in Xcode.
 source_group(
     TREE   ${CB_INCLUDE_DIR}
     PREFIX "include"
@@ -307,9 +400,7 @@ source_group(
 )
 
 
-
-
-#       6.3.    Create "src" File Group in Xcode.
+#       II.iii  Create "src" File Group in Xcode.
 source_group(TREE ${CB_SRC_DIR} PREFIX "src" FILES ${APP_SRCS})
 source_group(
     TREE   ${CB_IMGUI_DIR}
@@ -323,6 +414,23 @@ source_group(
     PREFIX "imgui/misc"             # how it should appear
     FILES  ${IMGUI_MISC_SRCS}
 )
+
+#
+#
+#
+########################################################################
+########################################################################    END "XCODE PROJECT SETUP".
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -368,25 +476,6 @@ endif()
 
 
 
-
-
-
-########################################################################
-#
-#
-#
-#   ?.  DEBUG MESSAGING AND INFO...
-########################################################################
-########################################################################
-
-#   MY OWN SOURCE CODE...
-#       message(STATUS      "APP_SRCS                       = ${APP_SRCS}")
-#       message(STATUS      "APP_HEADERS                    = ${APP_HEADERS}")
-#
-#
-#   IMGUI SOURCE CODE...
-#       message(DEBUG       "IMGUI_CORE_SRCS                = ${IMGUI_CORE_SRCS}")
-#       message(DEBUG       "IMGUI_MISC_SRCS                = ${IMGUI_MISC_SRCS}")
 
 
 

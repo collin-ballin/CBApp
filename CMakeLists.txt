@@ -37,8 +37,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/cmake/system/main.cmake)
 ########################################################################
 ########################################################################
 cmake_minimum_required(VERSION ${CB_MINIMUM_CMAKE_VERSION} FATAL_ERROR)
-#   project(cbapp_superbuild)
-project(CBApp VERSION ${CBAPP_VERSION} LANGUAGES CXX)
+project(PROJECT_NAME VERSION ${CBAPP_VERSION} LANGUAGES CXX)
 
 
 
@@ -120,15 +119,15 @@ CB_Log(DEBUG    "Minimum CMake Version Required     : ${CB_MINIMUM_CMAKE_VERSION
 #
 #
 CB_Log(INFO     "Main Directory Variables:")
-CB_Log(INFO     "CB_ROOT_DIR                        : ${CB_ROOT_DIR}")
-CB_Log(INFO     "CB_SRC_DIR                         : ${CB_SRC_DIR}")
-CB_Log(INFO     "CB_MISC_DIR                        : ${CB_MISC_DIR}")
-CB_Log(INFO     "CB_MISC_CPP_DIR                    : ${CB_MISC_CPP_DIR}")
+CB_Log(VERBOSE  "CB_ROOT_DIR                        : ${CB_ROOT_DIR}")
+CB_Log(VERBOSE  "CB_SRC_DIR                         : ${CB_SRC_DIR}")
+CB_Log(VERBOSE  "CB_MISC_DIR                        : ${CB_MISC_DIR}")
+CB_Log(VERBOSE  "CB_MISC_CPP_DIR                    : ${CB_MISC_CPP_DIR}")
 #
 #
 CB_Log(INFO     "Other Directory Variables:")
 #
-CB_Log(INFO     "CB_CMAKE_DIR                       : ${CB_CMAKE_DIR}")
+CB_Log(VERBOSE  "CB_CMAKE_DIR                       : ${CB_CMAKE_DIR}")
 
     
     
@@ -144,7 +143,7 @@ CB_Log(INFO     "CB_CMAKE_DIR                       : ${CB_CMAKE_DIR}")
 ########################################################################
 
 CB_newline(2)
-CB_Log(NOTIFY   "TRANSFERING CONTROL TO SECONDARY CMAKELISTS FILE...")
+CB_Log(STATUS   "TRANSFERING CONTROL TO SECONDARY CMAKELISTS FILE...")
 #
 #
 #   add_subdirectory(macos)      # later: add_subdirectory(windows)

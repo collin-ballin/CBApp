@@ -87,35 +87,41 @@ function(CB_Log level fmt)
     #
     #           3.1.        "DEBUG".
     if(_lvl STREQUAL "DEBUG")
-        set(_tag    "${BOLD}${WHITE}DEBUG")
-        string(PREPEND fmt "${DIM}")
+        set(_tag    "${DIM}${BOLD}${BLACK_BG}${WHITE}DEBUG")
+        string(PREPEND fmt "${DIM}${BLACK_BG}")
     #
     #
-    #           3.2.        "VERBOSE" / "INFO.
-    elseif(_lvl STREQUAL "VERBOSE" OR _lvl STREQUAL "INFO")
-        set(_tag    "${BOLD}INFO")
+    #           3.2.        "VERBOSE".
+    elseif(_lvl STREQUAL "VERBOSE")
+        set(_tag    "${BOLD}VERBOSE")
         string(PREPEND fmt "${WHITE}")
     #
     #
-    #           3.3.        "STATUS".
+    #           3.3.        "INFO.
+    elseif(_lvl STREQUAL "INFO")
+        set(_tag    "${BOLD}${GREEN}INFO")
+        # string(PREPEND fmt "${WHITE_BRIGHT}")
+    #
+    #
+    #           3.4.        "STATUS".
     elseif(_lvl STREQUAL "STATUS")
         set(_tag    "${BOLD}${GREEN}STATUS")
         string(PREPEND fmt "${GREEN}")
     #
     #
-    #           3.4.        "WARNING" / "AUTHOR WARNING".
+    #           3.5.        "WARNING" / "AUTHOR WARNING".
     elseif(_lvl STREQUAL "WARNING" OR _lvl STREQUAL "AUTHOR_WARNING")
         set(_tag    "${BOLD}${YELLOW}WARN")
         string(PREPEND fmt "${YELLOW}")
     #
     #
-    #           3.5.        "NOTIFY".
+    #           3.6.        "NOTIFY".
     elseif(_lvl STREQUAL "NOTIFY")
-        set(_tag    "${BOLD}${CYAN_BRIGHT}NOTIFY")
-        string(PREPEND fmt "${CYAN_BRIGHT}")
+        set(_tag    "${BOLD}${UNDERLINE}${BLACK_BG}${CYAN_BRIGHT}NOTIFY")
+        string(PREPEND fmt "${UNDERLINE}${BLACK_BG}${CYAN_BRIGHT}")
     #
     #
-    #           3.6.        "FATAL ERROR".
+    #           3.7.        "FATAL ERROR".
     elseif(_lvl STREQUAL "FATAL_ERROR" OR _lvl STREQUAL "SEND_ERROR")
         set(_tag    "${BOLD}${RED}ERROR")
         string(PREPEND fmt "${RED}")
@@ -130,10 +136,10 @@ function(CB_Log level fmt)
     endif()     #   END SWITCH.
 
 
-    #   3.      PADD "TAG" LABEL SO  “[ <tag> ]”  IS ALWAYS 7 CHARACTERS WIDE...
+    #   3.      PADD "TAG" LABEL SO  “[ <tag> ]”  IS ALWAYS 9 CHARACTERS WIDE...
     #
     string(LENGTH "${_tag}" _len)
-    math(EXPR _pad "7 - ${_len}")           # 7 = max tag width
+    math(EXPR _pad "9 - ${_len}")           # 9 = max tag width
     set(_spaces "")
     while(_pad GREATER 0)
         string(APPEND _spaces " ")
