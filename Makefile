@@ -147,7 +147,7 @@ $(EXEC_NAME): $(OBJ_FILES)
 # "xcode"
 #
 xcode:
-	@(cd build && cmake --log-level=DEBUG -G "Xcode" ..)
+	@(cd build && cmake --log-level=DEBUG -DPROJECT_LOG_LEVEL=DEBUG -G "Xcode" ..)
 	
 	
 # "windows"

@@ -19,7 +19,6 @@
 #   0.      INCLUDING EXTERNAL CMAKE RESOURCES...
 ########################################################################
 ########################################################################
-
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/system/main.cmake)
 
 #   CB_Test_Logging()
@@ -52,27 +51,34 @@ project(${CBAPP_NAME} VERSION ${CBAPP_VERSION} LANGUAGES CXX)
 ########################################################################
 
 #           2A.1.   CORE DIRECTORIES:
-set(        CB_ROOT_DIR                 "${CMAKE_SOURCE_DIR}"               CACHE PATH "")
-set(        CB_SRC_DIR                  "${CB_ROOT_DIR}/src"                CACHE PATH "")
-set(        CB_INCLUDE_DIR              "${CB_ROOT_DIR}/include"            CACHE PATH "")
-set(        CB_IMGUI_DIR                "${CB_ROOT_DIR}/imgui"              CACHE PATH "")
-set(        CB_THIRD_PARTY_DIR          "${CB_ROOT_DIR}/libs"               CACHE PATH "")
+set(        CB_ROOT_DIR                     "${CMAKE_SOURCE_DIR}"                   )
+set(        CB_SRC_DIR                      "${CB_ROOT_DIR}/src"                    )
+set(        CB_INCLUDE_DIR                  "${CB_ROOT_DIR}/include"                )
+set(        CB_IMGUI_DIR                    "${CB_ROOT_DIR}/imgui"                  )
+set(        CB_THIRD_PARTY_DIR              "${CB_ROOT_DIR}/libs"                   )
 #
-set(        CB_MISC_DIR                 "${CB_ROOT_DIR}/misc"               CACHE PATH "")
-set(        CB_MISC_CPP_DIR             "${CB_MISC_DIR}/cpp"                CACHE PATH "")
+set(        CB_MISC_DIR                     "${CB_ROOT_DIR}/misc"                   )
+set(        CB_MISC_CPP_DIR                 "${CB_MISC_DIR}/cpp"                    )
 #
 #
 #
 #           2A.2.   CMAKE / BUILD-SYSTEM DIRECTORIES:
-set(        CB_CMAKE_DIR                "${CB_ROOT_DIR}/cmake"              CACHE PATH  "Path to main CMake resource directory (version.hpp.in, version.rc.in)"             )
-set(        CB_CMAKE_LIB_DIR            "${CB_ROOT_DIR}/cmake/system"       CACHE PATH  "Directory containing the \"*.cmake\" files used for the CBApp build system."       )
-set(        CB_CMAKE_MACOS_DIR          "${CB_ROOT_DIR}/cmake/system"       CACHE PATH  "Directory containing *.cmake for MacOS build system."                              )
-set(        CB_CMAKE_WINDOWS_DIR        "${CMAKE_SOURCE_DIR}/macos"         CACHE PATH  "Directory containing *.cmake for Windows/MinGW build system."                      )
+set(        CB_CMAKE_DIR                    "${CB_ROOT_DIR}/cmake"                  )
+set(        CB_CMAKE_LIB_DIR                "${CB_ROOT_DIR}/cmake/system"           )
+set(        CB_CMAKE_MACOS_DIR              "${CB_ROOT_DIR}/cmake/system"           )
+set(        CB_CMAKE_WINDOWS_DIR            "${CMAKE_SOURCE_DIR}/macos"             )
 #
 #
 #
 #           2A.3.   ADDITIONAL DIRECTORIES:
-set(        CB_VERSION_HEADER_DIR       ${CMAKE_BINARY_DIR}/generated       CACHE PATH  "Directory containing \"version.hpp\" file.")
+set(        CB_VERSION_HEADER_DIR           ${CMAKE_BINARY_DIR}/generated           )
+#
+#
+#
+#           2A.4.   CBLIB DIRECTORIES:
+set(        CBLib_ROOT_DIR                  "${CB_ROOT_DIR}/libs/cblib"             )
+set(        CBLib_SRC_DIR                   "${CBLib_ROOT_DIR}/src"                 )
+set(        CBLib_INCLUDE_DIR               "${CBLib_ROOT_DIR}/include"             )
 
 
 
@@ -90,22 +96,13 @@ set(        CB_BUILD_SYSTEM_FILES
                 ${CB_CMAKE_LIB_DIR}/build.cmake
 )
 
-
-
-
-
-
-
-
-
-#           2.4.    SOURCE FILES:
-#               APP_SRCS
 #
-#           2.5.    HEADER FILES:
-#               APP_HEADERS
-    
-    
-    
+#
+########################################################################
+########################################################################    END "2".
+
+
+
     
     
     
@@ -125,12 +122,13 @@ CB_newline(2)
 
 CB_Log(STATUS   "INITIALIZING...")
 
-
-
+#           3.1.    PROGRAM VERSIONING:
 CB_Log(DEBUG    "Current CMake Version              : ${CMAKE_VERSION}  (${CMAKE_COMMAND})")
 CB_Log(DEBUG    "Minimum CMake Version Required     : ${CB_MINIMUM_CMAKE_VERSION}")
 #
 #
+#
+#           3.2.    MAIN DIRECTORY VARIABLES:
 CB_Log(OUTFO    "Main Directory Variables:")
 CB_Log(VERBOSE  "CB_ROOT_DIR                        : ${CB_ROOT_DIR}")
 CB_Log(VERBOSE  "CB_SRC_DIR                         : ${CB_SRC_DIR}")
@@ -138,13 +136,27 @@ CB_Log(VERBOSE  "CB_MISC_DIR                        : ${CB_MISC_DIR}")
 CB_Log(VERBOSE  "CB_MISC_CPP_DIR                    : ${CB_MISC_CPP_DIR}")
 #
 #
-CB_Log(OUTFO    "Other Directory Variables:")
 #
+#           3.3.    CBLIB DIRECTORIES:
+CB_Log(OUTFO    "Other Directory Variables:")
 CB_Log(VERBOSE  "CB_CMAKE_DIR                       : ${CB_CMAKE_DIR}")
+#
+#
+#
+#           3.4.    CBLIB DIRECTORIES:
+CB_Log(OUTFO    "CBLib Directory Variables:")
+CB_Log(VERBOSE  "CBLib_ROOT_DIR                     : ${CBLib_ROOT_DIR}")
+CB_Log(VERBOSE  "CBLib_SRC_DIR                      : ${CBLib_SRC_DIR}")
+CB_Log(VERBOSE  "CBLib_INCLUDE_DIR                  : ${CBLib_INCLUDE_DIR}")
 
+#
+#
+########################################################################
+########################################################################    END "3".
     
     
-    
+
+
 
 
 ########################################################################
@@ -164,21 +176,6 @@ include(${CMAKE_SOURCE_DIR}/macos/CMakeLists.txt)
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-########################################################################
-#
-#
-#   4.      ...
-########################################################################
-########################################################################
-
 #           4.1.    MACOS BUILD.
 #   if(CB_TARGET_OS STREQUAL "macos")
 #       add_subdirectory(macos)        # native build
@@ -187,18 +184,21 @@ include(${CMAKE_SOURCE_DIR}/macos/CMakeLists.txt)
 #   elseif(CB_TARGET_OS STREQUAL "windows")
 #     add_subdirectory(win64)        # MinGW-w64 cross-build
 #   endif()
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+#
+#
 ########################################################################
+########################################################################    END "4".
+    
+    
+
+    
+
+
+########################################################################
+#
 #
 #
 #   5.      BUILD RESULTS AND END-MESSAGING...
@@ -220,18 +220,28 @@ CB_file_list_info(INFO      APP_HEADERS     "\t"      "CBApp Source Files")
 #
 
 
-print_file_list(CB_BUILD_SYSTEM_FILES)
-
-
-
-
-
-
-
+# print_file_list(CB_BUILD_SYSTEM_FILES)
 
 
 
 CB_newline(2)
 CB_Log(NOTIFY   "build complete")
+
+#
+#
+########################################################################
+########################################################################    END "5".
+
+
+
+
+
+
+
+
+
+
+
+
 ########################################################################
 ########################################################################   END...

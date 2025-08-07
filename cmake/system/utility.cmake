@@ -53,6 +53,12 @@ endfunction()
 
 
 
+
+
+
+#
+#   ERROR,          WARNING,        NOTICE,         STATUS,         VERBOSE,        DEBUG,          TRACE.
+#
 # ---------------------------------------------------------------------------
 #  CB_Log(<LEVEL> <FORMAT_STRING> [key=value ...])
 #

@@ -136,15 +136,15 @@ target_compile_options(LIB_cxx_error_flags INTERFACE
     -Wpedantic
 #
 #
-#   ENABLED ERRORS...
+#   1.  ENABLED ERRORS...
     -Werror=unknown-warning-option          #   ERROR if using an unknown "-W" flag to compiler.
     -Werror=comment
     -Werror=tautological-compare            #   When using comaprisons that are ALWAYS true ( e.g., unsigned x; if (x < 0) { ... } ).
     -Werror=uninitialized                   #   Using an uninitialized, local variable.
-    -Wimplicit-fallthrough                  #   Missing [[fallthrough]] between switch statements.
+    -Werror=implicit-fallthrough            #   Missing [[fallthrough]] between switch statements.
 #
 #
-#   DISABLED ERRORS...
+#   2.  DISABLED ERRORS...
     #-Wno-error=
     #-Wno-sign-compare
 )
@@ -157,19 +157,29 @@ add_library(LIB_cxx_warning_flags INTERFACE)
 target_compile_options(LIB_cxx_warning_flags INTERFACE
 #
 #
-#   ENABLED WARNINGS...
+#   1.  ENABLED WARNINGS...
     -Wshadow
-    -Wcomma
-    -Wunused-variable               #
-    -Wunused-parameter              #
-    -Wunused-result                 #   Unused variable, func. argument, return value, etc...
+    -Wunused-variable                   #
+    -Wunused-parameter                  #
+    -Wunused-result                     #   Unused variable, func. argument, return value, etc...
 #
-    -Wfloat-equal                   #   Warning if comparing floats for equality.
-    -Wdocumentation
+#       1B.     TIER-2 WARNINGS.
+        -Wfloat-equal                   #   Warning if comparing floats for equality.
+#
+#       1C.     TIER-3 WARNINGS.
+        -Wcomma
+        -Wdocumentation
+#
+#       1D.     TIER-4 WARNINGS.
+        -Wheader-hygiene
+        -Wweak-vtables
+        #   -Wsign-conversion           #   Warns for IMPLICIT CONVERSIONS FROM:    "unsigned int = int",       "long long = size_t",       etc...
+        #   -Wconversion                #   Warns for IMPLICIT CONVERSIONS FROM:    "float = double",           "int = long",               etc...
 #
 #
-#   DISABLED WARNINGS...
-    -Wno-documentation              #   DOxygen Errors.
+#
+#   2.  DISABLED WARNINGS...
+    -Wno-documentation                  #   DOxygen Errors.
 #
 #
 #
