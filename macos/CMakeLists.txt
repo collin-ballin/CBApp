@@ -52,7 +52,7 @@ set(BUILD_NUMBER ${GIT_COMMIT_COUNT})
 
 
 if(NOT EXISTS "${CB_CMAKE_DIR}/version.hpp.in")
-    message(FATAL_ERROR "Template not found: ${CB_CMAKE_DIR}/version.hpp.in")
+    CB_Log(FATAL_ERROR "Template not found: ${CB_CMAKE_DIR}/version.hpp.in")
 endif()
 
 #
@@ -166,7 +166,6 @@ file(GLOB_RECURSE APP_SRCS
     CONFIGURE_DEPENDS
         ${CB_SRC_DIR}/*.cpp
 )
-
 
 #               Recursively Gather CBApp Header Files.
 file(GLOB_RECURSE APP_HEADERS
