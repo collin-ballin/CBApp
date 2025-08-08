@@ -56,9 +56,7 @@ if(NOT EXISTS "${CB_CMAKE_DIR}/version.hpp.in")
 endif()
 
 #
-#
-#
-########################################################################
+####################################################################
 ########################################################################    END "INITIAL PROJECT SETUP".
 
 
@@ -81,7 +79,13 @@ endif()
 find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
 
-#               2.  Aggregate each include directory path.
+#               2.  Third party included libraries...
+set(THIRD_PARTY_INCLUDE_DIR
+    ${CBLib_INCLUDE_DIR}
+    ${CB_THIRD_PARTY_DIR}/nlohmann/include
+)
+
+#               3.  Aggregate each include directory path.
 set(CBAPP_INCLUDE_DIRS
     ${CB_INCLUDE_DIR}
     ${CB_INCLUDE_DIR}/config
@@ -96,8 +100,7 @@ set(CBAPP_INCLUDE_DIRS
 
 
 #
-#
-################################################################
+########################################################
 ################################################################    END 2.1.
 
 
@@ -118,26 +121,22 @@ set(IMGUI_CORE_SRCS
     ${CB_IMGUI_DIR}/imgui_demo.cpp              #     Optional.
 )
 
-
 #                   Collect Misc ImGui source files.
 set(IMGUI_MISC_SRCS
     ${CB_MISC_CPP_DIR}/imgui_stdlib.cpp
 )
 
-
-#                   Collect only the backends you need (GLFW and OpenGL3).
+#                   Collect only the backends we need (GLFW and OpenGL3).
 set(IMGUI_BACKEND_SRCS
     ${CB_IMGUI_DIR}/backends/imgui_impl_glfw.cpp
     ${CB_IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
-
-#                   Combine all ImGui source files.
+#                   Combine all ImGui source files into a single list.
 set(IMGUI_SRCS ${IMGUI_CORE_SRCS} ${IMGUI_MISC_SRCS} ${IMGUI_BACKEND_SRCS})
 
 #
-#
-################################################################
+########################################################
 ################################################################    END 2.2.
 
 
@@ -146,13 +145,47 @@ set(IMGUI_SRCS ${IMGUI_CORE_SRCS} ${IMGUI_MISC_SRCS} ${IMGUI_BACKEND_SRCS})
 ################################################################
 #       2.3.    FILES FOR LIB #2 (CBLib)...
 ################################################################
-#   #
-#   #   ...
-#   #
+#               Recursively Gather CBApp Source Files.
+file(GLOB_RECURSE CBLib_SRCS
+    CONFIGURE_DEPENDS
+        ${CBLib_SRC_DIR}/*.cpp
+        ${CBLib_TESTS_DIR}/*.cpp
+)
+
+#               Recursively Gather CBApp Header Files.
+file(GLOB_RECURSE CBLib_HEADERS
+    ${CBLib_INCLUDE_DIR}/*.h
+    ${CBLib_INCLUDE_DIR}/**/*.h
+)
+
+
+#               **INTERNAL** Include Directories for CBLib.
+set(CBLib_INTERNAL_INCLUDE_DIRS
+    ${CBLib_INCLUDE_DIR}
+    ${CBLib_INCLUDE_DIR}/templates/containers/matrix
+#
+#           ${CBLib_INCLUDE_DIR}/main
+#           ${CBLib_INCLUDE_DIR}/templates
+#           ${CBLib_INCLUDE_DIR}/PCH
+)
+
+
+#               Third party included libraries.
+set(CBLib_INCLUDE_DIRS
+    ${CBLib_INTERNAL_INCLUDE_DIRS}
+#
+    ${CB_INCLUDE_DIR}/imgui_extensions
+    ${CB_IMGUI_DIR}
+    ${CB_IMGUI_DIR}/backends
+    ${CB_MISC_CPP_DIR}
+#
+    ${CB_THIRD_PARTY_DIR}/nlohmann/include
+)
+
+
 
 #
-#
-################################################################
+########################################################
 ################################################################    END 2.3.
 
 
@@ -173,14 +206,13 @@ file(GLOB_RECURSE APP_HEADERS
     ${CB_INCLUDE_DIR}/**/*.h
 )
 
+#               Recursively Gather CBApp Files.
+#   file(GLOB_RECURSE CBLIB_SRCS
+#       ${CB_SRC_DIR}/*.cpp
+#       ${CB_INCLUDE_DIR}/*.h
+#   )
 
-#               Third party included libraries...
-set(THIRD_PARTY_INCLUDE_DIR
-    ${CB_THIRD_PARTY_DIR}/cblib/include
-    ${CB_THIRD_PARTY_DIR}/nlohmann/include
-)
 
-#
 #
 ################################################################
 ################################################################    END 2.X.
@@ -188,9 +220,7 @@ set(THIRD_PARTY_INCLUDE_DIR
 
 
 #
-#
-#
-########################################################################
+####################################################################
 ########################################################################    END "GATHERING RESOURCES".
 
 
@@ -218,7 +248,7 @@ target_include_directories(ImGui PRIVATE ${CBAPP_INCLUDE_DIRS})     #   Add GLFW
 #                   - Provide compiler flag for "my_imconfig.h" to ImGui Source code.
 #                   - Set the "-w" compiler flag to disable all compiler flags (compile as "system").
 target_link_libraries(ImGui
-    PUBLIC glfw LIB_cbapp_config_defines -w
+    PUBLIC glfw CBAPP_CXX_CONFIG_DEFINES -w
 )
 
 
@@ -228,9 +258,7 @@ set_target_properties(ImGui PROPERTIES
 )
 
 #
-#
-#
-########################################################################
+####################################################################
 ########################################################################    END "LIBRARY #1".
 
 
@@ -246,38 +274,34 @@ set_target_properties(ImGui PROPERTIES
 ########################################################################
 ########################################################################
 
-#   NEED:
-#       - CBLIB_SRCS
-#       - CBLIB_HEADERS
-#       - CBLIB_INCLUDE_DIRS
-#
-
-
 #       4.1.    Compile Dear ImGui Source-Code SEPERATELY.
-#   #   add_library(CBLib STATIC ${CBLIB_SRCS})
+add_library(CBLib INTERFACE)
 
+#       4.2.    Set "include directories" for CBLib.
+target_include_directories(CBLib INTERFACE ${CBLib_INCLUDE_DIRS})
 
-#       4.2.    Treat ImGui’s own headers as “system” and silence warnings.
-#   #   target_include_directories(ImGui PRIVATE ${CBAPP_INCLUDE_DIRS})     #   Add GLFW inside Dear ImGui build...
-
-
-#       4.3.    Add GLFW inside Dear ImGui build.
-#                   - Provide compiler flag for "my_imconfig.h" to ImGui Source code.
-#                   - Set the "-w" compiler flag to disable all compiler flags (compile as "system").
-#   #   target_link_libraries(ImGui
-#   #       PUBLIC glfw LIB_cbapp_config_defines -w
-#   #   )
-
+#       4.3.    Add Linked Libraries to CBLib (Use the same as CBApp).
+target_link_libraries(CBLib
+    INTERFACE
+        ${OPENGL_gl_LIBRARY}
+        glfw
+        ImGui
+    #
+        CBAPP_CXX_PREPROCESSOR_DEFINES
+        CBAPP_CXX_ERROR_FLAGS
+        CBAPP_CXX_WARNING_FLAGS
+        CBAPP_CXX_DEBUG_FLAGS
+)
 
 #       4.4.    Set MacOS Minimum Version for ImGui Source Code Build.
-#   #   set_target_properties(ImGui PROPERTIES
-#   #       XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET                "${CBAPP_MIN_MACOS_VERSION}"
-#   #   )
+set_target_properties(CBLib PROPERTIES
+    XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET                "${CBAPP_MIN_MACOS_VERSION}"
+)
+
+
 
 #
-#
-#
-########################################################################
+####################################################################
 ########################################################################    END "LIBRARY #2".
 
 
@@ -294,30 +318,29 @@ set_target_properties(ImGui PROPERTIES
 ########################################################################
 ########################################################################
 
-
-
-#       X.4.    Create the executable from your application and ImGui source files
+#       X.1.    Create the executable from your application and ImGui source files
 add_executable(${PROJECT_NAME}
     ${APP_SRCS}
     ${APP_HEADERS}
 )
 
 
-#       X.5.    Link necessary libraries:   OpenGL, GLFW, ImGui, Compiler-Flags.
+#       X.2.    Link necessary libraries:   OpenGL, GLFW, ImGui, Compiler-Flags.
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         ${OPENGL_gl_LIBRARY}
         glfw
         ImGui
+        CBLib
     #
-        LIB_preprocessor_defines
-        LIB_cxx_error_flags
-        LIB_cxx_warning_flags
-        LIB_cxx_debug_flags
+        CBAPP_CXX_PREPROCESSOR_DEFINES
+        CBAPP_CXX_ERROR_FLAGS
+        CBAPP_CXX_WARNING_FLAGS
+        CBAPP_CXX_DEBUG_FLAGS
 )
 
 
-#       X.6.    Link necessary libraries:   OpenGL, GLFW, ImGui, Compiler-Flags.
+#       X.3.    Link necessary libraries:   OpenGL, GLFW, ImGui, Compiler-Flags.
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${CB_INCLUDE_DIR}
@@ -332,13 +355,13 @@ target_include_directories(${PROJECT_NAME}
 )
 
 
-#       X.7     Xcode‑specific attributes **including version info**
+#       X.4.    Xcode‑specific attributes **including version info**
 CB_apply_xcode_target_properties(${PROJECT_NAME})
 
+
+
 #
-#
-#
-########################################################################
+####################################################################
 ########################################################################    END "MAIN EXECUTABLE".
 
 
@@ -421,9 +444,7 @@ source_group(
 
 
 #
-#
-#
-########################################################################
+####################################################################
 ########################################################################    END "XCODE PROJECT SETUP".
 
 

@@ -78,6 +78,7 @@ set(        CB_VERSION_HEADER_DIR           ${CMAKE_BINARY_DIR}/generated       
 #           2A.4.   CBLIB DIRECTORIES:
 set(        CBLib_ROOT_DIR                  "${CB_ROOT_DIR}/libs/cblib"             )
 set(        CBLib_SRC_DIR                   "${CBLib_ROOT_DIR}/src"                 )
+set(        CBLib_TESTS_DIR                 "${CBLib_ROOT_DIR}/tests"               )
 set(        CBLib_INCLUDE_DIR               "${CBLib_ROOT_DIR}/include"             )
 
 
@@ -97,8 +98,7 @@ set(        CB_BUILD_SYSTEM_FILES
 )
 
 #
-#
-########################################################################
+####################################################################
 ########################################################################    END "2".
 
 
@@ -150,8 +150,7 @@ CB_Log(VERBOSE  "CBLib_SRC_DIR                      : ${CBLib_SRC_DIR}")
 CB_Log(VERBOSE  "CBLib_INCLUDE_DIR                  : ${CBLib_INCLUDE_DIR}")
 
 #
-#
-########################################################################
+####################################################################
 ########################################################################    END "3".
     
     
@@ -188,8 +187,7 @@ include(${CMAKE_SOURCE_DIR}/macos/CMakeLists.txt)
 
 
 #
-#
-########################################################################
+####################################################################
 ########################################################################    END "4".
     
     
@@ -211,16 +209,21 @@ CB_Log(STATUS   "POST-BUILD DIAGNOSTICS...")
 CB_file_list_info(INFO      APP_SRCS        "\t"      "CBApp Header Files")
 CB_file_list_info(INFO      APP_HEADERS     "\t"      "CBApp Source Files")
 
+CB_newline(1)
+CB_file_list_info(INFO      CBLib_SRCS      "\t"      "CBLib Source Files")
+CB_file_list_info(INFO      CBLib_HEADERS   "\t"      "CBLib Source Files")
+
+
 
 #
 #
 #   CB_file_list_info(DEBUG     IMGUI_SRCS      "\t\t")
 #   CB_file_list_info(DEBUG     IMGUI_SRCS      "\t\t")
 #
+#       print_file_list(CBLib_SRCS)
+#       print_file_list(CBLib_HEADERS)
 #
-
-
-# print_file_list(CB_BUILD_SYSTEM_FILES)
+#
 
 
 
@@ -228,8 +231,7 @@ CB_newline(2)
 CB_Log(NOTIFY   "build complete")
 
 #
-#
-########################################################################
+####################################################################
 ########################################################################    END "5".
 
 

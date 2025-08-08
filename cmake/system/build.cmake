@@ -14,7 +14,7 @@
 #
 ####################################################################################
 ####################################################################################
-set(    CB_MINIMUM_CMAKE_VERSION        3.15)
+cmake_minimum_required(VERSION ${CB_MINIMUM_CMAKE_VERSION} FATAL_ERROR)
 
 
 
@@ -22,10 +22,10 @@ set(    CB_MINIMUM_CMAKE_VERSION        3.15)
 ########################################################################
 ########################################################################
 
-#   "LIB_cbapp_config_defines"
+#   "CBAPP_CXX_CONFIG_DEFINES"      "CBAPP_CXX_CONFIG_DEFINES"
 #
-add_library(LIB_cbapp_config_defines INTERFACE)
-target_compile_definitions(LIB_cbapp_config_defines
+add_library(CBAPP_CXX_CONFIG_DEFINES INTERFACE)
+target_compile_definitions(CBAPP_CXX_CONFIG_DEFINES
     INTERFACE
         #   1.1     CONFIG FILES...
         IMGUI_USER_CONFIG=\"my_imconfig.h\"         #   SET FILENAME OF THE CUSTOM IMGUI CONFIG FILE...
@@ -34,18 +34,18 @@ target_compile_definitions(LIB_cbapp_config_defines
 
 
 
-#   "LIB_preprocessor_defines"
+#   "CBAPP_CXX_PREPROCESSOR_DEFINES"  "CBAPP_CXX_PREPROCESSOR_DEFINES"
 #
-add_library(LIB_preprocessor_defines INTERFACE)
-#   Inherit all items in "LIB_cbapp_config_defines"...
-target_link_libraries(LIB_cbapp_config_defines
+add_library(CBAPP_CXX_PREPROCESSOR_DEFINES INTERFACE)
+#   Inherit all items in "CBAPP_CXX_CONFIG_DEFINES"...
+target_link_libraries(CBAPP_CXX_CONFIG_DEFINES
    INTERFACE
-       LIB_preprocessor_defines
+       CBAPP_CXX_PREPROCESSOR_DEFINES
 )
 
 
 #       Now, add the additional items...
-target_compile_definitions(LIB_preprocessor_defines INTERFACE
+target_compile_definitions(CBAPP_CXX_PREPROCESSOR_DEFINES INTERFACE
     #
     #   1.1     CONFIG FILES...
     #   IMGUI_USER_CONFIG=\"my_imconfig.h\"         #   SET FILENAME OF THE CUSTOM IMGUI CONFIG FILE...
@@ -112,7 +112,7 @@ set(    CMAKE_OSX_DEPLOYMENT_TARGET         "${CBAPP_MIN_MACOS_VERSION}"        
 #   CLANG COMPILER FLAGS:
     #####################################################################################################################
     #   FLAG.                       |   DESCRIPTION.                                                                    #
-    ####################################|################################################################################
+    ################################|####################################################################################
     #                               |                                                                                   #
     #   -Werror=foo                 | ENABLE ERRORS for the warning flag "foo".                                         #
     #   -Wno-error=foo              | DISABLE ERRORS for the flag "foo" **even if** "-Werror" has been specified.       #
@@ -121,40 +121,45 @@ set(    CMAKE_OSX_DEPLOYMENT_TARGET         "${CBAPP_MIN_MACOS_VERSION}"        
     #   -Wno-foo                    | DISABLE WARNINGS for the flag "foo".                                              #
     #                               |                                                                                   #
     #                               |                                                                                   #
-    #   -ferror-limit=123           |                                                                                   #
     #                               |                                                                                   #
     #####################################################################################################################
 
 
 
-#   "LIB_cxx_error_flags"
+#   "CBAPP_CXX_ERROR_FLAGS"
 #
-add_library(LIB_cxx_error_flags INTERFACE)
-target_compile_options(LIB_cxx_error_flags INTERFACE
+add_library(CBAPP_CXX_ERROR_FLAGS INTERFACE)
+target_compile_options(CBAPP_CXX_ERROR_FLAGS INTERFACE
+#
+#   0.  GENERIC FLAGS...
     -Wall
     -Wextra
     -Wpedantic
 #
 #
 #   1.  ENABLED ERRORS...
-    -Werror=unknown-warning-option          #   ERROR if using an unknown "-W" flag to compiler.
-    -Werror=comment
-    -Werror=tautological-compare            #   When using comaprisons that are ALWAYS true ( e.g., unsigned x; if (x < 0) { ... } ).
     -Werror=uninitialized                   #   Using an uninitialized, local variable.
-    -Werror=implicit-fallthrough            #   Missing [[fallthrough]] between switch statements.
+#
+#       1B.     TIER-2 ERRORS.
+        -Werror=implicit-fallthrough            #   Missing [[fallthrough]] between switch statements.
+        -Werror=tautological-compare            #   When using comaprisons that are ALWAYS true ( e.g., unsigned x; if (x < 0) { ... } ).
+#
+#       1C.     TIER-3 ERRORS.
+        -Werror=unknown-warning-option          #   ERROR if using an unknown "-W" flag to compiler.
+        -Werror=comment
 #
 #
 #   2.  DISABLED ERRORS...
-    #-Wno-error=
-    #-Wno-sign-compare
+    #   -Wno-sign-compare
+    #   -ferror-limit=64
 )
 
 
 
-#   "LIB_cxx_warning_flags"
+#   "CBAPP_CXX_WARNING_FLAGS"
 #
-add_library(LIB_cxx_warning_flags INTERFACE)
-target_compile_options(LIB_cxx_warning_flags INTERFACE
+add_library(CBAPP_CXX_WARNING_FLAGS INTERFACE)
+target_compile_options(CBAPP_CXX_WARNING_FLAGS INTERFACE
 #
 #
 #   1.  ENABLED WARNINGS...
@@ -165,13 +170,14 @@ target_compile_options(LIB_cxx_warning_flags INTERFACE
 #
 #       1B.     TIER-2 WARNINGS.
         -Wfloat-equal                   #   Warning if comparing floats for equality.
+        -Wsign-compare
 #
 #       1C.     TIER-3 WARNINGS.
         -Wcomma
         -Wdocumentation
+        -Wheader-hygiene
 #
 #       1D.     TIER-4 WARNINGS.
-        -Wheader-hygiene
         -Wweak-vtables
         #   -Wsign-conversion           #   Warns for IMPLICIT CONVERSIONS FROM:    "unsigned int = int",       "long long = size_t",       etc...
         #   -Wconversion                #   Warns for IMPLICIT CONVERSIONS FROM:    "float = double",           "int = long",               etc...
@@ -180,21 +186,13 @@ target_compile_options(LIB_cxx_warning_flags INTERFACE
 #
 #   2.  DISABLED WARNINGS...
     -Wno-documentation                  #   DOxygen Errors.
-#
-#
-#
-#   -Wheader-hygiene
-#   -Wweak-vtables
-#
-#   -Wconversion
-#   -Wsign-conversion
 )
 
 
-#   "LIB_cxx_debug_flags"
+#   "CBAPP_CXX_DEBUG_FLAGS"
 #
-add_library(LIB_cxx_debug_flags INTERFACE)
-target_compile_options(LIB_cxx_warning_flags INTERFACE
+add_library(CBAPP_CXX_DEBUG_FLAGS INTERFACE)
+target_compile_options(CBAPP_CXX_WARNING_FLAGS INTERFACE
     #
 )
 
