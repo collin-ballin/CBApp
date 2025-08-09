@@ -206,12 +206,12 @@ include(${CMAKE_SOURCE_DIR}/macos/CMakeLists.txt)
 CB_newline(2)
 CB_Log(STATUS   "POST-BUILD DIAGNOSTICS...")
 
-CB_file_list_info(INFO      APP_SRCS        "\t"      "CBApp Header Files")
 CB_file_list_info(INFO      APP_HEADERS     "\t"      "CBApp Source Files")
+CB_file_list_info(INFO      APP_SRCS        "\t"      "CBApp Header Files")
 
-CB_newline(1)
-CB_file_list_info(INFO      CBLib_SRCS      "\t"      "CBLib Source Files")
-CB_file_list_info(INFO      CBLib_HEADERS   "\t"      "CBLib Source Files")
+
+CB_file_list_info(VERBOSE   CBLib_HEADERS   "\t"      "CBLib Header Files")
+CB_file_list_info(VERBOSE   CBLib_SRCS      "\t"      "CBLib Source Files")
 
 
 
