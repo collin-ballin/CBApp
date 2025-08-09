@@ -183,12 +183,7 @@ public:
     //          - It will ensure that each data-member of the App State is Up-To-Date and prepared for usage across any opteration
     //          that make take place across the coming frame.
     //
-    inline void                         PerFrameCache               (void)
-    {
-    
-    
-        return;
-    }
+    inline void                         PerFrameCache               (void)  { return; }
     
     
 

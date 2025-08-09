@@ -144,22 +144,13 @@ void App::run_IMPL(void)
     
     
     //  0.1.    RENDER THE DOCKSPACE...
-//      #ifndef CBAPP_NEW_DOCKSPACE
-//          ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_dock_bg);
-//          //ImGui::DockSpaceOverViewport(0, this->m_main_viewport);
-//          ImGui::DockSpaceOverViewport(this->m_main_viewport, ImGuiDockNodeFlags_NoTabBar);
-//          ImGui::PopStyleColor();
-//      #else
     this->S.m_dockspace_id                              = ImGui::GetID( S.m_windows[Window::Dockspace].uuid.c_str() );
 
 
-    //  1.      FIRST-FRAME INITIALIZATIONS...
+    //  0.2.    FIRST-FRAME INITIALIZATIONS...
     if (first_frame) [[unlikely]] {
         this->InitDockspace();
     }// END OF "first_frame"...
-    
-//      #endif  //  CBAPP_NEW_DOCKSPACE  //
-
 
 
     //  1.      HANDLE ANY CALLS WHICH REQUIRED RE-DRAW OF DOCKING SPACE...
@@ -170,6 +161,12 @@ void App::run_IMPL(void)
 
 
 
+    //
+    //
+    //      PRIMARY APPLICATION LOOP...     [ DRAW EACH APP WINDOW, ETC ].
+    // *************************************************************************** //
+
+
     //  2.      DRAW APPLICATION WINDOWS...
     //
     //          POLICY:     **DO NOT** check if the " winfo.render_fn" pointer is NULL...
@@ -178,11 +175,17 @@ void App::run_IMPL(void)
     for (idx = WINDOWS_BEGIN; idx < WINDOWS_END; ++idx)
     {
         app::WinInfo &  winfo   = S.m_windows[ static_cast<Window>(idx) ];
-        
         if (winfo.open) {
             winfo.render_fn( winfo.uuid.c_str(), &winfo.open, winfo.flags );
         }
     }
+    
+    
+    // *************************************************************************** //   END "PRIMARY LOOP".
+    //
+    //
+    //
+    
     
     
     //  1.      END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...

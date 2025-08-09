@@ -128,12 +128,72 @@ void                    ShowExampleAppDocuments     ([[maybe_unused]] const char
 
 class App
 {
-    CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
-    using                       WinRenderFn                 = std::function<void(const char *, bool *, ImGuiWindowFlags)>;
+//  0.              CONSTANTS AND ALIASES...
 // *************************************************************************** //
 // *************************************************************************** //
 public:
+
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    
+    CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+    using                       WinRenderFn                     = std::function<void(const char *, bool *, ImGuiWindowFlags)>;
+    
 //
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//
+//      1.              CLASS DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+    // *************************************************************************** //
+    //      DELAGATOR CLASSES.              |
+    // *************************************************************************** //
+    app::AppState &             CBAPP_STATE_NAME                = app::AppState::instance(); //app::AppState();
+    MenuBar                     m_menubar;
+    ControlBar                  m_controlbar;
+    Browser                     m_browser;
+    DetailView                  m_detview;
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      APPLICATION SUB-CLASSES.        |
+    // *************************************************************************** //
+    CCounterApp                 m_counter_app;
+    EditorApp                   m_editor_app;
+    GraphApp                    m_graph_app;
+#ifdef CBAPP_ENABLE_FUNCTIONAL_TESTING
+    ui::ActionComposer          m_composer;
+#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+#ifdef CBAPP_ENABLE_CB_DEMO
+    CBDemo                      m_cb_demo                       = CBDemo();
+#endif  //  CBAPP_ENABLE_CB_DEMO  //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//
+//  2.A.            PUBLIC API...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+    
     // *************************************************************************** //
     //  1.1             INLINE PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
@@ -167,11 +227,12 @@ private:
                                 App                         (void);                     //  Def. Constructor.
                                 ~App                        (void);                     //  Def. Destructor.
     // *************************************************************************** //
+    
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END PUBLIC API.
+// *************************************************************************** //   END "PUBLIC API".
     
 
     
@@ -295,50 +356,47 @@ private:
     //      UNIT TESTING STUFF.             |   "tests.cpp" ...
     // *************************************************************************** //
     void                        BeginFunctionalTesting      ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END MEMBER FUNCTIONS.
-
+// *************************************************************************** //   END "PROTECTED" FUNCTIONS.
 
     
+   
 // *************************************************************************** //
 //
 //
-//  2.A                     PROTECTED DATA-MEMBERS...
+//  2.C                 INLINE FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 protected:
-    // *************************************************************************** //
-    //      DELAGATOR CLASSES.              |
-    // *************************************************************************** //
-    app::AppState &             CBAPP_STATE_NAME                = app::AppState::instance(); //app::AppState();
-    MenuBar                     m_menubar;
-    ControlBar                  m_controlbar;
-    Browser                     m_browser;
-    DetailView                  m_detview;
-    // *************************************************************************** //
+
+    //  "PerFrameCache"
     //
+    //      TO-DO:
+    //          - This needs to be a centralized function that will be called  ONE-TIME  at the beginning of  EACH FRAME.
+    //          - It will ensure that each data-member of the App State is Up-To-Date and prepared for usage across any opteration
+    //          that make take place across the coming frame.
     //
-    //
+    inline void                         PerFrameCache               (void)
+    {
+    
+    
+        return;
+    }
+
+    
+    
+    
     // *************************************************************************** //
-    //      APPLICATION SUB-CLASSES.        |
-    // *************************************************************************** //
-    CCounterApp                 m_counter_app;
-    EditorApp                   m_editor_app;
-    GraphApp                    m_graph_app;
-#ifdef CBAPP_ENABLE_FUNCTIONAL_TESTING
-    ui::ActionComposer          m_composer;
-#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
-#ifdef CBAPP_ENABLE_CB_DEMO
-    CBDemo                      m_cb_demo                       = CBDemo();
-#endif  //  CBAPP_ENABLE_CB_DEMO  //
+    
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END DATA-MEMBERS
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
 
 
 
@@ -347,7 +405,13 @@ protected:
 
 // *************************************************************************** //
 // *************************************************************************** //
-};//	END MATRIX INLINE CLASS DEFINITION.
+};//	END "App" CLASS DEFINITION.
+
+
+
+
+
+
 
 
 
