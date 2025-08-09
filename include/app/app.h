@@ -373,21 +373,67 @@ private:
 // *************************************************************************** //
 protected:
 
-    //  "PerFrameCache"
+    //  "PerFrameCache_Begin"
     //
     //      TO-DO:
     //          - This needs to be a centralized function that will be called  ONE-TIME  at the beginning of  EACH FRAME.
     //          - It will ensure that each data-member of the App State is Up-To-Date and prepared for usage across any opteration
     //          that make take place across the coming frame.
     //
-    inline void                         PerFrameCache               (void)
+    inline void                 PerFrameCache_Begin         (bool & first_frame)
+    {
+        //      1.      UPDATE THE VALUE OF  IMGUI STATE  VARIABLES...
+        this->S.m_dockspace_id              = ImGui::GetID( S.m_windows[Window::Dockspace].uuid.c_str() );
+            
+    
+    
+        //      2.      FIRST-FRAME INITIALIZATIONS...
+        if (first_frame) [[unlikely]] {
+            this->InitDockspace();
+        }// END OF "first_frame"...
+
+
+
+        return;
+    }
+    
+    
+    //  "PerFrameCache_End"
+    //
+    inline void                 PerFrameCache_End           (bool & first_frame)
     {
     
-    
+        //      1.      END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
+        if (first_frame) [[unlikely]] {
+            first_frame = false;
+            ImGui::SetWindowFocus( S.current_task() );
+        }
+
+
+        //      2.      RE-DRAW THE DOCKING SPACE...
+        if (S.m_rebuild_dockspace) [[unlikely]] {
+            this->RebuildDockLayout();
+            S.m_rebuild_dockspace = false;
+        }
+        
+        
+
+        //      3.      UPDATE THE CURRENT APPLICATION STATE (Applet State).    [ NEEDED BEFORE WE SAVE/UNDO/REDO/ETC) ].
+        S.update_current_task();
+        
+        
+
+        //      4.      HANDLE ANY KEYBOARD SHORTCUTS...
+        this->KeyboardShortcutHandler();
+        
+        
+        //      5.      LASTLY, QUERY EACH SIGNAL HANDLER...
+        this->QuerySignalStates();
+
+
         return;
     }
 
-    
     
     
     // *************************************************************************** //

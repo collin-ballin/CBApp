@@ -73,7 +73,8 @@ AppState::AppState(void)
         m_current_task      = Applet::MainApp; 
     #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
     
-    //m_current_task
+    
+    m_task_info.m_current_task  = m_current_task;
 
     return;
 }

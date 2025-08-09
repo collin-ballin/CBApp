@@ -28,6 +28,9 @@
 #include "cblib.h"
 #include "utility/utility.h"
 #include "widgets/widgets.h"
+//
+#include "app/state/_sub_state.h"
+//
 #include "app/state/_init.h"
 #include "app/state/_config.h"
 #include "app/state/_types.h"
@@ -214,18 +217,19 @@ public:
     inline const char *                 current_plot_color_style    (void) const
     {  return this->m_plot_color_style_names[ static_cast<size_t>(this->m_current_plot_color_style) ];  }
 
-    //  "SysColor"
-    //      inline ImU32                        SysColor                    (const SystemColor idx) const
-    //      {  return this->ms_SYSTEM_COLORS[idx]; }
-
 
 
     //  "GetDockNodeVisText"
     inline const char *                 GetDockNodeVisText          (const ImGuiDockNode * node)
-    {
-        // Same expression used inside DebugNodeDockNode()
-        return (node && node->VisibleWindow) ? node->VisibleWindow->Name : "NULL";
-    }
+    { return (node && node->VisibleWindow) ? node->VisibleWindow->Name : "NULL"; } // Same expression used inside DebugNodeDockNode()
+    
+    //  "get_nav_window"
+    [[nodiscard]] inline ImGuiWindow *  get_nav_window              (void) noexcept {
+        //  Text("NavWindow: '%s'", g.NavWindow ? g.NavWindow->Name : "NULL");
+		ImGuiContext *	    g	    = ImGui::GetCurrentContext();
+		return ( g )    ? g->NavWindow      : nullptr;
+	}
+    
     
     //  "update_current_task"
     inline void                         update_current_task         (void)
@@ -236,31 +240,85 @@ public:
         //
         const bool                  app_is_idle             = ( glfwGetWindowAttrib(this->m_glfw_window, GLFW_FOCUSED) == 0 );
         //
-        const char *                vis                     = this->GetDockNodeVisText( this->m_main_node );
+        //
+        ImGuiWindow *               vis_win                 = this->get_nav_window();
+        const char *                vis                     = (vis_win) ? vis_win->Name     : nullptr;
+        //
+        //  const char *                vis                     = this->GetDockNodeVisText( this->m_main_node );
         const char *                name                    = this->current_task();
         bool                        match                   = false;
         
         
+        this->_update_task_state();
+        
+        
         //  CASE 0 :    ENTIRE APPLICATION IS UN-FOCUSED...
-        if ( app_is_idle )      { this->m_current_task = Applet::None; }
-        //
-        //
-        //  CASE 1 :    CURRENT WINDOW HAS NOT CHANGED SINCE OUR LAST FRAME (NO NEED TO CHANGE)...
-        else if ( strncmp(name, vis, CACHE_COMPARE_NUM) != 0 ) [[unlikely]]     //  Bail out early if same applet is in use.
+        if ( !vis )     { this->m_current_task = Applet::None; }
+        
+        else
         {
-            //  CASE 2 :    COMPARE THE CURRENT WINDOW NAME TO THE NAME OF EACH THE APPLET...
-            for (size_t i = 0; !match && i < static_cast<size_t>(Applet::Count); ++i) {
-                name    = m_applets[ static_cast<size_t>( i ) ]->c_str();
-                match   = ( strncmp(name, vis, LOOP_COMPARE_NUM) == 0 );
-                if (match)          { this->m_current_task = static_cast<Applet>( i ); }
+            //  CASE 1 :    CURRENT WINDOW HAS NOT CHANGED SINCE OUR LAST FRAME (NO NEED TO CHANGE)...
+            if ( strncmp(name, vis, CACHE_COMPARE_NUM) != 0 ) [[unlikely]]     //  Bail out early if same applet is in use.
+            {
+                //  CASE 2 :    COMPARE THE CURRENT WINDOW NAME TO THE NAME OF EACH THE APPLET...
+                for (size_t i = 0; !match && i < static_cast<size_t>(Applet::Count); ++i) {
+                    name    = m_applets[ static_cast<size_t>( i ) ]->c_str();
+                    match   = ( strncmp(name, vis, LOOP_COMPARE_NUM) == 0 );
+                    if (match)          { this->m_current_task = static_cast<Applet>( i ); }
+                }
+                
+                //  CASE 3 :    NO MATCH---A NON-NAMED WINDOW IS OPEN...
+                if (!match)                     { this->m_current_task      = Applet::Undefined; }
             }
-            
-            //  CASE 2A :   NO MATCH---A NON-NAMED WINDOW IS OPEN...
-            if (!match)         { this->m_current_task    = Applet::Undefined; }
         }
+        
+        
         
         return;
     }
+    
+    
+    //  "_update_task_state"
+    //
+    inline void                         _update_task_state          (void) noexcept
+	{
+		TaskState_t &           out     = m_task_info;
+		ImGuiContext*           ctx     = ImGui::GetCurrentContext();
+        
+		if ( !ctx )                     { return; }
+
+		ImGuiPlatformIO&        pio     = ctx->PlatformIO;
+
+		// Preferred: query the backend for OS focus across all platform windows (multi-viewport safe).
+		if ( pio.Platform_GetWindowFocus )
+		{
+			for (ImGuiViewportP * vp : ctx->Viewports)
+			{
+				if  (!vp->PlatformWindowCreated )       { continue; }       //  Skip viewports that don't own a platform window
+                
+				if ( pio.Platform_GetWindowFocus(vp) ) {                    //  Backend says this viewport is focused by the OS
+					out.has_focus           = true;
+					out.focused_viewport    = vp;
+					break;
+				}
+			}
+			out.reliable = true;
+			return;
+		}
+
+		// Fallback (heuristic): use the IO focus-lost event and assume main viewport.
+		// Note: io.AppFocusLost is typically set on the frame focus is lost (event-style).
+		ImGuiIO& io = ctx->IO;
+		out.has_focus        = !io.AppFocusLost;        // May be transient; treat as best-effort when backend lacks the callback
+		out.focused_viewport = ImGui::GetMainViewport();
+		out.reliable         = false;
+		return;
+	}
+
+
+    
+    
+    
     
     
     
@@ -302,6 +360,9 @@ public:
     //  2.2             SUB-STATE INFORMATION...
     // *************************************************************************** //
     Applet                              m_current_task;
+    TaskState_t                         m_task_info;
+    //
+    //
 #ifndef __CBAPP_BUILD_CCOUNTER_APP__
     AppColorStyle_t                     m_current_app_color_style       = AppColorStyle_t::Default;
 # else

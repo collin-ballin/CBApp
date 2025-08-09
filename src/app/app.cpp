@@ -144,20 +144,24 @@ void App::run_IMPL(void)
     
     
     //  0.1.    RENDER THE DOCKSPACE...
-    this->S.m_dockspace_id                              = ImGui::GetID( S.m_windows[Window::Dockspace].uuid.c_str() );
+    //      this->S.m_dockspace_id                              = ImGui::GetID( S.m_windows[Window::Dockspace].uuid.c_str() );
 
 
-    //  0.2.    FIRST-FRAME INITIALIZATIONS...
-    if (first_frame) [[unlikely]] {
-        this->InitDockspace();
-    }// END OF "first_frame"...
+    //      //  0.2.    FIRST-FRAME INITIALIZATIONS...
+    //      if (first_frame) [[unlikely]] {
+    //          this->InitDockspace();
+    //      }// END OF "first_frame"...
 
 
-    //  1.      HANDLE ANY CALLS WHICH REQUIRED RE-DRAW OF DOCKING SPACE...
-    if (S.m_rebuild_dockspace) [[unlikely]] {
-        this->RebuildDockLayout();
-        S.m_rebuild_dockspace = false;
-    }
+    //      //  1.      HANDLE ANY CALLS WHICH REQUIRED RE-DRAW OF DOCKING SPACE...
+    //      if (S.m_rebuild_dockspace) [[unlikely]] {
+    //          this->RebuildDockLayout();
+    //          S.m_rebuild_dockspace = false;
+    //      }
+
+
+    //  1.      PERFORM PER-FRAME-CACHE FOR  **BEGINNING**  OF THIS FRAME...
+    this->PerFrameCache_Begin(first_frame);
 
 
 
@@ -187,21 +191,24 @@ void App::run_IMPL(void)
     //
     
     
+    //  3.      PERFORM ALL PER-FRAME CACHE UPDATE
+    this->PerFrameCache_End(first_frame);
+    
     
     //  1.      END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
-    if (first_frame) [[unlikely]] {
-        first_frame = false;
-        ImGui::SetWindowFocus( S.current_task() );
-    }
+    //  if (first_frame) [[unlikely]] {
+    //      first_frame = false;
+    //      ImGui::SetWindowFocus( S.current_task() );
+    //  }
     
 
     //  3.      HANDLE ANY KEYBOARD SHORTCUTS...
-    this->KeyboardShortcutHandler();
+    //  this->KeyboardShortcutHandler();
     
     
         
     //  4.      LASTLY, QUERY EACH SIGNAL HANDLER...
-    this->QuerySignalStates();
+    //  this->QuerySignalStates();
     
     
     
@@ -391,10 +398,7 @@ void App::KeyboardShortcutHandler(void)
     static const ImGuiKeyChord      REDO_KEY                = ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z;
     //
     [[maybe_unused]] ImGuiIO &      io                      = ImGui::GetIO();
-    
-    
-    //  0.  UPDATE CURRENT APPLICATION STATE (NEEDED BEFORE WE SAVE/UNDO/REDO/ETC)...
-    S.update_current_task();
+
 
 
     //  1.  HOTKEY TO OPEN/CLOSE BROWSER...
