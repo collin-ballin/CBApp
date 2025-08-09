@@ -135,35 +135,56 @@ void MenuBar::Begin([[maybe_unused]] const char *       uuid,
 //
 void MenuBar::disp_file_menubar(void)
 {
-    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
-    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
-    static cblib::ndmatrix<float>   test(4,4);
+    [[maybe_unused]] ImGuiIO &          io                      = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &       style                   = ImGui::GetStyle();
+    constexpr bool                      ENABLE_NEW              = false;
+    constexpr bool                      ENABLE_OPEN             = false;
+    constexpr bool                      ENABLE_OPEN_RECENT      = false;
+    constexpr bool                      ENABLE_EXPORT           = false;
+    //  static cblib::ndmatrix<float>   test(4,4);
 
+StateHasIO
 
     //  1.  "New" SUB-MENU...
-    if (ImGui::BeginMenu("New"))
-    {
-        ImGui::MenuItem("New File",         nullptr,        nullptr);
-        ImGui::EndMenu();
-    }
+    ImGui::BeginDisabled(ENABLE_NEW);
+        if (ImGui::BeginMenu("New"))
+        {
+            ImGui::MenuItem("New File",         nullptr,        nullptr);
+            ImGui::EndMenu();
+        }
+    ImGui::EndDisabled();
 
     
     //  2.  "Open" SUB-MENU...
     ImGui::Separator();
-    if (ImGui::MenuItem("Open...",                  "CTRL+O"))      { }
-    if (ImGui::BeginMenu("Open Recent"))
-    {
-        //  ...
-        ImGui::EndMenu();
-    }
+    ImGui::BeginDisabled(ENABLE_OPEN);
+        if (ImGui::MenuItem("Open...",                  "CTRL+O"))      { }
+    ImGui::EndDisabled();
+    //
+    ImGui::BeginDisabled(ENABLE_OPEN_RECENT);
+        if (ImGui::BeginMenu("Open Recent"))
+        {
+            //  ...
+            ImGui::EndMenu();
+        }
+    ImGui::EndDisabled();
+    
+    
+    
+    
     
     
     //  3.  "Save" SUB-MENU...
     ImGui::Separator();
-    if (ImGui::MenuItem("Save",                     "CTRL+S")) {
-        io.AddKeyEvent(ImGuiMod_Ctrl, true); io.AddKeyEvent(ImGuiKey_S, true);
-    }
-    if (ImGui::MenuItem("Save As...",               nullptr))       { }
+    ImGui::BeginDisabled(ENABLE_OPEN);
+        if (ImGui::MenuItem("Save",                     "CTRL+S")) {
+            io.AddKeyEvent(ImGuiMod_Ctrl, true); io.AddKeyEvent(ImGuiKey_S, true);
+        }
+    ImGui::EndDisabled();
+    //
+    ImGui::BeginDisabled(ENABLE_OPEN);
+        if (ImGui::MenuItem("Save As...",               nullptr))       { }
+    ImGui::EndDisabled();
     
     
     //  4.  "ImGui" FILES SUB-MENU...
@@ -174,7 +195,9 @@ void MenuBar::disp_file_menubar(void)
     
     
     //  5.  MORE EXPORTS AND SAVES...
-    if (ImGui::MenuItem("Export",                   nullptr))       { }
+    ImGui::BeginDisabled(ENABLE_EXPORT);
+        if (ImGui::MenuItem("Export",                   nullptr))       { }
+    ImGui::EndDisabled();
     
     
     //  4.  "Quit"...
@@ -190,31 +213,47 @@ void MenuBar::disp_file_menubar(void)
 //
 void MenuBar::disp_edit_menubar(void)
 {
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO &                   io                  = ImGui::GetIO();
+    constexpr bool              ENABLE_UNDO         = false;
+    constexpr bool              ENABLE_REDO         = false;
+    constexpr bool              ENABLE_CUT          = false;
+    constexpr bool              ENABLE_COPY         = false;
+    constexpr bool              ENABLE_PASTE        = false;
     
     //  1.  UNDO / REDO...
-    if (ImGui::MenuItem("Undo",                             "CTRL+Z"))
-    { io.AddKeyEvent(ImGuiMod_Shift,true);   io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
-    
-    if (ImGui::MenuItem("Redo",                             "SHIFT+CTRL+Z"))
-    { io.AddKeyEvent(ImGuiMod_Shift,true);   io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
+    ImGui::BeginDisabled(ENABLE_UNDO);
+        if (ImGui::MenuItem("Undo",                             "CTRL+Z"))
+        { io.AddKeyEvent(ImGuiMod_Shift,true);   io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
+    ImGui::EndDisabled();
+    //
+    ImGui::BeginDisabled(ENABLE_REDO);
+        if (ImGui::MenuItem("Redo",                             "SHIFT+CTRL+Z"))
+        { io.AddKeyEvent(ImGuiMod_Shift,true);   io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
+    ImGui::EndDisabled();
     
     
     
     //  2.  CUT / COPY...
     ImGui::Separator();
-    if (ImGui::MenuItem("Cut",                              nullptr))           { }
-    if (ImGui::MenuItem("Copy",                             "CTRL+C"))          { }
+    ImGui::BeginDisabled(ENABLE_CUT);
+        if (ImGui::MenuItem("Cut",                              nullptr))           { }
+    ImGui::EndDisabled();
+    //
+    ImGui::BeginDisabled(ENABLE_COPY);
+        if (ImGui::MenuItem("Copy",                             "CTRL+C"))          { }
+    ImGui::EndDisabled();
     
     
     
     //  3.  "Paste" SUB-MENU...
-    if (ImGui::BeginMenu("Paste")) {
-        ImGui::MenuItem("Paste",                            "CTRL+V",           nullptr);
-        ImGui::MenuItem("Paste Special",                    "SHIFT+CTRL+V",     nullptr);
-        ImGui::MenuItem("Paste and Preserve Formatting",    "CTRL+ALT+V",       nullptr);
-        ImGui::EndMenu();
-    }
+    ImGui::BeginDisabled(ENABLE_PASTE);
+        if (ImGui::BeginMenu("Paste")) {
+            ImGui::MenuItem("Paste",                            "CTRL+V",           nullptr);
+            ImGui::MenuItem("Paste Special",                    "SHIFT+CTRL+V",     nullptr);
+            ImGui::MenuItem("Paste and Preserve Formatting",    "CTRL+ALT+V",       nullptr);
+            ImGui::EndMenu();
+        }
+    ImGui::EndDisabled();
     
     
     return;

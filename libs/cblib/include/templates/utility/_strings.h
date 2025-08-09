@@ -187,6 +187,37 @@ inline constexpr const char *           strcat_cx_cstr      = strcat_string_view
 };
     
     
+//  "fmt_imgui_string"
+//
+[[nodiscard]] inline static std::string fmt_imgui_string(const char * c_string, const std::size_t N = 64)
+{
+    using       sv                          = std::string_view;
+    constexpr   sv          pair            = "##";
+    constexpr   sv          ellipsis        = "...";
+    const       sv          s               = (c_string)    ? sv{c_string}  : sv{  };       // null-safe
+    sv                      core;
+    std::string             out;
+    const std::size_t       pos             = s.find(pair);                                 // --- normalize by first occurrence of "##"
+    const std::size_t       keep            = N - ellipsis.size();
+    
+    
+    if ( pos == sv::npos )                  { core = s;                     }       //  (1) absent
+    else if ( pos == 0 )                    { core = s.substr(2);           }       //  (2) leading
+    else                                    { core = s.substr(0, pos);      }       //  (3)/(4) before pair
+
+
+    // --- truncate with ellipsis policy
+    if ( core.size() <= N )                 { return std::string{core}; }
+
+    if ( N < ellipsis.size() )              { return std::string{core.substr(0, N)}; }   // Not enough room for full ellipsis: return raw prefix
+
+    out.reserve( N );
+    out.append( core.substr(0, keep) );
+    out.append( ellipsis );
+    
+    
+    return out; // length <= N and == N when N>0
+}
     
 
 

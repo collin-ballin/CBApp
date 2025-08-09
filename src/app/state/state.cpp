@@ -35,46 +35,49 @@ AppState::AppState(void)
 {
     size_t          i                   = size_t(0);
 
+
+
     //  1.      INITIALIZE WINDOW INFOS...
     for (i = 0; i < static_cast<size_t>(Window_t::Count); ++i) {
         m_windows.data[i] = APPLICATION_WINDOW_INFOS[i];
     }
-    //
-    //          1A.     Define the Names of Additional Applet States.
-    this->ms_IDLE_APPLET_NAME           = "Idle";
-    this->ms_UNDEFINED_APPLET_NAME      = "---";
-
-
+    
     //  2.      INITIALIZE APPLICATION FONTS...
     for (i = 0; i < static_cast<size_t>(Font::Count); ++i) {
         m_fonts.data[i] = nullptr;  // load later in your init()
     }
-       
-       
-    //  3A.     INITIALIZE APPLICATION'S APPLETS...
-    this->m_applets     = {
-        std::addressof( this->ms_IDLE_APPLET_NAME                   ),      //  THESE ARE FOR:  (1) App is IDLE, (2) No NAMED-Window is open.
-        std::addressof( this->ms_UNDEFINED_APPLET_NAME              ),      //  I had to store these seperate from the "m_windows[ Window::Name ]" because it makes no sense to
+
+
+
+
+
+
+    //  ?.      INITIALIZE SUB-STATE OBJECTS...
+    // *************************************************************************** //
+    // *************************************************************************** //
+    //          ?.1.    TaskState INITIALIZATION...
+    //
+    //                  END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS).
+    #if defined(__CBAPP_BUILD_CCOUNTER_APP__)
+        m_task_state.m_current_task     = Applet::CCounterApp;
+    # elif defined(__CBAPP_BUILD_EDITOR_APP__)
+        m_task_state.m_current_task     = Applet::EditorApp;
+    # elif defined(__CBAPP_BUILD_FDTD_APP__)
+        m_task_state.m_current_task     = Applet::GraphApp;
+    # else
+        m_task_state.m_current_task     = Applet::MainApp;
+    #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
+    //
+    m_task_state.m_applets   = {
+        std::addressof( m_task_state.ms_IDLE_APPLET_NAME            ),      //  THESE ARE FOR:  (1) App is IDLE, (2) No NAMED-Window is open.
+        std::addressof( m_task_state.ms_UNDEFINED_APPLET_NAME       ),      //  I had to store these seperate from the "m_windows[ Window::Name ]" because it makes no sense to
     //                                                                          define an additional member in the "m_windows" array to hold data for windows that are not stored.
         std::addressof( m_windows[ Window::MainApp      ].uuid      ),
         std::addressof( m_windows[ Window::CCounterApp  ].uuid      ),
         std::addressof( m_windows[ Window::EditorApp    ].uuid      ),
         std::addressof( m_windows[ Window::GraphApp     ].uuid      )
     };
-    //
-    //  3B.     END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
-    #if defined(__CBAPP_BUILD_CCOUNTER_APP__)
-        m_current_task      = Applet::CCounterApp;
-    # elif defined(__CBAPP_BUILD_EDITOR_APP__)
-        m_current_task      = Applet::EditorApp; 
-    # elif defined(__CBAPP_BUILD_FDTD_APP__)
-        m_current_task      = Applet::GraphApp;
-    # else
-        m_current_task      = Applet::MainApp; 
-    #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
     
-    
-    m_task_info.m_current_task  = m_current_task;
 
     return;
 }
@@ -277,7 +280,7 @@ void AppState::log_startup_info(void) noexcept
         "Start Task                 : {}\n"
         "Start App Color Style      : {}\n"
         "Start Plot Color Style     : {}",
-        this->current_task(),
+        this->current_task_name(),
         current_app_color_style(),
         current_plot_color_style()
     );

@@ -200,7 +200,7 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
             constexpr const char *      io_time_fmt     = "%.2f ms  ";                  //  FORMAT STRINGS.
             constexpr const char *      fps_fmt         = "%.1f FPS  ";                 //  FORMAT STRINGS.
             //
-            const char *                task            = S.current_task();
+            const char *                task            = S.current_task_name();
             const float                 delta_t         = 1000 * io.DeltaTime;
             const float                 fps_ct          = io.Framerate;
             const ImVec2                task_size       = ImGui::CalcTextSize(task);
@@ -215,7 +215,12 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
             //
             //  TASK.
             ImGui::AlignTextToFramePadding();
-            ImGui::TextColored( app::DEF_APPLE_BLUE, "%20s", task );
+            //
+            switch ( this->S.current_task() ) {
+                case Applet::Undefined      : { ImGui::TextDisabled( "%s", task );                              break;      }
+                default                     : { ImGui::TextColored( app::DEF_APPLE_BLUE,    "%s",     task );   break;      }
+            }
+            //
             ImGui::SameLine(0, ms_SMALL_ITEM_PAD);      ImGui::Dummy(ImVec2( 0.65f * (max_task_size.x - task_size.x), 0));
             ImGui::SameLine(0, ms_SMALL_ITEM_PAD);
             //

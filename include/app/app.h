@@ -406,7 +406,7 @@ protected:
         //      1.      END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
         if (first_frame) [[unlikely]] {
             first_frame = false;
-            ImGui::SetWindowFocus( S.current_task() );
+            ImGui::SetWindowFocus( S.current_task_name() );
         }
 
 

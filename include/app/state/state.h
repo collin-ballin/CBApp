@@ -203,11 +203,13 @@ public:
     { ImGui::PushFont( this->m_fonts[which] ); return; }
 
     //  "PopFont"
-    inline void                         PopFont                     (void)      { ImGui::PopFont(); return; }
+    inline void                         PopFont                     (void)          { ImGui::PopFont(); return; }
     
     //  "current_task"
-    inline const char *                 current_task                (void) const
-    {  return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str();  }
+    inline Applet                       current_task                (void) const    { return this->m_task_state.m_current_task; }
+    
+    //  "current_task"
+    inline const char *                 current_task_name           (void)          { return this->m_task_state.current_task_name(); }
 
     //  "current_app_color_style"
     inline const char *                 current_app_color_style     (void) const
@@ -234,91 +236,9 @@ public:
     //  "update_current_task"
     inline void                         update_current_task         (void)
     {
-        static constexpr size_t     CACHE_COMPARE_NUM       = 32;
-        static constexpr size_t     LOOP_COMPARE_NUM        = 16;
-        //
-        //
-        const bool                  app_is_idle             = ( glfwGetWindowAttrib(this->m_glfw_window, GLFW_FOCUSED) == 0 );
-        //
-        //
-        ImGuiWindow *               vis_win                 = this->get_nav_window();
-        const char *                vis                     = (vis_win) ? vis_win->Name     : nullptr;
-        //
-        //  const char *                vis                     = this->GetDockNodeVisText( this->m_main_node );
-        const char *                name                    = this->current_task();
-        bool                        match                   = false;
-        
-        
-        this->_update_task_state();
-        
-        
-        //  CASE 0 :    ENTIRE APPLICATION IS UN-FOCUSED...
-        if ( !vis )     { this->m_current_task = Applet::None; }
-        
-        else
-        {
-            //  CASE 1 :    CURRENT WINDOW HAS NOT CHANGED SINCE OUR LAST FRAME (NO NEED TO CHANGE)...
-            if ( strncmp(name, vis, CACHE_COMPARE_NUM) != 0 ) [[unlikely]]     //  Bail out early if same applet is in use.
-            {
-                //  CASE 2 :    COMPARE THE CURRENT WINDOW NAME TO THE NAME OF EACH THE APPLET...
-                for (size_t i = 0; !match && i < static_cast<size_t>(Applet::Count); ++i) {
-                    name    = m_applets[ static_cast<size_t>( i ) ]->c_str();
-                    match   = ( strncmp(name, vis, LOOP_COMPARE_NUM) == 0 );
-                    if (match)          { this->m_current_task = static_cast<Applet>( i ); }
-                }
-                
-                //  CASE 3 :    NO MATCH---A NON-NAMED WINDOW IS OPEN...
-                if (!match)                     { this->m_current_task      = Applet::Undefined; }
-            }
-        }
-        
-        
-        
+        this->m_task_state.update_current_task( m_glfw_window );
         return;
     }
-    
-    
-    //  "_update_task_state"
-    //
-    inline void                         _update_task_state          (void) noexcept
-	{
-		TaskState_t &           out     = m_task_info;
-		ImGuiContext*           ctx     = ImGui::GetCurrentContext();
-        
-		if ( !ctx )                     { return; }
-
-		ImGuiPlatformIO&        pio     = ctx->PlatformIO;
-
-		// Preferred: query the backend for OS focus across all platform windows (multi-viewport safe).
-		if ( pio.Platform_GetWindowFocus )
-		{
-			for (ImGuiViewportP * vp : ctx->Viewports)
-			{
-				if  (!vp->PlatformWindowCreated )       { continue; }       //  Skip viewports that don't own a platform window
-                
-				if ( pio.Platform_GetWindowFocus(vp) ) {                    //  Backend says this viewport is focused by the OS
-					out.has_focus           = true;
-					out.focused_viewport    = vp;
-					break;
-				}
-			}
-			out.reliable = true;
-			return;
-		}
-
-		// Fallback (heuristic): use the IO focus-lost event and assume main viewport.
-		// Note: io.AppFocusLost is typically set on the frame focus is lost (event-style).
-		ImGuiIO& io = ctx->IO;
-		out.has_focus        = !io.AppFocusLost;        // May be transient; treat as best-effort when backend lacks the callback
-		out.focused_viewport = ImGui::GetMainViewport();
-		out.reliable         = false;
-		return;
-	}
-
-
-    
-    
-    
     
     
     
@@ -359,8 +279,7 @@ public:
     // *************************************************************************** //
     //  2.2             SUB-STATE INFORMATION...
     // *************************************************************************** //
-    Applet                              m_current_task;
-    TaskState_t                         m_task_info;
+    TaskState_t                         m_task_state;
     //
     //
 #ifndef __CBAPP_BUILD_CCOUNTER_APP__
@@ -397,10 +316,10 @@ public:
     //
     //
     // *************************************************************************** //
-    //  2.3             REFERENCE TO CONSTEXPR GLOBAL ARRAYS...
+    //  2.3             REFERENCE TO CONSTEXPR GLOBAL ARRAYS.
     // *************************************************************************** //
-    std::array< std::string *, static_cast<size_t>(Applet_t::Count) >       //  No CONSTEXPR arr for this bc I want it to copy the
-                                        m_applets                       = {};   //  window names EXACTLY in case we ever rename them.
+    //      std::array< std::string *, static_cast<size_t>(Applet_t::Count) >       //  No CONSTEXPR arr for this bc I want it to copy the
+    //                                          m_applets                       = {};   //  window names EXACTLY in case we ever rename them.
     static constexpr auto &             m_app_color_style_names         = APPLICATION_COLOR_STYLE_NAMES;
     static constexpr auto &             m_plot_color_style_names        = APPLICATION_PLOT_COLOR_STYLE_NAMES;
     static constexpr AppleSystemColors_t
@@ -411,7 +330,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //  2.4             STATIC AND CONSTEXPR VARIABLES...
+    //  2.4             STATIC AND CONSTEXPR VARIABLES.
     // *************************************************************************** //
     //                      1.      Window Variables:
     //                      1.1         ALL Windows.
@@ -457,7 +376,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //  2.5             MISC. INFORMATION...
+    //  2.5             MISC. INFORMATION.
     // *************************************************************************** //
 //
 #if defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__) || defined(__CBAPP_DEBUG__)
@@ -495,7 +414,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //  2.6             DIMENSIONS...
+    //  2.6             DIMENSIONS.
     // *************************************************************************** //
     //                      SYSTEM:
     int                                 m_system_w                  = -1;       //  Sys. Display Dims.
@@ -523,7 +442,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //  2.7             SPECIFICS...
+    //  2.7             SPECIFICS.
     // *************************************************************************** //
     //                      MAIN DOCKINGSPACE:
     const char *                        m_dock_name                 = "##RootDockspace";
@@ -571,10 +490,10 @@ public:
     //
     //
     // *************************************************************************** //
-    //  3.              GENERIC CONSTANTS...
+    //  3.              GENERIC CONSTANTS.
     // *************************************************************************** //
-    std::string                         ms_IDLE_APPLET_NAME;
-    std::string                         ms_UNDEFINED_APPLET_NAME;
+    //      std::string                         ms_IDLE_APPLET_NAME;
+    //      std::string                         ms_UNDEFINED_APPLET_NAME;
     
     
     
