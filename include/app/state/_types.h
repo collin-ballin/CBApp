@@ -159,6 +159,7 @@ enum class Window_t : int {
 //      Plain‑old‑data (POD) to hold each window’s compile‑time defaults.
 struct WinInfo {
     inline const char * get_uuid(void) const { return this->uuid.c_str(); }
+//
     std::string                                                     uuid;           //  Window title / unique ID.
     ImGuiWindowFlags                                                flags;          //  ImGui window flags.
     bool                                                            open;           //  Current visibility state.
@@ -184,6 +185,9 @@ APPLICATION_WINDOW_INFOS            = {{
 
 //  "Applet_t"
 enum class Applet_t : uint8_t {
+    None = 0,
+    Undefined,
+//
     MainApp,
     CCounterApp,
     EditorApp,

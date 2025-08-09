@@ -660,7 +660,7 @@ protected:
 
 
     // *************************************************************************** //
-    //      CENTRALIZED OPERATION FUNCTIONS.
+    //                      CENTRALIZED OPERATION FUNCTIONS...
     // *************************************************************************** //
     
     inline void                         _run_all                        (void) {
@@ -677,7 +677,7 @@ protected:
     //
     //
     // *************************************************************************** //
-    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    //                      CENTRALIZED STATE MANAGEMENT FUNCTIONS...
     // *************************************************************************** //
 
     //  "is_running"

@@ -172,6 +172,34 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //
 
+    // *************************************************************************** //
+    //                      PRIMARY INLINE FUNCTIONS...
+    // *************************************************************************** //
+
+    //  "PerFrameCache"
+    //
+    //      TO-DO:
+    //          - This needs to be a centralized function that will be called  ONE-TIME  at the beginning of  EACH FRAME.
+    //          - It will ensure that each data-member of the App State is Up-To-Date and prepared for usage across any opteration
+    //          that make take place across the coming frame.
+    //
+    inline void                         PerFrameCache               (void)
+    {
+    
+    
+        return;
+    }
+    
+    
+
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                      CENTRALIZED OPERATION FUNCTIONS...
+    // *************************************************************************** //
+
     //  "PushFont"
     inline void                         PushFont                    ([[maybe_unused]] const Font & which)
     { ImGui::PushFont( this->m_fonts[which] ); return; }
@@ -207,19 +235,34 @@ public:
     //  "update_current_task"
     inline void                         update_current_task         (void)
     {
-        const char *    vis         = this->GetDockNodeVisText( this->m_main_node );
-        const char *    name        = this->current_task();
-        bool            match       = false;
+        static constexpr size_t     CACHE_COMPARE_NUM       = 32;
+        static constexpr size_t     LOOP_COMPARE_NUM        = 16;
+        //
+        //
+        const bool                  app_is_idle             = ( glfwGetWindowAttrib(this->m_glfw_window, GLFW_FOCUSED) == 0 );
+        //
+        const char *                vis                     = this->GetDockNodeVisText( this->m_main_node );
+        const char *                name                    = this->current_task();
+        bool                        match                   = false;
         
-        if ( strncmp(name, vis, 32) == 0 ) [[likely]] return; //  Bail out early if same applet is in use.
         
-        
-        for (size_t i = 0; !match && i < static_cast<size_t>(Applet::Count); ++i) {
-            name    = m_applets[ static_cast<size_t>( i ) ]->c_str();
-            match   = ( strncmp(name, vis, 16) == 0 );
-            if (match)      this->m_current_task = static_cast<Applet>( i );
+        //  CASE 0 :    ENTIRE APPLICATION IS UN-FOCUSED...
+        if ( app_is_idle )      { this->m_current_task = Applet::None; }
+        //
+        //
+        //  CASE 1 :    CURRENT WINDOW HAS NOT CHANGED SINCE OUR LAST FRAME (NO NEED TO CHANGE)...
+        else if ( strncmp(name, vis, CACHE_COMPARE_NUM) != 0 ) [[unlikely]]     //  Bail out early if same applet is in use.
+        {
+            //  CASE 2 :    COMPARE THE CURRENT WINDOW NAME TO THE NAME OF EACH THE APPLET...
+            for (size_t i = 0; !match && i < static_cast<size_t>(Applet::Count); ++i) {
+                name    = m_applets[ static_cast<size_t>( i ) ]->c_str();
+                match   = ( strncmp(name, vis, LOOP_COMPARE_NUM) == 0 );
+                if (match)          { this->m_current_task = static_cast<Applet>( i ); }
+            }
+            
+            //  CASE 2A :   NO MATCH---A NON-NAMED WINDOW IS OPEN...
+            if (!match)         { this->m_current_task    = Applet::Undefined; }
         }
-        if (!match)     this->m_current_task = Applet::MainApp;
         
         return;
     }
@@ -246,7 +289,6 @@ public:
     // *************************************************************************** //
     //  2.1             CLASS DATA MEMBERS...
     // *************************************************************************** //
-    //
     //                      GROUPS / SUB-CLASSES OF "APPSTATE":
     utl::Logger &                       m_logger;                                                   //  1.      LOGGER...
     ImWindows                           m_windows;                                                  //  2.      APPLICATION WINDOW STATE...
@@ -256,6 +298,7 @@ public:
                                         m_notes                         = {};
     Timestamp_t                         m_timestamp_spawn;
     Timestamp_t                         m_timestamp_start;
+    
     // *************************************************************************** //
     //
     //
@@ -270,6 +313,7 @@ public:
     AppColorStyle_t                     m_current_app_color_style       = AppColorStyle_t::Laser_410NM;
 #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
     PlotColorStyle_t                    m_current_plot_color_style      = PlotColorStyle_t::Default;
+    
     // *************************************************************************** //
     //
     //
@@ -292,7 +336,6 @@ public:
     bool                                m_dialog_queued                 = false;
     bool                                m_dialog_path                   = false;
     
-    
     // *************************************************************************** //
     //
     //
@@ -304,10 +347,8 @@ public:
                                         m_applets                       = {};   //  window names EXACTLY in case we ever rename them.
     static constexpr auto &             m_app_color_style_names         = APPLICATION_COLOR_STYLE_NAMES;
     static constexpr auto &             m_plot_color_style_names        = APPLICATION_PLOT_COLOR_STYLE_NAMES;
-    //  static constexpr auto &             ms_SYSTEM_COLORS                = app::DEF_APPLE_SYSTEM_COLORS;
     static constexpr AppleSystemColors_t
                                         SystemColor                     = {};
-    
     
     // *************************************************************************** //
     //
@@ -355,7 +396,6 @@ public:
 #endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
 
 
-    
     // *************************************************************************** //
     //
     //
@@ -469,6 +509,18 @@ public:
     //                              SubCategory.
     //                                  ...
     //
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //  3.              GENERIC CONSTANTS...
+    // *************************************************************************** //
+    std::string                         ms_IDLE_APPLET_NAME;
+    std::string                         ms_UNDEFINED_APPLET_NAME;
+    
+    
     
 //
 //

@@ -51,7 +51,7 @@ void App::run(void)
         //              - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
         //          Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfwPollEvents();
-        if (glfwGetWindowAttrib(this->S.m_glfw_window, GLFW_ICONIFIED))    { ImGui_ImplGlfw_Sleep(10); continue; }
+        if ( glfwGetWindowAttrib(this->S.m_glfw_window, GLFW_ICONIFIED) )       { ImGui_ImplGlfw_Sleep(10); continue; }
         
 
         //  2.  START THE "DEAR IMGUI" FRAME...
@@ -63,8 +63,10 @@ void App::run(void)
         // *************************************************************************** //
         
         
-        //  3.  DRAW MAIN "UI" ELEMENTS...
+        
+        //  3.  INVOKE THE PRIMARY GUI-LOOP FOR  **MY OWN**  APPLICATION.     [ Draw each application window, etc. ]...
         this->run_IMPL();
+
 
 
         // *************************************************************************** //
@@ -137,20 +139,17 @@ void App::run_IMPL(void)
     static size_t                   idx                 = static_cast<size_t>(0);
     static const size_t &           WINDOWS_BEGIN       = this->S.ms_WINDOWS_BEGIN;   // static_cast<size_t>(Window::Sidebar);
     static const size_t &           WINDOWS_END         = this->S.ms_WINDOWS_END;     // static_cast<size_t>(Window::Count);
-
     static bool                     first_frame         = true;
     
     
     
-    //  0.1     RENDER THE DOCKSPACE...
-#ifndef CBAPP_NEW_DOCKSPACE
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_dock_bg);
-    //ImGui::DockSpaceOverViewport(0, this->m_main_viewport);
-    ImGui::DockSpaceOverViewport(this->m_main_viewport, ImGuiDockNodeFlags_NoTabBar);
-    ImGui::PopStyleColor();
-#else
-    //const ImGuiViewport *           viewport            = ImGui::GetMainViewport();
-    //this->S.m_dockspace_id                              = ImGui::GetID(this->S.m_dock_name);
+    //  0.1.    RENDER THE DOCKSPACE...
+//      #ifndef CBAPP_NEW_DOCKSPACE
+//          ImGui::PushStyleColor(ImGuiCol_WindowBg, this->m_dock_bg);
+//          //ImGui::DockSpaceOverViewport(0, this->m_main_viewport);
+//          ImGui::DockSpaceOverViewport(this->m_main_viewport, ImGuiDockNodeFlags_NoTabBar);
+//          ImGui::PopStyleColor();
+//      #else
     this->S.m_dockspace_id                              = ImGui::GetID( S.m_windows[Window::Dockspace].uuid.c_str() );
 
 
@@ -159,7 +158,7 @@ void App::run_IMPL(void)
         this->InitDockspace();
     }// END OF "first_frame"...
     
-#endif  //  CBAPP_NEW_DOCKSPACE  //
+//      #endif  //  CBAPP_NEW_DOCKSPACE  //
 
 
 

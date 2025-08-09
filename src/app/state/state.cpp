@@ -33,12 +33,17 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb"...
 AppState::AppState(void)
     : m_logger{Logger::instance()}
 {
-    size_t      i       = size_t(0);
+    size_t          i                   = size_t(0);
 
     //  1.      INITIALIZE WINDOW INFOS...
     for (i = 0; i < static_cast<size_t>(Window_t::Count); ++i) {
         m_windows.data[i] = APPLICATION_WINDOW_INFOS[i];
     }
+    //
+    //          1A.     Define the Names of Additional Applet States.
+    this->ms_IDLE_APPLET_NAME           = "Idle";
+    this->ms_UNDEFINED_APPLET_NAME      = "---";
+
 
     //  2.      INITIALIZE APPLICATION FONTS...
     for (i = 0; i < static_cast<size_t>(Font::Count); ++i) {
@@ -48,6 +53,9 @@ AppState::AppState(void)
        
     //  3A.     INITIALIZE APPLICATION'S APPLETS...
     this->m_applets     = {
+        std::addressof( this->ms_IDLE_APPLET_NAME                   ),      //  THESE ARE FOR:  (1) App is IDLE, (2) No NAMED-Window is open.
+        std::addressof( this->ms_UNDEFINED_APPLET_NAME              ),      //  I had to store these seperate from the "m_windows[ Window::Name ]" because it makes no sense to
+    //                                                                          define an additional member in the "m_windows" array to hold data for windows that are not stored.
         std::addressof( m_windows[ Window::MainApp      ].uuid      ),
         std::addressof( m_windows[ Window::CCounterApp  ].uuid      ),
         std::addressof( m_windows[ Window::EditorApp    ].uuid      ),
@@ -67,7 +75,7 @@ AppState::AppState(void)
     
     //m_current_task
 
-
+    return;
 }
 
 
