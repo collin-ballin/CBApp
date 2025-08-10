@@ -67,7 +67,7 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 
 
 
-//  1.  APPLICATION UTILITY STRUCTS...
+//      1.      APPLICATION UTILITY STRUCTS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -130,12 +130,27 @@ APPLICATION_PLOT_COLOR_STYLE_NAMES      = {{
 
 
 
+//
+//
+// ******************************************************************* //
+// *************************************************************************** //   END "App Utility".
+
+
+
+
+
+
+
+
+
+
 
 
 // *************************************************************************** //
 //
 //
-//  2.  MORE WINDOW DEFINITIONS...
+//
+//      2.      MORE WINDOW DEFINITIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -225,12 +240,92 @@ enum CBSignalFlags_ {
 //      constexpr uint32_t to_uint(SignalBits v) noexcept
 //      { return static_cast<uint32_t>(v); }
 
+//
+//
+// ******************************************************************* //
+// *************************************************************************** //   END "MORE WINDOW DEFINITIONS".
+
+
+
+
+
+
+
+
 
 
 
 
 // *************************************************************************** //
-//      3.  COLOR AND STYLE TYPES...
+//
+//
+//
+//      3.      "MenuState" AUXILIARY TYPES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "CBMenuCapabilityFlags_"
+//
+enum CBMenuCapabilityFlags_ : uint64_t {
+    CBMenuCapabilityFlags_None			        = 0,
+//
+//
+    CBMenuCapabilityFlags_Open                  = 1u <<  0,         //  "File" Menu.
+    CBMenuCapabilityFlags_Save			        = 1u <<  1,
+    CBMenuCapabilityFlags_SaveAs			    = 1u <<  2,
+//
+    CBMenuCapabilityFlags_Undo		            = 1u <<  3,         //  "Edit" Menu.
+    CBMenuCapabilityFlags_Redo                  = 1u <<  4,
+    CBMenuCapabilityFlags_Copy                  = 1u <<  5,
+    CBMenuCapabilityFlags_Paste		            = 1u <<  6,
+//
+//
+    CBMenuCapabilityFlags_CustomFile		    = 1u <<  7,         //  "Custom" Flags...
+    CBMenuCapabilityFlags_CustomEdit		    = 1u <<  8,
+    CBMenuCapabilityFlags_CustomView		    = 1u <<  9,
+    CBMenuCapabilityFlags_CustomWindow	        = 1u << 10,
+    CBMenuCapabilityFlags_CustomHelp		    = 1u << 11,
+//
+//
+    CBMenuCapabilityFlags_COUNT
+};
+
+
+//  "MenuCallbacks"
+//
+struct MenuCallbacks {
+	std::function<void()>	    file;		    //  Called inside   "File"      menu.
+	std::function<void()>	    edit;		    //  Called inside   "Edit"      menu.
+	std::function<void()>	    view;		    //  Called inside   "View"      menu.
+    std::function<void()>       window;         //  Called inside   "Window"    menu.
+	std::function<void()>	    tools;		    //  Called inside   "Tools"     menu.
+	std::function<void()>	    help;		    //  Called inside   "Help"      menu.
+};
+
+
+
+//
+//
+// ******************************************************************* //
+// *************************************************************************** //   END "MenuState Types".
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      4.      COLOR STYLES AND TYPES...
+// *************************************************************************** //
 // *************************************************************************** //
 
 //  "AppleSystemColors_"
@@ -376,6 +471,15 @@ enum Colormap_t : int {
     //
     Count
 };
+
+
+
+//
+//
+// ******************************************************************* //
+// *************************************************************************** //   END "Color Types".
+
+
 
 
 

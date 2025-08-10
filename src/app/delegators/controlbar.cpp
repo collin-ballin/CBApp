@@ -268,6 +268,87 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
 
 
 
+//  "draw_all"
+//
+void ControlBar::draw_all(void)
+{
+    static constexpr const char *   uuid                    = "##Controlbar_ControlsColumns";
+    static constexpr int            NC                      = 6;
+    //
+    static ImGuiOldColumnFlags      COLUMN_FLAGS            = ImGuiOldColumnFlags_None;
+    //
+    //  "column_label"
+    auto                            column_label            = [&](const char * label) -> void
+    { S.PushFont(Font::FootNote);     ImGui::TextDisabled("%s", label);     S.PopFont(); };
+    
+    
+    ImGuiIO &                       io                      = ImGui::GetIO();
+    ImGuiStyle &                    style                   = ImGui::GetStyle();
+    //
+    const ImVec2                    SPACING                 = ImVec2( 0.0f,             style.ItemSpacing.y + style.FramePadding.y      );
+    const ImVec2                    WIDGET_SIZE             = ImVec2( -1,               ImGui::GetFrameHeight()                         );
+    const ImVec2                    BUTTON_SIZE             = ImVec2( WIDGET_SIZE.y,    WIDGET_SIZE.y                                   );
+    S.PushFont(Font::Small);
+    
+
+
+    //      1.      BEGIN COLUMNS...
+    ImGui::Columns(NC, uuid, COLUMN_FLAGS);
+    //
+    //
+    //
+        //      1.      OPEN / CLOSE SIDEBAR WINDOW...
+        column_label("Browser:");
+        //
+    
+    
+    
+        //      2.      PLAY / PAUSE...
+        ImGui::NextColumn();        column_label("Controls:");
+    
+    
+    
+        //      3.      RUN ONCE...
+        ImGui::NextColumn();        column_label("");
+        ImGui::SetNextItemWidth( WIDGET_SIZE.x );
+
+
+
+        //      ?.      EMPTY SPACES FOR LATER...
+        for (int i = ImGui::GetColumnIndex(); i < NC; ++i) {
+            ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
+        }
+
+
+
+        //      X.      INFO...
+        column_label("Info:");
+        //
+        
+        
+        
+        //      XX.     MOUSE COORDINATES...
+        ImGui::NextColumn();        column_label("Global Position:");
+        //
+                
+
+
+        //      XXX.    SETTINGS MENU...
+        ImGui::NextColumn();        column_label("Settings:");
+    //
+    //
+    //
+    ImGui::Columns(1);      //  END COLUMNS...
+    
+    
+    
+    //      ImGui::Dummy( SPACING );
+    
+    
+    
+    S.PopFont();
+    return;
+}
 
 
 

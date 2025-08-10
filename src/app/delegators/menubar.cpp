@@ -163,7 +163,12 @@ void MenuBar::disp_file_menubar(void)
     ImGui::BeginDisabled(ENABLE_OPEN_RECENT);
         if (ImGui::BeginMenu("Open Recent"))
         {
+            //
             //  ...
+            //
+            ImGui::Separator();
+            if ( ImGui::MenuItem("Clear Menu") )      {  }
+            //
             ImGui::EndMenu();
         }
     ImGui::EndDisabled();

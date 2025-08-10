@@ -323,6 +323,7 @@
 #define                 _CBAPP_APPSTATE_ALIAS_API                                                               \
 public:                                                                                                         \
     using               CBSignalFlags                   = std::uint32_t;                                        \
+    using               CBMenuCapabilityFlags           = std::uint64_t;                                        \
                                                                                                                 \
     using               Window                          = app::Window_t;                                        \
     using               Applet                          = app::Applet_t;                                        \

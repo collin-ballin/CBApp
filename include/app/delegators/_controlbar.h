@@ -65,113 +65,223 @@ namespace cb { // BEGINNING NAMESPACE "cb"...
 
 
 
-// *************************************************************** //
-// *************************************************************** //
-// 3.  PRIMARY CLASS INTERFACE
-// @brief NO DESCRIPTION PROVIDED
-// *************************************************************** //
-// *************************************************************** //
+// *************************************************************************** //
+//                PRIMARY CLASS INTERFACE:
+// 		Class-Interface for the "ControlBar" Abstraction.
+// *************************************************************************** //
+// *************************************************************************** //
 
 class ControlBar
 {
-    CBAPP_APPSTATE_ALIAS_API                //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
-    friend class                App;
+//      0.          CONSTANTS AND ALIASES...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    CBAPP_APPSTATE_ALIAS_API
+    friend class                        App;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      REFERENCES TO GLOBAL ARRAYS.
+    // *************************************************************************** //
+    
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//
+//      1.          CLASS DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+
+    // *************************************************************************** //
+    //      IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      GENERIC DATA.
+    // *************************************************************************** //
+    bool                                m_initialized                       = false;
+    bool                                m_first_frame                       = false;
+    //
+    ImVec2                              ms_PLOT_SIZE                        = ImVec2(-1, 75);
+    ImGuiWindowClass                    m_window_class;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATE VARIABLES.
+    // *************************************************************************** //
+    AppState &                          CBAPP_STATE_NAME;
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CLASS DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//
+//      2.A.        PUBLIC MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 public:
     
-    //  1               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
-    //  1.1                     Default Constructor, Destructor, etc.       [app/sidebar/sidebar.cpp]...
-    explicit                    ControlBar                          (app::AppState & );                             //  Def. Constructor.
-                                ~ControlBar                         (void);                                         //  Def. Destructor.
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    explicit                            ControlBar              (app::AppState & );                             //  Def. Constructor.
+                                        ~ControlBar             (void);
+    void                                initialize              (void);
     
-    //  1.2B                    Public API.
-    void                        toggle_sidebar                      (void);
-    void                        open_sidebar                        (void);
-    void                        close_sidebar                       (void);
-    void                        toggle_detview                      (void);
-    void                        open_detview                        (void);
-    void                        close_detview                       (void);
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+                                        ControlBar              (const ControlBar &    src)        = delete;   //  Copy. Constructor.
+                                        ControlBar              (ControlBar &&         src)        = delete;   //  Move Constructor.
+    ControlBar &                        operator =              (const ControlBar &    src)        = delete;   //  Assgn. Operator.
+    ControlBar &                        operator =              (ControlBar &&         src)        = delete;   //  Move-Assgn. Operator.
+                                        
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      MAIN API.                       |   "interface.cpp" ...
+    // *************************************************************************** //
+    void                                Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    //
+    //                              SECONDARY API:
+    void                                toggle_sidebar                      (void);
+    void                                open_sidebar                        (void);
+    void                                close_sidebar                       (void);
+    void                                toggle_detview                      (void);
+    void                                open_detview                        (void);
+    void                                close_detview                       (void);
     
-    
-    //  1.2C                    Primary Class Interface.                    [app/sidebar/sidebar.cpp]...
-    void                        Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                        initialize                          (void);
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "PUBLIC MEMBER FUNCS".
 
 
-    //  1.3                     Deleted Operators, Functions, etc.
-                                ControlBar                          (const ControlBar &    src)            = delete;   //  Copy. Constructor.
-                                ControlBar                          (ControlBar &&         src)            = delete;   //  Move Constructor.
-    ControlBar &                operator =                          (const ControlBar &    src)            = delete;   //  Assgn. Operator.
-    ControlBar &                operator =                          (ControlBar &&         src)            = delete;   //  Move-Assgn. Operator.
-
     
-    
+// *************************************************************************** //
+//
+//
+//      2.B.        PROTECTED MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 protected:
-    //  2.A             PROTECTED DATA-MEMBERS...
+
+    // *************************************************************************** //
+    //      "RULE-OF ..." FUNCTIONS.        |   "init.cpp" ...
+    // *************************************************************************** //
+    void                                init                                (void);
+    void                                destroy                             (void);
+    
+    // *************************************************************************** //
+    //      MAIN UI FUNCTIONS.              |   "interface.cpp" ...
+    // *************************************************************************** //
+    //                              MAIN GUI FUNCTIONS:
+    void                                draw_all                            (void);
+    
+    
+    
     // *************************************************************************** //
     
-    //                          1.  BOOLEANS...
-    bool                        m_initialized                       = false;
-    bool                        m_first_frame                       = false;
-    bool                        m_show_perf_metrics                 = app::DEF_PERF_METRICS_STATE;
-    bool                        m_show_perf_plots                   = app::DEF_PERF_PLOTS_STATE;
-    //
-    //                          2.  DIMENSIONS...
-    ImVec2                      ms_PLOT_SIZE                        = ImVec2(-1, 75);
-    //                                      ...
-    //
-    //                          3.  WINDOW / GUI ITEMS...
-    ImGuiWindowClass            m_window_class;
-    //
-    //                          4.  MISC INFORMATION...
-    //                                      ...
-    //
-    //                          5.  IMPORTANT VARIABLES...
-    AppState &                  CBAPP_STATE_NAME;
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "PROTECTED" FUNCTIONS.
+
     
-    
-    //  2.B             PROTECTED MEMBER FUNCTIONS...
-    // *************************************************************************** //
-    
-    //  2B.1                    Class Initializations.              [app/sidebar/sidebar.cpp]...
-    void                        init                                (void);
-    void                        load                                (void);
-    void                        destroy                             (void);
-    
-    
-    //  2B.2                    Secondary Class Methods.            [app/sidebar/sidebar.cpp]...
-    void                        Display_Preferences_Menu            (void);
-    //
-    void                        draw_browser_button                 (void);
-    void                        disp_appearance_mode                (void);     //  Other...
-    void                        disp_font_selector                  (void);
-    void                        disp_color_palette                  (void);
-    void                        color_tool                          (void);
-    void                        disp_ui_scale                       (void);
-    void                        disp_performance_metrics            (void);
-    
-    
-    
-    
-    
+   
+// *************************************************************************** //
+//
+//
+//      2.C         INLINE FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-private:
-    //  3.              PRIVATE MEMBER FUNCTIONS...
+protected:
+
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
     
+        //
+        //  ...
+        //
+    
+    // *************************************************************************** //
     //
-    //  ...
     //
+    //
+    // *************************************************************************** //
+    //      MISC. UTILITY FUNCTIONS.
+    // *************************************************************************** //
+    
+        //
+        //  ...
+        //
+    
+    
+    
+    // *************************************************************************** //
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+
 
 
 // *************************************************************************** //
 // *************************************************************************** //
-};//	END "Menubar" INLINE CLASS DEFINITION.
+};//	END "ControlBar" INLINE CLASS DEFINITION.
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
