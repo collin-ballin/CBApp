@@ -199,16 +199,14 @@ APPLICATION_WINDOW_INFOS            = {{
 // *************************************************************************** //
 
 //  "Applet_t"
-enum class Applet_t : uint8_t {
-    None = 0,
-    Undefined,
 //
-    MainApp,
+enum class Applet_t : uint8_t {
+    MainApp = 0,
     CCounterApp,
     EditorApp,
     GraphApp,
 //
-    Count
+    COUNT
 };
 
 

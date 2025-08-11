@@ -55,12 +55,12 @@ void ControlBar::init(void) {
 
 //  Destructor.
 //
-ControlBar::~ControlBar(void)             { this->destroy(); }
+ControlBar::~ControlBar(void)               { this->destroy(); }
 
 
 //  "destroy"       | protected
 //
-void ControlBar::destroy(void)         { }
+void ControlBar::destroy(void)              { }
 
 
 
@@ -131,15 +131,13 @@ void ControlBar::close_detview(void) {
 
 //  "Begin"
 //
-void ControlBar::Begin([[maybe_unused]] const char *        uuid,
-                    [[maybe_unused]] bool *                 p_open,
-                    [[maybe_unused]] ImGuiWindowFlags       flags)
+void ControlBar::BeginOLD( [[maybe_unused]] const char *            uuid,
+                           [[maybe_unused]] bool *                  p_open,
+                           [[maybe_unused]] ImGuiWindowFlags        flags )
 {
     static constexpr ImVec2                 ms_WINDOW_PADDING   = ImVec2(4.0f,      4.0f);  //  Default here should be      ImVec2(8.0f, 8.0f);
     static constexpr ImVec2                 ms_FRAME_PADDING    = ImVec2(10.0f,     5.0f);
     static constexpr ImVec2                 ms_ITEM_PADDING     = ImVec2(10.0f,     5.0f);
-    static constexpr float                  ms_SMALL_ITEM_PAD   = 4.0f;
-    static constexpr float                  ms_BIG_ITEM_PAD     = 8.0f;
     
     [[maybe_unused]] ImGuiIO &              io                  = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &           style               = ImGui::GetStyle();
@@ -157,8 +155,7 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
     
     constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiButtonFlags_None;
     const float                     ROW_H           = ImGui::GetFrameHeightWithSpacing();   //  font_size + 2*FramePadding.y
-    const float                     WIDGET_HEIGHT   = ROW_H - style.WindowPadding.y;
-    const ImVec2                    BUTTON_SIZE     = ImVec2(ROW_H, WIDGET_HEIGHT);         //  exactly one‑row square buttons
+    //  const float                     WIDGET_HEIGHT   = ROW_H - style.WindowPadding.y;
     
     
     //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
@@ -217,7 +214,7 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
             ImGui::AlignTextToFramePadding();
             //
             switch ( this->S.current_task() ) {
-                case Applet::Undefined      : { ImGui::TextDisabled( "%s", task );                              break;      }
+                //  case Applet::Undefined      : { ImGui::TextDisabled( "%s", task );                              break;      }
                 default                     : { ImGui::TextColored( app::DEF_APPLE_BLUE,    "%s",     task );   break;      }
             }
             //
@@ -253,6 +250,65 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
 }
 
 
+//  "Begin"
+//
+void ControlBar::Begin( [[maybe_unused]] const char *           uuid,
+                        [[maybe_unused]] bool *                 p_open,
+                        [[maybe_unused]] ImGuiWindowFlags       flags )
+{
+    static constexpr ImVec2                 ms_WINDOW_PADDING   = ImVec2(4.0f,      4.0f);  //  Default here should be      ImVec2(8.0f, 8.0f);
+    static constexpr ImVec2                 ms_FRAME_PADDING    = ImVec2(10.0f,     5.0f);
+    static constexpr ImVec2                 ms_ITEM_PADDING     = ImVec2(10.0f,     5.0f);
+    
+    [[maybe_unused]] ImGuiIO &              io                  = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &           style               = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiContext &         g                   = *GImGui;
+    [[maybe_unused]] ImGuiMetricsConfig *   cfg                 = &g.DebugMetricsConfig;
+    
+    
+    
+    
+    //  0.  SETUP NEW STYLE OPTIONS FOR CONTROL BAR WIDGETS...
+    ImGui::PushStyleVar(    ImGuiStyleVar_WindowPadding,    ms_WINDOW_PADDING       );
+    ImGui::PushStyleVar(    ImGuiStyleVar_FramePadding,     ms_FRAME_PADDING        );
+    ImGui::PushStyleVar(    ImGuiStyleVar_ItemSpacing,      ms_ITEM_PADDING         );
+    ImGui::PushStyleColor(  ImGuiCol_WindowBg,              S.m_controlbar_bg       );      // Push before ImGui::Begin()
+    
+    const float                             ROW_H               = ImGui::GetFrameHeightWithSpacing();   //  font_size + 2*FramePadding.y
+    
+    
+    //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
+    ImGui::SetNextWindowClass(&this->m_window_class);
+    ImGui::SetNextWindowSizeConstraints( ImVec2(-1, ROW_H), ImVec2(FLT_MAX, ROW_H) );
+    ImGui::Begin(uuid, p_open, flags);
+    //
+    //
+        ImGui::PopStyleColor();
+        this->draw_all();
+    //
+    //
+    ImGui::End();
+    
+    
+    
+    ImGui::PopStyleVar(3); // ItemSpacing, FramePadding, WindowPadding
+    
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     //  this->S.m_show_browser_window           = !this->S.m_show_browser_window;
     //  S.m_windows[ Window::Browser ].open     = !S.m_windows[ Window::Browser ].open;
     //  this->S.m_browser_ratio                 = this->S.m_show_browser_window ? app::DEF_SB_OPEN_WIDTH : 0.0f;
@@ -272,69 +328,63 @@ void ControlBar::Begin([[maybe_unused]] const char *        uuid,
 //
 void ControlBar::draw_all(void)
 {
-    static constexpr const char *   uuid                    = "##Controlbar_ControlsColumns";
-    static constexpr int            NC                      = 6;
+    ImGuiStyle &                style               = ImGui::GetStyle();
     //
-    static ImGuiOldColumnFlags      COLUMN_FLAGS            = ImGuiOldColumnFlags_None;
-    //
-    //  "column_label"
-    auto                            column_label            = [&](const char * label) -> void
-    { S.PushFont(Font::FootNote);     ImGui::TextDisabled("%s", label);     S.PopFont(); };
-    
-    
-    ImGuiIO &                       io                      = ImGui::GetIO();
-    ImGuiStyle &                    style                   = ImGui::GetStyle();
-    //
-    const ImVec2                    SPACING                 = ImVec2( 0.0f,             style.ItemSpacing.y + style.FramePadding.y      );
-    const ImVec2                    WIDGET_SIZE             = ImVec2( -1,               ImGui::GetFrameHeight()                         );
-    const ImVec2                    BUTTON_SIZE             = ImVec2( WIDGET_SIZE.y,    WIDGET_SIZE.y                                   );
+    this->SPACING                                   = ImVec2( 0.0f,                     style.ItemSpacing.y + style.FramePadding.y      );
+    this->WIDGET_SIZE                               = ImVec2( -1,                       ImGui::GetFrameHeight()                         );
+    this->BUTTON_SIZE                               = ImVec2( this->WIDGET_SIZE.y,      this->WIDGET_SIZE.y                             );
     S.PushFont(Font::Small);
     
 
 
-    //      1.      BEGIN COLUMNS...
-    ImGui::Columns(NC, uuid, COLUMN_FLAGS);
+    //  0.      DRAW COLUMNS-WIDGET...
+    ImGui::Columns(this->ms_NC, this->ms_UUID, ms_COLUMN_FLAGS);
     //
     //
     //
-        //      1.      OPEN / CLOSE SIDEBAR WINDOW...
-        column_label("Browser:");
+        //      1.      (1) OPEN/CLOSE SIDEBAR,     (2) OPEN/CLOSE DETAIL-VIEW      ...
+        //  column_label("...:");
         //
-    
-    
-    
-        //      2.      PLAY / PAUSE...
-        ImGui::NextColumn();        column_label("Controls:");
-    
-    
-    
-        //      3.      RUN ONCE...
-        ImGui::NextColumn();        column_label("");
-        ImGui::SetNextItemWidth( WIDGET_SIZE.x );
+        ImGui::AlignTextToFramePadding();
+        if ( ImGui::ArrowButtonEx("##ControlBar_ToggleSidebar",     (this->S.m_show_browser_window) ? ImGuiDir_Left : ImGuiDir_Right,
+                                  BUTTON_SIZE,                      ms_BUTTON_FLAGS) )
+        {
+            this->S.m_show_browser_window           = !this->S.m_show_browser_window;
+            S.m_windows[ Window::Browser ].open     = !S.m_windows[ Window::Browser ].open;
+        }
+        //
+        ImGui::SameLine(0, ms_SMALL_ITEM_PAD);
+        //
+        if ( ImGui::ArrowButtonEx("##ControlBar_ToggleDetailView",  (this->S.m_show_detview_window) ? ImGuiDir_Down : ImGuiDir_Up,
+                                  BUTTON_SIZE,                      ms_BUTTON_FLAGS) )
+        {
+            this->S.m_show_detview_window           = !this->S.m_show_detview_window;
+        }
+        
+        
+        //      3.      TOGGLE BETWEEN BROWSER / SYS. PREFERENCES...
+        //
+        ImGui::NextColumn();
+        if ( ImGui::Button( (this->S.m_show_system_preferences) ? "Browser##ControlBar" : "Preferences##ControlBar", ImVec2(120, BUTTON_SIZE.y)) )
+        {
+            this->S.m_show_system_preferences       = !this->S.m_show_system_preferences;
+        }
 
 
 
         //      ?.      EMPTY SPACES FOR LATER...
-        for (int i = ImGui::GetColumnIndex(); i < NC; ++i) {
+        for (int i = ImGui::GetColumnIndex(); i < ms_NC - ms_NE; ++i) {
             ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
         }
 
 
 
-        //      X.      INFO...
-        column_label("Info:");
-        //
+        //      X.      PERFORMANCE...
+        {
+            this->_draw_info_metrics();
+        }
+ 
         
-        
-        
-        //      XX.     MOUSE COORDINATES...
-        ImGui::NextColumn();        column_label("Global Position:");
-        //
-                
-
-
-        //      XXX.    SETTINGS MENU...
-        ImGui::NextColumn();        column_label("Settings:");
     //
     //
     //
@@ -343,10 +393,54 @@ void ControlBar::draw_all(void)
     
     
     //      ImGui::Dummy( SPACING );
-    
-    
-    
     S.PopFont();
+    return;
+}
+
+
+
+//  "_draw_info_metrics"
+//
+void ControlBar::_draw_info_metrics(void)
+{
+    constexpr const char *          io_time_fmt         = "%.2f ms  ";                  //  FORMAT STRINGS.
+    constexpr const char *          fps_fmt             = "%.1f FPS  ";                 //  FORMAT STRINGS.
+    //
+    ImGuiIO &                       io                  = ImGui::GetIO();
+    //
+    const char *                    task                = S.current_task_name();
+    const std::string &             nav_window_str      = S.GetNavWindowStr();
+    const char *                    nav_window_name     = (nav_window_str.empty()) ? "---" : nav_window_str.c_str();
+    //
+    const float                     delta_t             = 1000 * io.DeltaTime;
+    const float                     fps_ct              = io.Framerate;
+    
+    
+    
+    // ImGui::SameLine();                          utl::RightHandJustify(TOTAL_SIZE);
+    //
+    //
+    //      1.      TASK.
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored( app::DEF_APPLE_BLUE,    "%s",     task      );
+    //
+    //
+    //      2.      CURRENT NAV WINDOW.
+    ImGui::NextColumn();        ImGui::AlignTextToFramePadding();
+    this->column_label(     "%s",               nav_window_name     );
+    //
+    //
+    //      3.      UPDATE TIME.
+    ImGui::NextColumn();        ImGui::AlignTextToFramePadding();
+    ImGui::Text(            io_time_fmt,        delta_t             );
+    //
+    //
+    //      4.      FPS.
+    ImGui::NextColumn();        ImGui::AlignTextToFramePadding();
+    ImGui::Text(            fps_fmt,            fps_ct              );
+        
+        
+        
     return;
 }
 

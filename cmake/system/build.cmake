@@ -139,6 +139,7 @@ target_compile_options(CBAPP_CXX_ERROR_FLAGS INTERFACE
 #
 #   1.  ENABLED ERRORS...
     -Werror=uninitialized                   #   Using an uninitialized, local variable.
+    -Werror=shadow
 #
 #       1B.     TIER-2 ERRORS.
         -Werror=implicit-fallthrough            #   Missing [[fallthrough]] between switch statements.
@@ -163,7 +164,6 @@ target_compile_options(CBAPP_CXX_WARNING_FLAGS INTERFACE
 #
 #
 #   1.  ENABLED WARNINGS...
-    -Wshadow
     -Wunused-variable                   #
     -Wunused-parameter                  #
     -Wunused-result                     #   Unused variable, func. argument, return value, etc...

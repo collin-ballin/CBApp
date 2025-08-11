@@ -271,16 +271,16 @@ struct TaskState_t {
     // *************************************************************************** //
     //      STATIC AND CONSTEXPR VARIABLES.
     // *************************************************************************** //
-    static constexpr size_t             ms_TASK_NAME_LIMIT              = 64;
+    static constexpr size_t             ms_TASK_NAME_LIMIT              = 16;
     //
-    std::array< std::string *, static_cast<size_t>(Applet_t::Count) >                       //  No CONSTEXPR arr for this bc I want it to copy the
+    std::array< std::string *, static_cast<size_t>(Applet_t::COUNT) >                       //  No CONSTEXPR arr for this bc I want it to copy the
                                         m_applets                       = {};               //  window names EXACTLY in case we ever rename them.
     
     // *************************************************************************** //
     //      GENERIC CONSTANTS.
     // *************************************************************************** //
-    std::string                         ms_IDLE_APPLET_NAME;
-    std::string                         ms_UNDEFINED_APPLET_NAME;
+    //      std::string                         ms_IDLE_APPLET_NAME;
+    //      std::string                         ms_UNDEFINED_APPLET_NAME;
 
 
 
@@ -295,9 +295,10 @@ struct TaskState_t {
     //                      STATE INFORMATION.
     // *************************************************************************** //
     //                              MAIN STATE INFORMATION:
-    Applet                              m_current_task                  = Applet::None;
+    Applet                              m_current_task;
     ImGuiWindow *                       m_nav_window                    = nullptr;
     std::string                         m_und_task_name                 = {  };
+    std::string                         m_nav_window_name               = {  };
     //
     ImGuiViewport *                     focused_viewport                = nullptr; // Which viewport (if any)
     //
@@ -374,8 +375,6 @@ struct TaskState_t {
     
     //  Default Constructor.
     inline TaskState_t                                              (void)
-        : ms_IDLE_APPLET_NAME("Idle"),
-          ms_UNDEFINED_APPLET_NAME("---")
     {
         //  ...
     }
@@ -388,19 +387,28 @@ struct TaskState_t {
     //                      UTILITY FUNCTIONS...
     // *************************************************************************** //
     
-    //  "current_task_name"
-    inline const char *                 current_task_name           (void) {
-        if ( this->m_current_task == Applet::Undefined )
-        {
-            if ( this->m_und_task_name.empty() )
-            { this->m_und_task_name   = std::string( (this->m_nav_window) ? this->m_nav_window->Name : "NULL"); }
-            
-            return this->m_und_task_name.c_str();
-        }
+    //  "_OLD_current_task_name"
+    inline const char *                 _OLD_current_task_name           (void) {
+        //  if ( this->m_current_task == Applet::Undefined )
+        //  {
+        //      if ( this->m_nav_window_name.empty() )
+        //      { this->m_nav_window_name   = std::string( (this->m_nav_window) ? this->m_nav_window->Name : "NULL"); }
+        //
+        //      return this->m_nav_window_name.c_str();
+        //  }
 
         return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str();
     }
     
+    //  "current_task_name"
+    inline const char *                 current_task_name           (void)
+    { return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str(); }
+
+
+
+    //  "GetDockNodeVisText"
+    inline const char *                 GetDockNodeVisText          (const ImGuiDockNode * node)
+    { return (node && node->VisibleWindow) ? node->VisibleWindow->Name : "NULL"; } // Same expression used inside DebugNodeDockNode()
     
     //  "get_nav_window"
     [[nodiscard]] inline ImGuiWindow *  get_nav_window              (void) noexcept {
@@ -409,14 +417,6 @@ struct TaskState_t {
 		return ( g )    ? g->NavWindow      : nullptr;
 	}
  
- 
-    //  "StateHasIO"
-    [[nodiscard]] inline bool           StateHasIO                  (void) noexcept {
-        switch ( this->m_current_task ) {
-            case Applet::Undefined      : { return false;   }
-            default                     : { return true;    }
-        }
-    }
  
  
     // *************************************************************************** //
@@ -434,13 +434,14 @@ struct TaskState_t {
         static constexpr size_t     LOOP_COMPARE_NUM        = 16;
         //
         //
-        const bool                  app_is_idle             = ( glfwGetWindowAttrib(window, GLFW_FOCUSED) == 0 );
+        //  const bool                  app_is_idle             = ( glfwGetWindowAttrib(window, GLFW_FOCUSED) == 0 );
         //
         //
         ImGuiWindow *               vis_win                 = this->get_nav_window();
         const char *                vis                     = (vis_win) ? vis_win->Name     : nullptr;
         //
-        //  const char *                vis                     = this->GetDockNodeVisText( this->m_main_node );
+        // const char *                vis                     = this->GetDockNodeVisText( this->m_main_node );
+        //
         const char *                name                    = this->current_task_name();
         bool                        match                   = false;
         
@@ -455,8 +456,7 @@ struct TaskState_t {
         
         //  CASE 0 :    ENTIRE APPLICATION IS UN-FOCUSED...
         if ( !vis )     {
-            this->m_current_task = Applet::None;
-            this->m_und_task_name.clear();
+            this->m_nav_window_name.clear();
         }
         else
         {
@@ -464,7 +464,7 @@ struct TaskState_t {
             if ( strncmp(name, vis, CACHE_COMPARE_NUM) != 0 ) [[unlikely]]     //  Bail out early if same applet is in use.
             {
                 //  CASE 2 :    COMPARE THE CURRENT WINDOW NAME TO THE NAME OF EACH THE APPLET...
-                for (size_t i = 0; !match && i < static_cast<size_t>(Applet::Count); ++i) {
+                for ( size_t i = 0; !match && i < static_cast<size_t>(Applet::COUNT); ++i ) {
                     name    = m_applets[ static_cast<size_t>( i ) ]->c_str();
                     match   = ( strncmp(name, vis, LOOP_COMPARE_NUM) == 0 );
                     if (match)          {
@@ -474,14 +474,11 @@ struct TaskState_t {
                 }
                 
                 //  CASE 3 :    NO MATCH---A NON-NAMED WINDOW IS OPEN...
-                if (!match) {
-                    this->m_current_task        = Applet::Undefined;
-                    this->m_und_task_name       = std::string(cblib::utl::fmt_imgui_string( vis_win->Name, ms_TASK_NAME_LIMIT ));
+                if ( !match ) {
+                    this->m_nav_window_name       = std::string(cblib::utl::fmt_imgui_string( vis_win->Name, ms_TASK_NAME_LIMIT ));
                 }
             }
         }
-        
-        
         
         return;
     }
@@ -492,9 +489,6 @@ struct TaskState_t {
     inline void                         _update_task_state          (void) noexcept
 	{
 		ImGuiContext*           ctx     = ImGui::GetCurrentContext();
-        
-		if ( !ctx )                     { return; }
-
 		ImGuiPlatformIO &       pio     = ctx->PlatformIO;
 
 		// Preferred: query the backend for OS focus across all platform windows (multi-viewport safe).

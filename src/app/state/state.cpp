@@ -69,9 +69,6 @@ AppState::AppState(void)
     #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
     //
     m_task_state.m_applets   = {
-        std::addressof( m_task_state.ms_IDLE_APPLET_NAME            ),      //  THESE ARE FOR:  (1) App is IDLE, (2) No NAMED-Window is open.
-        std::addressof( m_task_state.ms_UNDEFINED_APPLET_NAME       ),      //  I had to store these seperate from the "m_windows[ Window::Name ]" because it makes no sense to
-    //                                                                          define an additional member in the "m_windows" array to hold data for windows that are not stored.
         std::addressof( m_windows[ Window::MainApp      ].uuid      ),
         std::addressof( m_windows[ Window::CCounterApp  ].uuid      ),
         std::addressof( m_windows[ Window::EditorApp    ].uuid      ),

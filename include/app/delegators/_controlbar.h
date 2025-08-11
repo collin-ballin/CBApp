@@ -82,7 +82,7 @@ public:
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
     CBAPP_APPSTATE_ALIAS_API
-    friend class                        App;
+    friend class                                App;
     
     // *************************************************************************** //
     //
@@ -90,6 +90,21 @@ public:
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
+    //
+    //                                      CONFIGURATION:
+    static constexpr const char *               ms_UUID                             = "##Controlbar_ControlsColumns";
+    static constexpr int                        ms_NC                               = 9;    //  # Entries in Column.
+    static constexpr int                        ms_NE                               = 4;    //  # Entries at END of Columns.
+    //
+    //
+    //                                      DIMENSIONS:
+    static constexpr float                      ms_SMALL_ITEM_PAD                   = 4.0f;
+    static constexpr float                      ms_BIG_ITEM_PAD                     = 8.0f;
+    //
+    //
+    //                                      WIDGETS:
+    static constexpr ImGuiButtonFlags           ms_BUTTON_FLAGS                     = ImGuiButtonFlags_None;
+    static constexpr ImGuiOldColumnFlags        ms_COLUMN_FLAGS                     = ImGuiOldColumnFlags_None;
     
     // *************************************************************************** //
     //
@@ -126,8 +141,11 @@ protected:
     bool                                m_initialized                       = false;
     bool                                m_first_frame                       = false;
     //
-    ImVec2                              ms_PLOT_SIZE                        = ImVec2(-1, 75);
-    ImGuiWindowClass                    m_window_class;
+    ImVec2                              ms_PLOT_SIZE                        = {  };     //  ImVec2(-1, 75);
+    ImVec2                              SPACING                             = {  };     //  ImVec2( 0.0f,             style.ItemSpacing.y + style.FramePadding.y      );
+    ImVec2                              WIDGET_SIZE                         = {  };     //  ImVec2( -1,               ImGui::GetFrameHeight()                         );
+    ImVec2                              BUTTON_SIZE                         = {  };     //  ImVec2( WIDGET_SIZE.y,    WIDGET_SIZE.y                                   );
+    
     
     // *************************************************************************** //
     //
@@ -135,6 +153,7 @@ protected:
     // *************************************************************************** //
     //      STATE VARIABLES.
     // *************************************************************************** //
+    ImGuiWindowClass                    m_window_class;
     AppState &                          CBAPP_STATE_NAME;
     
 //
@@ -175,6 +194,7 @@ public:
     //      MAIN API.                       |   "interface.cpp" ...
     // *************************************************************************** //
     void                                Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                                BeginOLD                            ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     //
     //                              SECONDARY API:
     void                                toggle_sidebar                      (void);
@@ -211,6 +231,7 @@ protected:
     // *************************************************************************** //
     //                              MAIN GUI FUNCTIONS:
     void                                draw_all                            (void);
+    void                                _draw_info_metrics                  (void);
     
     
     
@@ -248,9 +269,19 @@ protected:
     //      MISC. UTILITY FUNCTIONS.
     // *************************************************************************** //
     
-        //
-        //  ...
-        //
+    //  "column_label"
+    inline void                         column_label                        (const char * label)
+    { S.PushFont(Font::FootNote);     ImGui::TextDisabled("%s", label);     S.PopFont(); }
+    
+    //  "column_label"
+    inline void                         column_label                        (const char* fmt, ...) {
+        S.PushFont(Font::FootNote);
+            va_list args;
+            va_start(args, fmt);
+            ImGui::TextDisabledV(fmt, args);   // forward using the va_list version
+            va_end(args);
+        S.PopFont();
+    }
     
     
     

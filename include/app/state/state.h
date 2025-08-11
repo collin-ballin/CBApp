@@ -195,6 +195,38 @@ public:
     //
     //
     // *************************************************************************** //
+    //                      GETTER FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "current_task"
+    inline Applet                       current_task                (void) const    { return this->m_task_state.m_current_task; }
+    
+    //  "current_task_name"
+    inline const char *                 current_task_name           (void)          { return this->m_task_state.current_task_name(); }
+    
+    //  "GetNavWindowName"
+    inline const char *                 GetNavWindowName            (void)          { return this->m_task_state.m_nav_window_name.c_str(); }
+    
+    //  "GetNavWindowStr"
+    inline const std::string &          GetNavWindowStr             (void)          { return this->m_task_state.m_nav_window_name; }
+
+
+
+    //  "current_app_color_style"
+    inline const char *                 current_app_color_style     (void) const
+    {  return this->m_app_color_style_names[ static_cast<size_t>(this->m_current_app_color_style) ];  }
+
+    //  "current_plot_color_style"
+    inline const char *                 current_plot_color_style    (void) const
+    {  return this->m_plot_color_style_names[ static_cast<size_t>(this->m_current_plot_color_style) ];  }
+    
+    
+
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
     //                      CENTRALIZED OPERATION FUNCTIONS...
     // *************************************************************************** //
 
@@ -204,34 +236,12 @@ public:
 
     //  "PopFont"
     inline void                         PopFont                     (void)          { ImGui::PopFont(); return; }
-    
-    //  "current_task"
-    inline Applet                       current_task                (void) const    { return this->m_task_state.m_current_task; }
-    
-    //  "current_task"
-    inline const char *                 current_task_name           (void)          { return this->m_task_state.current_task_name(); }
-
-    //  "current_app_color_style"
-    inline const char *                 current_app_color_style     (void) const
-    {  return this->m_app_color_style_names[ static_cast<size_t>(this->m_current_app_color_style) ];  }
-
-    //  "current_plot_color_style"
-    inline const char *                 current_plot_color_style    (void) const
-    {  return this->m_plot_color_style_names[ static_cast<size_t>(this->m_current_plot_color_style) ];  }
 
 
 
     //  "GetDockNodeVisText"
     inline const char *                 GetDockNodeVisText          (const ImGuiDockNode * node)
     { return (node && node->VisibleWindow) ? node->VisibleWindow->Name : "NULL"; } // Same expression used inside DebugNodeDockNode()
-    
-    //  "get_nav_window"
-    [[nodiscard]] inline ImGuiWindow *  get_nav_window              (void) noexcept {
-        //  Text("NavWindow: '%s'", g.NavWindow ? g.NavWindow->Name : "NULL");
-		ImGuiContext *	    g	    = ImGui::GetCurrentContext();
-		return ( g )    ? g->NavWindow      : nullptr;
-	}
-    
     
     //  "update_current_task"
     inline void                         update_current_task         (void)

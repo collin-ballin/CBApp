@@ -137,6 +137,7 @@ void MenuBar::disp_file_menubar(void)
 {
     [[maybe_unused]] ImGuiIO &          io                      = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &       style                   = ImGui::GetStyle();
+    constexpr bool                      STATE_HAS_IO            = false;
     constexpr bool                      ENABLE_OPEN             = false;
     constexpr bool                      ENABLE_OPEN_RECENT      = false;
     constexpr bool                      ENABLE_EXPORT           = false;
@@ -145,7 +146,7 @@ void MenuBar::disp_file_menubar(void)
 //  StateHasIO
 
     //  1.  "New" SUB-MENU...
-    ImGui::BeginDisabled( S.m_task_state.StateHasIO() );
+    ImGui::BeginDisabled( STATE_HAS_IO );
         if (ImGui::BeginMenu("New"))
         {
             ImGui::MenuItem("New File",         nullptr,        nullptr);
@@ -156,7 +157,7 @@ void MenuBar::disp_file_menubar(void)
     
     //  2.  "Open" SUB-MENU...
     ImGui::Separator();
-    ImGui::BeginDisabled( S.m_task_state.StateHasIO() );
+    ImGui::BeginDisabled( STATE_HAS_IO );
         if (ImGui::MenuItem("Open...",                  "CTRL+O"))      { }
     ImGui::EndDisabled();
     //
