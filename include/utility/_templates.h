@@ -38,125 +38,29 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 
 
 
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//  ?.?     GENERAL INLINE UTILITY FUNCTIONS...
+//      1.      UTILITY TYPES...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "ColorConvertU32ToFloat4_constexpr"
-//      constexpr equivalent of the "ImGui::ColorConvertU32ToFloat4( ... )" function.
-//      0xAABBGGRR      →       (r,g,b,a)  ∈  [0,1]
+//  "HoverItem"
 //
-inline constexpr ImVec4 ColorConvertU32ToFloat4_constexpr(const ImU32 c) noexcept
+struct HoverItem
 {
-    constexpr float inv255 = 1.0f / 255.0f;
-    return {
-        static_cast<float>(( c        ) & 0xFF) * inv255,   // R
-        static_cast<float>(( c >>  8 )  & 0xFF) * inv255,   // G
-        static_cast<float>(( c >> 16 )  & 0xFF) * inv255,   // B
-        static_cast<float>(( c >> 24 )  & 0xFF) * inv255    // A
-    };
-}
-
-
-//  "ColorConvertFloat4ToU32_constexpr"
+    explicit operator bool() const noexcept { return id != 0; }
 //
-[[nodiscard]]
-constexpr ImU32 ColorConvertFloat4ToU32_constexpr(const ImVec4 & col) noexcept
-{
-    constexpr auto to_u8 = [](float f) constexpr -> ImU32
-    {
-        return static_cast<ImU32>(
-            f <= 0.0f ? 0u :
-            f >= 1.0f ? 255u :
-            f * 255.0f + 0.5f);          // round-to-nearest
-    };
-
-    return (to_u8(col.x) << IM_COL32_R_SHIFT) |
-           (to_u8(col.y) << IM_COL32_G_SHIFT) |
-           (to_u8(col.z) << IM_COL32_B_SHIFT) |
-           (to_u8(col.w) << IM_COL32_A_SHIFT);
-}
-
-
-//  "compute_shade"
 //
-//      shade >  0 : → darker (percentage)          e.g. 0.20 :     → 20 % darker
-//      shade ≤  0 : → brighter (tint)              e.g.-0.15 :     → 15 % brighter
-//
-inline ImVec4 compute_shade(const ImVec4 & color, float shade)
-{
-    constexpr float     MIN_FACTOR      = 0.0f;
-    constexpr float     MAX_FACTOR      = 1.0f;
-    const float         factor          = (shade >= 0.0f)
-                                            ? (1.0f - std::clamp(shade, MIN_FACTOR, MAX_FACTOR))
-                                            : (1.0f + std::clamp(shade, -MAX_FACTOR, MIN_FACTOR));
+    ImGuiID                 id                      = 0;                    //  0 => no hovered item
+    ImGuiWindow *           window                  = nullptr;              //  owning window (if any)
+    ImGuiViewport *         viewport                = nullptr;              //  owning viewport (fallback to main if unknown)
+    bool                    on_main_viewport        = false;
 
-    return ImVec4(color.x * factor, color.y * factor, color.z * factor, color.w);                 // preserve alpha
-}
-
-//  "compute_shade"
-//
-inline ImU32 compute_shade(const ImU32 & color, float shade) {
-    const ImVec4    src     = ImGui::ColorConvertU32ToFloat4(color);
-    const ImVec4    dst     = compute_shade(src, shade);
-    return ImGui::ColorConvertFloat4ToU32(dst);
-}
-
-//  "compute_shade"
-//      ImColor → ImColor   (wrapper around ImVec4)
-//
-inline ImColor compute_shade(const ImColor & color, float shade) {
-    const ImVec4    src     = color;               // ImColor → ImVec4 implicit
-    const ImVec4    dst     = compute_shade(src, shade);
-    return ImColor(dst);
-}
-
-
-
-
-
-
-//  "compute_tint"
-//      +0.25 → 25 % brighter   |   -0.20 → 20 % darker
-//
-inline ImVec4 compute_tint(const ImVec4 & color, float tint) {
-    constexpr float     MIN_FACTOR  = 0.0f;
-    constexpr float     MAX_FACTOR  = 1.0f;
-    float               factor      = (tint >= 0.0f)
-                                        ? (1.0f + std::clamp(tint, MIN_FACTOR, MAX_FACTOR))   // brighten
-                                        : (1.0f - std::clamp(-tint, MIN_FACTOR, MAX_FACTOR)); // darken
-
-    return ImVec4(color.x * factor, color.y * factor, color.z * factor, color.w);        // alpha unchanged
-}
-
-//  "compute_tint"
-//
-inline ImU32 compute_tint(const ImU32 & color, float tint) {
-    ImVec4      as_vec4     = ImGui::ColorConvertU32ToFloat4(color);
-    ImVec4      tinted      = compute_tint(as_vec4, tint);
-    return ImGui::ColorConvertFloat4ToU32(tinted);
-}
-
-//  "compute_tint"
-//
-inline ImColor compute_tint(const ImColor & color, float tint) {
-    ImVec4      as_vec4     = static_cast<ImVec4>(color);
-    ImVec4      tinted      = compute_tint(as_vec4, tint);
-    return ImColor(tinted);
-}
-
-
-
-
-
+    // Available only when the hovered item is also the most recently submitted item.
+    // (Safe to use immediately after the widget was submitted; otherwise false.)
+    bool                    has_rect                = false;
+    ImRect                  rect;                                           //  screen-space AABB of the item
+    ImVec2                  clip_min                {};                     //  window inner clip (for reference)
+    ImVec2                  clip_max                {};
+};
 
 
 
@@ -164,9 +68,19 @@ inline ImColor compute_tint(const ImColor & color, float tint) {
 
 
 // *************************************************************************** //
-//
-//
-//
+// *************************************************************************** //   END "UTILITY TYPES".
+
+
+
+
+
+
+
+
+
+
+
+
 //  1.4A    INLINE TEMPLATES FOR HELPER WIDGET FUNCTIONS / ABSTRACTIONS     [1 OF 2]...
 // *************************************************************************** //
 // *************************************************************************** //

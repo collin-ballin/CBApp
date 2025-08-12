@@ -585,17 +585,20 @@ struct MouseCaptureState {
     inline void reset(void) { *this = MouseCaptureState{}; }
 //
 //
-    bool                active              { false };          //  <   capturing?
-    ImVec2 *            dest                { nullptr };        //  <   where result is written
-    ImVec2 *            alt_dest            { nullptr };        //  <   the “other” endpoint
+    bool                    active                  { false };          //  <   capturing?
 //
-    GLFWwindow *        target_window       { nullptr };        //  <   window the user hovered
+    Action *                destination             { nullptr };
 //
-    ImVec2              live_local          {  };               //  <   live coords (local win)
-    ImVec2              backup              {  };               //  <   previous value (cancel)
+    ImVec2 *                dest                    { nullptr };        //  <   where result is written
+    ImVec2 *                alt_dest                { nullptr };        //  <   the “other” endpoint
 //
-    bool                snapped_to_grid     { false };          //  <   future: grid / step
-    bool                double_clicked      { false };          //  <   future: detect dbl‑click
+    GLFWwindow *            target_window           { nullptr };        //  <   window the user hovered
+//
+    ImVec2                  live_local              {  };               //  <   live coords (local win)
+    ImVec2                  backup                  {  };               //  <   previous value (cancel)
+//
+    bool                    snapped_to_grid         { false };          //  <   future: grid / step
+    bool                    double_clicked          { false };          //  <   future: detect dbl‑click
 };
 
 

@@ -795,6 +795,9 @@ bool ActionComposer::_begin_mouse_capture([[maybe_unused]] Action & act, ImVec2 
     
     GLFWwindow * hovered            = glfwGetCurrentContext();
     m_mouse_capture.active          = true;
+    //
+    m_mouse_capture.destination     = std::addressof( act );
+    //
     m_mouse_capture.dest            = destination;
     m_mouse_capture.target_window   = hovered ? hovered : S.m_glfw_window;
     
@@ -829,6 +832,7 @@ inline void ActionComposer::_update_mouse_capture(void)
         //  2.  swap pointers so the other endpoint is now active
         std::swap(m_mouse_capture.dest, m_mouse_capture.alt_dest);
 
+
         //  3.  update backup for Esc‑cancel on the new endpoint
         m_mouse_capture.backup  = *m_mouse_capture.dest;
 
@@ -837,10 +841,26 @@ inline void ActionComposer::_update_mouse_capture(void)
 
 
     //  2.  ACCEPT...
-    if ( ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsMouseClicked(ImGuiMouseButton_Left) ) {
-        *m_mouse_capture.dest   = m_mouse_capture.live_local;
-        m_mouse_capture.active  = false;
-        m_state                 = State::Idle;
+    if ( ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
+    {
+        *m_mouse_capture.dest           = m_mouse_capture.live_local;
+        
+        utl::HoverItem   hover          = S._get_item_under_cursor();
+        
+        std::cout << "ID:               : "     << hover.id                     << ".\n"
+                  << "Window            : "     << hover.window                 << ".\n"
+                  << "Viewport          : "     << hover.viewport               << ".\n"
+                  << "On Main Viewport  : "     << hover.on_main_viewport       << ".\n"
+                  << "Has-Rect          : "     << hover.has_rect               << ".\n"
+                  << "Clip-Min          : "     << "(" << hover.clip_min.x << ", " << hover.clip_min.y << ").\n"
+                  << "Clip-Max          : "     << "(" << hover.clip_max.x << ", " << hover.clip_max.y << ").\n"
+                  << std::endl;
+        
+        
+        
+        m_mouse_capture.active          = false;
+        m_state                         = State::Idle;
+        
         return;
     }
     

@@ -355,9 +355,9 @@ public:
     static constexpr float              ms_OVERLAY_ALPHA                            = 0.65f;
     //
     //                              RENDERER HELPER CONSTANTS:
-    static constexpr ImU32              ms_VIS_LINE_COLOR                           = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.800f      )  );
-    static constexpr ImU32              ms_VIS_COLOR_A                              = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   0.196f,     0.843f,     0.294f,     1.000f      )  );
-    static constexpr ImU32              ms_VIS_COLOR_B                              = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     1.000f      )  );
+    static constexpr ImU32              ms_VIS_LINE_COLOR                           = cblib::utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.800f      )  );
+    static constexpr ImU32              ms_VIS_COLOR_A                              = cblib::utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   0.196f,     0.843f,     0.294f,     1.000f      )  );
+    static constexpr ImU32              ms_VIS_COLOR_B                              = cblib::utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     1.000f      )  );
     static constexpr float              ms_VIS_RECT_HALF                            = 8.0f;
     static constexpr float              ms_VIS_THICK                                = 3.0f;
     //
@@ -367,7 +367,7 @@ public:
     static constexpr size_t             ms_ACTION_NAME_LIMIT                        = 64ULL;
     static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT                 = 256ULL;
     //
-    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                      = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
+    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                      = cblib::utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
     //
     //                              INDIVIDUAL WIDGET DIMENSIONS:
     static constexpr float              ms_COMPOSITION_DESCRIPTION_FIELD_HEIGHT     = 110.0f;
@@ -457,7 +457,7 @@ protected:
     //                              SETTINGS VARIABLES:
     bool                                m_show_overlay                              = true;
     bool                                m_render_visuals                            = true;
-    bool                                m_allow_input_blocker                       = true;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
+    bool                                m_allow_input_blocker                       = false;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
     bool                                m_show_composition_browser                  = true;
     bool                                m_show_composition_inspector                = false;
     //

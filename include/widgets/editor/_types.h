@@ -894,7 +894,7 @@ struct BrowserStyle
 //                                      SPECIFIC WIDGET STUFF...
 // *************************************************************************** //
     //                              DELETE BUTTON:
-    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                      = utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
+    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                      = cblib::utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
     static constexpr const char *       ms_DELETE_BUTTON_HANDLE                     = "=";
     static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT                 = 256ULL;
     //

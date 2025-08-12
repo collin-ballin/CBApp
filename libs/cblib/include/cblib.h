@@ -45,6 +45,10 @@
 # include "templates/containers/containers.h"
 #endif	// _CBLIB_CONTAINERS_H  //
 
+#ifndef _CBLIB_IMGUI_EXTENSIONS_H
+# include "templates/imgui_extensions/imgui_extensions.h"
+#endif	// _CBLIB_IMGUI_EXTENSIONS_H  //
+
 
 
 
