@@ -437,7 +437,10 @@ protected:
     ActionExecutor                      m_executor                                  {  };
     std::vector<Composition>            m_compositions                              { 1 };
     std::vector<Action> *               m_actions                                   = nullptr;
-    std::filesystem::path               m_filepath                                  = {"/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/assets/.cbapp/debug/editor_tests_1.json"};
+    //
+    //  EXE:        /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/build/Debug/CBApp
+    //  JSON DIR:   {"/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/assets/.cbapp/debug/editor_tests_1.json"};
+    std::filesystem::path               m_filepath                                  = {"../../assets/.cbapp/debug/editor_tests_1.json"};
     //
     int                                 m_comp_sel                                  = 0;            // current composition selection
     int                                 m_sel                                       = -1;           // current action selection

@@ -220,9 +220,19 @@ public:
     {  return this->m_plot_color_style_names[ static_cast<size_t>(this->m_current_plot_color_style) ];  }
     
     
-    
+
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                      UTILITY FUNCTIONS...
     // *************************************************************************** //
 
+    //  "get_item_under_cursor"
+    inline const char *                 _get_item_under_cursor      (void) const
+    {
+    }
 
 
 
@@ -437,7 +447,7 @@ public:
 #if defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__) || defined(__CBAPP_DEBUG__)
     LogLevel                            m_LogLevel                  = LogLevel::Debug;
 # else
-    LogLevel                            m_LogLevel                  = LogLevel::Warning;
+    LogLevel                            m_LogLevel                  = LogLevel::Debug;  //LogLevel::Warning;
 #endif  //  __CBLIB_RELEASE_WITH_DEBUG_INFO__ || __CBAPP_DEBUG__  //
 
 

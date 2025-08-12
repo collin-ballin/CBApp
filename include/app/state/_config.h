@@ -136,7 +136,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_CORE_WINDOW_FLAGS            = Im
 
 
 inline constexpr ImGuiWindowFlags       _CBAPP_ABOUT_WINDOW_FLAGS           = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
-inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse;
+inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings;
 
 
 
