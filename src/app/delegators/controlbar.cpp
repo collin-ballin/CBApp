@@ -197,7 +197,7 @@ void ControlBar::BeginOLD( [[maybe_unused]] const char *            uuid,
             constexpr const char *      io_time_fmt     = "%.2f ms  ";                  //  FORMAT STRINGS.
             constexpr const char *      fps_fmt         = "%.1f FPS  ";                 //  FORMAT STRINGS.
             //
-            const char *                task            = S.current_task_name();
+            const char *                task            = S.GetCurrentAppletName();
             const float                 delta_t         = 1000 * io.DeltaTime;
             const float                 fps_ct          = io.Framerate;
             const ImVec2                task_size       = ImGui::CalcTextSize(task);
@@ -213,7 +213,7 @@ void ControlBar::BeginOLD( [[maybe_unused]] const char *            uuid,
             //  TASK.
             ImGui::AlignTextToFramePadding();
             //
-            switch ( this->S.current_task() ) {
+            switch ( this->S.GetCurrentApplet() ) {
                 //  case Applet::Undefined      : { ImGui::TextDisabled( "%s", task );                              break;      }
                 default                     : { ImGui::TextColored( app::DEF_APPLE_BLUE,    "%s",     task );   break;      }
             }
@@ -346,7 +346,7 @@ void ControlBar::draw_all(void)
         //  column_label("...:");
         //
         ImGui::AlignTextToFramePadding();
-        if ( ImGui::ArrowButtonEx("##ControlBar_ToggleSidebar",     (this->S.m_show_browser_window) ? ImGuiDir_Left : ImGuiDir_Right,
+        if ( ImGui::ArrowButtonEx("##ControlBar_ToggleBrowser",     (this->S.m_show_browser_window) ? ImGuiDir_Left : ImGuiDir_Right,
                                   BUTTON_SIZE,                      ms_BUTTON_FLAGS) )
         {
             this->S.m_show_browser_window           = !this->S.m_show_browser_window;
@@ -365,10 +365,12 @@ void ControlBar::draw_all(void)
         //      3.      TOGGLE BETWEEN BROWSER / SYS. PREFERENCES...
         //
         ImGui::NextColumn();
+        ImGui::BeginDisabled( !this->S.m_show_browser_window );
         if ( ImGui::Button( (this->S.m_show_system_preferences) ? "Browser##ControlBar" : "Preferences##ControlBar", ImVec2(120, BUTTON_SIZE.y)) )
         {
             this->S.m_show_system_preferences       = !this->S.m_show_system_preferences;
         }
+        ImGui::EndDisabled();
 
 
 
@@ -408,7 +410,7 @@ void ControlBar::_draw_info_metrics(void)
     //
     ImGuiIO &                       io                  = ImGui::GetIO();
     //
-    const char *                    task                = S.current_task_name();
+    const char *                    task                = S.GetCurrentAppletName();
     const std::string &             nav_window_str      = S.GetNavWindowStr();
     const char *                    nav_window_name     = (nav_window_str.empty()) ? "---" : nav_window_str.c_str();
     //

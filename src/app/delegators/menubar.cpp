@@ -9,8 +9,8 @@
 **************************************************************************************
 **************************************************************************************/
 #include "app/delegators/_menubar.h"
+#include "app/app.h"
 #include <future>
-//#include "app/app.h"
 //#include CBAPP_USER_CONFIG
 
 
@@ -135,19 +135,24 @@ void MenuBar::Begin([[maybe_unused]] const char *       uuid,
 //
 void MenuBar::disp_file_menubar(void)
 {
+    using                               namespace               app;
     [[maybe_unused]] ImGuiIO &          io                      = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &       style                   = ImGui::GetStyle();
-    constexpr bool                      STATE_HAS_IO            = false;
-    constexpr bool                      ENABLE_OPEN             = false;
-    constexpr bool                      ENABLE_OPEN_RECENT      = false;
-    constexpr bool                      ENABLE_EXPORT           = false;
+    //
+    //
+    const app::MenuState_t &            MS                      = S.GetMenuState();
+    //
+    const bool                          has_file_new            = MS.has_capability(CBMenuCapabilityFlags_FileNew);
+    const bool                          has_file_open           = MS.has_capability(CBMenuCapabilityFlags_FileNew);
     //  static cblib::ndmatrix<float>   test(4,4);
+    
+    
+    
 
-//  StateHasIO
 
     //  1.  "New" SUB-MENU...
-    ImGui::BeginDisabled( STATE_HAS_IO );
-        if (ImGui::BeginMenu("New"))
+    ImGui::BeginDisabled( !has_file_new );
+        if ( has_file_new && ImGui::BeginMenu("New") )
         {
             ImGui::MenuItem("New File",         nullptr,        nullptr);
             ImGui::EndMenu();
@@ -157,21 +162,47 @@ void MenuBar::disp_file_menubar(void)
     
     //  2.  "Open" SUB-MENU...
     ImGui::Separator();
-    ImGui::BeginDisabled( STATE_HAS_IO );
-        if (ImGui::MenuItem("Open...",                  "CTRL+O"))      { }
-    ImGui::EndDisabled();
+    ImGui::BeginDisabled( !has_file_open );
     //
-    ImGui::BeginDisabled(ENABLE_OPEN_RECENT);
-        if (ImGui::BeginMenu("Open Recent"))
-        {
-            //
-            //  ...
-            //
-            ImGui::Separator();
-            if ( ImGui::MenuItem("Clear Menu") )      {  }
-            //
-            ImGui::EndMenu();
-        }
+        if (ImGui::MenuItem("Open...",                  "CTRL+O"))      { }
+        //
+        //
+        //
+        ImGui::BeginDisabled( !has_file_open && !MS.has_open_recent() );
+            if ( MS.has_open_recent()  &&  ImGui::BeginMenu("Open Recent") )
+            {
+                namespace               fs          = std::filesystem;
+                
+                
+                //  Display a list of each "Open Recent" File...
+                for ( const std::filesystem::path & file : MS.m_recent_files ) {
+                
+                    std::error_code     ec          {  };
+                    const bool          exists      = fs::is_regular_file( fs::symlink_status(file, ec) )  &&  !ec;
+                    //const bool          exists      = fs::is_regular_file( fs::symlink_status(file, ec) ) && !ec;
+                    
+                    
+                    ImGui::BeginDisabled( !exists );
+                    //
+                        if ( ImGui::MenuItem( file.filename().string().c_str() ) )       {
+                            /*  TO-DO:  OPEN THE FILE...    */
+                        }
+                    //
+                    ImGui::BeginDisabled( );
+                }
+                
+                
+                ImGui::Separator();
+                //
+                if ( ImGui::MenuItem("Clear Menu") )      {  }
+                //
+                ImGui::EndMenu();
+            }
+        //
+        //
+        //
+        ImGui::EndDisabled();
+    //
     ImGui::EndDisabled();
     
     
@@ -181,13 +212,13 @@ void MenuBar::disp_file_menubar(void)
     
     //  3.  "Save" SUB-MENU...
     ImGui::Separator();
-    ImGui::BeginDisabled(ENABLE_OPEN);
+    ImGui::BeginDisabled( !MS.has_capability(CBMenuCapabilityFlags_FileSave) );
         if (ImGui::MenuItem("Save",                     "CTRL+S")) {
             io.AddKeyEvent(ImGuiMod_Ctrl, true); io.AddKeyEvent(ImGuiKey_S, true);
         }
     ImGui::EndDisabled();
     //
-    ImGui::BeginDisabled(ENABLE_OPEN);
+    ImGui::BeginDisabled( !MS.has_capability(CBMenuCapabilityFlags_FileSaveAs) );
         if (ImGui::MenuItem("Save As...",               nullptr))       { }
     ImGui::EndDisabled();
     
@@ -200,14 +231,16 @@ void MenuBar::disp_file_menubar(void)
     
     
     //  5.  MORE EXPORTS AND SAVES...
-    ImGui::BeginDisabled(ENABLE_EXPORT);
+    ImGui::BeginDisabled( !MS.has_capability(CBMenuCapabilityFlags_FileExport) );
         if (ImGui::MenuItem("Export",                   nullptr))       { }
     ImGui::EndDisabled();
     
     
     //  4.  "Quit"...
     ImGui::Separator();
-    if (ImGui::MenuItem("Quit",                     "CTRL+Q"))      { }
+    if (ImGui::MenuItem("Quit",                     "CTRL+Q"))      {
+        app::instance().enqueue_signal( app::CBSignalFlags_Shutdown );
+    }
     
     
     return;

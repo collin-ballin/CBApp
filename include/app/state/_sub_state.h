@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <chrono>
+#include <type_traits>
 
 #include <string>           //  <======| std::string, ...
 #include <string_view>
@@ -51,6 +52,7 @@
 #include <limits.h>
 #include <math.h>
 #include <atomic>
+
 
 
 
@@ -104,6 +106,7 @@ struct MenuState_t {
     // *************************************************************************** //
     //      STATIC AND CONSTEXPR VARIABLES.
     // *************************************************************************** //
+    static constexpr size_t             ms_MAX_RECENT_FILES         = 8;
     
     // *************************************************************************** //
     //      GENERIC CONSTANTS.
@@ -123,22 +126,25 @@ struct MenuState_t {
     // *************************************************************************** //
     //
     //                                  MAIN STATE INFORMATION:
-    CBMenuCapabilityFlags                   m_capabilities                  = CBMenuCapabilityFlags_None;
-    
-    //
-    //                                  SECONDARY STATE INFORMATION:
-    int                                     m_undo_count                    = 0;
-    int                                     m_redo_count                    = 0;
-    bool                                    m_dirty                         = 0;
-    //
+    CBMenuCapabilityFlags                   m_capabilities                  = CBMenuCapabilityFlags_Default;
     //
     //                                  FILE I/O:
     std::filesystem::path                   m_filepath                      = {  };
-    //
+    std::vector<std::filesystem::path>      m_recent_files                  = {  };
     //
     //                                  SUB-STATE INFORMATION:
     MenuCallbacks                           m_callbacks                     = {  };
-
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //                      MUTABLE STATE INFORMATION.
+    // *************************************************************************** //
+    //                                  MUTABLE STATE DATA:
+    int                                     m_undo_count                    = 0;
+    int                                     m_redo_count                    = 0;
+    bool                                    m_dirty                         = 0;
 
     // *************************************************************************** //
     //
@@ -188,6 +194,19 @@ struct MenuState_t {
     
     //  Default Constructor.
     inline MenuState_t                                              (void)      {   }
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //                      QUERY FUNCTIONS...
+    // *************************************************************************** //
+    
+    [[nodiscard]] inline bool           has_capability              (CBMenuCapabilityFlags f) const noexcept    { return (m_capabilities & f) == f; }
+ 	[[nodiscard]] inline bool           supports_any                (CBMenuCapabilityFlags f) const noexcept    { return (m_capabilities & f) != 0; }
+	[[nodiscard]] inline bool           supports_all                (CBMenuCapabilityFlags f) const noexcept    { return (m_capabilities & f) == f; }
     
     
     // *************************************************************************** //
@@ -197,12 +216,22 @@ struct MenuState_t {
     //                      UTILITY FUNCTIONS...
     // *************************************************************************** //
     
-    [[nodiscard]] inline bool           can_undo                    (void)      { return false; }
-    [[nodiscard]] inline bool           can_redo                    (void)      { return false; }
+	[[nodiscard]] inline bool           can_undo                    (void) const noexcept       { return m_undo_count > 0; }
+    [[nodiscard]] inline bool           can_redo                    (void) const noexcept       { return m_redo_count > 0; }
+    //
+	[[nodiscard]] inline bool           has_assigned_file           (void) const noexcept       { namespace fs = std::filesystem; return fs::exists(m_filepath); }
+	[[nodiscard]] inline bool           has_open_recent             (void) const noexcept       { return m_recent_files.empty(); }
     //
     //
-    [[nodiscard]] inline bool           has_assigned_file           (void)      { return false; }
-    
+    //
+    inline void                         enable_capability           (CBMenuCapabilityFlags flags) noexcept      { m_capabilities |= flags;  }       // force-on bits in 'flags'
+    inline void                         set_capability              (CBMenuCapabilityFlags flags) noexcept      { m_capabilities |= flags;  }
+    //
+    inline void                         disable_capability          (CBMenuCapabilityFlags flags) noexcept      { m_capabilities &= ~flags; }       // force-off bits in 'flags'
+    inline void                         unset_capability            (CBMenuCapabilityFlags flags) noexcept      { m_capabilities &= ~flags; }
+    //
+    inline void                         toggle_capability           (CBMenuCapabilityFlags flags) noexcept      { m_capabilities ^= flags;  }       // flip bits in 'flags'
+ 
  
  
     // *************************************************************************** //
@@ -271,7 +300,7 @@ struct TaskState_t {
     // *************************************************************************** //
     //      STATIC AND CONSTEXPR VARIABLES.
     // *************************************************************************** //
-    static constexpr size_t             ms_TASK_NAME_LIMIT              = 16;
+    static constexpr size_t             ms_TASK_NAME_LIMIT              = 20;
     //
     std::array< std::string *, static_cast<size_t>(Applet_t::COUNT) >                       //  No CONSTEXPR arr for this bc I want it to copy the
                                         m_applets                       = {};               //  window names EXACTLY in case we ever rename them.
@@ -313,8 +342,8 @@ struct TaskState_t {
     // *************************************************************************** //
     //                      SUB-STATE.
     // *************************************************************************** //
-    MenuState_t                         m_default_menu_state            = {  };
-    MenuState_t *                       m_current_menu_state            = { &m_default_menu_state };
+    MenuState_t                             m_default_menu_state        = { };
+    std::reference_wrapper<MenuState_t>     m_current_menu_state        = { m_default_menu_state };
     
     
     // *************************************************************************** //
@@ -380,7 +409,39 @@ struct TaskState_t {
     }
     
     
+
     // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                      GETTER FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "GetCurrentAppletName"
+    inline const char *                 GetCurrentAppletName           (void)
+    { return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str(); }
+    
+    
+
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                      SETTER FUNCTIONS...
+    // *************************************************************************** //
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // *************************************************************************** //
+    //
     //
     //
     // *************************************************************************** //
@@ -399,15 +460,9 @@ struct TaskState_t {
 
         return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str();
     }
-    
-    //  "current_task_name"
-    inline const char *                 current_task_name           (void)
-    { return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str(); }
 
-
-
-    //  "GetDockNodeVisText"
-    inline const char *                 GetDockNodeVisText          (const ImGuiDockNode * node)
+    //  "get_dock_node_vis_text"
+    inline const char *                 get_dock_node_vis_text          (const ImGuiDockNode * node)
     { return (node && node->VisibleWindow) ? node->VisibleWindow->Name : "NULL"; } // Same expression used inside DebugNodeDockNode()
     
     //  "get_nav_window"
@@ -422,13 +477,14 @@ struct TaskState_t {
     // *************************************************************************** //
     //
     //
+    //
     // *************************************************************************** //
     //                      PRIMARY OPERATION FUNCTIONS...
     // *************************************************************************** //
     
     //  "update_current_task"
     //
-    inline void                         update_current_task         (GLFWwindow * window)
+    [[nodiscard]] inline bool           update_current_task         ([[maybe_unused]] GLFWwindow * window)
     {
         static constexpr size_t     CACHE_COMPARE_NUM       = 32;
         static constexpr size_t     LOOP_COMPARE_NUM        = 16;
@@ -440,10 +496,11 @@ struct TaskState_t {
         ImGuiWindow *               vis_win                 = this->get_nav_window();
         const char *                vis                     = (vis_win) ? vis_win->Name     : nullptr;
         //
-        // const char *                vis                     = this->GetDockNodeVisText( this->m_main_node );
+        // const char *                vis                     = this->get_dock_node_vis_text( this->m_main_node );
         //
-        const char *                name                    = this->current_task_name();
+        const char *                name                    = this->GetCurrentAppletName();
         bool                        match                   = false;
+        bool                        need_to_update          = false;
         
         
         
@@ -464,11 +521,14 @@ struct TaskState_t {
             if ( strncmp(name, vis, CACHE_COMPARE_NUM) != 0 ) [[unlikely]]     //  Bail out early if same applet is in use.
             {
                 //  CASE 2 :    COMPARE THE CURRENT WINDOW NAME TO THE NAME OF EACH THE APPLET...
-                for ( size_t i = 0; !match && i < static_cast<size_t>(Applet::COUNT); ++i ) {
+                for ( size_t i = 0; !match && i < static_cast<size_t>(Applet::COUNT); ++i )
+                {
                     name    = m_applets[ static_cast<size_t>( i ) ]->c_str();
                     match   = ( strncmp(name, vis, LOOP_COMPARE_NUM) == 0 );
+                    
                     if (match)          {
-                        this->m_current_task = static_cast<Applet>( i );
+                        need_to_update          = true;
+                        this->m_current_task    = static_cast<Applet>( i );
                         this->m_und_task_name.clear();
                     }
                 }
@@ -480,7 +540,7 @@ struct TaskState_t {
             }
         }
         
-        return;
+        return need_to_update;
     }
     
     

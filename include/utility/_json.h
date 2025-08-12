@@ -49,23 +49,23 @@ namespace nlohmann { //     BEGINNING NAMESPACE "nlohmann"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-template<>
-struct adl_serializer<ImVec2>
-{
-    static void to_json(json & j, const ImVec2 & v)
-    {
-        j = json::array({ v.x, v.y });          // -> [x, y]
-    }
-
-    static void from_json(const json & j, ImVec2 & v)
-    {
-        if ( !j.is_array() || j.size() != 2 )
-        { throw std::runtime_error("ImVec2 expects JSON array [x, y]"); }
-
-        v.x     = j[0].get<float>();
-        v.y     = j[1].get<float>();
-    }
-};
+//  template<>
+//  struct adl_serializer<ImVec2>
+//  {
+//      static void to_json(json & j, const ImVec2 & v)
+//      {
+//          j = json::array({ v.x, v.y });          // -> [x, y]
+//      }
+//
+//      static void from_json(const json & j, ImVec2 & v)
+//      {
+//          if ( !j.is_array() || j.size() != 2 )
+//          { throw std::runtime_error("ImVec2 expects JSON array [x, y]"); }
+//
+//          v.x     = j[0].get<float>();
+//          v.y     = j[1].get<float>();
+//      }
+//  };
 
 
 
@@ -107,6 +107,7 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 /// @tparam     T, the type to query serializer status
 ///
 ///
+/*
 template<typename T, typename = void>
 struct has_from_json : std::false_type {};
 
@@ -121,7 +122,7 @@ struct has_from_json<
             std::declval<T &>() )
     ) >
     > : std::true_type
-{/*  struct body  */};
+//  {/  struct body  /};
 
 
 
@@ -150,8 +151,8 @@ struct has_to_json<
             std::declval<const T&>() )                  //  second arg       : const T &
     ) >
     > : std::true_type
-{/*  struct body  */};
-
+{/  struct body  /};
+*/
 
 
 

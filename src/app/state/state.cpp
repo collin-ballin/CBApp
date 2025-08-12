@@ -102,26 +102,26 @@ AppState::~AppState(void) = default;
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "DockAtHome"
+//      //  "DockAtHome"
+//      //
+//      void AppState::DockAtHome(const Window & idx) {
+//          app::WinInfo &w = this->m_windows[static_cast<Window>(idx)];
+//          if (w.open)     ImGui::DockBuilderDockWindow(w.uuid.c_str(), this->m_main_dock_id);
+//          return;
+//      }
+//      //
+//      void AppState::DockAtHome(const char * uuid)                    { ImGui::DockBuilderDockWindow( uuid, m_main_dock_id ); }
 //
-void AppState::DockAtHome(const Window & idx) {
-    app::WinInfo &w = this->m_windows[static_cast<Window>(idx)];
-    if (w.open)     ImGui::DockBuilderDockWindow(w.uuid.c_str(), this->m_main_dock_id);
-    return;
-}
 //
-void AppState::DockAtHome(const char * uuid)                    { ImGui::DockBuilderDockWindow( uuid, m_main_dock_id ); }
-
-
-//  "DockAtDetView"
-//
-void AppState::DockAtDetView(const Window & idx) {
-    app::WinInfo &  w = this->m_windows[static_cast<Window>(idx)];
-    if (w.open)     ImGui::DockBuilderDockWindow(w.uuid.c_str(), this->m_detview_dockspace_id);
-    return;
-}
-//
-void AppState::DockAtDetView(const char * uuid)                 { ImGui::DockBuilderDockWindow( uuid, m_detview_dockspace_id ); }
+//      //  "DockAtDetView"
+//      //
+//      void AppState::DockAtDetView(const Window & idx) {
+//          app::WinInfo &  w = this->m_windows[static_cast<Window>(idx)];
+//          if (w.open)     ImGui::DockBuilderDockWindow(w.uuid.c_str(), this->m_detview_dockspace_id);
+//          return;
+//      }
+//      //
+//      void AppState::DockAtDetView(const char * uuid)                 { ImGui::DockBuilderDockWindow( uuid, m_detview_dockspace_id ); }
 
 
 
@@ -131,6 +131,7 @@ void AppState::DockAtDetView(const char * uuid)                 { ImGui::DockBui
 
 //  "SaveWithValidation"
 //
+//      TO-DO:  USE THE ERROR CODES AFTER FETCHING EACH FILESYSTEM ITEM!!!
 template<typename Callback>
 bool AppState::SaveWithValidation(const std::filesystem::path & path, Callback & callback, const std::string_view & caller_tag, const std::string_view & failure_msg)
 {
@@ -277,7 +278,7 @@ void AppState::log_startup_info(void) noexcept
         "Start Task                 : {}\n"
         "Start App Color Style      : {}\n"
         "Start Plot Color Style     : {}",
-        this->current_task_name(),
+        this->GetCurrentAppletName(),
         current_app_color_style(),
         current_plot_color_style()
     );

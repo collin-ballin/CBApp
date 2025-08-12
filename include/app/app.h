@@ -260,6 +260,7 @@ protected:
     void                        load                        (void);                     //  [init.cpp].
     bool                        init_asserts                (void);                     //  [init.cpp].
     static void                 install_signal_handlers     (void);                     //  [handler.cpp].
+    
     // *************************************************************************** //
     //
     //
@@ -280,6 +281,7 @@ protected:
     void                        get_build_info              (void) const;
     void                        get_config_info             (void) const;
     void                        get_imgui_info              (void) const;
+    
     // *************************************************************************** //
     //
     //
@@ -290,23 +292,33 @@ protected:
     void                        ShowColorTool               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                        ColorShaderTool             (void);
     void                        ColorMapCreatorTool         (void);
+    
     // *************************************************************************** //
     //
     //
     //
     // *************************************************************************** //
-    //      UTILITY FUNCTIONS.              |   "main_application.cpp" ...
+    //      INTERNAL API.                   |   "init.cpp" ...
     // *************************************************************************** //
-    //                      APPLICATION SIGNAL & HOTKEY HANDLERS:
-    void                        KeyboardShortcutHandler     (void);
+    //
+    //                      OVERSEERS:
     inline void                 DialogHandler               (void);
+    void                        QuerySignalStates           (void);
+    void                        KeyboardShortcutHandler     (void);
+    //
+    //                      NEW:
+    void                        save                        (void);
+    void                        open                        (void);
+    void                        undo                        (void);
+    void                        redo                        (void);
+    //
+    //                      APPLICATION SIGNAL & HOTKEY HANDLERS:
     void                        SaveHandler                 (void);
     void                        OpenHandler                 (void);
     void                        CopyHandler                 (void);
     void                        PasteHandler                (void);
     void                        UndoHandler                 (void);
     void                        RedoHandler                 (void);
-    void                        QuerySignalStates           (void);
     //
     //                      PLACEHOLDERS:
     void                        SaveHandler_Default         (void);
@@ -314,11 +326,19 @@ protected:
     void                        PasteHandler_Default        (void);
     void                        UndoHandler_Default         (void);
     void                        RedoHandler_Default         (void);
+    
+    // *************************************************************************** //
     //
+    //
+    //
+    // *************************************************************************** //
+    //      UTILITY FUNCTIONS.              |   "main_application.cpp" ...
+    // *************************************************************************** //
     //                      MISC. GUI FUNCTIONS:
     void                        InitDockspace               (void);
     void                        RebuildDockLayout           (void);
     void                        OnDpiScaleChanged           ([[maybe_unused]] float xs, [[maybe_unused]] float ys);
+    
     // *************************************************************************** //
     //
     //
@@ -336,6 +356,7 @@ protected:
     void                        ShowImPlotStyleEditor       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                        ShowImPlotMetricsWindow     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                        ShowImPlotDemoWindow        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    
     // *************************************************************************** //
     //
     //
@@ -348,6 +369,7 @@ private:
     void                        ImPlot_Testing0ALT          (void);
     void                        Test_Browser                (void);
     void                        Test_Editor                 (void);
+    
     // *************************************************************************** //
     //
     //
@@ -373,6 +395,10 @@ private:
 // *************************************************************************** //
 protected:
 
+    // *************************************************************************** //
+    //      PRIMARY INLINE FUNCTIONS.       |   ...
+    // *************************************************************************** //
+    
     //  "PerFrameCache_Begin"
     //
     //      TO-DO:
@@ -385,13 +411,11 @@ protected:
         //      1.      UPDATE THE VALUE OF  IMGUI STATE  VARIABLES...
         this->S.m_dockspace_id              = ImGui::GetID( S.m_windows[Window::Dockspace].uuid.c_str() );
             
-    
-    
+            
         //      2.      FIRST-FRAME INITIALIZATIONS...
         if (first_frame) [[unlikely]] {
             this->InitDockspace();
         }// END OF "first_frame"...
-
 
 
         return;
@@ -406,7 +430,7 @@ protected:
         //      1.      END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
         if (first_frame) [[unlikely]] {
             first_frame = false;
-            ImGui::SetWindowFocus( S.current_task_name() );
+            ImGui::SetWindowFocus( S.GetCurrentAppletName() );
         }
 
 
@@ -417,10 +441,11 @@ protected:
         }
         
         
-
         //      3.      UPDATE THE CURRENT APPLICATION STATE (Applet State).    [ NEEDED BEFORE WE SAVE/UNDO/REDO/ETC) ].
-        S.update_current_task();
-        
+        if ( S.update_current_task() )
+        {
+            this->_update_menu_state();
+        }
         
 
         //      4.      HANDLE ANY KEYBOARD SHORTCUTS...
@@ -431,6 +456,48 @@ protected:
         this->QuerySignalStates();
 
 
+        return;
+    }
+    
+    
+    
+    // *************************************************************************** //
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      INLINE UTILITY FUNCTIONS.       |   ...
+    // *************************************************************************** //
+
+    //  "_update_menu_state"
+    //
+    inline void                 _update_menu_state              (void)
+    {
+        if ( S.update_current_task() )
+        {
+            switch  (S.GetCurrentApplet() )
+            {
+                case Applet::CCounterApp :  {                       //  1.  "Coincidence Counter" Applet.
+                    //  S.SetMenuState( m_counter_app.GetMenuState() );
+                    break;
+                }
+    
+                case Applet::EditorApp :    {                       //  2.  "Editor" Applet.
+                    //  S.SetMenuState( m_editor_app.GetMenuState() );
+                    break;
+                }
+                
+                case Applet::GraphApp :     {                       //  3.  "Graph App" Applet.
+                    //  S.SetMenuState( m_graph_app.GetMenuState() );
+                    break;
+                }
+                
+                default :   { S.ResetMenuState();   break; }        //  0.  USE DEFAULT MENU-STATE...
+            }
+        }
+    
         return;
     }
 
@@ -452,6 +519,38 @@ protected:
 // *************************************************************************** //
 // *************************************************************************** //
 };//	END "App" CLASS DEFINITION.
+
+
+
+
+
+
+
+
+
+
+
+
+namespace app { //     BEGINNING NAMESPACE "app"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+//      FINAL INSTALLMENTS OF INLINE, FREE-STANDING FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+inline App &            instance                    (void)      { return App::instance(); }
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}//   END OF "app" NAMESPACE.
 
 
 

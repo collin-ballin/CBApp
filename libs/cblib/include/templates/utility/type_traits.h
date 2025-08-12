@@ -9,6 +9,8 @@
 # include <initializer_list>
 #endif	// C++11.
 
+#include "json.hpp"
+
 
 
 // 	BEGIN NAMESPACE     "cblib".
@@ -19,7 +21,77 @@ namespace cblib 	{
 
 
 // *************************************************************************** //
-//	Type-Trait Metafunctions.
+//	    Type-Trait Metafunctions.       [ NLOHMAN JSON ].
+// *************************************************************************** //
+
+//  "has_from_json"
+//
+/// @struct     has_from_json
+/// @brief      Detect if a type has a valid "from_json" serializer function.
+/// @note       Template type-trait style function to determine if a given type has a visible "from_json"
+///             serializer function as specified within the "nlohmann JSON for Modern C++" library.
+///             USAGE:  static_assert( has_from_json<MyType>::value, "Type \"MyType\" does NOT have a visible \"from_json\" serializer." );
+///
+/// @tparam     T, the type to query serializer status
+///
+///
+template<typename T, typename = void>
+struct has_from_json : std::false_type {};
+
+//  "has_from_json"
+//
+template<typename T>
+struct has_from_json<
+    T,
+    std::void_t< decltype(
+        nlohmann::adl_serializer<T>::from_json(
+            std::declval<const nlohmann::json &>(),
+            std::declval<T &>() )
+    ) >
+    > : std::true_type
+{/*  struct body  */};
+
+
+
+//  "has_to_json"
+//
+/// @struct     has_to_json
+/// @brief      Detect if a type has a valid "has_json" serializer function.
+/// @note       Template type-trait style function to determine if a given type has a visible "to_json"
+///             serializer function as specified within the "nlohmann JSON for Modern C++" library.
+///             USAGE:  static_assert( has_to_json<MyType>::value, "Type \"MyType\" does NOT have a visible \"to_json\" serializer." );
+///
+/// @tparam     T, the type to query serializer status
+///
+template<typename T, typename = void>
+struct has_to_json : std::false_type { };
+
+//  "has_to_json"
+//
+template<typename T>
+struct has_to_json<
+    T,
+    std::void_t<decltype(                       //  expression must be well‑formed
+        nlohmann::adl_serializer<T>::to_json(
+            std::declval<nlohmann::json &>(),           //  first arg        : json lvalue
+            std::declval<const T&>() )                  //  second arg       : const T &
+    ) >
+    > : std::true_type
+{/*  struct body  */};
+
+
+
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "JSON".
+
+
+
+
+
+
+// *************************************************************************** //
+//	    Type-Trait Metafunctions.       [ STANDARD ].
 // *************************************************************************** //
 
 //	1. Class-Member Defined Overloaded Operators.
@@ -266,12 +338,18 @@ struct has_postfix_decrement_operator
 									sizeof(test(std::declval<T>())) );
 };
 
+//
+// *************************************************************************** //
+// *************************************************************************** //   END.
+
+
 
 // *************************************************************************** //
 //
 //
 //
-//  2.  NON-MEMBER DEFINED OVERLOADED OPERATORS...
+//      2.      NON-MEMBER DEFINED OVERLOADED OPERATORS...
+// *************************************************************************** //
 // *************************************************************************** //
 
 //	"has_addition_operator_impl"
@@ -478,15 +556,27 @@ struct has_clear_function
 		: public has_clear_function_impl<Class>::type { };
 */
 
+//
+// *************************************************************************** //
+// *************************************************************************** //   END.
+
+
+
+
+
+
+
+
+
+
+
 
 // *************************************************************************** //
 //
 //
 //
+//	    4.0.    "AUDITOR" CLASS...
 // *************************************************************************** //
-
-// *************************************************************************** //
-//	3.1.    "AUDITOR" CLASS...
 // *************************************************************************** //
 
 

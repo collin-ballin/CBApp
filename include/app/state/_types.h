@@ -268,24 +268,29 @@ enum CBMenuCapabilityFlags_ : uint64_t {
     CBMenuCapabilityFlags_None			        = 0,
 //
 //
-    CBMenuCapabilityFlags_Open                  = 1u <<  0,         //  "File" Menu.
-    CBMenuCapabilityFlags_Save			        = 1u <<  1,
-    CBMenuCapabilityFlags_SaveAs			    = 1u <<  2,
+    CBMenuCapabilityFlags_FileNew               = 1u <<  0,         //  "File" Menu.
+    CBMenuCapabilityFlags_FileOpen              = 1u <<  1,
+    CBMenuCapabilityFlags_FileSave			    = 1u <<  2,
+    CBMenuCapabilityFlags_FileSaveAs            = 1u <<  3,
+    CBMenuCapabilityFlags_FileExport	        = 1u <<  4,
 //
-    CBMenuCapabilityFlags_Undo		            = 1u <<  3,         //  "Edit" Menu.
-    CBMenuCapabilityFlags_Redo                  = 1u <<  4,
-    CBMenuCapabilityFlags_Copy                  = 1u <<  5,
-    CBMenuCapabilityFlags_Paste		            = 1u <<  6,
+    CBMenuCapabilityFlags_EditUndo		        = 1u <<  5,         //  "Edit" Menu.
+    CBMenuCapabilityFlags_EditRedo              = 1u <<  6,
+    CBMenuCapabilityFlags_EditCopy              = 1u <<  7,
+    CBMenuCapabilityFlags_EditPaste		        = 1u <<  8,
+//
+    CBMenuCapabilityFlags_CustomFile		    = 1u <<  9,         //  "Custom" Flags...
+    CBMenuCapabilityFlags_CustomEdit		    = 1u << 10,
+    CBMenuCapabilityFlags_CustomView		    = 1u << 11,
+    CBMenuCapabilityFlags_CustomWindow	        = 1u << 12,
+    CBMenuCapabilityFlags_CustomHelp		    = 1u << 13,
 //
 //
-    CBMenuCapabilityFlags_CustomFile		    = 1u <<  7,         //  "Custom" Flags...
-    CBMenuCapabilityFlags_CustomEdit		    = 1u <<  8,
-    CBMenuCapabilityFlags_CustomView		    = 1u <<  9,
-    CBMenuCapabilityFlags_CustomWindow	        = 1u << 10,
-    CBMenuCapabilityFlags_CustomHelp		    = 1u << 11,
+    CBMenuCapabilityFlags_COUNT,
 //
 //
-    CBMenuCapabilityFlags_COUNT
+    CBMenuCapabilityFlags_All                   = (CBMenuCapabilityFlags_CustomHelp << 1) - 1u,   //  All supported bits (0..11) set:
+    CBMenuCapabilityFlags_Default               = CBMenuCapabilityFlags_None | CBMenuCapabilityFlags_FileNew | CBMenuCapabilityFlags_FileOpen | CBMenuCapabilityFlags_FileSaveAs
 };
 
 

@@ -423,7 +423,7 @@ source_group(
 )
 
 
-#       II.iii  Create "src" File Group in Xcode.
+#       II.iii. Create "src" File Group in Xcode.
 source_group(TREE ${CB_SRC_DIR} PREFIX "src" FILES ${APP_SRCS})
 source_group(
     TREE   ${CB_IMGUI_DIR}
@@ -437,6 +437,14 @@ source_group(
     PREFIX "imgui/misc"             # how it should appear
     FILES  ${IMGUI_MISC_SRCS}
 )
+
+
+#       II.iv.  Create "cblib" File Group in Xcode.
+#   source_group(
+#       TREE   ${CBLib_INCLUDE_DIR}
+#       PREFIX "cblib"
+#       FILES  ${CBLib_HEADERS}
+#   )
 
 
 

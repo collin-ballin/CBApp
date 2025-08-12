@@ -969,20 +969,20 @@ inline void ActionComposer::_cancel_key_capture(void)
 //  SERIALIZER ASSERTIONS...
 //
 //      1.      ImVec2.
-static_assert( utl::has_from_json<ImVec2>::value,               "ImVec2 \"from_json\" NOT visible."                 );
-static_assert( utl::has_to_json<ImVec2>::value,                 "ImVec2 \"to_json\" NOT visible."                   );
+static_assert( cblib::has_from_json<ImVec2>::value,                 "ImVec2 \"from_json\" NOT visible."                 );
+static_assert( cblib::has_to_json<ImVec2>::value,                   "ImVec2 \"to_json\" NOT visible."                   );
 //
 //      2.      CursorMoveParams.
-static_assert( utl::has_from_json<CursorMoveParams>::value,     "CursorMoveParams \"from_json\" NOT visible."       );
-static_assert( utl::has_to_json<CursorMoveParams>::value,       "CursorMoveParams \"to_json\" NOT visible."         );
+static_assert( cblib::has_from_json<CursorMoveParams>::value,       "CursorMoveParams \"from_json\" NOT visible."       );
+static_assert( cblib::has_to_json<CursorMoveParams>::value,         "CursorMoveParams \"to_json\" NOT visible."         );
 //
 //      3.      Action.
-static_assert( utl::has_from_json<Action>::value,               "Action \"from_json\" NOT visible."                 );
-static_assert( utl::has_to_json<Action>::value,                 "Action \"to_json\" NOT visible."                   );
+static_assert( cblib::has_from_json<Action>::value,                 "Action \"from_json\" NOT visible."                 );
+static_assert( cblib::has_to_json<Action>::value,                   "Action \"to_json\" NOT visible."                   );
 //
 //      4.      Composition_t.
-static_assert( utl::has_from_json<Composition_t>::value,        "Composition_t \"from_json\" NOT visible."          );
-static_assert( utl::has_to_json<Composition_t>::value,          "Composition_t \"to_json\" NOT visible."            );
+static_assert( cblib::has_from_json<Composition_t>::value,          "Composition_t \"from_json\" NOT visible."          );
+static_assert( cblib::has_to_json<Composition_t>::value,            "Composition_t \"to_json\" NOT visible."            );
                
                
                

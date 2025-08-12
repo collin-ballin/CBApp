@@ -139,10 +139,8 @@ public:
     // *************************************************************************** //
     //
     //                              APPLICATION UTILITIES:
-    void                                DockAtHome                  (const Window &);
-    void                                DockAtHome                  (const char *);
-    void                                DockAtDetView               (const Window &);
-    void                                DockAtDetView               (const char *);
+    //                                  ...
+    //
     //
     //                              SERIALIZATION ITEMS:
     template<typename Callback>
@@ -174,7 +172,72 @@ public:
 //  1.4                 INLINE FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+    
+    // *************************************************************************** //
+    //                      GETTER FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "GetCurrentApplet"
+    [[nodiscard]] inline Applet                     GetCurrentApplet            (void) const noexcept   { return this->m_task_state.m_current_task; }
+    
+    //  "GetCurrentAppletName"
+    [[nodiscard]] inline const char *               GetCurrentAppletName        (void) noexcept         { return this->m_task_state.GetCurrentAppletName(); }
+    
+    //  "GetNavWindowName"
+    [[nodiscard]] inline const char *               GetNavWindowName            (void) noexcept         { return this->m_task_state.m_nav_window_name.c_str(); }
+    
+    //  "GetNavWindowStr"
+    [[nodiscard]] inline const std::string &        GetNavWindowStr             (void) noexcept         { return this->m_task_state.m_nav_window_name; }
+    
+    //  "GetMenuState"
+    [[nodiscard]] inline MenuState_t &              GetMenuState                (void) noexcept         { return this->m_task_state.m_current_menu_state.get(); }
+    [[nodiscard]] inline const MenuState_t &        GetMenuState                (void) const noexcept   { return this->m_task_state.m_current_menu_state.get(); }
+    
+    
 
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                      SETTER FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "SetMenuState"
+    inline void                         SetMenuState                (MenuState_t & src)     { this->m_task_state.m_current_menu_state = src; }
+    
+    //  "ResetMenuState"
+    inline void                         ResetMenuState              (void)                  { this->m_task_state.m_current_menu_state = this->m_task_state.m_default_menu_state; }
+
+
+
+    //  "current_app_color_style"
+    inline const char *                 current_app_color_style     (void) const
+    {  return this->m_app_color_style_names[ static_cast<size_t>(this->m_current_app_color_style) ];  }
+
+    //  "current_plot_color_style"
+    inline const char *                 current_plot_color_style    (void) const
+    {  return this->m_plot_color_style_names[ static_cast<size_t>(this->m_current_plot_color_style) ];  }
+    
+    
+    
+    // *************************************************************************** //
+
+
+
+
+
+
+
+
+
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    //
     // *************************************************************************** //
     //                      PRIMARY INLINE FUNCTIONS...
     // *************************************************************************** //
@@ -189,36 +252,11 @@ public:
     inline void                         PerFrameCache               (void)  { return; }
     
     
-
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //                      GETTER FUNCTIONS...
-    // *************************************************************************** //
-    
-    //  "current_task"
-    inline Applet                       current_task                (void) const    { return this->m_task_state.m_current_task; }
-    
-    //  "current_task_name"
-    inline const char *                 current_task_name           (void)          { return this->m_task_state.current_task_name(); }
-    
-    //  "GetNavWindowName"
-    inline const char *                 GetNavWindowName            (void)          { return this->m_task_state.m_nav_window_name.c_str(); }
-    
-    //  "GetNavWindowStr"
-    inline const std::string &          GetNavWindowStr             (void)          { return this->m_task_state.m_nav_window_name; }
-
-
-
-    //  "current_app_color_style"
-    inline const char *                 current_app_color_style     (void) const
-    {  return this->m_app_color_style_names[ static_cast<size_t>(this->m_current_app_color_style) ];  }
-
-    //  "current_plot_color_style"
-    inline const char *                 current_plot_color_style    (void) const
-    {  return this->m_plot_color_style_names[ static_cast<size_t>(this->m_current_plot_color_style) ];  }
+    //  "update_current_task"
+    [[nodiscard]] inline bool           update_current_task         (void)
+    {
+        return this->m_task_state.update_current_task( m_glfw_window );
+    }
     
     
 
@@ -235,20 +273,27 @@ public:
     { ImGui::PushFont( this->m_fonts[which] ); return; }
 
     //  "PopFont"
-    inline void                         PopFont                     (void)          { ImGui::PopFont(); return; }
+    inline void                         PopFont                     (void)                  { ImGui::PopFont(); return; }
 
 
 
-    //  "GetDockNodeVisText"
-    inline const char *                 GetDockNodeVisText          (const ImGuiDockNode * node)
-    { return (node && node->VisibleWindow) ? node->VisibleWindow->Name : "NULL"; } // Same expression used inside DebugNodeDockNode()
-    
-    //  "update_current_task"
-    inline void                         update_current_task         (void)
-    {
-        this->m_task_state.update_current_task( m_glfw_window );
-        return;
+    //  "DockAtHome"
+    inline void                         DockAtHome                  (const Window & idx) {
+        app::WinInfo &w = this->m_windows[static_cast<Window>(idx)];
+        if (w.open)     ImGui::DockBuilderDockWindow(w.uuid.c_str(), this->m_main_dock_id);
     }
+    //
+    inline void                         DockAtHome                  (const char * uuid)     { ImGui::DockBuilderDockWindow( uuid, m_main_dock_id ); }
+    
+    
+    
+    //  "DockAtDetView"
+    inline void                         DockAtDetView               (const Window & idx) {
+        app::WinInfo &  w = this->m_windows[static_cast<Window>(idx)];
+        if (w.open)     ImGui::DockBuilderDockWindow(w.uuid.c_str(), this->m_detview_dockspace_id);
+    }
+    //
+    inline void                         DockAtDetView               (const char * uuid)     { ImGui::DockBuilderDockWindow( uuid, m_detview_dockspace_id ); }
     
     
     
