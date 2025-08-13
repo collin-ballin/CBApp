@@ -232,84 +232,77 @@ public:
     //  "_get_item_under_cursor"
     [[nodiscard]] inline utl::HoverItem     _get_item_under_cursor      (void) const noexcept
     {
-        using                       HoverItem           = utl::HoverItem;
-        HoverItem                   out                 {  };
-        ImGuiContext *              ctx                 = ImGui::GetCurrentContext();
-        ImGuiID                     hovered             = ctx->HoveredIdPreviousFrame;  //  Use the stable "previous frame" hovered id (current-frame value mutates during submission).
-        
-        //  CASE 0 :    NO ITEM IS HOVERED.
-        if ( hovered == 0 )         { return out; }
+        utl::HoverItem      out             {  };
+        ImGuiContext *      ctx             = ImGui::GetCurrentContext();
+        ImGuiID             hovered         = ctx->HoveredIdPreviousFrame;
+        if ( !hovered )     { return out; }
 
-        out.id                                          = hovered;
-        out.window                                      = ctx->HoveredWindow;
+        out.id          = hovered;
+        out.window      = ctx->HoveredWindow;
+        out.viewport    = (out.window && out.window->Viewport)
+                            ? out.window->Viewport
+                            : ImGui::FindViewportByID(ctx->IO.MouseHoveredViewport);
 
-
-        //  Derive viewport: prefer the window's viewport; else fall back to the backend-reported hovered viewport.
-        if ( out.window && out.window->Viewport )       { out.viewport = out.window->Viewport; }
-        else {
-            ImGuiViewport *     hvp         = ImGui::FindViewportByID(ctx->IO.MouseHoveredViewport);
-            out.viewport                    = hvp ? hvp : ImGui::GetMainViewport();
-        }
-        out.on_main_viewport            = (out.viewport && out.viewport->ID == ImGui::GetMainViewport()->ID);
-
-
-        const ImGuiLastItemData & last  = ctx->LastItemData;         //  Opportunistic rect: only valid if the last submitted item is the hovered one.
-        if ( last.ID == hovered )
+        // Exact bounding-box only available if this item was the LAST one
+        // submitted in this frame (typical when you query inside the same UI).
+        if (ctx->LastItemData.ID == hovered)
         {
-            out.has_rect    = true;
-            out.rect        = last.Rect; // screen-space
-            if ( out.window ) {
-                const ImRect    ic      = out.window->InnerClipRect;
-                out.clip_min            = ic.Min;
-                out.clip_max            = ic.Max;
-            }
+            out.has_rect   = true;
+            out.rect       = ctx->LastItemData.Rect;
+            out.frame_stamp= ctx->FrameCount;
         }
         return out;
     }
+    
+    
+    
+    
+    
+    
+    
+    // *************************************************************************** //
+    // *************************************************************************** //
 
-    inline void draw_highlight_box(const utl::HoverItem & it,
-                                   float pad = 1.5f,
-                                   float thickness = 2.0f,
-                                   ImU32 color = IM_COL32(255,255,0,255),
-                                   bool  show_clip_rect = false)
-    {
-        if ( !it.id || !it.viewport )   { return; }
-
-        ImDrawList * dl = ImGui::GetForegroundDrawList(it.viewport);
-
-        // Preferred: exact item rect (screen space)
-        if (it.has_rect)
-        {
-            ImRect r        = it.rect;
-            r.Min.x        -= pad;          r.Min.y         -= pad;
-            r.Max.x        += pad;          r.Max.y         += pad;
-
-            dl->AddRect(r.Min, r.Max, color, 0.0f, 0, thickness);
-            // Optional cross lines (like Metrics mesh viz)
-            dl->AddLine(r.Min, r.Max, color, thickness * 0.5f);
-            dl->AddLine(ImVec2(r.Min.x, r.Max.y), ImVec2(r.Max.x, r.Min.y), color, thickness * 0.5f);
-
-            if (show_clip_rect && it.window)
-                dl->AddRect(it.window->InnerClipRect.Min, it.window->InnerClipRect.Max,
-                            IM_COL32(255, 0, 255, 180)); // magenta clip/scissor viz
-            return;
-        }
-
-        // Fallback: outline the whole window (coarse but useful)
-        if (it.window)
-        {
-            ImRect r = it.window->Rect();
-            r.Min.x -= pad; r.Min.y -= pad;
-            r.Max.x += pad; r.Max.y += pad;
-            dl->AddRect(r.Min, r.Max, color, 0.0f, 0, thickness);
-        }
-        
-        return;
+    inline void hl_begin(void) noexcept {
+        utl::highlight::begin_frame();
+    }
+    
+    inline void hl_add(const ImGuiID & hovered) noexcept {
+        utl::highlight::add(hovered);
+    }
+    
+    inline void hl_remove(const ImGuiID & hovered) noexcept {
+        utl::highlight::remove(hovered);
+    }
+    
+    inline void hl_clear(void) noexcept {
+        utl::highlight::clear();
     }
 
 
+    //  "highlight_hover_item"
+    inline void highlight_hover_item(void) noexcept
+    {
+        ImGuiContext* ctx = ImGui::GetCurrentContext();
+        if (!ctx) return;
 
+        enum class phase { idle, armed };
+        static phase s = phase::idle;
 
+        if (s == phase::idle)
+        {
+            ctx->DebugItemPickerActive = true;  // highlight during this frame's submissions
+            s = phase::armed;
+        }
+        else // phase::armed
+        {
+            ctx->DebugItemPickerActive = false; // restore on next frame entry
+            s = phase::idle;
+        }
+    }
+
+    // *************************************************************************** //
+    // *************************************************************************** //
 
 
 

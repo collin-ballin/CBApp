@@ -591,7 +591,8 @@ void ActionComposer::_dispatch_action_ui(Action & a)
 //
 inline void ActionComposer::_ui_cursor_move(Action & a)
 {
-    this->_ui_movement_widgets(a);
+    //  this->_ui_movement_widgets(a);
+    this->_ui_movement_widgets_OLD(a);
     this->_ui_duration_widgets(a);
     
     return;
@@ -724,9 +725,9 @@ inline void ActionComposer::_ui_hotkey(Action & a)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_ui_movement_widgets"
+//  "_ui_movement_widgets_OLD"
 //
-inline void ActionComposer::_ui_movement_widgets(Action & a)
+inline void ActionComposer::_ui_movement_widgets_OLD(Action & a)
 {
     ImGui::PushStyleColor(  ImGuiCol_Text,                  ms_VIS_COLOR_A  );
     //
@@ -735,7 +736,7 @@ inline void ActionComposer::_ui_movement_widgets(Action & a)
             ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first,        1,          0,          FLT_MAX,        "%.f");
         ImGui::PopStyleColor();
             ImGui::SameLine();
-            if ( ImGui::SmallButton("assign") )         { _begin_mouse_capture(a, &a.cursor.first); }   // start capture for Begin
+            if ( ImGui::SmallButton("assign") )         { _begin_mouse_capture(a,   &a.cursor.first_pos,    &a.cursor.first); }   // start capture for Begin
             ImGui::SameLine();
             if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
     //
@@ -750,12 +751,69 @@ inline void ActionComposer::_ui_movement_widgets(Action & a)
             ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last,         1,          0,          FLT_MAX,        "%.f");
         ImGui::PopStyleColor();
             ImGui::SameLine();
-            if ( ImGui::SmallButton("assign") )         { _begin_mouse_capture(a, &a.cursor.last); }
+            if ( ImGui::SmallButton("assign") )         { _begin_mouse_capture(a,   &a.cursor.first_pos,    &a.cursor.last); }
     //
     ImGui::PopID();
     
+  
+    
     return;
 }
+
+
+
+//  "_ui_movement_widgets"
+//
+inline void ActionComposer::_ui_movement_widgets(Action & a)
+{
+    const ImGuiID       first_ID        = a.cursor.first_pos.widget.id;
+    const ImGuiID       last_ID         = a.cursor.last_pos.widget.id;
+
+
+
+    ImGui::PushStyleColor(  ImGuiCol_Text,                  ms_VIS_COLOR_A  );
+    //
+        ImGui::PushID("ActionComposed_CursorMove_NewBegin");
+            this->label("Begin:");
+            ImGui::DragFloat2   ("##init",          (float*)&a.cursor.first_pos.pos,        1,          0,          FLT_MAX,        "%.f");
+        ImGui::PopStyleColor();
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("assign") )         { _begin_mouse_capture(a,   &a.cursor.first_pos,    &a.cursor.first); }   // start capture for Begin
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
+    //
+            this->label("UUID:");   ImGui::SameLine();
+            ImGui::BeginDisabled( 0 > first_ID );
+                ImGui::Text( "%d", first_ID );
+            ImGui::EndDisabled();
+    //
+    ImGui::PopID();
+    
+    
+    
+    ImGui::PushStyleColor(  ImGuiCol_Text,                  ms_VIS_COLOR_B  );
+    //
+        ImGui::PushID("ActionComposed_CursorMove_NewEnd");
+            this->label("End:");
+            ImGui::DragFloat2   ("##final",         (float*)&a.cursor.last_pos.pos,         1,          0,          FLT_MAX,        "%.f");
+        ImGui::PopStyleColor();
+            ImGui::SameLine();
+            if ( ImGui::SmallButton("assign") )         { _begin_mouse_capture(a,   &a.cursor.first_pos,    &a.cursor.last); }
+    //
+            this->label("UUID:");   ImGui::SameLine();
+            ImGui::BeginDisabled( 0 > first_ID );
+                ImGui::Text( "%d", last_ID );
+            ImGui::EndDisabled();
+    //
+    ImGui::PopID();
+    
+    
+    return;
+}
+
+
+
+
 
 //  "_ui_duration_widgets"
 //

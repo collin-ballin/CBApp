@@ -174,9 +174,7 @@
 //
 //
 
-
     //#define     CBAPP_ENABLE_CB_DEMO                    1               //  Enable the "CBDemo" window with the application.
-    
     
 //
 //
@@ -185,7 +183,7 @@
 
 
 
-//      3A.     __CBAPP_DEBUG__  OR  __CBLIB_RELEASE_WITH_DEBUG_INFO__
+//      3A.     __CBAPP_DEBUG__  OR  __CBLIB_RELEASE_WITH_DEBUG_INFO__      [ Common to BOTH of these configurations ]...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -193,6 +191,10 @@
 // *************************************************************************** //
 //
 //
+    #ifdef IMGUI_DISABLE_DEBUG_TOOLS
+        #   error "Cannot create DEBUG build with \"IMGUI_DISABLE_DEBUG_TOOLS\" defined (check that you did NOT #define this inside \"my_imconfig.h\")."
+    #endif  //  IMGUI_DISABLE_DEBUG_TOOLS  //
+    
     #define __CBAPP_LOG__
 //
 //

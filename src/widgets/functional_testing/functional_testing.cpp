@@ -166,6 +166,8 @@ void ActionComposer::Begin_IMPL(void)
         this->_file_dialog_handler();
     }
     
+    S.highlight_hover_item();
+    
     return;
 }
     
@@ -700,6 +702,10 @@ void ActionComposer::_draw_renderer_visuals(void)
     if ( m_sel < 0 || m_sel >= static_cast<int>(m_actions->size()) )                    { return; }
 
     const Action &          act                 = (*m_actions)[m_sel];
+    const ImGuiID           first_ID            = act.cursor.first_pos.widget.id;
+    const ImGuiID           last_ID             = act.cursor.last_pos.widget.id;
+    
+    
     if ( act.type != ActionType::CursorMove && act.type != ActionType::MouseDrag )      { return; }
 
 
@@ -745,8 +751,13 @@ void ActionComposer::_draw_renderer_visuals(void)
     dl_a->AddLine(global_a, global_b, ms_VIS_LINE_COLOR, ms_VIS_THICK);
     draw_rect(dl_a, global_a, ms_VIS_COLOR_A);
     
-    if ( dl_b != dl_a )     { draw_rect(dl_b, global_b, ms_VIS_COLOR_B); }
-    else                    { draw_rect(dl_a, global_b, ms_VIS_COLOR_B); }
+    if ( dl_b != dl_a )         { draw_rect(dl_b, global_b, ms_VIS_COLOR_B); }
+    else                        { draw_rect(dl_a, global_b, ms_VIS_COLOR_B); }
+    
+    
+    //  5.  DRAW WIDGET BOX...
+    //  if ( !(0 > first_ID) )      { S.highlight_hover_item( act.cursor.first_pos.widget );    }
+    //  if ( !(0 > last_ID) )       { S.highlight_hover_item( act.cursor.last_pos.widget );     }
     
     
     
@@ -786,7 +797,7 @@ ImVec2 ActionComposer::get_cursor_pos(void) {
     
 //  "_begin_mouse_capture"
 //
-bool ActionComposer::_begin_mouse_capture([[maybe_unused]] Action & act, ImVec2 * destination)
+bool ActionComposer::_begin_mouse_capture([[maybe_unused]] Action & act, WPos * dst, ImVec2 * destination)
 {
     if ( m_state == State::Run )    { return false; }
 
@@ -796,7 +807,9 @@ bool ActionComposer::_begin_mouse_capture([[maybe_unused]] Action & act, ImVec2 
     GLFWwindow * hovered            = glfwGetCurrentContext();
     m_mouse_capture.active          = true;
     //
-    m_mouse_capture.destination     = std::addressof( act );
+    //
+    m_mouse_capture.dst             = dst;
+    //
     //
     m_mouse_capture.dest            = destination;
     m_mouse_capture.target_window   = hovered ? hovered : S.m_glfw_window;
@@ -804,9 +817,6 @@ bool ActionComposer::_begin_mouse_capture([[maybe_unused]] Action & act, ImVec2 
     if ( act.type == ActionType::CursorMove || act.type == ActionType::MouseDrag ) {
         m_mouse_capture.alt_dest    = (destination == &act.cursor.first)    ? &act.cursor.last     : &act.cursor.first;
     }
-    //  else { // MouseDrag
-    //      m_mouse_capture.alt_dest    = (destination == &act.drag.from)       ? &act.drag.to          : &act.drag.from;
-    //  }
     
     m_mouse_capture.backup          = *destination;         // save for cancel
     return true;
@@ -822,21 +832,36 @@ inline void ActionComposer::_update_mouse_capture(void)
 
 
     want_capture_mouse_next_frame();                //  ← NEW (blocks UI input)
-    m_mouse_capture.live_local = get_cursor_pos();
-
+    m_mouse_capture.live_local                  = get_cursor_pos();
+    //
+    m_mouse_capture.dst_live_local.pos          = get_cursor_pos();
+    m_mouse_capture.dst_live_local.widget       = S._get_item_under_cursor();
+        
+        
+        
     //  1.  USE TAB TO SWITCH ENDPOINTS...
     if ( ImGui::IsKeyPressed(ImGuiKey_Tab, false) && m_mouse_capture.alt_dest ) {
         //  1.  commit current pos to the endpoint we were editing
-        *m_mouse_capture.dest   = m_mouse_capture.live_local;
+        *m_mouse_capture.dest               = m_mouse_capture.live_local;
 
         //  2.  swap pointers so the other endpoint is now active
-        std::swap(m_mouse_capture.dest, m_mouse_capture.alt_dest);
+        std::swap( m_mouse_capture.dest, m_mouse_capture.alt_dest );
 
 
         //  3.  update backup for Esc‑cancel on the new endpoint
-        m_mouse_capture.backup  = *m_mouse_capture.dest;
+        m_mouse_capture.backup              = *m_mouse_capture.dest;
 
         //  4.  fall through: continue real‑time capture on new point
+        
+        
+        
+        //  ** NEW **
+        m_mouse_capture.dst->pos            = m_mouse_capture.live_local;
+        //
+        std::swap( m_mouse_capture.dst, m_mouse_capture.dst_alt );
+        //
+        m_mouse_capture.dst_backup          = *m_mouse_capture.dst;
+        
     }
 
 
@@ -845,16 +870,19 @@ inline void ActionComposer::_update_mouse_capture(void)
     {
         *m_mouse_capture.dest           = m_mouse_capture.live_local;
         
-        utl::HoverItem   hover          = S._get_item_under_cursor();
+        m_mouse_capture.dst->pos        = m_mouse_capture.live_local;
+        m_mouse_capture.dst->widget     = S._get_item_under_cursor();
         
-        std::cout << "ID:               : "     << hover.id                     << ".\n"
-                  << "Window            : "     << hover.window                 << ".\n"
-                  << "Viewport          : "     << hover.viewport               << ".\n"
-                  << "On Main Viewport  : "     << hover.on_main_viewport       << ".\n"
-                  << "Has-Rect          : "     << hover.has_rect               << ".\n"
-                  << "Clip-Min          : "     << "(" << hover.clip_min.x << ", " << hover.clip_min.y << ").\n"
-                  << "Clip-Max          : "     << "(" << hover.clip_max.x << ", " << hover.clip_max.y << ").\n"
-                  << std::endl;
+        //  const utl::HoverItem & hover    = m_mouse_capture.dst->widget;
+        //
+        //  std::cout << "ID:               : "     << hover.id                     << ".\n"
+        //            << "Window            : "     << hover.window                 << ".\n"
+        //            << "Viewport          : "     << hover.viewport               << ".\n"
+        //            << "On Main Viewport  : "     << hover.on_main_viewport       << ".\n"
+        //            << "Has-Rect          : "     << hover.has_rect               << ".\n"
+        //            << "Clip-Min          : "     << "(" << hover.clip_min.x << ", " << hover.clip_min.y << ").\n"
+        //            << "Clip-Max          : "     << "(" << hover.clip_max.x << ", " << hover.clip_max.y << ").\n"
+        //            << std::endl;
         
         
         
@@ -867,9 +895,10 @@ inline void ActionComposer::_update_mouse_capture(void)
 
     //  3.  CANCEL...
     if ( ImGui::IsKeyPressed(ImGuiKey_Escape) ) {
-        *m_mouse_capture.dest   = m_mouse_capture.backup;
-        m_mouse_capture.active  = false;
-        m_state                 = State::Idle;
+        *m_mouse_capture.dest       = m_mouse_capture.backup;
+        *m_mouse_capture.dst        = m_mouse_capture.dst_backup;
+        m_mouse_capture.active      = false;
+        m_state                     = State::Idle;
         return;
     }
     

@@ -20,6 +20,7 @@
 #include "json.hpp"
 #include "imgui.h"                      //  0.3     "DEAR IMGUI" HEADERS...
 #include "implot.h"
+#include "imgui_internal.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -51,16 +52,126 @@ struct HoverItem
 //
     ImGuiID                 id                      = 0;                    //  0 => no hovered item
     ImGuiWindow *           window                  = nullptr;              //  owning window (if any)
-    ImGuiViewport *         viewport                = nullptr;              //  owning viewport (fallback to main if unknown)
-    bool                    on_main_viewport        = false;
+    ImGuiViewport *         viewport                = nullptr;              //  owning viewport (fallback to main if unknown)ss
 
     // Available only when the hovered item is also the most recently submitted item.
     // (Safe to use immediately after the widget was submitted; otherwise false.)
     bool                    has_rect                = false;
     ImRect                  rect;                                           //  screen-space AABB of the item
-    ImVec2                  clip_min                {};                     //  window inner clip (for reference)
-    ImVec2                  clip_max                {};
+    int                     frame_stamp                   = -1;   // frame stamp for rect validity
 };
+
+
+
+
+#
+
+namespace highlight
+{
+    // --------------------------------------------------------------------- API
+    void begin_frame();                 // call once per frame before any Begin()
+    void add(ImGuiID id);               // start highlighting this widget
+    void remove(ImGuiID id);            // stop
+    void clear();                       // remove all
+
+    // ---------------------------------------------------------------- INTERNAL
+    struct Watched
+    {
+        ImGuiID         id          = 0;
+        ImGuiViewport*  viewport    = nullptr;
+        ImRect          rect{};
+        int             last_seen   = -1;      // frame index
+    };
+
+    struct PerContext
+    {
+        ImVector<Watched> watched;
+        static void IMGUI_CDECL hook(const ImGuiID* id, ImGuiDataType, const void*);
+    };
+
+    // one PerContext per ImGuiContext
+    inline PerContext& ctx_data()
+    {
+        // Static map: one PerContext per ImGuiContext*
+        static std::unordered_map<ImGuiContext*, PerContext> table;
+
+        ImGuiContext* g = ImGui::GetCurrentContext();
+        auto [it, inserted] = table.emplace(g, PerContext{});
+
+        if (inserted)                                          // first time for this context
+        {
+    #if !defined(IMGUI_DISABLE_DEBUG_TOOLS)
+            // Install our hook only if the field is a function pointer.
+            if constexpr (std::is_pointer_v<decltype(g->DebugHookIdInfo)>) {
+                //g->DebugHookIdInfo = PerContext::hook;
+            }
+    #endif
+        }
+        return it->second;
+    }
+
+    // ---------------------------------------------------------------- API impl
+    inline void add(ImGuiID id)
+    {
+        if (!id) return;
+        auto& list = ctx_data().watched;
+        for (auto& w : list) if (w.id == id) return;    // already present
+        list.push_back(Watched{ id });
+    }
+    inline void remove(ImGuiID id)
+    {
+        auto& list = ctx_data().watched;
+        for (int i = 0; i < list.Size; ++i)
+            if (list[i].id == id) { list.erase(list.Data + i); break; }
+    }
+    inline void clear() { ctx_data().watched.clear(); }
+
+    // --------------------------------------------------------------- Debug hook
+    // Called by ImGui every time GetID/PushID hashes a new ID.
+    inline void IMGUI_CDECL PerContext::hook(const ImGuiID* id,
+                                             ImGuiDataType, const void*)
+    {
+        if (!id || *id == 0) return;
+        PerContext& pc = ctx_data();
+        for (auto& w : pc.watched)
+            if (w.id == *id)
+                w.viewport = GImGui->CurrentWindow
+                           ? GImGui->CurrentWindow->Viewport
+                           : ImGui::GetMainViewport();
+    }
+
+    // --------------------------------------------------------------- Frame step
+    inline void begin_frame()
+    {
+        ImGuiContext& g = *GImGui;
+        PerContext&   pc = ctx_data();
+        const int     frame = g.FrameCount;
+
+        // Capture rect of *last* submitted item if it is watched.
+        if (g.LastItemData.ID != 0)
+            for (auto& w : pc.watched)
+                if (w.id == g.LastItemData.ID)
+                {
+                    w.rect      = g.LastItemData.Rect;
+                    w.last_seen = frame;
+                }
+
+        // Draw highlights
+        const ImU32 col = IM_COL32(255,255,0,255);
+        const float pad = 1.5f, thick = 2.0f;
+
+        for (const auto& w : pc.watched)
+        {
+            if (w.last_seen != frame || !w.viewport) continue;
+
+            ImRect r = w.rect; r.Min -= ImVec2(pad,pad); r.Max += ImVec2(pad,pad);
+            ImDrawList* dl = ImGui::GetForegroundDrawList(w.viewport);
+            dl->AddRect(r.Min, r.Max, col, 0.0f, 0, thick);
+            dl->AddLine(r.Min, r.Max, col, thick*0.5f);
+            dl->AddLine({r.Min.x,r.Max.y}, {r.Max.x,r.Min.y}, col, thick*0.5f);
+        }
+    }
+} // namespace highlight
 
 
 

@@ -290,28 +290,55 @@ DEF_CLICK_TYPE_NAMES = {
 //      ACTION DATA LAYER...
 // *************************************************************************** //
 
+
+//  "WPos"
+//
+struct WPos {
+    ImVec2              pos                 {  };
+    utl::HoverItem      widget              {  };
+};
+
+
+
+
+
 //  "CursorMoveParams"
 //
 struct CursorMoveParams {
-    ImVec2              first           {};
-    ImVec2              last            {};
-    float               duration        {1.f};
+    ImVec2              first               {  };
+    ImVec2              last                {  };
+    WPos                first_pos           {  };
+    WPos                last_pos            {  };
+//
+    float               wheel               { 0.0f };
+//
+    float               duration            { 1.0f };
 };
 
 inline void to_json (nlohmann::json & j, const CursorMoveParams & p)
 {
     j = {
-            {"first",       p.first},
-            {"last",        p.last},
-            {"duration",    p.duration}
+            {"first",               p.first},
+            {"last",                p.last},
+        //
+        //  {"first",               p.first_pos.pos},
+        //  {"last",                p.last_pos.pos},
+        //
+        //  {"wheel",               p.wheel}
+            {"duration",            p.duration}
     };
 }
 
 inline void from_json(const nlohmann::json & j, CursorMoveParams & p)
 {
-    j.at("first").get_to(p.first);
-    j.at("last").get_to(p.last);
-    j.at("duration").get_to(p.duration);
+    j.at(   "first"         )            .get_to(p.first                );
+    j.at(   "last"          )            .get_to(p.last                 );
+//
+    j.at(   "first"         )            .get_to(p.first_pos.pos        );
+    j.at(   "last"          )            .get_to(p.last_pos.pos         );
+//
+    j.at(   "duration"      )            .get_to(p.duration             );
+    //  j.at(   "duration"     )            .get_to(p.duration          );
 }
 
 
@@ -438,6 +465,7 @@ struct Action {
     std::string             descr           = "";
     ActionType              type            = ActionType::CursorMove;
 //
+//
     CursorMoveParams        cursor;             //  <   for CursorMove
     ClickParams             click;              //  <   for MouseClick
     ClickParams             press;              //  <   for MousePress
@@ -450,7 +478,7 @@ struct Action {
 };
 
 
-inline void to_json(nlohmann::json& j, const Action& a)
+inline void to_json(nlohmann::json & j, const Action & a)
 {
     uint8_t     type    = static_cast<uint8_t>( a.type );
     
@@ -587,15 +615,19 @@ struct MouseCaptureState {
 //
     bool                    active                  { false };          //  <   capturing?
 //
-    Action *                destination             { nullptr };
+    WPos *                  dst                     { nullptr };
+    WPos *                  dst_alt                 { nullptr };
+    WPos                    dst_live_local          { };
+    WPos                    dst_backup              { };
 //
-    ImVec2 *                dest                    { nullptr };        //  <   where result is written
-    ImVec2 *                alt_dest                { nullptr };        //  <   the “other” endpoint
-//
-    GLFWwindow *            target_window           { nullptr };        //  <   window the user hovered
 //
     ImVec2                  live_local              {  };               //  <   live coords (local win)
     ImVec2                  backup                  {  };               //  <   previous value (cancel)
+    ImVec2 *                dest                    { nullptr };        //  <   where result is written
+    ImVec2 *                alt_dest                { nullptr };        //  <   the “other” endpoint
+//
+//
+    GLFWwindow *            target_window           { nullptr };        //  <   window the user hovered
 //
     bool                    snapped_to_grid         { false };          //  <   future: grid / step
     bool                    double_clicked          { false };          //  <   future: detect dbl‑click

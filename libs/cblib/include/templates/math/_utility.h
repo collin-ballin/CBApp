@@ -131,27 +131,27 @@ inline T round_to(T v) {
 ///
 /// @throw std::invalid_argument if \p rel_tol or \p abs_tol is negative.
 template<typename T>
-[[nodiscard]] inline bool is_close( const T a, const T b,
-                                    T rel_tol = static_cast<T>(1e-9),
-                                    T abs_tol = static_cast<T>(0) )
+[[nodiscard]] inline constexpr bool is_close( const T a,                            const T b,
+                                              T rel_tol = static_cast<T>(1e-9),     T abs_tol = static_cast<T>(0) )
 {
-    static_assert(std::is_floating_point_v<T>, "\"is_close\" requires a floating-point type");
+    //  CASE 0 :    ASSERTIONS / EXCEPTIONS IF INVALID USAGE...
+    static_assert( std::is_floating_point_v<T>,     "\"is_close\" requires a floating-point type" );
+    if ( rel_tol < T(0) || abs_tol < T(0) )         { throw std::invalid_argument("rel_tol and abs_tol must be non-negative"); }
 
-    if (rel_tol < T(0) || abs_tol < T(0))
-        throw std::invalid_argument("rel_tol and abs_tol must be non-negative");
 
-    // fast-path for exact equality (also handles ±∞)
-    if (a == b)
-        return true;
+    //      1.      Early Exit for EXACT Equality ( also handles +/- INF ).
+    if ( a == b )                               { return true; }
 
-    // if either is NaN, result is false
-    if (std::isnan(a) || std::isnan(b))
-        return false;
+    //      2.      HANDLE NaN ARGUMENTS.
+    if ( std::isnan(a) || std::isnan(b) )       { return false; }
 
-    T diff   = std::abs(a - b);
-    T scale  = std::max(std::abs(a), std::abs(b));
-    T bound  = std::max(rel_tol * scale, abs_tol);
-    return diff <= bound;
+    //      3.      MIMIC BEHAVIOR OF THE PYTHON  "math.is_close(...)"  IMPLEMENTATION.
+    //  if ( std::isinf(a) || std::isinf(b) )       { return false; }
+    T       diff            = std::abs(a - b);
+    T       scale           = std::max(std::abs(a), std::abs(b));
+    T       bound           = std::max(rel_tol * scale, abs_tol);
+    
+    return (diff <= bound);
 }
 
 

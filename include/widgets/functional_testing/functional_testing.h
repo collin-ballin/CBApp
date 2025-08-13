@@ -593,6 +593,7 @@ protected:
     //
     //                              GENERIC UI FUNCTIONS:
     inline void                         _ui_movement_widgets                (Action & a);
+    inline void                         _ui_movement_widgets_OLD            (Action & a);
     inline void                         _ui_duration_widgets                (Action & a);
     
     // *************************************************************************** //
@@ -604,7 +605,7 @@ protected:
     // *************************************************************************** //
     //                              CURSOR CAPTURE:
     ImVec2                              get_cursor_pos                      (void);
-    bool                                _begin_mouse_capture                ([[maybe_unused]] Action & act, ImVec2 * destination);
+    bool                                _begin_mouse_capture                ([[maybe_unused]] Action & act, WPos * dst, ImVec2 * destination);
     inline void                         _update_mouse_capture               (void);
     //
     //                              KEYBOARD CAPTURE:
