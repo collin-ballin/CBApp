@@ -557,6 +557,16 @@ void App::InitUIScaler(void)
 //
 void App::OnDpiScaleChanged([[maybe_unused]] float xs, [[maybe_unused]] float ys)
 {
+    const float     new_scale   = std::max(xs, ys);
+    
+    if ( std::fabs(new_scale - S.m_dpi_scale) < 0.01f )     { return; }
+
+    S.m_ui_scaler.on_scale_changed(xs, ys);                 //  central handler
+    S.m_dpi_scale               = new_scale;                //  keep for logging/telemetry if desired
+    return;
+}
+/*
+{
     [[maybe_unused]] ImGuiIO &          io          = ImGui::GetIO();
     [[maybe_unused]] ImGuiStyle &       style       = ImGui::GetStyle();
     float                               new_scale   = std::max(xs, ys);
@@ -576,14 +586,6 @@ void App::OnDpiScaleChanged([[maybe_unused]] float xs, [[maybe_unused]] float ys
 
     this->S.m_dpi_scale = new_scale;             // store for next comparison
     return;
-}
-/*
-{
-    const float new_scale = std::max(xs, ys);
-    if (std::fabs(new_scale - S.m_dpi_scale) < 0.01f) return;   // ignore tiny changes
-
-    S.m_ui_scaler.on_scale_changed(xs, ys);     // <-- central handler (scales style + rebuilds fonts)
-    S.m_dpi_scale = new_scale;                  // keep for logs if you like
 }
 */
 

@@ -104,22 +104,22 @@ void App::init(void)
 void App::CreateContext(void)
 {
     //  0.1     SET GLFW WINDOW SETTINGS... [PRE].
-    glfwWindowHint(     GLFW_SCALE_TO_MONITOR,              GLFW_TRUE);       // Honor per‑monitor content scaling.
-    glfwWindowHint(     GLFW_TRANSPARENT_FRAMEBUFFER,       GLFW_TRUE);
-    //glfwWindowHint(   GLFW_COCOA_RETINA_FRAMEBUFFER,      GLFW_TRUE);
+    glfwWindowHint                  ( GLFW_SCALE_TO_MONITOR,                GLFW_TRUE                       );      //  Honor per‑monitor content scaling.
+    glfwWindowHint                  ( GLFW_TRANSPARENT_FRAMEBUFFER,         GLFW_TRUE                       );
+    //glfwWindowHint                ( GLFW_COCOA_RETINA_FRAMEBUFFER,        GLFW_TRUE                       );
     
     
     //  0.2     CREATE A WINDOW WITH GRAPHICS CONTEXT...
     this->S.m_glfw_window = utl::CreateGLFWWindow(this->S.m_window_w, this->S.m_window_h, this->S.m_windows[Window::Host].uuid.c_str(), nullptr, nullptr);
     //
     //      CASE 1  : FAILURE TO CREATE GLFW WINDOW...
-    if (!this->S.m_glfw_window)     { throw std::runtime_error(cb::error::GLFW_WINDOW_INIT_ERROR); }
+    if ( !this->S.m_glfw_window )   { throw std::runtime_error(cb::error::GLFW_WINDOW_INIT_ERROR); }
         
     
     
     //  0.3     SET GLFW WINDOW SETTINGS... [POST].
-    glfwSetWindowUserPointer(this->S.m_glfw_window, this);          //    Allow callbacks to reach this App instance.
-    glfwSetWindowContentScaleCallback(this->S.m_glfw_window,        //    Set callback for system DPI change.
+    glfwSetWindowUserPointer            ( this->S.m_glfw_window,            this                            );      //  Allow callbacks to reach this App instance.
+    glfwSetWindowContentScaleCallback   ( this->S.m_glfw_window,                                                    //  Set callback for system DPI change.
         [](GLFWwindow * win, float xs, float ys)
         {
             if ( auto * self = static_cast<App*>(glfwGetWindowUserPointer(win)) )
@@ -130,24 +130,23 @@ void App::CreateContext(void)
         
         
     //utl::SetGLFWWindowLocation(this->S.m_glfw_window, utl::WindowLocation::Center, cb::app::DEF_ROOT_WINDOW_SCALE);
-    utl::SetGLFWWindowSize(this->S.m_glfw_window, cb::app::DEF_ROOT_WINDOW_SCALE);
-    
-    
-    glfwMakeContextCurrent(this->S.m_glfw_window);
-    glfwSwapInterval(this->S.m_glfw_interval);        // Enable vsync
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    utl::SetGLFWWindowSize          ( this->S.m_glfw_window,                cb::app::DEF_ROOT_WINDOW_SCALE  );
+    //
+    glfwMakeContextCurrent          ( this->S.m_glfw_window                                                 );
+    glfwSwapInterval                ( this->S.m_glfw_interval                                               );      //  Enable vsync
+    glEnable                        ( GL_BLEND                                                              );
+    glBlendFunc                     ( GL_SRC_ALPHA,                         GL_ONE_MINUS_SRC_ALPHA          );
 
 
 
     //  2.  SETUP "Dear ImGui", "ImPlot", etc, CONTEXTS...
     IMGUI_CHECKVERSION();
-    if ( !ImGui::CreateContext()    )       { throw std::runtime_error(cb::error::IMGUI_CONTEXT_CREATION_ERROR); }
-    if ( !ImPlot::CreateContext()   )       { throw std::runtime_error(cb::error::IMPLOT_CONTEXT_CREATION_ERROR); }
+    if ( !ImGui::CreateContext()    )       { throw std::runtime_error(cb::error::IMGUI_CONTEXT_CREATION_ERROR);    }
+    if ( !ImPlot::CreateContext()   )       { throw std::runtime_error(cb::error::IMPLOT_CONTEXT_CREATION_ERROR);   }
         
     
     
-    [[maybe_unused]] ImGuiIO &      io          = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiIO &      io          = ImGui::GetIO();
     [[maybe_unused]] ImGuiStyle &   style       = ImGui::GetStyle();
 
     style.Colors[ImGuiCol_WindowBg].w           = 0.0f;     // host window background
@@ -162,11 +161,11 @@ void App::CreateContext(void)
     
     
     //      3.2     Setup Platform/Renderer backends.
-    ImGui_ImplGlfw_InitForOpenGL(this->S.m_glfw_window,     /*install_callbacks=*/true);
+    ImGui_ImplGlfw_InitForOpenGL    ( this->S.m_glfw_window,                /*install_callbacks=*/true      );
 #ifdef __EMSCRIPTEN__
     ImGui_ImplGlfw_InstallEmscriptenCallbacks(window, "#canvas");
 #endif      //  __EMSCRIPTEN__  //
-    ImGui_ImplOpenGL3_Init(this->S.m_glsl_version);
+    ImGui_ImplOpenGL3_Init          (this->S.m_glsl_version                                                 );
 
     return;
 }

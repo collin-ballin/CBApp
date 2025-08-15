@@ -390,34 +390,45 @@ private:
     //
 	void                    apply_ui_scale          (float s)
     {
-		ImGuiIO&    io = ImGui::GetIO();
-		ImGuiStyle& st = ImGui::GetStyle();
+		ImGuiIO &       io      = ImGui::GetIO();
+		ImGuiStyle &    st      = ImGui::GetStyle();
 
-		// Reset to pristine style captured during init_runtime()
-		st = m_base_style;
+		//  Reset to pristine style captured during init_runtime()
+		st                      = m_base_style;
 
-		// Version-aware scaling path
+
+		//  SELECT BASED ON WHICH IMGUI VERSION...
 		#if IMGUI_VERSION_NUM >= 19200
+        //
 			st.FontScaleDpi            = s;
 			st.ScaleAllSizes(s);
 			io.ConfigDpiScaleFonts     = true;
 			io.ConfigDpiScaleViewports = true;
-		#else
-			// ≤ 1.91 / 1.92 WIP: rebuild fonts at scaled px for crisp glyphs
-			if (m_cfg.rebuild_fonts) {
+        //
+		# else
+        //
+			//  CASE 1 :    IMGUI V1.91/1.92 WIP    -- rebuild fonts at scaled px for crisp glyphs.
+			if (m_cfg.rebuild_fonts)
+            {
 				m_cfg.rebuild_fonts(m_cfg.design_font_px * s);
-			} else {
-				// Fallback: single default font at scaled size
+			}
+            //
+            //  CASE 2 :    FALLBACK                -- single default font at scaled size.
+            else
+            {
 				io.Fonts->Clear();
-				ImFontConfig cfg; cfg.SizePixels = m_cfg.design_font_px * s;
+				ImFontConfig cfg; cfg.SizePixels    = m_cfg.design_font_px * s;
 				io.Fonts->AddFontDefault(&cfg);
 				io.Fonts->Build();
-				if (m_cfg.after_fonts_built) m_cfg.after_fonts_built();
+				if ( m_cfg.after_fonts_built )      { m_cfg.after_fonts_built(); }
 			}
 			st.ScaleAllSizes(s);
 			io.FontGlobalScale = 1.0f; // keep metrics consistent
-		#endif
-	}
+        //
+		#endif  //  IMGUI_VERSION_NUM >= 19200  //
+        
+        return;
+    }
 
     // *************************************************************************** //
     //
