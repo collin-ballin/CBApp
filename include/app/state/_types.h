@@ -194,6 +194,132 @@ APPLICATION_WINDOW_INFOS            = {{
 
 
 
+//  "UIScaler"
+//
+struct UIScaler
+{
+// *************************************************************************** //
+//
+//
+//      1.      DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    GLFWwindow *        window              = nullptr;
+    float               design_scale        = 0.0f;         //  e.g.:   2.0 on "Apple Studio Display"
+    float               base_font_px        = 16.0f;        //  your chosen "design" font size in px
+    ImGuiStyle          base_style          {  };           //  unscaled snapshot
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CLASS DATA-MEMBERS".
+    
+
+
+// *************************************************************************** //
+//
+//
+//      2.      MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    //  "init"
+    //
+    void        init        (GLFWwindow * w, float design_font_px = 16.0f)
+    {
+        window              = w;
+        base_font_px        = design_font_px;
+        base_style          = ImGui::GetStyle();          // snapshot BEFORE any scaling
+
+
+        float       xs      = 1.0f;
+        float       ys      = 1.0f;
+        
+        
+        glfwGetWindowContentScale(window, &xs, &ys);
+        design_scale        = (design_scale > 0.0f) ? design_scale : std::max(xs, ys);
+
+
+        //  Initial apply at current monitor
+        on_scale_changed(xs, ys);
+
+
+        //  React to future DPI moves/changes
+        glfwSetWindowContentScaleCallback(window, [](GLFWwindow* win, float xscale, float yscale)
+        {
+            //  Fetch instance stored in GLFW user pointer
+            auto * self     = static_cast<UIScaler*>( glfwGetWindowUserPointer(win) );
+            if (self)       { self->on_scale_changed(xscale, yscale); }
+        });
+        glfwSetWindowUserPointer(window, this);
+        
+        return;
+    }
+
+
+    //  "on_scale_changed"
+    //
+    void on_scale_changed(float xscale, float yscale) {
+        const float     monitor_scale   = std::max(xscale, yscale);
+        const float     s               = monitor_scale / design_scale; // key ratio
+
+        apply_ui_scale(s);
+        return;
+    }
+
+
+    //  "apply_ui_scale"
+    //
+    void apply_ui_scale(float s)
+    {
+        ImGuiIO& io     = ImGui::GetIO();
+        ImGuiStyle& st  = ImGui::GetStyle();
+
+        // Reset style then bake scaled sizes
+        st = base_style;
+#if IMGUI_VERSION_NUM >= 19200
+        // New (1.92+): fonts can be scaled via style.FontScaleDpi; sizes still need baking.
+        st.FontScaleDpi = s;            // scale all fonts for DPI (auto-updated if io.ConfigDpiScaleFonts=true)
+        st.ScaleAllSizes(s);            // paddings/spacings/thickness
+        // Optional: let ImGui auto-adjust when monitor DPI changes
+        io.ConfigDpiScaleFonts     = true;   // EXPERIMENTAL, present in current docs
+        io.ConfigDpiScaleViewports = true;   // EXPERIMENTAL, scales platform windows
+#else
+        // Legacy path (≤1.91): rebuild font atlas at scaled size
+        io.Fonts->Clear();
+        ImFontConfig cfg;
+        cfg.OversampleH = 3; cfg.OversampleV = 2;
+        // Replace with your actual font path(s)
+        io.Fonts->AddFontFromFileTTF("assets/fonts/Inter-Regular.ttf", base_font_px * s, &cfg);
+        // ...add other weights/icons at base_font_px * s as needed
+        io.Fonts->Build();
+
+        st.ScaleAllSizes(s);
+        io.FontGlobalScale = 1.0f;      // keep 1.0 so metrics and glyphs match
+#endif
+        return;
+    }
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MEMBER FUNCTIONS".
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "UIScaler" STRUCT INTERFACE.
+
+
+
+
+
+
+
+
 // *************************************************************************** //
 //      2B.  TASK IDENTIFIERS...
 // *************************************************************************** //
