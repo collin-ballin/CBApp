@@ -334,9 +334,12 @@ protected:
     // *************************************************************************** //
     //      UTILITY FUNCTIONS.              |   "main_application.cpp" ...
     // *************************************************************************** //
-    //                      MISC. GUI FUNCTIONS:
+    //                      DOCKSPACE GUI STUFF:
     void                        InitDockspace               (void);
     void                        RebuildDockLayout           (void);
+    //
+    //                      UI-SCALING STUFF:
+    void                        InitUIScaler                (void);
     void                        OnDpiScaleChanged           ([[maybe_unused]] float xs, [[maybe_unused]] float ys);
     
     // *************************************************************************** //

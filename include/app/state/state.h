@@ -94,7 +94,7 @@ public:
 // *************************************************************************** //
 //
     // *************************************************************************** //
-    //      CLASS INITIALIZATIONS.          |   "init.cpp" ...
+    //      1.1A.       CLASS INITIALIZATIONS.          |   "init.cpp" ...
     // *************************************************************************** //
     
     //  "instance"                          | Meyers-Style Singleton.       Created on first call, once.
@@ -112,12 +112,23 @@ public:
     //
     //
     // *************************************************************************** //
-    //  1.2     PRIVATE STRUCT INITIALIZATION FUNCTIONS...
+    //      1.1B.       PRIVATE STRUCT INITIALIZATION FUNCTIONS...
     // *************************************************************************** //
 protected:
                                         AppState                    (void);                 //  Default Constructor.
                                         ~AppState                   (void);                 //  Default Destructor.
+                                        
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //  1.2.    MAIN OPERATION FUNCTIONS...
+    // *************************************************************************** //
 public:
+    void                                InitUIScaler                (void);
+    void                                RebuildFonts                (const float scale);
+
+
     // *************************************************************************** //
     //
     //
@@ -410,7 +421,6 @@ public:
     inline void                         PopFont                     (void)                  { ImGui::PopFont(); return; }
 
 
-
     //  "DockAtHome"
     inline void                         DockAtHome                  (const Window & idx) {
         app::WinInfo &w = this->m_windows[static_cast<Window>(idx)];
@@ -456,6 +466,9 @@ public:
     ImWindows                           m_windows;                                                  //  2.      APPLICATION WINDOW STATE...
     std::vector<WinInfo *>              m_detview_windows               = {};                       //  2.1     WINDOWS INSIDE DETAIL VIEW...
     ImFonts                             m_fonts;                                                    //  3.      APPLICATION FONTS...
+    UIScaler                            m_ui_scaler;                                                //  4.      GUI-SCALER OBJECT...
+    //
+    //                      OTHER / SMALLER:
     std::vector< std::pair<Timestamp_t, std::string> >
                                         m_notes                         = {};
     Timestamp_t                         m_timestamp_spawn;

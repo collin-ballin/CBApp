@@ -376,7 +376,7 @@ void App::ShowDockspace([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 //
 //
 //
-//  3.4     ADDITIONAL APP FUNCTIONS...    | PRIVATE.
+//      3.4A.   DOCKSPACE GUI STUFF...    | PRIVATE.
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -519,6 +519,40 @@ void App::RebuildDockLayout(void)
     return;
 }
 
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      3.4B.   GUI-SCALING STUFF...    | PRIVATE.
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "InitUIScaler"
+/*
+void App::InitUIScaler(void)
+{
+    UIScaler::config            cfg;
+    
+    
+    cfg.window                  = S.m_glfw_window;
+    cfg.design_font_px          = cb::app::DEF_FONT_SIZE;    //     your “Main” base size
+    cfg.design_scale_hint       = 0.0f;                      //     capture current monitor as baseline
+    
+    cfg.rebuild_fonts           = [this](float scale){ this->rebuild_fonts(scale); };   //  When ImGui <= 1.91/1.92-WIP, UIScaler will call this on DPI/zoom changes.
+
+
+    S.m_ui_scaler               = UIScaler{cfg};
+    S.m_ui_scaler.init_runtime();                       // applies style scale + calls rebuild_fonts(scale)
+    
+    return;
+}
+   */
+
 //  "OnDpiScaleChanged"
 //
 void App::OnDpiScaleChanged([[maybe_unused]] float xs, [[maybe_unused]] float ys)
@@ -543,6 +577,15 @@ void App::OnDpiScaleChanged([[maybe_unused]] float xs, [[maybe_unused]] float ys
     this->S.m_dpi_scale = new_scale;             // store for next comparison
     return;
 }
+/*
+{
+    const float new_scale = std::max(xs, ys);
+    if (std::fabs(new_scale - S.m_dpi_scale) < 0.01f) return;   // ignore tiny changes
+
+    S.m_ui_scaler.on_scale_changed(xs, ys);     // <-- central handler (scales style + rebuilds fonts)
+    S.m_dpi_scale = new_scale;                  // keep for logs if you like
+}
+*/
 
 
 

@@ -187,9 +187,9 @@ void App::init_appstate(void)
 {
     [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
-    auto &                          m_fonts         = this->S.m_fonts;
+    //  auto &                          m_fonts         = this->S.m_fonts;
     std::tie( S.m_system_w, S.m_system_h )          = utl::GetMonitorDimensions(this->S.m_glfw_window);
-    bool                            good_fonts      = true;
+    //  bool                            good_fonts      = true;
 
     
     
@@ -199,7 +199,12 @@ void App::init_appstate(void)
 #ifdef CBAPP_USE_FONTSCALE_DPI
     S.m_dpi_fontscale                               = cblib::math::round_to<3>( utl::GetDPIFontScaling(this->S.m_glfw_window) );
 #endif  //  CBAPP_USE_FONTSCALE_DPI  //
-    style.ScaleAllSizes(this->S.m_dpi_scale);                   //      Apply initial scale to the style *once*.
+
+
+    //
+    //  style.ScaleAllSizes(this->S.m_dpi_scale);                   //      Apply initial scale to the style *once*.
+    //
+    
     
     CB_LOG(LogLevel::Debug, "System DPI Scale: {}.  System DPI Fontscale: {}",        S.m_dpi_scale, S.m_dpi_fontscale );
 
@@ -223,38 +228,19 @@ void App::init_appstate(void)
 
 
     //  4.  LOAD APPLICATION FONTS...
-    for (int i = 0; i < static_cast<int>(Font::Count) && good_fonts; ++i)
-    {
-        const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
-        
-    #ifndef CBAPP_DISABLE_CUSTOM_FONTS
-        m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontFromFileTTF(info.path.c_str(), S.m_dpi_fontscale * info.size);
-    # else
-        ImFontConfig    config;
-        config.SizePixels                   = S.m_dpi_fontscale * info.size;
-        m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontDefault(&config);
-    #endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
-        good_fonts                          = ( m_fonts[static_cast<Font>(i)] != nullptr );
-    }
+    //
+    this->S.RebuildFonts( /*scale=*/ this->S.m_dpi_fontscale );
+    //  this->S.RebuildFonts(/*scale=*/1.0f);   /* this->S.m_dpi_fontscale  */
     
-    
-    //      4.1     FALLING BACK TO DEFAULT FONTS...
-    if (!good_fonts) {
-        S.m_logger.warning( std::format("Failure to load custom fonts.  Reverting to default DEAR IMGUI Fonts") );
-        for (int i = 0; i < static_cast<int>(Font::Count); ++i) {                               //  TODO:   REFACTOR.
-            const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];          //      Adapt this impl to use RESOURCE IDs so
-            ImFontConfig    config;                                                             //      we can package FONTS as binary resources.
-            config.SizePixels                   = S.m_dpi_fontscale * info.size;
-            m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontDefault(&config);
-        }
-    }
     
     
     //      5.      LOADING CUSTOM COLORMAPS...
     S.LoadCustomColorMaps();
     
     
+    
     //      6.      INITIALIZE OTHER MEMBERS INSIDE APPSTATE...
+    //
     S.m_detview_windows.push_back(      std::addressof( this->m_graph_app.m_detview_window      )   );  //  TODO:   THIS SUCKS.
     S.m_detview_windows.push_back(      std::addressof( this->m_editor_app.m_detview_window     )   );  //      Fix it w/ forward declarations.
     S.m_detview_windows.push_back(      std::addressof( this->m_counter_app.m_detview_window    )   );

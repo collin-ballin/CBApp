@@ -84,10 +84,96 @@ AppState::AppState(void)
 //
 AppState::~AppState(void) = default;
 
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INIT" FUNCTIONS...
 
 
 
 
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      1.2.    MAIN OPERATION FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "InitUIScaler"
+//
+void AppState::InitUIScaler(void)
+{
+    UIScaler::Config            cfg;
+    
+    
+    cfg.window                  = this->m_glfw_window;
+    cfg.design_font_px          = cb::app::DEF_FONT_SIZE;    //     your “Main” base size
+    cfg.design_scale_hint       = 0.0f;                      //     capture current monitor as baseline
+    
+    cfg.rebuild_fonts           = [this](float scale){ this->RebuildFonts(scale); };   //  When ImGui <= 1.91/1.92-WIP, UIScaler will call this on DPI/zoom changes.
+
+
+    this->m_ui_scaler           = UIScaler{cfg};
+    this->m_ui_scaler.init_runtime();                       // applies style scale + calls rebuild_fonts(scale)
+    
+    return;
+}
+
+
+//  "RebuildFonts"
+//
+inline void AppState::RebuildFonts                (const float scale)
+{
+    ImGuiIO &               io              = ImGui::GetIO();
+    bool                    good_fonts      = true;
+    io.Fonts->Clear();
+        
+        
+    //      1A.     LOAD THE ASSIGNED FONTS...
+    for (int i = 0; i < static_cast<int>(Font::Count) && good_fonts; ++i)
+    {
+        const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
+        
+    #ifndef CBAPP_DISABLE_CUSTOM_FONTS
+        m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontFromFileTTF(info.path.c_str(), scale * info.size);
+    # else
+        ImFontConfig    config;
+        config.SizePixels                   = scale * info.size;
+        m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontDefault(&config);
+    #endif  //  CBAPP_DISABLE_CUSTOM_FONTS  //
+        good_fonts                          = ( this->m_fonts[static_cast<Font>(i)] != nullptr );
+    }
+    //
+    //      1B.     FAILURE IN [1A]     : FALLBACK TO USE DEFAULT FONTS...
+    if (!good_fonts) {
+        this->m_logger.warning( std::format("Failure to load custom fonts.  Reverting to default DEAR IMGUI Fonts") );
+        for (int i = 0; i < static_cast<int>(Font::Count); ++i) {                                   //  TODO: REFACTOR.
+            const auto &    info                    = cb::app::APPLICATION_FONT_STYLES[i];          //          Adapt this impl to use RESOURCE IDs so
+            ImFontConfig    config;                                                                 //          we can package FONTS as binary resources.
+            config.SizePixels                       = this->m_dpi_fontscale * info.size;
+            this->m_fonts[static_cast<Font>(i)]     = io.Fonts->AddFontDefault(&config);
+        }
+    }
+    
+    
+    
+    io.Fonts->Build();
+    //  Refresh GL texture now (OpenGL3 backend caches the atlas texture)
+    ImGui_ImplOpenGL3_DestroyFontsTexture();
+    ImGui_ImplOpenGL3_CreateFontsTexture();
+
+    
+    return;
+}
 
 
 

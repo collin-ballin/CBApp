@@ -203,9 +203,14 @@ APPLICATION_WINDOW_INFOS            = {{
 //
 struct UIScalerCFG
 {
-
-
-
+//
+    GLFWwindow *                        window                  = nullptr;      //  dependency, not owned
+    float                               design_font_px          = 16.0f;
+    float                               design_scale_hint       = 0.0f;         //  0 => capture from current monitor
+    //
+    std::function<void(float)>          rebuild_fonts           = {  };
+    std::function<void(void)>           after_fonts_built       = {  };
+//
 // *************************************************************************** //
 // *************************************************************************** //
 };//	END "UIScaler" STRUCT INTERFACE.
@@ -216,17 +221,26 @@ struct UIScalerCFG
 
 //  "UIScaler"
 //
-struct UIScaler
+class UIScaler
 {
 //  0.              CONSTANTS AND ALIASES...
 // *************************************************************************** //
 // *************************************************************************** //
+public:
 
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    //  CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
     using                       Config                          = UIScalerCFG;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr float      ms_MIN_UI_SCALE                 = 0.50f;
+    static constexpr float      ms_MAX_UI_SCALE                 = 2.50f;
     
 //
 //
@@ -241,10 +255,14 @@ struct UIScaler
 //      1.      DATA-MEMBERS...
 // *************************************************************************** //
 // *************************************************************************** //
-    GLFWwindow *        window              = nullptr;
-    float               design_scale        = 0.0f;         //  e.g.:   2.0 on "Apple Studio Display"
-    float               base_font_px        = 16.0f;        //  your chosen "design" font size in px
-    ImGuiStyle          base_style          {  };           //  unscaled snapshot
+protected:
+
+    Config                      m_cfg                           = {  };
+    //
+    ImGuiStyle                  m_base_style                    {  };
+	float                       m_user_scale                    = 1.0f;
+	float                       m_last_monitor_scale            = 1.0f;
+	float                       m_design_scale                  = 0.0f;
 
 //
 //
@@ -257,98 +275,195 @@ struct UIScaler
 // *************************************************************************** //
 //
 //
-//      2.      MEMBER FUNCTIONS...
+//      2A.     PUBLIC MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+public:
 
-    //  "init"
-    //
-    void        init        (GLFWwindow * w, float design_font_px = 16.0f)
+    // *************************************************************************** //
+    //      INITIALIZATION FUNCTIONS.   |   ...
+    // *************************************************************************** //
+
+    //  Explicit Constructor.
+	explicit                UIScaler                (Config cfg = {})
+        : m_cfg(std::move(cfg))   {  }
+ 
+    //  "init_runtime"
+	void                    init_runtime            (void)
     {
-        window              = w;
-        base_font_px        = design_font_px;
-        base_style          = ImGui::GetStyle();          // snapshot BEFORE any scaling
+        float       xs          = 1.0f;
+        float       ys          = 1.0f;
+    
+		IM_ASSERT( m_cfg.window                         && "UIScaler: config.window must be set"       );
+		IM_ASSERT( ImGui::GetCurrentContext()           && "UIScaler: ImGui context must exist"        );
+
+		this->m_base_style      = ImGui::GetStyle();
 
 
-        float       xs      = 1.0f;
-        float       ys      = 1.0f;
-        
-        
-        glfwGetWindowContentScale(window, &xs, &ys);
-        design_scale        = (design_scale > 0.0f) ? design_scale : std::max(xs, ys);
+		glfwGetWindowContentScale(m_cfg.window, &xs, &ys);
+		m_last_monitor_scale    = std::max(xs, ys);
+		m_design_scale          = (m_cfg.design_scale_hint > 0.0f)
+                                    ? m_cfg.design_scale_hint : m_last_monitor_scale;
 
-
-        //  Initial apply at current monitor
-        on_scale_changed(xs, ys);
-
-
-        //  React to future DPI moves/changes
-        glfwSetWindowContentScaleCallback(window, [](GLFWwindow* win, float xscale, float yscale)
-        {
-            //  Fetch instance stored in GLFW user pointer
-            auto * self     = static_cast<UIScaler*>( glfwGetWindowUserPointer(win) );
-            if (self)       { self->on_scale_changed(xscale, yscale); }
-        });
-        glfwSetWindowUserPointer(window, this);
-        
+		this->apply_ui_scale( this->effective_scale() );
         return;
-    }
+	}
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      API FUNCTIONS.              |   ...
+    // *************************************************************************** //
+    
+    //  "set_user_scale"
+	void                    set_user_scale          (float s) {
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+		this->m_user_scale = std::clamp(s, 0.60f, 2.00f);
+		this->apply_ui_scale( this->effective_scale() );
+	}
 
 
+    //  "nudge_user_scale"
+	void                    nudge_user_scale        (float delta)           { set_user_scale(m_user_scale + delta); }
+
+    //  "reset_user_scale"
+	void                    reset_user_scale        (void)                  { set_user_scale(1.0f); }
+
+    //  "effective_scale"
+	[[nodiscard]] float     effective_scale         (void) const
+    {
+		const float d = (m_design_scale > 0.0f) ? m_design_scale : m_last_monitor_scale;
+		return (m_last_monitor_scale / d) * m_user_scale;
+	}
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      OTHER FUNCTIONS.            |   ...
+    // *************************************************************************** //
+    
     //  "on_scale_changed"
-    //
-    void on_scale_changed(float xscale, float yscale) {
-        const float     monitor_scale   = std::max(xscale, yscale);
-        const float     s               = monitor_scale / design_scale; // key ratio
-
-        apply_ui_scale(s);
-        return;
-    }
-
-
-    //  "apply_ui_scale"
-    //
-    void apply_ui_scale(float s)
+	void                    on_scale_changed        (float xscale, float yscale)
     {
-        ImGuiIO& io     = ImGui::GetIO();
-        ImGuiStyle& st  = ImGui::GetStyle();
+		const float ms = std::max(xscale, yscale);
+		if (std::abs(ms - m_last_monitor_scale) < 0.001f) return;
+		m_last_monitor_scale = ms;
+		apply_ui_scale(effective_scale());
+	}
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "PUBLIC MEMBER FUNCTIONS".
+    
 
-        // Reset style then bake scaled sizes
-        st = base_style;
-#if IMGUI_VERSION_NUM >= 19200
-        // New (1.92+): fonts can be scaled via style.FontScaleDpi; sizes still need baking.
-        st.FontScaleDpi = s;            // scale all fonts for DPI (auto-updated if io.ConfigDpiScaleFonts=true)
-        st.ScaleAllSizes(s);            // paddings/spacings/thickness
-        // Optional: let ImGui auto-adjust when monitor DPI changes
-        io.ConfigDpiScaleFonts     = true;   // EXPERIMENTAL, present in current docs
-        io.ConfigDpiScaleViewports = true;   // EXPERIMENTAL, scales platform windows
-#else
-        // Legacy path (≤1.91): rebuild font atlas at scaled size
-        io.Fonts->Clear();
-        ImFontConfig cfg;
-        cfg.OversampleH = 3; cfg.OversampleV = 2;
-        // Replace with your actual font path(s)
-        io.Fonts->AddFontFromFileTTF("assets/fonts/Inter-Regular.ttf", base_font_px * s, &cfg);
-        // ...add other weights/icons at base_font_px * s as needed
-        io.Fonts->Build();
 
-        st.ScaleAllSizes(s);
-        io.FontGlobalScale = 1.0f;      // keep 1.0 so metrics and glyphs match
-#endif
+// *************************************************************************** //
+//
+//
+//      2B.     PROTECTED MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+private:
+    
+    // *************************************************************************** //
+    //      INTERNAL FUNCTIONS.         |   ...
+    // *************************************************************************** //
+    
+    //  "apply_ui_scale"
+    //      Reset style to baseline, then apply sizes + fonts for scale 's'.
+    //
+	void                    apply_ui_scale          (float s)
+    {
+		ImGuiIO&    io = ImGui::GetIO();
+		ImGuiStyle& st = ImGui::GetStyle();
+
+		// Reset to pristine style captured during init_runtime()
+		st = m_base_style;
+
+		// Version-aware scaling path
+		#if IMGUI_VERSION_NUM >= 19200
+			st.FontScaleDpi            = s;
+			st.ScaleAllSizes(s);
+			io.ConfigDpiScaleFonts     = true;
+			io.ConfigDpiScaleViewports = true;
+		#else
+			// ≤ 1.91 / 1.92 WIP: rebuild fonts at scaled px for crisp glyphs
+			if (m_cfg.rebuild_fonts) {
+				m_cfg.rebuild_fonts(m_cfg.design_font_px * s);
+			} else {
+				// Fallback: single default font at scaled size
+				io.Fonts->Clear();
+				ImFontConfig cfg; cfg.SizePixels = m_cfg.design_font_px * s;
+				io.Fonts->AddFontDefault(&cfg);
+				io.Fonts->Build();
+				if (m_cfg.after_fonts_built) m_cfg.after_fonts_built();
+			}
+			st.ScaleAllSizes(s);
+			io.FontGlobalScale = 1.0f; // keep metrics consistent
+		#endif
+	}
+
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      SERIALIZATION FUNCTIONS.    |   ...
+    // *************************************************************************** //
+    
+    //  "serialize"
+    void                    serialize               (nlohmann::json & j) const
+    {
+		j["user_scale"      ]       = m_user_scale;
+		j["design_scale"    ]       = m_design_scale;
+		j["design_font_px"  ]       = m_cfg.design_font_px;
+        
         return;
-    }
+	}
+    
+    //  "deserialize"
+	void                    deserialize             (const nlohmann::json & j)
+    {
+		if ( j.contains("design_font_px"    ) )     { m_cfg.design_font_px = j.at("design_font_px").get<float>();   }
+		if ( j.contains("design_scale"      ) )     { m_design_scale       = j.at("design_scale").get<float>();     }
+		if ( j.contains("user_scale"        ) )     { set_user_scale(j.at("user_scale").get<float>());              }
+        
+        return;
+	}
+
+
 
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "MEMBER FUNCTIONS".
+// *************************************************************************** //   END "PROTECTED FUNCTIONS".
+
+
+
+
 
 
 
 // *************************************************************************** //
 // *************************************************************************** //
-};//	END "UIScaler" STRUCT INTERFACE.
+};//	END "UIScaler" CLASS INTERFACE.
 
 
 
