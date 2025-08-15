@@ -106,15 +106,15 @@ class Manager {
 public:
     //
     //      1.      ASK-OK-CANCEL MENU:
-    static constexpr ImVec2             ASKOKCANCEL_WINDOW_SIZE         = ImVec2(400.0f,        200.0f);
+    static constexpr ImVec2             ASKOKCANCEL_WINDOW_SIZE         = ImVec2( 400.0f,        200.0f );
     static constexpr ImGuiWindowFlags   ASKOKCANCEL_WINDOW_FLAGS        = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration;
-    static constexpr ImVec2             ASKOKCANCEL_WINDOW_PIVOT        = ImVec2(0.5f,          1.0f/3.0f);
+    static constexpr ImVec2             ASKOKCANCEL_WINDOW_PIVOT        = ImVec2( 0.5f,          1.0f/3.0f );
     //
     //
     //      2.      SYSTEM PREFERENCES MENU:
-    static constexpr ImVec2             PREFERENCES_WINDOW_SIZE         = ImVec2(668.0f,        520.0f);
+    static constexpr ImVec2             PREFERENCES_WINDOW_SIZE         = ImVec2( 668.0f,        520.0f + 120.0f );
     static constexpr ImGuiWindowFlags   PREFERENCES_WINDOW_FLAGS        = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse;
-    static constexpr ImVec2             PREFERENCES_WINDOW_PIVOT        = ImVec2(0.5f,          1.0f/3.0f);
+    static constexpr ImVec2             PREFERENCES_WINDOW_PIVOT        = ImVec2( 0.5f,          0.0f );
     //
     //
     //      X.      OTHER WIDGETS...
@@ -256,6 +256,8 @@ inline void Open(const char*        id,
                    pivot,
                    viewport,
                    cond);
+                   
+    return;
 }
 
 
@@ -285,7 +287,7 @@ namespace ui { //     BEGINNING NAMESPACE "cb"...
 inline void ask_ok_cancel( const char *             uuid,
                            const char *             message,
                            std::function<void()>    on_ok           = {  },
-                           ImGuiViewport*           vp              = nullptr,
+                           ImGuiViewport *          vp              = nullptr,
                            ImVec2                   size            = popup::Manager::ASKOKCANCEL_WINDOW_SIZE,
                            ImGuiWindowFlags         flags           = popup::Manager::ASKOKCANCEL_WINDOW_FLAGS,
                            ImVec2                   pivot           = popup::Manager::ASKOKCANCEL_WINDOW_PIVOT,
@@ -446,14 +448,16 @@ inline void open_preferences_popup( const char *        uuid,
                                     ImVec2              pivot       = popup::Manager::PREFERENCES_WINDOW_PIVOT,
                                     ImGuiCond           cond        = ImGuiCond_Appearing )
 {
-    //  1.      Resolve viewport
+    //  CASE 0 :    USE DEFAULT VIEWPORT...
     if ( !vp ) {
-        if ( ImGuiWindow * w = ImGui::GetCurrentWindow() )      { vp = w->Viewport;                 }
-        else                                                    { vp = ImGui::GetMainViewport();    }
+        ImGuiWindow *   win     = ImGui::GetCurrentWindow();
+        if (win)        { vp = win->Viewport;               }
+        else            { vp = ImGui::GetMainViewport();    }
     }
 
-    //  2.      Anchor: horizontally centred, 120 px down from top edge
-    ImVec2 anchor{
+
+    //  1.      COMPUTE ANCHOR POINT AND POP-UP POSITIONING...
+    ImVec2      anchor{
         vp->Pos.x + vp->Size.x * 0.5f,   // centre-x (pivot.x = 0.5)
         vp->Pos.y + 120.0f               // top edge offset (pivot.y = 0)
     };
@@ -461,15 +465,16 @@ inline void open_preferences_popup( const char *        uuid,
 
     //  3.      Queue modal
     popup::Open(
-        uuid,
-        std::move(body),
-        flags,
-        /* on_close */ {},
-        /* pos      */ anchor,           // anchor matches pivot
-        /* size     */ size,
-        /* pivot    */ pivot,            // (0.5,0.0)
-        /* viewport */ vp->ID,
-        /* cond     */ cond);
+        /*  ID          */      uuid,
+        /*  body        */      std::move(body),
+        /*  flags       */      flags,
+        /*  on_close    */      {  },
+        /*  pos         */      anchor,             //    anchor matches pivot
+        /*  size        */      size,
+        /*  pivot       */      pivot,              //    (0.5,0.0)
+        /*  viewport    */      vp->ID,
+        /*  cond        */      cond );
+        
         
     return;
 }
