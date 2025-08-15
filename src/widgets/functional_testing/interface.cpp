@@ -10,6 +10,7 @@
 **************************************************************************************
 **************************************************************************************/
 #include "widgets/functional_testing/functional_testing.h"
+#include "widgets/_popups.h"
 #include "app/state/state.h"
 #include "app/state/_types.h"
 
@@ -157,11 +158,13 @@ void ActionComposer::_draw_controlbar(void)
         //      XXX.    SETTINGS MENU...
         ImGui::NextColumn();        column_label("Settings:");
         //
-        if ( ImGui::Button("+", BUTTON_SIZE) )      { ImGui::OpenPopup(SETTINGS_MENU_UUID); }
-        if ( ImGui::BeginPopup(SETTINGS_MENU_UUID) )              // draw the popup
+        if ( ImGui::Button("+", BUTTON_SIZE) )
         {
-            this->_draw_settings_menu();
-            ImGui::EndPopup();
+            ui::open_preferences_popup(
+                SETTINGS_MENU_UUID,
+                [this]([[maybe_unused]] popup::Context & ctx){ _draw_settings_menu(); },
+                ImGui::GetCurrentWindow()->Viewport
+            );
         }
     //
     //

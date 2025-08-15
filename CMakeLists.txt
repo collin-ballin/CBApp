@@ -207,7 +207,11 @@ CB_newline(2)
 CB_Log(STATUS   "POST-BUILD DIAGNOSTICS...")
 
 CB_file_list_info(INFO      APP_HEADERS     "\t"      "CBApp Source Files")
+#   print_file_list(APP_HEADERS)
+#
 CB_file_list_info(INFO      APP_SRCS        "\t"      "CBApp Header Files")
+#   print_file_list(APP_SRCS)
+
 
 
 CB_file_list_info(VERBOSE   CBLib_HEADERS   "\t"      "CBLib Header Files")
@@ -216,13 +220,20 @@ CB_file_list_info(VERBOSE   CBLib_SRCS      "\t"      "CBLib Source Files")
 
 
 #
+#       CB_file_list_info(DEBUG     IMGUI_HEADERS   "\t\t")
+#       #   print_file_list(IMGUI_HEADERS)
 #
-#   CB_file_list_info(DEBUG     IMGUI_SRCS      "\t\t")
-#   CB_file_list_info(DEBUG     IMGUI_SRCS      "\t\t")
+#       CB_file_list_info(DEBUG     IMGUI_SRCS      "\t\t")
+#       #   print_file_list(IMGUI_SRCS)
+#
+
+
 #
 #       print_file_list(CBLib_SRCS)
-#       print_file_list(CBLib_HEADERS)
+#       #   print_file_list(CBLib_SRCS)
 #
+#       print_file_list(CBLib_HEADERS)
+#       #   print_file_list(CBLib_HEADERS)
 #
 
 

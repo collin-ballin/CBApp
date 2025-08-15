@@ -166,7 +166,7 @@ void ActionComposer::Begin_IMPL(void)
         this->_file_dialog_handler();
     }
     
-    S.highlight_hover_item();
+    //  S.highlight_hover_item();
     
     return;
 }
@@ -1143,6 +1143,7 @@ bool ActionComposer::load_from_file(const std::filesystem::path & path)
 //  "_draw_settings_menu"
 //
 void ActionComposer::_draw_settings_menu(void)
+//  void ActionComposer::_draw_settings_menu([[maybe_unused]] popup::Context & ctx)
 {
     //  1.  ACTIONS...
     ImGui::SeparatorText("Actions...");

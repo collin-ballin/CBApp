@@ -55,9 +55,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-
-
-
 namespace popup { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -76,21 +73,30 @@ using CloseFn  = std::function<void(bool)>;       // fired once on close (true =
 //  "Modal"
 //
 struct Modal {
-    std::string       id;
-    BeginFn           begin;
-    CloseFn           on_close;
-    ImGuiWindowFlags  flags     = ImGuiWindowFlags_AlwaysAutoResize;
-    bool              open      = true;
-    bool              accepted  = false;
+    std::string         id;
+    BeginFn             begin;
+    CloseFn             on_close;
+    ImGuiWindowFlags    flags           = ImGuiWindowFlags_AlwaysAutoResize;
+//
+    ImVec2              pos             {  };              // placement
+    ImVec2              size            {  };
+    ImVec2              pivot           { 0.5f,     0.5f };
+    ImGuiID             viewport        = 0;
+    ImGuiCond           cond            = ImGuiCond_Appearing;
+//
+    bool                open            = true;
+    bool                accepted        = false;
 };
 
 
 //  "Context"
 //
 struct Context {
-    Modal& modal;
-    void close(bool ok = false) { modal.open = false; modal.accepted = ok; }
-    bool accepted() const       { return modal.accepted; }
+    Modal &         modal;
+//
+//
+    void            close       (bool ok = false)       { modal.open = false; modal.accepted = ok; }
+    bool            accepted    (void) const            { return modal.accepted; }
 };
 
 
@@ -99,113 +105,164 @@ struct Context {
 class Manager {
 public:
     //
-    //  FLAGS:
-    static constexpr ImGuiWindowFlags   ASKOKCANCEL_WINDOW_FLAGS        = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration;
-    static constexpr ImGuiWindowFlags   PREFERENCES_WINDOW_FLAGS        = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse;
-    //
-    //  SIZES:
+    //      1.      ASK-OK-CANCEL MENU:
     static constexpr ImVec2             ASKOKCANCEL_WINDOW_SIZE         = ImVec2(400.0f,        200.0f);
+    static constexpr ImGuiWindowFlags   ASKOKCANCEL_WINDOW_FLAGS        = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration;
+    static constexpr ImVec2             ASKOKCANCEL_WINDOW_PIVOT        = ImVec2(0.5f,          1.0f/3.0f);
+    //
+    //
+    //      2.      SYSTEM PREFERENCES MENU:
     static constexpr ImVec2             PREFERENCES_WINDOW_SIZE         = ImVec2(668.0f,        520.0f);
+    static constexpr ImGuiWindowFlags   PREFERENCES_WINDOW_FLAGS        = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse;
+    static constexpr ImVec2             PREFERENCES_WINDOW_PIVOT        = ImVec2(0.5f,          1.0f/3.0f);
+    //
+    //
+    //      X.      OTHER WIDGETS...
     static constexpr float              ASKOKCANCEL_BUTTON_W            = 120.0f;
 //
 //
 //
 public:
+
+
     //  "Open"
     //      flags defaults to AlwaysAutoResize
     //
-    void Open(const char *          id,
-              BeginFn               body,
-              ImGuiWindowFlags      flags = ImGuiWindowFlags_NoResize,// ImGuiWindowFlags_AlwaysAutoResize,
-              CloseFn               on_close  = {})
+    void Open( const char *         id,
+               BeginFn              body,
+               ImGuiWindowFlags     flags           = ImGuiWindowFlags_AlwaysAutoResize,
+               CloseFn              on_close        = {  },
+               ImVec2               pos             = {  },
+               ImVec2               size            = {  },
+               ImVec2               pivot           = {0.5f,    0.5f},
+               ImGuiID              viewport        = 0,
+               ImGuiCond            cond            = ImGuiCond_Appearing )
     {
-        queued_.push_back(
-            Modal{ id, std::move(body), std::move(on_close), flags });
+        queued_.push_back( Modal{
+            /*  id          */      id,
+            /*  begin       */      std::move(body),
+            /*  on_close    */      std::move(on_close),
+            /*  flags       */      flags,
+            /*  pos         */      pos,
+            /*  size        */      size,
+            /*  pivot       */      pivot,
+            /*  viewport    */      viewport,
+            /*  cond        */      cond
+            //
+            //  ...open / accepted use default members
+        } );
+        
+        return;
     }
+
 
     //  "Draw"
     //
     inline void Draw(void)
     {
-        //------------------------------------------------------------------ 1
-        // Promote any queued modals → active list and tell ImGui to show them
-        //------------------------------------------------------------------
-        for (auto& m : queued_) {
+        //  1.  PROMOTE ANY FRESHLY-QUEUED MODAL WINDOWS TO ACTIVE LIST...
+        for (Modal & m : queued_) {
             ImGui::OpenPopup(m.id.c_str());
             active_.push_back(std::move(m));
         }
         queued_.clear();
 
-        //------------------------------------------------------------------ 2
-        // Iterate through live pop-ups
-        //------------------------------------------------------------------
-        for (auto it = active_.begin(); it != active_.end(); ) {
-            Modal& m = *it;
 
-            // *** Pass &m.open so the title-bar “×” and Esc toggle it ***  ★
-            bool visible = ImGui::BeginPopupModal(
-                               m.id.c_str(),
-                               &m.open,                    // <- this pointer is required
-                               m.flags);                   // (AlwaysAutoResize by default)
+        //  2.  ITERATE THROUGH OPENED POP-UPS...
+        for (auto it = active_.begin(); it != active_.end(); /*increment inside*/)
+        {
+            Modal &     m   = *it;
 
-            if (visible) {
-                Context ctx{m};
-                m.begin(ctx);                             // user-supplied body
+            // ── Apply caller-supplied placement just before BeginPopupModal ──────────
+            ImGui::SetNextWindowSize     (m.size,  m.cond);
+            ImGui::SetNextWindowPos      (m.pos,   m.cond, m.pivot);
+            if ( m.viewport )           { ImGui::SetNextWindowViewport(m.viewport); }
 
-                // ----------------------------------------------------------------
-                // Explicit Esc key fallback: if the window is focused but the
-                // automatic mechanism didn't fire, close manually.           ★
-                // ----------------------------------------------------------------
-                if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
-                    ImGui::IsKeyPressed(ImGuiKey_Escape, /*repeat*/false))
+
+            //      2.1.    BEGIN MODAL WINDOW:
+            bool visible = ImGui::BeginPopupModal(m.id.c_str(), &m.open, m.flags);
+
+            if (visible)
+            {
+                Context     ctx         {m};
+                m.begin(ctx);   // draw user content
+
+                // Fallback: manual Esc close if default handler missed it
+                if ( ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
+                     ImGui::IsKeyPressed(ImGuiKey_Escape, /*repeat*/false) )
                 {
-                    ctx.close(false);                    // treat as “Cancel”
+                    ctx.close(false);                  // treat as Cancel
                 }
 
                 ImGui::EndPopup();
             }
 
-            // --------------------------------------------------------------------
-            // Remove modal if    (a) ImGui closed it (× / Esc)   OR
-            //                    (b) user code called ctx.close()
-            // --------------------------------------------------------------------
-            if (!visible || !m.open) {
-                if (m.on_close) m.on_close(m.accepted);  // accepted==true only on OK
-                it = active_.erase(it);                  // destroy modal
-            } else {
-                ++it;
+
+            //  3.  REMOVE THE MODAL WINDOW IF:  (A) ImGui closed it.  (B) User closes it by "x" or "[ESC]"...
+            if ( !visible || !m.open )
+            {
+                if (m.on_close)     { m.on_close(m.accepted); }     //  true ===>   OK/Accept
+                it = active_.erase(it);                             //  modal lifetime ends...
             }
+            else    { ++it; }
         }
+        
+        return;
     }
 
+
 private:
-    std::vector<Modal> queued_;
-    std::vector<Modal> active_;
+    std::vector<Modal>      queued_;
+    std::vector<Modal>      active_;
 };
 
-// global wrappers -----------------------------------------------------------
-inline Manager& manager() { static Manager inst; return inst; }
 
-inline void Open(const char* id,
-                 BeginFn     body,
-                 ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize,
-                 CloseFn     on_close  = {})
+
+// *************************************************************************** //
+//
+//
+//      GLOBAL WRAPPERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "manager"
+//
+inline Manager &        manager     (void)      { static Manager inst; return inst; }
+
+
+//  "Draw"
+//
+inline void             Draw        (void)      { manager().Draw(); }
+
+
+//  "Open"
+//
+inline void Open(const char*        id,
+                 BeginFn            body,
+                 ImGuiWindowFlags   flags     = ImGuiWindowFlags_AlwaysAutoResize,
+                 CloseFn            on_close  = {},
+                 ImVec2             pos       = {},
+                 ImVec2             size      = {},
+                 ImVec2             pivot     = {0.5f, 0.5f},
+                 ImGuiID            viewport  = 0,
+                 ImGuiCond          cond      = ImGuiCond_Appearing)
 {
-    manager().Open(id, std::move(body), flags, std::move(on_close));
+    manager().Open(id,
+                   std::move(body),
+                   flags,
+                   std::move(on_close),
+                   pos,
+                   size,
+                   pivot,
+                   viewport,
+                   cond);
 }
 
-inline void Draw() { manager().Draw(); }
 
 
 // *************************************************************************** //
 // *************************************************************************** //
 }//   END OF "popup" NAMESPACE.
-
-
-
-
-
-
 
 
 
@@ -225,28 +282,127 @@ namespace ui { //     BEGINNING NAMESPACE "cb"...
  *      ui::ask_ok_cancel("Erase everything?",
  *                        []{ clear_all(); });
  */
-inline void ask_ok_cancel(const char *              id,
-                          const char *              message,
-                          std::function<void()>     on_ok,
-                          ImGuiWindowFlags          flags       = popup::Manager::ASKOKCANCEL_WINDOW_FLAGS)
+inline void ask_ok_cancel( const char *             uuid,
+                           const char *             message,
+                           std::function<void()>    on_ok           = {  },
+                           ImGuiViewport*           vp              = nullptr,
+                           ImVec2                   size            = popup::Manager::ASKOKCANCEL_WINDOW_SIZE,
+                           ImGuiWindowFlags         flags           = popup::Manager::ASKOKCANCEL_WINDOW_FLAGS,
+                           ImVec2                   pivot           = popup::Manager::ASKOKCANCEL_WINDOW_PIVOT,
+                           ImGuiCond                cond            = ImGuiCond_Appearing)
 {
     using namespace popup;
+
+
+    //  CASE 0 :    USE DEFAULT VIEWPORT...
+    if ( !vp ) {
+        ImGuiWindow *   win     = ImGui::GetCurrentWindow();
+        if (win)        { vp = win->Viewport;               }
+        else            { vp = ImGui::GetMainViewport();    }
+    }
+
+
+    //  1.      COMPUTE ANCHOR POINT AND POP-UP POSITIONING...
+    ImVec2      anchor{
+        vp->Pos.x + vp->Size.x * pivot.x,
+        vp->Pos.y + vp->Size.y * pivot.y
+    };
+
+
+    // 3. Queue modal
+    popup::Open(
+        /*  ID          */      uuid,
+        /*  body        */      [msg = std::string(message)](popup::Context & ctx)
+        {
+            constexpr float         BTN_W           = popup::Manager::ASKOKCANCEL_BUTTON_W;
+            const float             BTN_H           = ImGui::GetFrameHeight();
+
+            //------------------------------------------------------------------
+            // 1.  Wrapped message
+            //------------------------------------------------------------------
+            const float             wrap_pos        = ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x; // right edge
+            ImGui::PushTextWrapPos(wrap_pos);
+            ImGui::TextWrapped("%s", msg.c_str());
+            ImGui::PopTextWrapPos();
+
+            //------------------------------------------------------------------
+            // 2.  Bottom-aligned & symmetric buttons
+            //------------------------------------------------------------------
+            const ImGuiStyle &      s               = ImGui::GetStyle();
+            const ImVec2            win_sz          = ImGui::GetWindowSize();
+
+            const float             btn_y           = win_sz.y - s.WindowPadding.y - BTN_H;        // bottom
+            const float             x_left          = s.WindowPadding.x;                           // left pad
+            const float             x_right         = win_sz.x - s.WindowPadding.x - BTN_W;        // right pad
+
+            // Cancel (left)
+            ImGui::SetCursorPos({x_left, btn_y});
+            bool                    cancel          = ImGui::Button("Cancel", {BTN_W, BTN_H});
+
+            // OK (right)
+            ImGui::SetCursorPos({x_right, btn_y});
+            bool                    ok              = ImGui::Button("OK", {BTN_W, BTN_H});
+
+            //------------------------------------------------------------------
+            // 3.  Result handling
+            //------------------------------------------------------------------
+            if ( !(cancel && ok) ) {
+                if (cancel)         { ctx.close(false); }  //   Cancel
+                else if ( ok )      { ctx.close(true);  }  //   OK / Accept
+            }
+            
+            return;
+        },
+        /*  flags       */      flags,
+        /*  on_close    */      [cb = std::move(on_ok)](bool accepted){ if (accepted && cb) cb(); },
+        /*  pos         */      anchor,                 // anchor matches pivot
+        /*  size        */      size,
+        /*  pivot       */      pivot,                  // (0.5,0.5)
+        /*  viewport    */      vp->ID,
+        /*  cond        */      cond
+    );
+    
+    return;
+}
+//
+//
+//
+/*
+inline void ask_ok_cancel( const char *             uuid,
+                           const char *             message,
+                           std::function<void()>    on_ok,
+                           ImGuiViewport *          vp          = nullptr,
+                           ImVec2                   size        = popup::Manager::ASKOKCANCEL_WINDOW_SIZE,
+                           ImGuiWindowFlags         flags       = popup::Manager::ASKOKCANCEL_WINDOW_FLAGS,
+                           ImVec2                   pivot       = popup::Manager::ASKOKCANCEL_WINDOW_PIVOT )
+{
+    using               namespace       popup;
+    ImGuiWindow *       window          = ImGui::GetCurrentWindow();
+    ImVec2              pos             = {  };
+        
+    //  CASE 0 :    ASSIGN DEFAULT VIEWPORT TO CURRENT WINDOW...
+    if ( nullptr == nullptr )           { vp = window->Viewport; }     // ImGui::GetMainViewport();
+    vp = window->Viewport;
     
     //------------------------------------------------------------------
     //  1.  Fixed size & centred position
     //------------------------------------------------------------------
-    const ImGuiViewport *   vp      = ImGui::GetMainViewport();
-    const ImVec2            pos     { vp->Pos.x + (vp->Size.x - Manager::ASKOKCANCEL_WINDOW_SIZE.x) * 0.5f,
-                                      vp->Pos.y + (vp->Size.y - Manager::ASKOKCANCEL_WINDOW_SIZE.y) * 0.5f };
+    pos     = { vp->Pos.x + (vp->Size.x - size.x) * 0.5f,
+                vp->Pos.y + (vp->Size.y - size.y) * 0.5f };
+
+
+
 
     //------------------------------------------------------------------
     // 2. Queue modal
     //------------------------------------------------------------------
-    ImGui::SetNextWindowSize(Manager::ASKOKCANCEL_WINDOW_SIZE,  ImGuiCond_Appearing);
-    ImGui::SetNextWindowPos (pos,                               ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize        (   size,       ImGuiCond_Appearing                 );
+    ImGui::SetNextWindowPos         (   pos,        ImGuiCond_Appearing,    pivot       );
+    ImGui::SetNextWindowViewport    (   vp->ID                                          );
+    //
     popup::Open(
-        /*  Title       */          id,
-        /*  BeginFn     */          [msg = std::string(message)](popup::Context & ctx)
+        //  Title       //          uuid,
+        //  BeginFn     //          [msg = std::string(message)](popup::Context & ctx)
         {
             static constexpr float  scale           = 2.05f;
             ImGuiStyle              style           = ImGui::GetStyle();
@@ -271,30 +427,50 @@ inline void ask_ok_cancel(const char *              id,
             }
         },
         //
-        /*  window flags    */      flags,
-        /*  on_close        */      [cb = std::move(on_ok)](bool accepted)      { if (accepted && cb) { cb(); } }
+        //  window flags    //      flags,
+        //  on_close        //      [cb = std::move(on_ok)](bool accepted)      { if (accepted && cb) { cb(); } }
     );
     
     return;
-}
+}*/
 
 
 //  "open_preferences_popup"
 //  Opens a macOS-style Preferences window and calls `body(ctx)` each frame.
 //
-inline void open_preferences_popup(const char *             id,
-                                   popup::BeginFn           body,
-                                   ImVec2                   size    = popup::Manager::PREFERENCES_WINDOW_SIZE,
-                                   ImGuiWindowFlags         flags   = popup::Manager::PREFERENCES_WINDOW_FLAGS)
+inline void open_preferences_popup( const char *        uuid,
+                                    popup::BeginFn      body,
+                                    ImGuiViewport *     vp          = nullptr,
+                                    ImVec2              size        = popup::Manager::PREFERENCES_WINDOW_SIZE,
+                                    ImGuiWindowFlags    flags       = popup::Manager::PREFERENCES_WINDOW_FLAGS,
+                                    ImVec2              pivot       = popup::Manager::PREFERENCES_WINDOW_PIVOT,
+                                    ImGuiCond           cond        = ImGuiCond_Appearing )
 {
-    const ImGuiViewport *   vp      = ImGui::GetMainViewport();
-    ImVec2                  pos{ vp->Pos.x + (vp->Size.x - size.x)*0.5f, vp->Pos.y + 120.0f };
+    //  1.      Resolve viewport
+    if ( !vp ) {
+        if ( ImGuiWindow * w = ImGui::GetCurrentWindow() )      { vp = w->Viewport;                 }
+        else                                                    { vp = ImGui::GetMainViewport();    }
+    }
 
-    ImGui::SetNextWindowSize(size, ImGuiCond_Appearing);
-    ImGui::SetNextWindowPos (pos,  ImGuiCond_Appearing);
+    //  2.      Anchor: horizontally centred, 120 px down from top edge
+    ImVec2 anchor{
+        vp->Pos.x + vp->Size.x * 0.5f,   // centre-x (pivot.x = 0.5)
+        vp->Pos.y + 120.0f               // top edge offset (pivot.y = 0)
+    };
 
-    popup::Open( id, std::move(body), flags );
-    
+
+    //  3.      Queue modal
+    popup::Open(
+        uuid,
+        std::move(body),
+        flags,
+        /* on_close */ {},
+        /* pos      */ anchor,           // anchor matches pivot
+        /* size     */ size,
+        /* pivot    */ pivot,            // (0.5,0.0)
+        /* viewport */ vp->ID,
+        /* cond     */ cond);
+        
     return;
 }
 

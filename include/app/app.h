@@ -456,6 +456,9 @@ protected:
         this->QuerySignalStates();
 
 
+        //      6.      HANDLE POP-UP OPERATIONS...
+        popup::Draw();
+
         return;
     }
     

@@ -591,9 +591,9 @@ void ActionComposer::_dispatch_action_ui(Action & a)
 //
 inline void ActionComposer::_ui_cursor_move(Action & a)
 {
-    //  this->_ui_movement_widgets(a);
+    this->_ui_movement_widgets(a);
     this->_ui_movement_widgets_OLD(a);
-    this->_ui_duration_widgets(a);
+    //  this->_ui_duration_widgets(a);
     
     return;
 }

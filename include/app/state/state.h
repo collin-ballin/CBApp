@@ -262,6 +262,63 @@ public:
     
     // *************************************************************************** //
     // *************************************************************************** //
+/*
+	inline void schedule_builtin_highlight(ImGuiID id, int frames = 2) noexcept
+	{
+		if (!id) return;
+		ImGuiContext* ctx = ImGui::GetCurrentContext();
+		if (!ctx) return;
+		// Internal debug locate: core will draw the yellow box when the item with this ID is submitted.
+		ctx->DebugLocateId      = id;
+		ctx->DebugLocateFrames  = (ctx->DebugLocateFrames > frames ? ctx->DebugLocateFrames : frames);
+	}
+
+
+
+
+    inline bool highlight_hover_item(const utl::HoverItem & it,
+	                                       float pad = 1.5f,
+	                                       float thickness = 2.0f,
+	                                       ImU32 color = IM_COL32(255,255,0,255),
+	                                       bool show_clip_rect = false) noexcept
+	{
+		if (!it.id) return false;
+
+		ImGuiContext* ctx = ImGui::GetCurrentContext();
+		ImGuiViewport* vp = it.viewport ? it.viewport : ImGui::GetMainViewport();
+		if (!vp) return false;
+
+		// If the hovered item is also the last submitted item, we have an exact rect NOW.
+		if (it.has_rect && ctx && it.frame_stamp == ctx->FrameCount)
+		{
+			ImDrawList* dl = ImGui::GetForegroundDrawList(vp);
+			ImRect      r  = it.rect;
+			r.Min.x -= pad; r.Min.y -= pad;
+			r.Max.x += pad; r.Max.y += pad;
+
+			dl->AddRect(r.Min, r.Max, color, 0.0f, 0, thickness);
+			dl->AddLine(r.Min, r.Max, color, thickness * 0.5f);
+			dl->AddLine(ImVec2(r.Min.x, r.Max.y), ImVec2(r.Max.x, r.Min.y), color, thickness * 0.5f);
+
+			if (show_clip_rect && it.window)
+				ImGui::GetForegroundDrawList(vp)->AddRect(it.window->InnerClipRect.Min, it.window->InnerClipRect.Max, IM_COL32(255,0,255,180));
+
+			return true;
+		}
+
+		// No reliable rect this frame: schedule ImGui to highlight the exact item on the next frame(s).
+		schedule_builtin_highlight(it.id, 2);
+		return false;
+	}
+*/
+
+
+
+
+
+    // *************************************************************************** //
+    // *************************************************************************** //
+
 
     inline void hl_begin(void) noexcept {
         utl::highlight::begin_frame();
@@ -281,24 +338,26 @@ public:
 
 
     //  "highlight_hover_item"
+    //
     inline void highlight_hover_item(void) noexcept
     {
-        ImGuiContext* ctx = ImGui::GetCurrentContext();
-        if (!ctx) return;
-
         enum class phase { idle, armed };
-        static phase s = phase::idle;
+        ImGuiContext *  ctx         = ImGui::GetCurrentContext();
+        ctx->DebugItemPickerActive  = false;
+        static phase    s           = phase::idle;
 
         if (s == phase::idle)
         {
-            ctx->DebugItemPickerActive = true;  // highlight during this frame's submissions
-            s = phase::armed;
+            //  ctx->DebugItemPickerActive = true;  // highlight during this frame's submissions
+            //  s = phase::armed;
         }
         else // phase::armed
         {
             ctx->DebugItemPickerActive = false; // restore on next frame entry
             s = phase::idle;
         }
+        ctx->DebugItemPickerActive = false;
+        return;
     }
 
     // *************************************************************************** //

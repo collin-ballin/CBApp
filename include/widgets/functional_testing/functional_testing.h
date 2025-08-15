@@ -86,10 +86,11 @@
 
 
 
+//      FORWARD DECLARATIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+namespace                       popup                         { struct Context; }
 
-
-//  FORWARD DECLARATION...
-//
 namespace cb { namespace app { //     BEGINNING NAMESPACE "cb::app"...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -378,8 +379,8 @@ public:
     static constexpr float              ms_LABEL_WIDTH                              = 90.0f;
     static constexpr float              ms_WIDGET_WIDTH                             = 250.0f;
     //
-    static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE                     = ImVec2( 55,   25 );
-    static constexpr float              ms_SETTINGS_LABEL_WIDTH                     = 180.0f;
+    static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE                     = ImVec2( 80,   25 );
+    static constexpr float              ms_SETTINGS_LABEL_WIDTH                     = 196.0f;
     static constexpr float              ms_SETTINGS_WIDGET_WIDTH                    = 300.0f;
     //
     //
@@ -455,7 +456,9 @@ protected:
     OverlayCache                        m_overlay_cache                             = {  };
     //
     //                              SETTINGS VARIABLES:
-    bool                                m_show_overlay                              = true;
+    bool                                m_show_overlay                              = false;
+    bool                                m_forced_overlay                            = false;
+    //
     bool                                m_render_visuals                            = true;
     bool                                m_allow_input_blocker                       = false;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
     bool                                m_show_composition_browser                  = true;
@@ -621,6 +624,7 @@ protected:
     //      UTILITY FUNCTIONS...
     // *************************************************************************** //
     void                                _draw_settings_menu                 (void);
+    //void                                _draw_settings_menu                 ([[maybe_unused]] popup::Context & ctx);
     void                                _draw_input_blocker                 (void);
     void                                _refresh_monitor_cache              (ImVec2);
     //
@@ -666,7 +670,13 @@ protected:
     //                      CENTRALIZED OPERATION FUNCTIONS...
     // *************************************************************************** //
     
-    inline void                         _run_all                        (void) {
+    inline void                         _run_all                        (void)
+    {
+        if ( !this->m_show_overlay ) {
+            this->m_show_overlay        = true;
+            this->m_forced_overlay      = true;
+        }
+    
         this->m_executor.reset();
         this->m_sel         = -1;
         m_play_index        = (m_sel >= 0               ? m_sel             : 0);
@@ -695,6 +705,12 @@ protected:
         m_state                             = State::Idle;
         //  this->m_sel                         = -1;
         //  this->m_play_index                  = -1;
+        //
+        if ( this->m_forced_overlay ) {
+            this->m_show_overlay        = false;
+            this->m_forced_overlay      = false;
+        }
+        //
         m_is_running                        = false;
         m_capture_is_active                 = false;
         m_key_capture_is_active             = false;
@@ -724,7 +740,7 @@ protected:
     }
     
     //  "exit_test"
-    inline void                         exit_test                       (void)           {
+    inline void                         exit_test                       (void) {
         //  m_step_req   = false;
         //  reset_state();
         //  m_play_index = -1;

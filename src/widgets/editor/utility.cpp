@@ -387,7 +387,7 @@ void Editor::_draw_controls(void)
 
         //  5.  CANVAS SETTINGS...
         ImGui::NextColumn(); ImGui::NewLine();
-        if ( ImGui::Button("Settings", WIDGET_SIZE) ) {
+        if ( ImGui::Button("+", BUTTON_SIZE) ) {
             ui::open_preferences_popup( "Editor System Preferences", [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
         }
 
@@ -409,7 +409,7 @@ void Editor::_draw_controls(void)
                                "This will erase all content on the plot.\nAre you sure you want to continue?",
                                [this]{ _clear_all(); } );
         }
-        popup::Draw();
+        //  popup::Draw();
     //
     //
     //

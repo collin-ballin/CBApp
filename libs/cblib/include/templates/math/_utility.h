@@ -135,9 +135,8 @@ template<typename T>
                                               T rel_tol = static_cast<T>(1e-9),     T abs_tol = static_cast<T>(0) )
 {
     //  CASE 0 :    ASSERTIONS / EXCEPTIONS IF INVALID USAGE...
-    static_assert( std::is_floating_point_v<T>,     "\"is_close\" requires a floating-point type" );
-    if ( rel_tol < T(0) || abs_tol < T(0) )         { throw std::invalid_argument("rel_tol and abs_tol must be non-negative"); }
-
+    static_assert(std::is_floating_point_v<T>, "\"is_close\" requires a floating-point type");
+    if ( rel_tol < T(0) || abs_tol < T(0) )     { throw std::invalid_argument("rel_tol and abs_tol must be non-negative"); }
 
     //      1.      Early Exit for EXACT Equality ( also handles +/- INF ).
     if ( a == b )                               { return true; }
@@ -146,7 +145,8 @@ template<typename T>
     if ( std::isnan(a) || std::isnan(b) )       { return false; }
 
     //      3.      MIMIC BEHAVIOR OF THE PYTHON  "math.is_close(...)"  IMPLEMENTATION.
-    //  if ( std::isinf(a) || std::isinf(b) )       { return false; }
+    if ( std::isinf(a) || std::isinf(b) )       { return false; }
+    
     T       diff            = std::abs(a - b);
     T       scale           = std::max(std::abs(a), std::abs(b));
     T       bound           = std::max(rel_tol * scale, abs_tol);
@@ -156,6 +156,43 @@ template<typename T>
 
 
 
+//  "tolerance_interval"
+//
+template<typename T>
+[[nodiscard]] inline constexpr std::pair<T,T>
+tolerance_interval( const T  ref,                      // reference “b”
+                    T        rel_tol = static_cast<T>(1e-9),
+                    T        abs_tol = static_cast<T>(0) )
+{
+    //  CASE 0 :    ASSERTIONS / EXCEPTIONS IF INVALID USAGE...
+    static_assert( std::is_floating_point_v<T>,     "\"tolerance_interval\" requires a floating-point type" );
+    if ( rel_tol < T(0) || abs_tol < T(0) )         { throw std::invalid_argument("rel_tol and abs_tol must be non-negative"); }
+    if ( std::isnan(ref) || std::isinf(ref) )       { return {ref, ref}; }
+
+    const T     base        = std::max(abs_tol, rel_tol * std::abs(ref));
+    T           low         = ref - base;            // left endpoint so far
+    T           high        = ref + base;            // right endpoint so far
+
+
+    //  --- asymmetric extension when the *other* number’s magnitude dominates ---
+    //      (rel_tol > 0 and moving *away* from zero on ref’s sign side)
+    if ( rel_tol > T(0) && rel_tol < T(1) )
+    {
+        const T     one_minus   = T(1) - rel_tol;
+
+        if ( ref > T(0) ) {                      //  positive reference  ===>  extend HIGH
+            const T high_rel    = ref / one_minus;          // equality at |x| > |ref|
+            high                = std::max(high, high_rel);
+        }
+        else if ( ref < T(0) ) {             // negative reference  ===>  extend LOW
+            const T low_rel     = ref / one_minus;   // more negative endpoint
+            low                 = std::min(low,  low_rel);
+        }
+        // ref == 0     : interval is symmetric; base is already correct
+    }
+
+    return { low, high };
+}
 
 
 
