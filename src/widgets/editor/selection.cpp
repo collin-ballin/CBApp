@@ -1121,8 +1121,10 @@ void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it
 
 
     //  2.  DELETE KEY.
-    if ( ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace) )
+    if ( it.hovered ) {
+        if ( ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace) )
         { delete_selection(); return; }                    // selection cleared, bail
+    }
 
 
 

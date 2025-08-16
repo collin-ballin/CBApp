@@ -1313,7 +1313,7 @@ void Editor::_draw_obj_properties_panel(Path & path, const size_t pidx)
 
 
     //  5.  PROPERTIES...
-    //  ImGui::NewLine();
+    ImGui::NewLine();
     ImGui::BeginDisabled(true);
     ImGui::SeparatorText("Properties");
     ImGui::EndDisabled();
