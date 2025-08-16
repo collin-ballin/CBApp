@@ -309,6 +309,7 @@ protected:
     //      PRIMARY STATE HANDLERS.         |   "editor.cpp" ...
     // *************************************************************************** //
     inline void                         _handle_default                     (const Interaction & );
+    inline void                         _handle_hand                        (const Interaction & );
     inline void                         _handle_line                        (const Interaction & );
     inline void                         _handle_point                       (const Interaction & );
     inline void                         _handle_pen                         (const Interaction & );
@@ -329,6 +330,8 @@ protected:
     void                                _dispatch_obj_inspector_column          (void);     //  PREVIOUSLY:     _draw_path_inspector_column
     //
     void                                _draw_obj_selector_column               (void);     //  PREVIOUSLY:     _draw_path_list_column
+    void                                _draw_obj_selector_table                (void);
+    //
     void                                _draw_single_obj_inspector              (void);     //  PREVIOUSLY:     _draw_single_path_inspector
     void                                _draw_multi_obj_inspector               (void);     //  PREVIOUSLY:     _draw_multi_path_inspector
     //
@@ -621,56 +624,73 @@ protected:
     }
     
     // *************************************************************************** //
+    
+    
+    
+    // *************************************************************************** //
     //
     //
     //
     // *************************************************************************** //
-    //      INLINE MISC. FUNCTIONS...
+    //      INLINE BROWSER FUNCTIONS...
     // *************************************************************************** //
+    
+    //  "_reorder_paths"
+    inline void                         _reorder_paths                      (int src, int dst)
+    {
+        BrowserState &      BS          = m_browser_S;
+        const bool          invalid     = ( (src == dst) || (src < 0) || (dst < 0) || ( src >= static_cast<int>(m_paths.size()) ) || ( dst >= static_cast<int>(m_paths.size()) ) );
+        
+        if ( invalid )      { return; }
 
-    //  "left_label"
-    inline void                         left_label                          (const char * label, const float label_w, const float widget_w) const
-    { utl::LeftLabel(label, label_w, widget_w); ImGui::SameLine(); return; };
-    
-    //  "label"
-    inline void                         label                               (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
-    { utl::LeftLabel(text, l_width, w_width); ImGui::SameLine(); };
-    
-    inline bool                         has_file                        (void) const    { return ( std::filesystem::exists( m_filepath ) ); }
-    
-    
-    
-    
-    //  "maybe_snap"
-    inline ImVec2                       maybe_snap                          (ImVec2 w) const
-    { return m_grid.snap_on ? snap_to_grid(w) : w; }
-    
-    //  "path_is_mutable"
-    inline bool                         path_is_mutable                     (const Path * p) const noexcept
-    { return p && p->visible && !p->locked; }
 
-    //  "_mode_has"
-    inline bool                         _mode_has                           (CBCapabilityFlags flag) const
-    { return (MODE_CAPS[static_cast<size_t>(m_mode)] & flag) != 0; }
 
-    //  "_toggle_resident_overlay"
-    inline void                         _toggle_resident_overlay            (const Resident idx) {
-        auto & entry = m_residents[idx];    Overlay * ov = entry.ptr;
-        ov->visible = !ov->visible;         return;
+        /*──────────────── reorder the vector ────────────────*/
+        Path temp      = std::move(m_paths[src]);
+        m_paths.erase(m_paths.begin() + src);
+        m_paths.insert(m_paths.begin() + (src < dst ? dst - 1 : dst),
+                       std::move(temp));
+
+        /*──────────────── rebuild z-index so
+            top row (index 0) = highest Z
+          ────────────────────────────────────────────────────*/
+        const int n = static_cast<int>(m_paths.size());
+        for (int i = 0; i < n; ++i)
+            m_paths[i].z_index = Z_FLOOR_USER + (n - 1 - i);
+
+        /*──────────────── adjust Editor-wide indices ────────*/
+        auto remap = [&](int & idx) {
+            if (idx < 0) return;
+            if (idx == src)                idx = dst;
+            else if (src < dst && idx > src && idx <= dst) idx--;
+            else if (dst < src && idx >= dst && idx <  src) idx++;
+        };
+        
+        remap(BS.m_browser_anchor);
+        remap(BS.m_layer_browser_anchor);
+        remap(BS.m_obj_rename_idx);
+        remap(BS.m_layer_rename_idx);
+
+        /*──────────────── remap path-selection set ──────────*/
+        std::unordered_set<size_t> new_sel;
+        for (size_t old_idx : m_sel.paths) {
+            int idx = static_cast<int>(old_idx);
+            remap(idx);
+            new_sel.insert(static_cast<size_t>(idx));
+        }
+        m_sel.paths.swap(new_sel);
     }
-
-    //  "_set_resident_visibility"
-    inline void                         _set_resident_visibility            (const Resident idx, const bool vis) {
-        auto & entry = m_residents[idx];    Overlay * ov = entry.ptr;
-        ov->visible = vis;                  return;
-    }
+    
+    // *************************************************************************** //
+    
+    
     
     // *************************************************************************** //
     //
     //
     //
     // *************************************************************************** //
-    //      NEW UTILITY FUNCTIONS...
+    //      NEW BOOK-KEEPING FUNCTIONS...
     // *************************************************************************** //
     
     //  "next_z_index"
@@ -789,6 +809,11 @@ protected:
         for (const Vertex& v : m_vertices)  { if (v.id >= m_next_id)    { m_next_id  = v.id + 1; }      }
         for (const Path& p : m_paths)       { if (p.id >= m_next_pid)   { m_next_pid = p.id + 1; }      }
     }
+    
+    // *************************************************************************** //
+    
+    
+    
     // *************************************************************************** //
     //
     //
@@ -866,6 +891,58 @@ protected:
         m_paths.push_back(std::move(dup));
         return m_paths.back();
     }
+    
+    // *************************************************************************** //
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      INLINE MISC. FUNCTIONS...
+    // *************************************************************************** //
+
+    //  "left_label"
+    inline void                         left_label                          (const char * label, const float label_w, const float widget_w) const
+    { utl::LeftLabel(label, label_w, widget_w); ImGui::SameLine(); return; };
+    
+    //  "label"
+    inline void                         label                               (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
+    { utl::LeftLabel(text, l_width, w_width); ImGui::SameLine(); };
+    
+    inline bool                         has_file                        (void) const    { return ( std::filesystem::exists( m_filepath ) ); }
+    
+    
+    
+    
+    //  "maybe_snap"
+    inline ImVec2                       maybe_snap                          (ImVec2 w) const
+    { return m_grid.snap_on ? snap_to_grid(w) : w; }
+    
+    //  "path_is_mutable"
+    inline bool                         path_is_mutable                     (const Path * p) const noexcept
+    { return p && p->visible && !p->locked; }
+
+    //  "_mode_has"
+    inline bool                         _mode_has                           (CBCapabilityFlags flag) const
+    { return (MODE_CAPS[static_cast<size_t>(m_mode)] & flag) != 0; }
+
+    //  "_toggle_resident_overlay"
+    inline void                         _toggle_resident_overlay            (const Resident idx) {
+        auto & entry = m_residents[idx];    Overlay * ov = entry.ptr;
+        ov->visible = !ov->visible;         return;
+    }
+
+    //  "_set_resident_visibility"
+    inline void                         _set_resident_visibility            (const Resident idx, const bool vis) {
+        auto & entry = m_residents[idx];    Overlay * ov = entry.ptr;
+        ov->visible = vis;                  return;
+    }
+    
+    
+    
 //
 //
 //

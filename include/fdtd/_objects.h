@@ -52,12 +52,51 @@ namespace cb { namespace fdtd {//     BEGINNING NAMESPACE "cb" :: "fdtd"...
 
 
 
-// *************************************************************************** //
-//
-//
 //      0.      ENUM TYPES...
 // *************************************************************************** //
 // *************************************************************************** //
+
+
+//  "SourceType"
+//
+enum class SourceType : uint8_t {
+    Gaussian,
+    TimeHarmonic,
+    RickerWavelet,
+//
+    COUNT
+};
+//
+//  "DEF_SOURCE_TYPE_NAMES"
+//      COMPILE-TIME ARRAY CONTAINING THE NAME OF ALL FDTD SOURCE TYPES.
+//
+inline static const std::array<const char *, static_cast<size_t>(SourceType::COUNT)>
+DEF_SOURCE_TYPE_NAMES        = {{
+    "Gaussian Pulse",       "Time-Harmonic",        "Ricker Wavelet"
+}};
+
+
+
+
+
+
+//  "BoundaryType"
+//
+enum class BoundaryType : uint8_t {
+    Mur,
+//
+    COUNT
+};
+//
+//  "DEF_BOUNDARY_TYPE_NAMES"
+//      COMPILE-TIME ARRAY CONTAINING THE NAME OF ALL FDTD BOUNDARY CONDITION TYPES.
+//
+inline static const std::array<const char *, static_cast<size_t>(BoundaryType::COUNT)>
+DEF_BOUNDARY_TYPE_NAMES        = {{
+    "Mur ABC"
+}};
+
+
 
 
 // *************************************************************************** //

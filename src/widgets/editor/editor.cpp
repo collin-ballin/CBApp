@@ -73,6 +73,7 @@ inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it
     if ( no_mod )
     {
         if ( ImGui::IsKeyPressed(ImGuiKey_V)                            )                   m_mode = Mode::Default;
+        if ( ImGui::IsKeyPressed(ImGuiKey_H)                            )                   m_mode = Mode::Hand;
         if ( ImGui::IsKeyPressed(ImGuiKey_N)                            )                   m_mode = Mode::Point;
         if ( ImGui::IsKeyPressed(ImGuiKey_P)                            )                   m_mode = Mode::Pen;
         if ( ImGui::IsKeyPressed(ImGuiKey_C)                            )                   m_mode = Mode::Scissor;
@@ -110,21 +111,23 @@ inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it
 
 //  "_dispatch_mode_handler"
 //
-inline void Editor::_dispatch_mode_handler([[maybe_unused]] const Interaction & it)
+inline void Editor::_dispatch_mode_handler( [[maybe_unused]] const Interaction & it )
 {
     if ( !(it.space && ImGui::IsMouseDown(ImGuiMouseButton_Left)) )
     {
-        switch (m_mode) {
-            case Mode::Default:         _handle_default(it);           break;
-            case Mode::Line:            _handle_line(it);              break;
-            case Mode::Point:           _handle_point(it);             break;
-            case Mode::Pen:             _handle_pen(it);               break;
-            case Mode::Scissor:         _handle_scissor(it);           break;
-            case Mode::Shape:           _handle_shape(it);             break;
-            case Mode::AddAnchor:       _handle_add_anchor(it);        break;
-            case Mode::RemoveAnchor:    _handle_remove_anchor(it);     break;
-            case Mode::EditAnchor:      _handle_edit_anchor(it);       break;
-            default: break;
+        switch ( this->m_mode )
+        {
+            case Mode::Default          :   { _handle_default         (it);           break;    }
+            case Mode::Hand             :   { _handle_hand            (it);           break;    }
+            case Mode::Line             :   { _handle_line            (it);           break;    }
+            case Mode::Point            :   { _handle_point           (it);           break;    }
+            case Mode::Pen              :   { _handle_pen             (it);           break;    }
+            case Mode::Scissor          :   { _handle_scissor         (it);           break;    }
+            case Mode::Shape            :   { _handle_shape           (it);           break;    }
+            case Mode::AddAnchor        :   { _handle_add_anchor      (it);           break;    }
+            case Mode::RemoveAnchor     :   { _handle_remove_anchor   (it);           break;    }
+            case Mode::EditAnchor       :   { _handle_edit_anchor     (it);           break;    }
+            default                     :   { break;                                            }
         }
     }
         
@@ -147,15 +150,17 @@ void Editor::Begin(const char * /*id*/)
 {
     ImGuiIO &               io              = ImGui::GetIO();
     const bool              space           = ImGui::IsKeyDown(ImGuiKey_Space);
+    //
+    const bool              pan_enabled     = space || _mode_has(CBCapabilityFlags_Pan);
     const bool              zoom_enabled    = _mode_has(CBCapabilityFlags_Zoom) && (!io.MouseDown[0]);
     //
     //
     ImPlotInputMap          backup          = ImPlot::GetInputMap();                //  Adjust ImPlot input map (backup, edit, restore at end)
-    ImPlotInputMap &        map             = ImPlot::GetInputMap();                        //
-    map.Pan                                 = ImGuiMouseButton_Left;                        //
-    map.PanMod                              = space ? 0 : ImGuiMod_Ctrl;                    //  disable pan unless Space
-    map.ZoomMod                             = zoom_enabled ? 0 : ImGuiMod_Ctrl;             //  disable zoom unless mode allows
-    map.ZoomRate                            = 0.10f;                                        //
+    ImPlotInputMap &        map             = ImPlot::GetInputMap();                            //
+    map.Pan                                 = ImGuiMouseButton_Left;                            //
+    map.PanMod                              = (pan_enabled)     ? 0     : ImGuiMod_Ctrl;        //  disable pan unless current TOOL allows PANNING...
+    map.ZoomMod                             = (zoom_enabled)    ? 0     : ImGuiMod_Ctrl;        //  disable zoom unless current TOOL allows ZOOMING...
+    map.ZoomRate                            = 0.05f;                                        //
 
 
     this->pump_main_tasks();
@@ -332,9 +337,18 @@ inline void Editor::_handle_default(const Interaction& it)
 }
 
 
+//  "_handle_hand"
+//
+inline void Editor::_handle_hand(const Interaction & it)
+{
+
+}
+
+
+
 //  "_handle_line"
 //
-inline void Editor::_handle_line(const Interaction& it)
+inline void Editor::_handle_line(const Interaction & it)
 {
     if (it.space) return; // ignore while panning
 

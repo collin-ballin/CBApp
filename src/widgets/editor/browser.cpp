@@ -186,7 +186,10 @@ void Editor::DrawBrowser(void)
         //  2.  OBJECT BROWSER'S SELECTOR COLUMN    (MAIN, LEFT-HAND MENU OF THE ENTIRE BROWSER)...
         ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_SELECTOR_DIMS.limits.min, BStyle.OBJ_SELECTOR_DIMS.limits.max );
         ImGui::BeginChild("##Editor_Browser_ObjSelector", BStyle.OBJ_SELECTOR_DIMS.value, BStyle.DYNAMIC_CHILD_FLAGS);
-            _draw_obj_selector_column();
+            //
+            this->_draw_obj_selector_table();
+            //  _draw_obj_selector_column();
+            //
             BStyle.OBJ_SELECTOR_DIMS.value.x     = ImGui::GetItemRectSize().x;
         ImGui::EndChild();
         ImGui::PopStyleColor();
@@ -382,6 +385,182 @@ void Editor::_draw_obj_selector_column(void)
     
     return;
 }
+
+
+//  "_draw_obj_selector_table"
+//
+void Editor::_draw_obj_selector_table(void)
+{
+    using                                   namespace           icon;
+    constexpr ImGuiTableFlags               TABLE_FLAGS         = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
+    constexpr ImGuiTableColumnFlags         C_HANDLE            = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    constexpr ImGuiTableColumnFlags         C_EYE               = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    constexpr ImGuiTableColumnFlags         C_LOCK              = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    constexpr ImGuiTableColumnFlags         C_NAME              = ImGuiTableColumnFlags_WidthStretch;
+    constexpr ImGuiTableColumnFlags         C_DEL               = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    const ImU32                             col_text            = ImGui::GetColorU32(ImGuiCol_Text);
+    const ImU32                             col_dim             = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+    //
+    BrowserStyle &                          BStyle              = m_style.browser_style;
+    BrowserState &                          BS                  = m_browser_S;
+    ImDrawList *                            dl                  = ImGui::GetWindowDrawList();
+    ImGuiListClipper                        clipper;
+
+
+    // filter input
+    S.PushFont(Font::Main);
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    if ( ImGui::InputTextWithHint( "##Editor_ObjSelector_ObjFilter",
+                                   "filter",
+                                   BS.m_obj_filter.InputBuf,
+                                   IM_ARRAYSIZE(BS.m_obj_filter.InputBuf) ) )
+        { BS.m_obj_filter.Build(); }
+        
+    S.PopFont();
+    ImGui::Separator();
+
+
+
+    if ( ImGui::BeginTable("##Editor_ObjSelector_ObjTable", 5, TABLE_FLAGS, ImVec2(0, -1)) )
+    {
+        ImGui::TableSetupColumn("Drag", C_HANDLE, CELL_SZ);
+        ImGui::TableSetupColumn("Eye",  C_EYE,    CELL_SZ);
+        ImGui::TableSetupColumn("Lock", C_LOCK,   CELL_SZ);
+        ImGui::TableSetupColumn("Name", C_NAME);
+        ImGui::TableSetupColumn("Del",  C_DEL,    1.2f * CELL_SZ);
+
+        clipper.Begin(static_cast<int>(m_paths.size()), -1);
+
+        while ( clipper.Step() )
+        {
+            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+            {
+                Path &                  path                = m_paths[i];
+                bool                    selected            = m_sel.paths.count(static_cast<size_t>(i));
+                bool                    mutable_path        = path.is_mutable();
+
+                if ( !BS.m_obj_filter.PassFilter(path.label.c_str()) )      { continue; }
+
+                ImGuiSelectableFlags    sel_flags           = (mutable_path)
+                    ? ( ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick     )
+                    : ( ImGuiSelectableFlags_Disabled | ImGuiSelectableFlags_AllowDoubleClick           );
+
+                ImGui::PushID(i);
+                ImGui::TableNextRow();
+
+
+                // ── 1. Drag-handle column ──────────────────────────
+                ImGui::TableSetColumnIndex(0);
+                ImGui::PushID("drag");                       // <── NEW
+                utl::SmallCButton( BStyle.ms_DRAG_HANDLE_ICON, 0x00000000 );
+                ImGui::PopID();                              // <── NEW
+                //
+                if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) )
+                {
+                    ImGui::SetDragDropPayload( "OBJ_ROW", &i, sizeof(i) );
+                    ImGui::EndDragDropSource();
+                }
+                if ( ImGui::BeginDragDropTarget() )
+                {
+                    if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("OBJ_ROW") )
+                    {
+                        int src = *static_cast<const int*>(p->Data);
+                        _reorder_paths(src, i);
+
+                        // safe early exit after mutation
+                        ImGui::PopID();
+                        clipper.End();
+                        ImGui::EndTable();
+                        return;
+                    }
+                    ImGui::EndDragDropTarget();
+                }
+
+
+
+                // ── 2. Eye toggle ─────────────────────────────────
+                ImGui::TableSetColumnIndex(1);
+                ImGui::InvisibleButton("##eye", {CELL_SZ, CELL_SZ});
+                if ( ImGui::IsItemClicked() )   { path.visible = !path.visible; _prune_selection_mutability(); }
+                (path.visible ? draw_eye_icon : draw_eye_off_icon)
+                    (dl, ImGui::GetItemRectMin(), {CELL_SZ, CELL_SZ},
+                     path.visible ? col_text : col_dim);
+
+
+
+                // ── 3. Lock toggle ───────────────────────────────
+                ImGui::TableSetColumnIndex(2);
+                ImGui::InvisibleButton("##lock", {CELL_SZ, CELL_SZ});
+                if ( ImGui::IsItemClicked() )   { path.locked = !path.locked; _prune_selection_mutability(); }
+                (path.locked ? draw_lock_icon : draw_unlock_icon)
+                    (dl, ImGui::GetItemRectMin(), {CELL_SZ, CELL_SZ},
+                     path.locked ? col_text : col_dim);
+
+
+
+                // ── 4. Name / selection / rename ─────────────────
+                ImGui::TableSetColumnIndex(3);
+                ImGui::PushStyleColor(ImGuiCol_Text, mutable_path ? col_text : col_dim);
+                
+                if ( ImGui::Selectable(path.label.c_str(), selected, sel_flags, {0.0f, 1.05f * CELL_SZ}) )
+                {
+                    const bool      ctrl    = ImGui::GetIO().KeyCtrl;
+                    const bool      shift   = ImGui::GetIO().KeyShift;
+                    if ( !ctrl && !shift )
+                    {
+                        reset_selection();
+                        if (mutable_path) m_sel.paths.insert(i);
+                        BS.m_browser_anchor = i;
+                    }
+                    else if ( shift && BS.m_browser_anchor >= 0 )
+                    {
+                        int     lo      = std::min(BS.m_browser_anchor, i);
+                        int     hi      = std::max(BS.m_browser_anchor, i);
+                        
+                        if (!ctrl)  { reset_selection(); }
+                        
+                        for (int k = lo; k <= hi; ++k) {
+                            if ( m_paths[k].is_mutable() )      { m_sel.paths.insert(k); }
+                        }
+                    }
+                    else if ( ctrl && mutable_path )
+                    {
+                        if ( !m_sel.paths.erase(i) )            { m_sel.paths.insert(i); }
+                        BS.m_browser_anchor = i;
+                    }
+                    _rebuild_vertex_selection();
+                }
+                ImGui::PopStyleColor();
+
+
+                // ── 5. Delete (selected & unlocked) ──────────────
+                ImGui::TableSetColumnIndex(4);
+                if ( !path.locked && selected )
+                {
+                    utl::SmallCButton(BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR);
+                    if (ImGui::IsItemClicked())
+                    {
+                        _erase_path_and_orphans(static_cast<PathID>(i));
+                        reset_selection();
+                        BS.m_inspector_vertex_idx = -1;
+                        _prune_selection_mutability();
+
+                        ImGui::PopID();
+                        clipper.End();
+                        ImGui::EndTable();
+                        return;
+                    }
+                }
+
+                ImGui::PopID();
+            }
+        }
+
+        clipper.End();
+        ImGui::EndTable();
+    }
+}
+
 
 
 /*

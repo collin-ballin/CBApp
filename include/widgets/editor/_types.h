@@ -92,6 +92,7 @@ enum class IoResult {
 //
 enum class Mode : int {
     Default = 0,        //  "Select"                (KEY: "V").
+    Hand,               //  "Hand"                  (KEY: "H").
     Line,
     Point,              //  "Point"                 (KEY: "N").
     Pen,                //  "Pen"                   (KEY: "P").
@@ -107,9 +108,9 @@ enum class Mode : int {
 //  "DEF_EDITOR_STATE_NAMES"
 static constexpr std::array<const char *, static_cast<size_t>(Mode::COUNT)>
     DEF_EDITOR_STATE_NAMES  = { {
-    "Default",              "Line",                     "Point",                    "Pen",
-    "Scissor",              "Shape",                    "Add Anchor Point",         "Remove Anchor Point",
-    "Edit Anchor"
+        "Default",                      "Hand",                     "Line",                 "Point",
+        "Pen",                          "Scissor",                  "Shape",                "Add Anchor Point",
+        "Remove Anchor Point",          "Edit Anchor"
 } };
 
 
@@ -138,6 +139,7 @@ enum CBCapabilityFlags_ : uint16_t {
 static constexpr std::array<uint16_t, static_cast<size_t>(Mode::COUNT)>
 MODE_CAPS               = {
 /*  Default         */      CBCapabilityFlags_Navigation | CBCapabilityFlags_Select | CBCapabilityFlags_CursorHint,
+/*  Hand            */      CBCapabilityFlags_Navigation,
 /*  Line            */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
 /*  Point           */      CBCapabilityFlags_Navigation | CBCapabilityFlags_Select | CBCapabilityFlags_CursorHint,
 /*  Pen             */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
@@ -840,7 +842,7 @@ struct BrowserStyle
     ImGuiChildFlags                     STATIC_CHILD_FLAGS                          = ImGuiChildFlags_Borders;
     //
     //                              BROWSER CHILD-WINDOW DIMENSIONS:
-    Param<ImVec2>                       OBJ_SELECTOR_DIMS                           = {     {250.0f,    -1.0f},     { {200.0f,      1.0f},      {400.0f,    FLT_MAX} }   };
+    Param<ImVec2>                       OBJ_SELECTOR_DIMS                           = {     {300.0f,    -1.0f},     { {250.0f,      1.0f},      {450.0f,    FLT_MAX} }   };
     Param<ImVec2>                       OBJ_PROPERTIES_INSPECTOR_DIMS               = {     {650.0f,    -1.0f},     { {600.0f,      1.0f},      {1200.0f,   FLT_MAX} }   };
     Param<ImVec2>                       VERTEX_SELECTOR_DIMS                        = {     {110.0f,    -1.0f},     { {90.0f,       1.0f},      {180.0f,    FLT_MAX} }   };
     //
@@ -894,11 +896,12 @@ struct BrowserStyle
 //                                      SPECIFIC WIDGET STUFF...
 // *************************************************************************** //
     //                              DELETE BUTTON:
+    static constexpr const char *       ms_DELETE_BUTTON_HANDLE                     = "x";
     static constexpr ImU32              ms_DELETE_BUTTON_COLOR                      = cblib::utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
-    static constexpr const char *       ms_DELETE_BUTTON_HANDLE                     = "=";
     static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT                 = 256ULL;
     //
     //                              DRAG/DROP STUFF:
+    static constexpr const char *       ms_DRAG_HANDLE_ICON                         = "=";
 
 
 // *************************************************************************** //
