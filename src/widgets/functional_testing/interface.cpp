@@ -35,9 +35,7 @@ void ActionComposer::_draw_controlbar(void)
 {
     using                           Font                    = app::AppState::Font;
     static constexpr const char *   uuid                    = "##Editor_Controls_Columns";
-    static constexpr const char *   SETTINGS_MENU_UUID      = "ActionComposer_SettingsMenu";
-    static constexpr int            NC                      = 8;
-    static constexpr int            NUM_ENTRIES_AT_END      = 3;
+    static constexpr const char *   SETTINGS_MENU_UUID      = "Action Composer Settings";
     //
     static ImGuiOldColumnFlags      COLUMN_FLAGS            = ImGuiOldColumnFlags_None;
     static ImGuiSliderFlags         SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
@@ -51,7 +49,9 @@ void ActionComposer::_draw_controlbar(void)
     ImGuiStyle &                    style                   = ImGui::GetStyle();
     //
     const ImVec2                    SPACING                 = ImVec2( 0.0f,             style.ItemSpacing.y + style.FramePadding.y      );
-    const ImVec2                    WIDGET_SIZE             = ImVec2( -1,               ImGui::GetFrameHeight()                         );
+    //  const ImVec2                    WIDGET_SIZE             = ImVec2( -1,               ImGui::GetFrameHeight()                         );
+    const ImVec2                    WIDGET_SIZE             = ImVec2( -1,               1.2f * ImGui::GetTextLineHeight()               );
+    const ImVec2                    SMALL_WIDGET_SIZE       = ImVec2( 95.0f,            WIDGET_SIZE.y                                   );
     const ImVec2                    BUTTON_SIZE             = ImVec2( WIDGET_SIZE.y,    WIDGET_SIZE.y                                   );
     //
     const ImVec2                    mpos                    = ImVec2(io.MousePos.x, io.MousePos.y);     // this->get_cursor_pos();    // glfwGetCursorPos(S.m_glfw_window, &cx, &cy);
@@ -60,19 +60,22 @@ void ActionComposer::_draw_controlbar(void)
 
 
     //      1.      BEGIN COLUMNS...
-    ImGui::Columns(NC, uuid, COLUMN_FLAGS);
+    ImGui::Columns(this->ms_NC, uuid, COLUMN_FLAGS);
     //
     //
     //
         //      1.      OPEN / CLOSE SIDEBAR WINDOW...
-        column_label("Browser:");
+        column_label( (this->m_show_composition_browser) ? "Hide Browser:" : "Show Browser:" );
         //
         if ( ImGui::ArrowButtonEx("##ActionComposer_ToggleCompositionBrowser",     (this->m_show_composition_browser) ? ImGuiDir_Left : ImGuiDir_Right,
                                   BUTTON_SIZE,                      ImGuiButtonFlags_None) )
         { this->m_show_composition_browser = !this->m_show_composition_browser; }
-    
-    
-    
+        //
+        //
+        //  ImGui::SameLine(0, ms_SMALL_ITEM_PAD);
+
+
+
         //      2.      PLAY / PAUSE...
         ImGui::NextColumn();        column_label("Controls:");
         //
@@ -81,35 +84,36 @@ void ActionComposer::_draw_controlbar(void)
         {
             if ( !this->is_running() )
             {
-                if ( ImGui::Button("Run All", WIDGET_SIZE) ) {
+                if ( ImGui::Button("Run All", SMALL_WIDGET_SIZE) ) {
                     this->_run_all();
                 }
             }
             else
             {
-                if ( utl::CButton("Stop", 0xFF453AFF, WIDGET_SIZE) ) {
+                if ( utl::CButton("Stop", 0xFF453AFF, SMALL_WIDGET_SIZE) ) {
                     this->reset_all();
                 }
             }
         }
         ImGui::EndDisabled();
-    
-    
-    
-        //      3.      RUN ONCE...
-        ImGui::NextColumn();        column_label("");
-        ImGui::SetNextItemWidth( WIDGET_SIZE.x );
-        ImGui::BeginDisabled( !this->is_running() && m_actions->empty() && (m_sel < 0) );
-            if ( ImGui::Button("Run Once", WIDGET_SIZE) ) {
-                m_play_index = m_sel;
-                m_step_req   = true;                       // flag for single action
-                m_state      = State::Run;
-            }
-        ImGui::EndDisabled();
-        
-
-
-    
+        //
+        //      ImGui::EndDisabled();
+        //
+        //      ImGui::SameLine(0, ms_SMALL_ITEM_PAD);
+        //      //
+        //      //      3.      RUN ONCE...
+        //      //  ImGui::NextColumn();        column_label("");
+        //      ImGui::SetNextItemWidth( SMALL_WIDGET_SIZE.x );
+        //      ImGui::BeginDisabled( !this->is_running() && m_actions->empty() && (m_sel < 0) );
+        //          if ( ImGui::Button("Run Once", SMALL_WIDGET_SIZE) ) {
+        //              m_play_index = m_sel;
+        //              m_step_req   = true;                       // flag for single action
+        //              m_state      = State::Run;
+        //          }
+        //      ImGui::EndDisabled();
+        //
+        //
+        //
         //      //  4.  STEP BUTTON...
         //      ImGui::NextColumn();        ImGui::NewLine();
         //      ImGui::BeginDisabled(m_sel < 0);               // usable while *not* running
@@ -119,13 +123,14 @@ void ActionComposer::_draw_controlbar(void)
         //          m_state      = State::Run;
         //      }
         //      ImGui::EndDisabled();
+        //
 
 
 
         //      5.      PLAYBACK SPEED...
         ImGui::NextColumn();        column_label("Playback Speed:");
         //
-        ImGui::SetNextItemWidth(WIDGET_SIZE.x);
+        ImGui::SetNextItemWidth( WIDGET_SIZE.x );
         if ( ImGui::SliderScalar( "##ActionComposer_PlaybackSpeed",         ImGuiDataType_Double,
                                   &m_executor.m_playback_speed.value,       &m_executor.m_playback_speed.limits.min,       &m_executor.m_playback_speed.limits.max,
                                   "%.1f", SLIDER_FLAGS ) )
@@ -133,8 +138,15 @@ void ActionComposer::_draw_controlbar(void)
 
 
 
+        //      6.      OVERLAY TOGGLE...
+        ImGui::NextColumn();        column_label("Show Overlay:");
+        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::Checkbox("##ActionComposer_ShowOverlay",             &m_show_overlay);
+
+
+
         //      ?.      EMPTY SPACES FOR LATER...
-        for (int i = ImGui::GetColumnIndex(); i < NC - NUM_ENTRIES_AT_END; ++i) {
+        for (int i = ImGui::GetColumnIndex(); i < this->ms_NC - this->ms_NE; ++i) {
             ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
         }
 
@@ -210,11 +222,12 @@ void ActionComposer::_draw_toolbar(void)
 //
 void ActionComposer::_draw_overlay(void)
 {
-    ImVec2                                  mpos            = ImGui::GetMousePos();
-    ImVec2                                  pos             = mpos + ms_OVERLAY_OFFSET;
+    ImVec2              mpos                = ImGui::GetMousePos();
+    ImVec2              pos                 = mpos + ms_OVERLAY_OFFSET;
+    const bool          force_overlay       = ( this->m_state == State::MouseCapture || this->m_mouse_capture.active  );
 
-    if ( !m_show_overlay )                  { return; }
-    if ( ImGui::GetIO().AppFocusLost )      { return; }
+    if ( !m_show_overlay && !force_overlay )    { return; }
+    if ( ImGui::GetIO().AppFocusLost )          { return; }
     //if ( glfwGetWindowAttrib(S.m_glfw_window, GLFW_FOCUSED) == 0 )    { return; }
 
     //  1.  CACHE CURRENT MONITOR DATA...
@@ -224,16 +237,11 @@ void ActionComposer::_draw_overlay(void)
     //  2.  CLAMP INSIDE CACHED MONITOR WORKSPACE...
     pos.x       = std::clamp( pos.x,        m_monitor_bounds.Min.x,       m_monitor_bounds.Max.x - m_overlay_size.x );
     pos.y       = std::clamp( pos.y,        m_monitor_bounds.Min.y,       m_monitor_bounds.Max.y - m_overlay_size.y );
-
-
-    //  3.  INPUT-BLOCKER WINDOW...
-    if ( (this->m_allow_input_blocker) && (m_state == State::MouseCapture || m_state == State::KeyCapture) )
-    { _draw_input_blocker(); }
     
 
-    //  4.  OVERLAY WINDOW...
-    ImGui::SetNextWindowBgAlpha(ms_OVERLAY_ALPHA);
-    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+    //  3.  OVERLAY WINDOW...
+    ImGui::SetNextWindowBgAlpha     (ms_OVERLAY_ALPHA);
+    ImGui::SetNextWindowPos         (pos, ImGuiCond_Always);
         if ( ImGui::BeginTooltip() )
         {
             this->_dispatch_overlay_content();

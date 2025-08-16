@@ -27,6 +27,168 @@
           "enabled": true,
           "hotkey": {
             "alt": false,
+            "ctrl": false,
+            "key": 606,
+            "shift": false,
+            "super": false
+          },
+          "name": "close sidebar",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 5
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              68.171875,
+              733.68359375
+            ],
+            "last": [
+              1914.96875,
+              144.33203125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 606,
+            "shift": false,
+            "super": false
+          },
+          "name": "clear all",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              68.171875,
+              733.68359375
+            ],
+            "last": [
+              1914.96875,
+              144.33203125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 606,
+            "shift": false,
+            "super": false
+          },
+          "name": "clear all",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        }
+      ],
+      "description": "",
+      "name": "Initialize Editor Testing (0/3)"
+    },
+    {
+      "actions": [
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              68.171875,
+              733.68359375
+            ],
+            "last": [
+              127.68359375,
+              532.48046875
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 606,
+            "shift": false,
+            "super": false
+          },
+          "name": "close sidebar",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 5
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              68.171875,
+              733.68359375
+            ],
+            "last": [
+              127.68359375,
+              532.48046875
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
             "ctrl": true,
             "key": 548,
             "shift": false,

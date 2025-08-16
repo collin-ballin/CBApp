@@ -308,14 +308,16 @@ void Editor::_update_world_extent()
 //
 void Editor::_draw_controls(void)
 {
-    static constexpr const char *   uuid            = "##Editor_Controls_Columns";
-    static constexpr int            NC              = 8;
-    static ImGuiOldColumnFlags      COLUMN_FLAGS    = ImGuiOldColumnFlags_None;
-    static ImVec2                   WIDGET_SIZE     = ImVec2( -1,  32 );
-    static ImVec2                   BUTTON_SIZE     = ImVec2( 32,   WIDGET_SIZE.y );
+    static constexpr const char *       uuid                = "##Editor_Controls_Columns";
+    static constexpr int                ms_NC               = 8;
+    static constexpr int                ms_NE               = 2;
     //
-    constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
-    int                             mode_i          = static_cast<int>(m_mode);
+    static ImGuiOldColumnFlags          COLUMN_FLAGS        = ImGuiOldColumnFlags_None;
+    const ImVec2                        WIDGET_SIZE         = ImVec2( -1,               1.2f * ImGui::GetTextLineHeight()               );
+    static ImVec2                       BUTTON_SIZE         = ImVec2( 32,   WIDGET_SIZE.y );
+    //
+    constexpr ImGuiButtonFlags          BUTTON_FLAGS        = ImGuiOldColumnFlags_NoPreserveWidths;
+    int                                 mode_i              = static_cast<int>(m_mode);
     
     this->S.PushFont( Font::Small );
    
@@ -325,12 +327,12 @@ void Editor::_draw_controls(void)
    
     //  BEGIN COLUMNS...
     //
-    ImGui::Columns(NC, uuid, COLUMN_FLAGS);
+    ImGui::Columns(ms_NC, uuid, COLUMN_FLAGS);
     //
     //
     //
-        //  1.  EDITOR STATE...
-        ImGui::Text("State:");
+        //      1.      EDITOR STATE...
+        this->S.column_label("State:");
         //
         ImGui::SetNextItemWidth( WIDGET_SIZE.x );
         if ( ImGui::Combo("##Editor_Controls_EditorState",      &mode_i,
@@ -341,27 +343,24 @@ void Editor::_draw_controls(void)
     
     
     
-        //  2.  GRID VISIBILITY...
-        ImGui::NextColumn();
-        ImGui::Text("Show Grid:");
+        //      2.      GRID VISIBILITY...
+        ImGui::NextColumn();        this->S.column_label("Show Grid:");
         //
         ImGui::SetNextItemWidth( BUTTON_SIZE.x );
         ImGui::Checkbox("##Editor_Controls_ShowGrid",           &m_grid.visible);
 
 
 
-        //  3.  SNAP-TO-GRID...
-        ImGui::NextColumn();
-        ImGui::Text("Snap-To-Grid:");
+        //      3.      SNAP-TO-GRID...
+        ImGui::NextColumn();        this->S.column_label("Snap-To-Grid:");
         //
         ImGui::SetNextItemWidth( BUTTON_SIZE.x );
         ImGui::Checkbox("##Editor_Controls_SnapToGrid",         &m_grid.snap_on);
         
         
         
-        //  4.  GRID-LINE DENSITY...
-        ImGui::NextColumn();
-        ImGui::Text("Grid Density:");
+        //      4.      GRID-LINE DENSITY...
+        ImGui::NextColumn();        this->S.column_label("Grid Density:");
         //
         //
         //
@@ -382,34 +381,38 @@ void Editor::_draw_controls(void)
         ImGui::SameLine();
         //
         ImGui::Text("(%.1f)", m_grid.snap_step);
+        
 
 
 
-        //  5.  CANVAS SETTINGS...
-        ImGui::NextColumn(); ImGui::NewLine();
-        if ( ImGui::Button("+", BUTTON_SIZE) ) {
-            ui::open_preferences_popup( "Editor System Preferences", [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
+        //      5.      CLEAR ALL...
+        ImGui::NextColumn();        this->S.column_label("Clear Data:");
+        if ( ImGui::Button("Clear", WIDGET_SIZE) ) {
+            ui::ask_ok_cancel( "Clear Data",
+                               "This action will erase all unsaved data in the current session.\nDo you wish to proceed?",
+                               [this]{ _clear_all(); } );
         }
 
 
-        
-        //  6.  EMPTY SPACES FOR LATER...
-        for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
+
+
+
+        //      ?.      EMPTY SPACES FOR LATER...
+        for (int i = ImGui::GetColumnIndex(); i < ms_NC - ms_NE; ++i) {
             ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
         }
 
 
 
-        //  X.  CLEAR ALL...
-        //ImGui::NextColumn();
-        //ImGui::TextUnformatted("##Editor_Controls_ClearCanvas");
-        ImGui::NewLine();
-        if ( ImGui::Button("Clear", WIDGET_SIZE) ) {
-            ui::ask_ok_cancel( "Ask Ok Cancel",
-                               "This will erase all content on the plot.\nAre you sure you want to continue?",
-                               [this]{ _clear_all(); } );
+        //      X.      CANVAS SETTINGS...
+        this->S.column_label("Settings:");
+        if ( ImGui::Button("+", BUTTON_SIZE) ) {
+            ui::open_preferences_popup( "Editor System Preferences", [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
         }
-        //  popup::Draw();
+        
+        
+        
+    //  popup::Draw();
     //
     //
     //

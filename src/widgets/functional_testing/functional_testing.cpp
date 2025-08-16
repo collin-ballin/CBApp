@@ -828,18 +828,21 @@ bool ActionComposer::_begin_mouse_capture([[maybe_unused]] Action & act, WPos * 
 inline void ActionComposer::_update_mouse_capture(void)
 {
     if ( m_state != State::MouseCapture || !m_mouse_capture.active )   { return; }
-
-
-
+    
+    
+    //  1.  INPUT-BLOCKER WINDOW...
+    if ( this->m_allow_input_blocker )          { _draw_input_blocker(); }
+    
+    
+    //  2.  CAPTURE DATA...
     want_capture_mouse_next_frame();                //  ← NEW (blocks UI input)
     m_mouse_capture.live_local                  = get_cursor_pos();
     //
     m_mouse_capture.dst_live_local.pos          = get_cursor_pos();
     m_mouse_capture.dst_live_local.widget       = S._get_item_under_cursor();
         
-        
-        
-    //  1.  USE TAB TO SWITCH ENDPOINTS...
+    
+    //  3.  USE TAB TO SWITCH ENDPOINTS...
     if ( ImGui::IsKeyPressed(ImGuiKey_Tab, false) && m_mouse_capture.alt_dest ) {
         //  1.  commit current pos to the endpoint we were editing
         *m_mouse_capture.dest               = m_mouse_capture.live_local;
@@ -861,11 +864,10 @@ inline void ActionComposer::_update_mouse_capture(void)
         std::swap( m_mouse_capture.dst, m_mouse_capture.dst_alt );
         //
         m_mouse_capture.dst_backup          = *m_mouse_capture.dst;
-        
     }
 
 
-    //  2.  ACCEPT...
+    //  4.  ACCEPT...
     if ( ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
     {
         *m_mouse_capture.dest           = m_mouse_capture.live_local;
@@ -893,7 +895,7 @@ inline void ActionComposer::_update_mouse_capture(void)
     }
     
 
-    //  3.  CANCEL...
+    //  5.  CANCEL...
     if ( ImGui::IsKeyPressed(ImGuiKey_Escape) ) {
         *m_mouse_capture.dest       = m_mouse_capture.backup;
         *m_mouse_capture.dst        = m_mouse_capture.dst_backup;
@@ -1167,7 +1169,7 @@ void ActionComposer::_draw_settings_menu(void)
     ImGui::NewLine();
     ImGui::SeparatorText("Settings...");
     {
-        //  1.  [TOGGLE]    OVERVIEW...
+        //  1.  [TOGGLE]    SHOW OVERLAY...
         this->label("Overlay Window:",              this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
         ImGui::SetNextItemWidth( ms_SETTINGS_BUTTON_SIZE.x );
         ImGui::Checkbox("##ActionComposer_OverlayToggle",           &m_show_overlay);

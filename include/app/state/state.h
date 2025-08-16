@@ -272,8 +272,8 @@ public:
     { utl::LeftLabel(text, l_width, w_width); ImGui::SameLine(); };
     
     //  "column_label"
-    inline void                         column_label                (const char * label)
-    { this->PushFont(Font::FootNote);     ImGui::TextDisabled("%s", label);     this->PopFont(); }
+    //  inline void                         column_label                (const char * label)
+    //  { this->PushFont(Font::FootNote);     ImGui::TextDisabled("%s", label);     this->PopFont(); }
     
     //  "column_label"
     inline void                         column_label                (const char * fmt, ...) {

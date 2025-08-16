@@ -397,7 +397,15 @@ public:
     static constexpr const char *       ms_EMPTY_HOTKEY_NAME                        = "UNASSIGNED";      // Used when Hotkey is UNASSIGNED...
     static constexpr const char *       ms_NO_ASSIGNED_FILE_STRING                  = "UNASSIGNED";      // Used when there is no "File > Save As..." assigned to app...
     //
+    //
+    //                              CONTROLBAR STUFF:
     static constexpr float              ms_CONTROLBAR_SELECTABLE_SEP                = 16.0f;    //  controlbar offset.
+    static constexpr float              ms_SMALL_ITEM_PAD                           = 4.0f;
+    static constexpr float              ms_BIG_ITEM_PAD                             = 8.0f;
+    static constexpr int                ms_NC                                       = 8;
+    static constexpr int                ms_NE                                       = 3;
+    //
+    //
     static constexpr float              ms_TOOLBAR_SELECTABLE_SEP                   = 16.0f;    //  sep for  "+ Add",  "Prev",  etc...
     static constexpr float              ms_BROWSER_SELECTABLE_SEP                   = 16.0f;    //  offset for buttons ontop of each selectable
     //

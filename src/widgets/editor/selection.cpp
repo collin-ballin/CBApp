@@ -1108,7 +1108,7 @@ void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it
     const float     step    = m_grid.snap_step * ( (io.KeyShift) ? 10.0f : 1.0f );         //  Always one “grid unit”.
     
     
-    if ( m_sel.empty() )    return;                     //  Nothing selected → nothing to do.
+    if ( m_sel.empty() || !it.hovered )     { return; }                     //  Nothing selected  OR  Not In-Focus  ===> nothing to do.
 
 
 
@@ -1121,11 +1121,8 @@ void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it
 
 
     //  2.  DELETE KEY.
-    if ( it.hovered )
-    {
-        if ( ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace) )
-            { delete_selection(); return; }                    // selection cleared, bail
-    }
+    if ( ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace) )
+        { delete_selection(); return; }                    // selection cleared, bail
 
 
     //  3.      JOIN.                   [ CTRL + J ].
@@ -1133,18 +1130,25 @@ void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it
             
             
     //  4.      CLEAR SELECTION.        [ ESC ].
-    if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )                 { this->reset_selection();      return;     }   //  [Esc]       CANCEL SELECTION...
+    if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )                 { this->reset_selection();      return;     }   //  [ESC]       CANCEL SELECTION...
             
 
     //  5.      COPY.                   [ CTRL + C ].
     if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) )        { this->copy_to_clipboard();    return;     }
+            
+
+    //  6.      PASTE.                  [ CTRL + V ].
+    if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) )        { /* this->copy_to_clipboard(); */      return;     }
 
 
-    //  6.      CREATE GROUP.           [ CTRL + G ].
+
+    //  X.      CREATE GROUP.           [ CTRL + G ].
     if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_G) &&
          ( m_sel.points.size() + m_sel.lines.size() + m_sel.paths.size() ) > 1 )
     {
-        // TODO: group_selection();
+        //
+        //  TODO: group_selection();
+        //
     }
 
 
