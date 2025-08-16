@@ -365,8 +365,8 @@ void Editor::_draw_controls(void)
         //
         //
         //
-        if ( ImGui::ArrowButtonEx("##Editor_Controls_GridDensityDown",      ImGuiDir_Down,
-                          BUTTON_SIZE,                                      BUTTON_FLAGS) )
+        if ( ImGui::ArrowButtonEx( "##Editor_Controls_GridDensityDown",     ImGuiDir_Down,
+                                   BUTTON_SIZE,                             BUTTON_FLAGS ) )
         {
             m_grid.snap_step *= 2.f;
         }
@@ -426,28 +426,30 @@ void Editor::_draw_controls(void)
 //
 void Editor::_draw_editor_settings([[maybe_unused]] popup::Context & ctx)
 {
+    S.PushFont(Font::Small);
+    
     //  1.  EDITOR SETTINGS...
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     if ( ImGui::CollapsingHeader("Behaviors and Mechanics") ) {
         this->_draw_settings_mechanics();
     }
 
 
     //  2.  USER PREFERENCES...
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     if ( ImGui::CollapsingHeader("User Preferences") ) {
         this->_draw_settings_user_preferences();
     }
 
 
     //  3.  SAVE/LOAD SERIALIZATION...
-    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::CollapsingHeader("Serialization") ) {
         this->_draw_settings_serialize();
     }
     
     
-    
+    S.PopFont();
     return;
 }
 
@@ -563,62 +565,74 @@ void Editor::_draw_settings_user_preferences(void)
 //
 void Editor::_draw_settings_serialize(void)
 {
-
-    //      using                       Type            = cb::FileDialog::Type;
-    //      using                       Initializer     = cb::FileDialog::Initializer;
-    //      static Initializer          save_data       = {
-    //          /* type               = */  Type::Save,
-    //          /* starting_dir       = */  std::filesystem::current_path(),
-    //          /* default_filename   = */  "canvas settings",
-    //          /* required_extension = */  ".json",
-    //          /* valid_extensions   = */  {".json", ".txt"}
-    //      };
-    //      static Initializer          open_data       = {
-    //          /* type               = */  Type::Open,
-    //          /* starting_dir       = */  std::filesystem::current_path(),
-    //          /* default_filename   = */  "",
-    //          /* required_extension = */  "",
-    //          /* valid_extensions   = */  {".json", ".txt"}
-    //      };
-    //      static cb::FileDialog       save_dialog;
-    //      static cb::FileDialog       open_dialog;
-
-/*
-    //  1.  SAVE DIALOGUE...
-    if ( ImGui::Button("Save") )    { save_dialog.initialize(save_data); }
-    //
-    if ( save_dialog.is_open() )
+    //  const float &                   LABEL_W             = m_style.ms_SETTINGS_LABEL_WIDTH;
+    //  const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    
+    
+    
+    //  3.  I/O OPERATIONS...
     {
-        if ( save_dialog.Begin("Save Editor Session") ) {        // returns true when finished
-            if ( auto path = save_dialog.result() )
-                { save_async( *path ); }        // your own handler
+        const bool                  has_file            = this->has_file();
+        [[maybe_unused]] bool       force_save_as       = false;
+    
+    
+        //      1.      CURRENT FILE...
+        this->label("Current File:",                this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        ImGui::TextDisabled( "%s", (has_file) ? this->m_filepath.string().c_str() : ms_NO_ASSIGNED_FILE_STRING );
+    
+    
+        //      2.      SAVE DIALOGUE...
+        this->label("Save:",                        this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( ImGui::Button("Save", ms_SETTINGS_BUTTON_SIZE) )    {
+            
+            if (has_file)       { this->save_async( this->m_filepath );     }
+            else                { force_save_as = true;                     }
+
         }
+        
+        
+        //      3.      "SAVE AS..." DIALOGUE...
+        //  this->label("Save As...:",                  this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        //  if ( force_save_as || ImGui::Button("Save As...", ms_SETTINGS_BUTTON_SIZE) )    {
+        //
+        //      if ( !S.m_dialog_queued )
+        //      {
+        //          S.m_dialog_queued       = true;
+        //          m_saving                = true;
+        //          S.m_dialog_settings     = {
+        //              /* type               = */  cb::FileDialog::Type::Save,
+        //              /* window_name        = */  "Open Testing Suite",
+        //              /* default_filename   = */  "functional_test.json",
+        //              /* required_extension = */  ".json",
+        //              /* valid_extensions   = */  {  },
+        //              /* starting_dir       = */  std::filesystem::current_path()
+        //          };
+        //      }
+        //  }
+
+
+        //      4.      LOAD DIALOGUE...
+        //  this->label("Load From File:",              this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        //  if ( ImGui::Button("Load", ms_SETTINGS_BUTTON_SIZE) )    {
+        //
+        //      if ( !S.m_dialog_queued )
+        //      {
+        //          S.m_dialog_queued       = true;
+        //          m_loading               = true;
+        //          S.m_dialog_settings     = {
+        //              /* type               = */  cb::FileDialog::Type::Open,
+        //              /* window_name        = */  "Save Testing Suite",
+        //              /* default_filename   = */  "",
+        //              /* required_extension = */  "",
+        //              /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
+        //              /* starting_dir       = */  std::filesystem::current_path()
+        //          };
+        //      }
+        //  }
     }
-
-
-    ImGui::SameLine(0,20);
     
     
-    //  2.  LOAD DIALOGUE...
-    if ( ImGui::Button("Open") )    { open_dialog.initialize(open_data); }
-    //
-    if ( open_dialog.is_open() )
-    {
-        if ( open_dialog.Begin("Load session from file") ) {        // returns true when finished
-            if ( auto path = open_dialog.result() )
-                { load_async( *path ); }        // your own handler
-        }
-    }
 
-
-
-    // status
-    if ( !m_io_msg.empty() )
-        ImGui::TextDisabled("%s", m_io_msg.c_str());
-    
-
-    // (existing Canvas/Grid prefs below …)
-*/
     return;
 }
 

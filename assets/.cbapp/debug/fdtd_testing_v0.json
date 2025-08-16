@@ -1,0 +1,240 @@
+{
+  "state": {
+    "lines": [],
+    "paths": [
+      {
+        "closed": true,
+        "id": 1,
+        "kind": 1,
+        "label": "Path 001",
+        "locked": false,
+        "payload": {
+          "data": "",
+          "meta": "",
+          "x": 1.0,
+          "y": 1.0
+        },
+        "style": {
+          "fill_color": 771714560,
+          "stroke_color": 4278255615,
+          "stroke_width": 2.0
+        },
+        "verts": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "visible": true,
+        "z_index": 256
+      },
+      {
+        "closed": true,
+        "id": 2,
+        "kind": 0,
+        "label": "Path 002",
+        "locked": true,
+        "style": {
+          "fill_color": 771714560,
+          "stroke_color": 4278255615,
+          "stroke_width": 2.0
+        },
+        "verts": [
+          5,
+          6,
+          7,
+          8
+        ],
+        "visible": true,
+        "z_index": 257
+      }
+    ],
+    "points": [
+      {
+        "sty": {
+          "color": 4278255360,
+          "radius": 4.0,
+          "visible": true
+        },
+        "v": 1
+      },
+      {
+        "sty": {
+          "color": 4278255360,
+          "radius": 4.0,
+          "visible": true
+        },
+        "v": 2
+      },
+      {
+        "sty": {
+          "color": 4278255360,
+          "radius": 4.0,
+          "visible": true
+        },
+        "v": 3
+      },
+      {
+        "sty": {
+          "color": 4278255360,
+          "radius": 4.0,
+          "visible": true
+        },
+        "v": 4
+      },
+      {
+        "sty": {
+          "color": 4278255360,
+          "radius": 4.0,
+          "visible": true
+        },
+        "v": 5
+      },
+      {
+        "sty": {
+          "color": 4278255360,
+          "radius": 4.0,
+          "visible": true
+        },
+        "v": 6
+      },
+      {
+        "sty": {
+          "color": 4278255360,
+          "radius": 4.0,
+          "visible": true
+        },
+        "v": 7
+      },
+      {
+        "sty": {
+          "color": 4278255360,
+          "radius": 4.0,
+          "visible": true
+        },
+        "v": 8
+      }
+    ],
+    "selection": {
+      "lines": [],
+      "paths": [],
+      "points": [],
+      "vertices": []
+    },
+    "vertices": [
+      {
+        "id": 1,
+        "in_handle": [
+          0.0,
+          0.0
+        ],
+        "kind": 0,
+        "out_handle": [
+          0.0,
+          0.0
+        ],
+        "x": 159.22048950195313,
+        "y": 244.67198181152344
+      },
+      {
+        "id": 2,
+        "in_handle": [
+          0.0,
+          0.0
+        ],
+        "kind": 0,
+        "out_handle": [
+          0.0,
+          0.0
+        ],
+        "x": 209.22048950195313,
+        "y": 244.67198181152344
+      },
+      {
+        "id": 3,
+        "in_handle": [
+          0.0,
+          0.0
+        ],
+        "kind": 0,
+        "out_handle": [
+          0.0,
+          0.0
+        ],
+        "x": 209.22048950195313,
+        "y": 294.6719970703125
+      },
+      {
+        "id": 4,
+        "in_handle": [
+          0.0,
+          0.0
+        ],
+        "kind": 0,
+        "out_handle": [
+          0.0,
+          0.0
+        ],
+        "x": 159.22048950195313,
+        "y": 294.6719970703125
+      },
+      {
+        "id": 5,
+        "in_handle": [
+          0.0,
+          0.0
+        ],
+        "kind": 0,
+        "out_handle": [
+          0.0,
+          0.0
+        ],
+        "x": 333.2577819824219,
+        "y": 235.57400512695313
+      },
+      {
+        "id": 6,
+        "in_handle": [
+          0.0,
+          0.0
+        ],
+        "kind": 0,
+        "out_handle": [
+          0.0,
+          0.0
+        ],
+        "x": 383.2577819824219,
+        "y": 235.57400512695313
+      },
+      {
+        "id": 7,
+        "in_handle": [
+          0.0,
+          0.0
+        ],
+        "kind": 0,
+        "out_handle": [
+          0.0,
+          0.0
+        ],
+        "x": 383.2577819824219,
+        "y": 285.5740051269531
+      },
+      {
+        "id": 8,
+        "in_handle": [
+          0.0,
+          0.0
+        ],
+        "kind": 0,
+        "out_handle": [
+          0.0,
+          0.0
+        ],
+        "x": 333.2577819824219,
+        "y": 285.5740051269531
+      }
+    ]
+  },
+  "version": 4
+}

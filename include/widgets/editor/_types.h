@@ -345,8 +345,8 @@ struct ShapeState_t {
     //
     //  Live-preview drag info (world-space)
     bool                dragging                = false;
-    ImVec2              press_ws{};                  // anchor at mouse-down
-    ImVec2              cur_ws{};                    // current mouse pos each frame
+    ImVec2              press_ws                {  };       // anchor at mouse-down
+    ImVec2              cur_ws                  {  };       // current mouse pos each frame
     float               start_y                 = 0.0f;
     float               start_rad               = 0.0f;
 };
@@ -436,7 +436,7 @@ struct BrowserState_t {
 //
 //
 //                          CACHE AND MISC. DATA:
-    char                        m_name_buffer[ms_PATH_TITLE_BUFFER_SIZE]    = {};       //  scratch text
+    char                        m_name_buffer[ms_PATH_TITLE_BUFFER_SIZE]    = {  };     //  scratch text
 //
 //
 //
@@ -840,9 +840,9 @@ struct BrowserStyle
     ImGuiChildFlags                     STATIC_CHILD_FLAGS                          = ImGuiChildFlags_Borders;
     //
     //                              BROWSER CHILD-WINDOW DIMENSIONS:
-    Param<ImVec2>                       OBJ_SELECTOR_DIMS                           = {     {300.0f,    -1.0f},     { {100.0f,      1.0f},      {550.0f,    FLT_MAX} }   };
-    Param<ImVec2>                       OBJ_PROPERTIES_INSPECTOR_DIMS               = {     {500.0f,    -1.0f},     { {150.0f,      1.0f},      {FLT_MAX,   FLT_MAX} }   };
-    Param<ImVec2>                       VERTEX_SELECTOR_DIMS                        = {     {100.0f,    -1.0f},     { {50.0f,       1.0f},      {200.0f,    FLT_MAX} }   };
+    Param<ImVec2>                       OBJ_SELECTOR_DIMS                           = {     {250.0f,    -1.0f},     { {200.0f,      1.0f},      {400.0f,    FLT_MAX} }   };
+    Param<ImVec2>                       OBJ_PROPERTIES_INSPECTOR_DIMS               = {     {650.0f,    -1.0f},     { {600.0f,      1.0f},      {1200.0f,   FLT_MAX} }   };
+    Param<ImVec2>                       VERTEX_SELECTOR_DIMS                        = {     {110.0f,    -1.0f},     { {90.0f,       1.0f},      {180.0f,    FLT_MAX} }   };
     //
     //
     //

@@ -81,7 +81,8 @@ static int point_index_from_vid(const std::vector<Editor::Point>& pts, uint32_t 
 Editor::Editor(app::AppState & src)
     : CBAPP_STATE_NAME(src)
 {
-    this->m_window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_HiddenTabBar;
+    namespace           fs                          = std::filesystem;
+    this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_HiddenTabBar;
     
     
     //  INITIALIZE EACH RESIDENT OVERLAY-WINDOW...
@@ -89,6 +90,18 @@ Editor::Editor(app::AppState & src)
     {
         Resident idx = static_cast<Resident>(i);
         this->_dispatch_resident_draw_fn( idx );
+    }
+    
+    
+    
+    //  2.  LOAD DEFAULT TESTS FROM FILE...
+    if ( !this->m_filepath.empty() && fs::exists(this->m_filepath) && fs::is_regular_file(this->m_filepath) )
+    {
+        this->S.m_logger.debug( std::format("Editor | loading from default file, \"{}\"", this->m_filepath.string()) );
+        this->load_async(this->m_filepath);
+    }
+    else {
+        this->S.m_logger.debug( std::format("Editor | unable to load default file, \"{}\"", this->m_filepath.string()) );
     }
 
     
@@ -197,7 +210,7 @@ void Editor::DrawBrowser(void)
     S.PopFont();
     return;
 }
-
+//OBJ_PROPERTIES_INSPECTOR_DIMS
 
 
 // *************************************************************************** //

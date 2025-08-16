@@ -155,6 +155,15 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //
     static constexpr float              ms_LIST_COLUMN_WIDTH            = 340.0f;   // px width of point‑list column
+    static constexpr float              ms_LABEL_WIDTH                  = 90.0f;
+    static constexpr float              ms_WIDGET_WIDTH                 = 250.0f;
+    //
+    //                              SETTINGS TAB:
+    static constexpr float              ms_SETTINGS_LABEL_WIDTH         = 196.0f;
+    static constexpr float              ms_SETTINGS_WIDGET_WIDTH        = 300.0f;
+    static constexpr const char *       ms_NO_ASSIGNED_FILE_STRING      = "UNASSIGNED";      // Used when there is no "File > Save As..." assigned to app...
+    static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE         = ImVec2( 80,   25 );
+    
 
 
 
@@ -623,6 +632,15 @@ protected:
     inline void                         left_label                          (const char * label, const float label_w, const float widget_w) const
     { utl::LeftLabel(label, label_w, widget_w); ImGui::SameLine(); return; };
     
+    //  "label"
+    inline void                         label                               (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
+    { utl::LeftLabel(text, l_width, w_width); ImGui::SameLine(); };
+    
+    inline bool                         has_file                        (void) const    { return ( std::filesystem::exists( m_filepath ) ); }
+    
+    
+    
+    
     //  "maybe_snap"
     inline ImVec2                       maybe_snap                          (ImVec2 w) const
     { return m_grid.snap_on ? snap_to_grid(w) : w; }
@@ -890,7 +908,6 @@ protected:
     std::string                         m_io_msg                        {  };
     //
     //
-    //
     std::atomic<bool>                   m_sdialog_open                  = {false};
     std::atomic<bool>                   m_odialog_open                  = {false};
     //
@@ -912,6 +929,7 @@ protected:
     };
     cb::FileDialog                      m_save_dialog;
     cb::FileDialog                      m_open_dialog;
+    std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/debug/fdtd_testing_v0.json"};
     
     // *************************************************************************** //
     //
