@@ -36,7 +36,6 @@ AppState::AppState(void)
     size_t          i                   = size_t(0);
 
 
-
     //  1.      INITIALIZE WINDOW INFOS...
     for (i = 0; i < static_cast<size_t>(Window_t::Count); ++i) {
         m_windows.data[i] = APPLICATION_WINDOW_INFOS[i];
@@ -46,9 +45,6 @@ AppState::AppState(void)
     for (i = 0; i < static_cast<size_t>(Font::Count); ++i) {
         m_fonts.data[i] = nullptr;  // load later in your init()
     }
-
-
-
 
 
 
@@ -75,7 +71,6 @@ AppState::AppState(void)
         std::addressof( m_windows[ Window::GraphApp     ].uuid      )
     };
     
-
     return;
 }
 
@@ -108,9 +103,9 @@ AppState::~AppState(void) = default;
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "InitUIScaler"
+//  "init_ui_scaler"
 //
-void AppState::InitUIScaler(void)
+void AppState::init_ui_scaler(void)
 {
     UIScaler::Config            cfg;
     

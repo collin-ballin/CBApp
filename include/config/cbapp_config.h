@@ -86,6 +86,7 @@
 // *************************************************************************** //
 // *************************************************************************** //
 //  #define     CBAPP_NEW_DOCKSPACE                             1
+#define     CBAPP_USE_NEW_GLFW_CALLBACKS                    1           //  Aug. 15, 2025:  USING "APP REGISTRY" TO OBTAIN "this" PTR INSIDE GLFW CALLBACK FUNCs...
 
 
 

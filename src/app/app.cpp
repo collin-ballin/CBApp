@@ -55,6 +55,11 @@ void App::run(void)
         
 
         //  2.  START THE "DEAR IMGUI" FRAME...
+        //
+        //
+        //      Any operations that must take place BEFORE the next ImGui Frame begins.
+                this->PREFrameCache();
+        //
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();

@@ -122,10 +122,10 @@ protected:
     //
     //
     // *************************************************************************** //
-    //  1.2.    MAIN OPERATION FUNCTIONS...
+    //      1.2A.   MAIN OPERATION FUNCTIONS...
     // *************************************************************************** //
 public:
-    void                                InitUIScaler                (void);
+    void                                init_ui_scaler              (void);
     void                                RebuildFonts                (const float scale);
 
 
@@ -134,7 +134,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //  1.3A    APPEARANCE HELPER FUNCTIONS...
+    //      1.3A.   APPEARANCE HELPER FUNCTIONS...
     // *************************************************************************** //
     void                                SetAppColorStyle            (const AppColorStyle_t);
     void                                SetPlotColorStyle           (const PlotColorStyle_t);
@@ -146,7 +146,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //  1.3B    APPLICATION OPERATION HELPER FUNCTIONS...
+    //      1.3B.   APPLICATION OPERATION HELPER FUNCTIONS...
     // *************************************************************************** //
     //
     //                              APPLICATION UTILITIES:
@@ -165,7 +165,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //  1.3C    MISC. HELPER FUNCTIONS...
+    //      1.3C.   MISC. HELPER FUNCTIONS...
     // *************************************************************************** //
     void                                log_startup_info            (void) noexcept;
     void                                log_shutdown_info           (void) noexcept;
@@ -203,6 +203,11 @@ public:
     //  "GetMenuState"
     [[nodiscard]] inline MenuState_t &              GetMenuState                (void) noexcept         { return this->m_task_state.m_current_menu_state.get(); }
     [[nodiscard]] inline const MenuState_t &        GetMenuState                (void) const noexcept   { return this->m_task_state.m_current_menu_state.get(); }
+    
+    
+    //  "GetUIScaler"
+    [[nodiscard]] inline UIScaler &                 GetUIScaler                 (void) noexcept         { return this->m_ui_scaler; }
+    [[nodiscard]] inline const UIScaler &           GetUIScaler                 (void) const noexcept   { return this->m_ui_scaler; }
     
     
 

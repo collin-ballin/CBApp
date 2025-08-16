@@ -103,13 +103,15 @@ void App::init(void)
 //
 void App::CreateContext(void)
 {
-    //  0.1     SET GLFW WINDOW SETTINGS... [PRE].
+
+
+    //  0.1.    SET GLFW WINDOW SETTINGS...     [ PRE ].
     glfwWindowHint                  ( GLFW_SCALE_TO_MONITOR,                GLFW_TRUE                       );      //  Honor per‑monitor content scaling.
     glfwWindowHint                  ( GLFW_TRANSPARENT_FRAMEBUFFER,         GLFW_TRUE                       );
     //glfwWindowHint                ( GLFW_COCOA_RETINA_FRAMEBUFFER,        GLFW_TRUE                       );
     
     
-    //  0.2     CREATE A WINDOW WITH GRAPHICS CONTEXT...
+    //  0.2.    CREATE A WINDOW WITH GRAPHICS CONTEXT.
     this->S.m_glfw_window = utl::CreateGLFWWindow(this->S.m_window_w, this->S.m_window_h, this->S.m_windows[Window::Host].uuid.c_str(), nullptr, nullptr);
     //
     //      CASE 1  : FAILURE TO CREATE GLFW WINDOW...
@@ -117,8 +119,18 @@ void App::CreateContext(void)
         
     
     
-    //  0.3     SET GLFW WINDOW SETTINGS... [POST].
-    glfwSetWindowUserPointer            ( this->S.m_glfw_window,            this                            );      //  Allow callbacks to reach this App instance.
+    //  0.3.    ASSIGN MY OWN USER-POINTER.
+#ifdef CBAPP_USE_NEW_GLFW_CALLBACKS
+
+
+#endif  //  CBAPP_USE_NEW_GLFW_CALLBACKS  //
+    
+    
+    
+    //  0.4.    SET GLFW CALLBACKS...           [ POST ].
+#ifndef CBAPP_USE_NEW_GLFW_CALLBACKS
+//
+    glfwSetWindowUserPointer            ( this->S.m_glfw_window,            this                            );      //  Allow callbacks to reach this App instance.     [THIS IS WRONG.  DO NOT READ FROM THIS POINTER IN A CALLBACK].
     glfwSetWindowContentScaleCallback   ( this->S.m_glfw_window,                                                    //  Set callback for system DPI change.
         [](GLFWwindow * win, float xs, float ys)
         {
@@ -126,6 +138,21 @@ void App::CreateContext(void)
                 self->OnDpiScaleChanged(xs, ys);    // treat xs==ys; ignore ys
         }
     );
+//
+# else
+//
+    app::register_app( this->S.m_glfw_window, this );
+    glfwSetWindowContentScaleCallback   ( this->S.m_glfw_window,
+        [](GLFWwindow * win, float xs, float ys)
+        {
+            if ( auto * self = app::lookup_app(win) ) {
+                self->OnDpiScaleChanged(xs, ys);
+            }
+            return;
+        }
+    );
+//
+#endif  //  CBAPP_USE_NEW_GLFW_CALLBACKS  //
         
         
         
@@ -160,12 +187,14 @@ void App::CreateContext(void)
     
     
     
-    //      3.2     Setup Platform/Renderer backends.
+    //      3.2.    Setup Platform/Renderer backends.
     ImGui_ImplGlfw_InitForOpenGL    ( this->S.m_glfw_window,                /*install_callbacks=*/true      );
 #ifdef __EMSCRIPTEN__
     ImGui_ImplGlfw_InstallEmscriptenCallbacks(window, "#canvas");
 #endif      //  __EMSCRIPTEN__  //
     ImGui_ImplOpenGL3_Init          (this->S.m_glsl_version                                                 );
+
+
 
     return;
 }
@@ -228,7 +257,10 @@ void App::init_appstate(void)
 
     //  4.  LOAD APPLICATION FONTS...
     //
+    //  this->S.init_ui_scaler();
+    //
     this->S.RebuildFonts( /*scale=*/ this->S.m_dpi_fontscale );
+    //
     //  this->S.RebuildFonts(/*scale=*/1.0f);   /* this->S.m_dpi_fontscale  */
     
     
@@ -477,7 +509,8 @@ void App::load(void)
     if ( utl::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH) ) {
         S.m_logger.debug( std::format("Successfully loaded ImGui \".ini\" from \"{}\"", cb::app::INI_FILEPATH) );
     }
-    else {
+    else
+    {
         S.m_logger.warning( std::format("Failure to load \".ini\" info from file \"{}\".  Fall back to default .ini content", cb::app::INI_FILEPATH) );
     }
 #endif  //  CBAPP_DISABLE_INI  //
@@ -578,17 +611,32 @@ void App::destroy(void)
     S.log_shutdown_info();
 
 
+
+    //  1.  REMOVE THIS APP FROM GLFW CALLBACK REGISTRY...
+#ifdef CBAPP_USE_NEW_GLFW_CALLBACKS
+    app::unregister_app(this->S.m_glfw_window);
+#endif  //  CBAPP_USE_NEW_GLFW_CALLBACKS  //
+    
+    
+    
+    //  2.  CLEAN-UP CONTEXTS FOR:    (1) OPENGL,  (2) GLFW,  (3) IMPLOT,  (4) IMGUI,    ETC...
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
 
-    if (this->S.m_glfw_window) {
+
+    //  3.  TERMINATE OPENGL / GLFW...
+    if ( this->S.m_glfw_window )
+    {
         glfwDestroyWindow(this->S.m_glfw_window);
         this->S.m_glfw_window = nullptr;
     }
     glfwTerminate();
+    
+    
+    
     return;
 }
 

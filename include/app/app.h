@@ -402,6 +402,24 @@ protected:
     //      PRIMARY INLINE FUNCTIONS.       |   ...
     // *************************************************************************** //
     
+    //  "PREFrameCache"     [ PRE - FRAME - Cache ].
+    //      Any and all operations that must take place BEFORE the next ImGui Frame begins.
+    //
+    inline void                 PREFrameCache               (void)
+    {
+        static app::UIScaler &      ui_scaler   = this->S.GetUIScaler();
+        static float                ui_scale    = ui_scaler.GetUIScale();
+        
+        
+        //      1.6.    QUERY FOR UPDATING GUI-SCALE...
+        //  if ( ui_scaler.Begin() ) {
+        //      S.m_logger.info( std::format("application UI-scale set to {:.2f}", ui_scale) );
+        //  }
+    
+        return;
+    }
+    
+    
     //  "PerFrameCache_Begin"
     //
     //      TO-DO:
@@ -430,36 +448,37 @@ protected:
     inline void                 PerFrameCache_End           (bool & first_frame)
     {
     
-        //      1.      END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
+        //      0.1.    END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
         if (first_frame) [[unlikely]] {
             first_frame = false;
             ImGui::SetWindowFocus( S.GetCurrentAppletName() );
         }
 
 
-        //      2.      RE-DRAW THE DOCKING SPACE...
+        //      1.2.    RE-DRAW THE DOCKING SPACE...
         if (S.m_rebuild_dockspace) [[unlikely]] {
             this->RebuildDockLayout();
             S.m_rebuild_dockspace = false;
         }
         
         
-        //      3.      UPDATE THE CURRENT APPLICATION STATE (Applet State).    [ NEEDED BEFORE WE SAVE/UNDO/REDO/ETC) ].
+        //      1.3.    UPDATE THE CURRENT APPLICATION STATE (Applet State).    [ NEEDED BEFORE WE SAVE/UNDO/REDO/ETC) ].
         if ( S.update_current_task() )
         {
             this->_update_menu_state();
         }
         
 
-        //      4.      HANDLE ANY KEYBOARD SHORTCUTS...
+        //      1.4.    HANDLE ANY KEYBOARD SHORTCUTS...
         this->KeyboardShortcutHandler();
         
         
-        //      5.      LASTLY, QUERY EACH SIGNAL HANDLER...
+        //      1.5.    QUERY EACH SIGNAL HANDLER...
         this->QuerySignalStates();
 
 
-        //      6.      HANDLE POP-UP OPERATIONS...
+
+        //      X.      HANDLE POP-UP OPERATIONS...
         popup::Draw();
 
         return;
@@ -545,7 +564,46 @@ namespace app { //     BEGINNING NAMESPACE "app"...
 //      FINAL INSTALLMENTS OF INLINE, FREE-STANDING FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-inline App &            instance                    (void)      { return App::instance(); }
+
+//  "instance"
+//
+inline App &            instance                    (void)                          { return App::instance(); }
+
+
+
+
+
+#ifdef CBAPP_USE_NEW_GLFW_CALLBACKS
+//
+//
+    //  "app_registry"
+    //
+    static inline std::unordered_map<GLFWwindow*, App*> &
+                            app_registry                (void)
+    {
+        static std::unordered_map<GLFWwindow*, App*> r;
+        return r;
+    }
+
+    //  "register_app"
+    //
+    static inline void      register_app                (GLFWwindow * w, App * a)       { app_registry()[w] = a; }
+
+    //  "unregister_app"
+    //
+    static inline void      unregister_app              (GLFWwindow * w)                { app_registry().erase(w); }
+
+    //  "lookup_app"
+    //
+    static inline App *     lookup_app                  (GLFWwindow * w)
+    {
+        auto it = app_registry().find(w);
+        return ( ( it == app_registry().end() )     ? nullptr   : it->second );
+    }
+//
+//
+#endif  //  CBAPP_USE_NEW_GLFW_CALLBACKS  //
+
 
 
 

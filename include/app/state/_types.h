@@ -241,6 +241,8 @@ public:
     // *************************************************************************** //
     static constexpr float      ms_MIN_UI_SCALE                 = 0.50f;
     static constexpr float      ms_MAX_UI_SCALE                 = 2.50f;
+    static constexpr float      ms_UI_SCALE_INCREMENT           = 0.125f;
+    static constexpr float      ms_UI_SCALE_UPDATE_THRESHOLD    = 1e-2;
     
 //
 //
@@ -309,6 +311,17 @@ public:
         return;
 	}
     
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      SET/GET UTILITY FUNCTIONS.  |   ...
+    // *************************************************************************** //
+    
+    //  "GetUIScale"
+	inline float            GetUIScale              (void) const noexcept       { return m_user_scale; }
+    
     
     
     // *************************************************************************** //
@@ -319,18 +332,35 @@ public:
     //      API FUNCTIONS.              |   ...
     // *************************************************************************** //
     
+    //  "Begin"
+    //
+	inline bool             Begin                   (void)
+    {
+        ImFontAtlas * const     atlas               = ImGui::GetIO().Fonts;
+        static float            last_applied        = -1.0f;                            // function-static is fine if you have a single UIScaler
+        const float             s                   = this->effective_scale();
+        bool                    updated             = false;
+        
+        if ( atlas && atlas->Locked )       { return false; }
+        
+        
+        updated                             = ( (last_applied < 0.0f) || (std::abs(s - last_applied) > ms_UI_SCALE_UPDATE_THRESHOLD) );
+    
+        if ( updated )
+        {
+            apply_ui_scale(s);                      // your existing private function; unchanged
+            last_applied = s;
+        }
+        
+        return updated;
+    }
+    
+    
     //  "set_user_scale"
 	void                    set_user_scale          (float s) {
-    
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      STATIC CONSTEXPR CONSTANTS.
-    // *************************************************************************** //
-		this->m_user_scale = std::clamp(s, 0.60f, 2.00f);
-		this->apply_ui_scale( this->effective_scale() );
-	}
+        m_user_scale = std::clamp(s, this->ms_MIN_UI_SCALE, this->ms_MAX_UI_SCALE );
+        // Defer applying; handled in begin_frame()
+    }
 
 
     //  "nudge_user_scale"
@@ -359,11 +389,32 @@ public:
     //  "on_scale_changed"
 	void                    on_scale_changed        (float xscale, float yscale)
     {
-		const float ms = std::max(xscale, yscale);
-		if (std::abs(ms - m_last_monitor_scale) < 0.001f) return;
-		m_last_monitor_scale = ms;
-		apply_ui_scale(effective_scale());
-	}
+        const float ms = std::max(xscale, yscale);
+        if (std::abs(ms - m_last_monitor_scale) < 0.001f) return;
+        m_last_monitor_scale = ms;
+        // Defer applying; handled in begin_frame()
+    }
+ 
+    //  "draw_controls"
+ 	bool                    draw_controls           (const char* label = "UI Scale")
+    {
+        bool    changed     = false;
+        float   s           = m_user_scale;
+        
+        if ( ImGui::SliderFloat(label, &s, ms_MIN_UI_SCALE, ms_MAX_UI_SCALE, "%.2fx", ImGuiSliderFlags_AlwaysClamp) )
+        {
+            if (ImGui::IsItemDeactivatedAfterEdit()) { set_user_scale(s); changed = true; }
+        }
+        ImGui::SameLine(); if (ImGui::SmallButton("-")) { set_user_scale(m_user_scale - 0.05f); changed = true; }
+        ImGui::SameLine(); if (ImGui::SmallButton("+")) { set_user_scale(m_user_scale + 0.05f); changed = true; }
+        ImGui::SameLine(); if (ImGui::SmallButton("Reset")) { set_user_scale(1.0f); changed = true; }
+
+        ImGui::TextDisabled("Monitor %.2f | Design %.2f | User %.2f | Eff %.2f",
+            m_last_monitor_scale, m_design_scale, m_user_scale, effective_scale());
+        return changed;
+    }
+ 
+ 
     
 //
 //
@@ -390,44 +441,35 @@ private:
     //
 	void                    apply_ui_scale          (float s)
     {
-		ImGuiIO &       io      = ImGui::GetIO();
-		ImGuiStyle &    st      = ImGui::GetStyle();
+        ImGuiIO&    io = ImGui::GetIO();
+        ImGuiStyle& st = ImGui::GetStyle();
 
-		//  Reset to pristine style captured during init_runtime()
-		st                      = m_base_style;
+        // Reset to baseline, then scale deterministically
+        st = m_base_style;
 
+    #if IMGUI_VERSION_NUM >= 19200
+        st.FontScaleDpi            = s;
+        st.ScaleAllSizes(s);
+        io.ConfigDpiScaleFonts     = true;
+        io.ConfigDpiScaleViewports = true;
+    #else
+        if (m_cfg.rebuild_fonts) {
+            IM_ASSERT(!io.Fonts->Locked && "Font atlas is locked (must rebuild outside NewFrame..Render)");
+            // Rebuild your FULL custom font stack at the new size (also refresh GL texture inside your callback)
+            m_cfg.rebuild_fonts(m_cfg.design_font_px * s);
+            io.FontGlobalScale = 1.0f;                 // crisp path: glyphs rebuilt
+            // Ensure default is valid (your callback should ideally set this)
+            if (io.FontDefault == nullptr && io.Fonts->Fonts.Size > 0)
+                io.FontDefault = io.Fonts->Fonts[0];
+        }
+        else {
+            // SAFE FALLBACK: do NOT clear/rebuild; approximate via global scale
+            // This avoids invalidating any ImFont* your app holds.
+            io.FontGlobalScale = s;
+        }
 
-		//  SELECT BASED ON WHICH IMGUI VERSION...
-		#if IMGUI_VERSION_NUM >= 19200
-        //
-			st.FontScaleDpi            = s;
-			st.ScaleAllSizes(s);
-			io.ConfigDpiScaleFonts     = true;
-			io.ConfigDpiScaleViewports = true;
-        //
-		# else
-        //
-			//  CASE 1 :    IMGUI V1.91/1.92 WIP    -- rebuild fonts at scaled px for crisp glyphs.
-			if (m_cfg.rebuild_fonts)
-            {
-				m_cfg.rebuild_fonts(m_cfg.design_font_px * s);
-			}
-            //
-            //  CASE 2 :    FALLBACK                -- single default font at scaled size.
-            else
-            {
-				io.Fonts->Clear();
-				ImFontConfig cfg; cfg.SizePixels    = m_cfg.design_font_px * s;
-				io.Fonts->AddFontDefault(&cfg);
-				io.Fonts->Build();
-				if ( m_cfg.after_fonts_built )      { m_cfg.after_fonts_built(); }
-			}
-			st.ScaleAllSizes(s);
-			io.FontGlobalScale = 1.0f; // keep metrics consistent
-        //
-		#endif  //  IMGUI_VERSION_NUM >= 19200  //
-        
-        return;
+        st.ScaleAllSizes(s);
+    #endif
     }
 
     // *************************************************************************** //

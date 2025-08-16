@@ -212,6 +212,10 @@ void Browser::disp_appearance_mode(void)
     {
         S.SetPlotColorStyle( static_cast<app::PlotColorStyle_t>(plot_idx) );
     }
+    
+    
+    //  3.  UI-SCALE WIDGETS.
+    this->S.m_ui_scaler.draw_controls();
 
 
     
