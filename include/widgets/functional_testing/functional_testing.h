@@ -441,7 +441,7 @@ protected:
     //
     //  EXE:        /Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/build/Debug/CBApp
     //  JSON DIR:   {"/Users/collinbond/Desktop/HOME_DIRECTORY/10_PROJECTS/imgui/CBApp/assets/.cbapp/debug/editor_tests_1.json"};
-    std::filesystem::path               m_filepath                                  = {"../../assets/.cbapp/debug/editor_tests_1.json"};
+    std::filesystem::path               m_filepath                                  = {"../../assets/.cbapp/debug/functional_testing_v0.json"};
     //
     int                                 m_comp_sel                                  = 0;            // current composition selection
     int                                 m_sel                                       = -1;           // current action selection
@@ -460,7 +460,7 @@ protected:
     bool                                m_forced_overlay                            = false;
     //
     bool                                m_render_visuals                            = true;
-    bool                                m_allow_input_blocker                       = false;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
+    bool                                m_allow_input_blocker                       = true;         //  DRAWS THE WINDOW THAT BLOCKS INPUT...
     bool                                m_show_composition_browser                  = true;
     bool                                m_show_composition_inspector                = false;
     //

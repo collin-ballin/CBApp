@@ -138,10 +138,11 @@ struct EditorIMPL {
         using                           Overlay                         = Overlay_t         <OverlayID>                             ;
         using                           Hit                             = Hit_t             <HitID>                                 ;
         using                           PathHit                         = PathHit_t         <PathID, VertexID>                      ;
-        using                           Selection                       = Selection_t       <VertexID, PointID, LineID, PathID>     ;
+        using                           EndpointInfo                    = EndpointInfo_t    <PathID>                                ;
     //
     //                              SUBSIDIARY STATE OBJECTS:
-        using                           EndpointInfo                    = EndpointInfo_t    <PathID>                                ;
+        using                           EditorState                     = EditorState_t     <VertexID, PointID, LineID, PathID>     ;
+        using                           Selection                       = Selection_t       <VertexID, PointID, LineID, PathID>     ;
         using                           PenState                        = PenState_t        <VertexID>                              ;
         using                           ShapeState                      = ShapeState_t      <OverlayID>                             ;
         using                           BrowserState                    = BrowserState_t    <VertexID, PointID, LineID, PathID>     ;

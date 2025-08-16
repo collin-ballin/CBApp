@@ -140,9 +140,11 @@ public:
         using                           Overlay                         = EditorIMPL::Overlay                   ;
         using                           Hit                             = EditorIMPL::Hit                       ;
         using                           PathHit                         = EditorIMPL::PathHit                   ;
-        using                           Selection                       = EditorIMPL::Selection                 ;
-    //
         using                           EndpointInfo                    = EditorIMPL::EndpointInfo              ;
+    //
+    //                              SUB-STATE ABSTRACTIONS:
+        using                           EditorState                     = EditorIMPL::EditorState               ;
+        using                           Selection                       = EditorIMPL::Selection                 ;
         using                           PenState                        = EditorIMPL::PenState                  ;
         using                           ShapeState                      = EditorIMPL::ShapeState                ;
         using                           BrowserState                    = EditorIMPL::BrowserState              ;
@@ -1020,7 +1022,7 @@ protected:
     bool                                WinInfo_open                    = true;
     ImGuiWindowClass                    m_window_class;
     //
-    BrowserState                        m_browser_state                 {  };
+    //  BrowserState                        m_browser_state                 {  };
     //  ImGuiTextFilter                     m_browser_filter;                           // search box text filter
     //  int                                 m_browser_anchor                = -1;       // anchor index for Shift‑range select
     //  int                                 m_inspector_vertex_idx          = -1;       // anchor index for Shift‑range select
@@ -1032,6 +1034,7 @@ protected:
     //      APPLICATION STATE...
     // *************************************************************************** //
     //                              OVERALL STATE:
+    //  EditorState
     Mode                                m_mode                          = Mode::Default;
     bool                                m_show_grid                     = true;
     //
@@ -1059,11 +1062,15 @@ protected:
     BrowserState                        m_browser_S;        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
     //
     //                              OTHER FACILITIES:
-    std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
     Selection                           m_sel;
     mutable BoxDrag                     m_boxdrag;
     MoveDrag                            m_movedrag;
     Clipboard                           m_clipboard;
+    //
+    //
+    //                              NEED TO RE-HOME:
+    std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
+    //
     // *************************************************************************** //
     //
     //

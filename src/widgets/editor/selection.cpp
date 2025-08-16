@@ -1121,26 +1121,28 @@ void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it
 
 
     //  2.  DELETE KEY.
-    if ( it.hovered ) {
-        if ( ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace) )
-        { delete_selection(); return; }                    // selection cleared, bail
-    }
-
-
-
-
-
-
-    //  3.  COPY    [ CTRL + C ].
-    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C))
+    if ( it.hovered )
     {
-        // TODO: copy_to_clipboard() or duplicate_selection();
+        if ( ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace) )
+            { delete_selection(); return; }                    // selection cleared, bail
     }
 
 
-    //  4.  CREATE GROUP        [ CTRL + G ].
-    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_G) &&
-        (m_sel.points.size() + m_sel.lines.size() + m_sel.paths.size()) > 1)
+    //  3.      JOIN.                   [ CTRL + J ].
+    if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )        { _join_selected_open_path();   return;     }   //  JOINING CLOSED PATHS...
+            
+            
+    //  4.      CLEAR SELECTION.        [ ESC ].
+    if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )                 { this->reset_selection();      return;     }   //  [Esc]       CANCEL SELECTION...
+            
+
+    //  5.      COPY.                   [ CTRL + C ].
+    if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) )        { this->copy_to_clipboard();    return;     }
+
+
+    //  6.      CREATE GROUP.           [ CTRL + G ].
+    if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_G) &&
+         ( m_sel.points.size() + m_sel.lines.size() + m_sel.paths.size() ) > 1 )
     {
         // TODO: group_selection();
     }

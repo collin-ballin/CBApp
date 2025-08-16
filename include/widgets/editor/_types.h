@@ -495,14 +495,14 @@ struct IndexState {
 //
 template<typename Vertex, typename Point, typename Line, typename Path>
 struct Clipboard_t {
-    inline void             clear()         { ref_ws = ImVec2(); vertices.clear(); points.clear(); lines.clear(); paths.clear(); return; }
-    inline bool             empty() const   { return vertices.empty() && points.empty() && lines.empty() && paths.empty(); }
+    inline void                 clear       (void)                      { ref_ws = ImVec2(); vertices.clear(); points.clear(); lines.clear(); paths.clear(); return; }
+    inline bool                 empty       (void) const noexcept       { return vertices.empty() && points.empty() && lines.empty() && paths.empty(); }
 //
-    ImVec2                  ref_ws      {};     // reference origin (top-left of bbox)
-    std::vector<Vertex>     vertices;           // geometry snapshots (id-field unused)
-    std::vector<Point>      points;
-    std::vector<Line>       lines;
-    std::vector<Path>       paths;              // verts[] hold vertex indices into vertices[]
+    ImVec2                      ref_ws                                  {  };       //  reference origin (top-left of bbox)
+    std::vector<Vertex>         vertices;                                           //  geometry snapshots (id-field unused)
+    std::vector<Point>          points;
+    std::vector<Line>           lines;
+    std::vector<Path>           paths;                                              //  verts[] hold vertex indices into vertices[]
 };
 
 // *************************************************************************** //
@@ -647,10 +647,10 @@ struct OverlayState {
 //  "MoveDrag"
 //
 struct MoveDrag {
-    bool                        active          = false;
-    ImVec2                      anchor_ws       {0,0};   // top-left of selection at mouse-press
-    ImVec2                      press_ws        {0,0};
-    ImVec2                      cum_delta       {0,0};   // accumulated world-space translation
+    bool                        active              = false;
+    ImVec2                      anchor_ws           {0.0f,      0.0f};   // top-left of selection at mouse-press
+    ImVec2                      press_ws            {0.0f,      0.0f};
+    ImVec2                      cum_delta           {0.0f,      0.0f};   // accumulated world-space translation
     std::vector<uint32_t>       v_ids;               // selected vertex IDs
     std::vector<ImVec2>         v_orig;              // original positions (same order)
 };
@@ -659,18 +659,18 @@ struct MoveDrag {
 //  "BoxDrag"
 //      struct (add fields for handle_ws0, orig_w, orig_h after mouse_ws0)
 struct BoxDrag {
-    bool                    active          = false;
-    uint8_t                 handle_idx      = 0;
-    ImVec2                  anchor_ws       = {0,0};
-    ImVec2                  bbox_tl_ws      = {0,0};
-    ImVec2                  bbox_br_ws      = {0,0};
-    std::vector<uint32_t>   v_ids;
-    std::vector<ImVec2>     v_orig;
-    ImVec2                  mouse_ws0       = {0,0};
-    ImVec2                  handle_ws0;                     // initial world‑space position of the dragged handle
-    float                   orig_w          = 1.f;          // original bbox width  (world units)
-    float                   orig_h          = 1.f;          // original bbox height (world units)
-    bool                    first_frame     = true;
+    bool                        active              = false;
+    uint8_t                     handle_idx          = 0;
+    ImVec2                      anchor_ws           = {0.0f,    0.0f};
+    ImVec2                      bbox_tl_ws          = {0.0f,    0.0f};
+    ImVec2                      bbox_br_ws          = {0.0f,    0.0f};
+    std::vector<uint32_t>       v_ids;
+    std::vector<ImVec2>         v_orig;
+    ImVec2                      mouse_ws0           = {0.0f,    0.0f};
+    ImVec2                      handle_ws0;                     // initial world‑space position of the dragged handle
+    float                       orig_w              = 1.0f;          // original bbox width  (world units)
+    float                       orig_h              = 1.0f;          // original bbox height (world units)
+    bool                        first_frame         = true;
 };
 
 
@@ -719,10 +719,10 @@ struct Camera {
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "EditorState"
+//  "EditorState_t"
 //
-template<typename VertexID, typename PathID>
-struct EditorState
+template<typename VID, typename PtID, typename LID, typename PID>
+struct EditorState_t
 {
 // *************************************************************************** //
 //                                  OVERALL STATE...
@@ -763,14 +763,14 @@ struct EditorState
     //                              LASSO TOOL / SELECTION:
     ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
     ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
-    VertexID                            m_next_id                       = 1;
-    PathID                              m_next_pid                      = 1;        // counter for new path IDs
+    VID                                 m_next_id                       = 1;
+    PID                                 m_next_pid                      = 1;        // counter for new path IDs
     //
     //                              PEN-TOOL STATE:
     bool                                m_drawing                       = false;
     bool                                m_dragging_handle               = false;
     bool                                m_dragging_out                  = true;
-    VertexID                            m_drag_vid                      = 0;
+    VID                                 m_drag_vid                      = 0;
 // *************************************************************************** //
 //
 //

@@ -82,10 +82,32 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 //
 class AppState
 {
-    _CBAPP_APPSTATE_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+//      0.          CONSTANTS AND ALIASES...
 // *************************************************************************** //
 // *************************************************************************** //
 public:
+
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    _CBAPP_APPSTATE_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr float              ms_LABEL_WIDTH                              = 90.0f;
+    static constexpr float              ms_WIDGET_WIDTH                             = 250.0f;
+    
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+    
+    
+
 // *************************************************************************** //
 //
 //
@@ -220,20 +242,48 @@ public:
     // *************************************************************************** //
     
     //  "SetMenuState"
-    inline void                             SetMenuState                (MenuState_t & src)     { this->m_task_state.m_current_menu_state = src; }
+    inline void                         SetMenuState                (MenuState_t & src)     { this->m_task_state.m_current_menu_state = src; }
     
     //  "ResetMenuState"
-    inline void                             ResetMenuState              (void)                  { this->m_task_state.m_current_menu_state = this->m_task_state.m_default_menu_state; }
+    inline void                         ResetMenuState              (void)                  { this->m_task_state.m_current_menu_state = this->m_task_state.m_default_menu_state; }
 
 
 
     //  "current_app_color_style"
-    inline const char *                     current_app_color_style     (void) const
+    inline const char *                 current_app_color_style     (void) const
     {  return this->m_app_color_style_names[ static_cast<size_t>(this->m_current_app_color_style) ];  }
 
     //  "current_plot_color_style"
-    inline const char *                     current_plot_color_style    (void) const
+    inline const char *                 current_plot_color_style    (void) const
     {  return this->m_plot_color_style_names[ static_cast<size_t>(this->m_current_plot_color_style) ];  }
+    
+    
+
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                      SMALL HELPER FUNCTIONS...
+    // *************************************************************************** //
+
+    //  "label"
+    inline void                         label                       (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
+    { utl::LeftLabel(text, l_width, w_width); ImGui::SameLine(); };
+    
+    //  "column_label"
+    inline void                         column_label                (const char * label)
+    { this->PushFont(Font::FootNote);     ImGui::TextDisabled("%s", label);     this->PopFont(); }
+    
+    //  "column_label"
+    inline void                         column_label                (const char * fmt, ...) {
+        this->PushFont(Font::FootNote);
+            va_list args;                       va_start(args, fmt);
+            ImGui::TextDisabledV(fmt, args);    va_end(args);  // forward using the va_list version
+        this->PopFont();
+    }
+    
+    // *************************************************************************** //
     
     
 
@@ -244,9 +294,9 @@ public:
     // *************************************************************************** //
     //                      UTILITY FUNCTIONS...
     // *************************************************************************** //
-
+    
     //  "_get_item_under_cursor"
-    [[nodiscard]] inline utl::HoverItem     _get_item_under_cursor      (void) const noexcept
+    [[nodiscard]] inline utl::HoverItem             _get_item_under_cursor      (void) const noexcept
     {
         utl::HoverItem      out             {  };
         ImGuiContext *      ctx             = ImGui::GetCurrentContext();
@@ -587,9 +637,9 @@ public:
     // *************************************************************************** //
 //
 #if defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__) || defined(__CBAPP_DEBUG__)
-    LogLevel                            m_LogLevel                  = LogLevel::Debug;
+    LogLevel                            m_LogLevel                  = LogLevel::Info;
 # else
-    LogLevel                            m_LogLevel                  = LogLevel::Debug;  //LogLevel::Warning;
+    LogLevel                            m_LogLevel                  = LogLevel::Warning;  //LogLevel::Warning;
 #endif  //  __CBLIB_RELEASE_WITH_DEBUG_INFO__ || __CBAPP_DEBUG__  //
 
 

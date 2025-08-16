@@ -2677,6 +2677,45 @@
               736.11328125
             ],
             "last": [
+              1855.0234375,
+              139.828125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "clear",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.5,
+            "first": [
+              87.97265625,
+              736.11328125
+            ],
+            "last": [
               330.01953125,
               538.98828125
             ]

@@ -446,19 +446,19 @@ void Editor::delete_selection(void)
 void Editor::_clear_all(void)
 {
     // ─── 1.  Wipe geometry containers in bulk ──────────────────────────
-    m_paths.clear();       // clears Path<…> vector
-    m_lines.clear();       // clears standalone Line<…> list
-    m_points.clear();      // glyphs
-    m_vertices.clear();    // anchors
+    m_paths         .clear();       // clears Path<…> vector
+    m_lines         .clear();       // clears standalone Line<…> list
+    m_points        .clear();       // glyphs
+    m_vertices      .clear();       // anchors
 
 
     // ─── 2.  Reset selection & per-tool state ─────────────────────────
     this->reset_selection();   // m_sel.clear() + related resets
     this->reset_pen();         // m_pen = {}      (live path state)
 
-    m_lasso_active                      = false;
-    m_dragging                          = false;
-    m_drawing                           = false;
+    m_lasso_active                          = false;
+    m_dragging                              = false;
+    m_drawing                               = false;
 
 
     //  Next ID counter back to 1 so new vertices/path IDs start fresh
@@ -467,7 +467,7 @@ void Editor::_clear_all(void)
 
     // ─── 3.  Browser & filter housekeeping ────────────────────────────
     //  Force filter to rebuild so the clipper sees an empty list.
-    this->m_browser_state.clear();
+    this->m_browser_S.clear();
 
 
     // ─── 4.  Inspector / overlay clean-up (if any live) ───────────────

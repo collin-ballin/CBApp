@@ -117,7 +117,6 @@ inline void Editor::_dispatch_mode_handler( [[maybe_unused]] const Interaction &
     {
         switch ( this->m_mode )
         {
-            case Mode::Default          :   { _handle_default         (it);           break;    }
             case Mode::Hand             :   { _handle_hand            (it);           break;    }
             case Mode::Line             :   { _handle_line            (it);           break;    }
             case Mode::Point            :   { _handle_point           (it);           break;    }
@@ -127,7 +126,8 @@ inline void Editor::_dispatch_mode_handler( [[maybe_unused]] const Interaction &
             case Mode::AddAnchor        :   { _handle_add_anchor      (it);           break;    }
             case Mode::RemoveAnchor     :   { _handle_remove_anchor   (it);           break;    }
             case Mode::EditAnchor       :   { _handle_edit_anchor     (it);           break;    }
-            default                     :   { break;                                            }
+            //
+            default                     :   { _handle_default         (it);           break;    }
         }
     }
         
@@ -148,19 +148,22 @@ inline void Editor::_dispatch_mode_handler( [[maybe_unused]] const Interaction &
 //
 void Editor::Begin(const char * /*id*/)
 {
-    ImGuiIO &               io              = ImGui::GetIO();
-    const bool              space           = ImGui::IsKeyDown(ImGuiKey_Space);
+    ImGuiIO &               io                      = ImGui::GetIO();
+    const bool              space                   = ImGui::IsKeyDown(ImGuiKey_Space);
     //
-    const bool              pan_enabled     = space || _mode_has(CBCapabilityFlags_Pan);
-    const bool              zoom_enabled    = _mode_has(CBCapabilityFlags_Zoom) && (!io.MouseDown[0]);
+    const bool              pan_enabled             = (space || (this->m_mode == Mode::Hand) );
+    const bool              zoom_enabled            = _mode_has(CBCapabilityFlags_Zoom) && (!io.MouseDown[0]);
     //
     //
-    ImPlotInputMap          backup          = ImPlot::GetInputMap();                //  Adjust ImPlot input map (backup, edit, restore at end)
-    ImPlotInputMap &        map             = ImPlot::GetInputMap();                            //
-    map.Pan                                 = ImGuiMouseButton_Left;                            //
-    map.PanMod                              = (pan_enabled)     ? 0     : ImGuiMod_Ctrl;        //  disable pan unless current TOOL allows PANNING...
-    map.ZoomMod                             = (zoom_enabled)    ? 0     : ImGuiMod_Ctrl;        //  disable zoom unless current TOOL allows ZOOMING...
-    map.ZoomRate                            = 0.05f;                                        //
+    //
+    ImPlotInputMap          backup                  = ImPlot::GetInputMap();                            //  Adjust ImPlot input map (backup, edit, restore at end)
+    ImPlotInputMap &        map                     = ImPlot::GetInputMap();
+    //  ImPlotInputMap          m_state.m_backup        = ImPlot::GetInputMap();
+    //
+    map.Pan                                         = ImGuiMouseButton_Left;                            //
+    map.PanMod                                      = (pan_enabled)     ? 0     : ImGuiMod_Ctrl;        //  disable pan unless current TOOL allows PANNING...
+    map.ZoomMod                                     = (zoom_enabled)    ? 0     : ImGuiMod_Ctrl;        //  disable zoom unless current TOOL allows ZOOMING...
+    map.ZoomRate                                    = 0.075f;                                           //
 
 
     this->pump_main_tasks();
@@ -229,11 +232,11 @@ void Editor::Begin(const char * /*id*/)
         {
             _process_selection(it);
             
-            if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )        { _join_selected_open_path(); }     //  JOINING CLOSED PATHS...
+            if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )        { _join_selected_open_path();   }   //  JOINING CLOSED PATHS...
             
-            if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )                 { this->reset_selection(); }        //  [Esc]       CANCEL SELECTION...
+            if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )                 { this->reset_selection();      }   //  [Esc]       CANCEL SELECTION...
             
-            if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) )        { this->copy_to_clipboard(); }      //  [CTRL+C]    COPY SELECTION...
+            if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) )        { this->copy_to_clipboard();    }   //  [CTRL+C]    COPY SELECTION...
         }
         
     
@@ -306,8 +309,8 @@ inline void Editor::_handle_default(const Interaction& it)
     //  2.  BBOX HANDLE HOVER...
     if ( !m_boxdrag.active && m_hover_handle != -1 && ImGui::IsMouseClicked(ImGuiMouseButton_Left) ) {
         ImVec2 tl, br;
-        if (_selection_bounds(tl, br))
-            _start_bbox_drag(static_cast<uint8_t>(m_hover_handle), tl, br);
+        if ( _selection_bounds(tl, br) )
+            { _start_bbox_drag(static_cast<uint8_t>(m_hover_handle), tl, br); }
     }
         
         
@@ -341,7 +344,8 @@ inline void Editor::_handle_default(const Interaction& it)
 //
 inline void Editor::_handle_hand(const Interaction & it)
 {
-
+    ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+    return;
 }
 
 
