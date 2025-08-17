@@ -826,11 +826,16 @@ inline void Editor::_handle_io(void)
     if ( this->m_save_dialog.is_open() )
     {
         m_sdialog_open.store(false, std::memory_order_release);
+        
+        
         if ( this->m_save_dialog.Begin() ) {        // returns true when finished
             if ( auto path = this->m_save_dialog.result() )
                 save_async( *path );        // your own handler
         }
+    
+    
     }
+    
     
     
     //  2.  LOAD DIALOGUE...

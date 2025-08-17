@@ -211,6 +211,59 @@ void AppState::RebuildFonts(float scale)
 //      SERIALIZATION...
 // *************************************************************************** //
 
+//  "FileDialogHandler"
+//
+void AppState::FileDialogHandler(void)
+{
+/*
+    namespace                   fs              = std::filesystem;
+    std::optional<fs::path>     filepath        = std::nullopt;
+    
+    if ( m_saving )
+    {
+        //      DIALOG IS OPEN...
+        if ( S.m_file_dialog.is_open() )        { return; }
+        //
+        //      FINISHED SAVING...
+        else {
+            m_saving        = false;
+            filepath        = S.m_file_dialog.get_last_path().value_or("");
+            if ( filepath )
+            {
+                S.m_logger.info( std::format("Saved to file \"{}\"", filepath->string()) );
+                
+                if ( this->save_to_file(filepath.value()) ) {
+                    this->m_filepath = filepath.value();
+                }
+            }
+            else    { S.m_logger.warning("Failed to save file."); }
+        }
+    }
+    
+    if ( m_loading )
+    {
+        //      DIALOG IS OPEN...
+        if ( S.m_file_dialog.is_open() )        { return; }
+        //
+        //      FINISHED SAVING...
+        else {
+            m_loading           = false;
+            filepath            = S.m_file_dialog.get_last_path().value_or("");
+            if ( filepath )   {
+                S.m_logger.info( std::format("Loaded from file \"{}\"", filepath->string()) );
+                this->load_from_file( filepath.value() );
+            }
+            else    { S.m_logger.warning("Failed to open file."); }
+        }
+    }
+
+
+*/
+    return;
+}
+
+
+
 //  "SaveWithValidation"
 //
 //      TO-DO:  USE THE ERROR CODES AFTER FETCHING EACH FILESYSTEM ITEM!!!

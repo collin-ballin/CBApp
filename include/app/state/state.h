@@ -176,6 +176,9 @@ public:
     //
     //
     //                              SERIALIZATION ITEMS:
+    //  std::optional<Applet>               m_hallpass                  = { std::nullopt };
+    //
+    void                                FileDialogHandler           ( void );
     template<typename Callback>
     bool                                SaveWithValidation          ( const std::filesystem::path & ,   Callback &,
                                                                       const std::string_view &      ,   const std::string_view & msg="callback function returned failure");

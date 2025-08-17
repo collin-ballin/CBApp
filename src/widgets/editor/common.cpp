@@ -19,17 +19,32 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 
 
 
-//  1A.     PUBLIC API...
+//      1A.     PUBLIC API...
 // *************************************************************************** //
 // *************************************************************************** //
 
 //  "save"
 //
-void Editor::save(void) {
-    CB_LOG( LogLevel::Info, "Editor--save" );
+void Editor::save(void)
+{
+    const bool  has_file    = this->has_file();
 
-
-    m_sdialog_open.store(true, std::memory_order_release);
+    
+    
+    //  CASE 1 :    EDITOR HAS EXISTING FILE...
+    if ( has_file )
+    {
+        S.m_logger.debug( std::format("Editor | saving data to existing file, \"{}\"", this->m_filepath.filename().string())  );
+        this->save_async(this->m_filepath);
+    }
+    //
+    //  CASE 2 :    NEED TO  "SAVE AS..."  THE CURRENT FILE...
+    else
+    {
+        S.m_logger.info( "Editor | requesting file dialog to create new file" );
+        m_sdialog_open.store(true, std::memory_order_release);
+    }
+    
     
     
     return;
@@ -64,6 +79,11 @@ void Editor::redo(void) {
     return;
 }
 
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "Public API".
+
 
 
 
@@ -73,7 +93,101 @@ void Editor::redo(void) {
 //
 //
 //
-//      1.  NEW...
+//      1B.      WRAPPED FUNCTIONS FOR PUBLIC API...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_file_dialog_handler"
+//
+void Editor::_file_dialog_handler(void)
+{
+/*
+    namespace                   fs              = std::filesystem;
+    std::optional<fs::path>     filepath        = std::nullopt;
+    
+    if ( m_saving )
+    {
+        //      DIALOG IS OPEN...
+        if ( S.m_file_dialog.is_open() )        { return; }
+        //
+        //      FINISHED SAVING...
+        else {
+            m_saving        = false;
+            filepath        = S.m_file_dialog.get_last_path().value_or("");
+            if ( filepath )
+            {
+                S.m_logger.info( std::format("Saved to file \"{}\"", filepath->string()) );
+                
+                if ( this->save_to_file(filepath.value()) ) {
+                    this->m_filepath = filepath.value();
+                }
+            }
+            else    { S.m_logger.warning("Failed to save file."); }
+        }
+    }
+    
+    if ( m_loading )
+    {
+        //      DIALOG IS OPEN...
+        if ( S.m_file_dialog.is_open() )        { return; }
+        //
+        //      FINISHED SAVING...
+        else {
+            m_loading           = false;
+            filepath            = S.m_file_dialog.get_last_path().value_or("");
+            if ( filepath )   {
+                S.m_logger.info( std::format("Loaded from file \"{}\"", filepath->string()) );
+                this->load_from_file( filepath.value() );
+            }
+            else    { S.m_logger.warning("Failed to open file."); }
+        }
+    }
+*/
+
+    return;
+}
+
+
+
+
+//  "_save_IMPL"
+//
+void Editor::_save_IMPL(void)
+{ 
+/*
+    const bool      has_file    = this->has_file();
+    
+    
+    //  CASE 1 :    SAVE TO THE CURRENT FILE...
+    if (has_file)
+    {
+        this->save_to_file( this->m_filepath );
+    }
+    //
+    //  CASE 2 :    OPEN FILE DIALOG TO SELECT A FILE...
+    else
+    {
+
+    }
+*/
+    return;
+}
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "WRAPPED API FUNCTIONS".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.      NEW...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -490,7 +604,8 @@ void Editor::_clear_all(void)
 // *************************************************************************** //
 //
 //
-//      SERIALIZATION...
+//
+//      3.      SERIALIZATION...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -547,15 +662,17 @@ void Editor::pump_main_tasks(void)
 //
 void Editor::save_async(std::filesystem::path path)
 {
-    m_io_busy = true;
-    auto snap = make_snapshot();
+    m_io_busy   = true;
+    auto snap   = make_snapshot();
 
-    // convert to absolute once, so worker sees a full path
-    path = std::filesystem::absolute(path);
+    //  convert to absolute once, so worker sees a full path
+    path        = std::filesystem::absolute(path);
 
     std::thread([this, snap = std::move(snap), path]{
         save_worker(snap, path);
     }).detach();
+    
+    return;
 }
 
 
@@ -576,22 +693,22 @@ void Editor::load_async(std::filesystem::path path)
 //
 void Editor::_draw_io_overlay(void)
 {
-    if (!m_io_busy && m_io_last == IoResult::Ok) return;   // nothing to show
+    if ( !m_io_busy && m_io_last == IoResult::Ok )          { return; }   // nothing to show
 
-    const char* txt = m_io_busy ? "Working…" : m_io_msg.c_str();
-    ImVec2 pad{8,8};
-    ImVec2 size = ImGui::CalcTextSize(txt);
-    ImVec2 pos  = ImGui::GetMainViewport()->Pos;
-    pos.y += ImGui::GetMainViewport()->Size.y - size.y - pad.y*2;
+    const char *    txt         = m_io_busy ? "Working..." : m_io_msg.c_str();
+    ImVec2          pad         {8,8};
+    ImVec2          size        = ImGui::CalcTextSize(txt);
+    ImVec2          pos         = ImGui::GetMainViewport()->Pos;
+    pos.y                      += ImGui::GetMainViewport()->Size.y - size.y - pad.y*2;
 
     ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.6f);
-    ImGui::Begin("##io_overlay", nullptr,
-                 ImGuiWindowFlags_NoDecoration |
-                 ImGuiWindowFlags_NoInputs     |
-                 ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::TextUnformatted(txt);
+    //
+    ImGui::Begin("##io_overlay", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::TextUnformatted(txt);
     ImGui::End();
+    
+    return;
 }
 
 
@@ -606,22 +723,45 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
     nlohmann::json      j;
     j["version"]                    = kSaveFormatVersion;
     j["state"]                      = snap;
-    std::ofstream       os(path, std::ios::binary);
+    std::ofstream       os          (path, std::ios::binary);
     IoResult            res         = os ? IoResult::Ok : IoResult::IoError;
-    if (res == IoResult::Ok) os << j.dump(2);
+    
+    
+    if ( res == IoResult::Ok )      { os << j.dump(2); }
+    
+    
     // enqueue completion notification
     {
         {
-            std::lock_guard lk(m_task_mtx);
-            m_main_tasks.push_back( [this,res,path] {
-                m_io_busy = false;
-                m_io_last = res;
-                m_io_msg  = (res == IoResult::Ok)
-                          ? "Saved to " + path.string()
-                          : "Save failed";
+            std::lock_guard     lk(m_task_mtx);
+            m_main_tasks.push_back( [this, res, path]
+            {
+                m_io_busy   = false;
+                m_io_last   = res;
+                m_io_msg    = (res == IoResult::Ok)
+                                ? "Saved to " + path.generic_string()
+                                : "Save failed";
             } );
         }
     }
+    
+    
+    //  2.  EVALUATE SUCCESS/FAILURE OF IO-OPERATION...
+    {
+        const char *    status      = this->ms_IORESULT_NAMES[ static_cast<size_t>( this->m_io_last ) ];
+    
+        //  CASE 2A :   SAVE SUCCESS.
+        if ( m_io_last == IoResult::Ok ) {
+            CB_LOG( LogLevel::Info, std::format("Editor | successfully saved data to \"{}\" [status: {}] ", path.filename().string(), status) );
+        }
+        //
+        //  CASE 2A :   SAVE FAILURE.
+        else {
+            CB_LOG( LogLevel::Error, std::format("Editor | failed to save data to \"{}\" [status: {}] ", path.filename().string(), status) );
+        }
+    }
+    
+    
     
     return;
 }
@@ -631,49 +771,59 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
 //
 void Editor::load_worker(std::filesystem::path path)
 {
-    // ---------- read file -------------------------------------------------
-    nlohmann::json      j;
-    std::ifstream       is(path, std::ios::binary);
-    IoResult            res     = is ? IoResult::Ok : IoResult::IoError;
-    EditorSnapshot      snap;
+    nlohmann::json          j;
+    std::ifstream           is          (path, std::ios::binary);
+    IoResult                res         = ( is )    ? IoResult::Ok      : IoResult::IoError;
+    EditorSnapshot          snap;
 
 
-    if (res == IoResult::Ok)
+    //      1.      LOAD FROM JSON-FILE...
+    if ( res == IoResult::Ok )
     {
-        try {
+        try
+        {
             is >> j;
-            if ( j.at("version").get<uint32_t>() != kSaveFormatVersion )
-                        { res = IoResult::VersionMismatch; }
+            
+            if (  j.at( "version" ).get<uint32_t>() != kSaveFormatVersion  )
+            {
+                res = IoResult::VersionMismatch;
+            }
             else        { snap = j.at("state").get<EditorSnapshot>(); }
         }
         catch (...)     { res = IoResult::ParseError; }
+        
     }
 
 
-    // ---------- enqueue GUI-thread callback -------------------------------
+    //      2.      ASSESS I/O RESULT.      -- enqueue GUI-thread callback...
     {
         std::lock_guard     lk  (m_task_mtx);
         
-        m_main_tasks.push_back(
-            [this, res, snap = std::move(snap), path]() mutable
-            {
-                m_io_busy = false;
+        m_main_tasks.push_back( [this, res, snap = std::move(snap), path]() mutable
+        {
+            m_io_busy = false;
 
-                if (res == IoResult::Ok) {
-                    load_from_snapshot(std::move(snap));
-                    m_io_msg = "Loaded \"" + path.filename().string() + "\"";
-                }
-                else
+            //  CASE 2A :   LOADING SUCCESS.
+            if ( res == IoResult::Ok )
+            {
+                load_from_snapshot( std::move(snap) );
+                m_io_msg = std::format( "loaded file \"{}\"", path.generic_string() );
+            }
+            //
+            //  CASE 2B :   LOADING FAILURE.
+            else
+            {
+                switch (res)
                 {
-                    switch (res) {
-                        case IoResult::IoError:         m_io_msg = "Load I/O error";                 break;
-                        case IoResult::ParseError:      m_io_msg = "Load parse error";               break;
-                        case IoResult::VersionMismatch: m_io_msg = "Save-file version mismatch";     break;
-                        default:                        m_io_msg = "Unknown load error";             break;
-                    }
+                    case IoResult::IoError              : {     m_io_msg = "load I/O error";                break;     }
+                    case IoResult::ParseError           : {     m_io_msg = "load parsing error";            break;     }
+                    case IoResult::VersionMismatch      : {     m_io_msg = "json version mismatch";         break;     }
+                    default                             : {     m_io_msg = "unknown load error";            break;     }
                 }
-                m_io_last = res;
-            });
+            }
+            m_io_last = res;
+            return;
+        });
     }
     
     

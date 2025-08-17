@@ -581,7 +581,9 @@ void Editor::_draw_settings_serialize(void)
     
         //      1.      CURRENT FILE...
         this->label("Current File:",                this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
-        ImGui::TextDisabled( "%s", (has_file) ? this->m_filepath.string().c_str() : ms_NO_ASSIGNED_FILE_STRING );
+        ImGui::TextDisabled( "%s", (has_file)
+                                        ? this->m_filepath.generic_string().c_str()
+                                        : ms_NO_ASSIGNED_FILE_STRING );
     
     
         //      2.      SAVE DIALOGUE...
@@ -595,43 +597,21 @@ void Editor::_draw_settings_serialize(void)
         
         
         //      3.      "SAVE AS..." DIALOGUE...
-        //  this->label("Save As...:",                  this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
-        //  if ( force_save_as || ImGui::Button("Save As...", ms_SETTINGS_BUTTON_SIZE) )    {
-        //
-        //      if ( !S.m_dialog_queued )
-        //      {
-        //          S.m_dialog_queued       = true;
-        //          m_saving                = true;
-        //          S.m_dialog_settings     = {
-        //              /* type               = */  cb::FileDialog::Type::Save,
-        //              /* window_name        = */  "Open Testing Suite",
-        //              /* default_filename   = */  "functional_test.json",
-        //              /* required_extension = */  ".json",
-        //              /* valid_extensions   = */  {  },
-        //              /* starting_dir       = */  std::filesystem::current_path()
-        //          };
-        //      }
-        //  }
+        this->label("Save As...:",                  this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( force_save_as || ImGui::Button("Save As...", ms_SETTINGS_BUTTON_SIZE) )
+        {
+            CB_LOG( LogLevel::Info, "Editor | requesting file dialog to create new file" );
+            m_sdialog_open.store(true, std::memory_order_release);
+        }
 
 
-        //      4.      LOAD DIALOGUE...
-        //  this->label("Load From File:",              this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
-        //  if ( ImGui::Button("Load", ms_SETTINGS_BUTTON_SIZE) )    {
-        //
-        //      if ( !S.m_dialog_queued )
-        //      {
-        //          S.m_dialog_queued       = true;
-        //          m_loading               = true;
-        //          S.m_dialog_settings     = {
-        //              /* type               = */  cb::FileDialog::Type::Open,
-        //              /* window_name        = */  "Save Testing Suite",
-        //              /* default_filename   = */  "",
-        //              /* required_extension = */  "",
-        //              /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
-        //              /* starting_dir       = */  std::filesystem::current_path()
-        //          };
-        //      }
-        //  }
+        //      4.      "OPEN" DIALOGUE...
+        this->label("Open File:",                   this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( ImGui::Button("Load", ms_SETTINGS_BUTTON_SIZE) )
+        {
+            CB_LOG( LogLevel::Info, "Editor | requesting file dialog to load from disk" );
+            m_odialog_open.store(true, std::memory_order_release);
+        }
     }
     
     

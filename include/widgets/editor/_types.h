@@ -82,8 +82,19 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  "IoResult"
 //
 enum class IoResult {
-    Ok, IoError, ParseError, VersionMismatch
+    Ok = 0,
+    IoError,
+    ParseError,
+    VersionMismatch,
+//
+    COUNT
 };
+//
+//  "DEF_IORESULT_NAMES"
+static constexpr std::array<const char *, static_cast<size_t>(IoResult::COUNT)>
+    DEF_IORESULT_NAMES  = { {
+        "OK",   "IO Error",     "Parsing Error",    "Version Mismatch"
+} };
 
 
 

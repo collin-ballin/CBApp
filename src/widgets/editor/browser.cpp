@@ -543,8 +543,8 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
     using                                   namespace           icon;
     static constexpr ImGuiInputTextFlags    TEXT_FLAGS          = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
     const ImGuiSelectableFlags              SEL_FLAGS           = ( mutable_path )
-                                                                    ? ( ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick     )
-                                                                    : ( ImGuiSelectableFlags_Disabled | ImGuiSelectableFlags_AllowDoubleClick           );
+                                                                    ? ( ImGuiSelectableFlags_AllowDoubleClick       )
+                                                                    : ( ImGuiSelectableFlags_Disabled               );
     //
     const ImU32                             col_text            = ImGui::GetColorU32(ImGuiCol_Text);
     const ImU32                             col_dim             = ImGui::GetColorU32(ImGuiCol_TextDisabled);

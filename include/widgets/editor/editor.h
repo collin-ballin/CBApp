@@ -283,6 +283,18 @@ public:
     //
     void                                Begin                               (const char * id = "##EditorCanvas");
     void                                DrawBrowser                         (void);
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      "Wrapped" API Functions.        |   "common.cpp" ...
+    // *************************************************************************** //
+    void                                _file_dialog_handler                (void);
+    //
+    void                                _save_IMPL                          (void);
+    
+    
 //
 //
 //
@@ -298,7 +310,7 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //
 protected:
-    
+
     // *************************************************************************** //
     //      "Begin" HELPERS.                |   "editor.cpp" ...
     // *************************************************************************** //
@@ -1001,7 +1013,7 @@ protected:
     };
     cb::FileDialog::Initializer         m_OPEN_DIALOG_DATA              = {
         /* type               = */  cb::FileDialogType::Open,
-        /* window_name        = */  "Save Editor Session",
+        /* window_name        = */  "Open Editor Session",
         /* default_filename   = */  "",
         /* required_extension = */  "",
         /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
@@ -1009,7 +1021,7 @@ protected:
     };
     cb::FileDialog                      m_save_dialog;
     cb::FileDialog                      m_open_dialog;
-    std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/debug/fdtd_testing_v0.json"};
+    std::filesystem::path               m_filepath                      = { }; // {"../../assets/.cbapp/debug/fdtd_testing_v0.json"};
     
     // *************************************************************************** //
     //
@@ -1139,6 +1151,8 @@ protected:
     static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
     static constexpr auto &             ms_ANCHOR_TYPE_NAMES            = DEF_ANCHOR_TYPE_NAMES;
     static constexpr auto &             ms_PATH_KIND_NAMES              = path::DEF_PATH_KIND_NAMES;
+    //
+    static constexpr auto &             ms_IORESULT_NAMES               = DEF_IORESULT_NAMES;
 //
 //
 //
