@@ -51,6 +51,7 @@ ActionComposer::ActionComposer(app::AppState & src)
 void ActionComposer::initialize(void)
 {
     namespace           fs          = std::filesystem;
+    using               Window      = app::AppState::Window;
     app::WinInfo &      win_info    = *m_detview_window;
     
     if ( this->m_initialized )          { return;                       }
@@ -59,7 +60,7 @@ void ActionComposer::initialize(void)
     
     //  1.  CREATE WinInfo OBJECT TO STORE WINDOW IN DETVIEW...
     win_info                        = {
-        "Functional Testing",
+        S.m_windows[ Window::MimicApp ].uuid,
         ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
         true,
         nullptr
@@ -79,6 +80,51 @@ void ActionComposer::initialize(void)
     return;
 }
 
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//          UTILITY API...
+// *************************************************************************** //
+
+//  "name"
+//
+void ActionComposer::save(void)
+{
+    this->_save_IMPL();
+    return;
+}
+
+
+//  "open"
+//
+void ActionComposer::open(void)
+{
+    return;
+}
+
+
+//  "undo"
+//
+void ActionComposer::undo(void)
+{
+    return;
+}
+
+
+//  "redo"
+//
+void ActionComposer::redo(void)
+{
+    return;
+}
+    
+    
+    
+    
 
 
 // *************************************************************************** //
@@ -701,9 +747,9 @@ void ActionComposer::_draw_renderer_visuals(void)
     if ( !m_render_visuals || S.m_glfw_window == nullptr )                              { return; }
     if ( m_sel < 0 || m_sel >= static_cast<int>(m_actions->size()) )                    { return; }
 
-    const Action &          act                 = (*m_actions)[m_sel];
-    const ImGuiID           first_ID            = act.cursor.first_pos.widget.id;
-    const ImGuiID           last_ID             = act.cursor.last_pos.widget.id;
+    const Action &                      act                 = (*m_actions)[m_sel];
+    [[maybe_unused]] const ImGuiID      first_ID            = act.cursor.first_pos.widget.id;
+    [[maybe_unused]] const ImGuiID      last_ID             = act.cursor.last_pos.widget.id;
     
     
     if ( act.type != ActionType::CursorMove && act.type != ActionType::MouseDrag )      { return; }
@@ -1053,9 +1099,13 @@ void ActionComposer::_file_dialog_handler(void)
         else {
             m_saving        = false;
             filepath        = S.m_file_dialog.get_last_path().value_or("");
-            if ( filepath )   {
+            if ( filepath )
+            {
                 S.m_logger.info( std::format("Saved to file \"{}\"", filepath->string()) );
-                this->save_to_file( filepath.value() );
+                
+                if ( this->save_to_file(filepath.value()) ) {
+                    this->m_filepath = filepath.value();
+                }
             }
             else    { S.m_logger.warning("Failed to save file."); }
         }
@@ -1081,7 +1131,48 @@ void ActionComposer::_file_dialog_handler(void)
 
     return;
 }
-              
+
+
+
+
+
+
+
+
+//  "_save_IMPL"
+//
+void ActionComposer::_save_IMPL(void)
+{
+    const bool      has_file    = this->has_file();
+    
+    
+    
+    //  CASE 1 :    SAVE TO THE CURRENT FILE...
+    if (has_file)
+    {
+        this->save_to_file( this->m_filepath );
+    }
+    //
+    //  CASE 2 :    OPEN FILE DIALOG TO SELECT A FILE...
+    else
+    {
+        if ( !S.m_dialog_queued )
+        {
+            S.m_dialog_queued       = true;
+            m_saving                = true;
+            S.m_dialog_settings     = {
+                /* type               = */  cb::FileDialog::Type::Save,
+                /* window_name        = */  "Open Testing Suite",
+                /* default_filename   = */  "functional_test.json",
+                /* required_extension = */  ".json",
+                /* valid_extensions   = */  {  },
+                /* starting_dir       = */  std::filesystem::current_path()
+            };
+        }
+    }
+        
+    return;
+}
 
 
 

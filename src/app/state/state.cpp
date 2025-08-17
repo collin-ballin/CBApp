@@ -65,10 +65,11 @@ AppState::AppState(void)
     #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
     //
     m_task_state.m_applets   = {
-        std::addressof( m_windows[ Window::MainApp      ].uuid      ),
-        std::addressof( m_windows[ Window::CCounterApp  ].uuid      ),
-        std::addressof( m_windows[ Window::EditorApp    ].uuid      ),
-        std::addressof( m_windows[ Window::GraphApp     ].uuid      )
+        std::addressof( m_windows[ Window::MainApp          ].uuid      ),
+        std::addressof( m_windows[ Window::CCounterApp      ].uuid      ),
+        std::addressof( m_windows[ Window::EditorApp        ].uuid      ),
+        std::addressof( m_windows[ Window::GraphApp         ].uuid      ),
+        std::addressof( m_windows[ Window::MimicApp         ].uuid      )
     };
     
     return;
@@ -126,7 +127,7 @@ void AppState::init_ui_scaler(void)
 
 //  "RebuildFonts"
 //
-inline void AppState::RebuildFonts                (const float scale)
+void AppState::RebuildFonts(float scale)
 {
     ImGuiIO &               io              = ImGui::GetIO();
     bool                    good_fonts      = true;

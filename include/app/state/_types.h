@@ -179,6 +179,8 @@ struct WinInfo {
     ImGuiWindowFlags                                                flags;          //  ImGui window flags.
     bool                                                            open;           //  Current visibility state.
     std::function<void(const char*, bool*, ImGuiWindowFlags)>       render_fn;      //  To be bound later...
+//
+    ImGuiID                                                         dockspace_id    = 0;      //  To be bound later...
 };
 
 
@@ -536,6 +538,7 @@ enum class Applet_t : uint8_t {
     CCounterApp,
     EditorApp,
     GraphApp,
+    MimicApp,
 //
     COUNT
 };

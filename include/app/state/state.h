@@ -476,6 +476,8 @@ public:
     inline void                         PopFont                     (void)                  { ImGui::PopFont(); return; }
 
 
+
+
     //  "DockAtHome"
     inline void                         DockAtHome                  (const Window & idx) {
         app::WinInfo &w = this->m_windows[static_cast<Window>(idx)];
@@ -611,18 +613,14 @@ public:
     static constexpr size_t             ms_DEMO_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiDemo);
 #if defined(CBAPP_ENABLE_CB_DEMO)
     static constexpr size_t             ms_DEMO_WINDOWS_END         = static_cast<size_t>(Window::CBDemo);
-#elif defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
-    static constexpr size_t             ms_DEMO_WINDOWS_END         = static_cast<size_t>(Window::CBFunctionalTesting);
 # else
     static constexpr size_t             ms_DEMO_WINDOWS_END         = static_cast<size_t>(Window::Count);
 #endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
     //
     //                      1.6         **Extra** Windows.
-#if defined(CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
+#if defined(CBAPP_ENABLE_CB_DEMO)
     #if defined(CBAPP_ENABLE_CB_DEMO)
         static constexpr size_t         ms_EXTRA_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBDemo);
-    # elif defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
-        static constexpr size_t         ms_EXTRA_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBFunctionalTesting);
     #endif
     static constexpr size_t             ms_EXTRA_WINDOWS_END        = static_cast<size_t>(Window::Count);
 #endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
@@ -739,7 +737,7 @@ public:
     //                      ADD MORE SHARED STATE DATA MEMBERS HERE:
     //
     //                              SubCategory.
-    //                                  ...
+    bool                                ms_FOCUS_ON_OPEN_WINDOW     = true;
     //
     
     // *************************************************************************** //

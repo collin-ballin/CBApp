@@ -32,10 +32,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 App::App(void)
     : m_menubar(S)          , m_controlbar(S)           , m_browser(S)          , m_detview(S),
-      m_counter_app(S)      , m_editor_app(S)           , m_graph_app(S)
-#ifdef CBAPP_ENABLE_FUNCTIONAL_TESTING
-    , m_composer(S)
-#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+      m_counter_app(S)      , m_editor_app(S)           , m_graph_app(S)        , m_mimic_app(S)
 {
     this->install_signal_handlers();
     
@@ -62,23 +59,26 @@ void App::init(void)
     this->CreateContext();
 
 
+
     //  2.      SECOND PART OF INITIALIZATION...            | INTERNAL STUFF...
     this->S.m_main_viewport   = ImGui::GetMainViewport();
-    this->init_appstate();
+    this->init_appstate_pre();
     this->load();
+    
     
     
     //  3.      THIRD PART OF INITIALIZATION...             | INITIALIZE DELEGATOR CLASSES
     //          (SOME OF THESE HAVE TO BE DONE **AFTER** WE CREATE IMGUI CONTEXT)...
-    this->m_controlbar.initialize();
-    this->m_browser.initialize();
-    this->m_detview.initialize();
-    this->m_counter_app.initialize();
-    this->m_editor_app.initialize();
-    this->m_graph_app.initialize();
-#ifdef CBAPP_ENABLE_FUNCTIONAL_TESTING
-    this->m_composer.initialize();
-#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+    this->m_controlbar      .initialize();
+    this->m_browser         .initialize();
+    this->m_detview         .initialize();
+    this->m_counter_app     .initialize();
+    this->m_editor_app      .initialize();
+    this->m_graph_app       .initialize();
+    this->m_mimic_app       .initialize();
+    //
+    this->init_appstate_post();
+       
        
        
     //  4.      PERFORM ALL RUNTIME ASSERTION STATEMENTS AND
@@ -103,8 +103,6 @@ void App::init(void)
 //
 void App::CreateContext(void)
 {
-
-
     //  0.1.    SET GLFW WINDOW SETTINGS...     [ PRE ].
     glfwWindowHint                  ( GLFW_SCALE_TO_MONITOR,                GLFW_TRUE                       );      //  Honor per‑monitor content scaling.
     glfwWindowHint                  ( GLFW_TRANSPARENT_FRAMEBUFFER,         GLFW_TRUE                       );
@@ -209,9 +207,9 @@ void App::CreateContext(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "init_appstate"
+//  "init_appstate_pre"
 //
-void App::init_appstate(void)
+void App::init_appstate_pre(void)
 {
     [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
@@ -257,35 +255,58 @@ void App::init_appstate(void)
 
     //  4.  LOAD APPLICATION FONTS...
     //
-    //  this->S.init_ui_scaler();
-    //
     this->S.RebuildFonts( /*scale=*/ this->S.m_dpi_fontscale );
     //
-    //  this->S.RebuildFonts(/*scale=*/1.0f);   /* this->S.m_dpi_fontscale  */
+    //
+    //  this->S.init_ui_scaler();
     
     
     
     //      5.      LOADING CUSTOM COLORMAPS...
     S.LoadCustomColorMaps();
-    
-    
-    
+
+
+    return;
+}
+
+
+//  "init_appstate_post"
+//
+void App::init_appstate_post(void)
+{
     //      6.      INITIALIZE OTHER MEMBERS INSIDE APPSTATE...
     //
-    S.m_detview_windows.push_back(      std::addressof( this->m_graph_app.m_detview_window      )   );  //  TODO:   THIS SUCKS.
-    S.m_detview_windows.push_back(      std::addressof( this->m_editor_app.m_detview_window     )   );  //      Fix it w/ forward declarations.
-    S.m_detview_windows.push_back(      std::addressof( this->m_counter_app.m_detview_window    )   );
-#ifdef CBAPP_ENABLE_FUNCTIONAL_TESTING
-    S.m_detview_windows.push_back(      this->m_composer.get_detview_window()                       );
-#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+    S.m_detview_windows.push_back(      std::addressof( this->m_graph_app.m_detview_window          )   );  //  TODO:   THIS SUCKS.
+    S.m_detview_windows.push_back(      std::addressof( this->m_editor_app.m_detview_window         )   );  //          Fix it w/ better forward declarations.
+    S.m_detview_windows.push_back(      std::addressof( this->m_counter_app.m_detview_window        )   );
+    S.m_detview_windows.push_back(      std::addressof( this->m_mimic_app.get_detview_window()      )   );
     
     
     
     //          6.1.    Make sure these windows cannot LEAVE the DetView Dockspace...
     for (auto & win : S.m_detview_windows) {
-        if (win)    win->flags |= ImGuiWindowFlags_NoMove;
+        if (win)    { win->flags |= ImGuiWindowFlags_NoMove; }
     }
-
+    //
+    //
+    //          6.2.    Set DOCKSPACE ID for DETVIEW Windows...
+    for (std::size_t i = S.ms_WINDOWS_BEGIN; i < static_cast<int>(Window::Count); ++i)
+    {
+        bool                match       = false;
+        Window              handle      = static_cast<Window>(i);
+        WinInfo &           win         = this->S.m_windows[handle];
+        
+        
+        for (auto & detwin : S.m_detview_windows)       //  CHECK IF THIS WINDOW EXISTS IN THE DETVIEW WINDOWS...
+        {
+            match       = (win.uuid == detwin->uuid);
+            if ( match )  {
+                win.dockspace_id    = cblib::maximum_value_of_type<ImGuiID>();
+                win.flags          &= ~ImGuiWindowFlags_NoMove;
+                break;
+            }
+        }
+    }
 
     return;
 }
@@ -308,37 +329,31 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         case Window::Dockspace:             {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->ShowDockspace(n, nullptr, f); };
-            //this->ShowDockspace(            w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::MenuBar:               {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->m_menubar.Begin(n, nullptr, f); };
-            //  this->m_menubar.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::ControlBar:            {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->m_controlbar.Begin(n, nullptr, f); };
-            //  this->m_controlbar.Begin(       w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::Browser:               {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->m_browser.Begin(n, nullptr, f); };
-            //  this->m_browser.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::DetailView:            {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->m_detview.Begin(n, nullptr, f); };
-            //  this->m_detview.Begin(          w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::MainApp:               {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->ShowMainWindow(n, nullptr, f); };
-            //  this->ShowMainWindow(           w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         //
@@ -348,19 +363,22 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         case Window::CCounterApp:       {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->m_counter_app.Begin(n, o, f); };
-            //  this->m_counter_app.Begin(      w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::EditorApp:             {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->m_editor_app.Begin(n, o, f); };
-            //  this->m_editor_app.Begin(       w.uuid.c_str(),     nullptr,        w.flags);
             break;
         }
         case Window::GraphApp:              {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->m_graph_app.Begin(n, o, f); };
-            //  this->m_graph_app.Begin(        w.uuid.c_str(),     nullptr,        w.flags);
+            break;
+        }
+        case Window::MimicApp:
+        {
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->m_mimic_app.Begin(n, o, f); };
             break;
         }
         //
@@ -370,25 +388,21 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         case Window::ImGuiStyleEditor:      {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiStyleEditor(n, o, f); };
-            //  this->ShowImGuiStyleEditor(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::ImPlotStyleEditor:     {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImPlotStyleEditor(n, o, f); };
-            //  this->ShowImGuiStyleEditor(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::ImGuiMetrics:          {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiMetricsWindow(n, o, f); };
-            //  this->ShowImGuiMetricsWindow(   w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::ImPlotMetrics:         {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImPlotMetricsWindow(n, o, f); };
-            //  this->ShowImPlotMetricsWindow(  w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //
@@ -396,13 +410,11 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         case Window::Logs:                  {
             render_fn   = [](const char * n, bool * o, ImGuiWindowFlags f)
                           { cb::ShowExampleAppLog(n, o, f); };
-            //  cb::ShowExampleAppLog(          w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::Console:               {
             render_fn   = [](const char * n, bool * o, ImGuiWindowFlags f)
                           { cb::ShowExampleAppConsole(n, o, f); };
-            //  cb::ShowExampleAppConsole(      w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //
@@ -412,13 +424,11 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         case Window::ColorTool:             {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowColorTool(n, o, f); };
-            //  this->ShowColorTool(            w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::CustomRendering:       {
             render_fn   = [](const char * n, bool * o, ImGuiWindowFlags f)
                           { cb::ShowCustomRendering(n, o, f); };
-            //  cb::ShowCustomRendering(        w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //
@@ -427,19 +437,16 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         case Window::ImGuiDemo:             {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiDemoWindow(n, o, f); };
-            //  this->ShowImGuiDemoWindow(      w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::ImPlotDemo:            {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImPlotDemoWindow(n, o, f); };
-            //  this->ShowImPlotDemoWindow(     w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         case Window::AboutMyApp:            {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowAboutWindow(n, o, f); };
-            //  this->ShowAboutWindow(          w.uuid.c_str(),     &w.open,        w.flags);
             break;
         }
         //
@@ -449,17 +456,6 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         case Window::CBDemo:                {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiDemoWindow(n, o, f); };
-            //  this->ShowImGuiDemoWindow(      w.uuid.c_str(),     &w.open,        w.flags);
-            break;
-        }
-#elif defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
-        case Window::CBFunctionalTesting:
-        {
-            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->m_composer.Begin(n, o, f); };
-                          
-            //  render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-            //                { this->BeginFunctionalTesting(n, o, f); };
             break;
         }
 #endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //

@@ -492,10 +492,10 @@ void App::RebuildDockLayout(void)
 
 
     //  2.  ENABLE WINDOW VISIBILITY...
-    S.m_windows[Window::ControlBar].open    = true;
-    S.m_windows[Window::Browser].open       = true;
-    S.m_windows[Window::MainApp].open       = true;
-    S.m_windows[Window::DetailView].open    = true;
+    S.m_windows[ Window::ControlBar     ].open      = true;
+    S.m_windows[ Window::Browser        ].open      = true;
+    S.m_windows[ Window::MainApp        ].open      = true;
+    S.m_windows[ Window::DetailView     ].open      = true;
 
 
     //  3.  RE-INSERT ALL WINDOWS INTO THEIR DEFAULT DOCKING SPACE...
@@ -504,8 +504,10 @@ void App::RebuildDockLayout(void)
     ImGui::DockBuilderDockWindow(S.m_windows[Window::DetailView ].uuid.c_str(), S.m_detview_dock_id);
     for (size_t idx = S.ms_APP_WINDOWS_BEGIN; idx < S.ms_WINDOWS_END; ++idx) {                              //  3.2     Remaining Windows.
         winfo           = S.m_windows[ static_cast<Window>(idx) ];
-        if (winfo.open) {
-            ImGui::DockBuilderDockWindow( winfo.uuid.c_str(), S.m_main_dock_id );
+        if (winfo.open)
+        {
+            if ( !winfo.dockspace_id )  { ImGui::DockBuilderDockWindow( winfo.uuid.c_str(), S.m_main_dock_id );     }
+            else                        { this->S.DockAtDetView( winfo.uuid.c_str() );                              }
         }
     }
     

@@ -402,7 +402,7 @@ public:
     static constexpr float              ms_CONTROLBAR_SELECTABLE_SEP                = 16.0f;    //  controlbar offset.
     static constexpr float              ms_SMALL_ITEM_PAD                           = 4.0f;
     static constexpr float              ms_BIG_ITEM_PAD                             = 8.0f;
-    static constexpr int                ms_NC                                       = 8;
+    static constexpr int                ms_NC                                       = 7;
     static constexpr int                ms_NE                                       = 3;
     //
     //
@@ -514,14 +514,24 @@ public:
     //
     //                              INITIALIZATION METHODS:
     void                                initialize              (void);
+    
     // *************************************************************************** //
     //
     //
     // *************************************************************************** //
     //      MAIN API.                       |   "interface.cpp" ...
     // *************************************************************************** //
+    //                              MAIN API:
     void                                Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                                draw_all                            (void);
+    //
+    //                              INTERFACE API [ STANDARDIZED ]:
+    void                                save                                (void);
+    void                                open                                (void);
+    void                                undo                                (void);
+    void                                redo                                (void);
+    //
+    //
 protected:
     void                                Begin_IMPL                          (void);
     
@@ -638,6 +648,8 @@ protected:
     //
     //                              SERIALIZATION:
     void                                _file_dialog_handler                (void);
+    //
+    void                                _save_IMPL                          (void);
     bool                                save_to_file                        (const std::filesystem::path & path) const;
     bool                                save_to_file_IMPL                   (const std::filesystem::path & path) const;
     bool                                load_from_file                      (const std::filesystem::path & path);
@@ -859,8 +871,8 @@ public:
 
     //  "get_detview_window"
     [[nodiscard]]
-    inline app::WinInfo *               get_detview_window              (void)
-    {  return this->m_detview_window.get(); }
+    inline app::WinInfo &               get_detview_window              (void)
+    {  return *this->m_detview_window; }
     
     
     

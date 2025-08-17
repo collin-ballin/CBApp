@@ -783,9 +783,9 @@ inline void ActionComposer::_ui_movement_widgets(Action & a)
             if ( ImGui::SmallButton("swap") )           { a.swap(); }                                   // Swap the order of Begin and End...
     //
             this->label("UUID:");   ImGui::SameLine();
-            ImGui::BeginDisabled( 0 > first_ID );
+            //  ImGui::BeginDisabled( 0 > first_ID );
                 ImGui::Text( "%d", first_ID );
-            ImGui::EndDisabled();
+            //  ImGui::EndDisabled();
     //
     ImGui::PopID();
     
@@ -801,9 +801,9 @@ inline void ActionComposer::_ui_movement_widgets(Action & a)
             if ( ImGui::SmallButton("assign") )         { _begin_mouse_capture(a,   &a.cursor.first_pos,    &a.cursor.last); }
     //
             this->label("UUID:");   ImGui::SameLine();
-            ImGui::BeginDisabled( 0 > first_ID );
+            //  ImGui::BeginDisabled( 0 > first_ID );
                 ImGui::Text( "%d", last_ID );
-            ImGui::EndDisabled();
+            //  ImGui::EndDisabled();
     //
     ImGui::PopID();
     

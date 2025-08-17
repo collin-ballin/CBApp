@@ -309,8 +309,8 @@ void Editor::_update_world_extent()
 void Editor::_draw_controls(void)
 {
     static constexpr const char *       uuid                = "##Editor_Controls_Columns";
-    static constexpr int                ms_NC               = 8;
-    static constexpr int                ms_NE               = 2;
+    static constexpr int                ms_NC               = 10;
+    static constexpr int                ms_NE               = 1;
     //
     static ImGuiOldColumnFlags          COLUMN_FLAGS        = ImGuiOldColumnFlags_None;
     const ImVec2                        WIDGET_SIZE         = ImVec2( -1,               1.2f * ImGui::GetTextLineHeight()               );

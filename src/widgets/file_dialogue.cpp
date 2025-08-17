@@ -255,7 +255,7 @@ inline void FileDialog::draw_file_table(State & s, const char * table_id)
     
 
     //  2.  UPDATE SORTING POLICY IF USER CLICKS ON HEADER ROW...
-    if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs())
+    if ( ImGuiTableSortSpecs * specs = ImGui::TableGetSortSpecs() )
     {
         if (specs->SpecsCount == 1)
         {
@@ -321,16 +321,27 @@ inline void FileDialog::draw_file_table(State & s, const char * table_id)
     //          2.2.    PRINTING EACH ROW...
     for ( auto & e : s.entries )
     {
-    
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
 
-        // build label with selectable id
-        bool            is_dir          = e.is_directory();
-        bool            clickable       = is_dir || is_valid_extension( s.valid_extensions, e.path() );
-        std::string     disp_name       = is_dir ? DIRECTORY_PREFIX : FILENAME_PREFIX;
+        //  build label with selectable id
+        const bool                      is_dir          = e.is_directory();
+        bool                            clickable       = is_dir || is_valid_extension( s.valid_extensions, e.path() );
+        //
+        ImGuiSelectableFlags            SEL_FLAGS       = ( is_dir )
+                                                            ? ImGuiSelectableFlags_AllowDoubleClick
+                                                            : ImGuiSelectableFlags_None;
+        SEL_FLAGS                                       = ( !clickable )
+                                                            ? SEL_FLAGS | ImGuiSelectableFlags_Disabled
+                                                            : SEL_FLAGS;
+        //
+        //
+        //
+        std::string     disp_name       = (is_dir)      ? DIRECTORY_PREFIX      : FILENAME_PREFIX;
         disp_name                      += e.path().filename().string();
         bool            sel             = s.current_selection && *s.current_selection == e.path();
+        
+        
         
         //  0.  IF FILENAME IS *NOT* SELECTABLE, DISABLE THE FOLLOWING ROW...
         if ( !clickable )       { ImGui::BeginDisabled(); }
@@ -338,14 +349,24 @@ inline void FileDialog::draw_file_table(State & s, const char * table_id)
         //
         //
             //  1.  FILENAME...
-            if ( ImGui::Selectable((disp_name + "##row" + std::to_string(row_idx++)).c_str(), sel) )
+            const bool  pressed             = ImGui::Selectable( (disp_name + "##row" + std::to_string(row_idx++)).c_str(), sel, SEL_FLAGS );
+            const bool  double_clicked      = ImGui::IsMouseDoubleClicked(0);
+            //
+            //
+            //      CASE 1A :   FILE.
+            //
+            if ( pressed )
             {
-                if ( is_dir)    { push_history(s, e.path() ); }
-                else {
-                    s.current_selection = e.path();
-                    s.default_filename = e.path().filename().string();
-                }
+                s.current_selection     = e.path();
+                if ( !is_dir)           { s.default_filename= e.path().filename().string(); }
             }
+            //
+            //      CASE 1B :   DIRECTORY.
+            if ( pressed && double_clicked && is_dir )
+            {
+                push_history(s, e.path() );
+            }
+
 
 
             //  2.  KIND...
@@ -410,6 +431,7 @@ inline void FileDialog::draw_breadcrumb_bar(State & s)
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
     //float                           avail_total     = 1.0f * this->m_window_size.x; // - 2 * style.WindowPadding.x;   // popup width
     float                           avail_total     = 1.35f * ImGui::GetContentRegionAvail().x;
+    int                             idx             = 0;
     
 #ifdef _WIN32
     //  SHOW WINDOWS ("C:") DRIVE FIRST...
@@ -447,20 +469,22 @@ inline void FileDialog::draw_breadcrumb_bar(State & s)
 
         //  4.  DRAW BUTTON FOR THE DIRECTORY...
         accum              /= part_raw;
-        ImGui::PushID(part.c_str());
-            bool    clicked     = ImGui::SmallButton( part.c_str() );
-            if (clicked)        { push_history(s, s.cwd.root_path() / accum); }
+        ImGui::PushID( ( part + std::to_string(idx++) ).c_str() );
+            bool    clicked         = ImGui::SmallButton( part.c_str() );
+            if ( clicked )          { push_history(s, s.cwd.root_path() / accum); }
         ImGui::PopID();
 
-        line_x += btn_w;
+        line_x     += btn_w;
 
 
         //  5.  DELIMETER CHARACTER BETWEEN DIRECTORY BUTTONS...
         ImGui::SameLine( 0.0f, 0.0f ); ImGui::TextUnformatted( BREADCRUMB_DELIM ); ImGui::SameLine( 0.0f, 0.0f );
-        line_x += ImGui::CalcTextSize( BREADCRUMB_DELIM ).x + 2.0f * ImGui::GetStyle().ItemSpacing.x;
+        line_x     += ImGui::CalcTextSize( BREADCRUMB_DELIM ).x + 2.0f * ImGui::GetStyle().ItemSpacing.x;
     }
 
     ImGui::NewLine();
+    
+    return;
 }
 
 

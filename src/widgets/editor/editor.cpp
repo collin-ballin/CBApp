@@ -342,7 +342,7 @@ inline void Editor::_handle_default(const Interaction& it)
 
 //  "_handle_hand"
 //
-inline void Editor::_handle_hand(const Interaction & it)
+inline void Editor::_handle_hand([[maybe_unused]] const Interaction & it)
 {
     ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
     return;

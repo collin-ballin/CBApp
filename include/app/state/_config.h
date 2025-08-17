@@ -161,14 +161,6 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 //
 //
 //
-#elif defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
-    #define _CBAPP_OPTIONAL_WINDOWS(X)                                                                                                      \
-/*| NAME.                       TITLE.                      DEFAULT OPEN.       FLAGS.                                                  */  \
-/*|========================================================================================================================|            */  \
-    X(CBFunctionalTesting,      "##Functional Tests",       true,               _CBAPP_CORE_WINDOW_FLAGS                                )
-//
-//
-//
 # else                                              // OTHERWISE                                    --- it expands to nothing...
     #define _CBAPP_OPTIONAL_WINDOWS(X)
 #endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
@@ -245,6 +237,9 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 /*                                                                                                                                          */      \
 /*          FDTD APP...                                                                                                                     */      \
     X(GraphApp,             "Graph App",                    DEF_FDTD_APP_VIS,       _CBAPP_CORE_WINDOW_FLAGS                                )       \
+/*                                                                                                                                          */      \
+/*          MIMIC APP...                                                                                                                    */      \
+    X(MimicApp,             "Mimic App",                    true,                   _CBAPP_CORE_WINDOW_FLAGS                                )       \
 /*                                                                                                                                          */      \
 /*                                                                                                                                          */      \
 /*  3.  BASIC TOOLS...                                                                                                                      */      \

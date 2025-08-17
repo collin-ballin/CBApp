@@ -392,6 +392,8 @@ void MenuBar::disp_show_windows_menubar(void)
             if ( ImGui::MenuItem(name.c_str(), nullptr, &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
                 ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
+                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
         
@@ -411,6 +413,8 @@ void MenuBar::disp_show_windows_menubar(void)
                                  &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
                 ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
+                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
     //  END "Applications" SUB-MENU.
@@ -426,7 +430,9 @@ void MenuBar::disp_show_windows_menubar(void)
                                  nullptr,
                                  &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
-                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+                S.DockAtHome( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str() );
+                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
+                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
     //  END "Tools" SUB-MENU.
@@ -443,6 +449,8 @@ void MenuBar::disp_show_windows_menubar(void)
                                  &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
                 ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
+                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
     //  END "Tools" SUB-MENU.
@@ -459,6 +467,8 @@ void MenuBar::disp_show_windows_menubar(void)
                                  &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
                 ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
+                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
     //  END "Demos" SUB-MENU.
@@ -475,8 +485,11 @@ void MenuBar::disp_show_windows_menubar(void)
             if (name[0] == '#' && name[1] == '#')           { name = name.erase(0, 2);       }
             else if (name[0] == '#')                        { name = name.erase(0, 1);       }
             
-            if ( ImGui::MenuItem(name.c_str(), nullptr, &this->S.m_windows[ static_cast<Window>(idx) ].open) )
-                { ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id ); }
+            if ( ImGui::MenuItem(name.c_str(), nullptr, &this->S.m_windows[ static_cast<Window>(idx) ].open) ) {
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
+                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
+            }
         }
     //  END "Extra" SUB-MENU.
 #endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
@@ -505,6 +518,8 @@ void MenuBar::disp_tools_menubar(void)
                                  &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
                 ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
+                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
     }//  END "Basic Tools" SUB-MENU.
@@ -521,6 +536,8 @@ void MenuBar::disp_tools_menubar(void)
                                  &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
                 ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
+                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
     }//  END "Custom Tools" SUB-MENU.
@@ -537,6 +554,8 @@ void MenuBar::disp_tools_menubar(void)
                                  &this->S.m_windows[ static_cast<Window>(idx) ].open) )
             {
                 ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
+                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
     }//  END "Custom Tools" SUB-MENU.

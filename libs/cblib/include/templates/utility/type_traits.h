@@ -81,6 +81,44 @@ struct has_to_json<
 
 
 
+
+
+
+//  "maximum_value_of_type"
+//
+template <class T>
+constexpr auto maximum_value_of_type(void)
+{
+    if constexpr ( std::is_enum_v<T> ) {
+        using U = std::underlying_type_t<T>;
+        return std::numeric_limits<U>::max();
+    }
+    else {
+        static_assert(std::is_integral_v<T>, "Template parameter is not an integral or enum type" );
+        return std::numeric_limits<T>::max();
+    }
+}
+
+
+//  "minimum_value_of_type"
+//
+template <class T>
+constexpr auto minimum_value_of_type(void)
+{
+    if constexpr ( std::is_enum_v<T> ) {
+        using U = std::underlying_type_t<T>;
+        return std::numeric_limits<U>::min();
+    }
+    else {
+        static_assert(std::is_integral_v<T>, "Template parameter is not an integral or enum type" );
+        return std::numeric_limits<T>::min();
+    }
+}
+
+
+
+
+
 //
 // *************************************************************************** //
 // *************************************************************************** //   END "JSON".

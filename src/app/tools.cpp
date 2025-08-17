@@ -40,27 +40,30 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 //  "ShowImGuiStyleEditor"
 //
-void App::ShowImGuiStyleEditor([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+void App::ShowImGuiStyleEditor([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
     ImGui::Begin(uuid, p_open, flags);
         ImGui::ShowStyleEditor();
     ImGui::End();
-    //ImGui::DockBuilderDockWindow(S.m_windows[Window::SideBar].uuid.c_str(),  S.m_browser_dock_id);
     return;
 }
 
 //  "ShowImGuiMetricsWindow"
 //
-void App::ShowImGuiMetricsWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+void App::ShowImGuiMetricsWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
     ImGui::ShowMetricsWindow(p_open);
-    //ImGui::DockBuilderDockWindow(S.m_windows[Window::SideBar].uuid.c_str(),  S.m_browser_dock_id);
     return;
 }
 
 //  "ShowImGuiDemoWindow"
 //
-void App::ShowImGuiDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+void App::ShowImGuiDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
     ImGui::ShowDemoWindow(p_open);
-    //ImGui::DockBuilderDockWindow(S.m_windows[Window::SideBar].uuid.c_str(),  S.m_browser_dock_id);
     return;
 }
 
@@ -76,7 +79,9 @@ void App::ShowImGuiDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unused
 
 //  "ShowImPlotStyleEditor"
 //
-void App::ShowImPlotStyleEditor([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+void App::ShowImPlotStyleEditor([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
     ImGui::Begin(uuid, p_open, flags);
         ImPlot::ShowStyleEditor();
     ImGui::End();
@@ -85,14 +90,18 @@ void App::ShowImPlotStyleEditor([[maybe_unused]] const char * uuid, [[maybe_unus
 
 //  "ShowImPlotMetricsWindow"
 //
-void App::ShowImPlotMetricsWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+void App::ShowImPlotMetricsWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
     ImPlot::ShowMetricsWindow(p_open);  //"ImPlot Metrics"
     return;
 }
 
 //  "ShowImPlotDemoWindow"
 //
-void App::ShowImPlotDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+void App::ShowImPlotDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
     ImPlot::ShowDemoWindow(p_open);
     return;
 }
@@ -113,6 +122,8 @@ void App::ShowImPlotDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unuse
 //
 void App::ShowColorTool([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
+    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
+    
     //  1.  CREATE THE WINDOW...
     if (!ImGui::Begin(uuid, p_open, flags)) {
         ImGui::End();

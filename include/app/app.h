@@ -172,9 +172,7 @@ protected:
     CCounterApp                 m_counter_app;
     EditorApp                   m_editor_app;
     GraphApp                    m_graph_app;
-#ifdef CBAPP_ENABLE_FUNCTIONAL_TESTING
-    ui::ActionComposer          m_composer;
-#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+    ui::ActionComposer          m_mimic_app;
 #ifdef CBAPP_ENABLE_CB_DEMO
     CBDemo                      m_cb_demo                       = CBDemo();
 #endif  //  CBAPP_ENABLE_CB_DEMO  //
@@ -253,7 +251,8 @@ protected:
     void                        destroy                     (void);                     //  [init.cpp].
     //
     //                      SUB-CLASS INIT. FUNCTIONS:
-    void                        init_appstate               (void);                     //  [init.cpp].
+    void                        init_appstate_pre           (void);                     //  [init.cpp].
+    void                        init_appstate_post          (void);                     //  [init.cpp].
     [[nodiscard]] WinRenderFn   dispatch_window_function    (const Window & uuid);      //  [init.cpp].
     //
     //                      RUNTIME INIT. FUNCTIONS:

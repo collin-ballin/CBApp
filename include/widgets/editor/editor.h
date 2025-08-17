@@ -311,7 +311,7 @@ protected:
     //      PRIMARY STATE HANDLERS.         |   "editor.cpp" ...
     // *************************************************************************** //
     inline void                         _handle_default                     (const Interaction & );
-    inline void                         _handle_hand                        (const Interaction & );
+    inline void                         _handle_hand                        ([[maybe_unused]] const Interaction & );
     inline void                         _handle_line                        (const Interaction & );
     inline void                         _handle_point                       (const Interaction & );
     inline void                         _handle_pen                         (const Interaction & );
@@ -333,6 +333,7 @@ protected:
     //
     void                                _draw_obj_selector_column               (void);     //  PREVIOUSLY:     _draw_path_list_column
     void                                _draw_obj_selector_table                (void);
+    inline void                         _draw_obj_selectable                    (Path & , const int , const bool , const bool );
     //
     void                                _draw_single_obj_inspector              (void);     //  PREVIOUSLY:     _draw_single_path_inspector
     void                                _draw_multi_obj_inspector               (void);     //  PREVIOUSLY:     _draw_multi_path_inspector

@@ -219,10 +219,11 @@ void App::KeyboardShortcutHandler(void)
 void App::SaveHandler(void)
 {
     switch ( S.GetCurrentApplet() ) {
-        case Applet::CCounterApp        : { this->m_counter_app     .save();        break; }
-        case Applet::EditorApp          : { this->m_editor_app      .save();        break; }
-        case Applet::GraphApp           : { this->m_graph_app       .save();        break; }
-        default                         : { this->SaveHandler_Default();            break; }
+        case Applet::CCounterApp            : { this->m_counter_app     .save();        break; }
+        case Applet::EditorApp              : { this->m_editor_app      .save();        break; }
+        case Applet::GraphApp               : { this->m_graph_app       .save();        break; }
+        case Applet::MimicApp               : { this->m_mimic_app       .save();        break; }
+        default                             : { this->SaveHandler_Default();            break; }
     }
     
     return;
@@ -234,10 +235,11 @@ void App::SaveHandler(void)
 void App::OpenHandler(void)
 {
     switch ( S.GetCurrentApplet() ) {
-        //case Applet::CCounterApp        : { this->m_counter_app.open();     break; }
-        case Applet::EditorApp          : { this->m_editor_app.open();      break; }
-        //case Applet::GraphApp           : { this->m_graph_app.open();       break; }
-        default                         : { /* this->OpenHandler_Default(); */    break; }
+        case Applet::CCounterApp            : { /* ... */                               break; }
+        case Applet::EditorApp              : { this->m_editor_app.open();              break; }
+        case Applet::GraphApp               : { /* ... */                               break; }
+        case Applet::MimicApp               : { /* ... */                               break; }
+        default                             : { /* this->OpenHandler_Default(); */      break; }
     }
     
     return;
@@ -249,10 +251,11 @@ void App::OpenHandler(void)
 void App::UndoHandler(void)
 {
     switch ( S.GetCurrentApplet() ) {
-        case Applet::CCounterApp        : { this->m_counter_app     .undo();        break; }
-        case Applet::EditorApp          : { this->m_editor_app      .undo();        break; }
-        case Applet::GraphApp           : { this->m_graph_app       .undo();        break; }
-        default                         : { this->UndoHandler_Default();            break; }
+        case Applet::CCounterApp            : { this->m_counter_app     .undo();        break; }
+        case Applet::EditorApp              : { this->m_editor_app      .undo();        break; }
+        case Applet::GraphApp               : { this->m_graph_app       .undo();        break; }
+        case Applet::MimicApp               : { /* ... */                               break; }
+        default                             : { this->UndoHandler_Default();            break; }
     }
     
     return;
@@ -264,10 +267,11 @@ void App::UndoHandler(void)
 void App::RedoHandler(void)
 {
     switch ( S.GetCurrentApplet() ) {
-        case Applet::CCounterApp        : { this->m_counter_app     .redo();        break; }
-        case Applet::EditorApp          : { this->m_editor_app      .redo();        break; }
-        case Applet::GraphApp           : { this->m_graph_app       .redo();        break; }
-        default                         : { this->RedoHandler_Default();            break; }
+        case Applet::CCounterApp            : { this->m_counter_app     .redo();        break; }
+        case Applet::EditorApp              : { this->m_editor_app      .redo();        break; }
+        case Applet::GraphApp               : { this->m_graph_app       .redo();        break; }
+        case Applet::MimicApp               : { /* ... */                               break; }
+        default                             : { this->RedoHandler_Default();            break; }
     }
     
     return;
