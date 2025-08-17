@@ -54,7 +54,7 @@ void Editor::save(void)
 //  "open"
 //
 void Editor::open(void) {
-    CB_LOG( LogLevel::Info, "Editor--open" );
+    //  CB_LOG( LogLevel::Info, "Editor--open" );
 
 
     m_odialog_open.store(true, std::memory_order_release);
@@ -99,9 +99,9 @@ void Editor::redo(void) {
 
 //  "_file_dialog_handler"
 //
+/*
 void Editor::_file_dialog_handler(void)
 {
-/*
     namespace                   fs              = std::filesystem;
     std::optional<fs::path>     filepath        = std::nullopt;
     
@@ -142,19 +142,19 @@ void Editor::_file_dialog_handler(void)
             else    { S.m_logger.warning("Failed to open file."); }
         }
     }
-*/
 
     return;
 }
+*/
 
 
 
 
 //  "_save_IMPL"
 //
-void Editor::_save_IMPL(void)
-{ 
 /*
+void Editor::_save_IMPL(void)
+{
     const bool      has_file    = this->has_file();
     
     
@@ -169,9 +169,11 @@ void Editor::_save_IMPL(void)
     {
 
     }
-*/
     return;
 }
+*/
+
+
 
 //
 //
@@ -686,6 +688,21 @@ void Editor::load_async(std::filesystem::path path)
     std::thread([this, path]{
         load_worker(path);
     }).detach();
+    
+    
+    //      2.      TAKE ACTIONS BASED ON SUCCESS/FAILURE OF LOADING PROCEDURE...
+    if ( (m_io_last == IOResult::Ok) || (m_io_last == IOResult::VersionMismatch) )
+    {
+        this->m_filepath    = path;
+    }
+    else
+    {
+        this->m_filepath    = std::filesystem::path{  };
+        this->RESET_ALL();
+    }
+    
+    
+    return;
 }
 
 
@@ -693,7 +710,7 @@ void Editor::load_async(std::filesystem::path path)
 //
 void Editor::_draw_io_overlay(void)
 {
-    if ( !m_io_busy && m_io_last == IoResult::Ok )          { return; }   // nothing to show
+    if ( !m_io_busy && m_io_last == IOResult::Ok )          { return; }   // nothing to show
 
     const char *    txt         = m_io_busy ? "Working..." : m_io_msg.c_str();
     ImVec2          pad         {8,8};
@@ -724,10 +741,10 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
     j["version"]                    = kSaveFormatVersion;
     j["state"]                      = snap;
     std::ofstream       os          (path, std::ios::binary);
-    IoResult            res         = os ? IoResult::Ok : IoResult::IoError;
+    IOResult            res         = os ? IOResult::Ok : IOResult::IoError;
     
     
-    if ( res == IoResult::Ok )      { os << j.dump(2); }
+    if ( res == IOResult::Ok )      { os << j.dump(2); }
     
     
     // enqueue completion notification
@@ -738,7 +755,7 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
             {
                 m_io_busy   = false;
                 m_io_last   = res;
-                m_io_msg    = (res == IoResult::Ok)
+                m_io_msg    = (res == IOResult::Ok)
                                 ? "Saved to " + path.generic_string()
                                 : "Save failed";
             } );
@@ -751,7 +768,7 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
         const char *    status      = this->ms_IORESULT_NAMES[ static_cast<size_t>( this->m_io_last ) ];
     
         //  CASE 2A :   SAVE SUCCESS.
-        if ( m_io_last == IoResult::Ok ) {
+        if ( m_io_last == IOResult::Ok ) {
             CB_LOG( LogLevel::Info, std::format("Editor | successfully saved data to \"{}\" [status: {}] ", path.filename().string(), status) );
         }
         //
@@ -773,12 +790,12 @@ void Editor::load_worker(std::filesystem::path path)
 {
     nlohmann::json          j;
     std::ifstream           is          (path, std::ios::binary);
-    IoResult                res         = ( is )    ? IoResult::Ok      : IoResult::IoError;
+    IOResult                res         = ( is )    ? IOResult::Ok      : IOResult::IoError;
     EditorSnapshot          snap;
 
 
     //      1.      LOAD FROM JSON-FILE...
-    if ( res == IoResult::Ok )
+    if ( res == IOResult::Ok )
     {
         try
         {
@@ -786,11 +803,11 @@ void Editor::load_worker(std::filesystem::path path)
             
             if (  j.at( "version" ).get<uint32_t>() != kSaveFormatVersion  )
             {
-                res = IoResult::VersionMismatch;
+                res = IOResult::VersionMismatch;
             }
             else        { snap = j.at("state").get<EditorSnapshot>(); }
         }
-        catch (...)     { res = IoResult::ParseError; }
+        catch (...)     { res = IOResult::ParseError; }
         
     }
 
@@ -804,7 +821,7 @@ void Editor::load_worker(std::filesystem::path path)
             m_io_busy = false;
 
             //  CASE 2A :   LOADING SUCCESS.
-            if ( res == IoResult::Ok )
+            if ( res == IOResult::Ok )
             {
                 load_from_snapshot( std::move(snap) );
                 m_io_msg = std::format( "loaded file \"{}\"", path.generic_string() );
@@ -815,9 +832,9 @@ void Editor::load_worker(std::filesystem::path path)
             {
                 switch (res)
                 {
-                    case IoResult::IoError              : {     m_io_msg = "load I/O error";                break;     }
-                    case IoResult::ParseError           : {     m_io_msg = "load parsing error";            break;     }
-                    case IoResult::VersionMismatch      : {     m_io_msg = "json version mismatch";         break;     }
+                    case IOResult::IoError              : {     m_io_msg = "load I/O error";                break;     }
+                    case IOResult::ParseError           : {     m_io_msg = "load parsing error";            break;     }
+                    case IOResult::VersionMismatch      : {     m_io_msg = "json version mismatch";         break;     }
                     default                             : {     m_io_msg = "unknown load error";            break;     }
                 }
             }

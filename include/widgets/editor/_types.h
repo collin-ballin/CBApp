@@ -79,9 +79,9 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "IoResult"
+//  "IOResult"
 //
-enum class IoResult {
+enum class IOResult {
     Ok = 0,
     IoError,
     ParseError,
@@ -91,7 +91,7 @@ enum class IoResult {
 };
 //
 //  "DEF_IORESULT_NAMES"
-static constexpr std::array<const char *, static_cast<size_t>(IoResult::COUNT)>
+static constexpr std::array<const char *, static_cast<size_t>(IOResult::COUNT)>
     DEF_IORESULT_NAMES  = { {
         "OK",   "IO Error",     "Parsing Error",    "Version Mismatch"
 } };
@@ -817,7 +817,7 @@ struct EditorState_t
     std::mutex                          m_task_mtx;
     std::vector<std::function<void()>>  m_main_tasks;
     std::atomic<bool>                   m_io_busy                       {false};
-    IoResult                            m_io_last                       {IoResult::Ok};
+    IOResult                            m_io_last                       {IOResult::Ok};
     std::string                         m_io_msg                        {  };
     //
     std::atomic<bool>                   m_sdialog_open                  = {false};

@@ -996,7 +996,7 @@ protected:
     std::mutex                          m_task_mtx;
     std::vector<std::function<void()>>  m_main_tasks;
     std::atomic<bool>                   m_io_busy                       {false};
-    IoResult                            m_io_last                       {IoResult::Ok};
+    IOResult                            m_io_last                       {IOResult::Ok};
     std::string                         m_io_msg                        {  };
     //
     //
@@ -1021,7 +1021,7 @@ protected:
     };
     cb::FileDialog                      m_save_dialog;
     cb::FileDialog                      m_open_dialog;
-    std::filesystem::path               m_filepath                      = { }; // {"../../assets/.cbapp/debug/fdtd_testing_v0.json"};
+    std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/editor-fdtd_v0.json"};
     
     // *************************************************************************** //
     //

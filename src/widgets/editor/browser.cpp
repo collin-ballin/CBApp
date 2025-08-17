@@ -407,7 +407,7 @@ void Editor::_draw_obj_selector_table(void)
     ImGuiListClipper                        clipper;
 
 
-    // filter input
+    //  1.  SEARCH-QUERY BOX...
     S.PushFont(Font::Main);
     ImGui::SetNextItemWidth(-FLT_MIN);
     if ( ImGui::InputTextWithHint( "##Editor_ObjSelector_ObjFilter",
@@ -421,6 +421,7 @@ void Editor::_draw_obj_selector_table(void)
 
 
 
+    //  2.  BEGIN THE TABLE TO PRESENT EACH OBJECT...
     if ( ImGui::BeginTable("##Editor_ObjSelector_ObjTable", 5, TABLE_FLAGS, ImVec2(0, -1)) )
     {
         ImGui::TableSetupColumn("Drag", C_HANDLE, CELL_SZ);
@@ -429,8 +430,10 @@ void Editor::_draw_obj_selector_table(void)
         ImGui::TableSetupColumn("Name", C_NAME);
         ImGui::TableSetupColumn("Del",  C_DEL,    1.2f * CELL_SZ);
 
-        clipper.Begin(static_cast<int>(m_paths.size()), -1);
+        clipper.Begin( static_cast<int>(m_paths.size()), -1 );
 
+
+        //  3.  DRAWING EACH OBJECT IN THE LEFT-HAND SELECTION COLUMN OF THE BROWSER...
         while ( clipper.Step() )
         {
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
@@ -439,99 +442,117 @@ void Editor::_draw_obj_selector_table(void)
                 bool                    selected            = m_sel.paths.count(static_cast<size_t>(i));
                 bool                    mutable_path        = path.is_mutable();
 
+                //  CASE 0 :    EARLY-OUT IF FILTER REMOVES OBJ.
                 if ( !BS.m_obj_filter.PassFilter(path.label.c_str()) )      { continue; }
 
 
-                ImGui::PushID(i);
+                //  4.  BEGIN THE ROW...
+                ImGui::PushID(i);       //  ImGui::BeginGroup();
                 ImGui::TableNextRow();
-
-
-                // ── 1. Drag-handle column ──────────────────────────
-                ImGui::TableSetColumnIndex(0);
-                ImGui::PushID("drag");                       // <── NEW
-                    utl::SmallCButton( BStyle.ms_DRAG_HANDLE_ICON, 0x00000000 );
-                ImGui::PopID();                              // <── NEW
                 //
-                if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) )
-                {
-                    ImGui::SetDragDropPayload( "OBJ_ROW", &i, sizeof(i) );
-                    ImGui::EndDragDropSource();
-                }
-                if ( ImGui::BeginDragDropTarget() )
-                {
-                    if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("OBJ_ROW") )
+                //
+                //
+                //  //      4.1.        "DRAG-HANDLE" FOR RE-ORDERING THIS ROW.
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::PushID("drag");                       // <── NEW
+                    //
+                        utl::SmallCButton( BStyle.ms_DRAG_HANDLE_ICON, 0x00000000 );
+                        //utl::CButton( BStyle.ms_DRAG_HANDLE_ICON, 0x00000000 );
+                    //
+                    ImGui::PopID();                              // <── NEW
+                    //
+                    if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) )
                     {
-                        int src = *static_cast<const int*>(p->Data);
-                        _reorder_paths(src, i);
-
-                        // safe early exit after mutation
-                        ImGui::PopID();
-                        clipper.End();
-                        ImGui::EndTable();
-                        return;
+                        ImGui::SetDragDropPayload( "OBJ_ROW", &i, sizeof(i) );
+                        ImGui::EndDragDropSource();
                     }
-                    ImGui::EndDragDropTarget();
-                }
-
-
-
-                // ── 2. Eye toggle ─────────────────────────────────
-                ImGui::TableSetColumnIndex(1);
-                ImGui::InvisibleButton("##Editor_Browser_ObjVisibilityButton", {CELL_SZ, CELL_SZ});
-                if ( ImGui::IsItemClicked() )   { path.visible = !path.visible; _prune_selection_mutability(); }
-                (path.visible ? draw_eye_icon : draw_eye_off_icon)
-                    (dl, ImGui::GetItemRectMin(), {CELL_SZ, CELL_SZ},
-                     path.visible ? col_text : col_dim);
-
-
-
-                // ── 3. Lock toggle ───────────────────────────────
-                ImGui::TableSetColumnIndex(2);
-                ImGui::InvisibleButton("##Editor_Browser_ObjLockButton", {CELL_SZ, CELL_SZ});
-                if ( ImGui::IsItemClicked() )   { path.locked = !path.locked; _prune_selection_mutability(); }
-                (path.locked ? draw_lock_icon : draw_unlock_icon)
-                    (dl, ImGui::GetItemRectMin(), {CELL_SZ, CELL_SZ},
-                     path.locked ? col_text : col_dim);
-
-
-
-                // ── 4. Name / selection / rename ─────────────────
-                ImGui::TableSetColumnIndex(3);
-                this->_draw_obj_selectable( path, i, mutable_path, selected );
-
-
-
-                // ── 5. Delete (selected & unlocked) ──────────────
-                ImGui::TableSetColumnIndex(4);
-                if ( !path.locked && selected )
-                {
-                    utl::SmallCButton(BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR);
-                    if ( ImGui::IsItemClicked() )
+                    //
+                    if ( ImGui::BeginDragDropTarget() )
                     {
-                        _erase_path_and_orphans(static_cast<PathID>(i));
-                        reset_selection();
-                        BS.m_inspector_vertex_idx = -1;
-                        _prune_selection_mutability();
+                        if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("OBJ_ROW") )
+                        {
+                            int src = *static_cast<const int*>(p->Data);
+                            _reorder_paths(src, i);
 
-                        ImGui::PopID();
-                        clipper.End();
-                        ImGui::EndTable();
-                        return;
+                            // safe early exit after mutation
+                            ImGui::PopID();
+                            clipper.End();
+                            ImGui::EndTable();
+                            return;
+                        }
+                        ImGui::EndDragDropTarget();
                     }
-                }
-                
-                
-                
-                
-                
+                    //
+                    //
+                    //
+                    //      4.2.        "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY).
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::InvisibleButton("##Editor_Browser_ObjVisibilityButton", {CELL_SZ, CELL_SZ});
+                    if ( ImGui::IsItemClicked() )   { path.visible = !path.visible; _prune_selection_mutability(); }
+                    (path.visible ? draw_eye_icon : draw_eye_off_icon)
+                        (dl, ImGui::GetItemRectMin(), {CELL_SZ, CELL_SZ},
+                         path.visible ? col_text : col_dim);
+                    //
+                    //
+                    //
+                    //      4.3.        "LOCK" BUTTON (TO TOGGLE OBJECT'S LOCKED-STATE).
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::InvisibleButton("##Editor_Browser_ObjLockButton", {CELL_SZ, CELL_SZ});
+                    if ( ImGui::IsItemClicked() )   { path.locked = !path.locked; _prune_selection_mutability(); }
+                    (path.locked ? draw_lock_icon : draw_unlock_icon)
+                        (dl, ImGui::GetItemRectMin(), {CELL_SZ, CELL_SZ},
+                         path.locked ? col_text : col_dim);
+                    //
+                    //
+                    //
+                    //      4.4.        DRAW THE SELECTABLE FOR THIS OBJECT.
+                    ImGui::TableSetColumnIndex(3);
+                    this->_draw_obj_selectable( path, i, mutable_path, selected );
+                    //
+                    //
+                    //
+                    //      4.5.        "DELETE" BUTTON.
+                    ImGui::TableSetColumnIndex(4);
+                    if ( !path.locked && selected )
+                    {
+                        utl::SmallCButton(BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR);
+                        if ( ImGui::IsItemClicked() )
+                        {
+                            _erase_path_and_orphans(static_cast<PathID>(i));
+                            reset_selection();
+                            BS.m_inspector_vertex_idx = -1;
+                            _prune_selection_mutability();
 
+                            ImGui::PopID();
+                            clipper.End();
+                            ImGui::EndTable();
+                            return;
+                        }
+                    }
+                //
+                //
+                //  END OF ROW.
+                
+                
                 ImGui::PopID();
-            }
-        }
+            //
+            //
+            }// END "ROW for-loop".
+        //
+        //
+        }// END "while-loop" [CLIPPER]
+
 
         clipper.End();
         ImGui::EndTable();
-    }
+    //
+    //
+    //
+    }// END ALL.
+    
+    
+    
+    return;
 }
 
 
@@ -556,62 +577,46 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
     
     
     
-    //  CASE 1 :    RENAMING THE OBJECT IN THIS ROW...
-    if (renaming)
+    //  CASE 1 :    NORMAL "SELECTABLE" BEHAVIOR    [ NOT RENAMING ]...
+    if ( !renaming )
     {
-        BS.m_renaming_obj = true;                       //  flag blocks global shortcuts
-        
-        ImGui::PushItemWidth(-FLT_MIN);
-        //
-        //      CASE 1A :   Submit name-change upon [ ENTER ].
-        if ( ImGui::InputText( "##Editor_ObjSelector_RenameObj",
-                               BS.m_name_buffer,
-                               IM_ARRAYSIZE(BS.m_name_buffer),
-                               TEXT_FLAGS ) )
-        {                                               // commit on Enter
-            path.label              = BS.m_name_buffer;
-            BS.m_obj_rename_idx     = -1;
-            BS.m_renaming_obj       = false;
-        }
-        //
-        //      CASE 1B :   Revert to previous name on [ ESC ] or FOCUS-LOSS.
-        if ( ImGui::IsKeyPressed(ImGuiKey_Escape) || (!ImGui::IsItemActive() && ImGui::IsItemDeactivated()) )
-        {
-            BS.m_obj_rename_idx     = -1;
-            BS.m_renaming_obj       = false;
-        }
-        ImGui::PopItemWidth();
-    //
-    //
-    }// END "CASE 1".
     
-
-
-    //  CASE 2 :    NORMAL "SELECTABLE" BEHAVIOR...
-    else
-    {
-    //
-        //      2.1.    CREATE SELECTABLE.
+    
+        //      1.1.    CREATE SELECTABLE.
         ImGui::PushStyleColor(ImGuiCol_Text, mutable_path ? col_text : col_dim);
         //
         //
-            const bool      ctrl        = ImGui::GetIO().KeyCtrl;
-            const bool      shift       = ImGui::GetIO().KeyShift;
+            const bool      ctrl            = ImGui::GetIO().KeyCtrl;
+            const bool      shift           = ImGui::GetIO().KeyShift;
             //
             const bool      single_click    = ImGui::Selectable(path.label.c_str(), selected, SEL_FLAGS, {0.0f, 1.05f * CELL_SZ});
-            const bool      double_click    = ctrl && shift && mutable_path && ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left); // mutable_path && ImGui::IsItemActivated() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+            const bool      double_click    = mutable_path
+                                                && ImGui::IsItemHovered()
+                                                && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
+                                                && !ctrl
+                                                && !shift;
         //
         //
         ImGui::PopStyleColor();
-        
-        
-        
-        //      2.1A.   SINGLE-CLICK SELECTABLE LOGIC.
-        if ( single_click && !double_click )
+    
+    
+        //      1.2.    DOUBLE CLICKED.
+        if ( double_click )
         {
-        
-            if ( !ctrl && !shift )
-            {
+            BS.m_obj_rename_idx     = idx;
+            std::strncpy( BS.m_name_buffer, path.label.c_str(), BrowserState::ms_PATH_TITLE_BUFFER_SIZE );
+                          
+            BS.m_name_buffer[ BrowserState::ms_PATH_TITLE_BUFFER_SIZE - 1 ] = '\0';
+            BS.m_renaming_obj       = true;
+            return;
+        //
+        }// END "DOUBLE CLICK".
+    
+    
+        //      1.3.    SINGLE CLICKED.
+        if ( single_click )
+        {
+            if ( !ctrl && !shift ) {
                 reset_selection();
                 if ( mutable_path )     { m_sel.paths.insert(idx); }
                 BS.m_browser_anchor = idx;
@@ -636,23 +641,61 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
             }
             
             _rebuild_vertex_selection();
-        //
+            
         //
         }// END "SINGLE CLICK".
-        //
-        //
-        //      2.2.    ALLOW DOUBLE-CLICK TO EDIT OBJECT NAME...
-        else
-        {
-            BS.m_obj_rename_idx     = idx;
-            std::strncpy( BS.m_name_buffer, path.label.c_str(), IM_ARRAYSIZE(BS.m_name_buffer) );
-            BS.m_renaming_obj       = true;
-        }// END "DOUBLE CLICK".
+    
+        return;
+        
     //
     //
-    //
-    }// END "CASE 2".
+    }// END "NORMAL SELECTABLE".
+    
 
+
+    //  CASE 2 :    NORMAL "SELECTABLE" BEHAVIOR...
+    //
+    {
+        BS.m_renaming_obj                               = true;
+        static int              last_rename_idx         = -1;
+        
+        
+        //      2.1.    SET KEYBOARD FOCUS ON FIRST ENTRY IN ROW.
+        if ( last_rename_idx != idx ) {
+            ImGui::SetKeyboardFocusHere();
+            last_rename_idx = idx;
+        }
+        //
+        //
+        //      2.2.    CREATE RE-NAME WIDGET AND LISTEN FOR USER ENTER/CANCEL SIGNALS.
+        ImGui::PushItemWidth(-FLT_MIN);
+            const bool      pressed_enter   = ImGui::InputText( "##Editor_ObjSelector_RenameObj", BS.m_name_buffer, BrowserState::ms_PATH_TITLE_BUFFER_SIZE, TEXT_FLAGS );
+            const bool      pressed_esc     = ImGui::IsKeyPressed(ImGuiKey_Escape);
+            const bool      lost_focus      = (!ImGui::IsItemActive() && ImGui::IsItemDeactivated());
+        ImGui::PopItemWidth();
+        //
+        //
+        //      2.3A.   COMMIT CHANGES TO THE NAME.
+        if ( pressed_enter || (lost_focus && !pressed_esc) ) {
+            path.label              = BS.m_name_buffer;   // commit
+            BS.m_obj_rename_idx     = -1;
+            BS.m_renaming_obj       = false;
+            last_rename_idx         = -1;
+            return;
+        }
+        //
+        //
+        //      2.3B.   DISCARD CHANGES AND REVERT TO PREVIOUS NAME.
+        if ( pressed_esc ) {
+            BS.m_obj_rename_idx     = -1;
+            BS.m_renaming_obj       = false;
+            last_rename_idx         = -1;
+            return;
+        }
+        
+    //
+    //
+    }// END "RENAMING".
 
 
     return;
