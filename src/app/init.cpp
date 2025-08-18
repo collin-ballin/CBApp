@@ -325,7 +325,7 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
     switch (uuid)
     {
         //
-        //      1.  PRIMARY GUI STRUCTURE...
+        //      1.1.    PRIMARY GUI STRUCTURE...
         case Window::Dockspace:             {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->ShowDockspace(n, nullptr, f); };
@@ -359,7 +359,7 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         //
         //
         //
-        //      2.  MAIN APPLICATION WINDOWS...
+        //      1.2.    MAIN APPLICATION WINDOWS...
         case Window::CCounterApp:       {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->m_counter_app.Begin(n, o, f); };
@@ -384,7 +384,7 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         //
         //
         //
-        //      3.  TOOLS, SUBSIDIARY APPLICATION WINDOWS...
+        //      1.3.    TOOLS, SUBSIDIARY APPLICATION WINDOWS...
         case Window::ImGuiStyleEditor:      {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiStyleEditor(n, o, f); };
@@ -395,17 +395,6 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
                           { this->ShowImPlotStyleEditor(n, o, f); };
             break;
         }
-        case Window::ImGuiMetrics:          {
-            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->ShowImGuiMetricsWindow(n, o, f); };
-            break;
-        }
-        case Window::ImPlotMetrics:         {
-            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
-                          { this->ShowImPlotMetricsWindow(n, o, f); };
-            break;
-        }
-        //
         //
         case Window::Logs:                  {
             render_fn   = [](const char * n, bool * o, ImGuiWindowFlags f)
@@ -420,7 +409,7 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         //
         //
         //
-        //      4.  *MY* TOOLS...
+        //      1.4.    *MY* TOOLS...
         case Window::ColorTool:             {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowColorTool(n, o, f); };
@@ -433,7 +422,8 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         }
         //
         //
-        //      5.  DEMOS, ETC...
+        //
+        //      1.5.    DEMOS, ETC...
         case Window::ImGuiDemo:             {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiDemoWindow(n, o, f); };
@@ -451,14 +441,42 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         }
         //
         //
-        //      6.  **EXTRA** WINDOWS...
-#if defined(CBAPP_ENABLE_CB_DEMO)
+        //
+        //
+        //
+        //
+        //      2.1.    DEBUG-ONLY TOOLS...
+        case Window::ImGuiMetrics:          {
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImGuiMetricsWindow(n, o, f); };
+            break;
+        }
+        case Window::ImPlotMetrics:         {
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImPlotMetricsWindow(n, o, f); };
+            break;
+        }
+        case Window::ImGuiIDStackTool:      {
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImGuiIDStackTool(n, o, f); };
+            break;
+        }
+        case Window::ImGuiItemPickerTool:   {
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->ShowImGuiItemPickerTool(n, o, f); };
+            break;
+        }
+        //
+        //
+        //
+        //      3.1.    **EXTRA** WINDOWS...
+#if defined(CBAPP_ENABLE_OPTIONAL_WINDOWS)
         case Window::CBDemo:                {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiDemoWindow(n, o, f); };
             break;
         }
-#endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
         //
         //
             //

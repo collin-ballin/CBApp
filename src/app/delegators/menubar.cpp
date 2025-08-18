@@ -379,7 +379,16 @@ void MenuBar::disp_show_windows_menubar(void)
     static size_t                   idx                 = static_cast<size_t>(0);
     
     
-    //  1.  DRAW EACH VISIBILITY STATE IN "Core Windows" WINDOWS...                 | SUB-MENU.
+    //      0.      DISPLAY "About This App" AT THE TOP...
+    if ( ImGui::MenuItem( this->S.m_windows[ Window::AboutMyApp ].uuid.c_str(),
+                          nullptr,
+                          &this->S.m_windows[ Window::AboutMyApp ].open ) ) {  }
+                     
+    ImGui::Separator();
+                         
+    
+    
+    //      1.      DRAW EACH VISIBILITY STATE IN "Core Windows" WINDOWS...                 | SUB-MENU.
 #ifdef __CBAPP_DEBUG__
     if (ImGui::BeginMenu("Core Windows (Debug Only)"))
     {
@@ -399,13 +408,15 @@ void MenuBar::disp_show_windows_menubar(void)
         
         ImGui::EndMenu();
     }//  END "Applications" SUB-MENU.
+    
+    ImGui::Separator();
 #endif  //  __CBAPP_DEBUG__  //
     
     
     
-    //  2.  DRAW EACH VISIBILITY STATE IN "Application Windows" WINDOWS...          | SUB-MENU.
-    ImGui::Separator();
-    ImGui::TextDisabled("Applications");
+    //      2.      DRAW EACH VISIBILITY STATE IN "Application Windows" WINDOWS...          | SUB-MENU.
+    if ( ImGui::BeginMenu("Applications") )
+    {
         for (idx = S.ms_APP_WINDOWS_BEGIN; idx < S.ms_APP_WINDOWS_END; ++idx)
         {
             if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
@@ -417,13 +428,44 @@ void MenuBar::disp_show_windows_menubar(void)
                     { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
-    //  END "Applications" SUB-MENU.
+        
+        ImGui::EndMenu();
+    }//  END "Applications" SUB-MENU.
     
     
     
-    //  3.  DRAW EACH VISIBILITY STATE IN "Tools" WINDOWS...                | SUB-MENU.
     ImGui::Separator();
-    ImGui::TextDisabled("Basic Tools");
+    ImGui::TextDisabled("Tools");
+    
+    
+    
+#ifdef CBAPP_ENABLE_DEBUG_WINDOWS
+//
+    //      3.      DRAW EACH VISIBILITY STATE IN "Demos" WINDOWS...                | SUB-MENU.
+    if ( ImGui::BeginMenu("Debugging Tools") )
+    {
+        for (idx = S.ms_DEBUG_WINDOWS_BEGIN; idx < S.ms_DEBUG_WINDOWS_END; ++idx)
+        {
+            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                                 nullptr,
+                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+            {
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
+                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
+            }
+        }
+        
+        ImGui::EndMenu();
+    }//  END "Demos" SUB-MENU.
+//
+#endif  //  CBAPP_ENABLE_DEBUG_WINDOWS  //
+    
+    
+    
+    //      4.      DRAW EACH VISIBILITY STATE IN "Tools" WINDOWS...                | SUB-MENU.
+    if ( ImGui::BeginMenu("Basic Tools") )
+    {
         for (idx = S.ms_TOOL_WINDOWS_BEGIN; idx < S.ms_TOOL_WINDOWS_END; ++idx)
         {
             if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
@@ -435,13 +477,15 @@ void MenuBar::disp_show_windows_menubar(void)
                     { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
-    //  END "Tools" SUB-MENU.
+        
+        ImGui::EndMenu();
+    }//  END "Tools" SUB-MENU.
     
     
     
-    //  4.  DRAW EACH VISIBILITY STATE IN "*MY* TOOLS" WINDOWS...           | SUB-MENU.
-    ImGui::Separator();
-    ImGui::TextDisabled("Collin's Tools");
+    //      5.      DRAW EACH VISIBILITY STATE IN "*MY* TOOLS" WINDOWS...           | SUB-MENU.
+    if ( ImGui::BeginMenu("Collin's Tools") )
+    {
         for (idx = S.ms_MY_TOOLS_WINDOWS_BEGIN; idx < S.ms_MY_TOOLS_WINDOWS_END; ++idx)
         {
             if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
@@ -453,32 +497,16 @@ void MenuBar::disp_show_windows_menubar(void)
                     { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
-    //  END "Tools" SUB-MENU.
-    
-    
-    
-    //  5.  DRAW EACH VISIBILITY STATE IN "Demos" WINDOWS...                | SUB-MENU.
-    ImGui::Separator();
-    ImGui::TextDisabled("Demos");
-        for (idx = S.ms_DEMO_WINDOWS_BEGIN; idx < S.ms_DEMO_WINDOWS_END; ++idx)
-        {
-            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
-                                 nullptr,
-                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
-            {
-                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
-                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
-                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
-            }
-        }
-    //  END "Demos" SUB-MENU.
+        
+        ImGui::EndMenu();
+    }//  END "Tools" SUB-MENU.
 
 
 
-    //  6.  DRAW **EXTRA** WINDOWS...                                       | SUB-MENU.
-#if defined(CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
-    ImGui::Separator();
-    ImGui::TextDisabled("Extra");
+    //      6.      DRAW **EXTRA** WINDOWS...                                       | SUB-MENU.
+#ifdef CBAPP_ENABLE_OPTIONAL_WINDOWS
+    if ( ImGui::BeginMenu("Extra") )
+    {
         for (idx = S.ms_EXTRA_WINDOWS_BEGIN; idx < S.ms_EXTRA_WINDOWS_END; ++idx)
         {
             std::string       name          = this->S.m_windows[ static_cast<Window>(idx) ].uuid;
@@ -491,8 +519,10 @@ void MenuBar::disp_show_windows_menubar(void)
                     { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
             }
         }
-    //  END "Extra" SUB-MENU.
-#endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+        
+        ImGui::EndMenu();
+    }//  END "Extra" SUB-MENU.
+#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS //
 
 
 
@@ -571,18 +601,20 @@ void MenuBar::disp_tools_menubar(void)
 //
 void MenuBar::disp_help_menubar(void)
 {
-    static bool     user_guide  = false;
-    
-    if (ImGui::MenuItem("User Guide", nullptr, &user_guide))
-    {
-        //  ...
-    }
-    
-    
-    ImGui::Separator();
     if ( ImGui::MenuItem(this->S.m_windows[ Window::AboutMyApp ].uuid.c_str(),
                          nullptr,
-                         &this->S.m_windows[ Window::AboutMyApp ].open) )
+                         &this->S.m_windows[ Window::AboutMyApp ].open) ) {  }
+        
+        
+    ImGui::Separator();
+    ImGui::BeginDisabled(true);
+        if (ImGui::MenuItem("User Guide", nullptr, false))
+        {
+            //  ...
+        }
+    ImGui::EndDisabled();
+    
+    
     
     //  ImGui::Checkbox("\"Dear ImGui\" Demo", &this->m_show_imgui_demo);   //  <--- Using a check-button
     return;

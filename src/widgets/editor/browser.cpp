@@ -407,24 +407,25 @@ void Editor::_draw_obj_selector_table(void)
     ImGuiListClipper                        clipper;
 
 
-    //  1.  SEARCH-QUERY BOX...
+    //      1.  SEARCH-QUERY BOX...
     S.PushFont(Font::Main);
     ImGui::SetNextItemWidth(-FLT_MIN);
     if ( ImGui::InputTextWithHint( "##Editor_ObjSelector_ObjFilter",
                                    "filter",
                                    BS.m_obj_filter.InputBuf,
-                                   IM_ARRAYSIZE(BS.m_obj_filter.InputBuf) ) )
+                                   IM_ARRAYSIZE( BS.m_obj_filter.InputBuf ) ) )
         { BS.m_obj_filter.Build(); }
         
     S.PopFont();
     ImGui::Separator();
 
 
+    (void)this->_ensure_paths_sorted_by_z_desc();
+    
 
-    //  2.  BEGIN THE TABLE TO PRESENT EACH OBJECT...
-    if ( ImGui::BeginTable("##Editor_ObjSelector_ObjTable", 5, TABLE_FLAGS, ImVec2(0, -1)) )
+    //      2.  BEGIN THE TABLE TO PRESENT EACH OBJECT...
+    if ( ImGui::BeginTable("##Editor_ObjSelector_ObjTable", 4, TABLE_FLAGS, ImVec2(0, -1)) )
     {
-        ImGui::TableSetupColumn("Drag", C_HANDLE, CELL_SZ);
         ImGui::TableSetupColumn("Eye",  C_EYE,    CELL_SZ);
         ImGui::TableSetupColumn("Lock", C_LOCK,   CELL_SZ);
         ImGui::TableSetupColumn("Name", C_NAME);
@@ -433,7 +434,7 @@ void Editor::_draw_obj_selector_table(void)
         clipper.Begin( static_cast<int>(m_paths.size()), -1 );
 
 
-        //  3.  DRAWING EACH OBJECT IN THE LEFT-HAND SELECTION COLUMN OF THE BROWSER...
+        //      3.      DRAWING EACH OBJECT IN THE LEFT-HAND SELECTION COLUMN OF THE BROWSER...
         while ( clipper.Step() )
         {
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
@@ -446,47 +447,14 @@ void Editor::_draw_obj_selector_table(void)
                 if ( !BS.m_obj_filter.PassFilter(path.label.c_str()) )      { continue; }
 
 
-                //  4.  BEGIN THE ROW...
+                //      4.      BEGIN THE ROW...
                 ImGui::PushID(i);       //  ImGui::BeginGroup();
                 ImGui::TableNextRow();
                 //
                 //
                 //
-                //  //      4.1.        "DRAG-HANDLE" FOR RE-ORDERING THIS ROW.
+                //  //      4.1.        "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY).
                     ImGui::TableSetColumnIndex(0);
-                    ImGui::PushID("drag");                       // <── NEW
-                    //
-                        utl::SmallCButton( BStyle.ms_DRAG_HANDLE_ICON, 0x00000000 );
-                        //utl::CButton( BStyle.ms_DRAG_HANDLE_ICON, 0x00000000 );
-                    //
-                    ImGui::PopID();                              // <── NEW
-                    //
-                    if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) )
-                    {
-                        ImGui::SetDragDropPayload( "OBJ_ROW", &i, sizeof(i) );
-                        ImGui::EndDragDropSource();
-                    }
-                    //
-                    if ( ImGui::BeginDragDropTarget() )
-                    {
-                        if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("OBJ_ROW") )
-                        {
-                            int src = *static_cast<const int*>(p->Data);
-                            _reorder_paths(src, i);
-
-                            // safe early exit after mutation
-                            ImGui::PopID();
-                            clipper.End();
-                            ImGui::EndTable();
-                            return;
-                        }
-                        ImGui::EndDragDropTarget();
-                    }
-                    //
-                    //
-                    //
-                    //      4.2.        "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY).
-                    ImGui::TableSetColumnIndex(1);
                     ImGui::InvisibleButton("##Editor_Browser_ObjVisibilityButton", {CELL_SZ, CELL_SZ});
                     if ( ImGui::IsItemClicked() )   { path.visible = !path.visible; _prune_selection_mutability(); }
                     (path.visible ? draw_eye_icon : draw_eye_off_icon)
@@ -495,8 +463,8 @@ void Editor::_draw_obj_selector_table(void)
                     //
                     //
                     //
-                    //      4.3.        "LOCK" BUTTON (TO TOGGLE OBJECT'S LOCKED-STATE).
-                    ImGui::TableSetColumnIndex(2);
+                    //      4.2.        "LOCK" BUTTON (TO TOGGLE OBJECT'S LOCKED-STATE).
+                    ImGui::TableSetColumnIndex(1);
                     ImGui::InvisibleButton("##Editor_Browser_ObjLockButton", {CELL_SZ, CELL_SZ});
                     if ( ImGui::IsItemClicked() )   { path.locked = !path.locked; _prune_selection_mutability(); }
                     (path.locked ? draw_lock_icon : draw_unlock_icon)
@@ -505,17 +473,52 @@ void Editor::_draw_obj_selector_table(void)
                     //
                     //
                     //
-                    //      4.4.        DRAW THE SELECTABLE FOR THIS OBJECT.
-                    ImGui::TableSetColumnIndex(3);
+                    //      4.3.        DRAW THE SELECTABLE FOR THIS OBJECT.
+                    ImGui::TableSetColumnIndex(2);
                     this->_draw_obj_selectable( path, i, mutable_path, selected );
                     //
                     //
                     //
+                    //      4.4.        DRAG / DROP TARGETS FOR RE-ORDERING EACH ROW.
+                    //                      Make the *Selectable item itself* the drag source & drop target.
+                    //                      Skip when this row is in rename mode so typing doesn't start drags.
+                    if ( m_browser_S.m_obj_rename_idx != i )
+                    {
+                        //      DRAG-DROP SOURCE :      Only when user actually drags (prevents double-click conflicts).
+                        if ( ImGui::IsItemActive() &&
+                             ImGui::IsMouseDragging(ImGuiMouseButton_Left, 2.0f) &&
+                             ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) )
+                        {
+                            int src = i;
+                            ImGui::SetDragDropPayload( "OBJ_ROW", &src, sizeof(src) );
+                            ImGui::EndDragDropSource();
+                        }
+                        //
+                        //      DRAG-DROP TARGET :      Same cell accepts the row payload.
+                        if ( ImGui::BeginDragDropTarget() )
+                        {
+                            if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("OBJ_ROW") )
+                            {
+                                int src = *static_cast<const int*>(p->Data);
+                                _reorder_paths(src, i);
+
+                                //  IMPORTANT:          //  we mutated m_paths; close scopes and return immediately.
+                                ImGui::PopID();         //  pop the row PushID(i)
+                                clipper.End();
+                                ImGui::EndTable();
+                                return;
+                            }
+                            ImGui::EndDragDropTarget();
+                        }
+                    }
+                    //
+                    //
+                    //
                     //      4.5.        "DELETE" BUTTON.
-                    ImGui::TableSetColumnIndex(4);
+                    ImGui::TableSetColumnIndex(3);
                     if ( !path.locked && selected )
                     {
-                        utl::SmallCButton(BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR);
+                        utl::SmallCButton( BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR );
                         if ( ImGui::IsItemClicked() )
                         {
                             _erase_path_and_orphans(static_cast<PathID>(i));

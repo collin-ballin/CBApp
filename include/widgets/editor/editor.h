@@ -650,6 +650,78 @@ protected:
     //      INLINE BROWSER FUNCTIONS...
     // *************************************************************************** //
     
+    //  "_ensure_paths_sorted_by_z_desc"
+    //
+    inline bool _ensure_paths_sorted_by_z_desc(void)
+    {
+        const int               n               = static_cast<int>(m_paths.size());
+        
+        if ( n <= 1 )           { return false; }
+
+
+
+
+        //  Build current order and check if already sorted (desc by z_index)
+        std::vector<int>        order           (n);
+        for (int i = 0; i < n; ++i)             { order[i] = i; }
+
+        auto is_desc_sorted = [&]() -> bool {
+            for (int i = 1; i < n; ++i)
+                if (m_paths[i-1].z_index < m_paths[i].z_index)   // should be non-increasing
+                    return false;
+            return true;
+        };
+        if ( is_desc_sorted() )                 { return false; }
+
+
+        //  Sort by z_index desc, stable for equal z
+        std::stable_sort(order.begin(), order.end(),
+            [&](int a, int b) { return m_paths[a].z_index > m_paths[b].z_index; });
+
+
+        //  Build new container and a map old_idx -> new_idx
+        std::vector<Path>       new_paths;
+        new_paths.reserve(n);
+        std::vector<int>        new_of_old      (n, -1);
+        
+        
+        for ( int new_i = 0; new_i < n; ++new_i ) {
+            int old_i = order[new_i];
+            new_of_old[old_i] = new_i;
+            new_paths.push_back(std::move(m_paths[old_i]));
+        }
+        m_paths.swap(new_paths);
+
+
+        //  Reassign sequential z so top row = greatest z
+        for (int i = 0; i < n; ++i)
+            m_paths[i].z_index = Z_FLOOR_USER + (n - 1 - i);
+
+
+        //  Remap selection indices
+        std::unordered_set<size_t>      remapped;
+        remapped.reserve(m_sel.paths.size());
+        for (size_t old_idx : m_sel.paths) {
+            int new_idx = new_of_old[static_cast<int>(old_idx)];
+            if (new_idx >= 0) remapped.insert(static_cast<size_t>(new_idx));
+        }
+        m_sel.paths.swap(remapped);
+
+        // Remap BrowserState indices that reference OBJECT rows
+        BrowserState& BS = m_browser_S;
+        auto remap_idx = [&](int& idx) {
+            if (idx < 0) return;
+            idx = new_of_old[idx];
+            if (idx < 0) idx = -1;
+        };
+        remap_idx(BS.m_browser_anchor);
+        remap_idx(BS.m_obj_rename_idx);
+        // (Layer-specific indices are unrelated to the object list, so we leave them.)
+
+        return true;
+    }
+
+
     //  "_reorder_paths"
     inline void                         _reorder_paths                      (int src, int dst)
     {
@@ -659,34 +731,36 @@ protected:
         if ( invalid )      { return; }
 
 
-
-        /*──────────────── reorder the vector ────────────────*/
+        //      1.      REORDER THE VECTOR.
         Path temp      = std::move(m_paths[src]);
-        m_paths.erase(m_paths.begin() + src);
-        m_paths.insert(m_paths.begin() + (src < dst ? dst - 1 : dst),
-                       std::move(temp));
+        m_paths.erase( m_paths.begin() + src );
+        m_paths.insert( m_paths.begin() + (src < dst ? dst - 1 : dst), std::move(temp) );
 
-        /*──────────────── rebuild z-index so
-            top row (index 0) = highest Z
-          ────────────────────────────────────────────────────*/
+
+        //      2.      REBUILD Z-INDEX     [ TOP-ROW = HIGHEST Z-INDEX.  BOTTOM-ROW = LOWEST Z-INDEX ].
         const int n = static_cast<int>(m_paths.size());
-        for (int i = 0; i < n; ++i)
+        for (int i = 0; i < n; ++i) {
             m_paths[i].z_index = Z_FLOOR_USER + (n - 1 - i);
+        }
 
-        /*──────────────── adjust Editor-wide indices ────────*/
-        auto remap = [&](int & idx) {
-            if (idx < 0) return;
-            if (idx == src)                idx = dst;
-            else if (src < dst && idx > src && idx <= dst) idx--;
-            else if (dst < src && idx >= dst && idx <  src) idx++;
+
+        //      3.      ADJUST EDITOR-WIDE INDICES.
+        auto remap = [&](int & idx)
+        {
+            if ( idx < 0 )                                      { return;       }
+            if ( idx == src )                                   { idx = dst;    }
+            else if ( src < dst && idx > src && idx <= dst )    { idx--;        }
+            else if ( dst < src && idx >= dst && idx <  src )   { idx++;        }
+            return;
         };
+        
         
         remap(BS.m_browser_anchor);
         remap(BS.m_layer_browser_anchor);
         remap(BS.m_obj_rename_idx);
         remap(BS.m_layer_rename_idx);
 
-        /*──────────────── remap path-selection set ──────────*/
+        //      4.      REMAP PATH-SELECTION SET.
         std::unordered_set<size_t> new_sel;
         for (size_t old_idx : m_sel.paths) {
             int idx = static_cast<int>(old_idx);
@@ -694,6 +768,9 @@ protected:
             new_sel.insert(static_cast<size_t>(idx));
         }
         m_sel.paths.swap(new_sel);
+        
+        
+        return;
     }
     
     // *************************************************************************** //

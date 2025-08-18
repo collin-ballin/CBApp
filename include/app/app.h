@@ -173,9 +173,9 @@ protected:
     EditorApp                   m_editor_app;
     GraphApp                    m_graph_app;
     ui::ActionComposer          m_mimic_app;
-#ifdef CBAPP_ENABLE_CB_DEMO
+#ifdef CBAPP_ENABLE_OPTIONAL_WINDOWS
     CBDemo                      m_cb_demo                       = CBDemo();
-#endif  //  CBAPP_ENABLE_CB_DEMO  //
+#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  //
 //
 //
 //
@@ -352,6 +352,9 @@ protected:
     void                        TestTabBar                  (void);
     //
     void                        ShowImGuiMetricsWindow      ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImGuiIDStackTool        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                        ShowImGuiItemPickerTool     ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    //
     void                        ShowImGuiDemoWindow         ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                        ShowImGuiStyleEditor        ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     //

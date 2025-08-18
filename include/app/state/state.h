@@ -595,38 +595,65 @@ public:
     //  2.4             STATIC AND CONSTEXPR VARIABLES.
     // *************************************************************************** //
     //                      1.      Window Variables:
-    //                      1.1         ALL Windows.
+    //
+    //                      1.1.        ALL Windows.
     static constexpr size_t             ms_WINDOWS_BEGIN            = static_cast<size_t>(Window::Dockspace);
     static constexpr size_t             ms_RHS_WINDOWS_BEGIN        = static_cast<size_t>(Window::MainApp);
     static constexpr size_t             ms_WINDOWS_END              = static_cast<size_t>(Window::Count);
     //
-    //                      1.2         Main Application Windows.
+    //
+    //                      1.2.        Main Application Windows.
     static constexpr size_t             ms_APP_WINDOWS_BEGIN        = static_cast<size_t>(Window::CCounterApp);
     static constexpr size_t             ms_APP_WINDOWS_END          = static_cast<size_t>(Window::ImGuiStyleEditor);
     //
-    //                      1.3         Basic Tool Windows.
+    //
+    //                      1.3.        Basic Tool Windows.
     static constexpr size_t             ms_TOOL_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiStyleEditor);
-    static constexpr size_t             ms_TOOL_WINDOWS_END         = static_cast<size_t>(Window::ColorTool);
+    static constexpr size_t             ms_TOOL_WINDOWS_END         = static_cast<size_t>(Window::Logs);
     //
-    //                      1.4         "MY Tools" / Custom Tools Windows.
-    static constexpr size_t             ms_MY_TOOLS_WINDOWS_BEGIN   = static_cast<size_t>(Window::ColorTool);
-    static constexpr size_t             ms_MY_TOOLS_WINDOWS_END     = static_cast<size_t>(Window::ImGuiDemo);
     //
-    //                      1.5         Demo Windows.
-    static constexpr size_t             ms_DEMO_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiDemo);
-#if defined(CBAPP_ENABLE_CB_DEMO)
-    static constexpr size_t             ms_DEMO_WINDOWS_END         = static_cast<size_t>(Window::CBDemo);
-# else
-    static constexpr size_t             ms_DEMO_WINDOWS_END         = static_cast<size_t>(Window::Count);
-#endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+    //                      1.4.        Custom Tools Windows.
+    static constexpr size_t             ms_MY_TOOLS_WINDOWS_BEGIN   = static_cast<size_t>(Window::Logs);
+    static constexpr size_t             ms_MY_TOOLS_WINDOWS_END     = static_cast<size_t>(Window::AboutMyApp);
     //
-    //                      1.6         **Extra** Windows.
-#if defined(CBAPP_ENABLE_CB_DEMO)
-    #if defined(CBAPP_ENABLE_CB_DEMO)
-        static constexpr size_t         ms_EXTRA_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBDemo);
-    #endif
+    //
+    //                      1.5.        Misc Windows.
+    static constexpr size_t             ms_MISC_WINDOWS_BEGIN       = static_cast<size_t>(Window::AboutMyApp);
+#if defined( CBAPP_ENABLE_OPTIONAL_WINDOWS )
+    static constexpr size_t             ms_MISC_WINDOWS_END         = static_cast<size_t>(Window::CBDemo);                  //  1.5A.   CB_DEMO IS ENABLED.
+# elif defined( CBAPP_ENABLE_DEBUG_WINDOWS ) && !defined( CBAPP_ENABLE_OPTIONAL_WINDOWS )
+    static constexpr size_t             ms_MISC_WINDOWS_END         = static_cast<size_t>(Window::ImGuiItemPickerTool);     //  1.5B.   CB_DEMO IS *DISABLED*
+# else                                                                                                                      //          *AND* DEBUG TOOLS ARE ENABLED.
+    static constexpr size_t             ms_MISC_WINDOWS_END         = static_cast<size_t>(Window::Count);               //  DEFAULT CASE.
+#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  ||  CBAPP_ENABLE_DEBUG_WINDOWS  //
+    //
+    //
+    //
+    //
+    //
+    //
+    //                      2.1.        Debugger Tools.
+# if defined(CBAPP_ENABLE_DEBUG_WINDOWS)
+    static constexpr size_t             ms_DEBUG_WINDOWS_BEGIN      = static_cast<size_t>(Window::ImGuiMetrics);
+    #if defined( CBAPP_ENABLE_OPTIONAL_WINDOWS )
+        static constexpr size_t             ms_DEBUG_WINDOWS_END        = static_cast<size_t>(Window::CBDemo);              //  2.1A.   CB_DEMO ENABLED.
+    # else
+        static constexpr size_t             ms_DEBUG_WINDOWS_END        = static_cast<size_t>(Window::Count);               //  2.1B.   CB_DEMO *DISABLED*.
+    #endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  //
+#endif  //  CBAPP_ENABLE_DEBUG_WINDOWS  //
+    //
+    //
+    //
+    //                      2.2.         **Extra** Windows.
+#if defined(CBAPP_ENABLE_OPTIONAL_WINDOWS)
+    # if defined(CBAPP_ENABLE_DEBUG_WINDOWS)
+        static constexpr size_t             ms_EXTRA_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBDemo);      //  2.2A.   DEBUG TOOLS ARE ENABLED.
+    # else
+        static constexpr size_t             ms_EXTRA_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBDemo);      //  2.2B.   DEBUG TOOLS ARE *DISABLED*.
+    # endif     //  CBAPP_ENABLE_DEBUG_WINDOWS  //
     static constexpr size_t             ms_EXTRA_WINDOWS_END        = static_cast<size_t>(Window::Count);
-#endif  //  CBAPP_ENABLE_CB_DEMO) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  //
+
 
 
     // *************************************************************************** //

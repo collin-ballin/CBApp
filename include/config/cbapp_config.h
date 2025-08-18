@@ -52,6 +52,24 @@
 // *************************************************************************** //
 
 
+
+//      2.0.    PREVENT USER FROM "-DMY_FLAG_NAME" FOR INTERNAL MACRO NAMES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+# ifdef CBAPP_ENABLE_DEBUG_WINDOWS
+    #   error "Cannot define \"CBAPP_ENABLE_DEBUG_WINDOWS\" externally (this macro is defined by my own headers)."
+#endif  //  CBAPP_ENABLE_DEBUG_WINDOWS  //
+
+# ifdef CBAPP_ENABLE_OPTIONAL_WINDOWS
+    #   error "Cannot define \"CBAPP_ENABLE_OPTIONAL_WINDOWS\" externally (this macro is defined by my own headers)."
+#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  //
+    
+    
+    
+
+
+
 //      2.1     CRITICAL BUILD SETTINGS...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -195,12 +213,15 @@
     #ifdef IMGUI_DISABLE_DEBUG_TOOLS
         #   error "Cannot create DEBUG build with \"IMGUI_DISABLE_DEBUG_TOOLS\" defined (check that you did NOT #define this inside \"my_imconfig.h\")."
     #endif  //  IMGUI_DISABLE_DEBUG_TOOLS  //
-    
-    #define __CBAPP_LOG__
+    //
+    //
+    //
+    #define     __CBAPP_LOG__                       1
+    #define     CBAPP_ENABLE_DEBUG_WINDOWS          1
 //
 //
 // *************************************************************************** //
-#endif  //  __CBAPP_DEBUG__  ||  __CBLIB_RELEASE_WITH_DEBUG_INFO__
+#endif  //  __CBAPP_DEBUG__  ||  __CBLIB_RELEASE_WITH_DEBUG_INFO__  //
 
 
 

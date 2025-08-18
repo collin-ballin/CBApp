@@ -143,17 +143,45 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 // *************************************************************************** //
 //
 //
-//  1.3     OPTIONAL / ADDITIONAL WINDOWS...        | [ CBAPP_ENABLE_CB_DEMO ]
+//  1.3     OPTIONAL / ADDITIONAL WINDOWS...        | [ CBAPP_ENABLE_OPTIONAL_WINDOWS ]
 // *************************************************************************** //
 // *************************************************************************** //
         
-#if defined(CBAPP_ENABLE_CB_DEMO) && defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
-#   error "Cannot define both  CBAPP_ENABLE_CB_DEMO  and  CBAPP_ENABLE_FUNCTIONAL_TESTING."
+#if defined(CBAPP_ENABLE_OPTIONAL_WINDOWS) && defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
+#   error "Cannot define both  CBAPP_ENABLE_OPTIONAL_WINDOWS  and  CBAPP_ENABLE_FUNCTIONAL_TESTING."
+#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  ||  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+
+#if defined(CBAPP_ENABLE_OPTIONAL_WINDOWS) || defined(CBAPP_ENABLE_FUNCTIONAL_TESTING)
+    #define     CBAPP_ENABLE_OPTIONAL_WINDOWS        1
 #endif
 
 
 
-#if defined(CBAPP_ENABLE_CB_DEMO)                           // IF [ CBAPP_ENABLE_CB_DEMO IS #DEFINED ]      --- this expands to one extra X(...).
+//      1.3A.       _CBAPP_DEBUG_WINDOWS                -- "DEBUG-ONLY" WINDOWS.
+//
+#if defined(CBAPP_ENABLE_DEBUG_WINDOWS)                     // IF [ CBAPP_ENABLE_DEBUG_WINDOWS IS #DEFINED ]        --- this expands to one extra X(...).
+    #define _CBAPP_DEBUG_WINDOWS(X)                                                                                                                 \
+/*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                                                  */      \
+/*|========================================================================================================================|                */      \
+    X(ImGuiMetrics,         "Dear ImGui Metrics/Debugger",  true,                   _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImPlotMetrics,        "ImPlot Metrics",               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImGuiIDStackTool,     "ImGui ID Stack Tool",          false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImGuiItemPickerTool,  "ImGui Item Picker Tool",       false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+//
+//
+//
+# else                                                      // OTHERWISE                        --- it expands to nothing...
+    #define _CBAPP_DEBUG_WINDOWS(X)
+#endif  //  _CBAPP_DEBUG_WINDOWS  //
+
+
+
+
+
+
+//      1.3B.       CBAPP_ENABLE_OPTIONAL_WINDOWS       -- "CB-DEMO" WINDOW.
+//
+#if defined(CBAPP_ENABLE_OPTIONAL_WINDOWS)                  // IF [ CBAPP_ENABLE_CB_DEMO IS #DEFINED ]              --- this expands to one extra X(...).
     #define _CBAPP_OPTIONAL_WINDOWS(X)                                                                                                      \
 /*| NAME.                       TITLE.                      DEFAULT OPEN.       FLAGS.                                                  */  \
 /*|========================================================================================================================|            */  \
@@ -161,9 +189,9 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 //
 //
 //
-# else                                              // OTHERWISE                                    --- it expands to nothing...
+# else                                              // OTHERWISE                                --- it expands to nothing...
     #define _CBAPP_OPTIONAL_WINDOWS(X)
-#endif  //  CBAPP_ENABLE_FUNCTIONAL_TESTING  //
+#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  //
 
 
 
@@ -173,11 +201,11 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 // *************************************************************************** //
 //
 //
-//  1.  FUNCTIONAL MACRO TO DEFINE APPLICATION WINDOWS...
+//      1.      FUNCTIONAL MACRO TO DEFINE APPLICATION WINDOWS...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//      1.1     DEFINE DEFAULT VISIBILITY OF APPLICATION WINDOWS...
+//              1.1     DEFINE DEFAULT VISIBILITY OF APPLICATION WINDOWS...
 #if defined(__CBAPP_BUILD_CCOUNTER_APP__)       //  CASE A :    COINCIDENCE COUNTER BUILD...
         inline constexpr bool   DEF_CCOUNTER_APP_VIS            = true;
         inline constexpr bool   DEF_FDTD_APP_VIS                = false;
@@ -245,21 +273,18 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 /*  3.  BASIC TOOLS...                                                                                                                      */      \
     X(ImGuiStyleEditor,     "Style Editor (ImGui)",         false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(ImPlotStyleEditor,    "Style Editor (ImPlot)",        false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImGuiMetrics,         "Dear ImGui Metrics/Debugger",  true,                   _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImPlotMetrics,        "ImPlot Metrics",               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-/*                                                                                                                                          */      \
-    X(Logs,                 "Logs",                         false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(Console,              "Console",                      false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImGuiDemo,            _IMGUI_DEMO_UUID,               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(ImPlotDemo,           _IMPLOT_DEMO_UUID,              false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
 /*                                                                                                                                          */      \
 /*                                                                                                                                          */      \
 /*  4.  CUSTOM TOOLS, ETC...                                                                                                                */      \
+    X(Logs,                 "Logs",                         false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    X(Console,              "Console",                      false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(ColorTool,            "Color Tool",                   false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
     X(CustomRendering,      "Custom Rendering",             false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
 /*                                                                                                                                          */      \
 /*                                                                                                                                          */      \
-/*  5.  DEMO WINDOWS...                                                                                                                     */      \
-    X(ImGuiDemo,            _IMGUI_DEMO_UUID,               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImPlotDemo,           _IMPLOT_DEMO_UUID,              false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+/*  6.  MISC / ADDITIONAL WINDOWS...                                                                                                        */      \
     X(AboutMyApp,           "About This App",               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )   // END
 /*                                                                                                                                          */
 /*|========================================================================================================================|                */

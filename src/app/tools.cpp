@@ -49,6 +49,7 @@ void App::ShowImGuiStyleEditor([[maybe_unused]] const char * uuid, [[maybe_unuse
     return;
 }
 
+
 //  "ShowImGuiMetricsWindow"
 //
 void App::ShowImGuiMetricsWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
@@ -58,6 +59,28 @@ void App::ShowImGuiMetricsWindow([[maybe_unused]] const char * uuid, [[maybe_unu
     return;
 }
 
+
+//  "ShowImGuiIDStackTool"
+//
+void App::ShowImGuiIDStackTool([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    //  ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
+    ImGui::ShowMetricsWindow(p_open);
+    return;
+}
+
+
+//  "ShowImGuiItemPickerTool"
+//
+void App::ShowImGuiItemPickerTool([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    //  ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
+    ImGui::ShowMetricsWindow(p_open);
+    return;
+}
+
+
+    
 //  "ShowImGuiDemoWindow"
 //
 void App::ShowImGuiDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)

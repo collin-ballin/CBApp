@@ -164,6 +164,7 @@ APPLICATION_PLOT_COLOR_STYLE_NAMES      = {{
 enum class Window_t : int {
 #define X(name, title, open, flags) name,
     _CBAPP_WINDOW_LIST(X)
+    _CBAPP_DEBUG_WINDOWS(X)
     _CBAPP_OPTIONAL_WINDOWS(X)
 #undef X
     Count
@@ -190,6 +191,7 @@ static inline const std::array<WinInfo, size_t(Window_t::Count)>
 APPLICATION_WINDOW_INFOS            = {{
 #define X(name, title, open, flags)  WinInfo{ title, flags, open, {} },
     _CBAPP_WINDOW_LIST(X)
+    _CBAPP_DEBUG_WINDOWS(X)
     _CBAPP_OPTIONAL_WINDOWS(X)
 #undef X
 }};
