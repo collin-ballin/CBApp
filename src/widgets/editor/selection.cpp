@@ -1171,8 +1171,6 @@ void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it
 //
 void Editor::dispatch_selection_context_menus([[maybe_unused]] const Interaction & it)
 {
-    constexpr const char *      selection_popup_id  = "Editor_Selection_ContextMenu";
-    constexpr const char *      canvas_popup_id     = "Editor_Canvas_ContextMenu";
     const bool                  rmb_click           = it.hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right);
 
 
@@ -1188,13 +1186,15 @@ void Editor::dispatch_selection_context_menus([[maybe_unused]] const Interaction
         }
 
         //  Decide which popup to open based on current selection state
-        if ( m_sel.empty() )    { ImGui::OpenPopup(canvas_popup_id); }     // empty → canvas menu
-        else                    { ImGui::OpenPopup(selection_popup_id); }  // non-empty → selection menu
+        if ( m_sel.empty() )    { ImGui::OpenPopup(this->ms_CANVAS_CONTEXT_MENU_ID); }     // empty → canvas menu
+        else                    { ImGui::OpenPopup(this->ms_SELECTION_CONTEXT_MENU_ID); }  // non-empty → selection menu
     }
 
     //      2.      Render both popups every frame; BeginPopup() returns false if not open
-    _show_selection_context_menu(it, selection_popup_id);
-    _show_canvas_context_menu(it,    canvas_popup_id);
+    _show_selection_context_menu    (it,    this->ms_SELECTION_CONTEXT_MENU_ID     );
+    _show_canvas_context_menu       (it,    this->ms_CANVAS_CONTEXT_MENU_ID        );
+    
+    return;
 }
 
 

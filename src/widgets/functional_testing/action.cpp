@@ -640,7 +640,8 @@ inline void ActionComposer::_ui_mouse_drag(Action & a)
 {
 
     //      1.      Begin / End coordinate widgets (reuse CursorMove block)
-    _ui_movement_widgets(a);
+    _ui_movement_widgets_OLD(a);
+    //  _ui_movement_widgets(a);
 
 
     _ui_duration_widgets(a);

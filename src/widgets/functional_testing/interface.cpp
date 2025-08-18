@@ -226,8 +226,8 @@ void ActionComposer::_draw_overlay(void)
     ImVec2              pos                 = mpos + ms_OVERLAY_OFFSET;
     const bool          force_overlay       = ( this->m_state == State::MouseCapture || this->m_mouse_capture.active  );
 
-    if ( !m_show_overlay && !force_overlay )    { return; }
-    if ( ImGui::GetIO().AppFocusLost )          { return; }
+    if ( !m_show_overlay && !force_overlay )                                        { return; }
+    if ( !(this->m_state == State::Run) && (ImGui::GetIO().AppFocusLost) )          { return; }
     //if ( glfwGetWindowAttrib(S.m_glfw_window, GLFW_FOCUSED) == 0 )    { return; }
 
     //  1.  CACHE CURRENT MONITOR DATA...
@@ -326,7 +326,11 @@ inline void ActionComposer::_overlay_ui_run(void)
 {
     static constexpr const char *   FMT                 = "%s";
     const bool                      first_action        = m_play_index < 0;
-    Action *                        act                 = (first_action) ? nullptr : &(*m_actions)[m_play_index - 1];       //  _drive_execution increments the counter,
+    Action *                        act                 = nullptr;
+    
+    if (first_action)//  _drive_execution increments the counter,
+    {   act = (m_play_index == 0) ? &(*m_actions)[m_play_index] : &(*m_actions)[m_play_index - 1];  }
+    
     static std::string              cache_descr         = "";                                                               //  ...so we need to grab the PREVIOUS action...
     //
     [[maybe_unused]] const bool     updated             = this->m_overlay_cache.update_cache( m_play_index, m_comp_sel, act );

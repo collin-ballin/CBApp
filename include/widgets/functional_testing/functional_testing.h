@@ -385,10 +385,10 @@ public:
     //
     //
     ImGuiChildFlags                     ms_COMPOSER_SELECTOR_FLAGS                  = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
-    Param<ImVec2>                       ms_COMPOSER_SELECTOR_DIMS                   = {     {400.0f, -1.0f},        { {150.0f, 1.0f},   {FLT_MAX, FLT_MAX} }   };
+    Param<ImVec2>                       ms_COMPOSER_SELECTOR_DIMS                   = {     {350.0f, -1.0f},        { {250.0f, 1.0f},   {450.0f, FLT_MAX} }   };
     //
     ImGuiChildFlags                     ms_ACTION_SELECTOR_FLAGS                    = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
-    Param<ImVec2>                       ms_ACTION_SELECTOR_DIMS                     = {     {500.0f, -1.0f},        { {200.0f, 1.0f},   {FLT_MAX, FLT_MAX} }   };
+    Param<ImVec2>                       ms_ACTION_SELECTOR_DIMS                     = {     {450.0f, -1.0f},        { {300.0f, 1.0f},   {600.0f, FLT_MAX} }   };
     //
     //  static constexpr float              ms_COMPOSITION_COLUMN_WIDTH             = 340.0f;
     //  static constexpr float              ms_SELECTOR_COLUMN_WIDTH                = 340.0f;
@@ -477,6 +477,8 @@ protected:
     bool                                m_step_req                                  = false;
     bool                                m_capture_is_active                         = false;        //  < true while “Auto” sampling.
     bool                                m_key_capture_is_active                     = false;        //  < true while “Auto” sampling.
+    //
+    std::string                         m_desc_cache                                = {  };
     //
     bool                                m_saving                                    = false;
     bool                                m_loading                                   = false;
@@ -699,7 +701,8 @@ protected:
     
         this->m_executor.reset();
         this->m_sel         = -1;
-        m_play_index        = (m_sel >= 0               ? m_sel             : 0);
+        //m_play_index        = (m_sel >= 0               ? m_sel             : 0);
+        m_play_index        = 0;
         m_is_running        = !m_actions->empty();
         m_state             = (m_actions->empty())      ? State::Idle       : State::Run;
         return;
@@ -722,6 +725,7 @@ protected:
         m_mouse_capture                     .reset();
         m_overlay_cache                     .reset();
         //
+        //
         m_state                             = State::Idle;
         //  this->m_sel                         = -1;
         //  this->m_play_index                  = -1;
@@ -731,10 +735,14 @@ protected:
             this->m_forced_overlay      = false;
         }
         //
+        //
         m_is_running                        = false;
         m_capture_is_active                 = false;
         m_key_capture_is_active             = false;
         m_show_composition_inspector        = false;
+        //
+        m_desc_cache                        .clear();
+        //
         //
         m_executor                          .reset();
         return;

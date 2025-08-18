@@ -216,13 +216,63 @@ struct GridSettings {
 };
 
 
+
+
+
+
+//  "EditorInteraction"
+//
+struct EditorInteraction
+{
+//                      IMPLOT STATE:
+    bool                    menus_closed            {  };
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "EditorInteraction" INLINE CLASS DEFINITION.
+
+
+
+
 //  "Interaction"
 //
-struct Interaction {
-    bool            hovered{},      active{},       space{};
-    ImVec2          canvas{},       origin{},       tl{};
-    ImDrawList *    dl{};
-};
+struct Interaction
+{
+// *************************************************************************** //
+//                          PREVIOUS DATA.
+// *************************************************************************** //
+//                      IMPLOT STATE:
+    bool                    hovered                 {  };
+    bool                    active                  {  };
+    bool                    space                   {  };
+//
+//
+//
+//                      IMPLOT VARIABLES:
+    ImVec2                  canvas                  {  };
+    ImVec2                  origin                  {  };
+    ImVec2                  tl                      {  };
+//
+//
+//
+//                      OTHER DATA:
+    ImDrawList *            dl                      {  };
+//
+//
+//
+//                      NEW DATA:
+    EditorInteraction       obj                     {  };
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "Interaction" INLINE CLASS DEFINITION.
+
+
+
 
 // *************************************************************************** //
 // *************************************************************************** //   END "INTERACTION STATES"

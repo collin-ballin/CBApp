@@ -889,7 +889,8 @@ inline void ActionComposer::_update_mouse_capture(void)
         
     
     //  3.  USE TAB TO SWITCH ENDPOINTS...
-    if ( ImGui::IsKeyPressed(ImGuiKey_Tab, false) && m_mouse_capture.alt_dest ) {
+    if ( ImGui::IsKeyPressed(ImGuiKey_Tab, false) && m_mouse_capture.alt_dest )
+    {
         //  1.  commit current pos to the endpoint we were editing
         *m_mouse_capture.dest               = m_mouse_capture.live_local;
 
@@ -905,11 +906,11 @@ inline void ActionComposer::_update_mouse_capture(void)
         
         
         //  ** NEW **
-        m_mouse_capture.dst->pos            = m_mouse_capture.live_local;
-        //
-        std::swap( m_mouse_capture.dst, m_mouse_capture.dst_alt );
-        //
-        m_mouse_capture.dst_backup          = *m_mouse_capture.dst;
+        //      m_mouse_capture.dst->pos            = m_mouse_capture.live_local;
+        //      //
+        //      std::swap( m_mouse_capture.dst, m_mouse_capture.dst_alt );
+        //      //
+        //      m_mouse_capture.dst_backup          = *m_mouse_capture.dst;
     }
 
 

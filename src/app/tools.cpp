@@ -64,8 +64,7 @@ void App::ShowImGuiMetricsWindow([[maybe_unused]] const char * uuid, [[maybe_unu
 //
 void App::ShowImGuiIDStackTool([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
-    //  ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
-    ImGui::ShowMetricsWindow(p_open);
+    ImGui::ShowIDStackToolWindow(p_open);
     return;
 }
 
@@ -74,11 +73,9 @@ void App::ShowImGuiIDStackTool([[maybe_unused]] const char * uuid, [[maybe_unuse
 //
 void App::ShowImGuiItemPickerTool([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
-    //  ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
-    ImGui::ShowMetricsWindow(p_open);
+    ImGui::ShowIDStackToolWindow(p_open);
     return;
 }
-
 
     
 //  "ShowImGuiDemoWindow"
@@ -111,6 +108,7 @@ void App::ShowImPlotStyleEditor([[maybe_unused]] const char * uuid, [[maybe_unus
     return;
 }
 
+
 //  "ShowImPlotMetricsWindow"
 //
 void App::ShowImPlotMetricsWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
@@ -119,6 +117,7 @@ void App::ShowImPlotMetricsWindow([[maybe_unused]] const char * uuid, [[maybe_un
     ImPlot::ShowMetricsWindow(p_open);  //"ImPlot Metrics"
     return;
 }
+
 
 //  "ShowImPlotDemoWindow"
 //

@@ -48,12 +48,12 @@
           "cursor": {
             "duration": 1.0,
             "first": [
-              68.171875,
-              733.68359375
+              356.7421875,
+              727.60546875
             ],
             "last": [
-              1147.60546875,
-              135.6640625
+              918.12890625,
+              136.30078125
             ]
           },
           "descr": "",
@@ -79,6 +79,84 @@
             "left": true
           },
           "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "click",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 525,
+            "shift": false,
+            "super": false
+          },
+          "name": "new action",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 5
         },
         {
           "click": {
@@ -3543,51 +3621,12 @@
           "cursor": {
             "duration": 1.5,
             "first": [
-              760.203125,
-              412.32421875
-            ],
-            "last": [
-              249.30859375,
-              674.140625
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "first move",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 0
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 1.0,
-            "first": [
-              249.0,
-              674.0
+              227.89453125,
+              672.69140625
             ],
             "last": [
               1095.0,
-              362.0
+              350.0
             ]
           },
           "descr": "",
@@ -3605,7 +3644,7 @@
             "shift": false,
             "super": false
           },
-          "name": "DOCK WINDOW",
+          "name": "dock",
           "press": {
             "left": true
           },
@@ -3651,11 +3690,581 @@
           "release": {
             "left": true
           },
+          "type": 4
+        }
+      ],
+      "description": "",
+      "name": "---"
+    },
+    {
+      "actions": [
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 606,
+            "shift": false,
+            "super": false
+          },
+          "name": "close browser",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 6
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.20000000298023224,
+            "first": [
+              139.94921875,
+              366.8671875
+            ],
+            "last": [
+              227.89453125,
+              672.69140625
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to tab",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.20000000298023224,
+            "first": [
+              227.89453125,
+              672.69140625
+            ],
+            "last": [
+              1095.0,
+              350.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "DRAG TO DOCK",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.20000000298023224,
+            "first": [
+              1095.0,
+              362.0
+            ],
+            "last": [
+              249.0,
+              674.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "---",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        }
+      ],
+      "description": "",
+      "name": "Initialize Browser Testing"
+    },
+    {
+      "actions": [
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              1155.58984375,
+              136.20703125
+            ],
+            "last": [
+              250.69921875,
+              420.16015625
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to canvas",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 564,
+            "shift": false,
+            "super": false
+          },
+          "name": "TOOL = SHAPE",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 5
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              1155.58984375,
+              136.20703125
+            ],
+            "last": [
+              250.69921875,
+              420.16015625
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "ADJUST SHAPE RADIUS",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
           "type": 0
         }
       ],
       "description": "",
-      "name": "Browser Testing --- (1/3)"
+      "name": "Browser Test --- Basic (1/3)"
+    },
+    {
+      "actions": [
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              1155.58984375,
+              136.20703125
+            ],
+            "last": [
+              250.69921875,
+              420.16015625
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to canvas",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 564,
+            "shift": false,
+            "super": false
+          },
+          "name": "TOOL = SHAPE",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 5
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.20000000298023224,
+            "first": [
+              250.69921875,
+              420.16015625
+            ],
+            "last": [
+              251.2890625,
+              420.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "S1",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              251.0,
+              380.0
+            ],
+            "last": [
+              534.54296875,
+              375.30078125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "---",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.20000000298023224,
+            "first": [
+              535.0,
+              375.0
+            ],
+            "last": [
+              534.54296875,
+              375.30078125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "S2",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        }
+      ],
+      "description": "",
+      "name": "Browser Test --- Basic (1/3)"
+    },
+    {
+      "actions": [
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.5,
+            "first": [
+              227.89453125,
+              672.69140625
+            ],
+            "last": [
+              1095.0,
+              350.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "dock",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              1095.0,
+              362.0
+            ],
+            "last": [
+              249.0,
+              674.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "---",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        }
+      ],
+      "description": "",
+      "name": "---"
     },
     {
       "actions": [
@@ -3941,6 +4550,168 @@
       ],
       "description": "description...",
       "name": "New Composition"
+    },
+    {
+      "actions": [
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              356.7421875,
+              727.60546875
+            ],
+            "last": [
+              1477.09375,
+              471.3046875
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 606,
+            "shift": false,
+            "super": false
+          },
+          "name": "move",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "click",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              68.171875,
+              733.68359375
+            ],
+            "last": [
+              127.68359375,
+              532.48046875
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 560,
+            "shift": false,
+            "super": false
+          },
+          "name": "hotkey",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 5
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              1477.09375,
+              471.3046875
+            ],
+            "last": [
+              706.734375,
+              345.921875
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 606,
+            "shift": false,
+            "super": false
+          },
+          "name": "move 2",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        }
+      ],
+      "description": "",
+      "name": "Test Focus"
     }
   ]
 }

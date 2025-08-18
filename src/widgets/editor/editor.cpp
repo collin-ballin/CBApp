@@ -135,6 +135,53 @@ inline void Editor::_dispatch_mode_handler( [[maybe_unused]] const Interaction &
 }
 
 
+//  "_per_frame_cache_begin"
+//
+[[nodiscard]]
+inline Interaction Editor::_per_frame_cache_begin(void) noexcept
+{
+    ImGuiIO &               io                      = ImGui::GetIO();
+    
+    //      1.1.    IMPLOT STATE...
+    const bool              space                   = ImGui::IsKeyDown(ImGuiKey_Space);
+    const bool              hovered                 = ImPlot::IsPlotHovered();
+    const bool              active                  = ImPlot::IsPlotSelected();
+    //
+    //
+    //      1.2.    IMPLOT DATA...
+    ImVec2                  plotTL                  = ImPlot::GetPlotPos();
+    ImVec2                  origin_scr              = plotTL;
+    ImVec2                  mouse_canvas            { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
+    //
+    //
+    //      1.3.    OTHER DATA...
+    ImDrawList *            dl                      = ImPlot::GetPlotDrawList();
+
+
+    //      2.1.    EDITOR STATE...
+    const bool              menus_open              = ImGui::IsPopupOpen( ms_SELECTION_CONTEXT_MENU_ID  ) ||
+                                                      ImGui::IsPopupOpen( ms_CANVAS_CONTEXT_MENU_ID     );
+
+
+    return Interaction({
+        hovered,
+        active,
+        space,
+    //
+        mouse_canvas,
+        origin_scr,
+        plotTL,
+    //
+        dl,
+    //
+    //  EDITOR INTERACTION:
+        EditorInteraction({
+            menus_open
+        })
+    });
+}
+
+
 
 // *************************************************************************** //
 //
@@ -186,42 +233,47 @@ void Editor::Begin(const char * /*id*/)
     //
     //          CASE 2B     : SUCCESSFULLY CREATED THE "IMPLOT" PLOT...
     {
-        //      3.0     CREATE VARIABLES FOR THIS FRAME CONTEXT...
     
-        //      4.  CONFIGURE THE "IMPLOT" APPEARANCE...
-        //
-        ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  4A.     Axis Names & Flags.
+        //      3.      CONFIGURE THE "IMPLOT" APPEARANCE...
+        ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  3A.     Axis Names & Flags.
                           m_axes[0].flags,          m_axes[1].flags);
         //
-        ImPlot::SetupAxesLimits( m_world_bounds.min_x, m_world_bounds.max_x,    //  4B.     Auto-fit axes *before* any other ImPlot call.
+        ImPlot::SetupAxesLimits( m_world_bounds.min_x, m_world_bounds.max_x,    //  3B.     Auto-fit axes *before* any other ImPlot call.
                                  m_world_bounds.min_y, m_world_bounds.max_y, ImPlotCond_Once );
         //
-        this->_update_grid_info();                                              //  4C.     Fetch Grid-Quantization Info.
+        this->_update_grid_info();                                              //  3C.     Fetch Grid-Quantization Info.
         
         
-        // ───────────────────────── 3. Per-frame context
-        ImDrawList *        dl              = ImPlot::GetPlotDrawList();
-        ImVec2              plotTL          = ImPlot::GetPlotPos();
-        const bool          hovered         = ImPlot::IsPlotHovered();
-        const bool          active          = ImPlot::IsPlotSelected();
+        
+        //      4.      CREATE THE  "Interaction"  OBJECT FOR THIS FRAME...
+        //  ImDrawList *        dl              = ImPlot::GetPlotDrawList();
+        //  ImVec2              plotTL          = ImPlot::GetPlotPos();
+        //  const bool          hovered         = ImPlot::IsPlotHovered();
+        //  const bool          active          = ImPlot::IsPlotSelected();
+        //  ImVec2              origin_scr      = plotTL;
+        //  ImVec2              mouse_canvas    { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
+        //
+        //  Interaction         it              { hovered, active, space, mouse_canvas, origin_scr, plotTL, dl };
+        //
+        Interaction         it              = this->_per_frame_cache_begin();
 
-        ImVec2              origin_scr      = plotTL;
-        ImVec2              mouse_canvas    { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
-        Interaction         it              { hovered, active, space, mouse_canvas, origin_scr, plotTL, dl };
 
 
-        //  5.      MODE SWITCH BEHAVIORS AND OVERLAY WINDOWS...
+
+
+
+        //      5.      MODE SWITCH BEHAVIORS AND OVERLAY WINDOWS...
         //
         this->_mode_switch_hotkeys(it);
         this->_handle_overlays(it);
 
 
-        //  6.      CURSOR HINTS AND SHORTCUTS...
+        //      6.      CURSOR HINTS AND SHORTCUTS...
         //
-        if ( space && hovered && _mode_has(CBCapabilityFlags_Pan) )
+        if ( space && it.hovered && _mode_has(CBCapabilityFlags_Pan) )
             { ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); }
         //
-        else if ( !space && hovered && _mode_has(CBCapabilityFlags_CursorHint) )
+        else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
             { _update_cursor_select(it); }
 
 
@@ -248,10 +300,10 @@ void Editor::Begin(const char * /*id*/)
         ImPlot::PushPlotClipRect();
         //
         //
-            _render_points(dl);           //  Already ported
-            // _render_lines(dl);         //  Enable once ported
-            _render_paths(dl);            //  Enable once ported
-            _render_selection_highlight(dl);
+            _render_points( it.dl );                //  Already ported
+            // _render_lines( it.dl );              //  Enable once ported
+            _render_paths( it.dl );                 //  Enable once ported
+            _render_selection_highlight( it.dl );
         //
         //
         ImPlot::PopPlotClipRect();

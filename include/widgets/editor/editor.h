@@ -165,6 +165,11 @@ public:
     static constexpr float              ms_SETTINGS_WIDGET_WIDTH        = 300.0f;
     static constexpr const char *       ms_NO_ASSIGNED_FILE_STRING      = "UNASSIGNED";      // Used when there is no "File > Save As..." assigned to app...
     static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE         = ImVec2( 80,   25 );
+    //
+    //
+    static constexpr const char *       ms_SELECTION_CONTEXT_MENU_ID    = "Editor_Selection_ContextMenu";       //  selection_popup_id
+    static constexpr const char *       ms_CANVAS_CONTEXT_MENU_ID       = "Editor_Canvas_ContextMenu";          //  canvas_popup_id
+    static constexpr const char *       ms_SYSTEM_PREFERENCES_MENU_ID   = "Editor System Preferences";          //  canvas_popup_id
     
 
 
@@ -316,6 +321,11 @@ protected:
     // *************************************************************************** //
     inline void                         _mode_switch_hotkeys                ([[maybe_unused]] const Interaction & );
     inline void                         _dispatch_mode_handler              ([[maybe_unused]] const Interaction & );
+    //
+    [[nodiscard]]
+    inline Interaction                  _per_frame_cache_begin              (void) noexcept;
+    inline void                         _per_frame_cache_end                (void) noexcept;
+    
     // *************************************************************************** //
     //
     //
@@ -529,9 +539,9 @@ protected:
     void                                _draw_editor_settings               ([[maybe_unused]] popup::Context & ctx);
     //
     //                              HELPER FUNCTIONS FOR EDITOR SETTINGS:
+    void                                _draw_settings_serialize            (void);
     void                                _draw_settings_mechanics            (void);
     void                                _draw_settings_user_preferences     (void);
-    void                                _draw_settings_serialize            (void);
     // *************************************************************************** //
     //
     //

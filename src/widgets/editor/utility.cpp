@@ -407,7 +407,7 @@ void Editor::_draw_controls(void)
         //      X.      CANVAS SETTINGS...
         this->S.column_label("Settings:");
         if ( ImGui::Button("+", BUTTON_SIZE) ) {
-            ui::open_preferences_popup( "Editor System Preferences", [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
+            ui::open_preferences_popup( this->ms_SYSTEM_PREFERENCES_MENU_ID, [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
         }
         
         
@@ -430,26 +430,28 @@ void Editor::_draw_controls(void)
 void Editor::_draw_editor_settings([[maybe_unused]] popup::Context & ctx)
 {
     S.PushFont(Font::Small);
+
+
+    //  1.  SAVE/LOAD SERIALIZATION...
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if ( ImGui::CollapsingHeader("Serialization") ) {
+        this->_draw_settings_serialize();
+    }
     
-    //  1.  EDITOR SETTINGS...
-    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+    
+    //  2.  EDITOR SETTINGS...
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::CollapsingHeader("Behaviors and Mechanics") ) {
         this->_draw_settings_mechanics();
     }
 
 
-    //  2.  USER PREFERENCES...
+    //  3.  USER PREFERENCES...
     ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     if ( ImGui::CollapsingHeader("User Preferences") ) {
         this->_draw_settings_user_preferences();
     }
-
-
-    //  3.  SAVE/LOAD SERIALIZATION...
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if ( ImGui::CollapsingHeader("Serialization") ) {
-        this->_draw_settings_serialize();
-    }
+    
     
     
     S.PopFont();
@@ -464,6 +466,69 @@ void Editor::_draw_editor_settings([[maybe_unused]] popup::Context & ctx)
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "_draw_settings_serialize"
+//
+void Editor::_draw_settings_serialize(void)
+{
+    //  const float &                   LABEL_W             = m_style.ms_SETTINGS_LABEL_WIDTH;
+    //  const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    
+    
+    
+    //  3.  I/O OPERATIONS...
+    ImGui::Indent();
+    //
+    //
+    {
+        const bool                  has_file            = this->has_file();
+        [[maybe_unused]] bool       force_save_as       = false;
+    
+    
+        //      1.      CURRENT FILE...
+        this->label("Current File:",                this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        ImGui::TextDisabled( "%s", (has_file)
+                                        ? this->m_filepath.filename().string().c_str()
+                                        : ms_NO_ASSIGNED_FILE_STRING );
+    
+    
+        //      2.      SAVE DIALOGUE...
+        this->label("Save:",                        this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( ImGui::Button("Save", ms_SETTINGS_BUTTON_SIZE) )    {
+            
+            if (has_file)       { this->save_async( this->m_filepath );     }
+            else                { force_save_as = true;                     }
+
+        }
+        
+        
+        //      3.      "SAVE AS..." DIALOGUE...
+        this->label("Save As...:",                  this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( force_save_as || ImGui::Button("Save As...", ms_SETTINGS_BUTTON_SIZE) )
+        {
+            CB_LOG( LogLevel::Info, "Editor | requesting file dialog to create new file" );
+            m_sdialog_open.store(true, std::memory_order_release);
+        }
+
+
+        //      4.      "OPEN" DIALOGUE...
+        this->label("Open File:",                   this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        if ( ImGui::Button("Load", ms_SETTINGS_BUTTON_SIZE) )
+        {
+            CB_LOG( LogLevel::Info, "Editor | requesting file dialog to load from disk" );
+            m_odialog_open.store(true, std::memory_order_release);
+        }
+    }
+    //
+    //
+    ImGui::Unindent();
+    ImGui::NewLine();
+    
+    
+
+    return;
+}
+
+
 //  "_draw_settings_mechanics"
 //
 void Editor::_draw_settings_mechanics(void)
@@ -474,14 +539,37 @@ void Editor::_draw_settings_mechanics(void)
     //constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
     
     
-    this->left_label("Show Grid:", LABEL_W, WIDGET_W);              //  1.      SHOW GRID.
-    ImGui::Checkbox("##Editor_Settings_Mechanics_ShowGrid",             &m_grid.visible);
+    //      1.      STATE...
+    ImGui::BeginDisabled(true);     ImGui::SeparatorText("State");      ImGui::EndDisabled();
+    ImGui::Indent();
+    //
+    //
+        this->left_label("Show Grid:", LABEL_W, WIDGET_W);                  //  1.1.        SHOW GRID.
+        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowGrid",             &m_grid.visible);
+        
+        this->left_label("Snap-To-Grid:", LABEL_W, WIDGET_W);               //  1.2.        SNAP-TO-GRID.
+        ImGui::Checkbox("##Editor_Settings_Mechanics_SnapToGrid",           &m_grid.snap_on);
+        
+        this->left_label("Show Debugger Overlay:", LABEL_W, WIDGET_W);      //  1.3.        SHOW DEBUG OVERLAY.
+        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowDebugOverlay",     &m_show_debug_overlay);
+    //
+    //
+    ImGui::Unindent();
     
-    this->left_label("Snap-To-Grid:", LABEL_W, WIDGET_W);           //  2.      SNAP-TO-GRID.
-    ImGui::Checkbox("##Editor_Settings_Mechanics_SnapToGrid",           &m_grid.snap_on);
     
-    this->left_label("Vertex Hit Radius:", LABEL_W, WIDGET_W);      //  3.      HIT THRESHOLD.
-    ImGui::SliderFloat( "##Editor_Settings_Mechanics_HitThreshold",     &m_style.HIT_THRESH_SQ,       4.0f,   81.0f,  "%.1f units-squared",  SLIDER_FLAGS);
+    
+    //      2.      MECHANICS...
+    ImGui::NewLine();
+    ImGui::BeginDisabled(true);     ImGui::SeparatorText("Mechanics");      ImGui::EndDisabled();
+    ImGui::Indent();
+    //
+    //
+        this->left_label("Vertex Hit Radius:", LABEL_W, WIDGET_W);          //  2.1.        HIT THRESHOLD.
+        ImGui::SliderFloat( "##Editor_Settings_Mechanics_HitThreshold",     &m_style.HIT_THRESH_SQ,       4.0f,   81.0f,  "%.1f units-squared",  SLIDER_FLAGS);
+    //
+    //
+    ImGui::Unindent();
+    ImGui::NewLine();
     
     
     return;
@@ -523,6 +611,7 @@ void Editor::_draw_settings_user_preferences(void)
         //
         //
         //
+        ImGui::NewLine();
         ImGui::TreePop();
     }
     
@@ -551,68 +640,10 @@ void Editor::_draw_settings_user_preferences(void)
         //
         //
         //
+        ImGui::NewLine();
         ImGui::TreePop();
     }
-    
-    
-
-    return;
-}
-
-
-
-
-
- 
-//  "_draw_settings_serialize"
-//
-void Editor::_draw_settings_serialize(void)
-{
-    //  const float &                   LABEL_W             = m_style.ms_SETTINGS_LABEL_WIDTH;
-    //  const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
-    
-    
-    
-    //  3.  I/O OPERATIONS...
-    {
-        const bool                  has_file            = this->has_file();
-        [[maybe_unused]] bool       force_save_as       = false;
-    
-    
-        //      1.      CURRENT FILE...
-        this->label("Current File:",                this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
-        ImGui::TextDisabled( "%s", (has_file)
-                                        ? this->m_filepath.generic_string().c_str()
-                                        : ms_NO_ASSIGNED_FILE_STRING );
-    
-    
-        //      2.      SAVE DIALOGUE...
-        this->label("Save:",                        this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
-        if ( ImGui::Button("Save", ms_SETTINGS_BUTTON_SIZE) )    {
-            
-            if (has_file)       { this->save_async( this->m_filepath );     }
-            else                { force_save_as = true;                     }
-
-        }
-        
-        
-        //      3.      "SAVE AS..." DIALOGUE...
-        this->label("Save As...:",                  this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
-        if ( force_save_as || ImGui::Button("Save As...", ms_SETTINGS_BUTTON_SIZE) )
-        {
-            CB_LOG( LogLevel::Info, "Editor | requesting file dialog to create new file" );
-            m_sdialog_open.store(true, std::memory_order_release);
-        }
-
-
-        //      4.      "OPEN" DIALOGUE...
-        this->label("Open File:",                   this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
-        if ( ImGui::Button("Load", ms_SETTINGS_BUTTON_SIZE) )
-        {
-            CB_LOG( LogLevel::Info, "Editor | requesting file dialog to load from disk" );
-            m_odialog_open.store(true, std::memory_order_release);
-        }
-    }
+    ImGui::NewLine();
     
     
 

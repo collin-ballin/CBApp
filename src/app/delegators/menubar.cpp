@@ -384,6 +384,7 @@ void MenuBar::disp_show_windows_menubar(void)
                           nullptr,
                           &this->S.m_windows[ Window::AboutMyApp ].open ) ) {  }
                      
+    ImGui::NewLine();
     ImGui::Separator();
                          
     
@@ -539,8 +540,8 @@ void MenuBar::disp_tools_menubar(void)
     [[maybe_unused]] static WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
     
     
-    //  1.  SUB-MENU    #1 :   "CBApp Applications"...
-    ImGui::TextDisabled("CBApp Applications");
+    //      1.      SUB-MENU    #1 :   "CBApp Applets"...
+    ImGui::TextDisabled("CBApp 'Applets'");
     {
         for (idx = S.ms_APP_WINDOWS_BEGIN; idx < S.ms_APP_WINDOWS_END; ++idx) {
             if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
@@ -555,8 +556,7 @@ void MenuBar::disp_tools_menubar(void)
     }//  END "Basic Tools" SUB-MENU.
     
     
-    
-    //  2.  SUB-MENU    #2 :   "Basic Tools"...
+    //      2.      SUB-MENU    #2 :   "Basic Tools"...
     ImGui::Separator();
     ImGui::TextDisabled("Basic Tools");
     {
@@ -574,7 +574,7 @@ void MenuBar::disp_tools_menubar(void)
     
     
     
-    //  3.  SUB-MENU    #3 :   "Custom Tools"...
+    //      3.      SUB-MENU    #3 :   "Custom Tools"...
     ImGui::Separator();
     ImGui::TextDisabled("Custom Tools");
     {
@@ -589,6 +589,27 @@ void MenuBar::disp_tools_menubar(void)
             }
         }
     }//  END "Custom Tools" SUB-MENU.
+    
+    
+
+#ifdef CBAPP_ENABLE_DEBUG_WINDOWS
+    //      4.      SUB-MENU    #4 :   "Debugging Tools"...
+    ImGui::NewLine();
+    ImGui::Separator();
+    ImGui::TextDisabled("Debugging Tools");
+    {
+        for (idx = S.ms_DEBUG_WINDOWS_BEGIN; idx < S.ms_DEBUG_WINDOWS_END; ++idx) {
+            if ( ImGui::MenuItem(this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(),
+                                 nullptr,
+                                 &this->S.m_windows[ static_cast<Window>(idx) ].open) )
+            {
+                ImGui::DockBuilderDockWindow( this->S.m_windows[ static_cast<Window>(idx) ].uuid.c_str(), S.m_main_dock_id );
+                if ( this->S.ms_FOCUS_ON_OPEN_WINDOW )
+                    { ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() ); }
+            }
+        }
+    }//  END "Custom Tools" SUB-MENU.
+#endif  //  CBAPP_ENABLE_DEBUG_WINDOWS  //
     
 
 
@@ -605,8 +626,11 @@ void MenuBar::disp_help_menubar(void)
                          nullptr,
                          &this->S.m_windows[ Window::AboutMyApp ].open) ) {  }
         
-        
+    ImGui::NewLine();
     ImGui::Separator();
+    
+    
+    
     ImGui::BeginDisabled(true);
         if (ImGui::MenuItem("User Guide", nullptr, false))
         {

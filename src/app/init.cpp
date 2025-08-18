@@ -284,8 +284,11 @@ void App::init_appstate_post(void)
     
     
     //          6.1.    Make sure these windows cannot LEAVE the DetView Dockspace...
-    for (auto & win : S.m_detview_windows) {
-        if (win)    { win->flags |= ImGuiWindowFlags_NoMove; }
+    for (auto & win : S.m_detview_windows)
+    {
+        if ( win && win->uuid != this->S.m_windows[ Window::MimicApp ].uuid )    {
+            win->flags |= ImGuiWindowFlags_NoMove;
+        }
     }
     //
     //
@@ -302,7 +305,6 @@ void App::init_appstate_post(void)
             match       = (win.uuid == detwin->uuid);
             if ( match )  {
                 win.dockspace_id    = cblib::maximum_value_of_type<ImGuiID>();
-                win.flags          &= ~ImGuiWindowFlags_NoMove;
                 break;
             }
         }
