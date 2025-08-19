@@ -4,30 +4,10 @@
     "paths": [
       {
         "closed": true,
-        "id": 8,
-        "kind": 0,
-        "label": "Normal Object",
-        "locked": false,
-        "style": {
-          "fill_color": 771714560,
-          "stroke_color": 4278255615,
-          "stroke_width": 2.0
-        },
-        "verts": [
-          13,
-          14,
-          15,
-          16
-        ],
-        "visible": true,
-        "z_index": 257
-      },
-      {
-        "closed": true,
         "id": 7,
         "kind": 1,
         "label": "Generic Payload",
-        "locked": false,
+        "locked": true,
         "payload": {
           "data": "persistent string data",
           "meta": "some metadata",
@@ -44,6 +24,26 @@
           10,
           11,
           12
+        ],
+        "visible": true,
+        "z_index": 257
+      },
+      {
+        "closed": true,
+        "id": 8,
+        "kind": 0,
+        "label": "Normal Object",
+        "locked": false,
+        "style": {
+          "fill_color": 771714560,
+          "stroke_color": 4278255615,
+          "stroke_width": 2.0
+        },
+        "verts": [
+          13,
+          14,
+          15,
+          16
         ],
         "visible": true,
         "z_index": 256
@@ -169,21 +169,9 @@
     ],
     "selection": {
       "lines": [],
-      "paths": [
-        0
-      ],
-      "points": [
-        8,
-        9,
-        10,
-        11
-      ],
-      "vertices": [
-        16,
-        15,
-        14,
-        13
-      ]
+      "paths": [],
+      "points": [],
+      "vertices": []
     },
     "vertices": [
       {

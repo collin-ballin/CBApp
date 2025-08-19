@@ -753,7 +753,7 @@ void Editor::_dispatch_obj_inspector_column(void)
     //  CASE 0 :    EMPTY SELECTION...
     if ( sel_paths == 0 ) {
         S.PushFont(Font::Main); ImGui::BeginDisabled(true);
-        ImGui::SeparatorText("Select an object from the left hand column...");
+            ImGui::SeparatorText("Select an object from the left hand column...");
         ImGui::EndDisabled(); S.PopFont(); return;
     }
     
@@ -772,10 +772,9 @@ void Editor::_draw_single_obj_inspector(void)
     constexpr ImGuiChildFlags       P1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     constexpr ImGuiChildFlags       C1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     BrowserStyle &                  BStyle              = this->m_style.browser_style;
-    BrowserState &                  BState              = this->m_browser_S;
     //
     //
-    static bool                     browser_vis_cache   = BState.m_show_vertex_browser;
+    static bool                     browser_vis_cache   = m_show_vertex_browser;
     //
     const size_t                    sel_idx             = *m_sel.paths.begin();   // only element
     Path &                          path                = m_paths[sel_idx];
@@ -784,35 +783,58 @@ void Editor::_draw_single_obj_inspector(void)
     
     
     //  4.  "VERTEX BROWSER" FOR THE OBJECT...
-    float                           sub_h               = 0.0f; // availY * m_style.ms_VERTEX_SUBBROWSER_HEIGHT;
 
 
 
     //  CASE 1 :    ONLY DRAW OBJECT BROWSER...
-    if ( !BState.m_show_vertex_browser )
+    if ( !m_show_vertex_browser )
     {
-        browser_vis_cache   = BState.m_show_vertex_browser;
-        //ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.min, BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.max );
-        ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", ImVec2(-1.0f, 0.0f),     BStyle.STATIC_CHILD_FLAGS);
-            _draw_obj_properties_panel(path, sel_idx);     // <-- NEW helper you just wrote
+        browser_vis_cache   = m_show_vertex_browser;
+        ImGui::PushStyleColor   (ImGuiCol_ChildBg,                  BStyle.ms_OBJ_INSPECTOR_FRAME_BG      );
+        ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value,     BStyle.DYNAMIC_CHILD_FLAGS);
+            ImGui::PopStyleColor(); //  ImGuiCol_ChildBg.
+            _draw_obj_properties_panel(path, sel_idx);
+            BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value.x       = ImGui::GetItemRectSize().x;
         ImGui::EndChild();
+        //
+        //
+        ImGui::SameLine( 0.0f, BStyle.ms_CHILD_WINDOW_SAMELINE );
+        //
+        //
+        //  //  //  4B.     VERTEX SUB-BROWSER...
+        const float                     P1_w                = ImGui::GetContentRegionAvail().x;
+        ImGui::PushStyleVar     (ImGuiStyleVar_ChildBorderSize,     BStyle.ms_CHILD_BORDER2         );
+        ImGui::PushStyleVar     (ImGuiStyleVar_ChildRounding,       BStyle.ms_CHILD_ROUND2          );
+        ImGui::PushStyleColor   (ImGuiCol_ChildBg,                  BStyle.ms_CHILD_FRAME_BG2R      );
+            //
+            ImGui::BeginChild("##Editor_Browser_PayloadPropertiesPanel",     ImVec2(P1_w, 0.0f),    BStyle.STATIC_CHILD_FLAGS);
+                    _draw_payload_properties_panel(path);
+            ImGui::EndChild();
+            //
+        ImGui::PopStyleColor(); //  ImGuiCol_ChildBg.
+        ImGui::PopStyleVar(2);   // ImGuiStyleVar_ChildBorderSize,  ImGuiStyleVar_ChildRounding.
     }
     //
     //
     //  CASE 2 :    DRAW OBJECT + VERTEX BROWSERS...
     else
     {
-        ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.min, ( browser_vis_cache != BState.m_show_vertex_browser )
+        ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.min, ( browser_vis_cache != m_show_vertex_browser )
                                                 ? BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value        //  Switched-BACK from FALSE to TRUE.
                                                 : BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.max );
-        browser_vis_cache = BState.m_show_vertex_browser;
+        browser_vis_cache = m_show_vertex_browser;
         
         //  4A.     OBJECT PROPERTIES PANEL.
+        ImGui::PushStyleColor   (ImGuiCol_ChildBg,                  BStyle.ms_OBJ_INSPECTOR_FRAME_BG      );
         ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value,     BStyle.DYNAMIC_CHILD_FLAGS);
+            ImGui::PopStyleColor(); //  ImGuiCol_ChildBg.
             _draw_obj_properties_panel(path, sel_idx);
             BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value.x       = ImGui::GetItemRectSize().x;
         ImGui::EndChild();
-        ImGui::SameLine( 0.0f );
+        //
+        //
+        //
+        ImGui::SameLine( 0.0f, BStyle.ms_CHILD_WINDOW_SAMELINE );
         //
         //
         //
@@ -840,7 +862,7 @@ void Editor::_draw_single_obj_inspector(void)
                 //  4B.2.   RIGHT-HAND VERTEX BROWSER.
                 const float             P1C1_w              = ImGui::GetContentRegionAvail().x;
                 ImGui::PushStyleColor(ImGuiCol_ChildBg, BStyle.ms_CHILD_FRAME_BG2R);
-                ImGui::BeginChild("##Editor_Browser_VertexInspectorColumn",     ImVec2(P1C1_w, sub_h),    C1_FLAGS);
+                ImGui::BeginChild("##Editor_Browser_VertexInspectorColumn",     ImVec2(P1C1_w, 0.0f),    C1_FLAGS);
                     _draw_vertex_inspector_column(path);
                 ImGui::EndChild();
                 ImGui::PopStyleColor();
@@ -1132,8 +1154,8 @@ void Editor::_draw_obj_properties_panel(Path & path, const size_t pidx)
     
     //  1B.     SUBSEQUENT HEADER ENTRIES...
     //
-        this->left_label("Show Vertex Browser:",       LABEL_W,    WIDGET_W);
-        ImGui::Checkbox("##Editor_VertexInspector_ShowVertexInspector",    &BState.m_show_vertex_browser);
+        this->left_label("Show Vertices:",       LABEL_W,    WIDGET_W);
+        ImGui::Checkbox("##Editor_VertexInspector_ShowVertexInspector",    &m_show_vertex_browser);
     //
     //
 
@@ -1249,6 +1271,47 @@ void Editor::_draw_obj_properties_panel(Path & path, const size_t pidx)
     
     return;
 }
+
+
+//  "_draw_payload_properties_panel"
+//
+void Editor::_draw_payload_properties_panel(Path & path)
+{
+    const bool                          PAYLOAD                 = path.kind != PathKind::None;
+
+
+    ImGui::BeginDisabled(true);
+    ImGui::SeparatorText("Properties");
+    ImGui::EndDisabled();
+    {
+        this->left_label("Payload:", 196.0f, 256.0f);    path.ui_kind();
+        
+        if (!PAYLOAD)   {
+            //  ImGui::Separator();
+            ImGui::Indent();
+                ImGui::TextDisabled("None");
+            ImGui::Unindent();
+        }
+        
+        else {
+            path.ui_properties();
+        }
+    }
+
+
+
+    return;
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

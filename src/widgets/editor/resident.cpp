@@ -42,8 +42,9 @@ void Editor::_draw_debugger_resident(void)
     S.PushFont(Font::Small);
     
     //      1.      HEADER CONTENT...
-    ImGui::TextUnformatted("Debugger Resident");
-    ImGui::Separator();
+    ImGui::BeginDisabled(true);
+        ImGui::SeparatorText("Debugger Resident");
+    ImGui::EndDisabled();
     
     
     
@@ -61,7 +62,6 @@ void Editor::_draw_debugger_resident(void)
     if (debug.show_more_info)
     {
         this->_debugger_resident_more_info();
-        return;
     }
 
 

@@ -524,10 +524,6 @@ struct BrowserState_t {
     // *************************************************************************** //
     //      3.      DATA MEMBERS...
     // *************************************************************************** //
-    //                      PERSISTENT STATE VARIABLES:
-    bool                        m_show_vertex_browser                       = true;
-    //
-    //
     //                      MUTABLE STATE VARIABLES:
     bool                        m_show_default_properties                   = false;
     bool                        m_renaming_layer                            = false;    //  TRUE when user is in the middle of MODIFYING NAME.
@@ -978,6 +974,7 @@ struct BrowserStyle
     ImGuiChildFlags                     STATIC_CHILD_FLAGS                          = ImGuiChildFlags_Borders;
     //
     //                              BROWSER CHILD-WINDOW DIMENSIONS:
+    float                               ms_CHILD_WINDOW_SAMELINE                    = 4.0f;
     Param<ImVec2>                       OBJ_SELECTOR_DIMS                           = {     {300.0f,    -1.0f},     { {250.0f,      1.0f},      {450.0f,    FLT_MAX} }   };
     Param<ImVec2>                       OBJ_PROPERTIES_INSPECTOR_DIMS               = {     {650.0f,    -1.0f},     { {600.0f,      1.0f},      {1200.0f,   FLT_MAX} }   };
     Param<ImVec2>                       VERTEX_SELECTOR_DIMS                        = {     {110.0f,    -1.0f},     { {90.0f,       1.0f},      {180.0f,    FLT_MAX} }   };
@@ -987,11 +984,15 @@ struct BrowserStyle
     //                              BROWSER CHILD-WINDOW COLORS:
     ImVec4                              ms_CHILD_FRAME_BG1                          = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
     ImVec4                              ms_CHILD_FRAME_BG1L                         = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
-    ImVec4                              ms_CHILD_FRAME_BG1R                         = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
+    ImVec4                              ms_CHILD_FRAME_BG1R                         = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
     
     ImVec4                              ms_CHILD_FRAME_BG2                          = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
     ImVec4                              ms_CHILD_FRAME_BG2L                         = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
-    ImVec4                              ms_CHILD_FRAME_BG2R                         = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
+    ImVec4                              ms_CHILD_FRAME_BG2R                         = ImVec4(0.129f,    0.140f,     0.168f,     0.800f); // ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
+    //
+    //                              NEW COLORS:
+    ImVec4                              ms_OBJ_INSPECTOR_FRAME_BG                   = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
+    //
     //
     //                              BROWSER CHILD-WINDOW STYLE:
     float                               ms_VERTEX_SUBBROWSER_HEIGHT                 = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT

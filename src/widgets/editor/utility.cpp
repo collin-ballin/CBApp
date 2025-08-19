@@ -553,7 +553,7 @@ void Editor::_draw_settings_mechanics(void)
         ImGui::Checkbox("##Editor_Settings_Mechanics_SnapToGrid",           &m_grid.snap_on);
         
         this->left_label("Show Vertex Browser:",    LABEL_W, WIDGET_W);         //  1.3.        VERTEX BROWSER.
-        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowVertexBrowser",    &BState.m_show_vertex_browser);
+        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowVertexBrowser",    &m_show_vertex_browser);
         
         
         

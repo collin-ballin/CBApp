@@ -374,6 +374,7 @@ protected:
     //
     //                              PANELS FOR EACH OBJECT TYPE:
     void                                _draw_obj_properties_panel              (Path & , const size_t );
+    void                                _draw_payload_properties_panel          (Path & );
     void                                _draw_vertex_properties_panel           (void);
     //
     //                              BROWSER HELPERS:
@@ -1145,7 +1146,12 @@ void                                        _debugger_resident_more_info        
     //                              OVERALL STATE:
     //  EditorState                     m_S                             = {   };
     Mode                                m_mode                          = Mode::Default;
+    //
+    //                              PERSISTENT STATE VARIABLES:
     bool                                m_show_grid                     = true;
+    bool                                m_show_debug_overlay            = true;
+    bool                                m_show_vertex_browser           = false;
+    //
     //
     //                              MISC. STATE:
     bool                                m_dragging                      = false;
@@ -1213,8 +1219,9 @@ void                                        _debugger_resident_more_info        
     //      VARIABLES FOR SPECIFIC MECHANICS...
     // *************************************************************************** //
     //                              RESIDENT STUFF:
-    bool                                m_show_debug_overlay            = true;
     bool                                m_show_sel_overlay              = false;
+    //
+    //
     //
     //                              LASSO TOOL / SELECTION:
     ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
