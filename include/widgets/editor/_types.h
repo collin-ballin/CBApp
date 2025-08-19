@@ -241,32 +241,42 @@ struct EditorInteraction
 struct Interaction
 {
 // *************************************************************************** //
-//                          PREVIOUS DATA.
+//                                  PREVIOUS DATA...
 // *************************************************************************** //
-//                      IMPLOT STATE:
-    bool                    hovered                 {  };
-    bool                    active                  {  };
-    bool                    space                   {  };
+    bool                            hovered                 {  };
+    bool                            active                  {  };
+    bool                            space                   {  };
 //
 //
 //
-//                      IMPLOT VARIABLES:
-    ImVec2                  canvas                  {  };
-    ImVec2                  origin                  {  };
-    ImVec2                  tl                      {  };
+//                              IMPLOT VARIABLES:
+    ImVec2                          canvas                  {  };
+    ImVec2                          origin                  {  };
+    ImVec2                          tl                      {  };
 //
 //
 //
-//                      OTHER DATA:
-    ImDrawList *            dl                      {  };
+//                              OTHER DATA:
+    ImDrawList *                    dl                      {  };
 //
 //
 //
-//                      NEW DATA:
-    EditorInteraction       obj                     {  };
+//                              NEW DATA:
+    EditorInteraction               obj                     {  };
 //
 //
 //
+// *************************************************************************** //
+//                                  INLINE FUNCTIONS...
+// *************************************************************************** //
+
+    //  "BlockShortcuts"
+    [[nodiscard]]
+    inline bool                     BlockShortcuts              (void) const noexcept
+    { return ( (!hovered) || (!obj.menus_closed) ); }
+
+
+
 // *************************************************************************** //
 // *************************************************************************** //
 };//	END "Interaction" INLINE CLASS DEFINITION.
@@ -439,19 +449,27 @@ inline void from_json(const nlohmann::json & j, ShapeState_t<OID> & o)
 
 //  "BrowserState_t"
 //
-template<typename VID, typename PtID, typename LID, typename PID>
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
 struct BrowserState_t {
 // *************************************************************************** //
 // *************************************************************************** //
 
-    // *************************************************************************** //
-    //      1.      CONSTEXPR AND ALIASES...
-    // *************************************************************************** //
-    static constexpr size_t     ms_PATH_TITLE_BUFFER_SIZE               = 128ULL;
-    static constexpr size_t     ms_VERTEX_TITLE_BUFFER_SIZE             = 64ULL;
 
     // *************************************************************************** //
-    //      2.      MEMBER FUNCTIONS...
+    //      1.      NESTED TYPENAME ALIASES...
+    // *************************************************************************** //
+    using                       Path                                    = Path_t        <PID, VID, ZID>         ;
+    using                       Vertex                                  = Vertex_t      <VID>                   ;
+
+    // *************************************************************************** //
+    //      2.      CONSTEXPR VALUES...
+    // *************************************************************************** //
+    static constexpr size_t     ms_MAX_PATH_TITLE_LENGTH                = Path::ms_MAX_PATH_LABEL_LENGTH + 64ULL;
+    //
+    static constexpr size_t     ms_MAX_VERTEX_TITLE_LENGTH              = Vertex:: ms_VERTEX_NAME_BUFFER_SIZE + 32ULL;
+
+    // *************************************************************************** //
+    //      3.      MEMBER FUNCTIONS...
     // *************************************************************************** //
     
     //  "reset"
@@ -460,19 +478,42 @@ struct BrowserState_t {
     //  "clear"
     inline void                 clear(void)
     {
+        //  Renaming "Active" State.
         m_renaming_layer            = false;
         m_renaming_obj              = false;
-        m_layer_filter              .Build();   //  Force filter to rebuild so the clipper sees an empty list.
-        m_obj_filter                .Build();   //  Force filter to rebuild so the clipper sees an empty list.
+
+
+        //  Force filter to rebuild so the clipper sees an empty list.
+        m_layer_filter              .Build();
+        m_obj_filter                .Build();
+        
+        
+        //  NEW STUFF...
+        //
+        //      (A)     LAYER.
+            //  m_layer_rows                .clear();
+            //  m_renaming_layer            = false;            //  "Dirty" Flags (to rebuild list of indices).
+            //  m_layer_rows_paths_rev      = -1;
+        //
+        //      (B)     OBJECT.
+        m_obj_rows                  .clear();
+        m_renaming_obj              = false;            //  "Dirty" Flags (to rebuild list of indices).
+        m_obj_rows_paths_rev        = -1;
+        
+        
+        
+        //  Rename Index.
+        m_layer_rename_idx          = -1;
+        m_obj_rename_idx            = -1;
+        
+        
           
-    
-    
+          
+          
+        //  ??  Other  ??
         m_layer_browser_anchor      = -1;
         m_browser_anchor            = -1;
         m_inspector_vertex_idx      = -1;
-        
-        m_layer_rename_idx          = -1;
-        m_obj_rename_idx            = -1;
         
         return;
     }
@@ -483,35 +524,48 @@ struct BrowserState_t {
     // *************************************************************************** //
     //      3.      DATA MEMBERS...
     // *************************************************************************** //
-//                          PERSISTENT STATE VARIABLES:
+    //                      PERSISTENT STATE VARIABLES:
     bool                        m_show_vertex_browser                       = true;
-    bool                        m_renaming_layer                            = false;    //  true while an InputText for rename is active
-    bool                        m_renaming_obj                              = false;    //  true while an InputText for rename is active
-//
-//
-//                          MUTABLE STATE ITEMS / INDICES:
+    //
+    //
+    //                      MUTABLE STATE VARIABLES:
+    bool                        m_show_default_properties                   = false;
+    bool                        m_renaming_layer                            = false;    //  TRUE when user is in the middle of MODIFYING NAME.
+    bool                        m_renaming_obj                              = false;    //
+    //
+    //
+    //                      NEW STUFF:
+        //      std::vector<int>            m_layer_rows                                {  };
+        //      bool                        m_layer_filter_dirty                        = false;    //  Flag to queue Browser to RE-COMPUTE sorted items.
+        //      int                         m_layer_rows_paths_rev                      = -1;
+    //
+    std::vector<int>            m_obj_rows                                  {  };
+    bool                        m_obj_filter_dirty                          = false;    //
+    int                         m_obj_rows_paths_rev                        = -1;
+    //
+    //
+    //                      INDICES:
     int                         m_layer_browser_anchor                      = -1;       //  ?? currently selected LAYER ??
     int                         m_browser_anchor                            = -1;       //  ?? anchor index for Shift‑range select ??
     int                         m_inspector_vertex_idx                      = -1;       //  ...
     //
-    int                         m_layer_rename_idx                          = -1;       //  row currently in rename-mode (–1 = none)
-    int                         m_obj_rename_idx                            = -1;       //  row currently in rename-mode (–1 = none)
-//
-//
-//                          CACHE AND MISC. DATA:
-    char                        m_name_buffer[ms_PATH_TITLE_BUFFER_SIZE]    = {  };     //  scratch text
-//
-//
-//
-//                          OTHER DATA ITEMS:
+    //
+    int                         m_layer_rename_idx                          = -1;       //  LAYER that is BEING RENAMED     (–1 = none)
+    int                         m_obj_rename_idx                            = -1;       //  OBJECT that is BEING RENAMED    (–1 = none)
+    //
+    //
+    //                      CACHE AND MISC. DATA:
+    char                        m_name_buffer[ ms_MAX_PATH_TITLE_LENGTH ]   = {  };     //  scratch text
+    //
+    //
+    //
+    //                      OTHER DATA ITEMS:
     ImGuiTextFilter             m_layer_filter;                                         //  search box for "LAYER" browser.
     ImGuiTextFilter             m_obj_filter;                                           //  search box for "OBJECT" browser.
     
     
     
     // *************************************************************************** //
-
-
 
 // *************************************************************************** //
 // *************************************************************************** //   END "BrowserState_t".
@@ -524,10 +578,12 @@ struct BrowserState_t {
 
 //  "IndexState_t"
 //
-template<typename VID, typename PtID, typename LID, typename PID>
-struct IndexState {
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
+struct IndexState_t {
     VID                         next_vid                                = 0;    //  original:   "m_next_id"...
     PID                         next_pid                                = 0;    //  original:   "m_next_pid"...
+//
+    size_t                      m_paths_rev                             = 0ULL;
 };
 
 
@@ -758,6 +814,20 @@ struct Camera {
         return fit * zoom_mag;
     }
 };
+
+
+
+
+
+//  "DebuggerState_t"
+//
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
+struct DebuggerState_t
+{
+    bool    show_more_info  = false;
+};
+
+
   
 // *************************************************************************** //
 // *************************************************************************** //   END "OTHER STATES"
@@ -782,7 +852,7 @@ struct Camera {
 
 //  "EditorState_t"
 //
-template<typename VID, typename PtID, typename LID, typename PID>
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
 struct EditorState_t
 {
 // *************************************************************************** //
@@ -798,15 +868,20 @@ struct EditorState_t
 //                                  TRANSIENT STATE...
 // *************************************************************************** //
     //
-    //                              BEHAVIORS:
+    //                              OVERALL STATE:
     bool                                m_show_grid                     = true;
+    bool                                m_show_debug_overlay            = true;     //  Persistent/Resident Overlays.
+    //
+    //
+    //
+    //                              TRANSIENT STATE:
+    bool                                m_show_sel_overlay              = false;
+    //
     bool                                m_dragging                      = false;
     bool                                m_lasso_active                  = false;
-    bool                                m_show_sel_overlay              = false;
-    bool                                m_show_debug_overlay            = true;
-    //
-    //                              OTHER:
     bool                                m_pending_clear                 = false;    //  pending click selection state ---
+    //
+    //
     //
     //                              UTILITY:
     float                               m_bar_h                         = 0.0f;
@@ -938,15 +1013,16 @@ struct BrowserStyle
 //                                      GENERAL WIDGET STUFF...
 // *************************************************************************** //
     //                              BROWSER **ALL** WIDGET STUFF:
-    float                               ms_BROWSER_BUTTON_SEP                       = 8.0f;
-    float                               ms_BROWSER_SELECTABLE_SEP                   = 16.0f;
+    //  float                               ms_BROWSER_BUTTON_SEP                       = 8.0f;
+    //  float                               ms_BROWSER_SELECTABLE_SEP                   = 16.0f;
+    std::pair<float,float>              ms_BROWSER_ITEM_SEPS                        = { 8.0f,   16.0f };
     //
     //                              BROWSER PATH WIDGET STUFF:
     float                               ms_BROWSER_OBJ_LABEL_WIDTH                  = 55.0f;
     float                               ms_BROWSER_OBJ_WIDGET_WIDTH                 = 256.0f;
     //
     //                              BROWSER VERTEX WIDGET STUFF:
-    float                               ms_BROWSER_VERTEX_LABEL_WIDTH               = 55.0f;
+    float                               ms_BROWSER_VERTEX_LABEL_WIDTH               = 75.0f;
     float                               ms_BROWSER_VERTEX_WIDGET_WIDTH              = 196.0f;
 
 // *************************************************************************** //
@@ -964,9 +1040,38 @@ struct BrowserStyle
     //                              DRAG/DROP STUFF:
     static constexpr const char *       ms_DRAG_HANDLE_ICON                         = "=";
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA MEMBERS".
+
+
+
+
+
 
 // *************************************************************************** //
+//
+//
+//      2.C         INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
 
+    // *************************************************************************** //
+    //      1.      UTILITY FUNCTIONS...
+    // *************************************************************************** //
+    
+    //
+    //  ...
+    //
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+    
 
 
 // *************************************************************************** //

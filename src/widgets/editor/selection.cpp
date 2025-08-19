@@ -1108,7 +1108,7 @@ void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it
     const float     step    = m_grid.snap_step * ( (io.KeyShift) ? 10.0f : 1.0f );         //  Always one “grid unit”.
     
     
-    if ( m_sel.empty() || !it.hovered )     { return; }                     //  Nothing selected  OR  Not In-Focus  ===> nothing to do.
+    if ( m_sel.empty() || !it.BlockShortcuts() )        { return; }                     //  Nothing selected  OR  Not In-Focus  ===> nothing to do.
 
 
 

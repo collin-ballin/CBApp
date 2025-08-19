@@ -33,27 +33,56 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //          4.1.    DEBUGGER OVERLAY.
 // *************************************************************************** //
 
-//  "_toggle_selection_resident"
-//
-//  void Editor::_toggle_selection_resident(const bool vis) {
-//      return;
-//  }
-
-
 //  "_draw_debugger_resident"
 //
 void Editor::_draw_debugger_resident(void)
 {
-    S.PushFont(Font::FootNote);
-    ImGui::TextUnformatted("Selection HUD");
+    static DebuggerState &    debug   = this->m_debugger;
+    
+    S.PushFont(Font::Small);
+    
+    //      1.      HEADER CONTENT...
+    ImGui::TextUnformatted("Debugger Resident");
     ImGui::Separator();
-    ImGui::Text("Verts : %zu", m_sel.vertices.size());
-    ImGui::Text("Paths : %zu", m_sel.paths.size());
+    
+    
+    
+    
+    
+    
+    //      2.      BODY CONTENT...
+    
+    this->left_label("Show More Info:");
+    ImGui::Checkbox("##Editor_Debugger_ShowMoreInfo",    &debug.show_more_info);
+    
+    
+    
+    //      3.      ADDITIONAL INFORMATION...
+    if (debug.show_more_info)
+    {
+        this->_debugger_resident_more_info();
+        return;
+    }
+
+
+
+
 
     S.PopFont();
     return;
 }
 
+
+//  "_debugger_resident_more_info"
+//
+void Editor::_debugger_resident_more_info(void)
+{
+    S.PushFont(Font::Small);
+
+
+    S.PopFont();
+    return;
+}
 
 
 
@@ -69,17 +98,35 @@ void Editor::_draw_selection_resident(void)
     const size_t        N_points        = m_sel.points.size();
     const size_t        N_lines         = m_sel.lines.size();
     const size_t        N_paths         = m_sel.paths.size();
-    S.PushFont(Font::Small);
     
     
-    ImGui::TextDisabled("Selection");
-    ImGui::Separator();
-    
-    ImGui::Text("Paths: %zu.  Lines: %zu.  Points: %zu.  Vertices: %zu.", N_paths, N_lines, N_points, N_vertices);
-    
-
-
+    //      1.      HEADER CONTENT...
+    S.PushFont(Font::FootNote);
+    //
+    //
+        ImGui::TextDisabled("Selection:");
+        //
+        ImGui::SameLine(0.0f, 8.0f);
+        //
+        ImGui::Text("Paths: %zu.  Lines: %zu.  Points: %zu.  Vertices: %zu.", N_paths, N_lines, N_points, N_vertices);
+    //
+    //
     S.PopFont();
+    
+    
+    
+
+    //      2.      BODY CONTENT...
+    ImGui::Separator();
+    S.PushFont(Font::Small);
+    //
+        //
+        //              ...
+        //
+    //
+    S.PopFont();
+    
+    
     return;
 }
 

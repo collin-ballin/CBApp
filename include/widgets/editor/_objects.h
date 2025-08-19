@@ -130,6 +130,7 @@ template<typename VID>
 struct Vertex_t {
     static constexpr const char *   ms_DEF_VERTEX_TITLE_FMT_STRING          = "Vertex V%03d (ID #%06u)";
     static constexpr const char *   ms_DEF_VERTEX_SELECTOR_FMT_STRING       = "V%03u";
+    static constexpr size_t         ms_MAX_VERTEX_NAME_LENGTH               = 10ULL;
 //
     uint32_t    id              = 0;
     float       x               = 0.0f,
@@ -321,7 +322,7 @@ namespace path { //     BEGINNING NAMESPACE "cb"...
 //  "PathKind"
 //
 enum class PathKind : uint8_t {
-    Default = 0,
+    None = 0,
     Generic,
 //
     Source,
@@ -335,7 +336,7 @@ enum class PathKind : uint8_t {
 //
 static constexpr std::array<const char *, static_cast<size_t>(PathKind::COUNT)>
 DEF_PATH_KIND_NAMES                     = {
-    "Default",
+    "None",
     "Generic",
     "Source", "Boundary Condition", "Dielectric"
 };
@@ -942,7 +943,7 @@ struct Path_t {
             case PathKind::Boundary :       { return path::BoundaryPayload{}; }
             case PathKind::Source :         { return path::SourcePayload{}; }
             case PathKind::Dielectric :     { return path::DielectricPayload{}; }
-            default:                        { break; }                   // PathKind::Default or unknown
+            default:                        { break; }                   // PathKind::None or unknown
         }
         
         return std::monostate{};                  // no extra data
@@ -1002,7 +1003,7 @@ struct Path_t {
     // *************************************************************************** //
     //                          NEW-ER:
     // *************************************************************************** //
-    PathKind                        kind                            = PathKind::Default;
+    PathKind                        kind                            = PathKind::None;
     Payload                         payload                         {  };
     
 
@@ -1088,7 +1089,7 @@ inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
     //
     //  6B.     GET "kind"...
     if ( has_kind && !invalid)      { p.kind = static_cast<PathKind>( j.at("kind").get<uint8_t>() );    }
-    else                            { p.kind = PathKind::Default;                                       }
+    else                            { p.kind = PathKind::None;                                          }
     //
     //  6C.     GET "payload"...
     if ( has_payload && !invalid)

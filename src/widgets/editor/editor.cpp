@@ -808,11 +808,11 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
     
     //  RESIDENTIAL WINDOWS...
     //
-    static bool             debug_overlay_cache     = this->m_show_debug_overlay;                       //  1.  Debugger/Info Overlay.
+    static bool             debug_overlay_cache     = !this->m_show_debug_overlay;                      //  1.  Debugger/Info Overlay.
     static auto &           debugger_entry          = m_residents[Resident::Debugger];
     static Overlay &        debugger_resident       = *m_overlays.lookup_resident(debugger_entry.id);
     //
-    static bool             sel_overlay_cache       = this->m_show_sel_overlay;                         //  2.  Selection Overlay.
+    static bool             sel_overlay_cache       = !this->m_show_sel_overlay;                        //  2.  Selection Overlay.
     static auto &           selection_entry         = m_residents[Resident::Selection];
     static Overlay &        selection_resident      = *m_overlays.lookup_resident(selection_entry.id);
     //

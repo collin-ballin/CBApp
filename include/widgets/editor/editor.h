@@ -142,14 +142,22 @@ public:
         using                           PathHit                         = EditorIMPL::PathHit                   ;
         using                           EndpointInfo                    = EditorIMPL::EndpointInfo              ;
     //
-    //                              SUB-STATE ABSTRACTIONS:
+    //
+    //
+    //                              PRIMARY STATE OBJECTS:
         using                           EditorState                     = EditorIMPL::EditorState               ;
+        using                           BrowserState                    = EditorIMPL::BrowserState              ;
+        using                           IndexState                      = EditorIMPL::IndexState                ;
+    //
+    //                              SUBSIDIARY STATE OBJECTS:
+        using                           Clipboard                       = EditorIMPL::Clipboard                 ;
         using                           Selection                       = EditorIMPL::Selection                 ;
+    //
+    //                              TOOL STATE OBJECTS:
         using                           PenState                        = EditorIMPL::PenState                  ;
         using                           ShapeState                      = EditorIMPL::ShapeState                ;
-        using                           BrowserState                    = EditorIMPL::BrowserState              ;
-    //
-        using                           Clipboard                       = EditorIMPL::Clipboard                 ;
+        using                           DebuggerState                   = EditorIMPL::DebuggerState             ;
+//
 //
 //      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 //
@@ -211,11 +219,11 @@ public:
             nullptr,                            //  Reference.
             {   /*  locked      */  false,
                 /*  placement   */  OverlayPlacement::CanvasBL,
-                /*  src_anchor  */  Anchor::North,
+                /*  src_anchor  */  Anchor::SouthWest,
                 /*  offscreen   */  OffscreenPolicy::Clamp,
-                /*  anchor_px   */  ImVec2{0,8},                        //  nudge below bbox
-                /*  anchor_ws   */  ImVec2{0,0},                        //  ws anchor filled each frame
-                /*  draw_fn     */  {}                                  // draw_fn patched in ctor
+                /*  anchor_px   */  ImVec2{ 8,      8 },                //  nudge below bbox
+                /*  anchor_ws   */  ImVec2{ 0,      0 },                //  ws anchor filled each frame
+                /*  draw_fn     */  {   }                               // draw_fn patched in ctor
             },
             {//     STYLE...
                 /*  alpha       */  0.80f,
@@ -423,15 +431,16 @@ protected:
     //
     //                              DEBUGGER RESIDENT:
     void                                _draw_debugger_resident             (void);
+void                                        _debugger_resident_more_info        (void);
     //
     //                              SELECTION RESIDENT:
     void                                _draw_selection_resident            (void);
     //
     //                              SHAPE-TOOL RESIDENT:
     void                                _draw_shape_resident                (void);
-    void                                _draw_shape_resident_custom         (void);
-    void                                _draw_shape_resident_multi          (void);
-    void                                _draw_shape_resident_default        (void);
+    void                                    _draw_shape_resident_custom         (void);
+    void                                    _draw_shape_resident_multi          (void);
+    void                                    _draw_shape_resident_default        (void);
     // *************************************************************************** //
     //
     //
@@ -1007,7 +1016,7 @@ protected:
     // *************************************************************************** //
 
     //  "left_label"
-    inline void                         left_label                          (const char * label, const float label_w, const float widget_w) const
+    inline void                         left_label                          (const char * label, const float label_w=ms_LABEL_WIDTH, const float widget_w=ms_WIDGET_WIDTH) const
     { utl::LeftLabel(label, label_w, widget_w); ImGui::SameLine(); return; };
     
     //  "label"
@@ -1134,7 +1143,7 @@ protected:
     //      APPLICATION STATE...
     // *************************************************************************** //
     //                              OVERALL STATE:
-    //  EditorState
+    //  EditorState                     m_S                             = {   };
     Mode                                m_mode                          = Mode::Default;
     bool                                m_show_grid                     = true;
     //
@@ -1155,21 +1164,19 @@ protected:
     // *************************************************************************** //
     //      OBJECTS...
     // *************************************************************************** //
-    //                              TOOL STATES:
-    PenState                            m_pen;
-    ShapeState                          m_shape;
-    OverlayState                        m_overlay;
-    BrowserState                        m_browser_S;        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
     //
-    //                              OTHER FACILITIES:
+    //                              SUBSIDIARY STATES:
+    BrowserState                        m_browser_S;        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
     Selection                           m_sel;
     mutable BoxDrag                     m_boxdrag;
     MoveDrag                            m_movedrag;
     Clipboard                           m_clipboard;
     //
-    //
-    //                              NEED TO RE-HOME:
-    std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
+    //                              TOOL STATES:
+    PenState                            m_pen;
+    ShapeState                          m_shape;
+    OverlayState                        m_overlay;
+    DebuggerState                       m_debugger;
     //
     // *************************************************************************** //
     //
@@ -1198,22 +1205,29 @@ protected:
     //
     static constexpr float              ms_GRID_STEP_MIN                = 2.0f;   // world-units
     static constexpr float              ms_GRID_LABEL_PAD               = 2.0f;
-    //
-    //                              FUNCTIONS:
-    //
-    //
     // *************************************************************************** //
     //
-    //
+    //DebuggerState
     //
     // *************************************************************************** //
     //      VARIABLES FOR SPECIFIC MECHANICS...
     // *************************************************************************** //
-    //                              LASSO TOOL / SELECTION:
+    //                              RESIDENT STUFF:
     bool                                m_show_debug_overlay            = true;
     bool                                m_show_sel_overlay              = false;
+    //
+    //                              LASSO TOOL / SELECTION:
     ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
     ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      NEED TO RE-HOUSE !!!
+    // *************************************************************************** //
+    //                              INDICES:
+    std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
     VertexID                            m_next_id                       = 1;
     PathID                              m_next_pid                      = 1;        // counter for new path IDs
     //
@@ -1226,6 +1240,33 @@ protected:
     ImVec2                              m_avail                         = ImVec2(0.0f, 0.0f);
     ImVec2                              m_p0                            = ImVec2(0.0f, 0.0f);
     ImVec2                              m_p1                            = ImVec2(0.0f, 0.0f);
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      BOOKMARK !!!
+    // *************************************************************************** //
+        //
+        //                              MAIN APPLICATION STATE:
+        //  bool                                m_show_grid                     = true;
+        //  //
+        //                                  MISC. STATE:
+        //  bool                                m_dragging                      = false;
+        //  bool                                m_lasso_active                  = false;
+        //  bool                                m_pending_clear                 = false;    //  pending click selection state ---
+        //
+        //
+        //
+        //                              PEN-TOOL STATE:
+        //  bool                                m_drawing                       = false;
+        //  bool                                m_dragging_handle               = false;
+        //  bool                                m_dragging_out                  = true;
+        //  VertexID                            m_drag_vid                      = 0;
+        //
+        //                              LASSO TOOL / SELECTION:
+        //  ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
+        //  ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
+    
     // *************************************************************************** //
     //
     //
@@ -1436,8 +1477,9 @@ public:
     // *************************************************************************** //
     //                                  NEW STUFF...
     // *************************************************************************** //
-    VertexID                            next_vid                        {0};            // first free vertex ID
-    PathID                              next_pid                        {0};            // first free path  ID
+    //  IndexState                          m_index_S                       {   };
+    VertexID                            next_vid                        { 0 };            // first free vertex ID
+    PathID                              next_pid                        { 0 };            // first free path  ID
     // *************************************************************************** //
 
 

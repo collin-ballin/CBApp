@@ -120,34 +120,41 @@ struct EditorIMPL {
         template<typename T, typename Tag>
         using                           ID                              = cblib::utl::IDType<T, Tag>;
     //
-        using                           VertexID                        = uint32_t;     //    ID<std::uint32_t, Vertex_Tag>         ;
-        using                           HandleID                        = uint8_t;      //    ID<std::uint32_t, Point_Tag>          ;
-        using                           PointID                         = uint32_t;     //    ID<std::uint32_t, Point_Tag>          ;
-        using                           LineID                          = uint32_t;     //    ID<std::uint32_t, Line_Tag>           ;
-        using                           PathID                          = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
-        using                           ZID                             = uint32_t;     //    ID<std::uint32_t, Path_Tag>           ;
+        using                           VertexID                        = uint32_t;     //    ID<std::uint32_t, Vertex_Tag>             ;
+        using                           HandleID                        = uint8_t;      //    ID<std::uint32_t, Point_Tag>              ;
+        using                           PointID                         = uint32_t;     //    ID<std::uint32_t, Point_Tag>              ;
+        using                           LineID                          = uint32_t;     //    ID<std::uint32_t, Line_Tag>               ;
+        using                           PathID                          = uint32_t;     //    ID<std::uint32_t, Path_Tag>               ;
+        using                           ZID                             = uint32_t;     //    ID<std::uint32_t, Path_Tag>               ;
         using                           OverlayID                       = OverlayManager::OverlayID;
-        using                           HitID                           = uint32_t;     //    ID<std::uint32_t, Hit_Tag>            ;
+        using                           HitID                           = uint32_t;     //    ID<std::uint32_t, Hit_Tag>                ;
     //
     //                              OBJECT TYPE ALIASES (BASED ON INDEX TYPES):
-        using                           Vertex                          = Vertex_t          <VertexID>                              ;
-        //  using                       Handle                          = Handle_t          <HandleID>                              ;
-        using                           Point                           = Point_t           <PointID>                               ;
-        using                           Line                            = Line_t            <LineID, ZID>                           ;
-        using                           Path                            = Path_t            <PathID, VertexID, ZID>                 ;
-        using                           Overlay                         = Overlay_t         <OverlayID>                             ;
-        using                           Hit                             = Hit_t             <HitID>                                 ;
-        using                           PathHit                         = PathHit_t         <PathID, VertexID>                      ;
-        using                           EndpointInfo                    = EndpointInfo_t    <PathID>                                ;
+        using                           Vertex                          = Vertex_t          <VertexID>                                  ;
+        //  using                       Handle                          = Handle_t          <HandleID>                                  ;
+        using                           Point                           = Point_t           <PointID>                                   ;
+        using                           Line                            = Line_t            <LineID, ZID>                               ;
+        using                           Path                            = Path_t            <PathID, VertexID, ZID>                     ;
+        using                           Overlay                         = Overlay_t         <OverlayID>                                 ;
+        using                           Hit                             = Hit_t             <HitID>                                     ;
+        using                           PathHit                         = PathHit_t         <PathID, VertexID>                          ;
+        using                           EndpointInfo                    = EndpointInfo_t    <PathID>                                    ;
+    //
+    //
+    //
+    //                              PRIMARY STATE OBJECTS:
+        using                           EditorState                     = EditorState_t     <VertexID, PointID, LineID, PathID, ZID>    ;
+        using                           BrowserState                    = BrowserState_t    <VertexID, PointID, LineID, PathID, ZID>    ;
+        using                           IndexState                      = IndexState_t      <VertexID, PointID, LineID, PathID, ZID>    ;
     //
     //                              SUBSIDIARY STATE OBJECTS:
-        using                           EditorState                     = EditorState_t     <VertexID, PointID, LineID, PathID>     ;
-        using                           Selection                       = Selection_t       <VertexID, PointID, LineID, PathID>     ;
-        using                           PenState                        = PenState_t        <VertexID>                              ;
-        using                           ShapeState                      = ShapeState_t      <OverlayID>                             ;
-        using                           BrowserState                    = BrowserState_t    <VertexID, PointID, LineID, PathID>     ;
+        using                           Clipboard                       = Clipboard_t       <Vertex, Point, Line, Path>                 ;
+        using                           Selection                       = Selection_t       <VertexID, PointID, LineID, PathID>         ;
     //
-        using                           Clipboard                       = Clipboard_t       <Vertex, Point, Line, Path>             ;
+    //                              TOOL STATE OBJECTS:
+        using                           PenState                        = PenState_t        <VertexID>                                  ;
+        using                           ShapeState                      = ShapeState_t      <OverlayID>                                 ;
+        using                           DebuggerState                   = DebuggerState_t   <VertexID, PointID, LineID, PathID, ZID>    ;
 //
 //
 //

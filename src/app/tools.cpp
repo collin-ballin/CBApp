@@ -73,7 +73,8 @@ void App::ShowImGuiIDStackTool([[maybe_unused]] const char * uuid, [[maybe_unuse
 //
 void App::ShowImGuiItemPickerTool([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
-    ImGui::ShowIDStackToolWindow(p_open);
+    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
+    ImGui::ShowDemoWindow(p_open);
     return;
 }
 
@@ -82,8 +83,7 @@ void App::ShowImGuiItemPickerTool([[maybe_unused]] const char * uuid, [[maybe_un
 //
 void App::ShowImGuiDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
-    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
-    ImGui::ShowDemoWindow(p_open);
+    ImGui::ShowIDStackToolWindow(p_open);
     return;
 }
 
