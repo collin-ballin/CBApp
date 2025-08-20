@@ -1025,7 +1025,7 @@ void                                        _debugger_more_info                 
     inline void                         label                               (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
     { utl::LeftLabel(text, l_width, w_width); ImGui::SameLine(); };
     
-    inline bool                         has_file                        (void) const    { return ( std::filesystem::exists( m_filepath ) ); }
+    inline bool                         has_file                        (void) const    { return ( std::filesystem::exists( m_editor_S.m_filepath ) ); }
     
     
     
@@ -1091,15 +1091,15 @@ void                                        _debugger_more_info                 
     // *************************************************************************** //
     //      SERIALIZATION STUFF...
     // *************************************************************************** //
-    std::mutex                          m_task_mtx;
-    std::vector<std::function<void()>>  m_main_tasks;
-    std::atomic<bool>                   m_io_busy                       {false};
-    IOResult                            m_io_last                       {IOResult::Ok};
-    std::string                         m_io_msg                        {   };
+    //  std::mutex                          m_task_mtx;
+    //  std::vector<std::function<void()>>  m_main_tasks;
+    //  std::atomic<bool>                   m_io_busy                       {false};
+    //  IOResult                            m_io_last                       {IOResult::Ok};
+    //  std::string                         m_io_msg                        {   };
     //
     //
-    std::atomic<bool>                   m_sdialog_open                  = {false};
-    std::atomic<bool>                   m_odialog_open                  = {false};
+    //  std::atomic<bool>                   m_sdialog_open                  = {false};
+    //  std::atomic<bool>                   m_odialog_open                  = {false};
     //
     cb::FileDialog::Initializer         m_SAVE_DIALOG_DATA              = {
         /* type               = */  cb::FileDialogType::Save,
@@ -1119,7 +1119,7 @@ void                                        _debugger_more_info                 
     };
     cb::FileDialog                      m_save_dialog;
     cb::FileDialog                      m_open_dialog;
-    std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/editor-fdtd_v0.json"};
+    //  std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/editor-fdtd_v0.json"};
     
     // *************************************************************************** //
     //
@@ -1244,10 +1244,10 @@ void                                        _debugger_more_info                 
     mutable ImVec2                      m_origin_scr                    = {0.f, 0.f};   // screen-space canvas origin                       //  -1 = none, 0-7 otherwise (corners+edges)
     //
     //                              UTILITY:
-    float                               m_bar_h                         = 0.0f;
-    ImVec2                              m_avail                         = ImVec2(0.0f, 0.0f);
-    ImVec2                              m_p0                            = ImVec2(0.0f, 0.0f);
-    ImVec2                              m_p1                            = ImVec2(0.0f, 0.0f);
+    //  float                               m_bar_h                         = 0.0f;
+    //  ImVec2                              m_avail                         = ImVec2(0.0f, 0.0f);
+    //  ImVec2                              m_p0                            = ImVec2(0.0f, 0.0f);
+    //  ImVec2                              m_p1                            = ImVec2(0.0f, 0.0f);
     //
     //
     //

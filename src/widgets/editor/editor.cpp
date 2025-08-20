@@ -195,6 +195,7 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
 void Editor::Begin(const char * /*id*/)
 {
     ImGuiIO &               io                      = ImGui::GetIO();
+    EditorState &           ES                      = this->m_editor_S;
     const bool              space                   = ImGui::IsKeyDown(ImGuiKey_Space);
     //
     const bool              pan_enabled             = (space || (this->m_mode == Mode::Hand) );
@@ -221,13 +222,13 @@ void Editor::Begin(const char * /*id*/)
     //      2A.     CONTROL BAR...
     this->_draw_controls();
     //
-    m_avail                                 = ImGui::GetContentRegionAvail();       //  1. Canvas size & plot flags
-    m_avail.x                               = std::max(m_avail.x, 50.f);
-    m_avail.y                               = std::max(m_avail.y, 50.f);
+    ES.m_avail                                      = ImGui::GetContentRegionAvail();       //  1. Canvas size & plot flags
+    ES.m_avail.x                                    = std::max(ES.m_avail.x, 50.f);
+    ES.m_avail.y                                    = std::max(ES.m_avail.y, 50.f);
     //
     //
     //          CASE 2B     : FAILURE TO CREATE CANVAS.
-    if ( !ImPlot::BeginPlot("##Editor_CanvasGrid", ImVec2(m_avail.x, m_avail.y), m_plot_flags) )
+    if ( !ImPlot::BeginPlot("##Editor_CanvasGrid", ImVec2(ES.m_avail.x, ES.m_avail.y), m_plot_flags) )
         { ImPlot::GetInputMap() = backup;       return; }
     //
     //          CASE 2B     : SUCCESSFULLY CREATED THE "IMPLOT" PLOT...
@@ -865,18 +866,19 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
 //
 inline void Editor::_handle_io(void)
 {
-    //using                       Initializer     = cb::FileDialog::Initializer;
+    EditorState &       EState          = this->m_editor_S;
+    //using             Initializer     = cb::FileDialog::Initializer;
 
 
     //  1.  SAVE DIALOGUE...
-    if ( m_sdialog_open.load(std::memory_order_acquire) ) {
-        m_sdialog_open.store(false, std::memory_order_release);
+    if ( EState.m_sdialog_open.load(std::memory_order_acquire) ) {
+        EState.m_sdialog_open.store(false, std::memory_order_release);
         this->m_save_dialog.initialize(this->m_SAVE_DIALOG_DATA );
     }
     //
     if ( this->m_save_dialog.is_open() )
     {
-        m_sdialog_open.store(false, std::memory_order_release);
+        EState.m_sdialog_open.store(false, std::memory_order_release);
         
         
         if ( this->m_save_dialog.Begin() ) {        // returns true when finished
@@ -890,8 +892,8 @@ inline void Editor::_handle_io(void)
     
     
     //  2.  LOAD DIALOGUE...
-    if ( m_odialog_open.load(std::memory_order_acquire) ) {
-        m_odialog_open.store(false, std::memory_order_release);
+    if ( EState.m_odialog_open.load(std::memory_order_acquire) ) {
+        EState.m_odialog_open.store(false, std::memory_order_release);
         this->m_open_dialog.initialize(m_OPEN_DIALOG_DATA );
     }
     //

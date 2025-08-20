@@ -27,22 +27,23 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::save(void)
 {
-    const bool  has_file    = this->has_file();
+    const bool          has_file    = this->has_file();
+    EditorState &       EState      = this->m_editor_S;
 
     
     
     //  CASE 1 :    EDITOR HAS EXISTING FILE...
     if ( has_file )
     {
-        S.m_logger.debug( std::format("Editor | saving data to existing file, \"{}\"", this->m_filepath.filename().string())  );
-        this->save_async(this->m_filepath);
+        S.m_logger.debug( std::format("Editor | saving data to existing file, \"{}\"", EState.m_filepath.filename().string())  );
+        this->save_async(EState.m_filepath);
     }
     //
     //  CASE 2 :    NEED TO  "SAVE AS..."  THE CURRENT FILE...
     else
     {
         S.m_logger.info( "Editor | requesting file dialog to create new file" );
-        m_sdialog_open.store(true, std::memory_order_release);
+        this->m_editor_S.m_sdialog_open.store(true, std::memory_order_release);
     }
     
     
@@ -57,7 +58,7 @@ void Editor::open(void) {
     //  CB_LOG( LogLevel::Info, "Editor--open" );
 
 
-    m_odialog_open.store(true, std::memory_order_release);
+    this->m_editor_S.m_odialog_open.store(true, std::memory_order_release);
     
     
     return;
@@ -653,8 +654,8 @@ void Editor::pump_main_tasks(void)
 {
     std::vector<std::function<void()>> tasks;
     {
-        std::lock_guard lk(m_task_mtx);
-        tasks.swap(m_main_tasks);
+        std::lock_guard lk( this->m_editor_S.m_task_mtx );
+        tasks.swap( this->m_editor_S.m_main_tasks );
     }
     for (auto& fn : tasks) fn();
 }
@@ -664,8 +665,8 @@ void Editor::pump_main_tasks(void)
 //
 void Editor::save_async(std::filesystem::path path)
 {
-    m_io_busy   = true;
-    auto snap   = make_snapshot();
+    this->m_editor_S.m_io_busy      = true;
+    auto snap                       = make_snapshot();
 
     //  convert to absolute once, so worker sees a full path
     path        = std::filesystem::absolute(path);
@@ -682,8 +683,9 @@ void Editor::save_async(std::filesystem::path path)
 //
 void Editor::load_async(std::filesystem::path path)
 {
-    m_io_busy   = true;
-    path        = std::filesystem::absolute(path);
+    EditorState &       EState      = this->m_editor_S;
+    EState.m_io_busy                = true;
+    path                            = std::filesystem::absolute(path);
 
     std::thread([this, path]{
         load_worker(path);
@@ -691,13 +693,13 @@ void Editor::load_async(std::filesystem::path path)
     
     
     //      2.      TAKE ACTIONS BASED ON SUCCESS/FAILURE OF LOADING PROCEDURE...
-    if ( (m_io_last == IOResult::Ok) || (m_io_last == IOResult::VersionMismatch) )
+    if ( (EState.m_io_last == IOResult::Ok) || (EState.m_io_last == IOResult::VersionMismatch) )
     {
-        this->m_filepath    = path;
+        EState.m_filepath    = path;
     }
     else
     {
-        this->m_filepath    = std::filesystem::path{  };
+        EState.m_filepath    = std::filesystem::path{  };
         this->RESET_ALL();
     }
     
@@ -710,13 +712,15 @@ void Editor::load_async(std::filesystem::path path)
 //
 void Editor::_draw_io_overlay(void)
 {
-    if ( !m_io_busy && m_io_last == IOResult::Ok )          { return; }   // nothing to show
+    EditorState &       EState      = this->m_editor_S;
+    
+    if ( (!EState.m_io_busy)  &&  (EState.m_io_last == IOResult::Ok) )              { return; }   // nothing to show
 
-    const char *    txt         = m_io_busy ? "Working..." : m_io_msg.c_str();
-    ImVec2          pad         {8,8};
-    ImVec2          size        = ImGui::CalcTextSize(txt);
-    ImVec2          pos         = ImGui::GetMainViewport()->Pos;
-    pos.y                      += ImGui::GetMainViewport()->Size.y - size.y - pad.y*2;
+    const char *        txt         = (EState.m_io_busy)    ? "Working..."  : EState.m_io_msg.c_str();
+    ImVec2              pad         {8, 8};
+    ImVec2              size        = ImGui::CalcTextSize(txt);
+    ImVec2              pos         = ImGui::GetMainViewport()->Pos;
+    pos.y                          += ImGui::GetMainViewport()->Size.y - size.y - pad.y*2;
 
     ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.6f);
@@ -737,6 +741,7 @@ void Editor::_draw_io_overlay(void)
 //
 void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
 {
+    EditorState &       EState      = this->m_editor_S;
     nlohmann::json      j;
     j["version"]                    = kSaveFormatVersion;
     j["state"]                      = snap;
@@ -750,14 +755,14 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
     // enqueue completion notification
     {
         {
-            std::lock_guard     lk(m_task_mtx);
-            m_main_tasks.push_back( [this, res, path]
+            std::lock_guard     lk(EState.m_task_mtx);
+            EState.m_main_tasks.push_back( [this, res, path]
             {
-                m_io_busy   = false;
-                m_io_last   = res;
-                m_io_msg    = (res == IOResult::Ok)
-                                ? "Saved to " + path.generic_string()
-                                : "Save failed";
+                this->m_editor_S.m_io_busy      = false;
+                this->m_editor_S.m_io_last      = res;
+                this->m_editor_S.m_io_msg       = (res == IOResult::Ok)
+                                                    ? "Saved to " + path.generic_string()
+                                                    : "Save failed";
             } );
         }
     }
@@ -765,10 +770,10 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
     
     //  2.  EVALUATE SUCCESS/FAILURE OF IO-OPERATION...
     {
-        const char *    status      = this->ms_IORESULT_NAMES[ static_cast<size_t>( this->m_io_last ) ];
+        const char *    status      = this->ms_IORESULT_NAMES[ static_cast<size_t>( EState.m_io_last ) ];
     
         //  CASE 2A :   SAVE SUCCESS.
-        if ( m_io_last == IOResult::Ok ) {
+        if ( EState.m_io_last == IOResult::Ok ) {
             CB_LOG( LogLevel::Info, std::format("Editor | successfully saved data to \"{}\" [status: {}] ", path.filename().string(), status) );
         }
         //
@@ -788,6 +793,7 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
 //
 void Editor::load_worker(std::filesystem::path path)
 {
+    EditorState &           EState      = this->m_editor_S;
     nlohmann::json          j;
     std::ifstream           is          (path, std::ios::binary);
     IOResult                res         = ( is )    ? IOResult::Ok      : IOResult::IoError;
@@ -814,17 +820,17 @@ void Editor::load_worker(std::filesystem::path path)
 
     //      2.      ASSESS I/O RESULT.      -- enqueue GUI-thread callback...
     {
-        std::lock_guard     lk  (m_task_mtx);
+        std::lock_guard     lk  (EState.m_task_mtx);
         
-        m_main_tasks.push_back( [this, res, snap = std::move(snap), path]() mutable
+        EState.m_main_tasks.push_back( [this, res, snap = std::move(snap), path]() mutable
         {
-            m_io_busy = false;
+            this->m_editor_S.m_io_busy    = false;
 
             //  CASE 2A :   LOADING SUCCESS.
             if ( res == IOResult::Ok )
             {
                 load_from_snapshot( std::move(snap) );
-                m_io_msg = std::format( "loaded file \"{}\"", path.generic_string() );
+                this->m_editor_S.m_io_msg = std::format( "loaded file \"{}\"", path.generic_string() );
             }
             //
             //  CASE 2B :   LOADING FAILURE.
@@ -832,13 +838,13 @@ void Editor::load_worker(std::filesystem::path path)
             {
                 switch (res)
                 {
-                    case IOResult::IoError              : {     m_io_msg = "load I/O error";                break;     }
-                    case IOResult::ParseError           : {     m_io_msg = "load parsing error";            break;     }
-                    case IOResult::VersionMismatch      : {     m_io_msg = "json version mismatch";         break;     }
-                    default                             : {     m_io_msg = "unknown load error";            break;     }
+                    case IOResult::IoError              : {     this->m_editor_S.m_io_msg = "load I/O error";                break;     }
+                    case IOResult::ParseError           : {     this->m_editor_S.m_io_msg = "load parsing error";            break;     }
+                    case IOResult::VersionMismatch      : {     this->m_editor_S.m_io_msg = "json version mismatch";         break;     }
+                    default                             : {     this->m_editor_S.m_io_msg = "unknown load error";            break;     }
                 }
             }
-            m_io_last = res;
+            this->m_editor_S.m_io_last = res;
             return;
         });
     }

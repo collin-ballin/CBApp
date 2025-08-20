@@ -480,6 +480,7 @@ void Editor::_draw_settings_serialize(void)
     //
     //
     {
+        EditorState &               EState              = this->m_editor_S;
         const bool                  has_file            = this->has_file();
         [[maybe_unused]] bool       force_save_as       = false;
     
@@ -487,7 +488,7 @@ void Editor::_draw_settings_serialize(void)
         //      1.      CURRENT FILE...
         this->label("Current File:",                this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
         ImGui::TextDisabled( "%s", (has_file)
-                                        ? this->m_filepath.filename().string().c_str()
+                                        ? EState.m_filepath.filename().string().c_str()
                                         : ms_NO_ASSIGNED_FILE_STRING );
     
     
@@ -495,7 +496,7 @@ void Editor::_draw_settings_serialize(void)
         this->label("Save:",                        this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
         if ( ImGui::Button("Save", ms_SETTINGS_BUTTON_SIZE) )    {
             
-            if (has_file)       { this->save_async( this->m_filepath );     }
+            if (has_file)       { this->save_async( EState.m_filepath );     }
             else                { force_save_as = true;                     }
 
         }
@@ -506,7 +507,7 @@ void Editor::_draw_settings_serialize(void)
         if ( force_save_as || ImGui::Button("Save As...", ms_SETTINGS_BUTTON_SIZE) )
         {
             CB_LOG( LogLevel::Info, "Editor | requesting file dialog to create new file" );
-            m_sdialog_open.store(true, std::memory_order_release);
+            EState.m_sdialog_open.store(true, std::memory_order_release);
         }
 
 
@@ -515,7 +516,7 @@ void Editor::_draw_settings_serialize(void)
         if ( ImGui::Button("Load", ms_SETTINGS_BUTTON_SIZE) )
         {
             CB_LOG( LogLevel::Info, "Editor | requesting file dialog to load from disk" );
-            m_odialog_open.store(true, std::memory_order_release);
+            EState.m_odialog_open.store(true, std::memory_order_release);
         }
     }
     //

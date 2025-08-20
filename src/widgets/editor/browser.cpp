@@ -96,13 +96,13 @@ Editor::Editor(app::AppState & src)
     
     
     //  2.  LOAD DEFAULT TESTS FROM FILE...
-    if ( !this->m_filepath.empty() && fs::exists(this->m_filepath) && fs::is_regular_file(this->m_filepath) )
+    if ( !m_editor_S.m_filepath.empty() && fs::exists(m_editor_S.m_filepath) && fs::is_regular_file(m_editor_S.m_filepath) )
     {
-        this->S.m_logger.debug( std::format("Editor | loading from default file, \"{}\"", this->m_filepath.string()) );
-        this->load_async(this->m_filepath);
+        this->S.m_logger.debug( std::format("Editor | loading from default file, \"{}\"", m_editor_S.m_filepath.string()) );
+        this->load_async(m_editor_S.m_filepath);
     }
     else {
-        this->S.m_logger.warning( std::format("Editor | unable to load default file, \"{}\"", this->m_filepath.string()) );
+        this->S.m_logger.warning( std::format("Editor | unable to load default file, \"{}\"", m_editor_S.m_filepath.string()) );
     }
 
     
