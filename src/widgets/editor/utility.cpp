@@ -539,6 +539,7 @@ void Editor::_draw_settings_mechanics(void)
     constexpr ImGuiSliderFlags      SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
     //constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
     //
+    EditorState &                   EState              = this->m_editor_S;
     BrowserState &                  BState              = this->m_browser_S;
     
     
@@ -554,12 +555,12 @@ void Editor::_draw_settings_mechanics(void)
         ImGui::Checkbox("##Editor_Settings_Mechanics_SnapToGrid",           &m_grid.snap_on);
         
         this->left_label("Show Vertex Browser:",    LABEL_W, WIDGET_W);         //  1.3.        VERTEX BROWSER.
-        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowVertexBrowser",    &m_show_vertex_browser);
+        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowVertexBrowser",    &EState.m_show_vertex_browser);
         
         
         
         this->left_label("Show Debugger Overlay:",  LABEL_W, WIDGET_W);         //  2.1.        SHOW DEBUG OVERLAY.
-        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowDebugOverlay",     &m_show_debug_overlay);
+        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowDebugOverlay",     &EState.m_show_debug_overlay);
     //
     //
     ImGui::Unindent();

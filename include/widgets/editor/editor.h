@@ -432,8 +432,9 @@ protected:
     //
     //                              DEBUGGER RESIDENT:
     void                                _draw_debugger_resident             (void);
-void                                        _debugger_interaction               (void);
-void                                        _debugger_more_info                 (void);
+    void                                    _debugger_draw_controlbar           (void);
+    void                                    _debugger_interaction               (void);
+    void                                    _debugger_more_info                 (void);
     //
     //                              SELECTION RESIDENT:
     void                                _draw_selection_resident            (void);
@@ -945,8 +946,9 @@ void                                        _debugger_more_info                 
     
     //  "reset_selection"
     inline void                         reset_selection                     (void) {
-        this->m_sel.clear();                this->m_show_handles.clear();
-        this->m_show_sel_overlay = false;   this->m_browser_S.reset();
+        this->m_sel.clear();                            this->m_show_handles.clear();
+        this->m_editor_S.m_show_sel_overlay = false;    this->m_browser_S.reset();
+        this->m_editor_S.m_show_sel_overlay = false;    this->m_browser_S.reset();
         return;
     }
     
@@ -1144,15 +1146,9 @@ void                                        _debugger_more_info                 
     //  EditorState                     m_S                             = {   };
     Mode                                m_mode                          = Mode::Default;
     //
-    //                              PERSISTENT STATE / BEHAVIOR VARIABLES:
-    bool                                m_show_grid                     = true;
-    bool                                m_show_debug_overlay            = true;
-    bool                                m_show_vertex_browser           = false;
-    //
     //
     //                              MUTABLE / TRANSIENT STATE:
     std::unique_ptr<Interaction>        m_it;
-    ImPlotRect                          m_plot_limits                   = {   };
     //
     bool                                m_dragging                      = false;
     bool                                m_lasso_active                  = false;
@@ -1163,6 +1159,7 @@ void                                        _debugger_more_info                 
     bool                                m_dragging_handle               = false;
     bool                                m_dragging_out                  = true;
     VertexID                            m_drag_vid                      = 0;
+    
     // *************************************************************************** //
     //
     //
@@ -1221,7 +1218,7 @@ void                                        _debugger_more_info                 
     //      VARIABLES FOR SPECIFIC MECHANICS...
     // *************************************************************************** //
     //                              RESIDENT STUFF:
-    bool                                m_show_sel_overlay              = false;
+    //  bool                                m_show_sel_overlay              = false;
     //
     //                              LASSO TOOL / SELECTION:
     ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
@@ -1259,11 +1256,6 @@ void                                        _debugger_more_info                 
         //  bool                                m_show_grid                     = true;
         //  Interaction                         m_it                            {   };
         //
-        //                                  MISC. STATE:
-        //  bool                                m_dragging                      = false;
-        //  bool                                m_lasso_active                  = false;
-        //  bool                                m_pending_clear                 = false;    //  pending click selection state ---
-        //
         //
         //
         //                              PEN-TOOL STATE:
@@ -1272,7 +1264,14 @@ void                                        _debugger_more_info                 
         //  bool                                m_dragging_out                  = true;
         //  VertexID                            m_drag_vid                      = 0;
         //
-        //                              LASSO TOOL / SELECTION:
+        //
+        //
+        //                              SELECTION STATE / LASSO TOOL:
+        //  bool                                m_dragging                      = false;
+        //  bool                                m_lasso_active                  = false;
+        //  bool                                m_pending_clear                 = false;    //  pending click selection state ---
+        //
+        //  std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
         //  ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
         //  ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
     

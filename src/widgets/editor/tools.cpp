@@ -601,10 +601,11 @@ void Editor::overlay_log(std::string msg, float secs)
 //
 void Editor::_overlay_display_main_content([[maybe_unused]] const Interaction& it)
 {
-    using namespace overlay;
+    using               namespace       overlay;
+    EditorState &       EState          = this->m_editor_S;
     
     // 1. Pointer position ------------------------------------------------
-    ImVec2 origin{ m_p0.x + m_cam.pan.x, m_p0.y + m_cam.pan.y };
+    ImVec2 origin{ EState.m_p0.x + m_cam.pan.x, EState.m_p0.y + m_cam.pan.y };
     ImVec2 canvas{ ImGui::GetIO().MousePos.x - origin.x,
                    ImGui::GetIO().MousePos.y - origin.y };
     ImVec2 world { canvas.x / m_cam.zoom_mag, canvas.y / m_cam.zoom_mag };

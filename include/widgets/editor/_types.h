@@ -820,7 +820,40 @@ struct Camera {
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
 struct DebuggerState_t
 {
-    bool    show_more_info  = false;
+// *************************************************************************** //
+//      0.      CONSTEXPR CONSTANTS...
+// *************************************************************************** //
+        static constexpr ImGuiChildFlags        ms_FLAGS        = ImGuiChildFlags_Borders;
+
+
+// *************************************************************************** //
+//      1.      NESTED TYPES...
+// *************************************************************************** //
+    struct DebugItem {
+        std::string                 uuid;
+        bool                        open;
+        ImGuiChildFlags             flags           = ms_FLAGS;
+        std::function<void()>       render_fn       {   };
+    };
+
+
+// *************************************************************************** //
+//      2.      DATA MEMBERS...
+// *************************************************************************** //
+    bool                            show_more_info      = false;
+    std::vector<DebugItem>          windows             = {   };
+
+
+
+// *************************************************************************** //
+//      3.      MEMBER FUNCTIONS...
+// *************************************************************************** //
+
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //   END "DebuggerState_t"
 };
 
 
@@ -852,7 +885,7 @@ template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
 struct EditorState_t
 {
 // *************************************************************************** //
-//                                  OVERALL STATE...
+//          OVERALL STATE...
 // *************************************************************************** //
     Mode                                m_mode                          = Mode::Default;
     ImPlotInputMap                      m_backup;
@@ -861,25 +894,20 @@ struct EditorState_t
 //
 //
 // *************************************************************************** //
-//                                  TRANSIENT STATE...
+//          TRANSIENT STATE...
 // *************************************************************************** //
     //
     //                              OVERALL STATE / ENABLED BEHAVIORS:
     bool                                m_show_grid                     = true;
     bool                                m_show_debug_overlay            = true;     //  Persistent/Resident Overlays.
+    bool                                m_show_vertex_browser           = false;
     //
     //
     //
     //                              TRANSIENT OBJECTS:
-    std::unique_ptr<Interaction>        m_it;
     ImPlotRect                          m_plot_limits                   = {   };
     //
     //                              TRANSIENT STATE:
-    bool                                m_show_sel_overlay              = false;
-    //
-    bool                                m_dragging                      = false;
-    bool                                m_lasso_active                  = false;
-    bool                                m_pending_clear                 = false;    //  pending click selection state ---
     //
     //
     //
@@ -894,14 +922,22 @@ struct EditorState_t
 //
 //
 // *************************************************************************** //
-//                                      TOOL STATE (TODO: RE-HOME THESE INTO TOOL STATE OBJs)...
+//          TOOL STATE (TODO: RE-HOME THESE INTO TOOL STATE OBJs)...
 // *************************************************************************** //
     //
     //                              LASSO TOOL / SELECTION:
+    bool                                m_show_sel_overlay              = false;
+    //
+    bool                                m_dragging                      = false;
+    bool                                m_lasso_active                  = false;
+    bool                                m_pending_clear                 = false;    //  pending click selection state ---
+    //
     ImVec2                              m_lasso_start                   = ImVec2(0.f,       0.f);
     ImVec2                              m_lasso_end                     = ImVec2(0.f,       0.f);
     VID                                 m_next_id                       = 1;
     PID                                 m_next_pid                      = 1;        // counter for new path IDs
+    //
+    //
     //
     //                              PEN-TOOL STATE:
     bool                                m_drawing                       = false;
@@ -926,7 +962,7 @@ struct EditorState_t
 //
 //
 // *************************************************************************** //
-//                                      SERIALIZATION STUFF...
+//          SERIALIZATION STUFF...
 // *************************************************************************** //
     std::mutex                          m_task_mtx;
     std::vector<std::function<void()>>  m_main_tasks;

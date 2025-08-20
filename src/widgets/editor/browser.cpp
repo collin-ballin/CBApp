@@ -104,6 +104,16 @@ Editor::Editor(app::AppState & src)
     else {
         this->S.m_logger.warning( std::format("Editor | unable to load default file, \"{}\"", m_editor_S.m_filepath.string()) );
     }
+    
+    
+    
+    //  3.  INITIALIZE FUNCTIONS FOR DEBUGGER OVERLAY WINDOW...
+    //  using               DebugItem                   = DebuggerState::DebugItem;
+    this->m_debugger.windows    = {{
+            {   "Interaction",      true,       DebuggerState::ms_FLAGS,        [this]{ this->_debugger_interaction     (); }       }
+        ,   {   "More Info",        false,      DebuggerState::ms_FLAGS,        [this]{ this->_debugger_more_info       (); }       }
+    }};
+
 
     
     return;
@@ -928,9 +938,10 @@ void Editor::_draw_single_obj_inspector(void)
     constexpr ImGuiChildFlags       P1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     constexpr ImGuiChildFlags       C1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
     BrowserStyle &                  BStyle              = this->m_style.browser_style;
+    EditorState &                   EState              = this->m_editor_S;
     //
     //
-    static bool                     browser_vis_cache   = m_show_vertex_browser;
+    static bool                     browser_vis_cache   = EState.m_show_vertex_browser;
     //
     const size_t                    sel_idx             = *m_sel.paths.begin();   // only element
     Path &                          path                = m_paths[sel_idx];
@@ -943,9 +954,9 @@ void Editor::_draw_single_obj_inspector(void)
 
 
     //  CASE 1 :    ONLY DRAW OBJECT BROWSER...
-    if ( !m_show_vertex_browser )
+    if ( !EState.m_show_vertex_browser )
     {
-        browser_vis_cache   = m_show_vertex_browser;
+        browser_vis_cache   = EState.m_show_vertex_browser;
         ImGui::PushStyleColor   (ImGuiCol_ChildBg,                  BStyle.ms_OBJ_INSPECTOR_FRAME_BG      );
         ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value,     BStyle.DYNAMIC_CHILD_FLAGS);
             ImGui::PopStyleColor(); //  ImGuiCol_ChildBg.
@@ -975,10 +986,10 @@ void Editor::_draw_single_obj_inspector(void)
     //  CASE 2 :    DRAW OBJECT + VERTEX BROWSERS...
     else
     {
-        ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.min, ( browser_vis_cache != m_show_vertex_browser )
+        ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.min, ( browser_vis_cache != EState.m_show_vertex_browser )
                                                 ? BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value        //  Switched-BACK from FALSE to TRUE.
                                                 : BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.max );
-        browser_vis_cache = m_show_vertex_browser;
+        browser_vis_cache = EState.m_show_vertex_browser;
         
         //  4A.     OBJECT PROPERTIES PANEL.
         ImGui::PushStyleColor   (ImGuiCol_ChildBg,                  BStyle.ms_OBJ_INSPECTOR_FRAME_BG      );
@@ -1253,6 +1264,7 @@ void Editor::_draw_obj_properties_panel(Path & path, const size_t pidx)
     //
     //
     BrowserStyle &                      BStyle                  = this->m_style.browser_style;
+    EditorState &                       EState                  = m_editor_S;
     BrowserState &                      BState                  = m_browser_S;
     //
     static char                         title                   [ BUFFER_SIZE ];   // safe head-room
@@ -1311,7 +1323,7 @@ void Editor::_draw_obj_properties_panel(Path & path, const size_t pidx)
     //  1B.     SUBSEQUENT HEADER ENTRIES...
     //
         this->left_label("Show Vertices:",       LABEL_W,    WIDGET_W);
-        ImGui::Checkbox("##Editor_VertexInspector_ShowVertexInspector",    &m_show_vertex_browser);
+        ImGui::Checkbox("##Editor_VertexInspector_ShowVertexInspector",    &EState.m_show_vertex_browser);
     //
     //
 

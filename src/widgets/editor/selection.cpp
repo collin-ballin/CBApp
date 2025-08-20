@@ -387,7 +387,7 @@ void Editor::_process_selection(const Interaction & it)
     dispatch_selection_context_menus    (it);   //  Right-Click CONTEXT MENU...
     
     if ( m_sel.is_empty() )             { return; }
-    else                                { this->m_show_sel_overlay = true; }
+    else                                { this->m_editor_S.m_show_sel_overlay = true; }
     
     _selection_handle_shortcuts         (it);   // NEW: selection-aware hot-keys
     
