@@ -80,6 +80,7 @@ static int point_index_from_vid(const std::vector<Editor::Point>& pts, uint32_t 
 //
 Editor::Editor(app::AppState & src)
     : CBAPP_STATE_NAME(src)
+    , m_it( std::make_unique<Interaction>() )
 {
     namespace           fs                          = std::filesystem;
     this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_HiddenTabBar;
@@ -172,6 +173,10 @@ void Editor::DrawBrowser(void)
                                 BStyle.DYNAMIC_CHILD_FLAGS      = (allow_resize)
                                                                     ? (BStyle.DYNAMIC_CHILD_FLAGS  | ImGuiChildFlags_ResizeX)
                                                                     : (BStyle.DYNAMIC_CHILD_FLAGS  & ~ImGuiChildFlags_ResizeX);
+                                                                    
+    this->_show_browser_color_edit_window();
+    
+    
     S.PushFont(Font::Small);
     
     
@@ -408,15 +413,19 @@ void Editor::_draw_obj_selector_table(void)
 
     //      1.      SEARCH-QUERY BOX...
     S.PushFont(Font::Main);
-    ImGui::SetNextItemWidth(-FLT_MIN);
-    if ( ImGui::InputTextWithHint( "##Editor_ObjSelector_ObjFilter",
-                                   "filter",
-                                   BS.m_obj_filter.InputBuf,
-                                   IM_ARRAYSIZE( BS.m_obj_filter.InputBuf ) ) )
-    {
-        BS.m_obj_filter.Build();
-        BS.m_obj_filter_dirty   = true;
-    }
+    ImGui::BeginDisabled(true);
+    //
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        if ( ImGui::InputTextWithHint( "##Editor_ObjSelector_ObjFilter",
+                                       "filter",
+                                       BS.m_obj_filter.InputBuf,
+                                       IM_ARRAYSIZE( BS.m_obj_filter.InputBuf ) ) )
+        {
+            BS.m_obj_filter.Build();
+            BS.m_obj_filter_dirty   = true;
+        }
+    //
+    ImGui::EndDisabled();
         
     S.PopFont();
     ImGui::Separator();
@@ -744,17 +753,164 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
 // *************************************************************************** //
 // *************************************************************************** //
 
+
+
+
+//  "_show_browser_color_edit_window"
+//
+void Editor::_show_browser_color_edit_window(void)
+{
+    const float                     LABEL_W             = 1.8 * m_style.ms_SETTINGS_LABEL_WIDTH;
+    const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
+    //
+    BrowserStyle &                  BStyle              = this->m_style.browser_style;
+    //
+    //
+    //
+    auto                            CopyToClipboard     = [](const ImVec4 & c)
+    {
+        static int ID = 1;
+        
+        ImGui::PushID(ID++);
+        char    buf[96];
+        
+        ImGui::SameLine();
+        if ( ImGui::SmallButton("copy") )
+        {
+            std::snprintf(buf, sizeof(buf),
+                          "ImVec4( %.3ff, %.3ff, %.3ff, %.3ff);",
+                          c.x, c.y, c.z, c.w);
+            ImGui::SetClipboardText(buf);
+        }
+        ImGui::PopID();
+        return;
+    };
+    
+    
+    S.PushFont(Font::Small);
+    ImGui::Begin("browser color edit window", nullptr, ImGuiWindowFlags_None);
+    //
+    //
+    //
+        this->left_label("[CUSTOM 1]:",     LABEL_W, WIDGET_W);
+        ui::CustomColorEdit4( "##CUSTOM 1", BStyle.ms_CHILD_FRAME_BG1 );
+        //
+        CopyToClipboard(BStyle.ms_CHILD_FRAME_BG1);
+        
+        
+        this->left_label("[CUSTOM 2]:",     LABEL_W, WIDGET_W);
+        ui::HexColor4( "##CUSTOM 2", BStyle.ms_CHILD_FRAME_BG1 );
+        //
+        CopyToClipboard(BStyle.ms_CHILD_FRAME_BG1);
+        
+        
+        
+        ImGui::NewLine();
+        /*
+        this->left_label("ImGuiColorEditFlags_None:", LABEL_W, WIDGET_W);
+        ImGui::ColorEdit4( "##ImGuiColorEditFlags_None",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  ImGuiColorEditFlags_None );
+        
+        this->left_label("None + Float:", LABEL_W, WIDGET_W);
+        ImGui::ColorEdit4( "##None + Float",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float );
+        
+        this->left_label("None + Float + Hex:", LABEL_W, WIDGET_W);
+        ImGui::ColorEdit4( "##None + Float + Hex",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_DisplayHex );
+        
+        this->left_label("None + Float + Hex + NoLabel:", LABEL_W, WIDGET_W);
+        ImGui::ColorEdit4( "##None + Float + Hex + NoLabel",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_NoLabel);
+        
+        
+        
+        this->left_label("None + Float + NoInput:", LABEL_W, WIDGET_W);
+        ImGui::ColorEdit4( "##None + Float + NoInput",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoInputs );
+        */
+        
+        
+        
+        
+        
+        
+        ImGui::NewLine();
+        ImGui::Separator();
+        
+        
+        
+        this->left_label("ms_CHILD_FRAME_BG1:", LABEL_W, WIDGET_W);
+        if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG1",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  COLOR_FLAGS ) )
+        {  }
+        CopyToClipboard(BStyle.ms_CHILD_FRAME_BG1L);
+        
+        
+        this->left_label("ms_CHILD_FRAME_BG1L:", LABEL_W, WIDGET_W);
+        if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG1L",     (float*)&BStyle.ms_CHILD_FRAME_BG1L,  COLOR_FLAGS ) )
+        {  }
+        CopyToClipboard(BStyle.ms_CHILD_FRAME_BG1L);
+        
+        
+        this->left_label("ms_CHILD_FRAME_BG1R:", LABEL_W, WIDGET_W);
+        if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG1R",     (float*)&BStyle.ms_CHILD_FRAME_BG1R,  COLOR_FLAGS ) )
+        {  }
+        CopyToClipboard(BStyle.ms_CHILD_FRAME_BG1R);
+        
+        
+        
+        
+        
+        
+        this->left_label("ms_CHILD_FRAME_BG2:", LABEL_W, WIDGET_W);
+        if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG2",     (float*)&BStyle.ms_CHILD_FRAME_BG2,  COLOR_FLAGS ) )
+        {  }
+        CopyToClipboard(BStyle.ms_CHILD_FRAME_BG2);
+        
+        
+        this->left_label("ms_CHILD_FRAME_BG2L:", LABEL_W, WIDGET_W);
+        if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG2L",     (float*)&BStyle.ms_CHILD_FRAME_BG2L,  COLOR_FLAGS ) )
+        {  }
+        CopyToClipboard(BStyle.ms_CHILD_FRAME_BG2L);
+        
+        
+        this->left_label("ms_CHILD_FRAME_BG2R:", LABEL_W, WIDGET_W);
+        if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG2R",     (float*)&BStyle.ms_CHILD_FRAME_BG2R,  COLOR_FLAGS ) )
+        {  }
+        CopyToClipboard(BStyle.ms_CHILD_FRAME_BG2R);
+        
+        
+
+        this->left_label("ms_OBJ_INSPECTOR_FRAME_BG:", LABEL_W, WIDGET_W);
+        if ( ImGui::ColorEdit4( "##ms_OBJ_INSPECTOR_FRAME_BG",     (float*)&BStyle.ms_OBJ_INSPECTOR_FRAME_BG,  COLOR_FLAGS ) )
+        {  }
+        CopyToClipboard(BStyle.ms_OBJ_INSPECTOR_FRAME_BG);
+    //
+    //
+    //
+    ImGui::End();
+
+
+
+    S.PopFont();
+    return;
+}
+
+
+
 //  "_dispatch_obj_inspector_column"
 //
 void Editor::_dispatch_obj_inspector_column(void)
 {
-    const size_t    sel_paths       = this->m_sel.paths.size();
+    const size_t                    sel_paths           = this->m_sel.paths.size();
+
+
 
     //  CASE 0 :    EMPTY SELECTION...
-    if ( sel_paths == 0 ) {
-        S.PushFont(Font::Main); ImGui::BeginDisabled(true);
+    if ( sel_paths == 0 )
+    {
+        S.PushFont(Font::Main);
+        ImGui::BeginDisabled(true);
             ImGui::SeparatorText("Select an object from the left hand column...");
-        ImGui::EndDisabled(); S.PopFont(); return;
+        ImGui::EndDisabled();
+        S.PopFont();
+        return;
     }
     
     if (sel_paths == 1)         { _draw_single_obj_inspector();     }

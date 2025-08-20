@@ -137,10 +137,10 @@ inline void Editor::_dispatch_mode_handler( [[maybe_unused]] const Interaction &
 
 //  "_per_frame_cache_begin"
 //
-[[nodiscard]]
-inline Interaction Editor::_per_frame_cache_begin(void) noexcept
+inline void Editor::_per_frame_cache_begin(void) noexcept
 {
     ImGuiIO &               io                      = ImGui::GetIO();
+    Interaction &           it                      = *m_it;
     
     //      1.1.    IMPLOT STATE...
     const bool              space                   = ImGui::IsKeyDown(ImGuiKey_Space);
@@ -162,23 +162,22 @@ inline Interaction Editor::_per_frame_cache_begin(void) noexcept
     const bool              menus_open              = ImGui::IsPopupOpen( ms_SELECTION_CONTEXT_MENU_ID  ) ||
                                                       ImGui::IsPopupOpen( ms_CANVAS_CONTEXT_MENU_ID     );
 
-
-    return Interaction({
-        hovered,
-        active,
-        space,
+    //      3.      ASSIGN UPDATED VALUES...
+    it.hovered                  = hovered;
+    it.active                   = active;
+    it.space                    = space;
     //
-        mouse_canvas,
-        origin_scr,
-        plotTL,
+    it.canvas                   = mouse_canvas;
+    it.origin                   = origin_scr;
+    it.tl                       = plotTL;
     //
-        dl,
+    it.dl                       = dl;
     //
-    //  EDITOR INTERACTION:
-        EditorInteraction({
-            menus_open
-        })
-    });
+    it.obj                      = EditorInteraction{
+        menus_open
+    };
+    
+    return;
 }
 
 
@@ -255,7 +254,9 @@ void Editor::Begin(const char * /*id*/)
         //
         //  Interaction         it              { hovered, active, space, mouse_canvas, origin_scr, plotTL, dl };
         //
-        Interaction         it              = this->_per_frame_cache_begin();
+        
+        this->_per_frame_cache_begin();
+        Interaction &           it              = *this->m_it;
 
 
 

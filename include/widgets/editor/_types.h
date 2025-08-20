@@ -224,8 +224,8 @@ struct GridSettings {
 //
 struct EditorInteraction
 {
-//                      IMPLOT STATE:
-    bool                    menus_closed            {  };
+//                              IMPLOT STATE:
+    bool                            menus_open              {   };
 //
 //
 //
@@ -243,26 +243,26 @@ struct Interaction
 // *************************************************************************** //
 //                                  PREVIOUS DATA...
 // *************************************************************************** //
-    bool                            hovered                 {  };
-    bool                            active                  {  };
-    bool                            space                   {  };
+    bool                            hovered                 {   };
+    bool                            active                  {   };
+    bool                            space                   {   };
 //
 //
 //
 //                              IMPLOT VARIABLES:
-    ImVec2                          canvas                  {  };
-    ImVec2                          origin                  {  };
-    ImVec2                          tl                      {  };
+    ImVec2                          canvas                  {   };
+    ImVec2                          origin                  {   };
+    ImVec2                          tl                      {   };
 //
 //
 //
 //                              OTHER DATA:
-    ImDrawList *                    dl                      {  };
+    ImDrawList *                    dl                      {   };
 //
 //
 //
 //                              NEW DATA:
-    EditorInteraction               obj                     {  };
+    EditorInteraction               obj                     {   };
 //
 //
 //
@@ -273,7 +273,7 @@ struct Interaction
     //  "BlockShortcuts"
     [[nodiscard]]
     inline bool                     BlockShortcuts              (void) const noexcept
-    { return ( (!hovered) || (!obj.menus_closed) ); }
+    { return ( (!hovered) || (obj.menus_open) ); }
 
 
 
@@ -864,11 +864,15 @@ struct EditorState_t
 //                                  TRANSIENT STATE...
 // *************************************************************************** //
     //
-    //                              OVERALL STATE:
+    //                              OVERALL STATE / ENABLED BEHAVIORS:
     bool                                m_show_grid                     = true;
     bool                                m_show_debug_overlay            = true;     //  Persistent/Resident Overlays.
     //
     //
+    //
+    //                              TRANSIENT OBJECTS:
+    std::unique_ptr<Interaction>        m_it;
+    ImPlotRect                          m_plot_limits                   = {   };
     //
     //                              TRANSIENT STATE:
     bool                                m_show_sel_overlay              = false;
@@ -881,9 +885,10 @@ struct EditorState_t
     //
     //                              UTILITY:
     float                               m_bar_h                         = 0.0f;
-    ImVec2                              m_avail                         = ImVec2(0.0f, 0.0f);
-    ImVec2                              m_p0                            = ImVec2(0.0f, 0.0f);
-    ImVec2                              m_p1                            = ImVec2(0.0f, 0.0f);
+    ImVec2                              m_avail                         = ImVec2(0.0f,      0.0f);
+    ImVec2                              m_p0                            = ImVec2(0.0f,      0.0f);
+    ImVec2                              m_p1                            = ImVec2(0.0f,      0.0f);
+    
 // *************************************************************************** //
 //
 //
@@ -893,8 +898,8 @@ struct EditorState_t
 // *************************************************************************** //
     //
     //                              LASSO TOOL / SELECTION:
-    ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
-    ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
+    ImVec2                              m_lasso_start                   = ImVec2(0.f,       0.f);
+    ImVec2                              m_lasso_end                     = ImVec2(0.f,       0.f);
     VID                                 m_next_id                       = 1;
     PID                                 m_next_pid                      = 1;        // counter for new path IDs
     //
@@ -903,6 +908,7 @@ struct EditorState_t
     bool                                m_dragging_handle               = false;
     bool                                m_dragging_out                  = true;
     VID                                 m_drag_vid                      = 0;
+    
 // *************************************************************************** //
 //
 //
@@ -920,19 +926,6 @@ struct EditorState_t
 //
 //
 // *************************************************************************** //
-//                                      BROWSER / SELECTION STATE...
-// *************************************************************************** //
-    //
-    //                              MISC:
-    //
-    //                              SELECTION / BROWSER STATE:
-    int                                 m_browser_anchor                = -1;       // anchor index for Shift‑range select
-    int                                 m_inspector_vertex_idx          = -1;       // anchor index for Shift‑range select
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
 //                                      SERIALIZATION STUFF...
 // *************************************************************************** //
     std::mutex                          m_task_mtx;
@@ -943,6 +936,8 @@ struct EditorState_t
     //
     std::atomic<bool>                   m_sdialog_open                  = {false};
     std::atomic<bool>                   m_odialog_open                  = {false};
+    std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/editor-fdtd_v0.json"};
+    
 // *************************************************************************** //
 
 
@@ -984,7 +979,7 @@ struct BrowserStyle
     //                              BROWSER CHILD-WINDOW COLORS:
     ImVec4                              ms_CHILD_FRAME_BG1                          = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
     ImVec4                              ms_CHILD_FRAME_BG1L                         = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
-    ImVec4                              ms_CHILD_FRAME_BG1R                         = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
+    ImVec4                              ms_CHILD_FRAME_BG1R                         = ImVec4(0.141f,    0.141f,     0.141f,     1.000f); // ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
     
     ImVec4                              ms_CHILD_FRAME_BG2                          = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
     ImVec4                              ms_CHILD_FRAME_BG2L                         = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46

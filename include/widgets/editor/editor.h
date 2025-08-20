@@ -330,8 +330,7 @@ protected:
     inline void                         _mode_switch_hotkeys                ([[maybe_unused]] const Interaction & );
     inline void                         _dispatch_mode_handler              ([[maybe_unused]] const Interaction & );
     //
-    [[nodiscard]]
-    inline Interaction                  _per_frame_cache_begin              (void) noexcept;
+    inline void                         _per_frame_cache_begin              (void) noexcept;
     inline void                         _per_frame_cache_end                (void) noexcept;
     
     // *************************************************************************** //
@@ -359,6 +358,7 @@ protected:
     //      BROWSER STUFF.                  |   "browser.cpp" ...
     // *************************************************************************** //
     //                              OBJECT BROWSER:
+    void                                _show_browser_color_edit_window         (void); 
     void                                _dispatch_obj_inspector_column          (void);     //  PREVIOUSLY:     _draw_path_inspector_column
     //
     void                                _draw_obj_selector_column               (void);     //  PREVIOUSLY:     _draw_path_list_column
@@ -432,7 +432,8 @@ protected:
     //
     //                              DEBUGGER RESIDENT:
     void                                _draw_debugger_resident             (void);
-void                                        _debugger_resident_more_info        (void);
+void                                        _debugger_interaction               (void);
+void                                        _debugger_more_info                 (void);
     //
     //                              SELECTION RESIDENT:
     void                                _draw_selection_resident            (void);
@@ -1074,7 +1075,7 @@ void                                        _debugger_resident_more_info        
     //      IMPORTANT DATA...
     // *************************************************************************** //
     app::AppState &                     CBAPP_STATE_NAME;
-    EditorStyle                         m_style                         {  };
+    EditorStyle                         m_style                         {   };
     //
     std::vector<Vertex>                 m_vertices;
     std::vector<Point>                  m_points;
@@ -1094,7 +1095,7 @@ void                                        _debugger_resident_more_info        
     std::vector<std::function<void()>>  m_main_tasks;
     std::atomic<bool>                   m_io_busy                       {false};
     IOResult                            m_io_last                       {IOResult::Ok};
-    std::string                         m_io_msg                        {  };
+    std::string                         m_io_msg                        {   };
     //
     //
     std::atomic<bool>                   m_sdialog_open                  = {false};
@@ -1131,11 +1132,7 @@ void                                        _debugger_resident_more_info        
     ImGuiWindowFlags                    WinInfo_flags                   = ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY;
     bool                                WinInfo_open                    = true;
     ImGuiWindowClass                    m_window_class;
-    //
-    //  BrowserState                        m_browser_state                 {  };
-    //  ImGuiTextFilter                     m_browser_filter;                           // search box text filter
-    //  int                                 m_browser_anchor                = -1;       // anchor index for Shift‑range select
-    //  int                                 m_inspector_vertex_idx          = -1;       // anchor index for Shift‑range select
+    
     // *************************************************************************** //
     //
     //
@@ -1147,13 +1144,16 @@ void                                        _debugger_resident_more_info        
     //  EditorState                     m_S                             = {   };
     Mode                                m_mode                          = Mode::Default;
     //
-    //                              PERSISTENT STATE VARIABLES:
+    //                              PERSISTENT STATE / BEHAVIOR VARIABLES:
     bool                                m_show_grid                     = true;
     bool                                m_show_debug_overlay            = true;
     bool                                m_show_vertex_browser           = false;
     //
     //
-    //                              MISC. STATE:
+    //                              MUTABLE / TRANSIENT STATE:
+    std::unique_ptr<Interaction>        m_it;
+    ImPlotRect                          m_plot_limits                   = {   };
+    //
     bool                                m_dragging                      = false;
     bool                                m_lasso_active                  = false;
     bool                                m_pending_clear                 = false;    //  pending click selection state ---
@@ -1172,7 +1172,8 @@ void                                        _debugger_resident_more_info        
     // *************************************************************************** //
     //
     //                              SUBSIDIARY STATES:
-    BrowserState                        m_browser_S;        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
+    EditorState                         m_editor_S                      {   };        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
+    BrowserState                        m_browser_S                     {   };
     Selection                           m_sel;
     mutable BoxDrag                     m_boxdrag;
     MoveDrag                            m_movedrag;
@@ -1211,9 +1212,10 @@ void                                        _debugger_resident_more_info        
     //
     static constexpr float              ms_GRID_STEP_MIN                = 2.0f;   // world-units
     static constexpr float              ms_GRID_LABEL_PAD               = 2.0f;
+    
     // *************************************************************************** //
     //
-    //DebuggerState
+    //
     //
     // *************************************************************************** //
     //      VARIABLES FOR SPECIFIC MECHANICS...
@@ -1221,11 +1223,10 @@ void                                        _debugger_resident_more_info        
     //                              RESIDENT STUFF:
     bool                                m_show_sel_overlay              = false;
     //
-    //
-    //
     //                              LASSO TOOL / SELECTION:
     ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
     ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
+    
     // *************************************************************************** //
     //
     //
@@ -1256,7 +1257,8 @@ void                                        _debugger_resident_more_info        
         //
         //                              MAIN APPLICATION STATE:
         //  bool                                m_show_grid                     = true;
-        //  //
+        //  Interaction                         m_it                            {   };
+        //
         //                                  MISC. STATE:
         //  bool                                m_dragging                      = false;
         //  bool                                m_lasso_active                  = false;

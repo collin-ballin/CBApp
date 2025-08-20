@@ -524,13 +524,13 @@ public:
     //                      GROUPS / SUB-CLASSES OF "APPSTATE":
     utl::Logger &                       m_logger;                                                   //  1.      LOGGER...
     ImWindows                           m_windows;                                                  //  2.      APPLICATION WINDOW STATE...
-    std::vector<WinInfo *>              m_detview_windows               = {};                       //  2.1     WINDOWS INSIDE DETAIL VIEW...
+    std::vector<WinInfo *>              m_detview_windows               = {   };                    //  2.1     WINDOWS INSIDE DETAIL VIEW...
     ImFonts                             m_fonts;                                                    //  3.      APPLICATION FONTS...
     UIScaler                            m_ui_scaler;                                                //  4.      GUI-SCALER OBJECT...
     //
     //                      OTHER / SMALLER:
     std::vector< std::pair<Timestamp_t, std::string> >
-                                        m_notes                         = {};
+                                        m_notes                         = {   };
     Timestamp_t                         m_timestamp_spawn;
     Timestamp_t                         m_timestamp_start;
     
@@ -585,7 +585,7 @@ public:
     static constexpr auto &             m_app_color_style_names         = APPLICATION_COLOR_STYLE_NAMES;
     static constexpr auto &             m_plot_color_style_names        = APPLICATION_PLOT_COLOR_STYLE_NAMES;
     static constexpr AppleSystemColors_t
-                                        SystemColor                     = {};
+                                        SystemColor                     = {   };
     
     // *************************************************************************** //
     //
@@ -699,35 +699,46 @@ public:
     //
     //
     // *************************************************************************** //
-    //  2.6             DIMENSIONS.
+    //      2.6                         TRANSIENT APPLICATION STATE / DIMENSIONS.
     // *************************************************************************** //
-    //                      SYSTEM:
+    //                              SYSTEM:
     int                                 m_system_w                  = -1;       //  Sys. Display Dims.
     int                                 m_system_h                  = -1;
     float                               m_dpi_scale                 = 1.0f;
     float                               m_dpi_fontscale             = 1.0f;
     //
-    //                      MAIN UI:
+    //                              MAIN UI:
     int                                 m_window_w                  = 1280;
     int                                 m_window_h                  = 720;
-    //
-    //                      BOOLEANS:
+    //                              BOOLEANS:
     std::atomic<CBSignalFlags>          m_pending                   = { CBSignalFlags_None };
     std::atomic<bool>                   m_running                   = { true };
     bool                                m_rebuild_dockspace         = false;
     //
+    //                              DIFFERENT WINDOWS:
     bool                                m_show_controlbar_window    = true;
     bool                                m_show_browser_window       = true;
     bool                                m_show_detview_window       = true;
-    //
-    bool                                m_show_system_preferences   = false;
     
     // *************************************************************************** //
     //
     //
     //
     // *************************************************************************** //
-    //  2.7             SPECIFICS.
+    //      2.6B.                       APPLICATION BEHAVIOR TOGGLES.
+    // *************************************************************************** //
+    //
+    bool                                m_show_system_preferences   = true;
+    //
+    //
+    bool                                ms_FOCUS_ON_OPEN_WINDOW     = true;     //  Set focus after "Window > Show > Open_Window_Name"...
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      2.7                         SPECIFICS.
     // *************************************************************************** //
     //                      MAIN DOCKINGSPACE:
     const char *                        m_dock_name                 = "##RootDockspace";
@@ -767,7 +778,6 @@ public:
     //                      ADD MORE SHARED STATE DATA MEMBERS HERE:
     //
     //                              SubCategory.
-    bool                                ms_FOCUS_ON_OPEN_WINDOW     = true;
     //
     
     // *************************************************************************** //
@@ -775,7 +785,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //  3.              GENERIC CONSTANTS.
+    //      3.                          GENERIC CONSTANTS.
     // *************************************************************************** //
     //      std::string                         ms_IDLE_APPLET_NAME;
     //      std::string                         ms_UNDEFINED_APPLET_NAME;

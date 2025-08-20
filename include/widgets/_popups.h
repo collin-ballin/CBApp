@@ -337,11 +337,11 @@ inline void ask_ok_cancel( const char *             uuid,
             const float             x_left          = s.WindowPadding.x;                           // left pad
             const float             x_right         = win_sz.x - s.WindowPadding.x - BTN_W;        // right pad
 
-            // Cancel (left)
+            //      2A.     DRAW "Cancel" BUTTON (on the left)...
             ImGui::SetCursorPos({x_left, btn_y});
             bool                    cancel          = ImGui::Button("Cancel", {BTN_W, BTN_H});
 
-            // OK (right)
+            //      2B.     DRAW "OK" BUTTON (on the right)...
             ImGui::SetCursorPos({x_right, btn_y});
             bool                    ok              = ImGui::Button("OK", {BTN_W, BTN_H});
 

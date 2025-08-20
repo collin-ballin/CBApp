@@ -384,7 +384,10 @@ void MenuBar::disp_show_windows_menubar(void)
                           nullptr,
                           &this->S.m_windows[ Window::AboutMyApp ].open ) ) {  }
                      
+    ImGui::Separator();
+    //
     ImGui::NewLine();
+    //
     ImGui::Separator();
                          
     
@@ -625,8 +628,7 @@ void MenuBar::disp_help_menubar(void)
     if ( ImGui::MenuItem(this->S.m_windows[ Window::AboutMyApp ].uuid.c_str(),
                          nullptr,
                          &this->S.m_windows[ Window::AboutMyApp ].open) ) {  }
-        
-    ImGui::NewLine();
+    
     ImGui::Separator();
     
     

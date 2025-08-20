@@ -42,10 +42,20 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void App::ShowImGuiStyleEditor([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
-    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
+    ImGui::SetNextWindowDockID( this->S.m_main_dock_id,     ImGuiCond_FirstUseEver );
     ImGui::Begin(uuid, p_open, flags);
         ImGui::ShowStyleEditor();
     ImGui::End();
+    return;
+}
+
+    
+//  "ShowImGuiDemoWindow"
+//
+void App::ShowImGuiDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
+{
+    ImGui::SetNextWindowDockID( this->S.m_main_dock_id,     ImGuiCond_FirstUseEver );
+    ImGui::ShowDemoWindow(p_open);
     return;
 }
 
@@ -54,7 +64,7 @@ void App::ShowImGuiStyleEditor([[maybe_unused]] const char * uuid, [[maybe_unuse
 //
 void App::ShowImGuiMetricsWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
-    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
+    ImGui::SetNextWindowDockID( this->S.m_main_dock_id,     ImGuiCond_FirstUseEver );
     ImGui::ShowMetricsWindow(p_open);
     return;
 }
@@ -64,26 +74,43 @@ void App::ShowImGuiMetricsWindow([[maybe_unused]] const char * uuid, [[maybe_unu
 //
 void App::ShowImGuiIDStackTool([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
+    ImGui::SetNextWindowViewport( this->S.m_main_viewport->ID );
     ImGui::ShowIDStackToolWindow(p_open);
     return;
 }
 
 
+
+
+//  MetricsHelpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.");
+//  if (Checkbox("Show Item Picker", &g.DebugItemPickerActive) && g.DebugItemPickerActive)
+//      DebugStartItemPicker();
+            
+            
 //  "ShowImGuiItemPickerTool"
 //
 void App::ShowImGuiItemPickerTool([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
-    ImGui::SetNextWindowDockID( this->S.m_main_dock_id, ImGuiCond_FirstUseEver );
-    ImGui::ShowDemoWindow(p_open);
-    return;
-}
-
+    static bool                 cache       = *p_open;
+    //
+    ImGuiContext *              g_ptr       = ImGui::GetCurrentContext();
+    IM_ASSERT( g_ptr != nullptr && "ShowImGuiItemPicker invoked with NULL ImGui Context" );
+    //
+    //
+    ImGuiContext &              g           = *g_ptr;
+    ImGuiIO &                   io          = g.IO;
+    ImGuiMetricsConfig *        cfg         = &g.DebugMetricsConfig;
     
-//  "ShowImGuiDemoWindow"
-//
-void App::ShowImGuiDemoWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
-{
-    ImGui::ShowIDStackToolWindow(p_open);
+    
+    
+    //  CASE 0 :    ACTIVATED ITEM-PICKER...
+    if ( cache != *p_open )
+    {
+        ImGui::DebugStartItemPicker();
+    }
+    
+    
+    //  UpdateDebugToolItemPicker
     return;
 }
 

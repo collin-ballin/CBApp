@@ -39,43 +39,111 @@ void Editor::_draw_debugger_resident(void)
 {
     static DebuggerState &    debug   = this->m_debugger;
     
-    S.PushFont(Font::Small);
+    
     
     //      1.      HEADER CONTENT...
-    ImGui::BeginDisabled(true);
-        ImGui::SeparatorText("Debugger Resident");
-    ImGui::EndDisabled();
+    S.PushFont(Font::Small);
+    //
+    //
+    //  //          1.A.        RESIDENT TITLE.
+        ImGui::BeginDisabled(true);
+            ImGui::SeparatorText("Debugger Resident");
+        ImGui::EndDisabled();
+        //
+        //
+        //          1.B.        CONTROL BAR.
+        this->left_label("Show More Info:");
+        ImGui::Checkbox("##Editor_Debugger_ShowMoreInfo",    &debug.show_more_info);
+        //
+        ImGui::NewLine();
+        ImGui::Separator();
+    //
+    //
+    //
+    S.PopFont();    //  END "HEADER".
     
     
     
     
-    
-    
-    //      2.      BODY CONTENT...
-    
-    this->left_label("Show More Info:");
-    ImGui::Checkbox("##Editor_Debugger_ShowMoreInfo",    &debug.show_more_info);
-    
-    
-    
-    //      3.      ADDITIONAL INFORMATION...
-    if (debug.show_more_info)
-    {
-        this->_debugger_resident_more_info();
-    }
+    //      2.      BODY ENTRIES...
+    S.PushFont(Font::FootNote);
+    //
+    //
+    //
+    //  //          2.A.        INTERACTION DIAGNOSTICS.
+        this->_debugger_interaction();
+        //
+        //
+        //
+        //          2.X.        ADDITIONAL INFORMATION.
+        if ( debug.show_more_info )
+        {
+            this->_debugger_more_info();
+        }
+    //
+    //
+    //
+    S.PopFont();    //  END "BODY".
 
 
 
-
-
-    S.PopFont();
     return;
 }
 
 
-//  "_debugger_resident_more_info"
+
+
+
+
+
+
+
+
+
+
+
+
+
+//  "_debugger_interaction"
 //
-void Editor::_debugger_resident_more_info(void)
+void Editor::_debugger_interaction(void)
+{
+    const float &                   LABEL_W             = m_style.ms_SETTINGS_LABEL_WIDTH;
+    const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    Interaction &                   it                  = *this->m_it;
+    //
+    auto                            PrintTF             = [&](const bool value, const char * true_text = "ENABLED", const char * false_text = "DISABLED" ) -> void {
+        ImGui::TextColored(
+            (value)     ? S.SystemColor.Green       : S.SystemColor.Red ,
+            "%s",
+            (value)     ? true_text                 : false_text
+        );
+    };
+    
+    
+    //      1.      SHORTCUTS ENABLED/DISABLED...
+    left_label("Shortcuts:", LABEL_W, WIDGET_W);
+    //
+    PrintTF( !it.BlockShortcuts() );
+    
+    
+    
+    //      2.      HOVERED...
+    left_label("Hovered:", LABEL_W, WIDGET_W);
+    PrintTF( it.hovered );
+    
+
+
+
+
+
+    return;
+}
+
+
+//  "_debugger_more_info"
+//
+void Editor::_debugger_more_info(void)
 {
     S.PushFont(Font::Small);
 
@@ -83,6 +151,15 @@ void Editor::_debugger_resident_more_info(void)
     S.PopFont();
     return;
 }
+
+
+
+
+
+
+
+
+
 
 
 
@@ -144,8 +221,9 @@ void Editor::_draw_shape_resident(void)
     S.PushFont(Font::Small);
 
 
-
-    ImGui::TextUnformatted("Shape Tool");
+    ImGui::BeginDisabled(true);
+        ImGui::SeparatorText("Shape Tool");
+    ImGui::EndDisabled();
     //
     //
     //
@@ -192,10 +270,9 @@ void Editor::_draw_shape_resident(void)
 //
 void Editor::_draw_shape_resident_default(void)
 {
-
-    ImGui::SliderFloat("Radius", &m_shape.radius, 1.0f, 100.0f, "%.2f");
-
-    
+    ImGui::BeginDisabled(true);
+        ImGui::SliderFloat("Radius", &m_shape.radius, 1.0f, 100.0f, "%.2f");
+    ImGui::EndDisabled();
     return;
 }
 
@@ -205,8 +282,10 @@ void Editor::_draw_shape_resident_default(void)
 //
 void Editor::_draw_shape_resident_multi(void)
 {
-    ImGui::SliderFloat("R", &m_shape.radius, 1.0f, 100.0f, "%.2f");
-    ImGui::SliderFloat("S", &m_shape.radius, 1.0f, 100.0f, "%.2f");
+    ImGui::BeginDisabled(true);
+        ImGui::SliderFloat("R", &m_shape.radius, 1.0f, 100.0f, "%.2f");
+        ImGui::SliderFloat("S", &m_shape.radius, 1.0f, 100.0f, "%.2f");
+    ImGui::EndDisabled();
     return;
 }
 
@@ -217,8 +296,10 @@ void Editor::_draw_shape_resident_multi(void)
 //
 void Editor::_draw_shape_resident_custom(void)
 {
-    ImGui::SliderFloat("R", &m_shape.radius, 1.0f, 100.0f, "%.2f");
-    ImGui::SliderFloat("S", &m_shape.radius, 1.0f, 100.0f, "%.2f");
+    ImGui::BeginDisabled(true);
+        ImGui::SliderFloat("R", &m_shape.radius, 1.0f, 100.0f, "%.2f");
+        ImGui::SliderFloat("S", &m_shape.radius, 1.0f, 100.0f, "%.2f");
+    ImGui::EndDisabled();
     return;
 }
 

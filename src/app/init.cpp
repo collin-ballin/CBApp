@@ -448,6 +448,7 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         //
         //
         //      2.1.    DEBUG-ONLY TOOLS...
+#ifdef CBAPP_ENABLE_DEBUG_WINDOWS
         case Window::ImGuiMetrics:          {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiMetricsWindow(n, o, f); };
@@ -468,6 +469,7 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
                           { this->ShowImGuiItemPickerTool(n, o, f); };
             break;
         }
+#endif      //  CBAPP_ENABLE_DEBUG_WINDOWS  //
         //
         //
         //

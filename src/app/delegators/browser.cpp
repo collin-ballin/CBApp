@@ -215,7 +215,9 @@ void Browser::disp_appearance_mode(void)
     
     
     //  3.  UI-SCALE WIDGETS.
-    this->S.m_ui_scaler.draw_controls();
+    //  ImGui::BeginDisabled(true);
+    //      this->S.m_ui_scaler.draw_controls();
+    //  ImGui::EndDisabled();
 
 
     
