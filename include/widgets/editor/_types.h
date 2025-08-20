@@ -158,7 +158,8 @@ enum class ObjectTrait : int {
 };
 //
 //  "DEF_OBJECT_TRAIT_NAMES"
-static constexpr std::array<const char *, static_cast<size_t>(ObjectTrait::COUNT)>
+//static constexpr std::array<const char *, static_cast<size_t>(ObjectTrait::COUNT)>
+static constexpr cblib::EnumArray< ObjectTrait, const char * >
     DEF_OBJECT_TRAIT_NAMES  = { {
         "Properties",       "Vertices",         "Payload"
 } };
@@ -355,8 +356,14 @@ static inline const char * GetMenuID(const EditorPopupBits & handle)
 struct EditorInteraction
 {
     using                           CBEditorPopupFlags              = CBEditorPopupFlags_;
+    //
+    //
 //                              IMPLOT STATE:
+                                    //  ...
 //
+//                              EDITOR STATE:
+    bool                            empty_selection                 = false;
+    bool                            single_obj_selection            = false;
 //
 //                              MENU STATE:
     CBEditorPopupFlags_             open_menus                      = CBEditorPopupFlags_None;
@@ -1140,6 +1147,9 @@ struct BrowserStyle
     //
     //                              BROWSER CHILD-WINDOW DIMENSIONS:
     float                               ms_CHILD_WINDOW_SAMELINE                    = 4.0f;
+    //
+    Param<ImVec2>                       TRAIT_SELECTOR_DIMS                         = {     {120.0f,    -1.0f},     { {80.0f,       1.0f},      {220.0f,    FLT_MAX} }   };
+    //
     Param<ImVec2>                       OBJ_SELECTOR_DIMS                           = {     {300.0f,    -1.0f},     { {250.0f,      1.0f},      {450.0f,    FLT_MAX} }   };
     Param<ImVec2>                       OBJ_PROPERTIES_INSPECTOR_DIMS               = {     {650.0f,    -1.0f},     { {600.0f,      1.0f},      {1200.0f,   FLT_MAX} }   };
     Param<ImVec2>                       VERTEX_SELECTOR_DIMS                        = {     {110.0f,    -1.0f},     { {90.0f,       1.0f},      {180.0f,    FLT_MAX} }   };

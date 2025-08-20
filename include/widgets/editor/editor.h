@@ -388,6 +388,7 @@ protected:
     //
     //
     void                                _draw_trait_selector                    (void);    
+    void                                _dispatch_trait_inspector               (void);
     //
     //
     void                                _draw_obj_selector_column               (void);     //  PREVIOUSLY:     _draw_path_list_column

@@ -765,12 +765,15 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
 //
 void Editor::_dispatch_obj_inspector_column(void)
 {
-    const size_t                    sel_paths           = this->m_sel.paths.size();
-
-
+    BrowserStyle &                  BStyle              = this->m_style.browser_style;
+    EditorState &                   EState              = this->m_editor_S;
+    //
+    const EditorInteraction &       eit                 = (*this->m_it).obj;
+        
+        
 
     //  CASE 0 :    EMPTY SELECTION...
-    if ( sel_paths == 0 )
+    if ( eit.empty_selection )
     {
         S.PushFont(Font::Main);
         ImGui::BeginDisabled(true);
@@ -780,11 +783,135 @@ void Editor::_dispatch_obj_inspector_column(void)
         return;
     }
     
-    if (sel_paths == 1)         { _draw_single_obj_inspector();     }
-    else                        { _draw_multi_obj_inspector();      }
+    
+    //      "DRAW 2A".      DRAW THE TRAIT-SELECTOR...
+    ImGui::SetNextWindowSizeConstraints(    BStyle.TRAIT_SELECTOR_DIMS.limits.min,    BStyle.TRAIT_SELECTOR_DIMS.limits.max );
+    ImGui::BeginChild("##Editor_Browser_TraitSelector", BStyle.OBJ_SELECTOR_DIMS.value,     BStyle.DYNAMIC_CHILD_FLAGS);
+    //
+        _draw_trait_selector();
+        BStyle.TRAIT_SELECTOR_DIMS.value.x       = ImGui::GetItemRectSize().x;
+    //
+    ImGui::EndChild();
+    //
+    //
+    //
+    ImGui::SameLine( 0.0f, BStyle.ms_CHILD_WINDOW_SAMELINE );
+    //
+    //
+    //
+    //      "DRAW 2B".      DRAW THE TRAIT-INSPECTOR PANEL...
+    const float                     P1_w                = ImGui::GetContentRegionAvail().x;
+    ImGui::BeginChild("##Editor_Browser_TraitInspector",    {P1_w, 0.0f},     BStyle.STATIC_CHILD_FLAGS);
+    //
+        _dispatch_trait_inspector();
+    //
+    ImGui::EndChild();
+    
+    
+    
+    
+    
     
     return;
 }
+
+
+
+//  "_dispatch_trait_inspector"
+//
+void Editor::_dispatch_trait_inspector(void)
+{
+    const size_t                    sel_idx             = *m_sel.paths.begin();   // only element
+    Path &                          path                = m_paths[sel_idx];
+    
+    
+    
+    //      DISPATCH THE APPROPRIATE PANEL DEPENDING ON WHICH "OBJECT-TRAIT" THE BROWSER IS ON...
+    switch (this->m_trait)
+    {
+        case ObjectTrait::Vertices      : {         //  TRAIT #2:   VERTEX-EDITOR.
+            break;
+        }
+        
+        case ObjectTrait::Payload       : {         //  TRAIT #3:   OBJECT-PAYLOAD.
+            break;
+        }
+        
+        default                         : {         //  TRAIT #1:   DEFAULT PROPERTIES.
+            _draw_obj_properties_panel(path, sel_idx);
+            break;
+        }
+    }
+    
+    
+    
+    
+    return;
+}
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DISPATCHED FUNCTIONS".
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //  "_draw_single_obj_inspector"
@@ -810,19 +937,71 @@ void Editor::_draw_single_obj_inspector(void)
 
 
 
+    //  4A.     OBJECT PROPERTIES PANEL.
+    ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.min, BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.max );
+    ImGui::PushStyleColor   (ImGuiCol_ChildBg,                  BStyle.ms_OBJ_INSPECTOR_FRAME_BG      );
+    ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value,     BStyle.DYNAMIC_CHILD_FLAGS);
+        ImGui::PopStyleColor(); //  ImGuiCol_ChildBg.
+        _draw_obj_properties_panel(path, sel_idx);
+        BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value.x       = ImGui::GetItemRectSize().x;
+    ImGui::EndChild();
+    //
+    //
+    //
+    ImGui::SameLine( 0.0f, BStyle.ms_CHILD_WINDOW_SAMELINE );
+        
+        
+
+    
+    return;
+}
+
+
+
+
+/*
+void Editor::_draw_single_obj_inspector(void)
+{
+    constexpr ImGuiChildFlags       P1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
+    constexpr ImGuiChildFlags       C1_FLAGS            = ImGuiChildFlags_AutoResizeX   | ImGuiChildFlags_AlwaysUseWindowPadding | ImGuiChildFlags_Borders;
+    BrowserStyle &                  BStyle              = this->m_style.browser_style;
+    EditorState &                   EState              = this->m_editor_S;
+    //
+    //
+    static bool                     browser_vis_cache   = EState.m_show_vertex_browser;
+    //
+    const size_t                    sel_idx             = *m_sel.paths.begin();   // only element
+    Path &                          path                = m_paths[sel_idx];
+    
+    //  Compute adaptive column widths BEFORE we emit any child windows
+    
+    
+    //  4.  "VERTEX BROWSER" FOR THE OBJECT...
+
+
+
+    ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.min, ( browser_vis_cache != EState.m_show_vertex_browser )
+                                            ? BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value        //  Switched-BACK from FALSE to TRUE.
+                                            : BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.max );
+    browser_vis_cache = EState.m_show_vertex_browser;
+    
+    //  4A.     OBJECT PROPERTIES PANEL.
+    ImGui::PushStyleColor   (ImGuiCol_ChildBg,                  BStyle.ms_OBJ_INSPECTOR_FRAME_BG      );
+    ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value,     BStyle.DYNAMIC_CHILD_FLAGS);
+        ImGui::PopStyleColor(); //  ImGuiCol_ChildBg.
+        _draw_obj_properties_panel(path, sel_idx);
+        BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value.x       = ImGui::GetItemRectSize().x;
+    ImGui::EndChild();
+    //
+    //
+    //
+    ImGui::SameLine( 0.0f, BStyle.ms_CHILD_WINDOW_SAMELINE );
+        
+        
+
     //  CASE 1 :    ONLY DRAW OBJECT BROWSER...
     if ( !EState.m_show_vertex_browser )
     {
-        browser_vis_cache   = EState.m_show_vertex_browser;
-        ImGui::PushStyleColor   (ImGuiCol_ChildBg,                  BStyle.ms_OBJ_INSPECTOR_FRAME_BG      );
-        ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value,     BStyle.DYNAMIC_CHILD_FLAGS);
-            ImGui::PopStyleColor(); //  ImGuiCol_ChildBg.
-            _draw_obj_properties_panel(path, sel_idx);
-            BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value.x       = ImGui::GetItemRectSize().x;
-        ImGui::EndChild();
-        //
-        //
-        ImGui::SameLine( 0.0f, BStyle.ms_CHILD_WINDOW_SAMELINE );
         //
         //
         //  //  //  4B.     VERTEX SUB-BROWSER...
@@ -843,22 +1022,6 @@ void Editor::_draw_single_obj_inspector(void)
     //  CASE 2 :    DRAW OBJECT + VERTEX BROWSERS...
     else
     {
-        ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.min, ( browser_vis_cache != EState.m_show_vertex_browser )
-                                                ? BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value        //  Switched-BACK from FALSE to TRUE.
-                                                : BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.limits.max );
-        browser_vis_cache = EState.m_show_vertex_browser;
-        
-        //  4A.     OBJECT PROPERTIES PANEL.
-        ImGui::PushStyleColor   (ImGuiCol_ChildBg,                  BStyle.ms_OBJ_INSPECTOR_FRAME_BG      );
-        ImGui::BeginChild("##Editor_Browser_ObjectPropertiesPanel", BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value,     BStyle.DYNAMIC_CHILD_FLAGS);
-            ImGui::PopStyleColor(); //  ImGuiCol_ChildBg.
-            _draw_obj_properties_panel(path, sel_idx);
-            BStyle.OBJ_PROPERTIES_INSPECTOR_DIMS.value.x       = ImGui::GetItemRectSize().x;
-        ImGui::EndChild();
-        //
-        //
-        //
-        ImGui::SameLine( 0.0f, BStyle.ms_CHILD_WINDOW_SAMELINE );
         //
         //
         //
@@ -902,6 +1065,16 @@ void Editor::_draw_single_obj_inspector(void)
     
     return;
 }
+*/
+
+
+
+
+
+
+
+
+
 
 
 //  "_draw_multi_obj_inspector"
@@ -1372,10 +1545,8 @@ void Editor::_draw_trait_selector(void)
     static constexpr ImGuiTableColumnFlags      C1_FLAGS                = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthStretch;
     static constexpr ImGuiSelectableFlags       SELECTABLE_FLAGS        = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick;
     //
-    const ImU32                                 col_text                = ImGui::GetColorU32(ImGuiCol_Text);
-    const ImU32                                 col_dim                 = ImGui::GetColorU32(ImGuiCol_TextDisabled);
     //
-    //
+    const EditorInteraction &                   eit                     = (*this->m_it).obj;
     ImGuiListClipper                            clipper;
 
 
@@ -1387,8 +1558,6 @@ void Editor::_draw_trait_selector(void)
         ImGui::SeparatorText("Traits");
     //
     ImGui::EndDisabled();
-    //ImGui::SetNextItemWidth(-FLT_MIN);
-    
     S.PopFont();
         
 
@@ -1396,7 +1565,7 @@ void Editor::_draw_trait_selector(void)
     //  2.  BEGIN THE TABLE TO PRESENT EACH OBJECT...
     if ( ImGui::BeginTable("##Editor_TraitSelector_TraitTable", 1, TABLE_FLAGS, ImVec2(0, -1)) )
     {
-        ImGui::TableSetupColumn ("C1",         C1_FLAGS);
+        ImGui::TableSetupColumn ("Trait",         C1_FLAGS);
 
 
 
@@ -1406,18 +1575,23 @@ void Editor::_draw_trait_selector(void)
         while ( clipper.Step() )
         {
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
-            {   
+            {
+                const ObjectTrait       trait           = static_cast<ObjectTrait>( i );
+                const bool              selected        = ( this->m_trait == trait );
+                
+                
                 //  4.  BEGIN THE ROW...
                 ImGui::PushID(i);
                 ImGui::TableNextRow();
 
 
                 
-
-
-                //      4.1.        "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY).
+                //      4.1.        DRAW THE NAME OF EACH TRAIT...
                 ImGui::TableSetColumnIndex(0);
-                ImGui::TextDisabled( "%s", ms_OBJECT_TRAIT_NAMES[ static_cast<size_t>(i) ] );
+                if ( ImGui::Selectable( ms_OBJECT_TRAIT_NAMES[ trait ], selected, SELECTABLE_FLAGS, {0.0f, 1.05f * CELL_SZ}) )
+                {
+                    this->m_trait = trait;      //  Set the current trait to the selection.
+                }
                 
                 
 

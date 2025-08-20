@@ -142,6 +142,7 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     ImGuiIO &               io                      = ImGui::GetIO();
     EditorState &           ES                      = this->m_editor_S;
     Interaction &           it                      = *m_it;
+    EditorInteraction &     eit                     = it.obj;
     
     //      1.1.    IMPLOT STATE...
     const bool              space                   = ImGui::IsKeyDown(ImGuiKey_Space);
@@ -163,24 +164,20 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     
 
     //      3.      ASSIGN UPDATED VALUES...
-    it.hovered                  = hovered;
-    it.active                   = active;
-    it.space                    = space;
+    it.hovered                      = hovered;
+    it.active                       = active;
+    it.space                        = space;
     //
-    it.canvas                   = mouse_canvas;
-    it.origin                   = origin_scr;
-    it.tl                       = plotTL;
+    it.canvas                       = mouse_canvas;
+    it.origin                       = origin_scr;
+    it.tl                           = plotTL;
     //
-    it.dl                       = dl;
-    //
-    //  it.obj                      = EditorInteraction{
-    //      /*  selection_ctx_open  */  ImGui::IsPopupOpen(     ms_SELECTION_CONTEXT_MENU_ID        );
-    //      /*  canvas_ctx_open     */  ImGui::IsPopupOpen(     ms_CANVAS_CONTEXT_MENU_ID           );
-    //      /*  browser_ctx_open    */  ImGui::IsPopupOpen(     ms_BROWSER_CONTEXT_MENU_ID          );
-    //      /*  settings_ctx_open   */  ImGui::IsPopupOpen(     ms_SYSTEM_PREFERENCES_MENU_ID       );
-    //  };
+    it.dl                           = dl;
     
     
+    //      4.      ASSIGNMENTS FOR EDITOR-INTERACTION OBJECT...
+    //
+    //              4.1.        SET BIT-FIELD FOR EACH POP-UP WINDOW OPEN.
     for (size_t i = 0; i < ms_POPUP_INFOS.size(); ++i)
     {
         const auto &    info    = ms_POPUP_INFOS[i];
@@ -188,14 +185,17 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
         
         if ( info.uuid )    { open = ImGui::IsPopupOpen(info.uuid); }
         
-        set_bit(it.obj.open_menus, i, open);
+        set_bit(eit.open_menus, i, open);
 	}
+    //
+    //              4.2.        CACHE THE SELECTION STATE.
+    eit.empty_selection             = static_cast<bool>( this->m_sel.paths.size() == 0 );
+    eit.single_obj_selection        = static_cast<bool>( this->m_sel.paths.size() == 1 );
     
     
     
-    
-    //      4.      OTHER PER-FRAME CACHE...
-    ES.m_plot_limits            = ImPlot::GetPlotLimits();          //     current X/Y axes
+    //      5.      OTHER PER-FRAME CACHE...
+    ES.m_plot_limits                = ImPlot::GetPlotLimits();          //     current X/Y axes
         
     
     return;
