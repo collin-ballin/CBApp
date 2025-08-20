@@ -277,10 +277,10 @@ void Editor::_draw_obj_selector_column(void)
     //  2.  BEGIN THE TABLE TO PRESENT EACH OBJECT...
     if ( ImGui::BeginTable("##Editor_ObjSelector_ObjTable", 4, TABLE_FLAGS, ImVec2(0, -1)) )
     {
-        ImGui::TableSetupColumn ("Eye",         C_EYE,          CELL_SZ             );
-        ImGui::TableSetupColumn ("Lock",        C_LOCK,         CELL_SZ             );
-        ImGui::TableSetupColumn ("Name",        C_NAME                              );
-        ImGui::TableSetupColumn ("Del",         C_DEL,          1.2f * CELL_SZ      );
+        ImGui::TableSetupColumn ("Eye",             C_EYE,          CELL_SZ             );
+        ImGui::TableSetupColumn ("Lock",            C_LOCK,         CELL_SZ             );
+        ImGui::TableSetupColumn ("Selectable",      C_NAME                              );
+        ImGui::TableSetupColumn ("Del",             C_DEL,          1.2f * CELL_SZ      );
 
 
 
@@ -1335,6 +1335,11 @@ void Editor::_draw_vertex_properties_panel(void)
     return;
 }
 
+// *************************************************************************** //
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INDIVIDUAL PANELS".
 
 
 
@@ -1355,6 +1360,100 @@ void Editor::_draw_vertex_properties_panel(void)
 //
 //
 //      NEW STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_draw_trait_selector"
+//
+void Editor::_draw_trait_selector(void)
+{
+    using                                       namespace               icon;
+    static constexpr ImGuiTableFlags            TABLE_FLAGS             = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
+    static constexpr ImGuiTableColumnFlags      C1_FLAGS                = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthStretch;
+    static constexpr ImGuiSelectableFlags       SELECTABLE_FLAGS        = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick;
+    //
+    const ImU32                                 col_text                = ImGui::GetColorU32(ImGuiCol_Text);
+    const ImU32                                 col_dim                 = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+    //
+    //
+    ImGuiListClipper                            clipper;
+
+
+
+    //  1.  SEARCH-QUERY BOX...
+    S.PushFont(Font::Main);
+    ImGui::BeginDisabled(true);
+    //
+        ImGui::SeparatorText("Traits");
+    //
+    ImGui::EndDisabled();
+    //ImGui::SetNextItemWidth(-FLT_MIN);
+    
+    S.PopFont();
+        
+
+
+    //  2.  BEGIN THE TABLE TO PRESENT EACH OBJECT...
+    if ( ImGui::BeginTable("##Editor_TraitSelector_TraitTable", 1, TABLE_FLAGS, ImVec2(0, -1)) )
+    {
+        ImGui::TableSetupColumn ("C1",         C1_FLAGS);
+
+
+
+        clipper.Begin( static_cast<int>(ObjectTrait::COUNT), -1 );
+
+        //  3.  DRAWING EACH OBJECT IN THE LEFT-HAND SELECTION COLUMN OF THE BROWSER...
+        while ( clipper.Step() )
+        {
+            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+            {   
+                //  4.  BEGIN THE ROW...
+                ImGui::PushID(i);
+                ImGui::TableNextRow();
+
+
+                
+
+
+                //      4.1.        "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY).
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextDisabled( "%s", ms_OBJECT_TRAIT_NAMES[ static_cast<size_t>(i) ] );
+                
+                
+
+                ImGui::PopID();
+            }// END "for-loop" [ROWS]
+            
+        }// END "while-loop" [CLIPPER]
+        
+        clipper.End();
+        ImGui::EndTable();
+    }
+    
+    
+    return;
+}
+
+// *************************************************************************** //
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "NEW STUFF".
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      TEMPORARY STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -1493,6 +1592,12 @@ void Editor::_show_browser_color_edit_window(void)
     S.PopFont();
     return;
 }
+
+// *************************************************************************** //
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "TEMPORARY STUFF".
 
 
 

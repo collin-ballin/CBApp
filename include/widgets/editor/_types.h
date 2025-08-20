@@ -79,25 +79,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "IOResult"
-//
-enum class IOResult {
-    Ok = 0,
-    IoError,
-    ParseError,
-    VersionMismatch,
-//
-    COUNT
-};
-//
-//  "DEF_IORESULT_NAMES"
-static constexpr std::array<const char *, static_cast<size_t>(IOResult::COUNT)>
-    DEF_IORESULT_NAMES  = { {
-        "OK",   "IO Error",     "Parsing Error",    "Version Mismatch"
-} };
-
-
-
 //  "Mode"
 //      - Enum type for each "tool" that we have in the application.
 //
@@ -160,6 +141,54 @@ MODE_CAPS               = {
 /*  RemoveAnchor    */      CBCapabilityFlags_None,
 /*  EditAnchor      */      CBCapabilityFlags_Navigation
 };
+
+
+
+
+
+
+//  "ObjectTrait"
+//
+enum class ObjectTrait : int {
+    Properties = 0,         //  "Properties"    -- Fill color, line thickness, etc.
+    Vertices,               //  "Vertices"      -- Bezier Control Points, etc...
+    Payload,                //  "Payload"       -- Auxiliary Data.
+//
+    COUNT
+};
+//
+//  "DEF_OBJECT_TRAIT_NAMES"
+static constexpr std::array<const char *, static_cast<size_t>(ObjectTrait::COUNT)>
+    DEF_OBJECT_TRAIT_NAMES  = { {
+        "Properties",       "Vertices",         "Payload"
+} };
+
+
+
+
+// *************************************************************************** //
+//      SECONDARY ENUM TYPES...
+// *************************************************************************** //
+
+//  "IOResult"
+//
+enum class IOResult {
+    Ok = 0,
+    IoError,
+    ParseError,
+    VersionMismatch,
+//
+    COUNT
+};
+//
+//  "DEF_IORESULT_NAMES"
+static constexpr std::array<const char *, static_cast<size_t>(IOResult::COUNT)>
+    DEF_IORESULT_NAMES  = { {
+        "OK",   "IO Error",     "Parsing Error",    "Version Mismatch"
+} };
+
+
+
 
 
 
@@ -993,7 +1022,6 @@ struct EditorState_t
 // *************************************************************************** //
 //          OVERALL STATE...
 // *************************************************************************** //
-    Mode                                m_mode                          = Mode::Default;
     ImPlotInputMap                      m_backup;
 // *************************************************************************** //
 //

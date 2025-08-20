@@ -193,6 +193,8 @@ public:
     // *************************************************************************** //
     //                              ARRAYS:
     static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;
+    static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES;
+    //
     static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
     static constexpr auto &             ms_ANCHOR_TYPE_NAMES            = DEF_ANCHOR_TYPE_NAMES;
     static constexpr auto &             ms_PATH_KIND_NAMES              = path::DEF_PATH_KIND_NAMES;
@@ -383,6 +385,10 @@ protected:
     //                              OBJECT BROWSER:
     void                                _show_browser_color_edit_window         (void); 
     void                                _dispatch_obj_inspector_column          (void);     //  PREVIOUSLY:     _draw_path_inspector_column
+    //
+    //
+    void                                _draw_trait_selector                    (void);    
+    //
     //
     void                                _draw_obj_selector_column               (void);     //  PREVIOUSLY:     _draw_path_list_column
     void                                _draw_obj_selector_table                (void);
@@ -1170,6 +1176,7 @@ protected:
     //                              OVERALL STATE:
     //  EditorState                     m_S                             = {   };
     Mode                                m_mode                          = Mode::Default;
+    ObjectTrait                         m_trait                         = ObjectTrait::Properties;
     //
     //
     //                              MUTABLE / TRANSIENT STATE:
