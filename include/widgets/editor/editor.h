@@ -85,12 +85,12 @@ struct                          SnapshotCmd;
 struct                          Command;
 //
 //
-struct                          Vertex_Tag                  {};
-struct                          Point_Tag                   {};
-struct                          Line_Tag                    {};
-struct                          Path_Tag                    {};
-struct                          Overlay_Tag                 {};
-struct                          Hit_Tag                     {};
+struct                          Vertex_Tag                  {   };
+struct                          Point_Tag                   {   };
+struct                          Line_Tag                    {   };
+struct                          Path_Tag                    {   };
+struct                          Overlay_Tag                 {   };
+struct                          Hit_Tag                     {   };
 
 
 
@@ -116,6 +116,10 @@ public:
         using                           LogLevel                        = EditorIMPL::LogLevel                  ;
         using                           CBCapabilityFlags               = EditorIMPL::CBCapabilityFlags         ;
         using                           Anchor                          = EditorIMPL::Anchor                    ;
+    //
+        using                           PopupHandle                     = EditorIMPL::PopupHandle               ;
+        using                           CBEditorPopupFlags              = EditorIMPL::CBEditorPopupFlags        ;
+        using                           PopupInfo                       = EditorIMPL::PopupInfo                 ;
     //
     //                              ID / INDEX TYPES:
     //  using                           ID                              = Editor::ID                        ;
@@ -175,25 +179,44 @@ public:
     static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE         = ImVec2( 80,   25 );
     //
     //
-    static constexpr const char *       ms_SELECTION_CONTEXT_MENU_ID    = "Editor_Selection_ContextMenu";       //  selection_popup_id
-    static constexpr const char *       ms_CANVAS_CONTEXT_MENU_ID       = "Editor_Canvas_ContextMenu";          //  canvas_popup_id
-    static constexpr const char *       ms_SYSTEM_PREFERENCES_MENU_ID   = "Editor System Preferences";          //  canvas_popup_id
+    //  static constexpr const char *       ms_SELECTION_CONTEXT_MENU_ID    = "Editor_Selection_ContextMenu";       //  selection_popup_id
+    //  static constexpr const char *       ms_CANVAS_CONTEXT_MENU_ID       = "Editor_Canvas_ContextMenu";          //  canvas_popup_id
+    //  static constexpr const char *       ms_BROWSER_CONTEXT_MENU_ID      = "Editor_Browser_ContextMenu";
+    //
+    //  static constexpr const char *       ms_SYSTEM_PREFERENCES_MENU_ID   = "Editor System Preferences";          //  canvas_popup_id
     
-
-
-
-
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      REFERENCES TO GLOBAL ARRAYS.
+    // *************************************************************************** //
+    //                              ARRAYS:
+    static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;
+    static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
+    static constexpr auto &             ms_ANCHOR_TYPE_NAMES            = DEF_ANCHOR_TYPE_NAMES;
+    static constexpr auto &             ms_PATH_KIND_NAMES              = path::DEF_PATH_KIND_NAMES;
+    //
+    static constexpr auto &             ms_IORESULT_NAMES               = DEF_IORESULT_NAMES;
+    static constexpr auto &             ms_POPUP_INFOS                  = DEF_EDITOR_POPUP_INFOS;
     
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
 // *************************************************************************** //
 //
 //
-//  1.              TEMPORARY PUBLIC STUFF...
+//      1.          TEMPORARY PUBLIC STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
 public:
 
     // *************************************************************************** //
-    //  1.              INITIALIZATION METHODS...
+    //      1.              INITIALIZATION METHODS...
     // *************************************************************************** //
                                         Editor                          (app::AppState & src);
                                         ~Editor                         (void);
@@ -277,7 +300,7 @@ public:
 // *************************************************************************** //
 //
 //
-//  2.              PUBLIC MEMBER FUNCTIONS...
+//      2.          PUBLIC MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 public:
@@ -319,7 +342,7 @@ public:
 // *************************************************************************** //
 //
 //
-//  2.A             PROTECTED OPERATION MEMBER FUNCTIONS...
+//      2.A.            PROTECTED OPERATION MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 protected:
@@ -432,7 +455,8 @@ protected:
     //
     //                              DEBUGGER RESIDENT:
     void                                _draw_debugger_resident             (void);
-    void                                    _debugger_draw_controlbar           (void);
+    void                                _debugger_draw_controlbar           (void);
+    void                                    _debugger_hit_detection             (void);
     void                                    _debugger_interaction               (void);
     void                                    _debugger_more_info                 (void);
     //
@@ -444,6 +468,7 @@ protected:
     void                                    _draw_shape_resident_custom         (void);
     void                                    _draw_shape_resident_multi          (void);
     void                                    _draw_shape_resident_default        (void);
+    
     // *************************************************************************** //
     //
     //
@@ -592,7 +617,7 @@ protected:
 // *************************************************************************** //
 //
 //
-//  2.C                 INLINE FUNCTIONS...
+//      2.C.            INLINE FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -1069,7 +1094,7 @@ protected:
 // *************************************************************************** //
 //
 //
-//  3.              PROTECTED DATA-MEMBERS...
+//      3.          PROTECTED DATA-MEMBERS...
 // *************************************************************************** //
 // *************************************************************************** //    
     
@@ -1274,21 +1299,7 @@ protected:
         //  std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
         //  ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
         //  ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      STATIC / CONSTANTS...
-    // *************************************************************************** //
-    //                      ARRAYS:
-    static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;
-    static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
-    static constexpr auto &             ms_ANCHOR_TYPE_NAMES            = DEF_ANCHOR_TYPE_NAMES;
-    static constexpr auto &             ms_PATH_KIND_NAMES              = path::DEF_PATH_KIND_NAMES;
-    //
-    static constexpr auto &             ms_IORESULT_NAMES               = DEF_IORESULT_NAMES;
+        
 //
 //
 //

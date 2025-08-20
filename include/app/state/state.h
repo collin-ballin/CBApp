@@ -286,6 +286,21 @@ public:
         this->PopFont();
     }
     
+    //  "print_TF"
+    inline void                         print_TF                    (const bool value, const char * true_text = "ENABLED", const char * false_text = "DISABLED")
+    {
+        ImGui::TextColored(
+            (value)     ? this->SystemColor.Green           : this->SystemColor.Red ,
+            "%s",
+            (value)     ? true_text                         : false_text
+        );
+        return;
+    }
+    
+
+    
+    
+    
     // *************************************************************************** //
     
     

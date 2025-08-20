@@ -47,7 +47,10 @@ void Editor::_draw_debugger_resident(void)
 {
     using                       DebugItem       = DebuggerState::DebugItem;
     static DebuggerState &      debug           = this->m_debugger;
+    //
+    //
     const size_t                N               = debug.windows.size();
+    int                         Nopen           = 0;
     
     
     
@@ -61,54 +64,54 @@ void Editor::_draw_debugger_resident(void)
         ImGui::EndDisabled();
     //
     //
-    //
     S.PopFont();//  END "HEADER".
-        
     
     
-    //      2.      CONTROL BAR...
+    
+    
+    //      2.      BODY ENTRIES...
     S.PushFont(Font::FootNote);
     {
-    //
-        this->_debugger_draw_controlbar();
-        //
-        ImGui::NewLine();
-        ImGui::Separator();
-    //
-    }// END "CONTROLS".
+        //          2A.     COUNT NUM. VISIBLE WINDOWS.
+        for (const DebugItem & item : debug.windows) {
+            Nopen   += static_cast<int>( (item.open == true) );
+        }
     
     
-    
-    
-    //      3.      BODY ENTRIES...
-    {
-    //
-    //
+        //          2B.     DISPLAY EACH WINDOW.
         for (size_t i = 0; i < N; ++i)
         {
-            DebugItem & item    = debug.windows.at(i);
+            DebugItem &     item        = debug.windows.at(i);
+            const bool      same_line   = (  (1 < Nopen) && (i != 0)  );
             
-            //      3A.     DISPLAY WINDOW.
-            if ( item.open ) {
-                
-                ImGui::SetNextWindowBgAlpha(0.0f);
-                item.render_fn(); 
-            
+            //      2B-1.       SAME-LINE AS NEXT WINDOW (IF MORE WINDOWS EXIST).
+            if (same_line) {
+                //  ImGui::SameLine();
             }
-            //
-            //      3B.     SAME-LINE AS NEXT WINDOW (IF MORE WINDOWS EXIST).
-            if ( i != (N-1) ) {
-                ImGui::SameLine();
+            
+            //      2B-2.       DISPLAY WINDOW.
+            if ( item.open ) {
+                ImGui::SetNextWindowBgAlpha(0.5f);
+                item.render_fn();
             }
             
         }
+    }//  END "BODY".
+        
+    
+    
+    //      3.      CONTROL BAR...
+    {
     //
+        ImGui::NewLine();
+        ImGui::Separator();
+        this->_debugger_draw_controlbar(/*Nopen*/);
     //
-    }
-    S.PopFont();//  END "BODY".
+    }// END "CONTROLS".
 
 
 
+    S.PopFont();
     return;
 }
 
@@ -130,7 +133,7 @@ void Editor::_debugger_draw_controlbar(void)
     using                           DebugItem               = DebuggerState::DebugItem;
     static DebuggerState &          debug                   = this->m_debugger;
     const int                       NC                      = static_cast<int>( debug.windows.size() );
-    const int                       NE                      = 1;
+    const int                       NE                      = 0;
     const int                       N                       = NC + NE;
     
 
@@ -175,33 +178,92 @@ void Editor::_debugger_draw_controlbar(void)
 //      HELPERS...
 // *************************************************************************** //
 
+//  "_debugger_hit_detection"
+//
+void Editor::_debugger_hit_detection(void)
+{
+    const float                     LABEL_W             = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
+    const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    EditorState &                   ES                  = this->m_editor_S;
+    Interaction &                   it                  = *this->m_it;
+    //
+    S.PushFont(Font::Small);
+    
+    
+    //      1.      SHORTCUTS ENABLED/DISABLED...
+    left_label("X-Range:", LABEL_W, WIDGET_W);
+    ImGui::Text( "(%.0f, %.0f)",      ES.m_plot_limits.X.Min,     ES.m_plot_limits.X.Max);
+    
+    left_label("Y-Range:", LABEL_W, WIDGET_W);
+    ImGui::Text( "(%4.0f, %4.0f)",      ES.m_plot_limits.Y.Min,     ES.m_plot_limits.Y.Max);
+    
+
+
+
+
+
+    S.PopFont();
+    return;
+}
+
+
 //  "_debugger_interaction"
 //
 void Editor::_debugger_interaction(void)
 {
-    const float                     LABEL_W             = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
-    const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
-    Interaction &                   it                  = *this->m_it;
+    constexpr size_t                N_POPUPS                = ms_POPUP_INFOS.size();
+    const float                     LABEL_W                 = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
+    const float &                   WIDGET_W                = m_style.ms_SETTINGS_WIDGET_WIDTH;
     //
-    auto                            PrintTF             = [&](const bool value, const char * true_text = "ENABLED", const char * false_text = "DISABLED" ) -> void {
-        ImGui::TextColored(
-            (value)     ? S.SystemColor.Green       : S.SystemColor.Red ,
-            "%s",
-            (value)     ? true_text                 : false_text
-        );
-    };
+    Interaction &                   it                      = *this->m_it;
+    const CBEditorPopupFlags &      open_menus              = it.obj.open_menus;
+    const bool                      no_menus_open           = (open_menus == CBEditorPopupFlags_None);
+    //
+    static CBEditorPopupFlags       open_menus_cache        = it.obj.open_menus;
+    static std::string              menu_buffer             = "";
     
     
     //      1.      SHORTCUTS ENABLED/DISABLED...
     left_label("Shortcuts:", LABEL_W, WIDGET_W);
-    //
-    PrintTF( !it.BlockShortcuts() );
+    S.print_TF( !it.BlockShortcuts() );
     
     
     
     //      2.      ANY POP-UP MENUS OPEN?...
-    left_label("Context Menus Open:", LABEL_W, WIDGET_W);
-    PrintTF( it.obj.menus_open, "YES", "NO" );
+    if ( open_menus_cache != open_menus )     //  UPDATE CACHE...
+    {
+        open_menus_cache            = open_menus;
+        
+        //          2A.     NO MENUS OPEN...
+        if ( no_menus_open ) {
+            menu_buffer.clear();
+        }
+        //
+        //          2B.     ADD THE NAME OF EACH OPEN-WINDOW INTO A SINGLE STRING (CSV)...
+        else
+        {
+            for (size_t i = 0, n = N_POPUPS; i < n; ++i)
+            {
+                if ( (static_cast<CBEditorPopupFlags>(open_menus) >> i) & 1u )
+                {
+                    const PopupInfo & info = ms_POPUP_INFOS[i];
+                    
+                    /*      Append each "info.name" into a char [512] BUFFER in a COMMA-SEPARATED FORMAT        */
+                    if (info.uuid)
+                    {
+                        menu_buffer += info.name;
+                        if ( (i != 0) && (i != (n-1)) )     { menu_buffer += ", ";  }
+                        //  if ( i == (n-1) )                   { menu_buffer += ".";   }
+                    }
+                    
+                }
+            }
+        }
+    }
+    
+    
+    left_label("Open Menus:", LABEL_W, WIDGET_W);
+    S.print_TF( !no_menus_open, menu_buffer.c_str(), "NONE" );
     
 
 
@@ -216,6 +278,16 @@ void Editor::_debugger_interaction(void)
 //
 void Editor::_debugger_more_info(void)
 {
+    const float                     LABEL_W             = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
+    const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    Interaction &                   it                  = *this->m_it;
+    
+    
+    //      1.      SHORTCUTS ENABLED/DISABLED...
+    left_label("Shortcuts:", LABEL_W, WIDGET_W);
+    S.print_TF( !it.BlockShortcuts() );
+    
+
 
     return;
 }

@@ -220,12 +220,117 @@ struct GridSettings {
 
 
 
+// *************************************************************************** //
+//              MENU FLAGS...
+// *************************************************************************** //
+    
+//  "EditorPopupBits"
+//
+enum class EditorPopupBits : uint8_t {
+    None = 0,
+    Selection,
+    Canvas,
+    Browser,
+    Settings,
+    AskOkCancel,
+//
+    COUNT
+};
+
+
+//  "CBEditorPopupFlags_"
+//
+enum CBEditorPopupFlags_ : uint32_t {
+    CBEditorPopupFlags_None                 = 0,               //  No popup / context menu is open
+//
+    CBEditorPopupFlags_Selection            = 1u << static_cast<unsigned>(  EditorPopupBits::Selection      ),
+    CBEditorPopupFlags_Canvas               = 1u << static_cast<unsigned>(  EditorPopupBits::Canvas         ),
+    CBEditorPopupFlags_Browser              = 1u << static_cast<unsigned>(  EditorPopupBits::Browser        ),
+//
+    CBEditorPopupFlags_Settings             = 1u << static_cast<unsigned>(  EditorPopupBits::Settings),
+    CBEditorPopupFlags_AskOkCancel          = 1u << static_cast<unsigned>(  EditorPopupBits::AskOkCancel    ),
+//
+    CBEditorPopupFlags_COUNT                            // helper: number of bits
+};
+//
+//      HELPERS...
+static inline constexpr uint32_t                to_u        (CBEditorPopupFlags_    x)      { return static_cast<uint32_t>(x);              }
+static inline constexpr CBEditorPopupFlags_     from_u      (uint32_t               x)      { return static_cast<CBEditorPopupFlags_>(x);   }
+static inline constexpr uint32_t                bit_u       (size_t                 i)      { return (1u << static_cast<unsigned>(i));      }
+//
+//  "set_bit"
+static inline void set_bit(CBEditorPopupFlags_ & m, size_t i, bool on)
+{
+	uint32_t    v   = to_u(m), b = bit_u(i);
+	m               = from_u(on ? (v | b) : (v & ~b));
+}
+
+
+//  "EditorPopupWindowInfo"
+//
+struct EditorPopupInfo {
+    const char *        uuid;
+    const char *        name;
+};
+
+
+
+//  "DEF_EDITOR_POPUP_INFOS"
+//
+static constexpr std::array< EditorPopupInfo, static_cast<size_t>( EditorPopupBits::COUNT ) >
+DEF_EDITOR_POPUP_INFOS      = { {
+    /* None         */  { nullptr                           , "None"            },
+    /* Selection    */  { "Editor_Selection_ContextMenu"    , "Selection"       },
+    /* Canvas       */  { "Editor_Canvas_ContextMenu"       , "Canvas"          },
+    /* Browser      */  { "Editor_Browser_ContextMenu"      , "Browser"         },
+    /* Settings     */  { "Editor System Preferences"       , ""                },
+    /* AskOkCancel  */  { nullptr                           , ""                }
+} };
+
+
+//  "k_valid_popup_bits"
+constexpr uint32_t k_valid_popup_bits = []{
+    constexpr size_t        N       = DEF_EDITOR_POPUP_INFOS.size();
+    constexpr uint32_t      retval  = (N >= 32)
+                                        ? 0xFFFF'FFFFu : ( (uint32_t{1} << N) - 1u );
+    return retval;
+}(    );
+
+
+//  "popup_name_from_flag"
+static inline const char * popup_name_from_flag(CBEditorPopupFlags_ single)
+{
+    uint32_t                    x           = to_u(single) & k_valid_popup_bits;
+    
+    if ( x == 0u || (x & (x - 1u)) )        { return nullptr; }                 // not single-bit
+    
+    unsigned                    i           = std::countr_zero(x);
+    const EditorPopupInfo &     info        = DEF_EDITOR_POPUP_INFOS[i];
+    return (info.uuid)      ? info.name    : nullptr;                          //     skip "None"
+}
+
+//  "GetMenuID"
+static inline const char * GetMenuID(const EditorPopupBits & handle)
+    { return DEF_EDITOR_POPUP_INFOS[ static_cast<size_t>( handle ) ].uuid; }
+
+
+
+
+
+// *************************************************************************** //
+//              INTERACTION...
+// *************************************************************************** //
+
 //  "EditorInteraction"
 //
 struct EditorInteraction
 {
+    using                           CBEditorPopupFlags              = CBEditorPopupFlags_;
 //                              IMPLOT STATE:
-    bool                            menus_open              {   };
+//
+//
+//                              MENU STATE:
+    CBEditorPopupFlags_             open_menus                      = CBEditorPopupFlags_None;
 //
 //
 //
@@ -273,7 +378,8 @@ struct Interaction
     //  "BlockShortcuts"
     [[nodiscard]]
     inline bool                     BlockShortcuts              (void) const noexcept
-    { return ( (!hovered) || (obj.menus_open) ); }
+    { return ( !hovered ); }
+    //{ return ( (!hovered) || (obj.menus_open) ); }
 
 
 
@@ -823,7 +929,7 @@ struct DebuggerState_t
 // *************************************************************************** //
 //      0.      CONSTEXPR CONSTANTS...
 // *************************************************************************** //
-        static constexpr ImGuiChildFlags        ms_FLAGS        = ImGuiChildFlags_Borders;
+        static constexpr ImGuiChildFlags        ms_FLAGS        = ImGuiChildFlags_Borders;// | ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY;
 
 
 // *************************************************************************** //

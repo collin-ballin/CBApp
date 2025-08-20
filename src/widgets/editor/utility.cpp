@@ -407,7 +407,7 @@ void Editor::_draw_controls(void)
         //      X.      CANVAS SETTINGS...
         this->S.column_label("Settings:");
         if ( ImGui::Button("+", BUTTON_SIZE) ) {
-            ui::open_preferences_popup( this->ms_SYSTEM_PREFERENCES_MENU_ID, [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
+            ui::open_preferences_popup( GetMenuID(PopupHandle::Settings), [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
         }
         
         

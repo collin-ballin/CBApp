@@ -1186,13 +1186,13 @@ void Editor::dispatch_selection_context_menus([[maybe_unused]] const Interaction
         }
 
         //  Decide which popup to open based on current selection state
-        if ( m_sel.empty() )    { ImGui::OpenPopup(this->ms_CANVAS_CONTEXT_MENU_ID); }     // empty → canvas menu
-        else                    { ImGui::OpenPopup(this->ms_SELECTION_CONTEXT_MENU_ID); }  // non-empty → selection menu
+        if ( m_sel.empty() )    { ImGui::OpenPopup( GetMenuID(PopupHandle::Canvas)      );      }       // empty → canvas menu
+        else                    { ImGui::OpenPopup( GetMenuID(PopupHandle::Selection)   );      }       // non-empty → selection menu
     }
 
     //      2.      Render both popups every frame; BeginPopup() returns false if not open
-    _show_selection_context_menu    (it,    this->ms_SELECTION_CONTEXT_MENU_ID     );
-    _show_canvas_context_menu       (it,    this->ms_CANVAS_CONTEXT_MENU_ID        );
+    _show_selection_context_menu    (it,    GetMenuID(PopupHandle::Selection)       );
+    _show_canvas_context_menu       (it,    GetMenuID(PopupHandle::Canvas)          );
     
     return;
 }

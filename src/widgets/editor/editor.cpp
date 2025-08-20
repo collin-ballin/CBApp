@@ -140,6 +140,7 @@ inline void Editor::_dispatch_mode_handler( [[maybe_unused]] const Interaction &
 inline void Editor::_per_frame_cache_begin(void) noexcept
 {
     ImGuiIO &               io                      = ImGui::GetIO();
+    EditorState &           ES                      = this->m_editor_S;
     Interaction &           it                      = *m_it;
     
     //      1.1.    IMPLOT STATE...
@@ -159,8 +160,7 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
 
 
     //      2.1.    EDITOR STATE...
-    const bool              menus_open              = ImGui::IsPopupOpen( ms_SELECTION_CONTEXT_MENU_ID  ) ||
-                                                      ImGui::IsPopupOpen( ms_CANVAS_CONTEXT_MENU_ID     );
+    
 
     //      3.      ASSIGN UPDATED VALUES...
     it.hovered                  = hovered;
@@ -173,9 +173,30 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     //
     it.dl                       = dl;
     //
-    it.obj                      = EditorInteraction{
-        menus_open
-    };
+    //  it.obj                      = EditorInteraction{
+    //      /*  selection_ctx_open  */  ImGui::IsPopupOpen(     ms_SELECTION_CONTEXT_MENU_ID        );
+    //      /*  canvas_ctx_open     */  ImGui::IsPopupOpen(     ms_CANVAS_CONTEXT_MENU_ID           );
+    //      /*  browser_ctx_open    */  ImGui::IsPopupOpen(     ms_BROWSER_CONTEXT_MENU_ID          );
+    //      /*  settings_ctx_open   */  ImGui::IsPopupOpen(     ms_SYSTEM_PREFERENCES_MENU_ID       );
+    //  };
+    
+    
+    for (size_t i = 0; i < ms_POPUP_INFOS.size(); ++i)
+    {
+        const auto &    info    = ms_POPUP_INFOS[i];
+        bool            open    = false;
+        
+        if ( info.uuid )    { open = ImGui::IsPopupOpen(info.uuid); }
+        
+        set_bit(it.obj.open_menus, i, open);
+	}
+    
+    
+    
+    
+    //      4.      OTHER PER-FRAME CACHE...
+    ES.m_plot_limits            = ImPlot::GetPlotLimits();          //     current X/Y axes
+        
     
     return;
 }
