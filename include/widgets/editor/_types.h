@@ -362,8 +362,8 @@ struct EditorInteraction
                                     //  ...
 //
 //                              EDITOR STATE:
-    bool                            empty_selection                 = false;
-    bool                            single_obj_selection            = false;
+    //  bool                            empty_selection                 = false;
+    //  bool                            single_obj_selection            = false;
 //
 //                              MENU STATE:
     CBEditorPopupFlags_             open_menus                      = CBEditorPopupFlags_None;
@@ -1157,6 +1157,15 @@ struct BrowserStyle
     //
     //
     //                              BROWSER CHILD-WINDOW COLORS:
+    ImVec4                              ms_TRAIT_INSPECTOR_FRAME_BG                 = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);
+    //
+    ImVec4                              ms_VERTEX_SELECTOR_FRAME_BG                 = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);
+    ImVec4                              ms_VERTEX_INSPECTOR_FRAME_BG                = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);
+    //
+    //
+    //
+    //
+    //
     ImVec4                              ms_CHILD_FRAME_BG1                          = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
     ImVec4                              ms_CHILD_FRAME_BG1L                         = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
     ImVec4                              ms_CHILD_FRAME_BG1R                         = ImVec4(0.141f,    0.141f,     0.141f,     1.000f); // ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B

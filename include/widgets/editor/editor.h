@@ -376,39 +376,52 @@ protected:
     inline void                         _handle_overlays                    ([[maybe_unused]] const Interaction & );
     //
     inline void                         _handle_io                          (void);
+    
     // *************************************************************************** //
     //
     //
     // *************************************************************************** //
     //      BROWSER STUFF.                  |   "browser.cpp" ...
     // *************************************************************************** //
-    //                              OBJECT BROWSER:
-    void                                _show_browser_color_edit_window         (void); 
+    //                              BROWSER ORCHESTRATORS:
     void                                _dispatch_obj_inspector_column          (void);     //  PREVIOUSLY:     _draw_path_inspector_column
     //
-    //
-    void                                _draw_trait_selector                    (void);    
-    void                                _dispatch_trait_inspector               (void);
-    //
-    //
-    void                                _draw_obj_selector_column               (void);     //  PREVIOUSLY:     _draw_path_list_column
+    //                              OBJECT SELECTION:
     void                                _draw_obj_selector_table                (void);
     inline void                         _draw_obj_selectable                    (Path & , const int , const bool , const bool );
     //
-    void                                _draw_single_obj_inspector              (void);     //  PREVIOUSLY:     _draw_single_path_inspector
-    void                                _draw_multi_obj_inspector               (void);     //  PREVIOUSLY:     _draw_multi_path_inspector
+    //                              TRAIT BEHAVIORS:
+    inline void                         _draw_trait_selector                    (void);
+    inline void                         _dispatch_trait_inspector               (void);
+        inline void                         _dispatch_trait_inspector_single        (void);
+        inline void                         _dispatch_trait_inspector_multi         (void);
     //
-    //                              VERTEX BROWSER:
+    //
+    //                              TEMPORARY:
+    void                                _show_browser_color_edit_window         (void);     //  TEMPORARY...
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      BROWSER-PANEL STUFF.            |   "browser_panel.cpp" ...
+    // *************************************************************************** //
+    //                              "PROPERTIES" TRAIT:
+    void                                _draw_properties_panel_single           (Path & , const size_t );
+    void                                _draw_properties_panel_multi            (void);     //  PREVIOUSLY:     _draw_multi_path_inspector
+    //
+    //                              "VERTICES" TRAIT:
+    void                                _draw_vertex_panel                      (Path & path, [[maybe_unused]] const size_t );
     void                                _draw_vertex_selector_column            (Path & );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
     void                                _draw_vertex_inspector_column           (Path & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
     //
-    //                              PANELS FOR EACH OBJECT TYPE:
-    void                                _draw_obj_properties_panel              (Path & , const size_t );
-    void                                _draw_payload_properties_panel          (Path & );
-    void                                _draw_vertex_properties_panel           (void);
+    //                              "PAYLOAD" TRAIT:
+    void                                _draw_payload_panel                     (Path & path, [[maybe_unused]] const size_t );
+    //
     //
     //                              BROWSER HELPERS:
     void                                _handle_selection_click                 (int row_idx, bool mutable_path);
+    
     // *************************************************************************** //
     //
     //
@@ -426,6 +439,7 @@ protected:
     inline bool                         _can_join_selected_path             (void) const;
     void                                _join_selected_open_path            (void);
     void                                _draw_pen_cursor                    (const ImVec2 &, ImU32);
+    
     // *************************************************************************** //
     //
     //
@@ -451,6 +465,25 @@ protected:
     //                              DEPRECATED:
     void                                _shape_preview_draw                 (ImDrawList * dl) const;
     void                                _draw_shape_cursor                  (const Interaction &) const;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      MENUS & CONTEXT-WINDOW STUFF.   |   "menus.cpp" ...
+    // *************************************************************************** //
+    //                              CONTEXT MENU ORCHESTRATORS:
+    void                                dispatch_selection_context_menus    ([[maybe_unused]] const Interaction & it);
+    //
+    //                              CANVAS CONTEXT MENU:
+    inline void                         _show_canvas_context_menu           ([[maybe_unused]] const Interaction & it, const char * );
+    //
+    //                              SELECTION CONTEXT MENU:
+    inline void                         _show_selection_context_menu        ([[maybe_unused]] const Interaction & it, const char * );
+    inline void                             _selection_context_primative        ([[maybe_unused]] const Interaction & );
+    inline void                             _selection_context_single           ([[maybe_unused]] const Interaction & );
+    inline void                             _selection_context_multi            ([[maybe_unused]] const Interaction & );
+    
     // *************************************************************************** //
     //
     //
@@ -493,6 +526,7 @@ protected:
     void                                _overlay_draw_content               ([[maybe_unused]]const Interaction &);
     void                                _overlay_display_main_content       ([[maybe_unused]]const Interaction &);
     void                                _overlay_display_extra_content      ([[maybe_unused]]const Interaction &);
+    
     // *************************************************************************** //
     //
     //
@@ -511,6 +545,7 @@ protected:
     void                                _render_selection_highlight         (ImDrawList *) const;
     inline void                         _render_selected_handles            (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
     inline void                         _render_selection_bbox              (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
+    
     // *************************************************************************** //
     //
     //
@@ -545,15 +580,7 @@ protected:
     //
     //                              SELECTION BEHAVIOR STUFF:
     void                                _selection_handle_shortcuts         ([[maybe_unused]] const Interaction & );
-    //
-    //                              SELECTION CONTEXT MENU STUFF:
-    void                                dispatch_selection_context_menus    ([[maybe_unused]] const Interaction & it);
-    inline void                         _show_selection_context_menu        ([[maybe_unused]] const Interaction & it, const char * );
-    inline void                         _show_canvas_context_menu           ([[maybe_unused]] const Interaction & it, const char * );
-    //
-    inline void                         _selection_context_primative        ([[maybe_unused]] const Interaction & );
-    inline void                         _selection_context_single           ([[maybe_unused]] const Interaction & );
-    inline void                         _selection_context_multi            ([[maybe_unused]] const Interaction & );
+    
     // *************************************************************************** //
     //
     //

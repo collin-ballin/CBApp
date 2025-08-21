@@ -189,8 +189,8 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
 	}
     //
     //              4.2.        CACHE THE SELECTION STATE.
-    eit.empty_selection             = static_cast<bool>( this->m_sel.paths.size() == 0 );
-    eit.single_obj_selection        = static_cast<bool>( this->m_sel.paths.size() == 1 );
+        //  eit.empty_selection             = static_cast<bool>( this->m_sel.paths.size() == 0 );
+        //  eit.single_obj_selection        = static_cast<bool>( this->m_sel.paths.size() == 1 );
     
     
     

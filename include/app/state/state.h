@@ -270,6 +270,21 @@ public:
     //                      SMALL HELPER FUNCTIONS...
     // *************************************************************************** //
 
+    //  "HeaderSeparatorText"
+    inline void                         HeadlineSeparatorText       (const char * text) noexcept {
+        this->PushFont(Font::Main);     ImGui::PushStyleColor(ImGuiCol_Text, app::DEF_APPLE_BLUE);
+            ImGui::SeparatorText(text);
+        ImGui::PopStyleColor();         this->PopFont();
+    }
+    
+    //  "DisabledSeparatorText"
+    inline void                         DisabledSeparatorText       (const char * text) noexcept {
+        ImGui::PushStyleColor( ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled) );
+            ImGui::SeparatorText(text);
+        ImGui::PopStyleColor();
+    }
+
+
     //  "label"
     inline void                         label                       (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
     { utl::LeftLabel(text, l_width, w_width); ImGui::SameLine(); };
