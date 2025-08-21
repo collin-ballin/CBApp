@@ -99,7 +99,14 @@ void Editor::_dispatch_resident_draw_fn(Resident idx)
     
         case Resident::Shape :                      //  3.  SHAPE-TOOL OVERLAY.
         { entry.cfg.draw_fn   = [this]{ _draw_shape_resident(); };          break;      }
-            
+    //
+    //
+    //
+        case Resident::UITraits :                   //  4.  UI-TRAITS OVERLAY
+        { entry.cfg.draw_fn   = [this]{ _draw_ui_traits_resident(); };      break;      }
+    //
+    //
+    //
         default :                                   //  DEFAULT :  Failure.
         { IM_ASSERT(true && "Unknown resident index"); }
     }

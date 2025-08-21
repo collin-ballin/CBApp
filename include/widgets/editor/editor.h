@@ -244,8 +244,8 @@ public:
         {   0,                                  //  ID.
             nullptr,                            //  Reference.
             {   /*  locked      */  false,
-                /*  placement   */  OverlayPlacement::CanvasBL,
-                /*  src_anchor  */  Anchor::SouthWest,
+                /*  placement   */  OverlayPlacement::CanvasTL,
+                /*  src_anchor  */  Anchor::NorthWest,
                 /*  offscreen   */  OffscreenPolicy::Clamp,
                 /*  anchor_px   */  ImVec2{ 8,      8 },                //  nudge below bbox
                 /*  anchor_ws   */  ImVec2{ 0,      0 },                //  ws anchor filled each frame
@@ -290,7 +290,30 @@ public:
                 /*  alpha       */  0.65f,
                 /*  background  */  0xFF000000
             }
+        },
+    //
+    //
+    //
+    //  ** UI-RESIDENTIAL OVERLAY WINDOWS **...
+        //  UITraits:
+        {   0,                                  //  ID.
+            nullptr,                            //  Reference.
+            {   /*  locked      */  false,
+                /*  placement   */  OverlayPlacement::CanvasBL,
+                /*  src_anchor  */  Anchor::SouthWest,
+                /*  offscreen   */  OffscreenPolicy::Clamp,
+                /*  anchor_px   */  ImVec2{ 8,      8 },                //  nudge below bbox
+                /*  anchor_ws   */  ImVec2{ 0,      0 },                //  ws anchor filled each frame
+                /*  draw_fn     */  {   }                               // draw_fn patched in ctor
+            },
+            {//     STYLE...
+                /*  alpha       */  0.80f,
+                /*  background  */  0x00000000
+            }
         }
+    //
+    //
+    //
     } };
 //
 //
@@ -509,6 +532,9 @@ protected:
     void                                    _draw_shape_resident_custom         (void);
     void                                    _draw_shape_resident_multi          (void);
     void                                    _draw_shape_resident_default        (void);
+    //
+    //                              UI-TOOLS RESIDENTS:
+    void                                    _draw_ui_traits_resident        (void);
     
     // *************************************************************************** //
     //

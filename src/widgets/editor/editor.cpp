@@ -827,21 +827,27 @@ inline void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
 //
 inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
 {
-    [[maybe_unused]] ImGuiIO &      io      = ImGui::GetIO();
-    EditorState &                   ES      = this->m_editor_S;
+    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO();
+    EditorState &                   ES                  = this->m_editor_S;
     
     //  RESIDENTIAL WINDOWS...
     //
-    static bool             debug_overlay_cache     = !ES.m_show_debug_overlay;                      //  1.  Debugger/Info Overlay.
-    static auto &           debugger_entry          = m_residents[Resident::Debugger];
-    static Overlay &        debugger_resident       = *m_overlays.lookup_resident(debugger_entry.id);
+    static bool             debug_overlay_cache         = !ES.m_show_debug_overlay;                         //  1.  Debugger/Info Overlay.
+    static auto &           debugger_entry              = m_residents[Resident::Debugger];
+    static Overlay &        debugger_resident           = *m_overlays.lookup_resident(debugger_entry.id);
     //
-    static bool             sel_overlay_cache       = !ES.m_show_sel_overlay;                        //  2.  Selection Overlay.
-    static auto &           selection_entry         = m_residents[Resident::Selection];
-    static Overlay &        selection_resident      = *m_overlays.lookup_resident(selection_entry.id);
+    static bool             sel_overlay_cache           = !ES.m_show_sel_overlay;                           //  2.  Selection Overlay.
+    static auto &           selection_entry             = m_residents[Resident::Selection];
+    static Overlay &        selection_resident          = *m_overlays.lookup_resident(selection_entry.id);
     //
-    static auto &           shape_entry             = m_residents[Resident::Shape];                     //  3.  Shape Resident.
-    static Overlay &        shape_resident          = *m_overlays.lookup_resident(shape_entry.id);
+    static auto &           shape_entry                 = m_residents[Resident::Shape];                     //  3.  Shape Resident.
+    static Overlay &        shape_resident              = *m_overlays.lookup_resident(shape_entry.id);
+    //
+    //
+    //                  UI-RESIDENT OVERLAYS:
+    static bool             ui_traits_overlay_cache     = !ES.m_show_debug_overlay;                         //  4.  UI-Traits Resident.
+    static auto &           ui_traits_entry             = m_residents[Resident::UITraits];
+    static Overlay &        ui_trait_resident           = *m_overlays.lookup_resident(ui_traits_entry.id);
 
     
     
@@ -865,9 +871,16 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
     }
     
     
-    
     //      3.      UPDATE "SHAPE" OVERLAY...
     shape_resident.visible              = ( m_mode == Mode::Shape );                //  Leaving the Shape-Tool closes the overlay window.
+    
+    
+    
+    //      4.      UPDATE "UI-TRAITS" OVERLAY...
+    if ( ES.m_show_ui_traits_overlay != ui_traits_overlay_cache ) [[unlikely]] {
+        ui_traits_overlay_cache         = ES.m_show_ui_traits_overlay;
+        ui_trait_resident.visible       = ES.m_show_ui_traits_overlay;
+    }
     
     
     
@@ -875,6 +888,7 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
     //
     ImVec2 bb_min = ImGui::GetItemRectMin();   // full ImPlot widget (axes included)
     ImVec2 bb_max = ImGui::GetItemRectMax();
+    //
     m_overlays.Begin(
         /* world→pixel */ [this](ImVec2 ws){ return world_to_pixels(ws); },
         /* cursor      */ ImGui::GetIO().MousePos,

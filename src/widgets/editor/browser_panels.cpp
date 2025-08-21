@@ -40,7 +40,7 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx)
     //
     //
     BrowserStyle &                      BStyle                  = this->m_style.browser_style;
-    EditorState &                       EState                  = m_editor_S;
+    //  EditorState &                       EState                  = m_editor_S;
     BrowserState &                      BState                  = m_browser_S;
     //
     static char                         title                   [ BUFFER_SIZE ];   // safe head-room

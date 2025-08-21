@@ -798,7 +798,13 @@ struct Clipboard_t {
 //      Enums for each RESIDENT that will be default-assigned in the Editor class.
 //
 enum Resident: uint8_t {
-    Debugger, Selection, Shape, COUNT
+    Debugger = 0,
+    Selection,
+    Shape,
+//
+    UITraits,
+//
+    COUNT
 };
 
 
@@ -806,23 +812,27 @@ enum Resident: uint8_t {
 //      Defiled in the order of unit circle angles (0deg = +x-axis) and DEFAULT = 0 = CENTER.
 //
 enum class BBoxAnchor : uint8_t {
-    Center, East, NorthEast, North, NorthWest, West, SouthWest, South, SouthEast, COUNT
+    Center = 0,
+    East, NorthEast, North, NorthWest, West, SouthWest, South, SouthEast,
+//
+    COUNT
 };
 
 
 //  "OverlayAnchor"
 //
 enum class OverlayAnchor : uint8_t {
-    World,      // anchor_ws interpreted in world-space → converts via world_to_pixels()
-    Screen,     // anchor_ws is absolute screen coords (pixels)
-    Cursor      // anchor_ws is Δ offset from current cursor (pixels)
+    World = 0,      // anchor_ws interpreted in world-space → converts via world_to_pixels()
+    Screen,         // anchor_ws is absolute screen coords (pixels)
+    Cursor,         // anchor_ws is Δ offset from current cursor (pixels)
+    COUNT
 };
 
 
 //  "OffscreenPolicy"
 //
 enum class OffscreenPolicy : uint8_t {
-    Hide,                // Overlay vanishes when anchor is outside canvas
+    Hide = 0,           // Overlay vanishes when anchor is outside canvas
     Clamp,              //  Overlay clamps to nearest edge (old behaviour)
     COUNT
 };
@@ -831,7 +841,7 @@ enum class OffscreenPolicy : uint8_t {
 //  "OverlayPlacement"
 //
 enum class OverlayPlacement : uint8_t {
-    Custom,             // anchor_px    = screen position (px)
+    Custom = 0,         // anchor_px    = screen position (px)
     Cursor,             // anchor_px    = offset  (px)
     World,              // anchor_ws    = world‑space point
 //
@@ -1059,7 +1069,7 @@ struct EditorState_t
     //                              OVERALL STATE / ENABLED BEHAVIORS:
     bool                                m_show_grid                     = true;
     bool                                m_show_debug_overlay            = true;     //  Persistent/Resident Overlays.
-    bool                                m_show_vertex_browser           = false;
+    bool                                m_show_ui_traits_overlay        = true;     //  Persistent/Resident Overlays.
     //
     //
     //

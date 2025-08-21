@@ -465,6 +465,42 @@ void Editor::_draw_shape_resident_custom(void)
 
 
 // *************************************************************************** //
+//          4.4.    UI-TRAITS OVERLAY...
+// *************************************************************************** //
+
+//  "_draw_ui_traits_resident"
+//
+void Editor::_draw_ui_traits_resident(void)
+{
+    BrowserStyle &      BStyle      = this->m_style.browser_style;
+    
+    
+    this->S.PushFont(Font::FootNote);
+    //
+    //
+        ImGui::SeparatorText("Traits");
+        
+        ImGui::BeginChild("##UITraits_Inspector",    {-1.0f, 0.0f},     BStyle.STATIC_CHILD_FLAGS);
+            _dispatch_trait_inspector();
+        ImGui::EndChild();
+    //
+    //
+    this->S.PopFont();
+    
+    
+    
+    return;
+}
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
 //
 //
 //
