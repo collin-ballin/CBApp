@@ -193,6 +193,7 @@ public:
     // *************************************************************************** //
     //                              ARRAYS:
     static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;
+    static constexpr auto &             ms_MODE_CAPABILITIES            = DEF_MODE_CAPABILITIES;
     static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES;
     //
     static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
@@ -580,6 +581,9 @@ protected:
     //
     //                              SELECTION BEHAVIOR STUFF:
     void                                _selection_handle_shortcuts         ([[maybe_unused]] const Interaction & );
+    inline void                             _selection_read_only_shortcuts      ([[maybe_unused]] const Interaction & );
+    inline void                             _selection_mutable_shortcuts        ([[maybe_unused]] const Interaction & );
+    inline void                             _selection_advanced_shortcuts       ([[maybe_unused]] const Interaction & );
     
     // *************************************************************************** //
     //
@@ -1101,7 +1105,7 @@ protected:
 
     //  "_mode_has"
     inline bool                         _mode_has                           (CBCapabilityFlags flag) const
-    { return (MODE_CAPS[static_cast<size_t>(m_mode)] & flag) != 0; }
+    { return ( this->ms_MODE_CAPABILITIES[ static_cast<size_t>(m_mode) ] & flag) != 0; }
 
     //  "_toggle_resident_overlay"
     inline void                         _toggle_resident_overlay            (const Resident idx) {

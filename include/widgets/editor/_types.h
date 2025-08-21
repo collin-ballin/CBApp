@@ -107,39 +107,57 @@ static constexpr std::array<const char *, static_cast<size_t>(Mode::COUNT)>
 
 
 
+
+
+
 //  "Capability"
-//      Global capability flags (extensible)
-//      Camera / editor feature toggles, ImGui-style
+//      -Bitfield that defines what behaviors/capabilities each Editor State (Mode) has.
 //
-enum CBCapabilityFlags_ : uint16_t {
-    CBCapabilityFlags_None              = 0,            // no special behaviour
+enum CBCapabilityFlags_ : uint64_t {
+    CBCapabilityFlags_None                      = 0,                    //  No special behaviours...
 //
-    CBCapabilityFlags_Pan               = 1 << 0,       // Space + drag navigation
-    CBCapabilityFlags_Zoom              = 1 << 1,       // mouse-wheel magnification
-    CBCapabilityFlags_Select            = 1 << 2,       // click / lasso / move-drag
-    CBCapabilityFlags_CursorHint        = 1 << 3,       // hand or resize cursor
+    CBCapabilityFlags_Pan                       = 1u << 0,              //  Space + drag navigation
+    CBCapabilityFlags_Zoom                      = 1u << 1,              //  mouse-wheel magnification
+    CBCapabilityFlags_Select                    = 1u << 2,              //  click / lasso / move-drag
+    CBCapabilityFlags_CursorHint                = 1u << 3,              //  hand or resize cursor
+    CBCapabilityFlags_EnableMutableHotkeys      = 1u << 4,              //  Disables hotkeys that alter objects (like [ DEL ]).
+    CBCapabilityFlags_EnableAdvancedHotkeys     = 1u << 5,              //  Enable EXTRA hotkeys (CMD+J to join, etc)
 //
-    CBCapabilityFlags_Navigation        = CBCapabilityFlags_Pan | CBCapabilityFlags_Zoom,
 //
-    CBCapabilityFlags_Count                             // helper: number of bits
+    CBCapabilityFlags_COUNT,                                            //  helper: number of bits
+//
+//
+//
+//  GROUPS OF FLAGS...
+    CBCapabilityFlags_Navigation                = CBCapabilityFlags_Pan | CBCapabilityFlags_Zoom,
+//
+//
+//  PRESETS...
+    CBCapabilityFlags_ReadOnly                  = CBCapabilityFlags_Navigation,
+//
+    CBCapabilityFlags_Plain                     = CBCapabilityFlags_Navigation,
+    CBCapabilityFlags_Default                   = CBCapabilityFlags_Plain | CBCapabilityFlags_CursorHint,
+    CBCapabilityFlags_More                      = CBCapabilityFlags_Default | CBCapabilityFlags_Select | CBCapabilityFlags_EnableMutableHotkeys,
+//
+    CBCapabilityFlags_All                       = CBCapabilityFlags_More | CBCapabilityFlags_EnableAdvancedHotkeys
 };
 //
 //
 //
 //
 //  Per‑mode capability mask
-static constexpr std::array<uint16_t, static_cast<size_t>(Mode::COUNT)>
-MODE_CAPS               = {
-/*  Default         */      CBCapabilityFlags_Navigation | CBCapabilityFlags_Select | CBCapabilityFlags_CursorHint,
-/*  Hand            */      CBCapabilityFlags_Navigation,
-/*  Line            */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
-/*  Point           */      CBCapabilityFlags_Navigation | CBCapabilityFlags_Select | CBCapabilityFlags_CursorHint,
-/*  Pen             */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
-/*  Scissor         */      CBCapabilityFlags_Navigation | CBCapabilityFlags_None,
-/*  Shape           */      CBCapabilityFlags_Navigation | CBCapabilityFlags_None,
-/*  AddAnchor       */      CBCapabilityFlags_None,
-/*  RemoveAnchor    */      CBCapabilityFlags_None,
-/*  EditAnchor      */      CBCapabilityFlags_Navigation
+static constexpr std::array< std::underlying_type_t<CBCapabilityFlags_>, static_cast<size_t>(Mode::COUNT)>
+DEF_MODE_CAPABILITIES       = {
+/*  Default             */      CBCapabilityFlags_All,
+/*  Hand                */      CBCapabilityFlags_ReadOnly,
+/*  Line                */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
+/*  Point               */      CBCapabilityFlags_Navigation | CBCapabilityFlags_Select | CBCapabilityFlags_CursorHint,
+/*  Pen Tool,           */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
+/*  Scisssor Tool       */      CBCapabilityFlags_Plain,
+/*  Shape               */      CBCapabilityFlags_Plain,
+/*  Add Anchor          */      CBCapabilityFlags_Plain,
+/*  Remove Anchor       */      CBCapabilityFlags_Plain,
+/*  Edit Anchor         */      CBCapabilityFlags_Plain
 };
 
 
