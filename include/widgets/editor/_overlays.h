@@ -87,6 +87,7 @@ class OverlayManager {
 public:
         using                   OverlayID                       = uint32_t;
         using                   Overlay                         = Overlay_t<OverlayID>;
+        using                   OverlayInfo                     = Overlay::OverlayInfo;
         using                   Anchor                          = BBoxAnchor;
 //
 //      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
@@ -107,6 +108,7 @@ public:
     Overlay *               resident                (OverlayID id);
     OverlayID               add_resident            (const OverlayCFG & cfg);
     OverlayID               add_resident            (const OverlayCFG &, const OverlayStyle &);
+    OverlayID               add_resident            (const OverlayCFG &, const OverlayStyle &, const OverlayInfo &);
     
     
 
@@ -120,7 +122,7 @@ public:
     //  "lookup"
     Overlay *               lookup                  (OverlayID id) {
         for (auto& ov : m_windows)
-            if (ov.id == id)
+            if (ov.info.id == id)
                 return &ov;
         return nullptr;                               // not found
     }
@@ -128,7 +130,7 @@ public:
     //  "lookup_resident"
     Overlay *               lookup_resident         (OverlayID id) {
         for (auto& ov : m_residents)
-            if (ov.id == id)
+            if (ov.info.id == id)
                 return &ov;
         return nullptr;                               // not found
     }
@@ -145,8 +147,9 @@ public:
     //  "get_resident"
     inline Overlay *        get_resident            (OverlayID id)
     {
-        for (auto & ov : m_residents)
-            if (ov.id == id) return std::addressof( ov );
+        for (auto & ov : m_residents) {
+            if (ov.info.id == id)   { return std::addressof( ov ); }
+        }
             
         IM_ASSERT(false && "get_resident: id not found");           // debug-time catch
         return std::addressof( m_residents.front() );                // fallback (never hit in release)
@@ -200,7 +203,7 @@ protected:
 // *************************************************************************** //
 // *************************************************************************** //
 private:
-    OverlayID                   m_next_id           {1};
+    OverlayID                   m_next_id           { 1 };
     //
     std::vector<Overlay>        m_windows;                  // dynamic overlays (current m_windows)
     std::vector<Overlay>        m_residents;                 // resident overlays never erased; their `visible` flag is toggled

@@ -65,7 +65,7 @@ void Editor::_handle_shape([[maybe_unused]] const Interaction & it)
     
     
     // ── 0. Spawn overlay the first frame Shape mode is active ───────────
-    resident->visible                   = true;
+    resident->info.visible              = true;
     
 
     _draw_shape_cursor(it);        // custom cursor hint

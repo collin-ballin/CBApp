@@ -473,12 +473,27 @@ void Editor::_draw_shape_resident_custom(void)
 void Editor::_draw_ui_traits_resident(void)
 {
     BrowserStyle &      BStyle      = this->m_style.browser_style;
+    int                 trait_i     = static_cast<int>( this->m_trait );
     
     
     this->S.PushFont(Font::FootNote);
     //
     //
-        ImGui::SeparatorText("Traits");
+        ImGui::BeginDisabled(true);
+            ImGui::SeparatorText("Traits");
+        ImGui::EndDisabled();
+        
+        
+        ImGui::SetNextItemWidth( FLT_MAX );
+        if ( ImGui::Combo("##UITraits_TraitSelector",           &trait_i,
+                          ms_OBJECT_TRAIT_NAMES.data(),         static_cast<int>(ObjectTrait::COUNT)) )
+        {
+            m_trait = static_cast<ObjectTrait>(trait_i);
+        }
+        
+        
+        
+        
         
         ImGui::BeginChild("##UITraits_Inspector",    {-1.0f, 0.0f},     BStyle.STATIC_CHILD_FLAGS);
             _dispatch_trait_inspector();

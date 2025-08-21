@@ -853,17 +853,17 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
     
     //      1.      UPDATE "DEBUGGER" OVERLAY...
     if ( ES.m_show_debug_overlay != debug_overlay_cache ) [[unlikely]] {
-        debug_overlay_cache             = ES.m_show_debug_overlay;
-        debugger_resident.visible       = ES.m_show_debug_overlay;
+        debug_overlay_cache                 = ES.m_show_debug_overlay;
+        debugger_resident.info.visible      = ES.m_show_debug_overlay;
     }
     
 
     //      2.      UPDATE SELECTION OVERLAY...
     if ( ES.m_show_sel_overlay != sel_overlay_cache ) [[unlikely]] {
-        sel_overlay_cache               = ES.m_show_sel_overlay;
-        selection_resident.visible      = ES.m_show_sel_overlay;
+        sel_overlay_cache                   = ES.m_show_sel_overlay;
+        selection_resident.info.visible     = ES.m_show_sel_overlay;
     }
-    if (selection_resident.visible) {
+    if (selection_resident.info.visible) {
         ImVec2 tl, br;
         if ( _selection_bounds(tl, br) ) {
             selection_resident.cfg.anchor_ws = { (tl.x + br.x) * 0.5f, tl.y }; // bottom-centre in world
@@ -872,14 +872,14 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
     
     
     //      3.      UPDATE "SHAPE" OVERLAY...
-    shape_resident.visible              = ( m_mode == Mode::Shape );                //  Leaving the Shape-Tool closes the overlay window.
+    shape_resident.info.visible              = ( m_mode == Mode::Shape );                //  Leaving the Shape-Tool closes the overlay window.
     
     
     
     //      4.      UPDATE "UI-TRAITS" OVERLAY...
     if ( ES.m_show_ui_traits_overlay != ui_traits_overlay_cache ) [[unlikely]] {
-        ui_traits_overlay_cache         = ES.m_show_ui_traits_overlay;
-        ui_trait_resident.visible       = ES.m_show_ui_traits_overlay;
+        ui_traits_overlay_cache             = ES.m_show_ui_traits_overlay;
+        ui_trait_resident.info.visible      = ES.m_show_ui_traits_overlay;
     }
     
     

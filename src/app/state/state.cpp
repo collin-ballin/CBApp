@@ -38,12 +38,12 @@ AppState::AppState(void)
 
     //  1.      INITIALIZE WINDOW INFOS...
     for (i = 0; i < static_cast<size_t>(Window_t::Count); ++i) {
-        m_windows.data[i] = APPLICATION_WINDOW_INFOS[i];
+        m_windows.m_data[i]     = APPLICATION_WINDOW_INFOS[i];
     }
     
     //  2.      INITIALIZE APPLICATION FONTS...
     for (i = 0; i < static_cast<size_t>(Font::Count); ++i) {
-        m_fonts.data[i] = nullptr;  // load later in your init()
+        m_fonts.m_data[i]   = nullptr;  // load later in your init()
     }
 
 
@@ -405,8 +405,8 @@ void AppState::log_startup_info(void) noexcept
         m_notes[0].first,
         start_time,
         dt,
-        this->m_windows.data.size(),
-        this->m_fonts.data.size()
+        this->m_windows.m_data.size(),
+        this->m_fonts.m_data.size()
     );
     this->m_notes.push_back( std::make_pair(start_time, "Program started ({})") );
     auto                startup_debug_log       = std::format("PROGRAM BOOT DEBUG-INFO...\n"

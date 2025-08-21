@@ -231,9 +231,9 @@ public:
     //                              RESIDENT OVERLAY DATA:
     // *************************************************************************** //
     struct ResidentEntry {
-        OverlayID                   id;         //  runtime ID (filled in ctor)
-        Overlay *                   ptr;        //  Reference.
-        OverlayCFG                  cfg;        //  compile-time defaults
+        OverlayID                   id;             //  runtime ID (filled in ctor)
+        Overlay *                   ptr;            //  Reference.
+        OverlayCFG                  cfg;            //  compile-time defaults
         OverlayStyle                style;
     };
     //
@@ -243,52 +243,54 @@ public:
         //  Debugger:
         {   0,                                  //  ID.
             nullptr,                            //  Reference.
-            {   /*  locked      */  false,
-                /*  placement   */  OverlayPlacement::CanvasTL,
-                /*  src_anchor  */  Anchor::NorthWest,
-                /*  offscreen   */  OffscreenPolicy::Clamp,
-                /*  anchor_px   */  ImVec2{ 8,      8 },                //  nudge below bbox
-                /*  anchor_ws   */  ImVec2{ 0,      0 },                //  ws anchor filled each frame
-                /*  draw_fn     */  {   }                               // draw_fn patched in ctor
+            {   /*  draw_fn         */  {   },                              // "draw_fn" will be dispatched in ctor.
+                /*  locked          */  false,
+            //
+                /*  placement       */  OverlayPlacement::CanvasTL,
+                /*  src_anchor      */  Anchor::NorthWest,
+                /*  offscreen       */  OffscreenPolicy::Clamp,
+                /*  anchor_px       */  ImVec2{ 8,      8 }                 //  nudge below bbox
             },
             {//     STYLE...
-                /*  alpha       */  0.80f,
-                /*  background  */  0x00000000
+                /*  alpha           */  0.80f,
+                /*  background      */  0x00000000,
+                /*  win_rounding    */  8
             }
         },
         //
         //  Selection:
         {   0,                                  //  ID.
             nullptr,                            //  Reference.
-            {   /*  locked      */  true,
-                /*  placement   */  OverlayPlacement::CanvasPoint,
-                /*  src_anchor  */  Anchor::North,
-                /*  offscreen   */  OffscreenPolicy::Hide,
-                /*  anchor_px   */  ImVec2{0,8},                        //  nudge below bbox
-                /*  anchor_ws   */  ImVec2{0,0},                        //  ws anchor filled each frame
-                /*  draw_fn     */  {}                                  // draw_fn patched in ctor
+            {   /*  draw_fn         */  {   },                              // "draw_fn" will be dispatched in ctor.
+                /*  locked          */  true,
+            //
+                /*  placement       */  OverlayPlacement::CanvasPoint,
+                /*  src_anchor      */  Anchor::North,
+                /*  offscreen       */  OffscreenPolicy::Hide,
+                /*  anchor_px       */  ImVec2{0,   8}                      //  Window Offset.
             },
             {//     STYLE...
-                /*  alpha       */  0.95f,
-                /*  background  */  0x00000000
+                /*  alpha           */  0.95f,
+                /*  background      */  0x00000000,
+                /*  win_rounding    */  12
             }
         },
         //
         //  Shape:
         {   0,                                  //  ID.
             nullptr,                            //  Reference.
-            {//     CONFIGURE...
-                /*  locked      */  false,
-                /*  placement   */  OverlayPlacement::CanvasBR,
-                /*  src_anchor  */  Anchor::SouthEast,
-                /*  offscreen   */  OffscreenPolicy::Clamp,
-                /*  anchor_px   */  ImVec2{-30.0f,   45.0f},                 //  nudge below bbox
-                /*  anchor_ws   */  ImVec2{0.0f,    0.0f},                  //  ws anchor filled each frame
-                /*  draw_fn     */  {}                                  // draw_fn patched in ctor
+            {   /*  draw_fn         */  {   },                              // "draw_fn" will be dispatched in ctor.
+                /*  locked          */  true,
+            //
+                /*  placement       */  OverlayPlacement::CanvasBR,
+                /*  src_anchor      */  Anchor::SouthEast,
+                /*  offscreen       */  OffscreenPolicy::Clamp,
+                /*  anchor_px       */  ImVec2{-30.0f,   45.0f}             //  Window Offset.
             },
             {//     STYLE...
-                /*  alpha       */  0.65f,
-                /*  background  */  0xFF000000
+                /*  alpha           */  0.65f,
+                /*  background      */  0xFF000000,
+                /*  win_rounding    */  5
             }
         },
     //
@@ -298,17 +300,23 @@ public:
         //  UITraits:
         {   0,                                  //  ID.
             nullptr,                            //  Reference.
-            {   /*  locked      */  false,
-                /*  placement   */  OverlayPlacement::CanvasBL,
-                /*  src_anchor  */  Anchor::SouthWest,
-                /*  offscreen   */  OffscreenPolicy::Clamp,
-                /*  anchor_px   */  ImVec2{ 8,      8 },                //  nudge below bbox
-                /*  anchor_ws   */  ImVec2{ 0,      0 },                //  ws anchor filled each frame
-                /*  draw_fn     */  {   }                               // draw_fn patched in ctor
+            {   /*  draw_fn         */  {   },                              // "draw_fn" will be dispatched in ctor.
+                /*  locked          */  false,
+            //
+                /*  placement       */  OverlayPlacement::CanvasTR,
+                /*  src_anchor      */  Anchor::NorthEast,
+                /*  offscreen       */  OffscreenPolicy::Clamp,
+                /*  anchor_px       */  ImVec2{ 8,      8 },                //  Offset Position.
+            //
+            //
+                /*  anchor_ws       */  ImVec2{ 0,      0 }                 //  ws anchor filled each frame
             },
             {//     STYLE...
-                /*  alpha       */  0.80f,
-                /*  background  */  0x00000000
+                /*  alpha           */  0.80f,
+                /*  background      */  0x00000000,
+                /*  win_rounding    */  8,
+            //
+                /*  window_size     */  {       {     { 275.0f,      550.0f },      { { 100.0f,        50.0f },     { 375.0f,       750.0f } }   }      }
             }
         }
     //
@@ -1135,14 +1143,16 @@ protected:
 
     //  "_toggle_resident_overlay"
     inline void                         _toggle_resident_overlay            (const Resident idx) {
-        auto & entry = m_residents[idx];    Overlay * ov = entry.ptr;
-        ov->visible = !ov->visible;         return;
+        auto & entry        = m_residents[idx];    Overlay * ov = entry.ptr;
+        ov->info.visible    = !ov->info.visible;
+        return;
     }
 
     //  "_set_resident_visibility"
     inline void                         _set_resident_visibility            (const Resident idx, const bool vis) {
-        auto & entry = m_residents[idx];    Overlay * ov = entry.ptr;
-        ov->visible = vis;                  return;
+        auto & entry        = m_residents[idx];    Overlay * ov = entry.ptr;
+        ov->info.visible    = vis;
+        return;
     }
     
     

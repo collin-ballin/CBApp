@@ -51,10 +51,31 @@ inline constexpr std::size_t        enum_count_v            = [](void) consteval
 //
 template<typename E, typename T, std::size_t N = enum_count_v<E>>
 requires std::is_enum_v<E>
-struct EnumArray {
-    std::array<T, N> data{};
-    T&       operator[](E e)       noexcept { return data[static_cast<std::size_t>(e)]; }
-    const T& operator[](E e) const noexcept { return data[static_cast<std::size_t>(e)]; }
+struct EnumArray
+{
+    using                   array_type                                      = std::array<T, N>;
+    using                   size_type                                       = array_type::size_type;
+//
+//
+//                      DATA MEMBERS:
+    std::array<T, N>        m_data                                          = {   };
+//
+//
+//
+//                      OVERLOADED OPERATORS:
+    T &                     operator [ ]        (E e)       noexcept        { return m_data[ static_cast<std::size_t>(e) ];     }
+    const T &               operator [ ]        (E e) const noexcept        { return m_data[ static_cast<std::size_t>(e) ];     }
+//
+//
+//
+//                      MEMBER FUNCTIONS:
+    inline T *              data                (void) noexcept             { return this->m_data.data(); }
+    inline const T *        data                (void) const noexcept       { return this->m_data.data(); }
+//
+    size_type               size                (void) const noexcept       { return this->m_data.size(); }
+    
+    
+    
 };
 
 /*template<typename E, typename T, std::size_t N = static_cast<std::size_t>(E::Count)>    //  We may need to change from (E::Count) to (E::COUNT)  //

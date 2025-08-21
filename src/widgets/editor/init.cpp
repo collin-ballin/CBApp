@@ -92,18 +92,19 @@ void Editor::_dispatch_resident_draw_fn(Resident idx)
     switch (idx)
     {
         case Resident::Debugger :                   //  1.  DEBUGGER-TOOL OVERLAY.
-        { entry.cfg.draw_fn   = [this]{ _draw_debugger_resident(); };       break;      }
+        { entry.cfg.draw_fn         = [this]{ _draw_debugger_resident(); };         break;      }
         
         case Resident::Selection :                  //  2.  SELECTION OVERLAY.
-        { entry.cfg.draw_fn   = [this]{ _draw_selection_resident(); };      break;      }
+        { entry.cfg.draw_fn         = [this]{ _draw_selection_resident(); };        break;      }
     
         case Resident::Shape :                      //  3.  SHAPE-TOOL OVERLAY.
-        { entry.cfg.draw_fn   = [this]{ _draw_shape_resident(); };          break;      }
+        { entry.cfg.draw_fn         = [this]{ _draw_shape_resident(); };            break;      }
     //
     //
     //
-        case Resident::UITraits :                   //  4.  UI-TRAITS OVERLAY
-        { entry.cfg.draw_fn   = [this]{ _draw_ui_traits_resident(); };      break;      }
+    //      4.      UI-TRAITS OVERLAY
+        case Resident::UITraits :
+        { entry.cfg.draw_fn         = [this]{ _draw_ui_traits_resident(); };        break;      }
     //
     //
     //
@@ -114,6 +115,11 @@ void Editor::_dispatch_resident_draw_fn(Resident idx)
 
     entry.id    = m_overlays.add_resident(entry.cfg, entry.style);
     entry.ptr   = m_overlays.get_resident(entry.id);   // now safe
+    
+    
+    //  IF ANY ADDITIONAL FLAGS SET, FLIP THEIR VALUE IN THE OVERLAY...
+        
+        
     return;
 }
 

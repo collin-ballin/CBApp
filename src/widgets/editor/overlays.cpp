@@ -27,12 +27,14 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //
 OverlayManager::OverlayID OverlayManager::create_overlay(const OverlayCFG & cfg)
 {
-    if (!cfg.draw_fn) return 0;             // guard against empty callback
-    Overlay ov;
-    ov.id  = m_next_id++;
-    ov.cfg = std::move(cfg);                // move preserves draw_fn
-    m_windows.push_back(std::move(ov));
-    return m_windows.back().id;
+    if ( !cfg.draw_fn )     { return 0; }             //    guard against empty callback
+    Overlay     ov;
+    
+    ov.info.id      = m_next_id++;
+    ov.cfg          = std::move( cfg );                //  move preserves draw_fn
+    m_windows.push_back( std::move(ov) );
+    
+    return m_windows.back().info.id;
 }
 
 
@@ -41,7 +43,7 @@ OverlayManager::OverlayID OverlayManager::create_overlay(const OverlayCFG & cfg)
 void OverlayManager::destroy_overlay(OverlayID id)
 {
     m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(),
-                                   [id](const Overlay& o){ return o.id == id; }),
+                                   [id](const Overlay& o){ return o.info.id == id; }),
                     m_windows.end());
 }
 
@@ -50,30 +52,51 @@ void OverlayManager::destroy_overlay(OverlayID id)
 //
 OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG & cfg)
 {
-    Overlay ov;
-    ov.id  = m_next_id++;
-    ov.cfg = cfg;
+    Overlay             ov;
+    ov.info.id          = m_next_id++;
+    ov.cfg              = cfg;
     m_residents.push_back(std::move(ov));
-    return m_residents.back().id;
+    return m_residents.back().info.id;
 }
 
 //  "add_resident"
 OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG & cfg, const OverlayStyle & style) {
-    Overlay ov;
-    ov.id       = m_next_id++;
-    ov.cfg      = cfg;
-    ov.style    = style;
-    m_residents.push_back(std::move(ov));
-    return m_residents.back().id;
+    Overlay             ov;
+    
+    ov.info.id          = m_next_id++;
+    ov.cfg              = cfg;
+    ov.style            = style;
+    
+    m_residents.push_back( std::move(ov) );
+    return m_residents.back().info.id;
 }
+
+//  "add_resident"
+//  OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG & cfg, const OverlayStyle & style, const OverlayInfo & info) {
+//      Overlay             ov;
+//
+//      ov.info             = info;
+//      ov.info.id          = m_next_id++;
+//
+//      ov.cfg              = cfg;
+//      ov.style            = style;
+//      m_residents.push_back( std::move(ov) );
+//
+//      return m_residents.back().info.id;
+//  }
+
+
+    
 
 
 //  "resident"
 //
 OverlayManager::Overlay * OverlayManager::resident(OverlayID id)
 {
-    for (auto& ov : m_residents)
-        if (ov.id == id) return &ov;
+    for ( auto & ov : m_residents ) {
+        if (ov.info.id == id)   { return &ov; }
+    }
+    
     return nullptr;
 }
 
@@ -92,18 +115,26 @@ OverlayManager::Overlay * OverlayManager::resident(OverlayID id)
 void OverlayManager::Begin(const std::function<ImVec2(ImVec2)> & world_to_px, ImVec2 cursor_px, const ImRect & plot_rect)
 {
     // ---------- render always-present overlays ----------
-    for (auto& ov : m_residents)
-        if (ov.visible && ov.cfg.draw_fn)
+    for (auto & ov : m_residents)
+    {
+        if (ov.info.visible && ov.cfg.draw_fn) {
             _render_overlay(ov, world_to_px, cursor_px, plot_rect);
+        }
+    }
 
     // ---------- render & purge dynamic overlays ----------
-    for (auto& ov : m_windows)
-        if (ov.visible && ov.cfg.draw_fn)
+    for (auto & ov : m_windows)
+    {
+        if (ov.info.visible && ov.cfg.draw_fn) {
             _render_overlay(ov, world_to_px, cursor_px, plot_rect);
+        }
+    }
 
     m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(),
-                    [](const Overlay& o){ return !o.visible; }),
+                    [](const Overlay& o){ return !o.info.visible; }),
                     m_windows.end());
+                    
+    return;
 }
 
 
@@ -124,12 +155,14 @@ void OverlayManager::Begin(const std::function<ImVec2(ImVec2)> & world_to_px, Im
 
 //  "_draw_context_menu"
 //
-void OverlayManager::_draw_context_menu(Overlay& ov)
+void OverlayManager::_draw_context_menu(Overlay & ov)
 {
     const bool  canvas_anchor       = ov.cfg.placement != OverlayPlacement::Custom &&
                                       ov.cfg.placement != OverlayPlacement::Cursor &&
                                       ov.cfg.placement != OverlayPlacement::World;
-             
+    const bool  canvas_point        = (ov.cfg.placement == OverlayPlacement::CanvasPoint);
+    const bool  can_resize          = ov.style.window_size.has_value();
+    
     //  "emit_item"
     auto        emit_item           = [&](const char * label, OverlayPlacement p) {
         bool sel = (ov.cfg.placement == p);
@@ -155,14 +188,16 @@ void OverlayManager::_draw_context_menu(Overlay& ov)
     // Open when user right–clicks anywhere on the overlay window
     if ( ImGui::BeginPopupContextWindow() )
     {
-        ImGui::SeparatorText("Overlay Window Settings");
+        ImGui::BeginDisabled(true);
+            ImGui::SeparatorText("Overlay Window Settings");
+        ImGui::EndDisabled();
         
         
         
         
         ImGui::TextDisabled("State");
 
-        //  1.  DESTINATION ANCHOR...
+        //      1.      DESTINATION ANCHOR...
         if ( ImGui::BeginMenu("Destination Anchor") )
         {
             ImGui::TextDisabled("World");
@@ -182,7 +217,7 @@ void OverlayManager::_draw_context_menu(Overlay& ov)
             ImGui::EndMenu();
         }
         
-        //  2.  SOURCE ANCHOR...
+        //      2.      SOURCE ANCHOR...
         if ( ImGui::BeginMenu("Source Anchor") )
         {
             emit_anchor("Center",               Anchor::Center);
@@ -197,7 +232,7 @@ void OverlayManager::_draw_context_menu(Overlay& ov)
             ImGui::EndMenu();
         }
         
-        //  3.  OFFSCREEN POLICY...
+        //      3.      OFFSCREEN POLICY...
         if ( ImGui::BeginMenu("Offscreen Policy") )
         {
             emit_offscreen("Hide",              OffscreenPolicy::Hide);
@@ -206,39 +241,90 @@ void OverlayManager::_draw_context_menu(Overlay& ov)
         }
         
         
-        //  4.  OFFSET POINT...
+        //      4.      WINDOW POSITIONING...
         ImGui::Separator();
-        ImGui::TextDisabled("Position");
-        
-        
-        if ( canvas_anchor) {
-            if ( ImGui::BeginMenu("Offset") ) {
-                utl::LeftLabelSimple("X:");
-                ImGui::SliderFloat("##OverlayManager_CanvasOffsetX",     &ov.cfg.anchor_px.x,    -100,   100,    "%.0f");
-                //
-                utl::LeftLabelSimple("Y:");
-                ImGui::SliderFloat("##OverlayManager_CanvasOffsetY",     &ov.cfg.anchor_px.y,    -100,   100,    "%.0f");
-                ImGui::EndMenu();
+        if ( canvas_anchor || canvas_point )
+        {
+        //
+        //
+            ImGui::TextDisabled("Position");
+            
+            
+            //      4A.     ...
+            if ( canvas_anchor)
+            {
+                if ( ImGui::BeginMenu("Offset") ) {
+                    utl::LeftLabelSimple("X:");
+                    ImGui::SliderFloat("##OverlayManager_CanvasOffsetX",     &ov.cfg.anchor_px.x,    -100,   100,    "%.0f");
+                    //
+                    utl::LeftLabelSimple("Y:");
+                    ImGui::SliderFloat("##OverlayManager_CanvasOffsetY",     &ov.cfg.anchor_px.y,    -100,   100,    "%.0f");
+                    ImGui::EndMenu();
+                }
             }
+            
+            
+            //      4B.     CANVAS POINT ADJUSTMENT... (only when placement == CanvasPoint)...
+            if ( canvas_point )
+            {
+                if ( ImGui::BeginMenu("Canvas Point") ) {
+                    ImGui::SeparatorText("Canvas Position");
+                    utl::LeftLabelSimple("X:");
+                    ImGui::SliderFloat("##OverlayManager_CanvasCoordX",     &ov.cfg.anchor_ws.x,    -25e2,   5e3,    "%.1f");
+                    //
+                    utl::LeftLabelSimple("Y:");
+                    ImGui::SliderFloat("##OverlayManager_CanvasCoordY",     &ov.cfg.anchor_ws.y,    -25e2,   5e3,    "%.1f");
+                ImGui::EndMenu();
+                }
+            }
+        //
+        //
         }
-        
-        
-        //  5.  CANVAS POINT ADJUSTMENT... (only when placement == CanvasPoint)...
-        if (ov.cfg.placement == OverlayPlacement::CanvasPoint) {
-        
-            if ( ImGui::BeginMenu("Canvas Point") ) {
-                ImGui::SeparatorText("Canvas Position");
+
+
+        //      5.      WINDOW SIZE...
+        ImGui::BeginDisabled( !can_resize );
+        //
+            if ( can_resize && ImGui::BeginMenu("Window Size") )
+            {
+                auto &  size    = *ov.style.window_size;
+                
+                
+                //  Size.
+                ImGui::SeparatorText("Size");
                 utl::LeftLabelSimple("X:");
-                ImGui::SliderFloat("##OverlayManager_CanvasCoordX",     &ov.cfg.anchor_ws.x,    -25e2,   5e3,    "%.1f");
+                ImGui::SliderFloat("##OverlayManager_WindowSizeX",      &size.Value().x,            size.Min().x,       size.Max().x,    "%.1f");
                 //
                 utl::LeftLabelSimple("Y:");
-                ImGui::SliderFloat("##OverlayManager_CanvasCoordY",     &ov.cfg.anchor_ws.y,    -25e2,   5e3,    "%.1f");
+                ImGui::SliderFloat("##OverlayManager_WindowSizeY",      &size.Value().y,            size.Min().y,       size.Max().y,    "%.1f");
+                
+                
+                //  Minimum.
+                //      ImGui::SeparatorText("Minimum Size");
+                //      utl::LeftLabelSimple("X:");
+                //      ImGui::SliderFloat("##OverlayManager_WindowSizeMinX",     &size.Value().x,          size.Min().x,       size.Max().x,    "%.1f");
+                //      //
+                //      utl::LeftLabelSimple("Y:");
+                //      ImGui::SliderFloat("##OverlayManager_WindowSizeMinY",     &size.Value().y,          size.Min().y,       size.Max().y,    "%.1f");
+                
+                
+                //  Maximum.
+                //      ImGui::SeparatorText("Maximum Size");
+                //      utl::LeftLabelSimple("X:");
+                //      ImGui::SliderFloat("##OverlayManager_WindowSizeMaxX",     &size.Value().x,          size.Min().x,       size.Max().x,    "%.1f");
+                //      //
+                //      utl::LeftLabelSimple("Y:");
+                //      ImGui::SliderFloat("##OverlayManager_WindowSizeMaxY",     &size.Value().y,          size.Min().y,       size.Max().y,    "%.1f");
+                
+                
             ImGui::EndMenu();
             }
-        }
+        //
+        ImGui::EndDisabled();
 
 
-        //  6.  TRANSPARENCY / ALPHA SLIDER...
+
+        //      6.      TRANSPARENCY / ALPHA SLIDER...
         utl::LeftLabelSimple("Alpha:");
         ImGui::SliderFloat("##OverlayManager_Alpha", &ov.style.alpha, 0.10f, 1.00f, "%.2f");
         
@@ -255,31 +341,32 @@ void OverlayManager::_draw_context_menu(Overlay& ov)
 //  "_render_overlay"
 //
 void OverlayManager::_render_overlay(
-        Overlay&                                ov,
-        const std::function<ImVec2(ImVec2)>&    world_to_px,
+        Overlay &                               ov,
+        const std::function<ImVec2(ImVec2)> &   world_to_px,
         ImVec2                                  cursor_px,
-        const ImRect&                           plot_rect)
+        const ImRect &                          plot_rect)
 {
-#ifdef __CBAPP_DEBUG__
-    IM_ASSERT(ov.cfg.draw_fn && "Overlay draw_fn must not be null");
-#endif
+    IM_ASSERT(ov.cfg.draw_fn  &&  "Overlay draw_fn must not be null");
+
 
     // ───────────────────────────────────────────────────────────── 1. anchor
     auto            [pos, pivot]    = _anchor_to_pos(ov, world_to_px, cursor_px, plot_rect);
-
     const bool      is_custom       = (ov.cfg.placement == OverlayPlacement::Custom);
+    const bool      custom_size     = ( ov.style.window_size.has_value() );
+    const ImVec2    anchor_px       = (ov.cfg.placement == OverlayPlacement::CanvasPoint)// pixel coords of anchor itself (CanvasPoint only)
+                                        ? world_to_px(ov.cfg.anchor_ws) : ImVec2{0, 0};
 
-    // pixel coords of anchor itself (CanvasPoint only)
-    const ImVec2    anchor_px       = (ov.cfg.placement == OverlayPlacement::CanvasPoint) ? world_to_px(ov.cfg.anchor_ws) : ImVec2{0,0};
+
 
     // ───────────────────────────────────────────────────────────── 2. off‑screen
-    if (ov.cfg.placement == OverlayPlacement::CanvasPoint)
+    if ( ov.cfg.placement == OverlayPlacement::CanvasPoint )
     {
         const bool inside =
-              anchor_px.x >= plot_rect.Min.x && anchor_px.x <= plot_rect.Max.x &&
-              anchor_px.y >= plot_rect.Min.y && anchor_px.y <= plot_rect.Max.y;
+              (anchor_px.x >= plot_rect.Min.x)  &&  (anchor_px.x <= plot_rect.Max.x)  &&
+              (anchor_px.y >= plot_rect.Min.y)  &&  (anchor_px.y <= plot_rect.Max.y);
 
-        if (!inside) {
+        if (!inside)
+        {
             if (ov.cfg.offscreen == OffscreenPolicy::Hide)      { return; }  // skip draw
 
             if (ov.cfg.offscreen == OffscreenPolicy::Clamp)
@@ -293,28 +380,53 @@ void OverlayManager::_render_overlay(
         }
     }
 
+
     // ───────────────────────────────────────────────────────────── 3. flags/pos
-    ImGuiWindowFlags            win_flags       = ov.flags;
+    ImGuiWindowFlags            win_flags       = ov.info.flags;
+    //
+    //
     if (is_custom)              { win_flags &= ~ImGuiWindowFlags_NoMove; }
     else                        { win_flags |=  ImGuiWindowFlags_NoMove; }
-    ImGuiCond                   cond            = is_custom ? ImGuiCond_Once : ImGuiCond_Always;
+    //
+    //
+    ImGuiCond                   cond            = (is_custom)   ? ImGuiCond_Once : ImGuiCond_Always;
     const ImGuiViewport *       vp              = ImGui::GetMainViewport();
-    const std::string           win_name        = "##EditorOverlay_" + std::to_string(ov.id);
+    const std::string           win_name        = "##EditorOverlay_" + std::to_string(ov.info.id);
     
     if (!is_custom)             { ImGui::SetNextWindowViewport(vp->ID); }
 
 
 
-    ImGui::SetNextWindowPos(pos, cond, pivot);
-    ImGui::PushStyleColor(  ImGuiCol_WindowBg, ov.style.bg );
-    ImGui::SetNextWindowBgAlpha(ov.style.alpha);
+    //      OVERLAY STYLE PUSH:
+    //  win_flags                                      ^= ov.cfg.override_flags;
+    //
+    auto &                          style           = ov.style;
+    ImGui::PushStyleColor           ( ImGuiCol_WindowBg,                style.bg                    );
+    ImGui::PushStyleVar             ( ImGuiStyleVar_WindowRounding,     style.window_rounding       );
+    //
+    //
+    //      NEXT WINDOW:
+    ImGui::SetNextWindowPos         ( pos, cond, pivot                                              );
+    ImGui::SetNextWindowBgAlpha     ( style.alpha                                                   );
+
+    if (custom_size) {
+        win_flags &= ~ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize;
+        ImGui::SetNextWindowSize                (   (*style.window_size).Value(),    ImGuiCond_Always                   );
+        ImGui::SetNextWindowSizeConstraints     (   (*style.window_size).Min(),     (*style.window_size).Max()          );
+    }
+
 
     // ───────────────────────────────────────────────────────────── 4. draw
-    ImGui::Begin(win_name.c_str(), nullptr, win_flags);
-        ImGui::PopStyleColor(); //  ImGuiCol_WindowBg
+    ImGui::Begin( win_name.c_str(), nullptr, win_flags );
+    //
+    //  1.  OVERLAY STYLE POP:
+        ImGui::PopStyleVar();       //  ImGuiStyleVar_WindowRounding
+        ImGui::PopStyleColor();     //  ImGuiCol_WindowBg
         
         ov.cfg.draw_fn();
         if ( !ov.cfg.locked )   { _draw_context_menu(ov); }
+    //
+    //
     ImGui::End();
 
 
@@ -351,6 +463,9 @@ void OverlayManager::_render_overlay(
     // ───────────────────────────────────────────────────────────── 6. persist drag
     if (is_custom && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
         ov.cfg.anchor_px = win->Pos;        // remember new TL
+
+
+    return;
 }
 
 

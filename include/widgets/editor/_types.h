@@ -858,40 +858,102 @@ enum class OverlayPlacement : uint8_t {
 //  "OverlayCFG"
 //
 struct OverlayCFG {
-    bool                        locked          = false;
-    OverlayPlacement            placement       {OverlayPlacement::Custom};
-    BBoxAnchor                  src_anchor      = BBoxAnchor::NorthWest;        // top-centre of the window
-    OffscreenPolicy             offscreen       {OffscreenPolicy::Clamp};       // NEW
+    std::function<void()>       draw_fn;            //  Widgets callback.
+    bool                        locked;             //  TRUE :  Allows user to modify Overlay settings (with right-click context menu).
+//
+    OverlayPlacement            placement           { OverlayPlacement::Custom };
+    BBoxAnchor                  src_anchor          = BBoxAnchor::NorthWest;            //  top-centre of the window
+    OffscreenPolicy             offscreen           { OffscreenPolicy::Clamp };         //  NEW
 //
 //
-    ImVec2                      anchor_px       {0,0};     // pixel inset / offset
-    ImVec2                      anchor_ws       {0,0};     // world-space anchor
+    ImVec2                      anchor_px           { 0.0f,     0.0f };         //  Pixel inset / offset
+    //  ImGuiWindowFlags            override_flags      = ImGuiWindowFlags_None;
 //
-    std::function<void()>       draw_fn         {};                    // widgets callback
+//
+//  PRIVATE:
+    ImVec2                      anchor_ws           { 0.0f,     0.0f };         //  World-space anchor
 };
 
 
 //  "OverlayStyle"
 //
 struct OverlayStyle {
-    float                       alpha           = 0.65f;
-    ImU32                       bg              = 0x000000FF;
+    CBAPP_CBLIB_TYPES_API
+//
+    float                                   alpha                   = 0.65f;
+    ImU32                                   bg                      = 0x000000FF;
+    int                                     window_rounding         = 8;
+//
+    std::optional< Param<ImVec2> >          window_size             = { std::nullopt };      // {     {120.0f,    -1.0f},     { {80.0f,       1.0f},      {220.0f,    FLT_MAX} }   };
+//
+//
+//
+    //  Default Constructor.
+    //  OverlayStyle                            (void)                                  = default;
+      
+    //  Deep Cooy Constructor.
+    //OverlayStyle                            (const OverlayStyle & src)
+    //    : alpha(src.alpha)
+    //      , bg(src.bg)
+    //      , window_rounding(src.window_rounding)
+    //      , window_size( (src.window_size) ? std::make_unique< Param<ImVec2> >(*src.window_size) : nullptr )
+    //{   }
+
+
+    //  Move Constructor.
+    //  OverlayStyle                            (OverlayStyle && ) noexcept             = default;
+    
+    
+    //  Move Assignment Operator.
+    //  OverlayStyle &           operator =      (OverlayStyle &&) noexcept             = default;
+    
+    
+    //  "swap"
+    friend void             swap            (OverlayStyle & src, OverlayStyle & dst) noexcept {
+        using std::swap;
+        swap    ( src.alpha,                dst.alpha               );  // intentional fallthrough to swap both
+        swap    ( src.bg,                   dst.bg                  );
+        swap    ( src.window_rounding,      dst.window_rounding     );
+        
+        return;
+    }
+//
+//
+//
 };
+
+
+//  "OverlayInfo_t"
+//
+template<typename OID = uint32_t>
+struct OverlayInfo_t {
+    using                                   OverlayID               = OID;
+    static constexpr ImGuiWindowFlags       ms_DEF_WINDOW_FLAGS     = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+//
+//
+    OverlayID                               id                      = 0;
+    bool                                    visible                 = false;                 // owner sets false to retire
+    ImGuiWindowFlags                        flags                   = ms_DEF_WINDOW_FLAGS;
+};
+
 
 
 //  "Overlay_t"
 //      MAIN "STATE" / "DATA" PACKET FOR EACH OVERLAY WINDOW...
 //
-template<typename T = uint32_t>
+template<typename OID = uint32_t>
 struct Overlay_t {
-    using                       OverlayID       = T;
+    using                                   OverlayID               = OID;
+    using                                   OverlayInfo             = OverlayInfo_t<OID>;
 //
-    OverlayID                   id              = 0;
-    bool                        visible         = false;                 // owner sets false to retire
-    ImGuiWindowFlags            flags           = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-    OverlayCFG                  cfg             {};
-    OverlayStyle                style           {};
+    OverlayInfo                             info                    {   };
+    OverlayCFG                              cfg                     {   };
+    OverlayStyle                            style                   {   };
 };
+
+
+
+
 
 
 //  "OverlayState"
