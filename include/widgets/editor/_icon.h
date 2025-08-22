@@ -192,17 +192,31 @@ inline static float         LOCK_SHACKLE_TILT       = 0.0f;
 
 //  "draw_icon_background"
 //
-static inline void draw_icon_background(ImDrawList* dl,
-                                        ImVec2 rc_min, ImVec2 size,
-                                        ImU32 bg_col,
-                                        float rounding = icon::BG_ROUNDING)
-{
-    if ((bg_col & 0xFF000000) == 0) return;
-    dl->AddRectFilled(rc_min,
-                      ImVec2{ rc_min.x + size.x, rc_min.y + size.y },
-                      bg_col, rounding);
-}
+//      static inline void draw_icon_background(ImDrawList* dl,
+//                                              ImVec2 rc_min, ImVec2 size,
+//                                              ImU32 bg_col,
+//                                              float rounding = icon::BG_ROUNDING)
+//      {
+//          if ((bg_col & 0xFF000000) == 0) return;
+//          dl->AddRectFilled(rc_min,
+//                            ImVec2{ rc_min.x + size.x, rc_min.y + size.y },
+//                            bg_col, rounding);
+//      }
 
+
+//  "draw_icon_background"
+//
+static inline void draw_icon_background( ImDrawList *   dl,
+                                         ImVec2         tl,
+                                         ImVec2         size,
+                                         ImU32          fg_col,
+                                         float          rounding = icon::BG_ROUNDING )
+{
+    if ((fg_col & 0xFF000000) == 0) return;
+    dl->AddRectFilled(tl,
+                      ImVec2{ tl.x + size.x, tl.y + size.y },
+                      fg_col, rounding);
+}
 
 
 

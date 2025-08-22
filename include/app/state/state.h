@@ -90,7 +90,7 @@ public:
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    _CBAPP_APPSTATE_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+    _CBAPP_APPSTATE_INTERNAL_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
     
     // *************************************************************************** //
     //
@@ -100,6 +100,9 @@ public:
     // *************************************************************************** //
     static constexpr float              ms_LABEL_WIDTH                              = 90.0f;
     static constexpr float              ms_WIDGET_WIDTH                             = 250.0f;
+    //
+    LabelFn                             ms_LeftLabel;
+    LabelFn                             ms_TopLabel;
     
 //
 //
@@ -285,9 +288,42 @@ public:
     }
 
 
-    //  "label"
-    inline void                         label                       (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
-    { utl::LeftLabel(text, l_width, w_width); ImGui::SameLine(); };
+
+    //  "labelf"
+    inline void                         labelf                      (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
+    {
+        const ImVec2        padding             = ImVec2( l_width - ImGui::CalcTextSize(text).x,  0.0f );
+        ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_width);
+        ImGui::TextUnformatted(text);           ImGui::SameLine();
+        ImGui::Dummy(padding);
+        ImGui::SetNextItemWidth(w_width);       ImGui::SameLine();
+        return;
+    };
+
+
+    //  "_LeftLabel"
+    inline void                         _LeftLabel                  (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
+    {
+        const ImVec2        padding             = ImVec2( l_width - ImGui::CalcTextSize(text).x,  0.0f );
+        ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_width);
+        ImGui::TextUnformatted(text);           ImGui::SameLine();
+        ImGui::Dummy(padding);
+        ImGui::SetNextItemWidth(w_width);       ImGui::SameLine();
+        return;
+    };
+
+    //  "_TopLabel"
+    inline void                         _TopLabel                   (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
+    {
+        ImGui::AlignTextToFramePadding();
+        ImGui::SetNextItemWidth(l_width);
+        ImGui::TextUnformatted(text);
+        ImGui::SetNextItemWidth(w_width);
+        return;
+    };
+    
+    
+    
     
     //  "column_label"
     //  inline void                         column_label                (const char * label)

@@ -98,16 +98,18 @@ struct EditorIMPL {
 //
 //
 //
-        using                           Font                            = app::Font_t               ;
-        using                           Logger                          = utl::Logger               ;
-        using                           LogLevel                        = utl::LogLevel             ;
+        using                           Font                            = app::Font_t                           ;
+        using                           Logger                          = utl::Logger                           ;
+        using                           LogLevel                        = utl::LogLevel                         ;
     //
-        using                           CBCapabilityFlags               = CBCapabilityFlags_        ;
-        using                           Anchor                          = BBoxAnchor                ;
+        using                           CBCapabilityFlags               = CBCapabilityFlags_                    ;
+        using                           Anchor                          = BBoxAnchor                            ;
     //
-        using                           PopupHandle                     = EditorPopupBits           ;
-        using                           CBEditorPopupFlags              = CBEditorPopupFlags_       ;
-        using                           PopupInfo                       = EditorPopupInfo           ;
+        using                           PopupHandle                     = EditorPopupBits                       ;
+        using                           CBEditorPopupFlags              = CBEditorPopupFlags_                   ;
+        using                           PopupInfo                       = EditorPopupInfo                       ;
+    //
+        using                           LabelFn                         = std::function<void(const char *)>     ;
         
     // *************************************************************************** //
     //

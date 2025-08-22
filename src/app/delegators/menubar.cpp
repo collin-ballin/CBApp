@@ -127,9 +127,25 @@ void MenuBar::Begin([[maybe_unused]] const char *       uuid,
 // *************************************************************************** //
 //
 //
+//
 //  3.      MENU-BAR FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "disp_cbapp_menubar"
+//
+void MenuBar::disp_cbapp_menubar(void)
+{
+    ImGui::MenuItem("Item 1",         nullptr);
+    ImGui::MenuItem("Item 2",         nullptr);
+    
+    
+    
+    
+    
+    return;
+}
+
 
 //  "disp_file_menubar"
 //
@@ -304,6 +320,27 @@ void MenuBar::disp_view_menubar(void)
 {
     ImGui::MenuItem("Item 1",         nullptr);
     ImGui::MenuItem("Item 2",         nullptr);
+    
+    
+    
+    
+    //      2.      MAIN UI ITEMS...
+    ImGui::Separator();
+    ImGui::TextDisabled("Main UI");
+    //
+    //
+        ImGui::MenuItem("Item 2",         nullptr);
+    //
+    //
+    //  END "MAIN UI".
+    
+    
+    
+    
+    
+    
+    
+    
     return;
 }
 

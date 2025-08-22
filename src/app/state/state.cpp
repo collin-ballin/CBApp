@@ -34,17 +34,32 @@ AppState::AppState(void)
     : m_logger{Logger::instance()}
 {
     size_t          i                   = size_t(0);
-
-
-    //  1.      INITIALIZE WINDOW INFOS...
+    
+    
+    
+    //      1.      INITIALIZE WINDOW INFOS...
     for (i = 0; i < static_cast<size_t>(Window_t::Count); ++i) {
         m_windows.m_data[i]     = APPLICATION_WINDOW_INFOS[i];
     }
     
-    //  2.      INITIALIZE APPLICATION FONTS...
+    //      2.      INITIALIZE APPLICATION FONTS...
     for (i = 0; i < static_cast<size_t>(Font::Count); ++i) {
         m_fonts.m_data[i]   = nullptr;  // load later in your init()
     }
+
+
+    //      3.      INITIALIZE LABEL CALLBACKS...
+    this->ms_LeftLabel          = [this](const char * t) {
+        this->_LeftLabel(t);
+    };
+    this->ms_TopLabel           = [this](const char * t) {
+        this->_TopLabel(t);
+    };
+    //
+    //
+    //
+    const int   num_invalid         = static_cast<int>( !this->ms_LeftLabel )  +  static_cast<int>( !this->ms_TopLabel );
+    IM_ASSERT( (num_invalid == 0)  &&  "one or more AppState label callbacks are NULL (LabelFn)" );
 
 
 

@@ -198,7 +198,7 @@ void Browser::disp_appearance_mode(void)
     if (ImGui::Combo( "##Browser_SetAppColorStyle",
                       &app_idx,
                       S.m_app_color_style_names.data(),                         //  Names table
-                      static_cast<int>(app::AppColorStyle_t::Count)) )          //  Item count
+                      static_cast<int>(app::AppColorStyle_t::COUNT)) )          //  Item count
     {
         S.SetAppColorStyle( static_cast<app::AppColorStyle_t>(app_idx) );
     }
@@ -208,7 +208,7 @@ void Browser::disp_appearance_mode(void)
     if (ImGui::Combo( "##Browser_SetPlotColorStyle",
                       &plot_idx,
                       S.m_plot_color_style_names.data(),                        //  Names table
-                      static_cast<int>(app::PlotColorStyle_t::Count)) )         //  Item count
+                      static_cast<int>(app::PlotColorStyle_t::COUNT)) )         //  Item count
     {
         S.SetPlotColorStyle( static_cast<app::PlotColorStyle_t>(plot_idx) );
     }

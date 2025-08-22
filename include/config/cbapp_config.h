@@ -339,12 +339,14 @@
 
 
 
-//  _CBAPP_APPSTATE_ALIAS_API           |   ** INTERNAL **
+//  _CBAPP_APPSTATE_INTERNAL_ALIAS_API           |   ** INTERNAL **
+//
+//      - ** **.
 //
 //      - "API" USED **EXCLUSIVELY** INSIDE "AppState" CLASS.
 //      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
 //
-#define                 _CBAPP_APPSTATE_ALIAS_API                                                               \
+#define                 _CBAPP_APPSTATE_INTERNAL_ALIAS_API                                                      \
 public:                                                                                                         \
     using               CBSignalFlags                   = std::uint32_t;                                        \
     using               CBMenuCapabilityFlags           = std::uint64_t;                                        \
@@ -354,6 +356,9 @@ public:                                                                         
     using               Font                            = app::Font_t;                                          \
     using               Cmap                            = app::Colormap_t;                                      \
     using               Timestamp_t                     = std::chrono::time_point<std::chrono::system_clock>;   \
+                                                                                                                \
+    using               LabelFn                         = std::function<void(const char *)>;                    \
+                                                                                                                \
                                                                                                                 \
     using               ImFonts                         = cblib::EnumArray<Font, ImFont *>;                     \
     using               ImWindows                       = cblib::EnumArray<Window, WinInfo>;                    \
@@ -385,7 +390,7 @@ public:                                                                         
     using               AppState                        = app::AppState;                        \
     using               WinInfo                         = app::WinInfo;                         \
                                                         CBAPP_CBLIB_TYPES_API                   \
-                                                        _CBAPP_APPSTATE_ALIAS_API
+                                                        _CBAPP_APPSTATE_INTERNAL_ALIAS_API
 
 
 

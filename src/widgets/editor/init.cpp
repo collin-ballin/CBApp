@@ -39,7 +39,13 @@ Editor::Editor(app::AppState & src)
     this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_HiddenTabBar;
     
     
-    //  INITIALIZE EACH RESIDENT OVERLAY-WINDOW...
+    
+    //      INITIALIZE LABEL CALLBACKS...
+    //  this->ms_default_label_fn   = [this](const char * t, float lw, float ww) {
+    
+    
+    
+    //      INITIALIZE EACH RESIDENT OVERLAY-WINDOW...
     for (size_t i = 0; i < static_cast<size_t>( Resident::COUNT ); ++i)
     {
         Resident idx = static_cast<Resident>(i);
@@ -48,7 +54,7 @@ Editor::Editor(app::AppState & src)
     
     
     
-    //  2.  LOAD DEFAULT TESTS FROM FILE...
+    //      2.      LOAD DEFAULT TESTS FROM FILE...
     if ( !m_editor_S.m_filepath.empty() && fs::exists(m_editor_S.m_filepath) && fs::is_regular_file(m_editor_S.m_filepath) )
     {
         this->S.m_logger.debug( std::format("Editor | loading from default file, \"{}\"", m_editor_S.m_filepath.string()) );
@@ -60,7 +66,7 @@ Editor::Editor(app::AppState & src)
     
     
     
-    //  3.  INITIALIZE FUNCTIONS FOR DEBUGGER OVERLAY WINDOW...
+    //      3.      INITIALIZE FUNCTIONS FOR DEBUGGER OVERLAY WINDOW...
     //  using               DebugItem                   = DebuggerState::DebugItem;
     this->m_debugger.windows    = {{
             {   "Hit Detection",    true,       DebuggerState::ms_FLAGS,        [this]{ this->_debugger_hit_detection   (); }       }

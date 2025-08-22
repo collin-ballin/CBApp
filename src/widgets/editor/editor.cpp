@@ -216,7 +216,11 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
 void Editor::Begin(const char * /*id*/)
 {
     ImGuiIO &               io                      = ImGui::GetIO();
+    EditorStyle &           EStyle                  = this->m_style;
     EditorState &           ES                      = this->m_editor_S;
+    //
+    //
+    //
     const bool              space                   = ImGui::IsKeyDown(ImGuiKey_Space);
     //
     const bool              pan_enabled             = (space || (this->m_mode == Mode::Hand) );
@@ -231,7 +235,7 @@ void Editor::Begin(const char * /*id*/)
     map.Pan                                         = ImGuiMouseButton_Left;                            //
     map.PanMod                                      = (pan_enabled)     ? 0     : ImGuiMod_Ctrl;        //  disable pan unless current TOOL allows PANNING...
     map.ZoomMod                                     = (zoom_enabled)    ? 0     : ImGuiMod_Ctrl;        //  disable zoom unless current TOOL allows ZOOMING...
-    map.ZoomRate                                    = 0.075f;                                           //
+    map.ZoomRate                                    = EStyle.ms_ZOOM_RATE;                              //
 
 
     this->pump_main_tasks();

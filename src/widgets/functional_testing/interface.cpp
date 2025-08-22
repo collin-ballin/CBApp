@@ -50,7 +50,7 @@ void ActionComposer::_draw_controlbar(void)
     //
     const ImVec2                    SPACING                 = ImVec2( 0.0f,             style.ItemSpacing.y + style.FramePadding.y      );
     //  const ImVec2                    WIDGET_SIZE             = ImVec2( -1,               ImGui::GetFrameHeight()                         );
-    const ImVec2                    WIDGET_SIZE             = ImVec2( -1,               1.2f * ImGui::GetTextLineHeight()               );
+    const ImVec2                    WIDGET_SIZE             = ImVec2( -1,               ImGui::GetFrameHeight()                         );
     const ImVec2                    SMALL_WIDGET_SIZE       = ImVec2( 95.0f,            WIDGET_SIZE.y                                   );
     const ImVec2                    BUTTON_SIZE             = ImVec2( WIDGET_SIZE.y,    WIDGET_SIZE.y                                   );
     //

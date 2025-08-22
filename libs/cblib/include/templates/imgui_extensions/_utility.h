@@ -97,7 +97,7 @@ constexpr ImU32 ColorConvertFloat4ToU32_constexpr(const ImVec4 & col) noexcept
 //      shade >  0 : → darker (percentage)          e.g. 0.20 :     → 20 % darker
 //      shade ≤  0 : → brighter (tint)              e.g.-0.15 :     → 15 % brighter
 //
-inline ImVec4 compute_shade(const ImVec4 & color, float shade)
+inline ImVec4 compute_shade(const ImVec4 & color, const float shade = 0.0484f)
 {
     constexpr float     MIN_FACTOR      = 0.0f;
     constexpr float     MAX_FACTOR      = 1.0f;
@@ -108,9 +108,10 @@ inline ImVec4 compute_shade(const ImVec4 & color, float shade)
     return ImVec4(color.x * factor, color.y * factor, color.z * factor, color.w);                 // preserve alpha
 }
 
+
 //  "compute_shade"
 //
-inline ImU32 compute_shade(const ImU32 & color, float shade) {
+inline ImU32 compute_shade(const ImU32 & color, const float shade = 0.0484f) {
     const ImVec4    src     = ImGui::ColorConvertU32ToFloat4(color);
     const ImVec4    dst     = compute_shade(src, shade);
     return ImGui::ColorConvertFloat4ToU32(dst);
@@ -119,7 +120,7 @@ inline ImU32 compute_shade(const ImU32 & color, float shade) {
 //  "compute_shade"
 //      ImColor → ImColor   (wrapper around ImVec4)
 //
-inline ImColor compute_shade(const ImColor & color, float shade) {
+inline ImColor compute_shade(const ImColor & color, const float shade = 0.0484f) {
     const ImVec4    src     = color;               // ImColor → ImVec4 implicit
     const ImVec4    dst     = compute_shade(src, shade);
     return ImColor(dst);
@@ -133,7 +134,7 @@ inline ImColor compute_shade(const ImColor & color, float shade) {
 //  "compute_tint"
 //      +0.25 → 25 % brighter   |   -0.20 → 20 % darker
 //
-inline ImVec4 compute_tint(const ImVec4 & color, float tint) {
+inline ImVec4 compute_tint(const ImVec4 & color, const float tint = 0.0484f) {
     constexpr float     MIN_FACTOR  = 0.0f;
     constexpr float     MAX_FACTOR  = 1.0f;
     float               factor      = (tint >= 0.0f)
@@ -145,7 +146,7 @@ inline ImVec4 compute_tint(const ImVec4 & color, float tint) {
 
 //  "compute_tint"
 //
-inline ImU32 compute_tint(const ImU32 & color, float tint) {
+inline ImU32 compute_tint(const ImU32 & color, const float tint = 0.0484f) {
     ImVec4      as_vec4     = ImGui::ColorConvertU32ToFloat4(color);
     ImVec4      tinted      = compute_tint(as_vec4, tint);
     return ImGui::ColorConvertFloat4ToU32(tinted);
@@ -153,7 +154,7 @@ inline ImU32 compute_tint(const ImU32 & color, float tint) {
 
 //  "compute_tint"
 //
-inline ImColor compute_tint(const ImColor & color, float tint) {
+inline ImColor compute_tint(const ImColor & color, const float tint = 0.0484f) {
     ImVec4      as_vec4     = static_cast<ImVec4>(color);
     ImVec4      tinted      = compute_tint(as_vec4, tint);
     return ImColor(tinted);

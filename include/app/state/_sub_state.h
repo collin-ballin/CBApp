@@ -90,7 +90,7 @@ struct MenuState_t {
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    _CBAPP_APPSTATE_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+    _CBAPP_APPSTATE_INTERNAL_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 
     // *************************************************************************** //
     //      PUBLIC API.
@@ -284,7 +284,7 @@ struct TaskState_t {
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    _CBAPP_APPSTATE_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
+    _CBAPP_APPSTATE_INTERNAL_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 
     // *************************************************************************** //
     //      PUBLIC API.

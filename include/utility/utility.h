@@ -169,6 +169,18 @@ inline void LeftLabel(const char * text, const ImVec2 & l_dims, const ImVec2 & w
 }
 
 
+//  "TopLabel"
+//
+inline void TopLabel(const char * text, const float l_width=150.0f, const float w_width=250.0f)
+{
+    const ImVec2        padding             = ImVec2( l_width - ImGui::CalcTextSize(text).x,  0.0f );
+    ImGui::AlignTextToFramePadding();
+    ImGui::SetNextItemWidth(l_width);
+    ImGui::TextUnformatted(text);
+    ImGui::SetNextItemWidth(w_width);
+    return;
+}
+
 
 
 

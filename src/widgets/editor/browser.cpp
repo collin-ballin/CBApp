@@ -100,8 +100,10 @@ void Editor::DrawBrowser(void)
                                 BStyle.DYNAMIC_CHILD_FLAGS      = (allow_resize)
                                                                     ? (BStyle.DYNAMIC_CHILD_FLAGS  | ImGuiChildFlags_ResizeX)
                                                                     : (BStyle.DYNAMIC_CHILD_FLAGS  & ~ImGuiChildFlags_ResizeX);
-                                                                    
+                          
+#ifdef __CBAPP_DEBUG__
     this->_show_browser_color_edit_window();
+#endif  //  __CBAPP_DEBUG__
     
     
     S.PushFont(Font::Small);
@@ -119,7 +121,9 @@ void Editor::DrawBrowser(void)
         ImGui::SetNextWindowSizeConstraints( BStyle.OBJ_SELECTOR_DIMS.limits.min, BStyle.OBJ_SELECTOR_DIMS.limits.max );
         ImGui::BeginChild("##Editor_Browser_ObjSelector", BStyle.OBJ_SELECTOR_DIMS.value, BStyle.DYNAMIC_CHILD_FLAGS);
             //
-            this->_draw_obj_selector_table();
+            S.PushFont(Font::Main);
+                this->_draw_obj_selector_table();
+            S.PopFont();
             //
             BStyle.OBJ_SELECTOR_DIMS.value.x     = ImGui::GetItemRectSize().x;
         ImGui::EndChild();
@@ -196,7 +200,7 @@ void Editor::_dispatch_obj_inspector_column(void)
     const float                     P1_w                = ImGui::GetContentRegionAvail().x;
     ImGui::BeginChild("##Editor_Browser_TraitInspector",    {P1_w, 0.0f},     BStyle.STATIC_CHILD_FLAGS);
     //
-        _dispatch_trait_inspector();
+        _dispatch_trait_inspector( this->S.ms_LeftLabel );
     //
     ImGui::EndChild();
     
@@ -237,13 +241,19 @@ void Editor::_dispatch_obj_inspector_column(void)
 void Editor::_draw_obj_selector_table(void)
 {
     using                                   namespace           icon;
-    constexpr ImGuiTableFlags               TABLE_FLAGS         = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
+    constexpr ImGuiTableFlags               TABLE_FLAGS         = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY; // | ImGuiTableFlags_RowBg;
     constexpr ImGuiTableColumnFlags         C_EYE               = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
     constexpr ImGuiTableColumnFlags         C_LOCK              = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
     constexpr ImGuiTableColumnFlags         C_NAME              = ImGuiTableColumnFlags_WidthStretch;
     constexpr ImGuiTableColumnFlags         C_DEL               = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
-    const ImU32                             col_text            = ImGui::GetColorU32(ImGuiCol_Text);
-    const ImU32                             col_dim             = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+    //
+    //
+    constexpr const float                   SHADE               = 0.20f;
+    static const ImU32                      col_text            = ImGui::GetColorU32(ImGuiCol_Text);
+    static const ImU32                      col_text_uh         = cblib::utl::compute_shade(col_text, SHADE);    //  "_uh"   == "un-hovered".
+    static const ImU32                      col_dim             = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+    static const ImU32                      col_dim_uh          = cblib::utl::compute_shade(col_dim, SHADE);    //  "_uh"   == "un-hovered".
+    //
     //
     BrowserStyle &                          BStyle              = m_style.browser_style;
     BrowserState &                          BS                  = m_browser_S;
@@ -296,10 +306,10 @@ void Editor::_draw_obj_selector_table(void)
     //      2.      BEGIN THE TABLE TO PRESENT EACH OBJECT...
     if ( ImGui::BeginTable("##Editor_ObjSelector_ObjTable", 4, TABLE_FLAGS, ImVec2(0, -1)) )
     {
-        ImGui::TableSetupColumn("Eye",  C_EYE,    CELL_SZ);
-        ImGui::TableSetupColumn("Lock", C_LOCK,   CELL_SZ);
-        ImGui::TableSetupColumn("Name", C_NAME);
-        ImGui::TableSetupColumn("Del",  C_DEL,    1.2f * CELL_SZ);
+        ImGui::TableSetupColumn("Eye",  C_EYE,    CELL_SZ       );
+        ImGui::TableSetupColumn("Lock", C_LOCK,   CELL_SZ       );
+        ImGui::TableSetupColumn("Name", C_NAME                  );
+        ImGui::TableSetupColumn("Del",  C_DEL,    CELL_SZ       );
 
         clipper.Begin( static_cast<int>(m_paths.size()), -1 );
 
@@ -325,21 +335,41 @@ void Editor::_draw_obj_selector_table(void)
                 //
                 //  //      4.1.        "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY).
                     ImGui::TableSetColumnIndex(0);
-                    ImGui::InvisibleButton("##Editor_Browser_ObjVisibilityButton", {CELL_SZ, CELL_SZ});
-                    if ( ImGui::IsItemClicked() )   { path.visible = !path.visible; _prune_selection_mutability(); }
-                    (path.visible ? draw_eye_icon : draw_eye_off_icon)
-                        (dl, ImGui::GetItemRectMin(), {CELL_SZ, CELL_SZ},
-                         path.visible ? col_text : col_dim);
+                    {
+                        ImGui::InvisibleButton("##Editor_Browser_ObjVisibilityButton", {CELL_SZ, CELL_SZ});
+                        if ( ImGui::IsItemClicked() )   { path.visible = !path.visible; _prune_selection_mutability(); }
+                        //
+                        const bool hovered = ImGui::IsItemHovered();
+                        //
+                        ( (path.visible) ? draw_eye_icon : draw_eye_off_icon )
+                            ( dl,
+                              ImGui::GetItemRectMin(),
+                              { CELL_SZ, CELL_SZ },
+                              ( path.visible )
+                                ? ( (hovered)   ? col_text  : col_text_uh       )
+                                : ( (hovered)   ? col_dim   : col_dim_uh        )
+                        );
+                    }
                     //
                     //
                     //
                     //      4.2.        "LOCK" BUTTON (TO TOGGLE OBJECT'S LOCKED-STATE).
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::InvisibleButton("##Editor_Browser_ObjLockButton", {CELL_SZ, CELL_SZ});
-                    if ( ImGui::IsItemClicked() )   { path.locked = !path.locked; _prune_selection_mutability(); }
-                    (path.locked ? draw_lock_icon : draw_unlock_icon)
-                        (dl, ImGui::GetItemRectMin(), {CELL_SZ, CELL_SZ},
-                         path.locked ? col_text : col_dim);
+                    {
+                        ImGui::InvisibleButton("##Editor_Browser_ObjLockButton", {CELL_SZ, CELL_SZ});
+                        if ( ImGui::IsItemClicked() )   { path.locked = !path.locked; _prune_selection_mutability(); }
+                        //
+                        const bool hovered = ImGui::IsItemHovered();
+                        //
+                        ( (path.locked) ? draw_lock_icon : draw_unlock_icon )
+                            ( dl,
+                              ImGui::GetItemRectMin(),
+                              { CELL_SZ, CELL_SZ },
+                              ( path.locked )
+                                ? ( (hovered)   ? col_text  : col_text_uh       )
+                                : ( (hovered)   ? col_dim   : col_dim_uh        )
+                        );
+                    }
                     //
                     //
                     //
@@ -388,7 +418,23 @@ void Editor::_draw_obj_selector_table(void)
                     ImGui::TableSetColumnIndex(3);
                     if ( !path.locked && selected )
                     {
-                        utl::SmallCButton( BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR );
+                        //  utl::SmallCButton( BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR );
+                        //  utl::CButton( BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR, {CELL_SZ, CELL_SZ} );
+                        //
+                        //
+                        //
+                        ImGui::InvisibleButton("##Editor_Browser_ObjDeleteButton", {CELL_SZ, CELL_SZ});
+                        const bool hovered = ImGui::IsItemHovered();
+                        draw_icon_background(
+                            dl,
+                            ImGui::GetItemRectMin(),
+                            {CELL_SZ, CELL_SZ},
+                            ( hovered )
+                                ? (BStyle.ms_DELETE_BUTTON_COLOR | 0xFF000000u) : BStyle.ms_DELETE_BUTTON_COLOR,
+                            8.0f * icon::BG_ROUNDING
+                        );
+                        //
+                        //
                         if ( ImGui::IsItemClicked() )
                         {
                             _erase_path_and_orphans(static_cast<PathID>(i));
@@ -663,7 +709,7 @@ inline void Editor::_draw_trait_selector(void)
 
 //  "_dispatch_trait_inspector"
 //
-inline void Editor::_dispatch_trait_inspector(void)
+void Editor::_dispatch_trait_inspector(const LabelFn & callback)
 {
     const size_t                    N_paths             = this->m_sel.paths.size();
     const bool                      no_selection        = (N_paths == 0);
@@ -673,16 +719,14 @@ inline void Editor::_dispatch_trait_inspector(void)
     if ( no_selection )
     {
         //this->S.HeadlineSeparatorText( ms_OBJECT_TRAIT_NAMES[ this->m_trait ] );
-        S.PushFont( Font::Main );
             ImGui::TextDisabled("No selection...");
-        S.PopFont();
         return;
     }
 
 
 
-    if (single)                     { this->_dispatch_trait_inspector_single();     }
-    else                            { this->_dispatch_trait_inspector_multi();      }
+    if (single)                     { this->_dispatch_trait_inspector_single    (callback);         }
+    else                            { this->_dispatch_trait_inspector_multi     (callback);         }
 
     return;
 }
@@ -690,7 +734,7 @@ inline void Editor::_dispatch_trait_inspector(void)
 
 //  "_dispatch_trait_inspector_single"
 //
-inline void Editor::_dispatch_trait_inspector_single(void)
+inline void Editor::_dispatch_trait_inspector_single(const LabelFn & callback)
 {
     IM_ASSERT( !(this->m_sel.paths.size() != 1ULL)       && "single trait inspector called with selection != one" );
 
@@ -704,17 +748,17 @@ inline void Editor::_dispatch_trait_inspector_single(void)
     switch (this->m_trait)
     {
         case ObjectTrait::Vertices      : {         //  TRAIT #2:   VERTEX-EDITOR.
-            _draw_vertex_panel(path, sel_idx);
+            _draw_vertex_panel(path, sel_idx, callback);
             break;
         }
         
         case ObjectTrait::Payload       : {         //  TRAIT #3:   OBJECT-PAYLOAD.
-            _draw_payload_panel(path, sel_idx);
+            _draw_payload_panel(path, sel_idx, callback);
             break;
         }
         
         default                         : {         //  TRAIT #1:   DEFAULT PROPERTIES.
-            _draw_properties_panel_single(path, sel_idx);
+            _draw_properties_panel_single(path, sel_idx, callback);
             break;
         }
     }
@@ -728,7 +772,7 @@ inline void Editor::_dispatch_trait_inspector_single(void)
 
 //  "_dispatch_trait_inspector_multi"
 //
-inline void Editor::_dispatch_trait_inspector_multi(void)
+inline void Editor::_dispatch_trait_inspector_multi(const LabelFn & callback)
 {
     IM_ASSERT( !(this->m_sel.paths.size() < 1ULL)       && "multi trait inspector called with selection not greater-than one" );
     
@@ -739,7 +783,7 @@ inline void Editor::_dispatch_trait_inspector_multi(void)
     {
         
         case ObjectTrait::Vertices      : {         //  TRAIT #1:   "PROPERTIES".
-            _draw_properties_panel_multi();
+            _draw_properties_panel_multi(callback);
             break;
         }
         
@@ -866,13 +910,13 @@ void Editor::_show_browser_color_edit_window(void)
     //
     //
     //
-        this->left_label("[CUSTOM 1]:",     LABEL_W, WIDGET_W);
+        this->S.labelf("[CUSTOM 1]:",     LABEL_W, WIDGET_W);
         ui::CustomColorEdit4( "##CUSTOM 1", BStyle.ms_CHILD_FRAME_BG1 );
         //
         CopyToClipboard(BStyle.ms_CHILD_FRAME_BG1);
         
         
-        this->left_label("[CUSTOM 2]:",     LABEL_W, WIDGET_W);
+        this->S.labelf("[CUSTOM 2]:",     LABEL_W, WIDGET_W);
         ui::HexColor4( "##CUSTOM 2", BStyle.ms_CHILD_FRAME_BG1 );
         //
         CopyToClipboard(BStyle.ms_CHILD_FRAME_BG1);
@@ -881,21 +925,21 @@ void Editor::_show_browser_color_edit_window(void)
         
         ImGui::NewLine();
         /*
-        this->left_label("ImGuiColorEditFlags_None:", LABEL_W, WIDGET_W);
+        this->S.labelf("ImGuiColorEditFlags_None:", LABEL_W, WIDGET_W);
         ImGui::ColorEdit4( "##ImGuiColorEditFlags_None",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  ImGuiColorEditFlags_None );
         
-        this->left_label("None + Float:", LABEL_W, WIDGET_W);
+        this->S.labelf("None + Float:", LABEL_W, WIDGET_W);
         ImGui::ColorEdit4( "##None + Float",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float );
         
-        this->left_label("None + Float + Hex:", LABEL_W, WIDGET_W);
+        this->S.labelf("None + Float + Hex:", LABEL_W, WIDGET_W);
         ImGui::ColorEdit4( "##None + Float + Hex",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_DisplayHex );
         
-        this->left_label("None + Float + Hex + NoLabel:", LABEL_W, WIDGET_W);
+        this->S.labelf("None + Float + Hex + NoLabel:", LABEL_W, WIDGET_W);
         ImGui::ColorEdit4( "##None + Float + Hex + NoLabel",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_NoLabel);
         
         
         
-        this->left_label("None + Float + NoInput:", LABEL_W, WIDGET_W);
+        this->S.labelf("None + Float + NoInput:", LABEL_W, WIDGET_W);
         ImGui::ColorEdit4( "##None + Float + NoInput",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoInputs );
         */
         
@@ -909,19 +953,19 @@ void Editor::_show_browser_color_edit_window(void)
         
         
         
-        this->left_label("ms_CHILD_FRAME_BG1:", LABEL_W, WIDGET_W);
+        this->S.labelf("ms_CHILD_FRAME_BG1:", LABEL_W, WIDGET_W);
         if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG1",     (float*)&BStyle.ms_CHILD_FRAME_BG1,  COLOR_FLAGS ) )
         {  }
         CopyToClipboard(BStyle.ms_CHILD_FRAME_BG1L);
         
         
-        this->left_label("ms_CHILD_FRAME_BG1L:", LABEL_W, WIDGET_W);
+        this->S.labelf("ms_CHILD_FRAME_BG1L:", LABEL_W, WIDGET_W);
         if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG1L",     (float*)&BStyle.ms_CHILD_FRAME_BG1L,  COLOR_FLAGS ) )
         {  }
         CopyToClipboard(BStyle.ms_CHILD_FRAME_BG1L);
         
         
-        this->left_label("ms_CHILD_FRAME_BG1R:", LABEL_W, WIDGET_W);
+        this->S.labelf("ms_CHILD_FRAME_BG1R:", LABEL_W, WIDGET_W);
         if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG1R",     (float*)&BStyle.ms_CHILD_FRAME_BG1R,  COLOR_FLAGS ) )
         {  }
         CopyToClipboard(BStyle.ms_CHILD_FRAME_BG1R);
@@ -931,26 +975,26 @@ void Editor::_show_browser_color_edit_window(void)
         
         
         
-        this->left_label("ms_CHILD_FRAME_BG2:", LABEL_W, WIDGET_W);
+        this->S.labelf("ms_CHILD_FRAME_BG2:", LABEL_W, WIDGET_W);
         if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG2",     (float*)&BStyle.ms_CHILD_FRAME_BG2,  COLOR_FLAGS ) )
         {  }
         CopyToClipboard(BStyle.ms_CHILD_FRAME_BG2);
         
         
-        this->left_label("ms_CHILD_FRAME_BG2L:", LABEL_W, WIDGET_W);
+        this->S.labelf("ms_CHILD_FRAME_BG2L:", LABEL_W, WIDGET_W);
         if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG2L",     (float*)&BStyle.ms_CHILD_FRAME_BG2L,  COLOR_FLAGS ) )
         {  }
         CopyToClipboard(BStyle.ms_CHILD_FRAME_BG2L);
         
         
-        this->left_label("ms_CHILD_FRAME_BG2R:", LABEL_W, WIDGET_W);
+        this->S.labelf("ms_CHILD_FRAME_BG2R:", LABEL_W, WIDGET_W);
         if ( ImGui::ColorEdit4( "##ms_CHILD_FRAME_BG2R",     (float*)&BStyle.ms_CHILD_FRAME_BG2R,  COLOR_FLAGS ) )
         {  }
         CopyToClipboard(BStyle.ms_CHILD_FRAME_BG2R);
         
         
 
-        this->left_label("ms_OBJ_INSPECTOR_FRAME_BG:", LABEL_W, WIDGET_W);
+        this->S.labelf("ms_OBJ_INSPECTOR_FRAME_BG:", LABEL_W, WIDGET_W);
         if ( ImGui::ColorEdit4( "##ms_OBJ_INSPECTOR_FRAME_BG",     (float*)&BStyle.ms_OBJ_INSPECTOR_FRAME_BG,  COLOR_FLAGS ) )
         {  }
         CopyToClipboard(BStyle.ms_OBJ_INSPECTOR_FRAME_BG);

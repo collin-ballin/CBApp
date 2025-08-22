@@ -121,6 +121,8 @@ public:
         using                           CBEditorPopupFlags              = EditorIMPL::CBEditorPopupFlags        ;
         using                           PopupInfo                       = EditorIMPL::PopupInfo                 ;
     //
+        using                           LabelFn                         = EditorIMPL::LabelFn                   ;
+    //
     //                              ID / INDEX TYPES:
     //  using                           ID                              = Editor::ID                        ;
         using                           VertexID                        = EditorIMPL::VertexID                  ;
@@ -176,7 +178,7 @@ public:
     static constexpr float              ms_SETTINGS_LABEL_WIDTH         = 196.0f;
     static constexpr float              ms_SETTINGS_WIDGET_WIDTH        = 300.0f;
     static constexpr const char *       ms_NO_ASSIGNED_FILE_STRING      = "UNASSIGNED";      // Used when there is no "File > Save As..." assigned to app...
-    static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE         = ImVec2( 80,   25 );
+    static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE         = ImVec2( 100,   25 );
     //
     //
     //  static constexpr const char *       ms_SELECTION_CONTEXT_MENU_ID    = "Editor_Selection_ContextMenu";       //  selection_popup_id
@@ -420,13 +422,13 @@ protected:
     //
     //                              OBJECT SELECTION:
     void                                _draw_obj_selector_table                (void);
-    inline void                         _draw_obj_selectable                    (Path & , const int , const bool , const bool );
+    inline void                             _draw_obj_selectable                    (Path & , const int , const bool , const bool);
     //
     //                              TRAIT BEHAVIORS:
     inline void                         _draw_trait_selector                    (void);
-    inline void                         _dispatch_trait_inspector               (void);
-        inline void                         _dispatch_trait_inspector_single        (void);
-        inline void                         _dispatch_trait_inspector_multi         (void);
+    void                                _dispatch_trait_inspector               (const LabelFn & );
+        inline void                         _dispatch_trait_inspector_single        (const LabelFn & );
+        inline void                         _dispatch_trait_inspector_multi         (const LabelFn & );
     //
     //
     //                              TEMPORARY:
@@ -439,16 +441,16 @@ protected:
     //      BROWSER-PANEL STUFF.            |   "browser_panel.cpp" ...
     // *************************************************************************** //
     //                              "PROPERTIES" TRAIT:
-    void                                _draw_properties_panel_single           (Path & , const size_t );
-    void                                _draw_properties_panel_multi            (void);     //  PREVIOUSLY:     _draw_multi_path_inspector
+    void                                _draw_properties_panel_single           (Path & , const size_t , const LabelFn & );
+    void                                _draw_properties_panel_multi            ([[maybe_unused]] const LabelFn & );      //  PREVIOUSLY:     _draw_multi_path_inspector
     //
     //                              "VERTICES" TRAIT:
-    void                                _draw_vertex_panel                      (Path & path, [[maybe_unused]] const size_t );
+    void                                _draw_vertex_panel                      (Path & path, [[maybe_unused]] const size_t , const LabelFn & callback);
     void                                _draw_vertex_selector_column            (Path & );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
     void                                _draw_vertex_inspector_column           (Path & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
     //
     //                              "PAYLOAD" TRAIT:
-    void                                _draw_payload_panel                     (Path & path, [[maybe_unused]] const size_t );
+    void                                _draw_payload_panel                     (Path & path, [[maybe_unused]] const size_t , const LabelFn & );
     //
     //
     //                              BROWSER HELPERS:
@@ -645,12 +647,12 @@ protected:
     //
     //                              MISC. UTILITIES:
     void                                _draw_controls                      (void);
-    void                                _draw_editor_settings               ([[maybe_unused]] popup::Context & ctx);
     //
-    //                              HELPER FUNCTIONS FOR EDITOR SETTINGS:
-    void                                _draw_settings_serialize            (void);
-    void                                _draw_settings_mechanics            (void);
-    void                                _draw_settings_user_preferences     (void);
+    //                              EDITOR SETTINGS:
+    void                                _draw_editor_settings               ([[maybe_unused]] popup::Context & ctx);
+    void                                    _draw_settings_serialize                (void);
+    void                                    _draw_settings_mechanics                (void);
+    void                                    _draw_settings_style_and_preferences    (void);
     // *************************************************************************** //
     //
     //
@@ -1116,14 +1118,6 @@ protected:
     //      INLINE MISC. FUNCTIONS...
     // *************************************************************************** //
 
-    //  "left_label"
-    inline void                         left_label                          (const char * label, const float label_w=ms_LABEL_WIDTH, const float widget_w=ms_WIDGET_WIDTH) const
-    { utl::LeftLabel(label, label_w, widget_w); ImGui::SameLine(); return; };
-    
-    //  "label"
-    inline void                         label                               (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
-    { utl::LeftLabel(text, l_width, w_width); ImGui::SameLine(); };
-    
     inline bool                         has_file                        (void) const    { return ( std::filesystem::exists( m_editor_S.m_filepath ) ); }
     
     

@@ -191,10 +191,10 @@ void Editor::_debugger_hit_detection(void)
     
     
     //      1.      SHORTCUTS ENABLED/DISABLED...
-    left_label("X-Range:", LABEL_W, WIDGET_W);
+    this->S.labelf("X-Range:", LABEL_W, WIDGET_W);
     ImGui::Text( "(%.0f, %.0f)",      ES.m_plot_limits.X.Min,     ES.m_plot_limits.X.Max);
     
-    left_label("Y-Range:", LABEL_W, WIDGET_W);
+    this->S.labelf("Y-Range:", LABEL_W, WIDGET_W);
     ImGui::Text( "(%4.0f, %4.0f)",      ES.m_plot_limits.Y.Min,     ES.m_plot_limits.Y.Max);
     
 
@@ -224,7 +224,7 @@ void Editor::_debugger_interaction(void)
     
     
     //      1.      SHORTCUTS ENABLED/DISABLED...
-    left_label("Shortcuts:", LABEL_W, WIDGET_W);
+    this->S.labelf("Shortcuts:", LABEL_W, WIDGET_W);
     S.print_TF( !it.BlockShortcuts() );
     
     
@@ -262,7 +262,7 @@ void Editor::_debugger_interaction(void)
     }
     
     
-    left_label("Open Menus:", LABEL_W, WIDGET_W);
+    this->S.labelf("Open Menus:", LABEL_W, WIDGET_W);
     S.print_TF( !no_menus_open, menu_buffer.c_str(), "NONE" );
     
 
@@ -284,7 +284,7 @@ void Editor::_debugger_more_info(void)
     
     
     //      1.      SHORTCUTS ENABLED/DISABLED...
-    left_label("Shortcuts:", LABEL_W, WIDGET_W);
+    this->S.labelf("Shortcuts:", LABEL_W, WIDGET_W);
     S.print_TF( !it.BlockShortcuts() );
     
 
@@ -484,7 +484,7 @@ void Editor::_draw_ui_traits_resident(void)
         ImGui::EndDisabled();
         
         
-        ImGui::SetNextItemWidth( FLT_MAX );
+        //  ImGui::SetNextItemWidth( FLT_MAX );
         if ( ImGui::Combo("##UITraits_TraitSelector",           &trait_i,
                           ms_OBJECT_TRAIT_NAMES.data(),         static_cast<int>(ObjectTrait::COUNT)) )
         {
@@ -496,7 +496,7 @@ void Editor::_draw_ui_traits_resident(void)
         
         
         ImGui::BeginChild("##UITraits_Inspector",    {-1.0f, 0.0f},     BStyle.STATIC_CHILD_FLAGS);
-            _dispatch_trait_inspector();
+            _dispatch_trait_inspector(/*top_label = */this->S.ms_TopLabel);
         ImGui::EndChild();
     //
     //

@@ -66,7 +66,17 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 // *************************************************************************** //
 
 
+//      0.      INTERNAL TYPENAME ALIASES FOR  "app"  NAMESPACE...
+// *************************************************************************** //
+// *************************************************************************** //
 
+//  using                   LabelFn             = std::function<void(const char *)>;
+
+
+
+// *************************************************************************** //
+//
+//
 //      1.      APPLICATION UTILITY STRUCTS...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -84,12 +94,12 @@ enum class AppColorStyle_t : uint8_t {
     ImGuiDark,
     ImGuiClassic,
 //
-    Count
+    COUNT
 };
 //
 //  "APPLICATION_COLOR_STYLE_NAMES"
 //      COMPILE-TIME ARRAY CONTAINING THE NAME OF ALL STYLES.
-inline static const std::array<const char *, static_cast<size_t>(AppColorStyle_t::Count)>
+inline static const std::array<const char *, static_cast<size_t>(AppColorStyle_t::COUNT)>
 APPLICATION_COLOR_STYLE_NAMES           = {{
     "Default",                      "Light Mode",                   "Dark Mode",
     "410 nm",
@@ -106,12 +116,12 @@ enum class PlotColorStyle_t : uint8_t {
     LightMode,
     DarkMode,
 //
-    Count
+    COUNT
 };
 //
 //  "APPLICATION_PLOT_COLOR_STYLE_NAMES"
 //      COMPILE-TIME ARRAY CONTAINING THE NAME OF ALL STYLES.
-inline static const std::array<const char *, static_cast<size_t>(PlotColorStyle_t::Count)>
+inline static const std::array<const char *, static_cast<size_t>(PlotColorStyle_t::COUNT)>
 APPLICATION_PLOT_COLOR_STYLE_NAMES      = {{
     "Default",                      "Light Mode",                   "Dark Mode"
 }};

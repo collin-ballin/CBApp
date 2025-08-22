@@ -30,7 +30,7 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 
 //  "_draw_properties_panel_single"
 //
-void Editor::_draw_properties_panel_single(Path & path, const size_t pidx)
+void Editor::_draw_properties_panel_single(Path & path, const size_t pidx, const LabelFn & callback)
 {
     enum class ObjectType               { None = 0, Stroke, COUNT };
     //
@@ -48,14 +48,18 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx)
     //
     //
     //
-    const float &                       LABEL_W                 = BStyle.ms_BROWSER_VERTEX_LABEL_WIDTH;
-    const float &                       WIDGET_W                = BStyle.ms_BROWSER_VERTEX_WIDGET_WIDTH;
+    //  const float &                       LABEL_W                 = BStyle.ms_BROWSER_VERTEX_LABEL_WIDTH;
+    //  const float &                       WIDGET_W                = BStyle.ms_BROWSER_VERTEX_WIDGET_WIDTH;
     const bool                          is_area                 = path.is_area();
 
 
 
-    //  CASE 0 :    ERROR...
-    if ( pidx >= m_paths.size() )   { ImGui::SeparatorText("[invalid object]"); cache_id = static_cast<PathID>(-1); return; }
+    //      CASE 0 :    ERROR...
+    if ( pidx >= m_paths.size() )   {
+        ImGui::SeparatorText("[invalid object]");
+        cache_id = static_cast<PathID>(-1);
+        return;
+    }
     
     
     
@@ -116,11 +120,11 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx)
             bool            fill_dirty          = false;
 
 
-            this->left_label("Line Color:",         LABEL_W,    WIDGET_W);
+            callback("Line Color:");
             stroke_dirty                        = ImGui::ColorEdit4( "##Editor_VertexInspector_LineColor",    (float*)&stroke_f,  COLOR_FLAGS );
             //
             //
-            this->left_label("Fill Color:",         LABEL_W,    WIDGET_W);
+            callback("Fill Color:");
             ImGui::BeginDisabled( !is_area );
                 fill_dirty                      = ImGui::ColorEdit4( "##Editor_VertexInspector_FillColor",    (float*)&fill_f,    COLOR_FLAGS );
             ImGui::EndDisabled();
@@ -142,7 +146,8 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx)
             bool                    dirty       = false;
             float                   w           = path.style.stroke_width;
             
-            this->left_label("Stroke Weight:", LABEL_W, WIDGET_W);
+            
+            callback("Stroke Weight:");
             ImGui::SetNextItemWidth(200.0f);
             //
             //  CASE 1 :    Value < 2.0f
@@ -170,7 +175,7 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx)
     //
         //  4.  Z-ORDER...
         {
-            this->left_label("Z-Index:", LABEL_W, WIDGET_W);
+            callback("Z-Index:");
             ImGui::Text("%3u", path.z_index);
             
             if ( ImGui::SmallButton("Send To Back")     )       { send_selection_to_back();     }
@@ -197,7 +202,7 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx)
 //  "_draw_properties_panel_multi"
 //      Draws the right-hand, INSPECTOR COLUMN for case of: SELECTION CONTAINS MORE THAN ONE OBJECT.
 //
-void Editor::_draw_properties_panel_multi(void)
+void Editor::_draw_properties_panel_multi(const LabelFn & callback)
 {
     static constexpr size_t         TITLE_SIZE              = 128;
     static char                     title [TITLE_SIZE];   // safe head-room
@@ -253,7 +258,7 @@ void Editor::_draw_properties_panel_multi(void)
 
 //  "_draw_vertex_panel"
 //
-void Editor::_draw_vertex_panel(Path & path, [[maybe_unused]] const size_t pidx)
+void Editor::_draw_vertex_panel(Path & path, [[maybe_unused]] const size_t pidx, const LabelFn & callback)
 {
     BrowserStyle &                  BStyle              = this->m_style.browser_style;
 
@@ -483,7 +488,7 @@ void Editor::_draw_vertex_inspector_column(Path & path)
         auto                snap            = [grid](float f){ return std::round(f / grid) * grid; };
 
         //      3.1.    Position:
-        this->left_label("Position:", LABEL_W, WIDGET_W);
+        this->S.labelf("Position:", LABEL_W, WIDGET_W);
         dirty                              |= ImGui::DragFloat2("##Editor_VertexBrowser_Pos", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
         //
         if ( dirty && /*!ImGui::IsItemActive() && */ this->want_snap() ) {
@@ -500,7 +505,7 @@ void Editor::_draw_vertex_inspector_column(Path & path)
         //
         //              3.2A    ANCHOR TYPE (corner / smooth / symmetric):
         {
-            this->left_label("Type:", LABEL_W, WIDGET_W);
+            this->S.labelf("Type:", LABEL_W, WIDGET_W);
             dirty = ImGui::Combo("##Editor_VertexBrowser_AnchorType", &kind_idx, ms_ANCHOR_TYPE_NAMES.data(), static_cast<int>( AnchorType::COUNT ));          // <- int, not enum
             //
             if (dirty) {
@@ -510,7 +515,7 @@ void Editor::_draw_vertex_inspector_column(Path & path)
         }
         //
         //              3.2B    INWARD (from previous vertex):
-        this->left_label("Inward:", LABEL_W, WIDGET_W);
+        this->S.labelf("Inward:", LABEL_W, WIDGET_W);
         //
         dirty              = ImGui::DragFloat2("##Editor_VertexBrowser_InwardControl",     &v->in_handle.x,    speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
         if ( dirty && !ImGui::IsItemActive() ) {
@@ -521,7 +526,7 @@ void Editor::_draw_vertex_inspector_column(Path & path)
         }
         //
         //              3.2C    OUTWARD (to next vertex):
-        this->left_label("Outward:", LABEL_W, WIDGET_W);
+        this->S.labelf("Outward:", LABEL_W, WIDGET_W);
         dirty               = ImGui::DragFloat2("##Editor_VertexBrowser_OutwardControl",    &v->out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
         if ( dirty && !ImGui::IsItemActive() ) {
             v->out_handle.x     = snap(v->out_handle.x);
@@ -558,16 +563,15 @@ void Editor::_draw_vertex_inspector_column(Path & path)
 
 //  "_draw_payload_panel"
 //
-void Editor::_draw_payload_panel(Path & path, [[maybe_unused]] const size_t pidx)
+void Editor::_draw_payload_panel(Path & path, [[maybe_unused]] const size_t pidx, const LabelFn & callback)
 {
     const bool                          has_payload                 = path.kind != PathKind::None;
 
 
-    ImGui::BeginDisabled(true);
-        ImGui::SeparatorText("Payload");
-    ImGui::EndDisabled();
+    S.DisabledSeparatorText("Payload");
     {
-        this->left_label("Type:", 196.0f, 256.0f);    path.ui_kind();
+        callback("Type:");
+        path.ui_kind();
         
         
         //  CASE 1 :    NO PAYLOAD TYPE...
