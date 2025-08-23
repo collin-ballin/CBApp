@@ -565,7 +565,9 @@ void MenuBar::ViewMenubar(void)
     ImGui::TextDisabled("Main UI");
     //
     //
-        ImGui::MenuItem("Item 2",         nullptr);
+        ImGui::MenuItem( "Control Bar",         nullptr,    &this->S.m_windows[ Window::ControlBar ].open   );
+        ImGui::MenuItem( "Browser",             nullptr,    &this->S.m_show_controlbar_window               );
+        ImGui::MenuItem( "Detail View",         nullptr,    &this->S.m_show_detview_window                  );
     //
     //
     //  END "MAIN UI".
@@ -949,29 +951,6 @@ void MenuBar::HelpMenubar(void)
     
     
     //      SECTION #1.     HELP AND STUFF...
-    ImGui::Separator();
-    ImGui::BeginDisabled(true);
-    //
-    //
-    
-        //      1.1.    USER GUIDE...
-        if ( ImGui::MenuItem("User Guide", nullptr, false) )
-        {
-            //  ...
-        }
-    
-        //      1.2.    READ THE DOCS...
-        if ( ImGui::MenuItem("Documentation", nullptr, false) )
-        {
-            //  ...
-        }
-    //
-    //
-    ImGui::EndDisabled();
-    
-    
-    
-    //      SECTION #2.     HELP AND STUFF...
     ImGui::Separator();
     ImGui::BeginDisabled(true);
     //

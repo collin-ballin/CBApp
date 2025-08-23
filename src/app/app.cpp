@@ -481,24 +481,20 @@ void App::RebuildDockLayout(void)
 {
     app::WinInfo &           winfo               = S.m_windows[static_cast<Window>(0)];
     
-    //  1.  CLEAR EXISTING DOCK LAYOUT...
-    //  ImGui::DockBuilderRemoveNode    (this->S.m_dockspace_id);
-    //  ImGui::DockBuilderAddNode       (this->S.m_dockspace_id,        ImGuiDockNodeFlags_DockSpace);
-    //  ImGui::DockBuilderSetNodeSize   (this->S.m_dockspace_id,        S.m_main_viewport->WorkSize);
-
-    //  //  2.  CREATE SPLIT-DOCK NODES...
-    //  ImGui::DockBuilderSplitNode     (this->S.m_dockspace_id,        ImGuiDir_Left,          this->S.m_browser_ratio,
-    //                                   &S.m_browser_dock_id,          &S.m_main_dock_id);
+    
+    this->S.m_show_controlbar_window                = true;
+    this->S.m_show_browser_window                   = true;
+    this->S.m_show_detview_window                   = true;
 
 
-    //  2.  ENABLE WINDOW VISIBILITY...
+    //      2.      ENABLE WINDOW VISIBILITY...
     S.m_windows[ Window::ControlBar     ].open      = true;
     S.m_windows[ Window::Browser        ].open      = true;
     S.m_windows[ Window::MainApp        ].open      = true;
     S.m_windows[ Window::DetailView     ].open      = true;
 
 
-    //  3.  RE-INSERT ALL WINDOWS INTO THEIR DEFAULT DOCKING SPACE...
+    //      3.      RE-INSERT ALL WINDOWS INTO THEIR DEFAULT DOCKING SPACE...
     ImGui::DockBuilderDockWindow(S.m_windows[Window::ControlBar ].uuid.c_str(), S.m_controlbar_dock_id);
     ImGui::DockBuilderDockWindow(S.m_windows[Window::Browser    ].uuid.c_str(), S.m_browser_dock_id);
     ImGui::DockBuilderDockWindow(S.m_windows[Window::DetailView ].uuid.c_str(), S.m_detview_dock_id);

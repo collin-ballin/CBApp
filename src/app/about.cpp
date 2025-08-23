@@ -389,28 +389,34 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
         //      2.      "AUTHOR / HEADER"...
         ImGui::Text                     ("CBApp %s (Build %s, WIP)", __CBAPP_VERSION__, __CBAPP_BUILD__);
         ImGui::TextUnformatted          ("Developed by Collin Andrew Bond  (c)  2024-2025");
-        //
-        //
-        //      3.      "CONTACT ME"...
-        ImGui::NewLine();
-        ImGui::TextUnformatted          ("Contact me:");
-        ImGui::Indent();
-        //
-            ImGui::TextLinkOpenURL      ("collin.bond.d@gmail.com",     about::GMAIL_COMPOSE_URL);      ImGui::SameLine();
-            ImGui::TextUnformatted      ("or");                                                         ImGui::SameLine();
-            ImGui::TextLinkOpenURL      ("collin23@pdx.edu",            about::EDU_COMPOSE_URL);
+
         
-            ImGui::TextLinkOpenURL      ("Repository",                  "https://github.com/collin-ballin/CBApp");
-        //
-        ImGui::Unindent();
+        //      3.      "CONTACT ME"...
+        if ( about::info_selection == InfoType::None )
+        {
+            ImGui::NewLine();
+            ImGui::TextUnformatted          ("Contact me:");
+            ImGui::Indent();
+            //
+                ImGui::TextLinkOpenURL      ("collin.bond.d@gmail.com",     about::GMAIL_COMPOSE_URL);      ImGui::SameLine();
+                ImGui::TextUnformatted      ("or");                                                         ImGui::SameLine();
+                ImGui::TextLinkOpenURL      ("collin23@pdx.edu",            about::EDU_COMPOSE_URL);
+            
+                ImGui::TextLinkOpenURL      ("Repository",                  "https://github.com/collin-ballin/CBApp");
+            //
+            ImGui::Unindent();
+        }
         
         
         
         //      4.      Simple Formatting / Spacing...
-        //  ImGui::Dummy( {0.0f, half_line_height} );
-        ImGui::NewLine();
-        ImGui::Separator();
-        //  ImGui::Dummy( {0.0f, half_line_height} );
+        if ( about::info_selection == InfoType::None )
+        {
+            //  ImGui::Dummy( {0.0f, half_line_height} );
+            ImGui::NewLine();
+            ImGui::Separator();
+            //  ImGui::Dummy( {0.0f, half_line_height} );
+        }
         ImGui::NewLine();
         
         
@@ -450,6 +456,7 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
                 {
                     about::info_selection               = InfoType::None;
                 }
+                ImGui::Separator();
             }
             
             
@@ -1102,9 +1109,17 @@ void App::get_imgui_info(void) const
 //
 void App::_about_acknowledgements_info(void) const noexcept
 {
+    ImGui::TextUnformatted("A special thank you to the following individuals...");
+    ImGui::NewLine();
+    
+    ImGui::BulletText("Dr. Erik J. Sánchez, PSU");
+    ImGui::BulletText("Dr. Andres H. La Rosa, PSU");
+    ImGui::BulletText("John B. Schneider, WSU");
 
 
 
+    ImGui::NewLine();
+    
     return;
 }
 
@@ -1116,6 +1131,10 @@ void App::_about_license_info(void) const noexcept
 
 
 
+
+
+    ImGui::NewLine();
+    
     return;
 }
 
