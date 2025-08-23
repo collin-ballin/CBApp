@@ -306,10 +306,10 @@ void Editor::_draw_obj_selector_table(void)
     //      2.      BEGIN THE TABLE TO PRESENT EACH OBJECT...
     if ( ImGui::BeginTable("##Editor_ObjSelector_ObjTable", 4, TABLE_FLAGS, ImVec2(0, -1)) )
     {
-        ImGui::TableSetupColumn("Eye",  C_EYE,    CELL_SZ       );
-        ImGui::TableSetupColumn("Lock", C_LOCK,   CELL_SZ       );
-        ImGui::TableSetupColumn("Name", C_NAME                  );
-        ImGui::TableSetupColumn("Del",  C_DEL,    CELL_SZ       );
+        ImGui::TableSetupColumn("Eye",      C_EYE,    CELL_SZ       );
+        ImGui::TableSetupColumn("Lock",     C_LOCK,   CELL_SZ       );
+        ImGui::TableSetupColumn("Name",     C_NAME                  );
+        ImGui::TableSetupColumn("Del",      C_DEL,    CELL_SZ       );
 
         clipper.Begin( static_cast<int>(m_paths.size()), -1 );
 
@@ -532,7 +532,7 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
     
     
         //      1.3.    SINGLE CLICKED.
-        if ( single_click )
+        if ( single_click  &&  !renaming )
         {
             if ( !ctrl && !shift ) {
                 reset_selection();
@@ -615,7 +615,7 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
     //
     }// END "RENAMING".
 
-
+    
     return;
 }
 

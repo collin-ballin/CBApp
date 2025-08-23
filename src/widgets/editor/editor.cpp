@@ -848,24 +848,29 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
     static Overlay &        shape_resident              = *m_overlays.lookup_resident(shape_entry.id);
     //
     //
+    //
     //                  UI-RESIDENT OVERLAYS:
     static bool             ui_traits_overlay_cache     = !ES.m_show_debug_overlay;                         //  4.  UI-Traits Resident.
     static auto &           ui_traits_entry             = m_residents[Resident::UITraits];
-    static Overlay &        ui_trait_resident           = *m_overlays.lookup_resident(ui_traits_entry.id);
+    static Overlay &        ui_traits_resident          = *m_overlays.lookup_resident(ui_traits_entry.id);
+    //
+    static bool             ui_objects_overlay_cache    = !ES.m_show_ui_objects_overlay;                    //  5.  UI-Objects Resident.
+    static auto &           ui_objects_entry            = m_residents[Resident::UIObjects];
+    static Overlay &        ui_objects_resident         = *m_overlays.lookup_resident(ui_objects_entry.id);
 
     
     
     //      1.      UPDATE "DEBUGGER" OVERLAY...
     if ( ES.m_show_debug_overlay != debug_overlay_cache ) [[unlikely]] {
-        debug_overlay_cache                 = ES.m_show_debug_overlay;
-        debugger_resident.info.visible      = ES.m_show_debug_overlay;
+        debug_overlay_cache                     = ES.m_show_debug_overlay;
+        debugger_resident.info.visible          = ES.m_show_debug_overlay;
     }
     
 
     //      2.      UPDATE SELECTION OVERLAY...
     if ( ES.m_show_sel_overlay != sel_overlay_cache ) [[unlikely]] {
-        sel_overlay_cache                   = ES.m_show_sel_overlay;
-        selection_resident.info.visible     = ES.m_show_sel_overlay;
+        sel_overlay_cache                       = ES.m_show_sel_overlay;
+        selection_resident.info.visible         = ES.m_show_sel_overlay;
     }
     if (selection_resident.info.visible) {
         ImVec2 tl, br;
@@ -876,14 +881,22 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
     
     
     //      3.      UPDATE "SHAPE" OVERLAY...
-    shape_resident.info.visible              = ( m_mode == Mode::Shape );                //  Leaving the Shape-Tool closes the overlay window.
+    shape_resident.info.visible                 = ( m_mode == Mode::Shape );                //  Leaving the Shape-Tool closes the overlay window.
     
     
     
     //      4.      UPDATE "UI-TRAITS" OVERLAY...
     if ( ES.m_show_ui_traits_overlay != ui_traits_overlay_cache ) [[unlikely]] {
-        ui_traits_overlay_cache             = ES.m_show_ui_traits_overlay;
-        ui_trait_resident.info.visible      = ES.m_show_ui_traits_overlay;
+        ui_traits_overlay_cache                 = ES.m_show_ui_traits_overlay;
+        ui_traits_resident.info.visible         = ES.m_show_ui_traits_overlay;
+    }
+    
+    
+    
+    //      5.      UPDATE "UI-OBJECTS" OVERLAY...
+    if ( ES.m_show_ui_objects_overlay != ui_objects_overlay_cache ) [[unlikely]] {
+        ui_objects_overlay_cache                = ES.m_show_ui_objects_overlay;
+        ui_objects_resident.info.visible        = ES.m_show_ui_objects_overlay;
     }
     
     

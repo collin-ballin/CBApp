@@ -548,19 +548,22 @@ void Editor::_draw_settings_mechanics(void)
     ImGui::Indent();
     //
     //
-        this->S.labelf("Show Grid:",              LABEL_W, WIDGET_W);         //  1.1.        SHOW GRID.
+        this->S.labelf("Show Grid:",              LABEL_W, WIDGET_W);           //  1.1.        SHOW GRID.
         ImGui::Checkbox("##Editor_Settings_Mechanics_ShowGrid",                 &m_grid.visible);
         
-        this->S.labelf("Snap-To-Grid:",           LABEL_W, WIDGET_W);         //  1.2.        SNAP-TO-GRID.
+        this->S.labelf("Snap-To-Grid:",           LABEL_W, WIDGET_W);           //  1.2.        SNAP-TO-GRID.
         ImGui::Checkbox("##Editor_Settings_Mechanics_SnapToGrid",               &m_grid.snap_on);
         
         
         
-        this->S.labelf("Show Debugger Overlay:",  LABEL_W, WIDGET_W);         //  2.1.        SHOW DEBUG OVERLAY.
+        this->S.labelf("Show Debugger Overlay:",  LABEL_W, WIDGET_W);           //  2.1.        SHOW DEBUG OVERLAY.
         ImGui::Checkbox("##Editor_Settings_Mechanics_ShowDebugOverlay",         &EState.m_show_debug_overlay);
         //
-        this->S.labelf("Show UI-Traits Overlay:",  LABEL_W, WIDGET_W);         //  2.2.        SHOW UI-TRAITS OVERLAY.
-        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUIResidentOverlay",    &EState.m_show_ui_traits_overlay);
+        this->S.labelf("Show UI-Traits Overlay:",  LABEL_W, WIDGET_W);          //  2.2.        SHOW UI-TRAITS OVERLAY.
+        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUITraitsOverlay",      &EState.m_show_ui_traits_overlay);
+        //
+        this->S.labelf("Show UI-Objects Overlay:",  LABEL_W, WIDGET_W);         //  2.3.        SHOW UI-TRAITS OVERLAY.
+        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUIObjectsOverlay",     &EState.m_show_ui_objects_overlay);
     //
     //
     ImGui::Unindent();

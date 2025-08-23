@@ -103,6 +103,7 @@ public:
     //
     LabelFn                             ms_LeftLabel;
     LabelFn                             ms_TopLabel;
+    LabelFn                             ms_LabelUnformat;
     
 //
 //
@@ -319,6 +320,14 @@ public:
         ImGui::SetNextItemWidth(l_width);
         ImGui::TextUnformatted(text);
         ImGui::SetNextItemWidth(w_width);
+        return;
+    };
+
+    //  "_LabelUnformat"
+    inline void                         _LabelUnformat              (const char * text)
+    {
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted(text);
         return;
     };
     

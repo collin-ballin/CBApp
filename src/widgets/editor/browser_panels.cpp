@@ -39,7 +39,7 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx, const
     //
     //
     //
-    BrowserStyle &                      BStyle                  = this->m_style.browser_style;
+    //  BrowserStyle &                      BStyle                  = this->m_style.browser_style;
     //  EditorState &                       EState                  = m_editor_S;
     BrowserState &                      BState                  = m_browser_S;
     //
@@ -148,17 +148,18 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx, const
             
             
             callback("Stroke Weight:");
-            ImGui::SetNextItemWidth(200.0f);
+            ImGui::PushItemWidth(200.0f);
             //
             //  CASE 1 :    Value < 2.0f
             if (w < 2.0f) {
-                dirty = ImGui::InputFloat("##Editor_VertexBrowser_LineWidth", &w,   0.000f,     0.25f,      "%.4f px");
+                dirty = ImGui::InputFloat("##Editor_VertexBrowser_LineWidth", &w,   0.125f,     2.0f,       "%.3f px");
             }
             //
             //  CASE 2 :    2.0 <= Value.
             else {
                 dirty = ImGui::InputFloat("##Editor_VertexBrowser_LineWidth", &w,   1.0f,       2.0f,       "%.2f px");
             }
+            ImGui::PopItemWidth();
             //
             //
             //
@@ -178,13 +179,13 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx, const
             callback("Z-Index:");
             ImGui::Text("%3u", path.z_index);
             
-            if ( ImGui::SmallButton("Send To Back")     )       { send_selection_to_back();     }
-            ImGui::SameLine();
-            if ( ImGui::SmallButton("Send Backward")    )       { send_selection_backward();    }
-            ImGui::SameLine();
-            if ( ImGui::SmallButton("Bring Forward")    )       { bring_selection_forward();    }
-            ImGui::SameLine();
-            if ( ImGui::SmallButton("Bring To Front")   )       { bring_selection_to_front();   }
+            //      if ( ImGui::SmallButton("Bring To Front")   )       { bring_selection_to_front();   }
+            //
+            //      if ( ImGui::SmallButton("Bring Forward")    )       { bring_selection_forward();    }
+            //
+            //      if ( ImGui::SmallButton("Send Backward")    )       { send_selection_backward();    }
+            //
+            //      if ( ImGui::SmallButton("Send To Back")     )       { send_selection_to_back();     }
         }
     //
     //
@@ -202,7 +203,7 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx, const
 //  "_draw_properties_panel_multi"
 //      Draws the right-hand, INSPECTOR COLUMN for case of: SELECTION CONTAINS MORE THAN ONE OBJECT.
 //
-void Editor::_draw_properties_panel_multi(const LabelFn & callback)
+void Editor::_draw_properties_panel_multi([[maybe_unused]] const LabelFn & callback)
 {
     static constexpr size_t         TITLE_SIZE              = 128;
     static char                     title [TITLE_SIZE];   // safe head-room
@@ -258,7 +259,7 @@ void Editor::_draw_properties_panel_multi(const LabelFn & callback)
 
 //  "_draw_vertex_panel"
 //
-void Editor::_draw_vertex_panel(Path & path, [[maybe_unused]] const size_t pidx, const LabelFn & callback)
+void Editor::_draw_vertex_panel(Path & path, [[maybe_unused]] const size_t pidx, [[maybe_unused]] const LabelFn & callback)
 {
     BrowserStyle &                  BStyle              = this->m_style.browser_style;
 

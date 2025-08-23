@@ -318,7 +318,30 @@ public:
                 /*  background      */  0x00000000,
                 /*  win_rounding    */  8,
             //
-                /*  window_size     */  {       {     { 275.0f,      550.0f },      { { 100.0f,        50.0f },     { 375.0f,       750.0f } }   }      }
+                /*  window_size     */  {       {     { 275.0f,      500.0f },      { { 100.0f,        50.0f },     { 375.0f,       750.0f } }   }      }
+            }
+        },
+        //
+        //  UIObjects:
+        {   0,                                  //  ID.
+            nullptr,                            //  Reference.
+            {   /*  draw_fn         */  {   },                              // "draw_fn" will be dispatched in ctor.
+                /*  locked          */  false,
+            //
+                /*  placement       */  OverlayPlacement::CanvasBL,
+                /*  src_anchor      */  Anchor::SouthWest,
+                /*  offscreen       */  OffscreenPolicy::Clamp,
+                /*  anchor_px       */  ImVec2{ 8,      8 },                //  Offset Position.
+            //
+            //
+                /*  anchor_ws       */  ImVec2{ 0,      0 }                 //  ws anchor filled each frame
+            },
+            {//     STYLE...
+                /*  alpha           */  0.80f,
+                /*  background      */  0x00000000,
+                /*  win_rounding    */  8,
+            //
+                /*  window_size     */  {       {     { 225.0f,      300.0f },      { { 100.0f,        100.0f },     { 300.0f,       400.0f } }   }      }
             }
         }
     //
@@ -545,6 +568,7 @@ protected:
     //
     //                              UI-TOOLS RESIDENTS:
     void                                    _draw_ui_traits_resident        (void);
+    void                                    _draw_ui_objects_resident       (void);
     
     // *************************************************************************** //
     //

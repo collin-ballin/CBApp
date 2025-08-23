@@ -88,6 +88,7 @@ public:
         using                   OverlayID                       = uint32_t;
         using                   Overlay                         = Overlay_t<OverlayID>;
         using                   OverlayInfo                     = Overlay::OverlayInfo;
+        using                   WindowType                      = OverlayInfo::WindowType;
         using                   Anchor                          = BBoxAnchor;
 //
 //      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
@@ -98,6 +99,7 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //
 public:
+
     void                    Begin                   (const std::function<ImVec2(ImVec2)> & world_to_px, ImVec2 cursor_px, const ImRect& plot_rect);
     //
     //
@@ -121,17 +123,19 @@ public:
     
     //  "lookup"
     Overlay *               lookup                  (OverlayID id) {
-        for (auto& ov : m_windows)
-            if (ov.info.id == id)
-                return &ov;
+        for (auto& ov : m_windows) {
+            if (ov.info.id == id)   { return &ov; }
+        }
+        
         return nullptr;                               // not found
     }
     
     //  "lookup_resident"
     Overlay *               lookup_resident         (OverlayID id) {
-        for (auto& ov : m_residents)
-            if (ov.info.id == id)
-                return &ov;
+        for (auto& ov : m_residents) {
+            if (ov.info.id == id)   { return &ov; }
+        }
+        
         return nullptr;                               // not found
     }
 
@@ -185,14 +189,95 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //
 protected:
-    void                    _render_overlay         (Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
-                                                     ImVec2 cursor_px, const ImRect & );
-    void                    _draw_context_menu      (Overlay & );
+
+    //  void                    _render_overlay             ( Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
+    //                                                        ImVec2 cursor_px, const ImRect & );
+    //
+    //
+    void                        _render_default_overlay         ( Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
+                                                                  ImVec2 cursor_px, const ImRect & );
+    //
+    void                        _render_custom_overlay          ( Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
+                                                                  ImVec2 cursor_px, const ImRect & );
+    //
+    //
+    //
+    void                        _draw_context_menu              (Overlay & );
     //
     //
     [[nodiscard]] std::pair<ImVec2, ImVec2>
-                            _anchor_to_pos          (Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
-                                                     ImVec2 cursor_px, const ImRect & );
+                                _anchor_to_pos                  ( Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
+                                                                  ImVec2 cursor_px, const ImRect & );
+                            
+                              
+    //  "_render_overlay"
+    //
+    inline void                 _render_overlay                 ( Overlay & ov, const std::function<ImVec2(ImVec2)> & render_fn,
+                                                                  ImVec2 cursor_px, const ImRect & rect )
+    {
+        IM_ASSERT( ov.cfg.draw_fn  &&  "Overlay draw_fn must not be null" );
+        if ( !ov.info.visible )         { return; }
+        
+    
+        switch (ov.info.type)
+        {
+            //      1.      DEFAULT RESIDENTS.
+            case WindowType::Resident   : {
+                _render_default_overlay         (ov,    render_fn,  cursor_px,  rect);
+                break;
+            }
+            
+            //      2.      CUSTOM RESIDENTS.
+            case WindowType::Custom     : {
+                _render_custom_overlay          (ov,    render_fn,  cursor_px,  rect);
+                break;
+            }
+            
+            //      0.      EPHENERAL OVERLAY WINDOWS.
+            default                     : {
+                IM_ASSERT( true && "ephemeral overlays are NOT implemented yet" );
+            }
+        }
+        
+        return;
+    }
+                            
+                  
+                  
+                  
+                  
+    //  "_init_resident_overlay"
+    //
+    inline void                 _init_resident_overlay              (Overlay & ov)
+    {
+        const bool  promote_to_custom   = ov.style.window_size.has_value();
+    
+        if ( promote_to_custom )        { ov.info.type = WindowType::Custom; }
+        else                            { ov.info.type = WindowType::Resident; }
+        
+        
+        switch (ov.info.type)
+        {
+            //      1.      DEFAULT RESIDENTS.
+            case WindowType::Resident   : {
+                ov.info.id              = m_next_id++;
+                ov.info.window_name     = "##DefaultResident_" + std::to_string(ov.info.id);
+                break;
+            }
+            
+            //      2.      CUSTOM RESIDENTS.
+            case WindowType::Custom     : {
+                ov.info.id              = m_next_id++;
+                ov.info.window_name     = "##CustomResident_" + std::to_string(ov.info.id);
+                break;
+            }
+            
+            //      0.      EPHENERAL OVERLAY WINDOWS.
+            default :           { IM_ASSERT( true && "ephemeral overlays are NOT implemented yet" ); }
+        }
+        
+        return;
+    }
                         
 
 
@@ -203,11 +288,17 @@ protected:
 // *************************************************************************** //
 // *************************************************************************** //
 private:
-    OverlayID                   m_next_id           { 1 };
-    //
-    std::vector<Overlay>        m_windows;                  // dynamic overlays (current m_windows)
-    std::vector<Overlay>        m_residents;                 // resident overlays never erased; their `visible` flag is toggled
 
+    OverlayID                           m_next_id                   { 1 };
+    //
+    std::vector<Overlay>                m_windows;                              //  dynamic overlays (current m_windows)
+    std::vector<Overlay>                m_residents;                            //  resident overlays never erased; their `visible` flag is toggled
+    //
+    //
+    //                              CACHE VARIABLES FOR RE-SIZE:
+    ImVec2                              m_pos_cache                 = { 0.0f,   0.0f };
+    ImVec2                              m_pivot_cache               = { 0.0f,   0.0f };
+    
 
 
 

@@ -803,6 +803,7 @@ enum Resident: uint8_t {
     Shape,
 //
     UITraits,
+    UIObjects,
 //
     COUNT
 };
@@ -851,8 +852,25 @@ enum class OverlayPlacement : uint8_t {
     CanvasBL,           // anchor_padpx = inset from bot‑left  corner
     CanvasBR,           // anchor_padpx = inset from bot‑right corner
 //
+    CanvasLeft,
+    CanvasRight,
+    CanvasTop,
+    CanvasBottom,
+//
     COUNT
 };
+
+
+//  "OverlayWindowType"
+//
+enum class OverlayWindowType : uint8_t {
+    Ephemeral = 0,      //  Ephemeral / Transient.
+    Resident,
+    Custom,
+//
+    COUNT
+};
+
 
 
 //  "OverlayCFG"
@@ -923,17 +941,26 @@ struct OverlayStyle {
 };
 
 
+
+
 //  "OverlayInfo_t"
 //
 template<typename OID = uint32_t>
 struct OverlayInfo_t {
     using                                   OverlayID               = OID;
+    using                                   WindowType              = OverlayWindowType;
+//
+//
     static constexpr ImGuiWindowFlags       ms_DEF_WINDOW_FLAGS     = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    static constexpr ImGuiWindowFlags       ms_CUSTOM_WINDOW_FLAGS  = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
 //
 //
     OverlayID                               id                      = 0;
-    bool                                    visible                 = false;                 // owner sets false to retire
+    bool                                    visible                 = false;                 //     owner sets false to retire
     ImGuiWindowFlags                        flags                   = ms_DEF_WINDOW_FLAGS;
+//
+    std::string                             window_name             = {   };
+    WindowType                              type                    = { WindowType::Ephemeral };
 };
 
 
@@ -945,6 +972,7 @@ template<typename OID = uint32_t>
 struct Overlay_t {
     using                                   OverlayID               = OID;
     using                                   OverlayInfo             = OverlayInfo_t<OID>;
+    using                                   WindowType              = OverlayWindowType;
 //
     OverlayInfo                             info                    {   };
     OverlayCFG                              cfg                     {   };
@@ -1131,7 +1159,9 @@ struct EditorState_t
     //                              OVERALL STATE / ENABLED BEHAVIORS:
     bool                                m_show_grid                     = true;
     bool                                m_show_debug_overlay            = true;     //  Persistent/Resident Overlays.
-    bool                                m_show_ui_traits_overlay        = true;     //  Persistent/Resident Overlays.
+    //
+    bool                                m_show_ui_traits_overlay        = true;     //  UI-Overlays
+    bool                                m_show_ui_objects_overlay       = true;
     //
     //
     //

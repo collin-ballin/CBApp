@@ -55,10 +55,14 @@ AppState::AppState(void)
     this->ms_TopLabel           = [this](const char * t) {
         this->_TopLabel(t);
     };
+    this->ms_LabelUnformat      = [this](const char * t) {
+        this->_LabelUnformat(t);
+    };
+    //
+    const int   num_invalid         = static_cast<int>( !this->ms_LeftLabel )  +  static_cast<int>( !this->ms_TopLabel )  +  static_cast<int>( !this->ms_LabelUnformat );
     //
     //
     //
-    const int   num_invalid         = static_cast<int>( !this->ms_LeftLabel )  +  static_cast<int>( !this->ms_TopLabel );
     IM_ASSERT( (num_invalid == 0)  &&  "one or more AppState label callbacks are NULL (LabelFn)" );
 
 

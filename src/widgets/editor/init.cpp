@@ -112,6 +112,10 @@ void Editor::_dispatch_resident_draw_fn(Resident idx)
         case Resident::UITraits :
         { entry.cfg.draw_fn         = [this]{ _draw_ui_traits_resident(); };        break;      }
     //
+    //      5.      UI-OBJECTS OVERLAY
+        case Resident::UIObjects :
+        { entry.cfg.draw_fn         = [this]{ _draw_ui_objects_resident(); };       break;      }
+    //
     //
     //
         default :                                   //  DEFAULT :  Failure.

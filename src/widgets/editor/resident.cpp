@@ -473,10 +473,11 @@ void Editor::_draw_shape_resident_custom(void)
 void Editor::_draw_ui_traits_resident(void)
 {
     BrowserStyle &      BStyle      = this->m_style.browser_style;
+    const ImVec2        Avail       = ImGui::GetContentRegionAvail();
     int                 trait_i     = static_cast<int>( this->m_trait );
     
     
-    this->S.PushFont(Font::FootNote);
+    this->S.PushFont(Font::Small);
     //
     //
         ImGui::BeginDisabled(true);
@@ -484,7 +485,8 @@ void Editor::_draw_ui_traits_resident(void)
         ImGui::EndDisabled();
         
         
-        //  ImGui::SetNextItemWidth( FLT_MAX );
+        ImGui::SetNextItemWidth( Avail.x );
+        //ImGui::SetNextItemWidth( -1.0f );
         if ( ImGui::Combo("##UITraits_TraitSelector",           &trait_i,
                           ms_OBJECT_TRAIT_NAMES.data(),         static_cast<int>(ObjectTrait::COUNT)) )
         {
@@ -506,6 +508,38 @@ void Editor::_draw_ui_traits_resident(void)
     
     return;
 }
+
+
+//  "_draw_ui_objects_resident"
+//
+void Editor::_draw_ui_objects_resident(void)
+{
+    BrowserStyle &      BStyle      = this->m_style.browser_style;
+    
+    
+    this->S.PushFont(Font::Small);
+    //
+    //
+        ImGui::BeginDisabled(true);
+            ImGui::SeparatorText("Objects");
+        ImGui::EndDisabled();
+        
+        
+        
+        ImGui::BeginChild("##UIObjects_Inspector",    {-1.0f, 0.0f},     BStyle.STATIC_CHILD_FLAGS);
+            _draw_obj_selector_table(/*top_label = this->S.ms_TopLabel*/);
+        ImGui::EndChild();
+    //
+    //
+    this->S.PopFont();
+    
+    
+    
+    return;
+}
+
+
+
 
 
 
