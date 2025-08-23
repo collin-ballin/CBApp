@@ -196,6 +196,11 @@ namespace about { //     BEGINNING NAMESPACE "about"...
         None = 0, Github, COUNT
     };
     
+    //  "InfoType"
+    enum class InfoType : uint8_t {
+        None = 0, Verbose, Acknowledgments, License, COUNT
+    };
+    
     //  "get_imgui_color_order"
     //      Return "RGBA" (default) or "BGRA" when the build
     //      was compiled with IMGUI_USE_BGRA_PACKED_COLOR.
@@ -254,7 +259,7 @@ namespace about { //     BEGINNING NAMESPACE "about"...
     //
     //
     //                              MUTABLE STATE STUFF:
-    static bool                         show_verbose_info           = false;
+    static InfoType                     info_selection              = InfoType::None;
     //
     static bool                         show_cbapp_info             = true;
     static bool                         show_build_info             = false;
@@ -262,7 +267,7 @@ namespace about { //     BEGINNING NAMESPACE "about"...
     static bool                         show_imgui_info             = false;
     //
     //                              MUTABLE DIMENSION STUFF:
-    static ImVec2                       BUTTON_SIZE                 = ImVec2(80.0f, -1);
+    static ImVec2                       BUTTON_SIZE                 = ImVec2(0.0f, 0.0f);
     static ImVec2                       Avail                       = {};
     //
     //                              MUTABLE STRING STUFF:
@@ -306,7 +311,8 @@ namespace about { //     BEGINNING NAMESPACE "about"...
     //
     inline static void first_frame_cache(void)
     {
-        BUTTON_SIZE                             = ImVec2( 1.8f * ImGui::CalcTextSize("More Info...").x, ImGui::GetFrameHeight() );
+        BUTTON_SIZE                             = { 1.2f * ImGui::CalcTextSize("Acknowledgments...").x,     ImGui::GetFrameHeight()      };
+        //  BUTTON_SIZE                             = ImVec2( 1.8f * ImGui::CalcTextSize("More Info...").x,     ImGui::GetFrameHeight()     );
         OPENGL_VERSION                          = std::string( reinterpret_cast<const char *>( glGetString(GL_VERSION)                   )  );
     #ifdef __APPLE__
         GLSL_VERSION                            = std::string( reinterpret_cast<const char *>( glGetString(GL_SHADING_LANGUAGE_VERSION)  )  );
@@ -345,14 +351,16 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
                           [[maybe_unused]]   bool *              p_open,
                           [[maybe_unused]]   ImGuiWindowFlags    flags)
 {
-    using           CopyFormatType          = about::CopyFormatType;
+    using           InfoType                = about::InfoType;
     static bool     first_frame             = true;
-    int             copy_format_int         = static_cast<int>(about::copy_format);
     ImVec2          center                  = ImGui::GetMainViewport()->GetCenter();
+    //
+    const float     line_height             = ImGui::GetTextLineHeight();
+    const float     half_line_height        = 0.65f * line_height;
     
     
     
-    if (!*p_open)                        { return; }
+    if ( !(*p_open) )                       { return; }
     
     
     
@@ -368,7 +376,13 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
     
 
         //      0B.     If [ESC], CLOSE WINDOW...
-        if ( !first_frame && ImGui::IsKeyPressed( ImGuiKey_Escape ) )       { *p_open = false; ImGui::EndPopup(); return; }     // { *p_open = false; }
+        if ( !first_frame && ImGui::IsKeyPressed( ImGuiKey_Escape ) )
+        {
+            about::info_selection               = InfoType::None;
+            *p_open                             = false;
+            ImGui::EndPopup();
+            return;
+        }
         
         
         
@@ -389,73 +403,81 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
             ImGui::TextLinkOpenURL      ("Repository",                  "https://github.com/collin-ballin/CBApp");
         //
         ImGui::Unindent();
-        //
-        //
-        //      4.      "MORE INFO..." BUTTON...
+        
+        
+        
+        //      4.      Simple Formatting / Spacing...
+        //  ImGui::Dummy( {0.0f, half_line_height} );
         ImGui::NewLine();
-        if ( !about::show_verbose_info )
+        ImGui::Separator();
+        //  ImGui::Dummy( {0.0f, half_line_height} );
+        ImGui::NewLine();
+        
+        
+        
+        //      5.      "MORE INFO..." BUTTONS...
         {
-            about::Avail                        = ImGui::GetContentRegionAvail();
-            
-            ImGui::Dummy( { 0.5f * (about::Avail.x - about::BUTTON_SIZE.x), 0 } );      ImGui::SameLine(0.0f, 0.0f);
-            
-            if ( ImGui::Button( "More Info...", about::BUTTON_SIZE) )
-                { about::show_verbose_info = true; }
+            this->S.PushFont(Font::Small);
             
             
-            ImGui::NewLine();
-           
-        }
-        else {
-            if ( ImGui::Button("Less Info...", about::BUTTON_SIZE) )
-                { about::show_verbose_info = false; }
-            
-        }
-        
-        
-        
-        //      5.      "MORE INFO" TEXTBOX WINDOW...
-        if ( about::show_verbose_info )
-        {
-            ImGui::Separator();
-            ImGui::Indent();
-            
-                ImGui::Checkbox("Show CBApp Information",           &about::show_cbapp_info);
-                ImGui::Checkbox("Show Build Information",           &about::show_build_info);
-                ImGui::Checkbox("Show Configuration Information",   &about::show_config_info);
+            if ( about::info_selection == InfoType::None )
+            {
+                about::Avail                        = ImGui::GetContentRegionAvail();
+                
+                //      5.1.    "MORE INFO" BUTTON.
+                ImGui::Dummy( { 0.5f * (about::Avail.x - about::BUTTON_SIZE.x), 0 } );      ImGui::SameLine(0.0f, 0.0f);
+                if ( ImGui::Button( "More Info...", about::BUTTON_SIZE) )
+                    {  about::info_selection = InfoType::Verbose; }
                 //
-                if ( ImGui::Checkbox("Show Default ImGui Information",   &about::show_imgui_info) )
-                {
-                    about::show_cbapp_info = false;     about::show_build_info = false;     about::show_config_info = false;
-                }
-                if ( ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) )
-                { ImGui::SetTooltip("Use this option when posting a feature request, bug report, etc, to the Dear ImGui GitHub page."); }
-                
-                
-            ImGui::Unindent();
-        
-            this->show_about_info();
-        }
-
-
-        if ( about::show_verbose_info )
-        {
-            ImGui::BeginDisabled(true);
-                about::copy_to_clipboard    = false;
-                if ( ImGui::Button("Copy-To-Clipboard") ) {
-                    about::copy_to_clipboard    = true;
-                }
-            ImGui::EndDisabled();//  TO-DO:     Copy-To-Clipboard FAILS.
-                                 //             The copy acts correctly, but when the user PASTES the data somewhere else, it crashes the application.
-        
-        
-            ImGui::SameLine(0, 25);
+                //
+                //      5.2.    "Acknowledgments" BUTTON.
+                ImGui::Dummy( { 0.5f * (about::Avail.x - about::BUTTON_SIZE.x), half_line_height } );      ImGui::SameLine(0.0f, 0.0f);
+                if ( ImGui::Button( "Acknowledgments...", about::BUTTON_SIZE) )
+                    {  about::info_selection = InfoType::Acknowledgments; }
+                //
+                //
+                //      5.3.    "License" BUTTON.
+                ImGui::Dummy( { 0.5f * (about::Avail.x - about::BUTTON_SIZE.x), half_line_height } );      ImGui::SameLine(0.0f, 0.0f);
+                if ( ImGui::Button( "License...", about::BUTTON_SIZE) )
+                    {  about::info_selection = InfoType::License; }
             
-            ImGui::TextUnformatted("Copy Format:");
-            ImGui::SameLine();
-            if ( ImGui::Combo("##App_About_CopyFormatType",             &copy_format_int,
-                              about::DEF_FORMAT_TYPE_NAMES.data(),      static_cast<int>(CopyFormatType::COUNT)) )
-            { about::copy_format  = static_cast<CopyFormatType>(copy_format_int); }
+            }
+            //
+            //
+            else
+            {
+                if ( ImGui::Button("Go Back...", about::BUTTON_SIZE) )
+                {
+                    about::info_selection               = InfoType::None;
+                }
+            }
+            
+            
+            this->S.PopFont();
+            ImGui::NewLine();
+        }
+        
+        
+        
+        //      DISPATCH THE APPROPRIATE INFO FUNCTION...
+        switch (about::info_selection)
+        {
+            case InfoType::Verbose : {                  //  1.  Verbose.
+                this->_about_verbose_info();
+                break;
+            }
+            
+            case InfoType::Acknowledgments : {          //  2.  Acknowledgments.
+                this->_about_acknowledgements_info();
+                break;
+            }
+            
+            case InfoType::License : {                  //  3.  License.
+                this->_about_license_info();
+                break;
+            }
+            
+             default :   { break; }                     //  0.  NONE.
         }
 
 
@@ -476,6 +498,67 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
 // *************************************************************************** //
 
 
+//  "_about_verbose_info"
+//
+void App::_about_verbose_info(void) const noexcept
+{
+    using           CopyFormatType          = about::CopyFormatType;
+    using           InfoType                = about::InfoType;
+    int             copy_format_int         = static_cast<int>(about::copy_format);
+    
+
+    
+    //      5.      "MORE INFO" TEXTBOX WINDOW...
+    if ( about::info_selection == InfoType::Verbose )
+    {
+        ImGui::Indent();
+        
+            ImGui::Checkbox("Show CBApp Information",           &about::show_cbapp_info);
+            ImGui::Checkbox("Show Build Information",           &about::show_build_info);
+            ImGui::Checkbox("Show Configuration Information",   &about::show_config_info);
+            //
+            if ( ImGui::Checkbox("Show Default ImGui Information",   &about::show_imgui_info) )
+            {
+                about::show_cbapp_info = false;     about::show_build_info = false;     about::show_config_info = false;
+            }
+            if ( ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) )
+            { ImGui::SetTooltip("Use this option when posting a feature request, bug report, etc, to the Dear ImGui GitHub page."); }
+            
+            
+        ImGui::Unindent();
+    
+        this->show_about_info();
+    }
+        
+        
+        
+        
+        
+
+
+    if ( about::info_selection == InfoType::Verbose )
+    {
+        ImGui::BeginDisabled(true);
+            about::copy_to_clipboard    = false;
+            if ( ImGui::Button("Copy-To-Clipboard") ) {
+                about::copy_to_clipboard    = true;
+            }
+        ImGui::EndDisabled();//  TO-DO:     Copy-To-Clipboard FAILS.
+                             //             The copy acts correctly, but when the user PASTES the data somewhere else, it crashes the application.
+    
+    
+        ImGui::SameLine(0, 25);
+        
+        ImGui::TextUnformatted("Copy Format:");
+        ImGui::SameLine();
+        if ( ImGui::Combo("##App_About_CopyFormatType",             &copy_format_int,
+                          about::DEF_FORMAT_TYPE_NAMES.data(),      static_cast<int>(CopyFormatType::COUNT)) )
+        { about::copy_format  = static_cast<CopyFormatType>(about::copy_format); }
+    }
+
+    return;
+}
+
 
 
 
@@ -489,7 +572,7 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
 
 //  "show_about_info"
 //
-void App::show_about_info(void) const
+void App::show_about_info(void) const noexcept
 {
     [[maybe_unused]] ImGuiIO &          io                  = ImGui::GetIO();
     [[maybe_unused]] ImGuiStyle &       style               = ImGui::GetStyle();
@@ -990,6 +1073,66 @@ void App::get_imgui_info(void) const
 
     return;
 }
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "VERBOSE" INFO.
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      OTHER INFO TYPES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_about_acknowledgements_info"
+//
+void App::_about_acknowledgements_info(void) const noexcept
+{
+
+
+
+    return;
+}
+
+
+//  "_about_license_info"
+//
+void App::_about_license_info(void) const noexcept
+{
+
+
+
+    return;
+}
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "OTHER INFO".
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -270,11 +270,18 @@ protected:
     //                      MAIN GUI FUNCTIONS:
     void                        ShowMainWindow              ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                        ShowDockspace               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    //
+    //
+    //                      ABOUT THIS APP:
     void                        ShowAboutWindow             ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    void                            show_about_info                 (void) const noexcept;
+    void                            _about_verbose_info             (void) const noexcept;
+    void                            _about_acknowledgements_info    (void) const noexcept;
+    void                            _about_license_info             (void) const noexcept;
+    //
     //
     //                      UTILITIES FOR MAIN GUI FUNCTIONS:
     void                        run_IMPL                    (void);
-    void                        show_about_info             (void) const;
     //
     void                        get_cbapp_info              (void) const;
     void                        get_build_info              (void) const;

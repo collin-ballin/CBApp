@@ -20,6 +20,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 
 
+
 // *************************************************************************** //
 //
 //
@@ -30,17 +31,17 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 MenuBar::MenuBar(app::AppState & src)
-    : S(src)                  { }
+    : S(src)                  {   }
 
 
 //  "init"          | private
 //
-void MenuBar::init(void)            { }
+void MenuBar::init(void)            {   }
 
 
 //  "load"
 //
-void MenuBar::load(void)            { }
+void MenuBar::load(void)            {   }
 
 
 //  Destructor.
@@ -50,7 +51,7 @@ MenuBar::~MenuBar(void)             { this->destroy(); }
 
 //  "destroy"       | protected
 //
-void MenuBar::destroy(void)         { }
+void MenuBar::destroy(void)         {   }
 
 
 
@@ -68,36 +69,40 @@ void MenuBar::Begin([[maybe_unused]] const char *       uuid,
                     [[maybe_unused]] bool *             p_open,
                     [[maybe_unused]] ImGuiWindowFlags   flags)
 {
-
     if (ImGui::BeginMainMenuBar())
     {
+        if (ImGui::BeginMenu("CBApp")) {        //  0.  "CBApp" MENU...
+            this->CBAppMenubar();
+            ImGui::EndMenu();
+        }
+        
         if (ImGui::BeginMenu("File")) {         //  1.  "File" MENU...
-            this->disp_file_menubar();
+            this->FileMenubar();
             ImGui::EndMenu();
         }
         
         if (ImGui::BeginMenu("Edit")) {         //  2.  "Edit" MENU...
-            this->disp_edit_menubar();
+            this->EditMenubar();
             ImGui::EndMenu();
         }
         
         if (ImGui::BeginMenu("View")) {         //  3.  "View" MENU...
-            this->disp_view_menubar();
+            this->ViewMenubar();
             ImGui::EndMenu();
         }
         
         if (ImGui::BeginMenu("Window")) {       //  4.  "Window" MENU...
-            this->disp_window_menubar();
+            this->WindowMenubar();
             ImGui::EndMenu();
         }
         
         if (ImGui::BeginMenu("Tools")) {        //  5.  "Tools" MENU...
-            this->disp_tools_menubar();
+            this->ToolsMenubar();
             ImGui::EndMenu();
         }
         
-        if (ImGui::BeginMenu("Help")) {         //  9.  "Help" MENU...
-            this->disp_help_menubar();
+        if (ImGui::BeginMenu("Help")) {         //  X.  "Help" MENU...
+            this->HelpMenubar();
             ImGui::EndMenu();
         }
         
@@ -113,12 +118,48 @@ void MenuBar::Begin([[maybe_unused]] const char *       uuid,
     return;
 }
 
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "SEC. 1".
+
+
+
+
 
 
 // *************************************************************************** //
 //
 //
-//  2.      GENERAL MENU FUNCTIONS...
+//      2.      GENERAL MENU FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    //
+    //  ...
+    //
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "GENERAL MENU".
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      3.      MENU-BAR FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -127,29 +168,66 @@ void MenuBar::Begin([[maybe_unused]] const char *       uuid,
 // *************************************************************************** //
 //
 //
-//
-//  3.      MENU-BAR FUNCTIONS...
+//              3.0.    "CBAPP" MENUBAR...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "disp_cbapp_menubar"
+//  "CBAppMenubar"
 //
-void MenuBar::disp_cbapp_menubar(void)
+void MenuBar::CBAppMenubar(void)
 {
-    ImGui::MenuItem("Item 1",         nullptr);
-    ImGui::MenuItem("Item 2",         nullptr);
+    //      1.1.        "ABOUT" THIS APP.
+    ImGui::MenuItem( "About CBApp", nullptr, &this->S.m_windows[ Window::AboutMyApp ].open );
+                                   
+                                   
+                 
+    //      2.0.        OTHER ITEMS...
+    ImGui::Separator();
+    //
+    //              2.1.    "Settings".
+    ImGui::BeginDisabled(true);
+        if ( ImGui::MenuItem("Settings...",                 "CTRL ,") )      {
+            //  ...
+        }
+    ImGui::EndDisabled();
     
     
+    
+    
+    //      3.0     "???"...
+    ImGui::Separator();
+    //
+    //              3.1.    "Quit".
+    ImGui::Separator();
+    if ( ImGui::MenuItem("Quit",                        "CTRL Q") )      {
+        app::instance().enqueue_signal( app::CBSignalFlags_Shutdown );
+    }
     
     
     
     return;
 }
 
-
-//  "disp_file_menubar"
 //
-void MenuBar::disp_file_menubar(void)
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CBAPP MENUBAR".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//              3.1.     "FILE" MENUBAR...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "FileMenubar"
+//
+void MenuBar::FileMenubar(void)
 {
     using                               namespace               app;
     [[maybe_unused]] ImGuiIO &          io                      = ImGui::GetIO(); (void)io;
@@ -241,7 +319,7 @@ void MenuBar::disp_file_menubar(void)
     
     //  4.  "ImGui" FILES SUB-MENU...
     if (ImGui::BeginMenu("Save ImGui Files")) {
-        this->disp_imgui_submenu();
+        this->file_imgui_submenu();
         ImGui::EndMenu();
     }
     
@@ -252,20 +330,162 @@ void MenuBar::disp_file_menubar(void)
     ImGui::EndDisabled();
     
     
-    //  4.  "Quit"...
-    ImGui::Separator();
-    if (ImGui::MenuItem("Quit",                     "CTRL+Q"))      {
-        app::instance().enqueue_signal( app::CBSignalFlags_Shutdown );
-    }
-    
-    
     return;
 }
 
 
-//  "disp_edit_menubar"
+//  "file_imgui_submenu"
 //
-void MenuBar::disp_edit_menubar(void)
+void MenuBar::file_imgui_submenu(void)
+{
+#ifdef CBAPP_DISABLE_INI
+    ImGui::TextDisabled("Disabled at compile-time (#ifdef CBAPP_DISABLE_INI)");
+# else
+    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
+    static ImGuiInputTextFlags      read_file_flags     = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_EnterReturnsTrue;
+    static ImGuiInputTextFlags      write_file_flags    = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue;
+    static constexpr std::size_t    BUFF_SIZE           = 256ULL;
+    static constexpr float          COOLDOWN            = 3.0f;
+    
+    static char                     buffer1[BUFF_SIZE];
+    static char                     custom_ini_file     [BUFF_SIZE];
+    static char                     current_ini_file    [BUFF_SIZE];
+    static char                     default_ini_file    [BUFF_SIZE];
+    static float                    TIME_CACHE          = 0.0f,     TIME = 0;
+    static bool                     ONCE                = true;
+    static bool                     TRIGGER             = false;
+    
+    if (ONCE) {
+        std::strncpy(current_ini_file,  io.IniFilename,     BUFF_SIZE-1);
+        std::strncpy(default_ini_file,  app::INI_FILEPATH,  BUFF_SIZE-1);
+        ONCE = false;
+    }
+    
+    
+    //  4.1     ".ini" FILE SUB-SUB-MENU.
+    if (ImGui::BeginMenu("Save ImGui \".ini\" File"))
+    {
+        //      4.1A    Save Custom ".ini" file.
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Custom File:");
+        ImGui::SameLine();
+        //
+        if ( ImGui::InputText("##CustomIniFilepath", buffer1, BUFF_SIZE, write_file_flags) )
+        {
+            TRIGGER     = true;
+            TIME_CACHE  = ImGui::GetIO().DeltaTime;
+            TIME        = 0.0f;
+            
+            std::snprintf(custom_ini_file, BUFF_SIZE, "%s/%s%s", app::USER_DATA_DIR, buffer1, ".ini");
+            ImGui::SaveIniSettingsToDisk(custom_ini_file);
+        }
+        ImGui::SameLine();
+        utl::HelpMarker("Tooltip are typically created by using a IsItemHovered() + SetTooltip() sequence.\n\n"
+                        "We provide a helper SetItemTooltip() function to perform the two with standards flags.");
+        //
+        //      4.1A-2  RESET COOLDOWN TIMER...
+        if (TRIGGER) {
+            TIME       += ImGui::GetIO().DeltaTime;
+            TRIGGER     = static_cast<bool>( !(COOLDOWN <= std::abs(TIME - TIME_CACHE)) );
+            ImGui::TextDisabled("Data was saved to \"%s\" at %.3f sec.", custom_ini_file, TIME_CACHE);
+            S.m_logger.info( std::format("ImGui \".ini\" data was written to file \"{}\" at {:.3f} sec.", custom_ini_file, TIME_CACHE) );
+        }
+        
+        
+        //      4.1B    Save *CURRENT* ".ini" file.
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Current File:");
+        ImGui::SameLine();
+        //
+        if ( ImGui::InputText("##CurrentIniFilepath", current_ini_file, BUFF_SIZE, read_file_flags) ) {
+            ImGui::SaveIniSettingsToDisk(custom_ini_file);
+        }
+        
+        
+        
+        
+        
+        //      4.1X-1      Display default ".ini" file.
+        ImGui::Separator();
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Default File:");
+        ImGui::SameLine();
+        ImGui::TextDisabled(app::INI_FILEPATH);
+            
+        //      4.1X-2      Overwrite/Save default ".ini" file.
+        if (ImGui::MenuItem("Save Current Settings As Default",       nullptr)) {
+            ImGui::SaveIniSettingsToDisk(cb::app::INI_FILEPATH);
+            CB_LOG(LogLevel::Info, "Default ImGui \".ini\" settings overwritten (\"{}\")", cb::app::INI_FILEPATH);
+        }
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort | ImGuiHoveredFlags_NoSharedDelay))
+            ImGui::SetTooltip("Overwrite the default settings with the current ones (stored at \"%s\").", app::INI_FILEPATH);
+
+        ImGui::EndMenu();
+    }
+    //
+    //
+    //  4.2     ".JSON" STYLE SUB-SUB-MENU.
+    if (ImGui::BeginMenu("Save ImGui \"Style\" File"))
+    {
+
+        if (ImGui::MenuItem("Save ImGui \"Style\" File",       nullptr))
+        {
+        
+            //  SPAWN SECONDARY THREAD...
+            auto _  = std::async(std::launch::async, []()
+            {
+            //
+                //  1.  Save ImPlot Settings...
+                if ( utl::SaveImGuiStyleToDisk(      ImGui::GetStyle(),      cb::app::IMGUI_STYLE_FILEPATH) ) {
+                    CB_LOG(LogLevel::Info, "Default ImGui style settings overwritten (\"{}\")", cb::app::IMGUI_STYLE_FILEPATH);
+                }
+                else {
+                    CB_LOG(LogLevel::Warning, "Failed to overwrite default ImGui style settings at (\"{}\")", cb::app::IMGUI_STYLE_FILEPATH);
+                }
+                
+                //  2.  Save ImPlot Settings...
+                if ( utl::SaveImPlotStyleToDisk(      ImPlot::GetStyle(),      cb::app::IMPLOT_STYLE_FILEPATH) ) {
+                    CB_LOG(LogLevel::Info, "Default ImPlot style settings overwritten (\"{}\")", cb::app::IMPLOT_STYLE_FILEPATH);
+                }
+                else {
+                    CB_LOG(LogLevel::Warning, "Failed to overwrite default ImPlot style settings at (\"{}\")", cb::app::IMPLOT_STYLE_FILEPATH);
+                }
+                
+                //  utl::SaveImPlotStyleToDisk(     ImPlot::GetStyle(),     cb::app::IMPLOT_STYLE_FILEPATH);
+            //
+            });
+            
+        }
+        ImGui::EndMenu();
+    }
+#endif  //  CBAPP_DISABLE_INI  //
+
+    return;
+}
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "FILE MENUBAR".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//              3.2.     "EDIT" MENUBAR...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "EditMenubar"
+//
+void MenuBar::EditMenubar(void)
 {
     ImGuiIO &                   io                  = ImGui::GetIO();
     constexpr bool              ENABLE_UNDO         = false;
@@ -313,10 +533,26 @@ void MenuBar::disp_edit_menubar(void)
     return;
 }
 
-
-//  "disp_view_menubar"
 //
-void MenuBar::disp_view_menubar(void)
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "EDIT MENUBAR".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//              3.3.     "VIEW" MENUBAR...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "ViewMenubar"
+//
+void MenuBar::ViewMenubar(void)
 {
     ImGui::MenuItem("Item 1",         nullptr);
     ImGui::MenuItem("Item 2",         nullptr);
@@ -344,10 +580,26 @@ void MenuBar::disp_view_menubar(void)
     return;
 }
 
-
-//  "disp_window_menubar"
 //
-void MenuBar::disp_window_menubar(void)
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "EDIT MENUBAR".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//              3.4.     "WINDOW" MENUBAR...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "WindowMenubar"
+//
+void MenuBar::WindowMenubar(void)
 {
     using WinLoc                    = utl::WindowLocation;
     GLFWwindow * main_window        = glfwGetCurrentContext();
@@ -400,7 +652,7 @@ void MenuBar::disp_window_menubar(void)
     ImGui::Separator();
     if (ImGui::BeginMenu("Show"))
     {
-        this->disp_show_windows_menubar();              //  2.1     SHOW VISIBILITY TOGGLE MENU HERE...
+        this->window_show_windows();                //  2.1     SHOW VISIBILITY TOGGLE MENU HERE...
         ImGui::EndMenu();
     }
        
@@ -409,9 +661,9 @@ void MenuBar::disp_window_menubar(void)
 }
 
 
-//  "disp_show_windows_menubar"
+//  "window_show_windows"
 //
-void MenuBar::disp_show_windows_menubar(void)
+void MenuBar::window_show_windows(void)
 {
     static size_t                   idx                 = static_cast<size_t>(0);
     
@@ -570,11 +822,26 @@ void MenuBar::disp_show_windows_menubar(void)
     return;
 }
 
-
-
-//  "disp_tools_menubar"
 //
-void MenuBar::disp_tools_menubar(void)
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "EDIT MENUBAR".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//              3.5.     "TOOLS" MENUBAR...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "ToolsMenubar"
+//
+void MenuBar::ToolsMenubar(void)
 {
     [[maybe_unused]] static size_t              idx                 = static_cast<size_t>(0);
     [[maybe_unused]] static WinInfo &           winfo               = S.m_windows[static_cast<Window>(idx)];
@@ -656,26 +923,77 @@ void MenuBar::disp_tools_menubar(void)
     return;
 }
 
-
-
-//  "disp_help_menubar"
 //
-void MenuBar::disp_help_menubar(void)
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "TOOLS MENUBAR".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//              3.6.     "HELP" MENUBAR...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "HelpMenubar"
+//
+void MenuBar::HelpMenubar(void)
 {
-    if ( ImGui::MenuItem(this->S.m_windows[ Window::AboutMyApp ].uuid.c_str(),
-                         nullptr,
-                         &this->S.m_windows[ Window::AboutMyApp ].open) ) {  }
+
     
+    
+    
+    //      SECTION #1.     HELP AND STUFF...
     ImGui::Separator();
-    
-    
-    
     ImGui::BeginDisabled(true);
-        if (ImGui::MenuItem("User Guide", nullptr, false))
+    //
+    //
+    
+        //      1.1.    USER GUIDE...
+        if ( ImGui::MenuItem("User Guide", nullptr, false) )
         {
             //  ...
         }
+    
+        //      1.2.    READ THE DOCS...
+        if ( ImGui::MenuItem("Documentation", nullptr, false) )
+        {
+            //  ...
+        }
+    //
+    //
     ImGui::EndDisabled();
+    
+    
+    
+    //      SECTION #2.     HELP AND STUFF...
+    ImGui::Separator();
+    ImGui::BeginDisabled(true);
+    //
+    //
+    
+        //      1.1.    USER GUIDE...
+        if ( ImGui::MenuItem("User Guide", nullptr, false) )
+        {
+            //  ...
+        }
+    
+        //      1.2.    READ THE DOCS...
+        if ( ImGui::MenuItem("Documentation", nullptr, false) )
+        {
+            //  ...
+        }
+    //
+    //
+    ImGui::EndDisabled();
+    
+    
+    
     
     
     
@@ -683,145 +1001,28 @@ void MenuBar::disp_help_menubar(void)
     return;
 }
 
-
-
-// *************************************************************************** //
 //
 //
-//      3.1     SUB-MENU MENU-BAR FUNCTIONS...
 // *************************************************************************** //
-// *************************************************************************** //
+// *************************************************************************** //   END "HELP MENUBAR".
 
 
-//  "disp_imgui_submenu"
-//
-void MenuBar::disp_imgui_submenu(void)
-{
-#ifdef CBAPP_DISABLE_INI
-    ImGui::TextDisabled("Disabled at compile-time (#ifdef CBAPP_DISABLE_INI)");
-# else
-    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO(); (void)io;
-    [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
-    static ImGuiInputTextFlags      read_file_flags     = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_EnterReturnsTrue;
-    static ImGuiInputTextFlags      write_file_flags    = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue;
-    static constexpr std::size_t    BUFF_SIZE           = 256ULL;
-    static constexpr float          COOLDOWN            = 3.0f;
-    
-    static char                     buffer1[BUFF_SIZE];
-    static char                     custom_ini_file     [BUFF_SIZE];
-    static char                     current_ini_file    [BUFF_SIZE];
-    static char                     default_ini_file    [BUFF_SIZE];
-    static float                    TIME_CACHE          = 0.0f,     TIME = 0;
-    static bool                     ONCE                = true;
-    static bool                     TRIGGER             = false;
-    
-    if (ONCE) {
-        std::strncpy(current_ini_file,  io.IniFilename,     BUFF_SIZE-1);
-        std::strncpy(default_ini_file,  app::INI_FILEPATH,  BUFF_SIZE-1);
-        ONCE = false;
-    }
-    
-    
-    //  4.1     ".ini" FILE SUB-SUB-MENU.
-    if (ImGui::BeginMenu("Save ImGui \".ini\" File"))
-    {
-        //      4.1A    Save Custom ".ini" file.
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Custom File:");
-        ImGui::SameLine();
-        //
-        if ( ImGui::InputText("##CustomIniFilepath", buffer1, BUFF_SIZE, write_file_flags) )
-        {
-            TRIGGER     = true;
-            TIME_CACHE  = ImGui::GetIO().DeltaTime;
-            TIME        = 0.0f;
-            
-            std::snprintf(custom_ini_file, BUFF_SIZE, "%s/%s%s", app::USER_DATA_DIR, buffer1, ".ini");
-            ImGui::SaveIniSettingsToDisk(custom_ini_file);
-        }
-        ImGui::SameLine();
-        utl::HelpMarker("Tooltip are typically created by using a IsItemHovered() + SetTooltip() sequence.\n\n"
-                        "We provide a helper SetItemTooltip() function to perform the two with standards flags.");
-        //
-        //      4.1A-2  RESET COOLDOWN TIMER...
-        if (TRIGGER) {
-            TIME       += ImGui::GetIO().DeltaTime;
-            TRIGGER     = static_cast<bool>( !(COOLDOWN <= std::abs(TIME - TIME_CACHE)) );
-            ImGui::TextDisabled("Data was saved to \"%s\" at %.3f sec.", custom_ini_file, TIME_CACHE);
-            S.m_logger.info( std::format("ImGui \".ini\" data was written to file \"{}\" at {:.3f} sec.", custom_ini_file, TIME_CACHE) );
-        }
-        
-        
-        //      4.1B    Save *CURRENT* ".ini" file.
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Current File:");
-        ImGui::SameLine();
-        //
-        if ( ImGui::InputText("##CurrentIniFilepath", current_ini_file, BUFF_SIZE, read_file_flags) ) {
-            ImGui::SaveIniSettingsToDisk(custom_ini_file);
-        }
-        
-        
-        
-        
-        
-        //      4.1X-1      Display default ".ini" file.
-        ImGui::Separator();
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Default File:");
-        ImGui::SameLine();
-        ImGui::TextDisabled(app::INI_FILEPATH);
-            
-        //      4.1X-2      Overwrite/Save default ".ini" file.
-        if (ImGui::MenuItem("Save Current Settings As Default",       nullptr)) {
-            ImGui::SaveIniSettingsToDisk(cb::app::INI_FILEPATH);
-            CB_LOG(LogLevel::Info, "Default ImGui \".ini\" settings overwritten (\"{}\")", cb::app::INI_FILEPATH);
-        }
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort | ImGuiHoveredFlags_NoSharedDelay))
-            ImGui::SetTooltip("Overwrite the default settings with the current ones (stored at \"%s\").", app::INI_FILEPATH);
 
-        ImGui::EndMenu();
-    }
-    //
-    //
-    //  4.2     ".JSON" STYLE SUB-SUB-MENU.
-    if (ImGui::BeginMenu("Save ImGui \"Style\" File"))
-    {
 
-        if (ImGui::MenuItem("Save ImGui \"Style\" File",       nullptr))
-        {
-        
-            //  SPAWN SECONDARY THREAD...
-            auto _  = std::async(std::launch::async, []()
-            {
-            //
-                //  1.  Save ImPlot Settings...
-                if ( utl::SaveImGuiStyleToDisk(      ImGui::GetStyle(),      cb::app::IMGUI_STYLE_FILEPATH) ) {
-                    CB_LOG(LogLevel::Info, "Default ImGui style settings overwritten (\"{}\")", cb::app::IMGUI_STYLE_FILEPATH);
-                }
-                else {
-                    CB_LOG(LogLevel::Warning, "Failed to overwrite default ImGui style settings at (\"{}\")", cb::app::IMGUI_STYLE_FILEPATH);
-                }
-                
-                //  2.  Save ImPlot Settings...
-                if ( utl::SaveImPlotStyleToDisk(      ImPlot::GetStyle(),      cb::app::IMPLOT_STYLE_FILEPATH) ) {
-                    CB_LOG(LogLevel::Info, "Default ImPlot style settings overwritten (\"{}\")", cb::app::IMPLOT_STYLE_FILEPATH);
-                }
-                else {
-                    CB_LOG(LogLevel::Warning, "Failed to overwrite default ImPlot style settings at (\"{}\")", cb::app::IMPLOT_STYLE_FILEPATH);
-                }
-                
-                //  utl::SaveImPlotStyleToDisk(     ImPlot::GetStyle(),     cb::app::IMPLOT_STYLE_FILEPATH);
-            //
-            });
-            
-        }
-        ImGui::EndMenu();
-    }
-#endif  //  CBAPP_DISABLE_INI  //
 
-    return;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
