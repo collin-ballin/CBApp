@@ -111,6 +111,10 @@ public:
         friend struct                   SnapshotCmd;
         friend struct                   Command;
         //
+        static constexpr auto           ms_MAJOR_VERSION                = EditorIMPL::ms_EDITOR_JSON_MAJ_VERSION;
+        static constexpr auto           ms_MINOR_VERSION                = EditorIMPL::ms_EDITOR_JSON_MIN_VERSION;
+        static constexpr auto           ms_EDITOR_SCHEMA                = EditorIMPL::ms_EDITOR_SCHEMA;
+        //
         using                           Font                            = EditorIMPL::Font                      ;
         using                           Logger                          = EditorIMPL::Logger                    ;
         using                           LogLevel                        = EditorIMPL::LogLevel                  ;
@@ -1421,7 +1425,7 @@ protected:
 // *************************************************************************** //
 // *************************************************************************** //
 
-inline static constexpr uint32_t        kSaveFormatVersion              = 4;
+
 
 // Extend similarly for Point, Line, GridSettings, ViewState …
 //
@@ -1510,8 +1514,10 @@ public:
         this->points                    = e.m_points                ;
         this->lines                     = e.m_lines                 ;
         //
+        //
         //  2.  SUB-STATE OBJECTS...
         this->selection                 = e.m_sel                   ;
+        //
         //
         //  3.  ADDITIONAL MEMBERS...
         this->next_vid                  = e.m_next_id               ;       // << new
@@ -1562,7 +1568,9 @@ public:
     // *************************************************************************** //
     //                                  MISC DATA...
     // *************************************************************************** //
-    static constexpr uint32_t           version                 { kSaveFormatVersion };
+    static constexpr uint8_t           ms_MAJOR_VERSION                     = EditorIMPL::ms_EDITOR_JSON_MAJ_VERSION;
+    static constexpr uint8_t           ms_MINOR_VERSION                     = EditorIMPL::ms_EDITOR_JSON_MIN_VERSION;
+    
     // *************************************************************************** //
     //
     //

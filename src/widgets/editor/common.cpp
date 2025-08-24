@@ -287,16 +287,16 @@ void Editor::send_selection_backward(void)
 //
 void Editor::send_selection_to_back(void)
 {
-    if (m_sel.paths.empty()) return;
+    if ( m_sel.paths.empty() )      { return; }
 
-    // 1. Build vector sorted by current z
+    //      1.      Build vector sorted by current z
     std::vector<Path*> vec;
     vec.reserve(m_paths.size());
     for (Path & p : m_paths) vec.push_back(&p);
     std::stable_sort(vec.begin(), vec.end(),
         [](const Path* a, const Path* b){ return a->z_index < b->z_index; });
 
-    // 2. Re-order: selected first, unselected last
+    //      2.      Re-order: selected first, unselected last
     std::vector<Path*> reordered;
     reordered.reserve(vec.size());
     for (Path * p : vec) {
@@ -308,7 +308,7 @@ void Editor::send_selection_to_back(void)
         if (!m_sel.paths.count(idx)) reordered.push_back(p);
     }
 
-    // 3. Re-assign dense z-indices
+    //      3.      Re-assign dense z-indices
     ZID z = Z_FLOOR_USER;
     for (Path* p : reordered)
         p->z_index = z++;
@@ -657,7 +657,7 @@ void Editor::pump_main_tasks(void)
         std::lock_guard lk( this->m_editor_S.m_task_mtx );
         tasks.swap( this->m_editor_S.m_main_tasks );
     }
-    for (auto& fn : tasks) fn();
+    for (auto & fn : tasks) fn();
 }
 
 
@@ -743,8 +743,14 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
 {
     EditorState &       EState      = this->m_editor_S;
     nlohmann::json      j;
-    j["version"]                    = kSaveFormatVersion;
+    //
+    //
+    //  j["version"]                    = std::format("{}.{}", this->ms_MAJOR_VERSION, this->ms_MINOR_VERSION); //    kSaveFormatVersion;
+    j["version"]                    = ms_EDITOR_SCHEMA;       // uses to_json(SchemaVersion)
     j["state"]                      = snap;
+    //  j["editor_state"]               = this->m_editor_S;
+    //
+    //
     std::ofstream       os          (path, std::ios::binary);
     IOResult            res         = os ? IOResult::Ok : IOResult::IoError;
     
@@ -793,6 +799,7 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
 //
 void Editor::load_worker(std::filesystem::path path)
 {
+    using                   Version     = cblib::SchemaVersion;
     EditorState &           EState      = this->m_editor_S;
     nlohmann::json          j;
     std::ifstream           is          (path, std::ios::binary);
@@ -806,21 +813,28 @@ void Editor::load_worker(std::filesystem::path path)
         try
         {
             is >> j;
+            const Version     file_ver    = j.at("version").get<Version>();
             
-            if (  j.at( "version" ).get<uint32_t>() != kSaveFormatVersion  )
+            
+            //      1A.     VERSION MIS-MATCH ERROR...
+            if ( (file_ver != this->ms_EDITOR_SCHEMA)  ||  (file_ver > ms_EDITOR_SCHEMA) )
             {
                 res = IOResult::VersionMismatch;
             }
-            else        { snap = j.at("state").get<EditorSnapshot>(); }
+            //
+            //      1B.     MAIN LOADING BRANCH...
+            else
+            {
+                snap = j.at("state").get<EditorSnapshot>();
+            }
         }
         catch (...)     { res = IOResult::ParseError; }
-        
     }
 
 
     //      2.      ASSESS I/O RESULT.      -- enqueue GUI-thread callback...
     {
-        std::lock_guard     lk  (EState.m_task_mtx);
+        std::lock_guard     lk      (EState.m_task_mtx);
         
         EState.m_main_tasks.push_back( [this, res, snap = std::move(snap), path]() mutable
         {
@@ -845,8 +859,9 @@ void Editor::load_worker(std::filesystem::path path)
                 }
             }
             this->m_editor_S.m_io_last = res;
+            
             return;
-        });
+        } );
     }
     
     

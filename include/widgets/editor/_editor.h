@@ -93,23 +93,26 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  "EditorIMPL"
 //
 struct EditorIMPL {
+//      0.          CONSTANTS AND ALIASES...
 // *************************************************************************** //
 // *************************************************************************** //
-//
-//
-//
-        using                           Font                            = app::Font_t                           ;
-        using                           Logger                          = utl::Logger                           ;
-        using                           LogLevel                        = utl::LogLevel                         ;
+public:
+
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    using                           Font                            = app::Font_t                           ;
+    using                           Logger                          = utl::Logger                           ;
+    using                           LogLevel                        = utl::LogLevel                         ;
     //
-        using                           CBCapabilityFlags               = CBCapabilityFlags_                    ;
-        using                           Anchor                          = BBoxAnchor                            ;
+    using                           CBCapabilityFlags               = CBCapabilityFlags_                    ;
+    using                           Anchor                          = BBoxAnchor                            ;
     //
-        using                           PopupHandle                     = EditorPopupBits                       ;
-        using                           CBEditorPopupFlags              = CBEditorPopupFlags_                   ;
-        using                           PopupInfo                       = EditorPopupInfo                       ;
+    using                           PopupHandle                     = EditorPopupBits                       ;
+    using                           CBEditorPopupFlags              = CBEditorPopupFlags_                   ;
+    using                           PopupInfo                       = EditorPopupInfo                       ;
     //
-        using                           LabelFn                         = std::function<void(const char *)>     ;
+    using                           LabelFn                         = std::function<void(const char *)>     ;
         
     // *************************************************************************** //
     //
@@ -163,6 +166,29 @@ struct EditorIMPL {
         using                           PenState                        = PenState_t        <VertexID>                                  ;
         using                           ShapeState                      = ShapeState_t      <OverlayID>                                 ;
         using                           DebuggerState                   = DebuggerState_t   <VertexID, PointID, LineID, PathID, ZID>    ;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    using                                           version_type                    = cblib::SchemaVersion::value_type;
+    static constexpr version_type                   ms_EDITOR_JSON_MAJ_VERSION      = 4;
+    static constexpr version_type                   ms_EDITOR_JSON_MIN_VERSION      = 1;
+    //
+    static constexpr cblib::SchemaVersion           ms_EDITOR_SCHEMA                { ms_EDITOR_JSON_MAJ_VERSION, ms_EDITOR_JSON_MIN_VERSION };
+    
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+
+
+
 //
 //
 //

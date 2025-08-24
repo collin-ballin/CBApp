@@ -1245,6 +1245,43 @@ struct EditorState_t
 // *************************************************************************** //
 // *************************************************************************** //   END "EditorState"
 };
+//
+//
+//
+//      EditorState     : "to_json"
+//
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
+inline void to_json(nlohmann::json & j, const EditorState_t<VID, PtID, LID, PID, ZID> & obj)
+{
+    //  j = {
+    //      { "Z_EDITOR_BACK",          obj.Z_EDITOR_BACK       },
+    //      { "Z_FLOOR_USER",           obj.Z_FLOOR_USER        },
+    //      { "Z_EDITOR_FRONT",         obj.Z_EDITOR_FRONT      },
+    //      { "Z_CEIL_USER",            obj.Z_CEIL_USER         },
+    //      { "RENORM_THRESHOLD",       obj.RENORM_THRESHOLD    }
+    //  };
+    
+    return;
+}
+//
+//
+//
+//      EditorState     : "from_json"
+//
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
+inline void from_json(nlohmann::json & j, EditorState_t<VID, PtID, LID, PID, ZID> & obj)
+{
+
+    //  j.at("")        .get_to(obj.m_plot_limits);
+
+    //  j.at("Z_EDITOR_BACK")           .get_to(obj.Z_EDITOR_BACK);
+    //  j.at("Z_FLOOR_USER")            .get_to(obj.Z_FLOOR_USER);
+    //  j.at("Z_EDITOR_FRONT")          .get_to(obj.Z_EDITOR_FRONT);
+    //  j.at("Z_CEIL_USER")             .get_to(obj.Z_CEIL_USER);
+    //  j.at("RENORM_THRESHOLD")        .get_to(obj.RENORM_THRESHOLD);
+    
+    return;
+}
 
 
 
