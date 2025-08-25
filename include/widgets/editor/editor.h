@@ -326,13 +326,10 @@ public:
     //      MAIN API.                       |   "common.cpp" ...
     // *************************************************************************** //
     void                                save                                (void);
+    void                                save_as                             (void);
     void                                open                                (void);
     void                                undo                                (void);
     void                                redo                                (void);
-    //
-    void                                _draw_io_overlay                    (void);
-    void                                save_async                          (std::filesystem::path path);
-    void                                load_async                          (std::filesystem::path path);
     //
     void                                Begin                               (const char * id = "##EditorCanvas");
     void                                DrawBrowser                         (void);
@@ -344,7 +341,6 @@ public:
     //      "Wrapped" API Functions.        |   "common.cpp" ...
     // *************************************************************************** //
     void                                _file_dialog_handler                (void);
-    //
     void                                _save_IMPL                          (void);
     
     
@@ -398,6 +394,10 @@ protected:
     // *************************************************************************** //
     //      BROWSER STUFF.                  |   "browser.cpp" ...
     // *************************************************************************** //
+    //                              MAIN UI FUNCTIONS:
+    void                                _draw_controls                      (void);
+    //
+    //
     //                              BROWSER ORCHESTRATORS:
     void                                _dispatch_obj_inspector_column          (void);     //  PREVIOUSLY:     _draw_path_inspector_column
     //
@@ -607,34 +607,52 @@ protected:
     //
     //
     // *************************************************************************** //
+    //      SERIALIZATION STUFF.            |   "serialization.cpp" ...
+    // *************************************************************************** //
+    //                              EDITOR SETTINGS:
+    void                                _draw_editor_settings               ([[maybe_unused]] popup::Context & ctx);
+    void                                    _draw_settings_serialize                (void);
+    void                                    _draw_settings_mechanics                (void);
+    void                                    _draw_settings_style_and_preferences    (void);
+    //
+    //
+    //                              SERIALIZATION ORCHESTRATORS:
+    void                                _draw_io_overlay                    (void);
+    void                                pump_main_tasks                     (void);
+    //
+    inline EditorSnapshot               make_snapshot                       (void) const;
+    void                                load_from_snapshot                  (EditorSnapshot && );
+    //
+    //                              SERIALIZATION IMPLEMENTATIONS:
+    void                                save_worker                         (EditorSnapshot snap, std::filesystem::path path);
+    bool                                save_async                          (std::filesystem::path path);
+    //
+    void                                load_worker                         (std::filesystem::path );
+    bool                                load_async                          (std::filesystem::path path);
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
     //      UTILITIES.                      |   "utility.cpp" ...
     // *************************************************************************** //
+    //                              GENERAL APPLICATION HELPERS:
     Vertex *                            find_vertex                         (std::vector<Vertex> & , VertexID);
     const Vertex *                      find_vertex                         (const std::vector<Vertex> & , VertexID) const;
     std::optional<EndpointInfo>         _endpoint_if_open                   (PathID vid) const;
     //
-    //                              DATA MODIFIER UTILITIES:
+    //                              DATA MODIFIER UTILITIES
     void                                _add_point_glyph                    (VertexID vid);
     VertexID                            _add_vertex                         (ImVec2 w);
     void                                _add_point                          (ImVec2 w);
     void                                _erase_vertex_and_fix_paths         (VertexID vid);
     void                                _erase_path_and_orphans             (VertexID vid);
     //
-    //                              APP UTILITY OPERATIONS:
+    //                              MISC. UTILITIES:
     bool                                _try_begin_handle_drag              (const Interaction & );
     void                                _scissor_cut                        (const PathHit & );
-    //
-    //                              LOCAMOTION UTILITIES:
     void                                _update_world_extent                (void);
-    //
-    //                              MISC. UTILITIES:
-    void                                _draw_controls                      (void);
-    //
-    //                              EDITOR SETTINGS:
-    void                                _draw_editor_settings               ([[maybe_unused]] popup::Context & ctx);
-    void                                    _draw_settings_serialize                (void);
-    void                                    _draw_settings_mechanics                (void);
-    void                                    _draw_settings_style_and_preferences    (void);
+    
     // *************************************************************************** //
     //
     //
@@ -655,13 +673,6 @@ protected:
     //
     //                              GLOBAL OPERATIONS:
     void                                _clear_all                          (void);
-    //
-    //                              SERIALIZATION:
-    inline EditorSnapshot               make_snapshot                       (void) const;
-    void                                load_from_snapshot                  (EditorSnapshot && );
-    void                                pump_main_tasks                     (void);
-    void                                save_worker                         (EditorSnapshot snap, std::filesystem::path path);
-    void                                load_worker                         (std::filesystem::path );
 //
 //
 //
@@ -979,7 +990,7 @@ protected:
         
         
         //      4.      IF NO OBJECTS REMAIN IN SELECTION, CLOSE SELECTION WINDOW...
-        this->m_editor_S.m_show_sel_overlay = static_cast<bool>( this->m_sel.paths.size() == 0 );
+        //  this->m_editor_S.m_show_sel_overlay = static_cast<bool>( this->m_sel.paths.size() == 0 );
 
 
         _rebuild_vertex_selection();     // sync vertices ↔ points

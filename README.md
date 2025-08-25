@@ -1,7 +1,7 @@
-# *[**"\*CBApp"**]()* | *A cross-platform, GUI-based desktop application for computationally modeling electrodynamics with C++*
+# *[**\*CBApp:**]()* *a cross-platform desktop application for computational electrodynamic modeling with C++*
 
 
-[![CBAppSlideshow](docs/My_Docs/gifs/slideshow_1.gif)](https://github.com/nlohmann/json/releases)
+[![CBAppSlideshow](docs/CBApp/gifs/slideshow_1.gif)](https://github.com/nlohmann/json/releases)
 
 
 
@@ -13,15 +13,18 @@
 
 
 [![Last commit](https://img.shields.io/github/last-commit/collin-ballin/CBApp.svg)](https://github.com/collin-ballin/CBApp/commits/main)
+\
 ![Windows](https://img.shields.io/badge/Windows-supported-green)
 ![macOS](https://img.shields.io/badge/macOS-supported-green)
+\
 ![ImGui Docking](https://img.shields.io/badge/imgui-docking-green)
 ![GLFW](https://img.shields.io/badge/GLFW-3.3-success)
 ![OpenGL](https://img.shields.io/badge/OpenGL-3.3+-success)
+\
 ![C++20](https://img.shields.io/badge/C%2B%2B-20%2B-blue)
 ![Apple Clang](https://img.shields.io/badge/Compiler-Apple%20Clang%20%3E%3D16.0.2-blue)
 ![GNU GCC](https://img.shields.io/badge/Compiler-GNU%20GCC%20%3E%3D15.1.0-blue)
-![CMake](https://img.shields.io/badge/cmake-%3E%3D3.15-blue)
+![CMake](https://img.shields.io/badge/cmake-%3E%3D3.16-blue)
 ![MinGW-w64 x86_64 Toolchain](https://img.shields.io/badge/toolchain-x86__64--w64--mingw32-blue)
 
 
@@ -223,7 +226,7 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 
 <p align="center">
-  <img src="docs/My_Docs/all_1.png"
+  <img src="docs/CBApp/all_1.png"
        alt="heatmap-1"
        width="97.5%" />
   <br>
@@ -233,10 +236,10 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 
 <p align="center">
-  <img src="docs/My_Docs/heatmap_2.png"
+  <img src="docs/CBApp/heatmap_2.png"
        alt="Dark-mode dashboard"
        width="45%" />
-  <img src="docs/My_Docs/heatmap_2.png"
+  <img src="docs/CBApp/heatmap_2.png"
        alt="Light-mode dashboard"
        width="45%" />
 </p>
@@ -331,7 +334,7 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 ## 6. CURRENT STATUS
 
 <p align="center">
-  <img src="docs/My_Docs/gifs/slideshow_1.gif"
+  <img src="docs/CBApp/gifs/slideshow_1.gif"
        alt="heatmap-1"
        width="97.5%" />
   <br>
@@ -356,7 +359,7 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 ### Archive
 
-[![CBAppSlideshow](docs/My_Docs/gifs/slideshow_1.gif)](https://github.com/nlohmann/json/releases)
+[![CBAppSlideshow](docs/CBApp/gifs/slideshow_1.gif)](https://github.com/nlohmann/json/releases)
 
 
 

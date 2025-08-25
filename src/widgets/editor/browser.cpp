@@ -111,9 +111,9 @@ void Editor::DrawBrowser(void)
     
     
     //  2.  LEFTHAND BROWSER SELECTION MENU...
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  BStyle.ms_CHILD_BORDER1);
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,    BStyle.ms_CHILD_ROUND1);
-    ImGui::PushStyleColor(ImGuiCol_ChildBg,             BStyle.ms_CHILD_FRAME_BG1L);
+    ImGui::PushStyleVar     (ImGuiStyleVar_ChildBorderSize,     BStyle.ms_CHILD_BORDER1         );
+    ImGui::PushStyleVar     (ImGuiStyleVar_ChildRounding,       BStyle.ms_CHILD_ROUND1          );
+    ImGui::PushStyleColor   (ImGuiCol_ChildBg,                  BStyle.ms_CHILD_FRAME_BG1L      );
     //
     //
     //
@@ -159,6 +159,144 @@ void Editor::DrawBrowser(void)
 
 
 
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      1.      MAIN INTERFACE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_draw_controls"
+//
+void Editor::_draw_controls(void)
+{
+    static constexpr const char *       uuid                = "##Editor_Controls_Columns";
+    static constexpr int                ms_NC               = 10;
+    static constexpr int                ms_NE               = 1;
+    //
+    static ImGuiOldColumnFlags          COLUMN_FLAGS        = ImGuiOldColumnFlags_None;
+    const ImVec2                        WIDGET_SIZE         = ImVec2( -1,               ImGui::GetFrameHeight()               );
+    static ImVec2                       BUTTON_SIZE         = ImVec2( 32,   WIDGET_SIZE.y );
+    //
+    constexpr ImGuiButtonFlags          BUTTON_FLAGS        = ImGuiOldColumnFlags_NoPreserveWidths;
+    int                                 mode_i              = static_cast<int>(m_mode);
+    
+    this->S.PushFont( Font::Small );
+   
+    
+    
+   
+   
+    //  BEGIN COLUMNS...
+    //
+    ImGui::Columns(ms_NC, uuid, COLUMN_FLAGS);
+    //
+    //
+    //
+        //      1.      EDITOR STATE...
+        this->S.column_label("State:");
+        //
+        ImGui::SetNextItemWidth( WIDGET_SIZE.x );
+        if ( ImGui::Combo("##Editor_Controls_EditorState",      &mode_i,
+                          ms_EDITOR_STATE_NAMES.data(),         static_cast<int>(Mode::COUNT)) )
+        {
+            m_mode = static_cast<Mode>(mode_i);
+        }
+    
+    
+    
+        //      2.      GRID VISIBILITY...
+        ImGui::NextColumn();        this->S.column_label("Show Grid:");
+        //
+        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::Checkbox("##Editor_Controls_ShowGrid",           &m_grid.visible);
+
+
+
+        //      3.      SNAP-TO-GRID...
+        ImGui::NextColumn();        this->S.column_label("Snap-To-Grid:");
+        //
+        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
+        ImGui::Checkbox("##Editor_Controls_SnapToGrid",         &m_grid.snap_on);
+        
+        
+        
+        //      4.      GRID-LINE DENSITY...
+        ImGui::NextColumn();        this->S.column_label("Grid Density:");
+        //
+        //
+        //
+        if ( ImGui::ArrowButtonEx( "##Editor_Controls_GridDensityDown",     ImGuiDir_Down,
+                                   BUTTON_SIZE,                             BUTTON_FLAGS ) )
+        {
+            m_grid.snap_step *= 2.f;
+        }
+        //
+        ImGui::SameLine(0.0f, 0.0f);
+        //
+        if ( ImGui::ArrowButtonEx("##Editor_Controls_GridDensityUp",        ImGuiDir_Up,
+                          BUTTON_SIZE,                                      BUTTON_FLAGS) )
+        {
+            m_grid.snap_step = std::max(ms_GRID_STEP_MIN, m_grid.snap_step * 0.5f);
+        }
+        //
+        ImGui::SameLine();
+        //
+        ImGui::Text("(%.1f)", m_grid.snap_step);
+        
+
+
+
+        //      5.      CLEAR ALL...
+        ImGui::NextColumn();        this->S.column_label("Clear Data:");
+        if ( ImGui::Button("Clear", WIDGET_SIZE) ) {
+            ui::ask_ok_cancel( "Clear Data",
+                               "This action will erase all unsaved data in the current session.\nDo you wish to proceed?",
+                               [this]{ _clear_all(); } );
+        }
+
+
+
+
+
+        //      ?.      EMPTY SPACES FOR LATER...
+        for (int i = ImGui::GetColumnIndex(); i < ms_NC - ms_NE; ++i) {
+            ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
+        }
+
+
+
+        //      X.      CANVAS SETTINGS...
+        this->S.column_label("Settings:");
+        if ( ImGui::Button("+", BUTTON_SIZE) ) {
+            ui::open_preferences_popup( GetMenuID(PopupHandle::Settings), [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
+        }
+        
+        
+        
+    //  popup::Draw();
+    //
+    //
+    //
+    ImGui::Columns(1);      //  END COLUMNS...
+    
+    
+    this->S.PopFont();
+   
+    return;
+}
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MAIN INTERFACE".
 
 
 

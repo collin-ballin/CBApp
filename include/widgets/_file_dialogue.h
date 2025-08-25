@@ -154,7 +154,7 @@ struct FileDialogState_t {
 //  CACHED DATA:
     std::filesystem::path                           home_dir;                                       //  Ref. to original default directory.
     std::filesystem::path                           desktop_dir;                                    //  Ref. to user's Desktop folder.
-    std::filesystem::file_time_type                 cwd_timestamp           {};                     //  Track last modification of CWD to refresh if contents change while browsing.
+    std::filesystem::file_time_type                 cwd_timestamp           {   };                  //  Track last modification of CWD to refresh if contents change while browsing.
     std::string                                     window_name             = "File Dialog";
 //
 //

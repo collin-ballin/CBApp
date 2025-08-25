@@ -1229,11 +1229,12 @@ struct EditorState_t
     std::vector<std::function<void()>>  m_main_tasks;
     std::atomic<bool>                   m_io_busy                       {false};
     IOResult                            m_io_last                       {IOResult::Ok};
-    std::string                         m_io_msg                        {  };
+    std::string                         m_io_msg                        {   };
     //
     std::atomic<bool>                   m_sdialog_open                  = {false};
     std::atomic<bool>                   m_odialog_open                  = {false};
-    std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/editor-fdtd_v0.json"};
+    std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};   //    {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
+    //  std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
     
 // *************************************************************************** //
 

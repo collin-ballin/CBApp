@@ -194,7 +194,7 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
 	}
     //
     //              4.2.        CACHE THE SELECTION STATE.
-    ES.m_show_sel_overlay           = static_cast<bool>( N_obj_selected == 0 );
+    //  ES.m_show_sel_overlay           = static_cast<bool>( N_obj_selected == 0 );
     //
     //  //  eit.empty_selection             = static_cast<bool>( this->m_sel.paths.size() == 0 );
     //  //  eit.single_obj_selection        = static_cast<bool>( this->m_sel.paths.size() == 1 );
@@ -926,24 +926,56 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
 //
 inline void Editor::_handle_io(void)
 {
-    EditorState &       EState          = this->m_editor_S;
+    namespace           fs              = std::filesystem;
+    EditorState &       ES              = this->m_editor_S;
     //using             Initializer     = cb::FileDialog::Initializer;
 
 
-    //  1.  SAVE DIALOGUE...
-    if ( EState.m_sdialog_open.load(std::memory_order_acquire) ) {
-        EState.m_sdialog_open.store(false, std::memory_order_release);
+    //      1.      SAVE DIALOGUE...
+    if ( ES.m_sdialog_open.load(std::memory_order_acquire) )
+    {
+        ES.m_sdialog_open.store(false, std::memory_order_release);
         this->m_save_dialog.initialize(this->m_SAVE_DIALOG_DATA );
     }
     //
     if ( this->m_save_dialog.is_open() )
     {
-        EState.m_sdialog_open.store(false, std::memory_order_release);
+        ES.m_sdialog_open.store(false, std::memory_order_release);
         
+        if ( this->m_save_dialog.Begin() )      // returns true when finished
+        {
         
-        if ( this->m_save_dialog.Begin() ) {        // returns true when finished
+            //  CASE 1.1. :     FILE DIALOG SELECTED A FILE.
             if ( auto path = this->m_save_dialog.result() )
-                save_async( *path );        // your own handler
+            {
+                const bool result   = save_async( *path );        // your own handler
+                
+                
+                //  CASE 1.1A.      SAVE SUCCESS...
+                if (result)
+                {
+                    ES.m_filepath       = *path;
+                    CB_LOG( LogLevel::Info, "Editor | saved data to file \"{}\"", ES.m_filepath.filename().string() );
+                }
+                //
+                //  CASE 1.1B.      SAVE FAILURE...
+                else
+                {
+                    CB_LOG( LogLevel::Error, "Editor | failure to save data to file \"{}\"", (*path).filename().string() );
+                    //
+                    //  ES.m_filepath       = fs::path{   };
+                    //  this->RESET_ALL();
+                }
+                
+        
+            }
+            //
+            //  CASE 1.2. :     USER HAS CANCELLED FILE DIALOG.
+            else
+            {
+                CB_LOG( LogLevel::Debug, "Editor | cancelled file dialog menu (\"save file\")" );
+            }
+            
         }
     
     
@@ -951,22 +983,49 @@ inline void Editor::_handle_io(void)
     
     
     
-    //  2.  LOAD DIALOGUE...
-    if ( EState.m_odialog_open.load(std::memory_order_acquire) ) {
-        EState.m_odialog_open.store(false, std::memory_order_release);
+    //      2.      LOAD DIALOGUE...
+    if ( ES.m_odialog_open.load(std::memory_order_acquire) )
+    {
+        ES.m_odialog_open.store(false, std::memory_order_release);
         this->m_open_dialog.initialize(m_OPEN_DIALOG_DATA );
     }
     //
     if ( this->m_open_dialog.is_open() )
     {
-        if ( this->m_open_dialog.Begin() ) {        // returns true when finished
+        if ( this->m_open_dialog.Begin() )      // returns true when finished
+        {
         
+            //  CASE 2.1. :     FILE DIALOG SELECTED A FILE.
             if ( auto path = this->m_open_dialog.result() )
             {
                 this->RESET_ALL();
+                const bool result   = load_async( *path );        // your own handler
                 
-                load_async( *path );        // your own handler
+                
+                
+                //  CASE 2.1A.      LOAD SUCCESS...
+                if (result)
+                {
+                    ES.m_filepath       = *path;
+                    CB_LOG( LogLevel::Info, "Editor | loaded session from file \"{}\"", ES.m_filepath.filename().string() );
+                }
+                //
+                //  CASE 2.1B.      LOAD FAILURE...
+                else
+                {
+                    CB_LOG( LogLevel::Error, "Editor | failure to load file \"{}\"", (*path).filename().string() );
+                    ES.m_filepath       = fs::path{   };
+                    this->RESET_ALL();
+                }
+                
             }
+            //
+            //  CASE 2.2. :     USER HAS CANCELLED FILE DIALOG.
+            else
+            {
+                CB_LOG( LogLevel::Debug, "Editor | cancelled file dialog menu (\"open file\")" );
+            }
+            
         }
     }
 
