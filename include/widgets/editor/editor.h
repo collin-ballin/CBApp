@@ -103,77 +103,35 @@ struct                          Hit_Tag                     {   };
   
 //  "Editor"
 //
-class Editor {
+class Editor
+{
+//      0.          CONSTANTS AND ALIASES...
+// *************************************************************************** //
+// *************************************************************************** //
 public:
-        friend class                    App;
-        friend struct                   EditorSnapshot;
-        friend class                    History;
-        friend struct                   SnapshotCmd;
-        friend struct                   Command;
-        //
-        static constexpr auto           ms_MAJOR_VERSION                = EditorIMPL::ms_EDITOR_JSON_MAJ_VERSION;
-        static constexpr auto           ms_MINOR_VERSION                = EditorIMPL::ms_EDITOR_JSON_MIN_VERSION;
-        static constexpr auto           ms_EDITOR_SCHEMA                = EditorIMPL::ms_EDITOR_SCHEMA;
-        //
-        using                           Font                            = EditorIMPL::Font                      ;
-        using                           Logger                          = EditorIMPL::Logger                    ;
-        using                           LogLevel                        = EditorIMPL::LogLevel                  ;
-        using                           CBCapabilityFlags               = EditorIMPL::CBCapabilityFlags         ;
-        using                           Anchor                          = EditorIMPL::Anchor                    ;
-    //
-        using                           PopupHandle                     = EditorIMPL::PopupHandle               ;
-        using                           CBEditorPopupFlags              = EditorIMPL::CBEditorPopupFlags        ;
-        using                           PopupInfo                       = EditorIMPL::PopupInfo                 ;
-    //
-        using                           LabelFn                         = EditorIMPL::LabelFn                   ;
-    //
-    //                              ID / INDEX TYPES:
-    //  using                           ID                              = Editor::ID                        ;
-        using                           VertexID                        = EditorIMPL::VertexID                  ;
-        using                           HandleID                        = EditorIMPL::HandleID                  ;
-        using                           PointID                         = EditorIMPL::PointID                   ;
-        using                           LineID                          = EditorIMPL::LineID                    ;
-        using                           PathID                          = EditorIMPL::PathID                    ;
-        using                           ZID                             = EditorIMPL::ZID                       ;
-        using                           OverlayID                       = EditorIMPL::OverlayID                 ;
-        using                           HitID                           = EditorIMPL::HitID                     ;
-    //
-    //                              TYPENAME ALIASES (BASED ON INDEX TYPES):
-        using                           Vertex                          = EditorIMPL::Vertex                    ;
-    //  using                           Handle                          = EditorIMPL::Handle                    ;
-        using                           Point                           = EditorIMPL::Point                     ;
-        using                           Line                            = EditorIMPL::Line                      ;
-        using                           Path                            = EditorIMPL::Path                      ;
-        using                           PathKind                        = Path::PathKind                        ;
-        using                           Payload                         = Path::Payload                         ;
-    //
-        using                           Overlay                         = EditorIMPL::Overlay                   ;
-        using                           Hit                             = EditorIMPL::Hit                       ;
-        using                           PathHit                         = EditorIMPL::PathHit                   ;
-        using                           EndpointInfo                    = EditorIMPL::EndpointInfo              ;
+
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    _EDITOR_APP_INTERNAL_API
+    friend class                    App;
+    friend struct                   EditorSnapshot;
+    friend class                    History;
+    friend struct                   SnapshotCmd;
+    friend struct                   Command;
+    
+    // *************************************************************************** //
     //
     //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    //                              VERSIONING:
+    static constexpr auto               ms_MAJOR_VERSION                = EditorIMPL::ms_EDITOR_JSON_MAJ_VERSION;
+    static constexpr auto               ms_MINOR_VERSION                = EditorIMPL::ms_EDITOR_JSON_MIN_VERSION;
+    static constexpr auto               ms_EDITOR_SCHEMA                = EditorIMPL::ms_EDITOR_SCHEMA;
     //
-    //                              PRIMARY STATE OBJECTS:
-        using                           EditorState                     = EditorIMPL::EditorState               ;
-        using                           BrowserState                    = EditorIMPL::BrowserState              ;
-        using                           IndexState                      = EditorIMPL::IndexState                ;
-    //
-    //                              SUBSIDIARY STATE OBJECTS:
-        using                           Clipboard                       = EditorIMPL::Clipboard                 ;
-        using                           Selection                       = EditorIMPL::Selection                 ;
-    //
-    //                              TOOL STATE OBJECTS:
-        using                           PenState                        = EditorIMPL::PenState                  ;
-        using                           ShapeState                      = EditorIMPL::ShapeState                ;
-        using                           DebuggerState                   = EditorIMPL::DebuggerState             ;
-//
-//
-//      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
+    //                              MISC. DIMENSIONS:
     static constexpr float              ms_LIST_COLUMN_WIDTH            = 340.0f;   // px width of point‑list column
     static constexpr float              ms_LABEL_WIDTH                  = 90.0f;
     static constexpr float              ms_WIDGET_WIDTH                 = 250.0f;
@@ -188,7 +146,6 @@ public:
     //  static constexpr const char *       ms_SELECTION_CONTEXT_MENU_ID    = "Editor_Selection_ContextMenu";       //  selection_popup_id
     //  static constexpr const char *       ms_CANVAS_CONTEXT_MENU_ID       = "Editor_Canvas_ContextMenu";          //  canvas_popup_id
     //  static constexpr const char *       ms_BROWSER_CONTEXT_MENU_ID      = "Editor_Browser_ContextMenu";
-    //
     //  static constexpr const char *       ms_SYSTEM_PREFERENCES_MENU_ID   = "Editor System Preferences";          //  canvas_popup_id
     
     // *************************************************************************** //
@@ -950,15 +907,15 @@ protected:
     //  "renormalise_z"
     void                                renormalise_z                       (void)
     {
-        std::vector<Path*> items;// collect visible+hidden paths in stable draw order
+        std::vector<Path*>      items;// collect visible+hidden paths in stable draw order
         items.reserve(m_paths.size());
-        for (Path& p : m_paths) items.push_back(&p);
+        for (Path & p : m_paths)    { items.push_back(&p); }
 
         std::stable_sort(items.begin(), items.end(),
             [](const Path* a, const Path* b){ return a->z_index < b->z_index; });
 
         ZID     z   = Z_FLOOR_USER;
-        for (Path* p : items) p->z_index = z++;
+        for (Path * p : items)      { p->z_index = z++; }
         return;
     }
     
@@ -973,7 +930,7 @@ protected:
     //  "parent_path_of_vertex_mut"
     //      Mutable variant – returns nullptr if not found
     [[nodiscard]] inline Path *         parent_path_of_vertex_mut           (VertexID vid) {
-        for (Path& p : m_paths) {
+        for (Path & p : m_paths) {
             for (VertexID v : p.verts) {
                 if (v == vid)   { return &p; }
             }
@@ -1418,6 +1375,12 @@ protected:
 
 
 
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
@@ -1429,12 +1392,15 @@ protected:
 
 // Extend similarly for Point, Line, GridSettings, ViewState …
 //
-struct EditorSnapshot {
+struct EditorSnapshot
+{
+//      0.          CONSTANTS AND ALIASES...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+
     // *************************************************************************** //
-    //
-    //
-    //      1.          NESTED PUBLIC TYPENAME ALIASES...
-    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
         using                           Font                            = Editor::Font                      ;
         using                           Logger                          = Editor::Logger                    ;
@@ -1468,21 +1434,80 @@ struct EditorSnapshot {
         using                           PenState                        = Editor::PenState                  ;
         using                           ShapeState                      = Editor::ShapeState                ;
         using                           Clipboard                       = Editor::Clipboard                 ;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr uint8_t           ms_MAJOR_VERSION                 = EditorIMPL::ms_EDITOR_JSON_MAJ_VERSION;
+    static constexpr uint8_t           ms_MINOR_VERSION                 = EditorIMPL::ms_EDITOR_JSON_MIN_VERSION;
+    
 //
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//
+//      1.          CLASS DATA-MEMBERS...
 // *************************************************************************** //
 // *************************************************************************** //
 public:
+
     // *************************************************************************** //
-    //
-    //
-    //      2.          MEMBER FUNCTIONS...
+    //      CORE DATA...
     // *************************************************************************** //
-    // *************************************************************************** //
+    std::vector<Vertex>                 vertices;
+    std::vector<Path>                   paths;
+    std::vector<Point>                  points;
+    std::vector<Line>                   lines;
     
     // *************************************************************************** //
-    //                                  RULE OF 7...
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                                  APPLICATION SUB-STATES...
+    // *************************************************************************** //
+    Selection                           selection;
+    
     // *************************************************************************** //
     //
+    //
+    //
+    // *************************************************************************** //
+    //                                  NEW STUFF...
+    // *************************************************************************** //
+    //  IndexState                          m_index_S                       {   };
+    VertexID                            next_vid                        { 0 };            // first free vertex ID
+    PathID                              next_pid                        { 0 };            // first free path  ID
+    
+    // *************************************************************************** //
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CLASS DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//
+//      2.A.        PUBLIC MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
     //                              DEFAULTED SPECIAL MEMBERS:
     inline                              EditorSnapshot          (const Editor & src);
     
@@ -1492,41 +1517,69 @@ public:
     //
     //                              DEFAULTED SPECIAL MEMBERS:
     EditorSnapshot &                    operator =              (const EditorSnapshot&)             = default;
-    EditorSnapshot &                    operator =              (EditorSnapshot&&) noexcept         = default;
+    EditorSnapshot &                    operator =              (EditorSnapshot &&) noexcept        = default;
     
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
     
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                                  CENTRALIZED FUNCTIONS...
+    //      MAIN API.                       |   "interface.cpp" ...
     // *************************************************************************** //
-        
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "PUBLIC MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//
+//      2.C         INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+
     //  "copy_from"
     //      centralised copy function.
     //
     inline void                         copy_from               (const Editor & e)
     {
-        //  1.  CORE DATA...
+        //      1.      CORE DATA...
         this->vertices                  = e.m_vertices              ;
         this->paths                     = e.m_paths                 ;
         this->points                    = e.m_points                ;
         this->lines                     = e.m_lines                 ;
         //
         //
-        //  2.  SUB-STATE OBJECTS...
+        //      2.      STATE OBJECTS...
+        EditorStyle                         m_style                         {   };
+        
+        //
+        //
+        //      3.      SUB-STATE OBJECTS...
         this->selection                 = e.m_sel                   ;
         //
         //
-        //  3.  ADDITIONAL MEMBERS...
+        //      4.      ADDITIONAL MEMBERS...
         this->next_vid                  = e.m_next_id               ;       // << new
         this->next_pid                  = e.m_next_pid              ;       // << new
     
+    
+    
         return;
     }
-    
-    
+
     //  "assign_to"
     //      centralised "apply" function.
     //
@@ -1551,66 +1604,26 @@ public:
     }
     
     
-    // *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-public:
-    // *************************************************************************** //
-    //
-    //
-    //      3.          DATA MEMBERS...
-    // *************************************************************************** //
-    // *************************************************************************** //
     
     // *************************************************************************** //
-    //                                  MISC DATA...
-    // *************************************************************************** //
-    static constexpr uint8_t           ms_MAJOR_VERSION                     = EditorIMPL::ms_EDITOR_JSON_MAJ_VERSION;
-    static constexpr uint8_t           ms_MINOR_VERSION                     = EditorIMPL::ms_EDITOR_JSON_MIN_VERSION;
     
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      CORE DATA...
-    // *************************************************************************** //
-    std::vector<Vertex>                 vertices;
-    std::vector<Path>                   paths;
-    std::vector<Point>                  points;
-    std::vector<Line>                   lines;
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //                                  APPLICATION SUB-STATES...
-    // *************************************************************************** //
-    Selection                           selection;
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //                                  NEW STUFF...
-    // *************************************************************************** //
-    //  IndexState                          m_index_S                       {   };
-    VertexID                            next_vid                        { 0 };            // first free vertex ID
-    PathID                              next_pid                        { 0 };            // first free path  ID
-    // *************************************************************************** //
-
-
-
-// *************************************************************************** //
 //
 //
 //
 // *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+
+
+
 // *************************************************************************** //
-};//    END "EditorSnapshot" Struct Definition.
+// *************************************************************************** //
+};//	END "EditorSnapshot" INLINE CLASS DEFINITION.
+
+
+
 
 //  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EditorSnapshot,
 //                                     version,

@@ -746,8 +746,12 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
     //
     //
     //  j["version"]                    = std::format("{}.{}", this->ms_MAJOR_VERSION, this->ms_MINOR_VERSION); //    kSaveFormatVersion;
-    j["version"]                    = ms_EDITOR_SCHEMA;       // uses to_json(SchemaVersion)
-    j["state"]                      = snap;
+    //
+    //
+        j["version"]                    = ms_EDITOR_SCHEMA;       // uses to_json(SchemaVersion)
+        j["state"]                      = snap;
+    //
+    //
     //  j["editor_state"]               = this->m_editor_S;
     //
     //
@@ -761,7 +765,7 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
     // enqueue completion notification
     {
         {
-            std::lock_guard     lk(EState.m_task_mtx);
+            std::lock_guard     lk      (EState.m_task_mtx);
             EState.m_main_tasks.push_back( [this, res, path]
             {
                 this->m_editor_S.m_io_busy      = false;

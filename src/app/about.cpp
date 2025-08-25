@@ -208,7 +208,7 @@ namespace about { //     BEGINNING NAMESPACE "about"...
     [[nodiscard]]
     inline static constexpr const char * get_imgui_color_order(void) noexcept
     {
-        if constexpr (IM_COL32_R_SHIFT == 0 && IM_COL32_B_SHIFT == 16)
+        if constexpr ( (IM_COL32_R_SHIFT == 0)  &&  (IM_COL32_B_SHIFT == 16) )
             { return "RGBA"; }           // packed as 0xAABBGGRR
         else
             { return "BGRA"; }           // packed as 0xAARRGGBB
@@ -220,7 +220,7 @@ namespace about { //     BEGINNING NAMESPACE "about"...
     [[nodiscard]]
     inline static constexpr const char * get_imgui_packing_format(void) noexcept
     {
-        if constexpr (IM_COL32_R_SHIFT == 0 && IM_COL32_B_SHIFT == 16)
+        if constexpr ( (IM_COL32_R_SHIFT == 0)  &&  (IM_COL32_B_SHIFT == 16) )
             { return "0xAABBGGRR"; }
         else
             { return "0xAARRGGBB"; }

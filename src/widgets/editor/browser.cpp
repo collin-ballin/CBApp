@@ -887,9 +887,9 @@ void Editor::_show_browser_color_edit_window(void)
     //
     auto                            CopyToClipboard     = [](const ImVec4 & c)
     {
-        static int ID = 1;
+        static int id = 1;
         
-        ImGui::PushID(ID++);
+        ImGui::PushID(id++);
         char    buf[96];
         
         ImGui::SameLine();

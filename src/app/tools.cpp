@@ -97,9 +97,9 @@ void App::ShowImGuiItemPickerTool([[maybe_unused]] const char * uuid, [[maybe_un
     IM_ASSERT( g_ptr != nullptr && "ShowImGuiItemPicker invoked with NULL ImGui Context" );
     //
     //
-    ImGuiContext &              g           = *g_ptr;
-    ImGuiIO &                   io          = g.IO;
-    ImGuiMetricsConfig *        cfg         = &g.DebugMetricsConfig;
+    //  ImGuiContext &              g           = *g_ptr;
+    //  ImGuiIO &                   io          = g.IO;
+    //  ImGuiMetricsConfig *        cfg         = &g.DebugMetricsConfig;
     
     
     
@@ -895,7 +895,7 @@ void CMAPTable(void)
 
             const float avail = ImGui::GetContentRegionAvail().x;
             ImGui::SetNextItemWidth(avail * 0.60f);
-            if (ImGui::SliderFloat("##pos", &tmp, 0.0f, 1.0f, "%.4f") && tmp != t) {
+            if (ImGui::SliderFloat("##pos", &tmp, 0.0f, 1.0f, "%.4f") && !cblib::math::is_close(tmp, t) ) {
                 t           = tmp;
                 pos_changed = true;
             }

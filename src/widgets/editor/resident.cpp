@@ -182,10 +182,10 @@ void Editor::_debugger_draw_controlbar(void)
 //
 void Editor::_debugger_hit_detection(void)
 {
-    const float                     LABEL_W             = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
-    const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
-    EditorState &                   ES                  = this->m_editor_S;
-    Interaction &                   it                  = *this->m_it;
+    const float                         LABEL_W             = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
+    const float &                       WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    EditorState &                       ES                  = this->m_editor_S;
+    [[maybe_unused]] Interaction &      it                  = *this->m_it;
     //
     S.PushFont(Font::Small);
     
