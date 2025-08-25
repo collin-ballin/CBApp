@@ -102,7 +102,7 @@ void Editor::DrawBrowser(void)
                                                                     : (BStyle.DYNAMIC_CHILD_FLAGS  & ~ImGuiChildFlags_ResizeX);
                           
 #ifdef __CBAPP_DEBUG__
-    this->_show_browser_color_edit_window();
+    //  this->_show_browser_color_edit_window();
 #endif  //  __CBAPP_DEBUG__
     
     
@@ -906,7 +906,7 @@ void Editor::_show_browser_color_edit_window(void)
     
     
     S.PushFont(Font::Small);
-    //  ImGui::Begin("browser color edit window", nullptr, ImGuiWindowFlags_None);
+    ImGui::Begin("browser color edit window", nullptr, ImGuiWindowFlags_None);
     //
     //
     //
