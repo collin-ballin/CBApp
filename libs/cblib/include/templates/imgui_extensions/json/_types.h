@@ -1,16 +1,16 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****                _ J S O N . H  ____  F I L E                ****
+*       ****               _ T Y P E S . H  ____  F I L E               ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond.
-*               DATED:      August 12, 2025.
+*               DATED:      August 24, 2025.
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CBLIB_IMGUI_EXTENSIONS_JSON_H
-#define _CBLIB_IMGUI_EXTENSIONS_JSON_H 1
+#ifndef _CBLIB_IMGUI_JSON_TYPES_H
+#define _CBLIB_IMGUI_JSON_TYPES_H 1
 
 //      C++ Standard Libraries.
 #include <iostream>
@@ -34,6 +34,8 @@
 
 
 //      **My** Headers.
+//  # include "templates/imgui_extensions/json/_helpers.h"
+//
 #include "json.hpp"
 #include "imgui.h"                      //  0.3     "DEAR IMGUI" HEADERS...
 #include "implot.h"
@@ -49,65 +51,9 @@
 
 
 
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//  ?.?     JSON SERIALIZERS...
+//      1.      JSON HELPER TYPES...
 // *************************************************************************** //
 // *************************************************************************** //
-
-namespace nlohmann { //     BEGINNING NAMESPACE "nlohmann"...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-//      "ImVec2"            SERIALIZER...
-template<>
-struct adl_serializer<ImVec2>
-{
-    static void to_json(json & j, const ImVec2 & v)
-    {
-        j = json::array({ v.x, v.y });          // -> [x, y]
-    }
-
-    static void from_json(const json & j, ImVec2 & v)
-    {
-        if ( !j.is_array() || j.size() != 2 )
-        { throw std::runtime_error("ImVec2 expects JSON array [x, y]"); }
-
-        v.x     = j[0].get<float>();
-        v.y     = j[1].get<float>();
-    }
-};
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-}//   END OF "nlohmann" NAMESPACE.
-
-
-
-
-
-
-
-
-
 
 
 
@@ -328,4 +274,4 @@ namespace cblib { namespace utl {   //     BEGINNING NAMESPACE "cblib" :: "math"
 
 // *************************************************************************** //
 // *************************************************************************** //
-#endif  //  _CBLIB_IMGUI_EXTENSIONS_JSON_H  //
+#endif  //  _CBLIB_IMGUI_JSON_TYPES_H  //

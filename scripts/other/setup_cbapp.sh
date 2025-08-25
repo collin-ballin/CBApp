@@ -1,18 +1,58 @@
 #!/usr/bin/env bash
-#################################################################################
-#   setup_cbapp.command – one-click bootstrap for Collin’s Dear ImGui project   #
-#                                                                               #
-#   SECTIONS:                                                                   #
-#       1.  Initial safeguards & helpers                                        #
-#       2.  Environment check (Xcode, Homebrew, packages)                       #
-#       3.  Workspace: clone *or* pull latest code                              #
-#       4.  Ensure build/ dir, then run CMake                                   #
-#       5.  Completion                                                          #
-#                                                                               #
-#  USAGE:                                                                       #
-#       ./setup_cbapp.command [--branch <name>] [--force]                       #
-#                                                                               #
-#################################################################################
+#############################################################################################
+#   setup_cbapp.command – one-click bootstrap for Collin’s Dear ImGui project               #
+#                                                                                           #
+#   SECTIONS:                                                                               #
+#       1.  Initial safeguards & helpers                                                    #
+#       2.  Environment check (Xcode, Homebrew, packages)                                   #
+#       3.  Workspace: clone *or* pull latest code                                          #
+#       4.  Ensure build/ dir, then run CMake                                               #
+#       5.  Completion                                                                      #
+#                                                                                           #
+#  USAGE:                                                                                   #
+#       ./setup_cbapp.command [--branch <name>] [--force]                                   #
+#                                                                                           #
+#############################################################################################
+#  TO-DO:                                                                                   #
+#       1.  Prevent script from running on macOS < 13.3                                     #
+#           (the min version of macOS that CBApp supports)                                  #
+#                                                                                           #
+#       2.  Account for the path-differences of system installations                        #
+#           that take place on Machines with Intel *versus* Apple Silicon.                  #
+#                                                                                           #
+#       3.  Adjust for issues with iCloud status which may prevent the user                 #
+#           from RWE privilages for creating directories on their Desktop, etc.             #
+#                                                                                           #
+#       4.  Inform user to allow  Terminal  *AND*  Xcode  to access files on                #
+#           the system Desktop (Settings > Privacy > etc...).                               #
+#                                                                                           #
+#       5.  Inform user to allow  Terminal  *AND*  Xcode  to access files on                #
+#           the system Desktop (Settings > Privacy > etc...).                               #
+#                                                                                           #
+#############################################################################################
+#  ISSUES / INFO:                                                                           #
+#       1.  Installation mismatch for the currently selected Xcode compiler...              #
+#                                                                                           #
+#       #   The developer directory is still inside the Xcode.app bundle:                   #
+#       >:  /Applications/Xcode.app/Contents/Developer                                      #
+#                                                                                           #
+#       #   How-to set the path that Xcode is using:                                        #
+#       >:  sudo xcode-select -s /Applications/Xcode.app/Contents/Developer                 #
+#                                                                                           #
+#       #   How-to set the path that Xcode is using:                                        #
+#       >:  sudo xcode-select -s /Applications/Xcode.app/Contents/Developer                 #
+#                                                                                           #
+#############################################################################################
+#  ISSUES / INFO:                                                                           #
+#       >:  xcrun --find clang                                                              #
+#       >:  xcrun clang --version                                                           #
+#                                                                                           #
+#                                                                                           #
+#                                                                                           #
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+#############################################################################################
 #   EXAMPLE INVOCATIONS:
 #       1.  DEFAULT :           // Clone/update code from the main branch of my repository.
 #               ./setup_cbapp.command
@@ -32,15 +72,15 @@
 #               ./setup_cbapp.command --help
 #               ./setup_cbapp.command -h
 #
-#################################################################################
-#################################################################################
+#############################################################################################
+#############################################################################################
 set -Eeuo pipefail
 IFS=$'\n\t'
 
 
-#################################################################################
-#   0.      ARGUMENT PARSING...                                                 #
-#################################################################################
+#############################################################################################
+#   0.      ARGUMENT PARSING...                                                             #
+#############################################################################################
 BRANCH="main"       # default branch
 FORCE_RESET=false
 
@@ -88,9 +128,9 @@ done
 
 
 
-#################################################################################
-#   1.      GLOBALS AND HELPERS...                                              #
-#################################################################################
+#############################################################################################
+#   1.      GLOBALS AND HELPERS...                                                          #
+#############################################################################################
 APP_NAME="CBApp"
 REPO_URL="https://github.com/collin-ballin/CBApp.git"
 TARGET_DIR="$HOME/Desktop/$APP_NAME"
@@ -107,9 +147,9 @@ abort()         { log_err "$1"; exit 1; }
 
 
 
-#################################################################################
-#   2.      ENVIRONMENT CHECK (Xcode, Homebrew, etc)...                         #
-#################################################################################
+#############################################################################################
+#   2.      ENVIRONMENT CHECK (Xcode, Homebrew, etc)...                                     #
+#############################################################################################
 log_notify  "BEGINNING CBAPP BOOTSTRAP SHELL SCRIPT (branch=$BRANCH  force=$FORCE_RESET)..."
 log_info    "(re-run with -h or --help for more info)"
 echo ""
@@ -153,9 +193,9 @@ done
 [[ ${#MISSING_PKGS[@]} -gt 0 ]] && brew install "${MISSING_PKGS[@]}"
 
 
-#################################################################################
-#   3.      WORKSPACE: Clone / Update / Reset...                                #
-#################################################################################
+#############################################################################################
+#   3.      WORKSPACE: Clone / Update / Reset...                                            #
+#############################################################################################
 log_info "Preparing the project workspace at $TARGET_DIR..."
 if [[ -d "$TARGET_DIR/.git" ]]; then
     # Existing repo ---------------------------------------------------------
@@ -191,9 +231,9 @@ else
 fi
 
 
-#################################################################################
-#   4.      CMAKE CONFIGURATION (NO MORE PRE-BUILD)...                          #
-#################################################################################
+#############################################################################################
+#   4.      CMAKE CONFIGURATION (NO MORE PRE-BUILD)...                                      #
+#############################################################################################
 log_info "Ensuring the build directory exists: $BUILD_DIR..."
 mkdir -p "$BUILD_DIR"
 
@@ -211,9 +251,9 @@ fi
 popd >/dev/null
 
 
-#################################################################################
-#   5.      SCRIPT COMPLETION...                                                #
-#################################################################################
+#############################################################################################
+#   5.      SCRIPT COMPLETION...                                                            #
+#############################################################################################
 PROJECT_PATH="$BUILD_DIR/${APP_NAME}.xcodeproj"
 
 log_notify  "SUCCESS.  CBAPP SETUP COMPLETE."
@@ -221,12 +261,15 @@ log_info    "all project build dependencies are present"
 log_info    "project materials installed at: $PROJECT_PATH"
 
 echo ""
-log_info    "Opening project in Xcode..."
+log_info    "Opening the project in Xcode..."
 
 open "$PROJECT_PATH"
 
 
 
-
-#################################################################################
-#################################################################################   END.
+#############################################################################################
+#
+#
+#
+#############################################################################################
+#############################################################################################   END.

@@ -164,7 +164,7 @@ void glfw_error_callback(int error, const char * description)
 {
     constexpr float         N           = 2.6f;
     constexpr float         A           = 1.6f;
-    constexpr float         B           = 0.55f;
+    constexpr float         B           = 0.86f;    //  BETWEEN:    0.78f   AND     0.86f;
     constexpr float         C           = 1.0f;
     constexpr float         D           = 1.0f;
     //
