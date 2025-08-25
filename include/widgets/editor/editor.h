@@ -235,7 +235,7 @@ public:
             {//     STYLE...
                 /*  alpha           */  0.95f,
                 /*  background      */  0x00000000,
-                /*  win_rounding    */  12
+                /*  win_rounding    */  10
             }
         },
         //
@@ -293,9 +293,6 @@ public:
                 /*  src_anchor      */  Anchor::SouthWest,
                 /*  offscreen       */  OffscreenPolicy::Clamp,
                 /*  anchor_px       */  ImVec2{ 8,      8 },                //  Offset Position.
-            //
-            //
-                /*  anchor_ws       */  ImVec2{ 0,      0 }                 //  ws anchor filled each frame
             },
             {//     STYLE...
                 /*  alpha           */  0.80f,
@@ -814,11 +811,11 @@ protected:
         m_sel.paths.swap(remapped);
 
         // Remap BrowserState indices that reference OBJECT rows
-        BrowserState& BS = m_browser_S;
-        auto remap_idx = [&](int& idx) {
-            if (idx < 0) return;
+        BrowserState &  BS          = m_browser_S;
+        auto            remap_idx   = [&](int & idx) {
+            if (idx < 0)    { return; }
             idx = new_of_old[idx];
-            if (idx < 0) idx = -1;
+            if (idx < 0)    { idx = -1; }
         };
         remap_idx(BS.m_browser_anchor);
         remap_idx(BS.m_obj_rename_idx);
@@ -979,6 +976,11 @@ protected:
             if ( lid >= m_lines.size() || !m_lines[lid].is_mutable() )      { it = m_sel.lines.erase(it); }
             else                                                            { ++it; }
         }
+        
+        
+        //      4.      IF NO OBJECTS REMAIN IN SELECTION, CLOSE SELECTION WINDOW...
+        this->m_editor_S.m_show_sel_overlay = static_cast<bool>( this->m_sel.paths.size() == 0 );
+
 
         _rebuild_vertex_selection();     // sync vertices ↔ points
         return;

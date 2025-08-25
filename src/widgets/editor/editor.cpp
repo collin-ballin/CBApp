@@ -156,8 +156,13 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     ImVec2                  mouse_canvas            { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
     //
     //
-    //      1.3.    OTHER DATA...
+    //      1.3.    SELECTION DATA...
+    const size_t            N_obj_selected          = this->m_sel.paths.size();
+    //
+    //
+    //      1.4.    OTHER DATA...
     ImDrawList *            dl                      = ImPlot::GetPlotDrawList();
+
 
 
     //      2.1.    EDITOR STATE...
@@ -189,8 +194,10 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
 	}
     //
     //              4.2.        CACHE THE SELECTION STATE.
-        //  eit.empty_selection             = static_cast<bool>( this->m_sel.paths.size() == 0 );
-        //  eit.single_obj_selection        = static_cast<bool>( this->m_sel.paths.size() == 1 );
+    ES.m_show_sel_overlay           = static_cast<bool>( N_obj_selected == 0 );
+    //
+    //  //  eit.empty_selection             = static_cast<bool>( this->m_sel.paths.size() == 0 );
+    //  //  eit.single_obj_selection        = static_cast<bool>( this->m_sel.paths.size() == 1 );
     
     
     

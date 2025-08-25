@@ -906,7 +906,7 @@ void Editor::_show_browser_color_edit_window(void)
     
     
     S.PushFont(Font::Small);
-    ImGui::Begin("browser color edit window", nullptr, ImGuiWindowFlags_None);
+    //  ImGui::Begin("browser color edit window", nullptr, ImGuiWindowFlags_None);
     //
     //
     //
