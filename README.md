@@ -10,7 +10,7 @@
 
 
 
-[![CBAppSlideshow](docs/CBApp/gifs/slideshow-2.gif)](https://github.com/collin-ballin/CBApp/releases)
+[![CBAppSlideshow](docs/CBApp/gifs/slideshow-0.gif)](https://github.com/collin-ballin/CBApp/releases)
 
 
 
@@ -49,23 +49,26 @@
   - [Theoretical Aims](#theoretical-aims)
   - [Implementation Aims](#implementation-aims)
 - [4. APPLICATION FEATURES](#4-application-features)
-  - [The `Editor` Application](#the-editor-application)
-  - [The `Mimic` Application](#the-mimic-application)
-  - [The `Graph` Application](#the-graph-application)
-  - [The `CCounter` Application](#the-ccounter-application)
-  - [Additional Tools and Utilities](#additional-tools-and-utilities)
-    - [Functional Testing Tool](#functional-testing-tool)
-    - [Color Tool](#color-tool)
-    - [ImGui Tools](#imgui-tools)
+  - [4A. Main Applications](#4A-main-applications)
+    - [4A.1 The `Editor` Application](#4A.1-the-editor-application)
+    - [4A.2 The `Mimic` Application](#4A.2-the-mimic-application)
+    - [4A.3 The `Graph` Application](#4A.3-the-graph-application)
+  - [4B. Secondary Applications](#4B-secondary-applications)
+    - [4B.1 The `CCounter` Application](#4B.1-the-ccounter-application)
+    - [4B.2 `SPR Calculator` Application](#4B.2-spr-calculator-application)
+  - [4C. Additional Tools and Utilities](#4C-additional-tools-and-utilities)
+    - [4C.1 Color Tool](#4C.1-color-tool)
+    - [4C.2 ImGui Tools](#4C.2-imgui-tools)
 - [5. IMPLEMENTATION DETAILS](#5-implementation-details)
   - [Build System](#build-system)
     - [macOS (Xcode)](#macos-xcode)
     - [Windows (VSCode)](#windows-vscode)
-- [6. CURRENT STATUS](#6-current-status)
-- [7. OTHER](#7-other)
-  - [Legacy & Archive](#legacy--archive)
-  - [License](#license)
+- [6. CURRENT PROJECT STATUS](#6-current-project-status)
+- [7. ADDITIONAL INFORMATION](#7-additional-information)
   - [Author](#author)
+  - [Acknowledgements](#acknowledgements)
+  - [License](#license)
+  - [Legacy & Archive](#legacy--archive)
 
 
 
@@ -376,14 +379,14 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 ---
 ---
 
-## 6. CURRENT STATUS
+## 6. CURRENT PROJECT STATUS
 
 <p align="center">
   <img src="docs/CBApp/gifs/slideshow_1.gif"
-       alt="heatmap-1"
+       alt="slideshow-2"
        width="97.5%" />
   <br>
-  <em>Slideshow 3. Assorted images across various stages of project development.</em>
+  <em>SLIDESHOW 2.  Assorted images taken across various points within the project's development.</em>
 </p>
 
 
@@ -398,23 +401,23 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 ---
 
-## 7. OTHER
+## 7. ADDITIONAL INFORMATION
 
 
 
 ### Author
 > - **Collin A. Bond**
+>   - A Recent [*Conference Paper*](https://iopscience.iop.org/article/10.1088/1742-6596/3052/1/012002) on FDTD.
 >   - Student of Physics and Computer Science.
 >   - *Portland State University*.
 
 
 
-https://doi.org/10.1088/1742-6596/3052/1/012002. 
+
 
 
 ### License
-Distributed under the **MIT License**.
-See `LICENSE.txt` for details.
+Distributed under the **MIT License**.  See `LICENSE.txt` for details.
 
 
 
