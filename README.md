@@ -1,7 +1,8 @@
 # *[**\*CBApp:**]()* *a cross-platform desktop application for computational electrodynamic modeling with C++*
 
 
-[![CBAppSlideshow](docs/CBApp/gifs/slideshow_1.gif)](https://github.com/nlohmann/json/releases)
+
+[![CBAppSlideshow](docs/CBApp/gifs/slideshow-2.gif)](https://github.com/collin-ballin/CBApp/releases)
 
 
 
@@ -44,6 +45,7 @@
   - [Implementation Aims](#implementation-aims)
 - [4. FEATURES](#features)
   - [The `Editor` Application](#the-editor-application)
+  - [The `Mimic` Application](#the-mimic-application)
   - [The `Graph` Application](#the-graph-application)
   - [The `CCounter` Application](#the-ccounter-application)
   - [Additional Tools and Utilities](#additional-tools-and-utilities)
@@ -70,7 +72,17 @@
 
 ## 1. SYNOPSIS
 
+
 ### [**This project seeks to develop a cross-platform, GUI-based desktop application for performing computational physics simulations.  Our project is built using modern C++ (cpp-20+), the *docking branch* of `Dear ImGui`, `OpenGL`, and `GLFW`.**]()
+
+
+<p align="center">
+  <img src="docs/CBApp/gifs/fdtd-1d-1.gif"
+       alt="slideshow-2"
+       width="97.5%" />
+  <br>
+  <em>Slideshow 2. 1D FDTD Simulation; work was taken from an FDTD engine I developed for a recent paper and migrated into the CBApp interface.</em>
+</p>
 
 
 ### Our application is built using `CMake`; `minGW` is used as a cross-platform toolchain to build the project for Windows.  The set of third-party dependencies is kept to a minimum to maximize the compatibility our application for use across a variety of different machines that may/may-not have access to certain installations.  Currently, these dependencies are limited to the `ImPlot` extension for Dear ImGui and `nlohmann`'s JSON for modern C++.
@@ -161,9 +173,24 @@
 
 ## 4. FEATURES
 
-
+<p align="center">
+  <img src="docs/CBApp/images/tools.png"
+       alt="tools"
+       width="30.0%" />
+  <br>
+  <em>Figure 1. Menubar list displaying each tool that is available in the application.</em>
+</p>
 
 ### ***THE `EDITOR` APPLICATION***
+>
+> Text
+>
+>  #### Sub-Item 1:
+> > Some more text...
+
+
+
+### ***THE `MIMIC` APPLICATION***
 >
 > Text
 >
@@ -225,13 +252,6 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 
 
-<p align="center">
-  <img src="docs/CBApp/all_1.png"
-       alt="heatmap-1"
-       width="97.5%" />
-  <br>
-  <em>Figure 2. In development of a real-time 'Heat Map' plotting engine to serve as a core aspect of plotting data from FDTD simulations.</em>
-</p>
 
 
 
@@ -338,7 +358,7 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
        alt="heatmap-1"
        width="97.5%" />
   <br>
-  <em>Figure 1. In development of a real-time 'Heat Map' plotting engine to serve as a core aspect of plotting data from FDTD simulations.</em>
+  <em>Slideshow 3. Assorted images across various stages of project development.</em>
 </p>
 
 
@@ -359,7 +379,6 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 ### Archive
 
-[![CBAppSlideshow](docs/CBApp/gifs/slideshow_1.gif)](https://github.com/nlohmann/json/releases)
 
 
 
