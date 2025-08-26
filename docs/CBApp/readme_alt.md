@@ -1,11 +1,7 @@
 # *[**\*CBApp:**]()* *a cross-platform desktop application for computational electrodynamic modeling with C++*
 
-
-
-<details open>
-  <summary>Note:</summary>
-
-  > *CBApp is just a generic, placeholder name I've given to this project for the purpose of having an identifier in the build system.*
+***<details><summary>Note:</summary>***
+*CBApp is just a generic, placeholder name I've given to this project for the purpose of having an identifier in the build system.*
 </details>
 
 
@@ -83,10 +79,10 @@
 
 <p align="center">
   <img src="docs/CBApp/gifs/fdtd-1d-1.gif"
-       alt="fdtd-video-1"
+       alt="slideshow-2"
        width="97.5%" />
   <br>
-  <em>Video 1. 1D FDTD Simulation; work was taken from an FDTD engine I developed for a recent paper and migrated into the CBApp interface.</em>
+  <em>Slideshow 2. 1D FDTD Simulation; work was taken from an FDTD engine I developed for a recent paper and migrated into the CBApp interface.</em>
 </p>
 
 
@@ -402,17 +398,15 @@ The app layout, fonts, and color scheme are JSON-configured via files in `assets
 
 
 
-### Author
-> - **Collin A. Bond**
->   - Student of Physics and Computer Science.
->   - *Portland State University*.
+### Archive
 
 
 
-https://doi.org/10.1088/1742-6596/3052/1/012002. 
+
 
 
 ### License
+
 Distributed under the **MIT License**.
 See `LICENSE.txt` for details.
 
@@ -421,22 +415,13 @@ See `LICENSE.txt` for details.
 
 
 
-### Acknowledgements
-> A special thanks goes out to the following individuals:
+
+
+### Author
+
+> **Collin A. Bond**
 >
-> - Dr. Erik J. Sánchez
->   - Department of Physics, Portland State University.
-> - Dr. Andres H. La Rosa
->   - Department of Physics, Portland State University.
-> - Prof. John B. Schneider
->   - School of Electrical Engineering and Computer Science, Washington State University.
->   - His *outstanding* book, [*Understanding the Finite-Difference Time-Domain Method*](https://eecs.wsu.edu/~schneidj/ufdtd/index.php).
-> - Dr. Jeroen Vleggaar
->   - The [*Huygens Optics*](https://www.youtube.com/@HuygensOptics) YouTube Channel.
-
-
-
-
+> *Portland State University*
 
 
 
@@ -464,6 +449,9 @@ See `LICENSE.txt` for details.
 ---
 
 ### MISC
+
+
+
 and data analysis, and data visualization.  Our ultimate goal is for this application to serve in a similar capacity to the commercial products developed by companies such as Ansys Lumerical and others.
 
 

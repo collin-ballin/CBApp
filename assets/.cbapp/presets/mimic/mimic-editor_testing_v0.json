@@ -1072,7 +1072,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 1.5,
+            "duration": 0.75,
             "first": [
               1463.0,
               229.0
@@ -1150,7 +1150,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 1.0,
+            "duration": 0.5,
             "first": [
               1871.0,
               331.0
@@ -1228,7 +1228,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 0.5,
+            "duration": 0.25,
             "first": [
               745.265625,
               375.640625
@@ -1267,7 +1267,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 2.0,
+            "duration": 1.2000000476837158,
             "first": [
               384.0,
               637.0
@@ -1423,7 +1423,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 0.5,
+            "duration": 0.25,
             "first": [
               1217.0,
               341.0
@@ -1462,7 +1462,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 2.0,
+            "duration": 1.2000000476837158,
             "first": [
               1647.0,
               617.0
@@ -1501,7 +1501,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 1.0,
+            "duration": 0.5,
             "first": [
               1647.0,
               617.0
@@ -1618,7 +1618,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 1.0,
+            "duration": 0.75,
             "first": [
               1807.0,
               311.0
@@ -1696,7 +1696,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 2.0,
+            "duration": 0.5,
             "first": [
               796.3359375,
               314.578125
@@ -1774,7 +1774,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 2.0,
+            "duration": 1.0,
             "first": [
               745.51171875,
               372.6015625
@@ -1852,7 +1852,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 0.5,
+            "duration": 0.25,
             "first": [
               1311.0,
               498.0
@@ -1891,7 +1891,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 2.0,
+            "duration": 1.2000000476837158,
             "first": [
               1807.0,
               311.0
@@ -1969,7 +1969,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 2.0,
+            "duration": 1.0,
             "first": [
               1807.0,
               311.0
@@ -2125,7 +2125,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 2.0,
+            "duration": 1.5,
             "first": [
               1246.0,
               586.0
@@ -2203,7 +2203,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 1.5,
+            "duration": 0.75,
             "first": [
               824.0,
               255.0
@@ -2281,7 +2281,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 0.800000011920929,
+            "duration": 0.20000000298023224,
             "first": [
               822.14453125,
               427.43359375
@@ -2320,7 +2320,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 1.5,
+            "duration": 1.2000000476837158,
             "first": [
               1580.0,
               515.0
