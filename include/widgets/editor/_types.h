@@ -201,7 +201,7 @@ enum class IOResult {
 };
 //
 //  "DEF_IORESULT_NAMES"
-static constexpr std::array<const char *, static_cast<size_t>(IOResult::COUNT)>
+static constexpr cblib::EnumArray< IOResult, const char * >
     DEF_IORESULT_NAMES  = { {
         "OK",   "IO Error",     "Parsing Error",    "Version Mismatch"
 } };
@@ -1144,99 +1144,215 @@ struct DebuggerState_t
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
 struct EditorState_t
 {
+//      0.          CONSTANTS AND ALIASES...
 // *************************************************************************** //
-//          OVERALL STATE...
 // *************************************************************************** //
-    ImPlotInputMap                      m_backup;
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//          TRANSIENT STATE...
-// *************************************************************************** //
-    //
-    //                              OVERALL STATE / ENABLED BEHAVIORS:
-    bool                                m_show_grid                     = true;
-    bool                                m_show_debug_overlay            = true;     //  Persistent/Resident Overlays.
-    //
-    bool                                m_show_ui_traits_overlay        = true;     //  UI-Overlays
-    bool                                m_show_ui_objects_overlay       = true;
-    //
-    //
-    //
-    //                              TRANSIENT OBJECTS:
-    ImPlotRect                          m_plot_limits                   = {   };
-    //
-    //                              TRANSIENT STATE:
-    //
-    //
-    //
-    //                              UTILITY:
-    float                               m_bar_h                         = 0.0f;
-    ImVec2                              m_avail                         = ImVec2(0.0f,      0.0f);
-    ImVec2                              m_p0                            = ImVec2(0.0f,      0.0f);
-    ImVec2                              m_p1                            = ImVec2(0.0f,      0.0f);
-    
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//          TOOL STATE (TODO: RE-HOME THESE INTO TOOL STATE OBJs)...
-// *************************************************************************** //
-    //
-    //                              LASSO TOOL / SELECTION:
-    bool                                m_show_sel_overlay              = false;
-    //
-    bool                                m_dragging                      = false;
-    bool                                m_lasso_active                  = false;
-    bool                                m_pending_clear                 = false;    //  pending click selection state ---
-    //
-    ImVec2                              m_lasso_start                   = ImVec2(0.f,       0.f);
-    ImVec2                              m_lasso_end                     = ImVec2(0.f,       0.f);
-    VID                                 m_next_id                       = 1;
-    PID                                 m_next_pid                      = 1;        // counter for new path IDs
-    //
-    //
-    //
-    //                              PEN-TOOL STATE:
-    bool                                m_drawing                       = false;
-    bool                                m_dragging_handle               = false;
-    bool                                m_dragging_out                  = true;
-    VID                                 m_drag_vid                      = 0;
-    
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                                      MISC STATE...
-// *************************************************************************** //
+public:
 
-                                        //
-                                        //  ...
-                                        //
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    //                              //  ...
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr float                  ms_IO_MESSAGE_DURATION          = 10.0f;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      REFERENCES TO GLOBAL ARRAYS.
+    // *************************************************************************** //
+    //                              //  ...
+    
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
 
 // *************************************************************************** //
 //
 //
-//
+//      1.          CLASS DATA-MEMBERS...
 // *************************************************************************** //
-//          SERIALIZATION STUFF...
 // *************************************************************************** //
-    std::mutex                          m_task_mtx;
-    std::vector<std::function<void()>>  m_main_tasks;
-    std::atomic<bool>                   m_io_busy                       {false};
-    IOResult                            m_io_last                       {IOResult::Ok};
-    std::string                         m_io_msg                        {   };
+
+    // *************************************************************************** //
+    //                  OVERALL STATE...
+    // *************************************************************************** //
+    ImPlotInputMap                          m_backup;
+    
+    // *************************************************************************** //
     //
-    std::atomic<bool>                   m_sdialog_open                  = {false};
-    std::atomic<bool>                   m_odialog_open                  = {false};
-    std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};   //    {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
+    //
+    //
+    // *************************************************************************** //
+    //                  TRANSIENT STATE...
+    // *************************************************************************** //
+    //                                  OVERALL STATE / ENABLED BEHAVIORS:
+    bool                                    m_show_grid                     = true;
+    bool                                    m_show_debug_overlay            = true;     //  Persistent/Resident Overlays.
+    //
+    bool                                    m_show_ui_traits_overlay        = true;     //  UI-Overlays
+    bool                                    m_show_ui_objects_overlay       = true;
+    //
+    //
+    //
+    //                                  TRANSIENT OBJECTS:
+    ImPlotRect                              m_plot_limits                   = {   };
+    //
+    //                                  TRANSIENT STATE:
+    //
+    //
+    //
+    //                                  UTILITY:
+    float                                   m_bar_h                         = 0.0f;
+    ImVec2                                  m_avail                         = ImVec2(0.0f,      0.0f);
+    ImVec2                                  m_p0                            = ImVec2(0.0f,      0.0f);
+    ImVec2                                  m_p1                            = ImVec2(0.0f,      0.0f);
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                  TODO: RE-HOME THESE INTO TOOL STATE OBJs...
+    // *************************************************************************** //
+    //
+    //                                  LASSO TOOL / SELECTION:
+    bool                                    m_show_sel_overlay              = false;
+    //
+    bool                                    m_dragging                      = false;
+    bool                                    m_lasso_active                  = false;
+    bool                                    m_pending_clear                 = false;    //  pending click selection state ---
+    //
+    ImVec2                                  m_lasso_start                   = ImVec2(0.f,       0.f);
+    ImVec2                                  m_lasso_end                     = ImVec2(0.f,       0.f);
+    VID                                     m_next_id                       = 1;
+    PID                                     m_next_pid                      = 1;        // counter for new path IDs
+    //
+    //
+    //
+    //                                  PEN-TOOL STATE:
+    bool                                    m_drawing                       = false;
+    bool                                    m_dragging_handle               = false;
+    bool                                    m_dragging_out                  = true;
+    VID                                     m_drag_vid                      = 0;
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                  MISC STATE...
+    // *************************************************************************** //
+
+                                            //
+                                            //  ...
+                                            //
+
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                  SERIALIZATION STUFF...
+    // *************************************************************************** //
+    std::mutex                              m_task_mtx;
+    std::vector<std::function<void()>>      m_main_tasks;
+    //
+    std::atomic<bool>                       m_io_busy                       { false };
+    IOResult                                m_io_last                       { IOResult::Ok };
+    std::string                             m_io_msg                        {   };
+    //
+    std::atomic<bool>                       m_sdialog_open                  = { false };
+    std::atomic<bool>                       m_odialog_open                  = { false };
+    std::filesystem::path                   m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};   //    {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
     //  std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
+    //
+    //
+    //                                  PEN-TOOL STATE:
+    std::atomic<bool>                       m_show_io_message               { false };
+    float                                   m_io_message_timer              = -1.0f;
     
+//
+//
+//
 // *************************************************************************** //
+// *************************************************************************** //   END "CLASS DATA-MEMBERS".
+
+    
+   
+// *************************************************************************** //
+//
+//
+//      2.A.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      MAIN FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "DisplayIOStatus"
+    inline void                         DisplayIOStatus                     (void) noexcept
+    {
+        ImGuiIO &           io                  = ImGui::GetIO();
+        this->m_io_message_timer               -= io.DeltaTime;
+        
+        
+        //      1.      DECREMENT TIMER...
+        if ( this->m_io_message_timer <= 0.0f ) {
+            this->m_io_message_timer = -1.0f;
+            this->m_show_io_message.store(false, std::memory_order_release);
+            return;
+        }
+        //
+        //      2.      DISPLAY TOOL-TIP I/O MESSAGING...
+        //  ImGui::SetNextWindowBgAlpha(0.75f); // optional: semi-transparent
+        ImGui::BeginTooltip();
+            ImGui::TextUnformatted( this->m_io_msg.c_str() );
+        ImGui::EndTooltip();
+    
+        return;
+    }
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "SetLastIOStatus"
+    inline void                         SetLastIOStatus                     (const IOResult result, std::string & message) noexcept
+    {
+        this->m_io_busy                 .store( false,   std::memory_order_release   );
+        this->m_show_io_message         .store( true,    std::memory_order_release   );
+        this->m_io_message_timer        = ms_IO_MESSAGE_DURATION;
+        //
+        this->m_io_last                 = result;
+        this->m_io_msg                  = std::move( message );
+        
+        return;
+    }
+    
+    
+    
+    // *************************************************************************** //
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
 
 
 

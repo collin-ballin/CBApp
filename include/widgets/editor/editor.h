@@ -624,11 +624,11 @@ protected:
     void                                load_from_snapshot                  (EditorSnapshot && );
     //
     //                              SERIALIZATION IMPLEMENTATIONS:
-    void                                save_worker                         (EditorSnapshot snap, std::filesystem::path path);
     bool                                save_async                          (std::filesystem::path path);
+    void                                save_worker                         (EditorSnapshot snap, std::filesystem::path path);
     //
-    void                                load_worker                         (std::filesystem::path );
     bool                                load_async                          (std::filesystem::path path);
+    void                                load_worker                         (std::filesystem::path );
     
     // *************************************************************************** //
     //

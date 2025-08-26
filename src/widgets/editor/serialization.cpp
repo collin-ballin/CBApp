@@ -73,7 +73,8 @@ void Editor::_draw_editor_settings([[maybe_unused]] popup::Context & ctx)
 //
 void Editor::_draw_settings_serialize(void)
 {
-    EditorState &               EState                  = this->m_editor_S;
+    namespace                   fs                      = std::filesystem;
+    EditorState &               ES                      = this->m_editor_S;
     const bool                  has_file                = this->has_file();
     [[maybe_unused]] bool       force_save_as           = false;
     bool                        requested_close         = false;
@@ -98,7 +99,7 @@ void Editor::_draw_settings_serialize(void)
         S.PushFont(Font::Main);
         
             this->S.labelf("Current File:",                 this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
-            if ( has_file )     { ImGui::TextColored( app::DEF_APPLE_BLUE, "%s", EState.m_filepath.filename().string().c_str() ); }
+            if ( has_file )     { ImGui::TextColored( app::DEF_APPLE_BLUE, "%s", ES.m_filepath.filename().string().c_str() ); }
             else                { ImGui::TextDisabled( "%s", ms_NO_ASSIGNED_FILE_STRING ); }
             
         S.PopFont();
@@ -130,13 +131,13 @@ void Editor::_draw_settings_serialize(void)
         if ( ImGui::Button("Save", ms_SETTINGS_BUTTON_SIZE) )
         {
             
-            if (has_file)       { this->save_async( EState.m_filepath );    }
-            else                { force_save_as = true;                     }
+            if (has_file)       { this->save_async( ES.m_filepath );            }
+            else                { force_save_as = true; requested_close = true;     }
 
         }
         
         
-        //      3.      "SAVE AS..." DIALOGUE...
+        //      2.2.    "SAVE AS..." DIALOGUE...
         this->S.labelf("Save As...:",                   this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
         if ( /*force_save_as || */ ImGui::Button("Save As...", ms_SETTINGS_BUTTON_SIZE) )
         {
@@ -145,14 +146,25 @@ void Editor::_draw_settings_serialize(void)
         }
 
 
-        //      4.      "OPEN" DIALOGUE...
+        //      2.3.    "OPEN" DIALOGUE...
         this->S.labelf("Open File:",                    this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
         if ( ImGui::Button("Load", ms_SETTINGS_BUTTON_SIZE) )
         {
             CB_LOG( LogLevel::Info, "Editor | requesting file dialog to load from disk" );
             requested_close = true;
-            EState.m_odialog_open.store( true, std::memory_order_release );
+            ES.m_odialog_open.store( true, std::memory_order_release );
         }
+
+
+        //      2.4.    "NEW" DIALOGUE...
+        this->S.labelf("New File:",                     this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        ImGui::BeginDisabled(true);
+            if ( ImGui::Button("New", ms_SETTINGS_BUTTON_SIZE) )
+            {
+                ES.m_filepath       = fs::path{   };
+                requested_close     = true;
+            }
+        ImGui::EndDisabled();
         
         
         
@@ -183,7 +195,7 @@ void Editor::_draw_settings_mechanics(void)
     constexpr ImGuiSliderFlags      SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
     //constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
     //
-    EditorState &                   EState              = this->m_editor_S;
+    EditorState &                   ES                  = this->m_editor_S;
     //  BrowserState &                  BState              = this->m_browser_S;
     
     
@@ -192,25 +204,42 @@ void Editor::_draw_settings_mechanics(void)
     ImGui::Indent();
     //
     //
-        this->S.labelf("Show Grid:",              LABEL_W, WIDGET_W);           //  1.1.        SHOW GRID.
-        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowGrid",                 &m_grid.visible);
-        
-        this->S.labelf("Snap-To-Grid:",           LABEL_W, WIDGET_W);           //  1.2.        SNAP-TO-GRID.
-        ImGui::Checkbox("##Editor_Settings_Mechanics_SnapToGrid",               &m_grid.snap_on);
-        
-        
-        
-        this->S.labelf("Show Debugger Overlay:",  LABEL_W, WIDGET_W);           //  2.1.        SHOW DEBUG OVERLAY.
-        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowDebugOverlay",         &EState.m_show_debug_overlay);
+    //
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if ( ImGui::TreeNode("Behaviors") )
+    {
+        ImGui::Indent();
         //
-        this->S.labelf("Show UI-Traits Overlay:",  LABEL_W, WIDGET_W);          //  2.2.        SHOW UI-TRAITS OVERLAY.
-        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUITraitsOverlay",      &EState.m_show_ui_traits_overlay);
         //
-        this->S.labelf("Show UI-Objects Overlay:",  LABEL_W, WIDGET_W);         //  2.3.        SHOW UI-TRAITS OVERLAY.
-        ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUIObjectsOverlay",     &EState.m_show_ui_objects_overlay);
+            this->S.labelf("Show Grid:",              LABEL_W, WIDGET_W);           //  1.1.        SHOW GRID.
+            ImGui::Checkbox("##Editor_Settings_Mechanics_ShowGrid",                 &m_grid.visible);
+            
+            this->S.labelf("Snap-To-Grid:",           LABEL_W, WIDGET_W);           //  1.2.        SNAP-TO-GRID.
+            ImGui::Checkbox("##Editor_Settings_Mechanics_SnapToGrid",               &m_grid.snap_on);
+            
+            
+            
+            this->S.labelf("Show Debugger Overlay:",  LABEL_W, WIDGET_W);           //  2.1.        SHOW DEBUG OVERLAY.
+            ImGui::Checkbox("##Editor_Settings_Mechanics_ShowDebugOverlay",         &ES.m_show_debug_overlay);
+            //
+            this->S.labelf("Show UI-Traits Overlay:",  LABEL_W, WIDGET_W);          //  2.2.        SHOW UI-TRAITS OVERLAY.
+            ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUITraitsOverlay",      &ES.m_show_ui_traits_overlay);
+            //
+            this->S.labelf("Show UI-Objects Overlay:",  LABEL_W, WIDGET_W);         //  2.3.        SHOW UI-TRAITS OVERLAY.
+            ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUIObjectsOverlay",     &ES.m_show_ui_objects_overlay);
+        //
+        //
+        ImGui::Unindent();
+        //
+        //
+        //
+        ImGui::NewLine();
+        ImGui::TreePop();
+    }
     //
     //
-    ImGui::Unindent();
+    //
+    ImGui::Unindent();  //  END "Behaviors".
         
     
 
@@ -404,11 +433,11 @@ void Editor::pump_main_tasks(void)
 //
 void Editor::_draw_io_overlay(void)
 {
-    EditorState &       EState      = this->m_editor_S;
+    EditorState &       ES      = this->m_editor_S;
     
-    if ( (!EState.m_io_busy)  &&  (EState.m_io_last == IOResult::Ok) )              { return; }   // nothing to show
+    if ( (!ES.m_io_busy)  &&  (ES.m_io_last == IOResult::Ok) )              { return; }   // nothing to show
 
-    const char *        txt         = (EState.m_io_busy)    ? "Working..."  : EState.m_io_msg.c_str();
+    const char *        txt         = (ES.m_io_busy)    ? "Working..."  : ES.m_io_msg.c_str();
     ImVec2              pad         {8, 8};
     ImVec2              size        = ImGui::CalcTextSize(txt);
     ImVec2              pos         = ImGui::GetMainViewport()->Pos;
@@ -503,69 +532,6 @@ void Editor::load_from_snapshot(EditorSnapshot && snap)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "save_worker"
-//
-void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
-{
-    EditorState &       EState      = this->m_editor_S;
-    nlohmann::json      j;
-    //
-    //
-    //  j["version"]                    = std::format("{}.{}", this->ms_MAJOR_VERSION, this->ms_MINOR_VERSION); //    kSaveFormatVersion;
-    //
-    //
-        j["version"]                    = ms_EDITOR_SCHEMA;       // uses to_json(SchemaVersion)
-        //
-        j["state"]                      = snap;
-    //
-    //
-    //  j["editor_state"]               = this->m_editor_S;
-    //
-    //
-    std::ofstream       os          (path, std::ios::binary);
-    IOResult            res         = ( os )    ? IOResult::Ok      : IOResult::IoError;
-    
-    
-    if ( res == IOResult::Ok )      { os << j.dump(2); }
-    
-    
-    // enqueue completion notification
-    {
-        {
-            std::lock_guard     lk      (EState.m_task_mtx);
-            EState.m_main_tasks.push_back( [this, res, path]
-            {
-                this->m_editor_S.m_io_busy      = false;
-                this->m_editor_S.m_io_last      = res;
-                this->m_editor_S.m_io_msg       = (res == IOResult::Ok)
-                                                    ? "Saved to " + path.generic_string()
-                                                    : "Save failed";
-            } );
-        }
-    }
-    
-    
-    //  2.  EVALUATE SUCCESS/FAILURE OF IO-OPERATION...
-    {
-        const char *    status      = this->ms_IORESULT_NAMES[ static_cast<size_t>( EState.m_io_last ) ];
-    
-        //  CASE 2A :   SAVE SUCCESS.
-        if ( EState.m_io_last == IOResult::Ok ) {
-            CB_LOG( LogLevel::Info, std::format("Editor | successfully saved data to \"{}\" [status: {}] ", path.filename().string(), status) );
-        }
-        //
-        //  CASE 2A :   SAVE FAILURE.
-        else {
-            CB_LOG( LogLevel::Error, std::format("Editor | failed to save data to \"{}\" [status: {}] ", path.filename().string(), status) );
-        }
-    }
-    
-    
-    
-    return;
-}
-
-
 //  "save_async"
 //
 bool Editor::save_async(std::filesystem::path path)
@@ -602,6 +568,83 @@ bool Editor::save_async(std::filesystem::path path)
     return result;
 }
 
+
+//  "save_worker"
+//
+void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
+{
+    EditorState &       ES      = this->m_editor_S;
+    nlohmann::json      j;
+    //
+    //
+    //  j["version"]                    = std::format("{}.{}", this->ms_MAJOR_VERSION, this->ms_MINOR_VERSION); //    kSaveFormatVersion;
+    //
+    //
+        j["version"]                    = ms_EDITOR_SCHEMA;       // uses to_json(SchemaVersion)
+        //
+        j["state"]                      = snap;
+    //
+    //
+    //  j["editor_state"]               = this->m_editor_S;
+    //
+    //
+    std::ofstream       os          (path, std::ios::binary);
+    IOResult            res         = ( os )    ? IOResult::Ok      : IOResult::IoError;
+    
+    
+    if ( res == IOResult::Ok )      { os << j.dump(2); }
+    
+    
+    // enqueue completion notification
+    {
+        std::lock_guard     lk      (ES.m_task_mtx);
+        ES.m_main_tasks.push_back( [this, res, path]
+        {
+            EditorState &   ES_             = this->m_editor_S;
+            std::string     message         = {   };
+
+            switch ( res )
+            {
+                //  CASE 2A :   SAVING SUCCESS.
+                case IOResult::Ok                   : {
+                    message     = std::format( "Saved data to file \"{}\"", path.filename().string() );
+                    break;
+                }
+                //
+                //  CASE 2B :   SAVING FAILURE.
+                default                             : {
+                    message = std::format( "Failed to save file \"{}\", (I/O Result: {})", path.filename().string(), ms_IORESULT_NAMES[ res ] );
+                    break;
+                }
+            }
+            //
+            //
+            ES_.SetLastIOStatus( res, message );
+            
+        } );
+    }
+    
+    
+    //  2.  EVALUATE SUCCESS/FAILURE OF IO-OPERATION...
+    {
+        const char *    status      = this->ms_IORESULT_NAMES[ ES.m_io_last ];
+    
+        //  CASE 2A :   SAVE SUCCESS.
+        if ( ES.m_io_last == IOResult::Ok ) {
+            CB_LOG( LogLevel::Info, std::format("Editor | successfully saved data to \"{}\" [status: {}] ", path.filename().string(), status) );
+        }
+        //
+        //  CASE 2A :   SAVE FAILURE.
+        else {
+            CB_LOG( LogLevel::Error, std::format("Editor | failed to save data to \"{}\" [status: {}] ", path.filename().string(), status) );
+        }
+    }
+    
+    
+    
+    return;
+}
+
 //
 // *************************************************************************** //
 // *************************************************************************** //   END "SAVING".
@@ -614,12 +657,46 @@ bool Editor::save_async(std::filesystem::path path)
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "load_async"
+//
+bool Editor::load_async(std::filesystem::path path)
+{
+    EditorState &       ES          = this->m_editor_S;
+    ES.m_io_busy                    = true;
+    path                            = std::filesystem::absolute(path);
+    bool                result      = true;
+
+
+    //      1.      PERFORM I/O ON SECONDARY THREAD...
+    std::thread([this, path]{
+        load_worker(path);
+    }).detach();
+    
+    
+    //      2.      TAKE ACTIONS BASED ON SUCCESS/FAILURE OF LOADING PROCEDURE...
+    if ( (ES.m_io_last == IOResult::Ok) || (ES.m_io_last == IOResult::VersionMismatch) )
+    {
+        result              = true;
+        ES.m_filepath       = path;
+    }
+    else
+    {
+        result              = false;
+        ES.m_filepath       = std::filesystem::path{   };
+        this->RESET_ALL();
+    }
+    
+    
+    return result;
+}
+
+
 //  "load_worker"
 //
 void Editor::load_worker(std::filesystem::path path)
 {
     using                   Version     = cblib::SchemaVersion;
-    EditorState &           EState      = this->m_editor_S;
+    EditorState &           ES          = this->m_editor_S;
     nlohmann::json          j;
     std::ifstream           is          (path, std::ios::binary);
     IOResult                res         = ( is )    ? IOResult::Ok      : IOResult::IoError;
@@ -653,72 +730,38 @@ void Editor::load_worker(std::filesystem::path path)
 
     //      2.      ASSESS I/O RESULT.      -- enqueue GUI-thread callback...
     {
-        std::lock_guard     lk      (EState.m_task_mtx);
+        std::lock_guard     lk      (ES.m_task_mtx);
         
-        EState.m_main_tasks.push_back( [this, res, snap = std::move(snap), path]() mutable
+        ES.m_main_tasks.push_back( [this, res, snap = std::move(snap), path]() mutable
         {
-            this->m_editor_S.m_io_busy    = false;
+            EditorState &   ES_             = this->m_editor_S;
+            std::string     message         = {   };
 
-            //  CASE 2A :   LOADING SUCCESS.
-            if ( res == IOResult::Ok )
+
+            switch ( res )
             {
-                load_from_snapshot( std::move(snap) );
-                this->m_editor_S.m_io_msg = std::format( "loaded file \"{}\"", path.generic_string() );
+                //  CASE 2A :   LOADING SUCCESS.
+                case IOResult::Ok                   : {
+                    this->load_from_snapshot( std::move(snap) );
+                    message     = std::format( "Loaded from file \"{}\"", path.filename().string() );
+                    break;
+                }
+                //
+                //  CASE 2B :   LOADING FAILURE.
+                case IOResult::IoError              : { message = "load I/O error"              ; break;  }
+                case IOResult::ParseError           : { message = "load parsing error"          ; break;  }
+                case IOResult::VersionMismatch      : { message = "json version mismatch"       ; break;  }
+                default                             : { message = "unknown load error"          ; break;  }
             }
             //
-            //  CASE 2B :   LOADING FAILURE.
-            else
-            {
-                switch (res)
-                {
-                    case IOResult::IoError              : {     this->m_editor_S.m_io_msg = "load I/O error";                break;     }
-                    case IOResult::ParseError           : {     this->m_editor_S.m_io_msg = "load parsing error";            break;     }
-                    case IOResult::VersionMismatch      : {     this->m_editor_S.m_io_msg = "json version mismatch";         break;     }
-                    default                             : {     this->m_editor_S.m_io_msg = "unknown load error";            break;     }
-                }
-            }
-            this->m_editor_S.m_io_last = res;
-            
+            //
+            ES_.SetLastIOStatus( res, message );
             return;
         } );
     }
     
     
     return;
-}
-
-
-//  "load_async"
-//
-bool Editor::load_async(std::filesystem::path path)
-{
-    EditorState &       ES          = this->m_editor_S;
-    ES.m_io_busy                    = true;
-    path                            = std::filesystem::absolute(path);
-    bool                result      = true;
-
-
-    //      1.      PERFORM I/O ON SECONDARY THREAD...
-    std::thread([this, path]{
-        load_worker(path);
-    }).detach();
-    
-    
-    //      2.      TAKE ACTIONS BASED ON SUCCESS/FAILURE OF LOADING PROCEDURE...
-    if ( (ES.m_io_last == IOResult::Ok) || (ES.m_io_last == IOResult::VersionMismatch) )
-    {
-        result              = true;
-        ES.m_filepath       = path;
-    }
-    else
-    {
-        result              = false;
-        ES.m_filepath       = std::filesystem::path{   };
-        this->RESET_ALL();
-    }
-    
-    
-    return result;
 }
 
 //

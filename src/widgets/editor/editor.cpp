@@ -926,9 +926,17 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
 //
 inline void Editor::_handle_io(void)
 {
-    namespace           fs              = std::filesystem;
-    EditorState &       ES              = this->m_editor_S;
-    //using             Initializer     = cb::FileDialog::Initializer;
+    namespace           fs                  = std::filesystem;
+    //using             Initializer         = cb::FileDialog::Initializer;
+    ImGuiIO &           io                  = ImGui::GetIO();
+    EditorState &       ES                  = this->m_editor_S;
+
+
+
+    //      0.      TOOL-TIP I/O MESSAGING...
+    if ( ES.m_show_io_message.load(std::memory_order_acquire) ) {
+        ES.DisplayIOStatus();
+    }
 
 
     //      1.      SAVE DIALOGUE...
