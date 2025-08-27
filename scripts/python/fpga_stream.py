@@ -16,8 +16,9 @@ Commands via stdin:
 """
 import sys, time, json, threading, queue, signal, datetime, argparse, random
 from typing import List, Tuple
-#from _FPGA_SAMPLE_DATA import SAMPLE_DATA0 as SAMPLE_PACKETS
-from _FPGA_SAMPLE_DATA import SAMPLE_DATA2 as SAMPLE_PACKETS
+#
+#   from _FPGA_SAMPLE_DATA import SAMPLE_DATA0 as SAMPLE_PACKETS
+#   from _FPGA_SAMPLE_DATA import SAMPLE_DATA2 as SAMPLE_PACKETS
 
 ################################################################################
 #
@@ -25,9 +26,22 @@ from _FPGA_SAMPLE_DATA import SAMPLE_DATA2 as SAMPLE_PACKETS
 #    1.  GLOBAL CONSTANTS...
 ################################################################################
 ################################################################################
-BITFILE         = r"c:\Users\larsenal\Downloads\SPADCCUMK2\LabVIEW Data\SPADMK2\FPGA Bitfiles\spadccumk2_FPGATarget_DSPTesting_zbVGNUvhPcI.lvbitx"
-RESOURCE        = r"rio://172.22.11.2/RIO0"
-USE_HARDWARE    = False
+USE_CALIBRATION_DATA    = False     # W/O not to use "real" FPGA data or "calibration" data to test AVG, etc.
+
+
+
+#   CASE 1 :    Use "CALIBRATION DATA"      -- Artificial data that is used to test the average computations and etc...
+if ( USE_CALIBRATION_DATA ):
+    from _FPGA_SAMPLE_DATA import SAMPLE_DATA2 as SAMPLE_PACKETS
+#
+#   CASE 2 :    Use "REAL FPGA DATA"        -- This is MOCK DATA that was recorded directly from the FPGA...
+else:
+    from _FPGA_SAMPLE_DATA import SAMPLE_DATA0 as SAMPLE_PACKETS
+
+
+BITFILE                 = r"c:\Users\larsenal\Downloads\SPADCCUMK2\LabVIEW Data\SPADMK2\FPGA Bitfiles\spadccumk2_FPGATarget_DSPTesting_zbVGNUvhPcI.lvbitx"
+RESOURCE                = r"rio://172.22.11.2/RIO0"
+USE_HARDWARE            = False
 
 
 #  Import NI‑FPGA only if available

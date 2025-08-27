@@ -34,7 +34,8 @@ from typing import List, Tuple
 #
 ################################################################################
 
-#  SAMPLE FPGA DATA (For running is Dummy Mode)...
+#  CALIBRATION DATA (For testing AVERAGE-VALUE Computations, etc)...
+#
 SAMPLE_DATA1: List[Tuple[List[int], int]] = [
 #   UNUSED.     D.      C.      CD.     B.      BD.     BC.     BCD.    A.      AD.     AC.     ACD.    AB.     ABD.    ABC.    ABCD.       FPGA CYCLES.    #
 ##############################################################################################################################################################
