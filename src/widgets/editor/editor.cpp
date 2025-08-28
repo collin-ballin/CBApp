@@ -225,13 +225,16 @@ void Editor::Begin(const char * /*id*/)
     ImGuiIO &               io                      = ImGui::GetIO();
     EditorStyle &           EStyle                  = this->m_style;
     EditorState &           ES                      = this->m_editor_S;
+    Interaction &           it                      = *this->m_it;
     //
     //
     //
-    const bool              space                   = ImGui::IsKeyDown(ImGuiKey_Space);
+    const bool              block_input             = it.BlockInput();
+    const bool              space                   = ( !block_input  &&  ImGui::IsKeyDown(ImGuiKey_Space) );
     //
-    const bool              pan_enabled             = (space || (this->m_mode == Mode::Hand) );
-    const bool              zoom_enabled            = _mode_has(CBCapabilityFlags_Zoom) && (!io.MouseDown[0]);
+    const bool              pan_enabled_IMPL        = (  (!block_input)  &&  ( (this->m_mode == Mode::Hand)  ||  space)  ); // || (this->m_mode == Mode::Hand) )  );
+    const bool              pan_enabled             = ( pan_enabled_IMPL  &&  _mode_has(CBCapabilityFlags_Pan) );
+    const bool              zoom_enabled            = (  (!block_input)  &&  _mode_has(CBCapabilityFlags_Zoom)  &&   (!io.MouseDown[0]) );
     //
     //
     //
@@ -239,9 +242,11 @@ void Editor::Begin(const char * /*id*/)
     ImPlotInputMap &        map                     = ImPlot::GetInputMap();
     //  ImPlotInputMap          m_state.m_backup        = ImPlot::GetInputMap();
     //
-    map.Pan                                         = ImGuiMouseButton_Left;                            //
-    map.PanMod                                      = (pan_enabled)     ? 0     : ImGuiMod_Ctrl;        //  disable pan unless current TOOL allows PANNING...
-    map.ZoomMod                                     = (zoom_enabled)    ? 0     : ImGuiMod_Ctrl;        //  disable zoom unless current TOOL allows ZOOMING...
+    //
+    //
+    map.Pan                                         = ImGuiMouseButton_Left;
+    map.PanMod                                      = (pan_enabled)     ? 0                         : ImGuiMod_Ctrl;        //  disable pan unless current TOOL allows PANNING...
+    map.ZoomMod                                     = (zoom_enabled)    ? 0                         : ImGuiMod_Ctrl;        //  disable zoom unless current TOOL allows ZOOMING...
     map.ZoomRate                                    = EStyle.ms_ZOOM_RATE;                              //
 
 
@@ -289,7 +294,6 @@ void Editor::Begin(const char * /*id*/)
         //
         
         this->_per_frame_cache_begin();
-        Interaction &           it              = *this->m_it;
 
 
 

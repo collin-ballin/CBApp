@@ -155,7 +155,8 @@ public:                                                                         
     /*      6.      TOOL STATE OBJECTS...                                                                                       */      \
     using                           PenState                    = PenState_t        <VertexID>                                  ;       \
     using                           ShapeState                  = ShapeState_t      <OverlayID>                                 ;       \
-    using                           DebuggerState               = DebuggerState_t   <VertexID, PointID, LineID, PathID, ZID>    ;
+    using                           DebuggerState               = DebuggerState_t   <VertexID, PointID, LineID, PathID, ZID>    ;       \
+    using                           ResidentEntry               = ResidentEntry_t   <OverlayID>                                 ;
 //
 //
 //

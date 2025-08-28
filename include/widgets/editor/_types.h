@@ -157,7 +157,7 @@ DEF_MODE_CAPABILITIES       = {
 /*  Shape               */      CBCapabilityFlags_Plain,
 /*  Add Anchor          */      CBCapabilityFlags_Plain,
 /*  Remove Anchor       */      CBCapabilityFlags_Plain,
-/*  Edit Anchor         */      CBCapabilityFlags_Plain
+/*  Edit Anchor         */      CBCapabilityFlags_None
 };
 
 
@@ -434,6 +434,11 @@ struct Interaction
     inline bool                     BlockShortcuts              (void) const noexcept
     { return ( !hovered ); }
     //{ return ( (!hovered) || (obj.menus_open) ); }
+
+    //  "BlockInput"
+    [[nodiscard]]
+    inline bool                     BlockInput                  (void) const noexcept
+    { return ( !hovered  &&  !ImGui::IsMouseDown(ImGuiMouseButton_Left) ); }   //  IsMouseDragging( ... )      IsMouseDragPastThreshold( ... )
 
 
 
@@ -981,26 +986,29 @@ struct Overlay_t {
 
 
 
-
-
-
-//  "OverlayState"
-//      **DEPRECATED** > State for the OLD "HELPER" OVERLAY MENU / DEBUGGER MENU...
-struct OverlayState {
-    bool                open                = true;         // Editor toggles this; no “x” button
-    bool                show_details        = true;         // extra diagnostics pane
-    bool                verbose_detail      = false;        // extra diagnostics pane
-    int                 location            = 3;            // 0-3 corners, −2 centre, −1 free
-    float               alpha               = 0.65f;        // window translucency
-    float               pad                 = 40.0f;        // margin from viewport edge
-    ImGuiWindowFlags    base_flags          = ImGuiWindowFlags_NoDecoration       | ImGuiWindowFlags_NoDocking          | ImGuiWindowFlags_AlwaysAutoResize |
-                                              ImGuiWindowFlags_NoSavedSettings    | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-    ImGuiWindowFlags    flags               = 0;            // recomputed each frame
+// *************************************************************************** //
 //
-    std::string         log_msg;                            // last message (≤40 words)
-    float               log_timer           = 0.0f;         // seconds until it disappears
+//      2.7B.       EDITOR "OVERLAY" DEFINITIONS.
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "ResidentEntry_t"
+//
+template<typename OID = uint32_t>
+struct ResidentEntry_t {
+    using                       OverlayID       = OID;
+    using                       Overlay         = Overlay_t<OID>;
+//
+    OverlayID                   id;             //  runtime ID (filled in ctor)
+    Overlay *                   ptr;            //  Reference.
+    OverlayCFG                  cfg;            //  compile-time defaults
+    OverlayStyle                style;
 };
 
+
+
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //   END "OVERLAY"
 
@@ -1568,7 +1576,7 @@ struct EditorStyle
 // *************************************************************************** //
     float                       GRID_STEP                       = 64.0f;
     float                       HIT_THRESH_SQ                   = 6.0f * 6.0f;
-    float                       ms_ZOOM_RATE                    = 0.060f;
+    float                       ms_ZOOM_RATE                    = 0.050f;
 //
     int                         PEN_DRAG_TIME_THRESHOLD         = 0.05;                             //  PEN_DRAG_TIME_THRESHOLD         // seconds.
     float                       PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;                             //  PEN_DRAG_MOVEMENT_THRESHOLD     // px  (was 2)

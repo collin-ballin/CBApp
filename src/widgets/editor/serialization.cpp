@@ -263,7 +263,7 @@ void Editor::_draw_settings_mechanics(void)
                 constexpr float     s_SCALE         = 100.0f;
                 //
                 float               zoom_rate       = s_SCALE * m_style.ms_ZOOM_RATE;
-                const bool          dirty           = ImGui::SliderFloat( "##Editor_Settings_Style_ZoomRate", &zoom_rate,         0.0f,   100.0f,  "%.2f",  SLIDER_FLAGS);
+                const bool          dirty           = ImGui::SliderFloat( "##Editor_Settings_Style_ZoomRate", &zoom_rate,         0.10f,   35.0f,  "%.2f",  SLIDER_FLAGS);
                 //
                 if (dirty)
                 {

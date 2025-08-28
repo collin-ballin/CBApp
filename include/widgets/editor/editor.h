@@ -193,12 +193,12 @@ public:
     // *************************************************************************** //
     //                              RESIDENT OVERLAY DATA:
     // *************************************************************************** //
-    struct ResidentEntry {
-        OverlayID                   id;             //  runtime ID (filled in ctor)
-        Overlay *                   ptr;            //  Reference.
-        OverlayCFG                  cfg;            //  compile-time defaults
-        OverlayStyle                style;
-    };
+    //  struct ResidentEntry {
+    //      OverlayID                   id;             //  runtime ID (filled in ctor)
+    //      Overlay *                   ptr;            //  Reference.
+    //      OverlayCFG                  cfg;            //  compile-time defaults
+    //      OverlayStyle                style;
+    //  };
     //
     //
     std::array<ResidentEntry, Resident::COUNT>      m_residents { {
@@ -311,6 +311,221 @@ public:
 //
 // *************************************************************************** //
 // *************************************************************************** //   END TEMPORARY STUFF.
+
+
+
+// *************************************************************************** //
+//
+//
+//      1.          CLASS DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+
+    // *************************************************************************** //
+    //      IMPORTANT DATA...
+    // *************************************************************************** //
+    app::AppState &                     CBAPP_STATE_NAME;
+    EditorStyle                         m_style                         {   };
+    //
+    std::vector<Vertex>                 m_vertices;
+    std::vector<Point>                  m_points;
+    std::vector<Line>                   m_lines;
+    std::vector<Path>                   m_paths;                //  New path container
+    std::unordered_set<HandleID>        m_show_handles;         //  List of which glyphs we WANT to display Bezier points for.
+    //
+    OverlayManager                      m_overlays;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SERIALIZATION STUFF...
+    // *************************************************************************** //
+    cb::FileDialog::Initializer         m_SAVE_DIALOG_DATA              = {
+        /* type               = */  cb::FileDialogType::Save,
+        /* window_name        = */  "Save Editor Session",
+        /* default_filename   = */  "canvas_settings.json",
+        /* required_extension = */  "json",
+        /* valid_extensions   = */  {".json", ".txt"},
+        /* starting_dir       = */  std::filesystem::current_path()
+    };
+    cb::FileDialog::Initializer         m_OPEN_DIALOG_DATA              = {
+        /* type               = */  cb::FileDialogType::Open,
+        /* window_name        = */  "Open Editor Session",
+        /* default_filename   = */  "",
+        /* required_extension = */  "",
+        /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
+        /* starting_dir       = */  std::filesystem::current_path()
+    };
+    cb::FileDialog                      m_save_dialog;
+    cb::FileDialog                      m_open_dialog;
+    //  std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/editor-fdtd_v0.json"};
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      BROWSER STUFF...
+    // *************************************************************************** //
+    std::string                         WinInfo_uuid                    = "Editor Browser";
+    ImGuiWindowFlags                    WinInfo_flags                   = ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY;
+    bool                                WinInfo_open                    = true;
+    ImGuiWindowClass                    m_window_class;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      APPLICATION STATE...
+    // *************************************************************************** //
+    //                              OVERALL STATE:
+    //  EditorState                     m_S                             = {   };
+    Mode                                m_mode                          = Mode::Default;
+    ObjectTrait                         m_trait                         = ObjectTrait::Properties;
+    //
+    //
+    //                              MUTABLE / TRANSIENT STATE:
+    std::unique_ptr<Interaction>        m_it;
+    //
+    bool                                m_dragging                      = false;
+    bool                                m_lasso_active                  = false;
+    bool                                m_pending_clear                 = false;    //  pending click selection state ---
+    //
+    //                              PEN-TOOL STATE:
+    bool                                m_drawing                       = false;
+    bool                                m_dragging_handle               = false;
+    bool                                m_dragging_out                  = true;
+    VertexID                            m_drag_vid                      = 0;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      OBJECTS...
+    // *************************************************************************** //
+    //                              SUBSIDIARY STATES:
+    EditorState                         m_editor_S                      {   };        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
+    BrowserState                        m_browser_S                     {   };
+    Selection                           m_sel;
+    mutable BoxDrag                     m_boxdrag;
+    MoveDrag                            m_movedrag;
+    Clipboard                           m_clipboard;
+    //
+    //                              TOOL STATES:
+    PenState                            m_pen;
+    ShapeState                          m_shape;
+    //  OverlayState                        m_overlay;
+    DebuggerState                       m_debugger;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      IMPLOT / CANVAS SYSTEM...
+    // *************************************************************************** //
+    ImPlotFlags                         m_plot_flags                    = ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
+    utl::AxisCFG                        m_axes [2]                      = {
+        {"##x-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit | ImPlotAxisFlags_Opposite },
+        {"##y-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit }
+    };
+    utl::LegendCFG                      m_legend                        = { ImPlotLocation_NorthWest, ImPlotLegendFlags_None };
+    //
+    //
+    //
+    Camera                              m_cam;
+    GridSettings                        m_grid                          = { 100.0f,  true,  false };
+    float                               m_ppw                           = 1.0f;
+    Bounds                              m_world_bounds                  = {
+        /*min_x=*/0.0f,        /*min_y=*/0.0f,
+        /*max_x=*/500.0f,      /*max_y=*/500.0f
+    };
+    //
+    static constexpr float              ms_GRID_STEP_MIN                = 2.0f;   // world-units
+    static constexpr float              ms_GRID_LABEL_PAD               = 2.0f;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      VARIABLES FOR SPECIFIC MECHANICS...
+    // *************************************************************************** //
+    //                              RESIDENT STUFF:
+    //  bool                                m_show_sel_overlay              = false;
+    //
+    //                              LASSO TOOL / SELECTION:
+    ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
+    ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      NEED TO RE-HOUSE !!!
+    // *************************************************************************** //
+    //                              INDICES:
+    std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
+    VertexID                            m_next_id                       = 1;
+    PathID                              m_next_pid                      = 1;        // counter for new path IDs
+    //
+    //                              BBOX SCALING:
+    mutable int                         m_hover_handle                  = -1;
+    mutable ImVec2                      m_origin_scr                    = {0.f, 0.f};   // screen-space canvas origin                       //  -1 = none, 0-7 otherwise (corners+edges)
+    //
+    //                              UTILITY:
+    //  float                               m_bar_h                         = 0.0f;
+    //  ImVec2                              m_avail                         = ImVec2(0.0f, 0.0f);
+    //  ImVec2                              m_p0                            = ImVec2(0.0f, 0.0f);
+    //  ImVec2                              m_p1                            = ImVec2(0.0f, 0.0f);
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      BOOKMARK !!!
+    // *************************************************************************** //
+        //
+        //                              MAIN APPLICATION STATE:
+        //  bool                                m_show_grid                     = true;
+        //  Interaction                         m_it                            {   };
+        //
+        //
+        //
+        //                              PEN-TOOL STATE:
+        //  bool                                m_drawing                       = false;
+        //  bool                                m_dragging_handle               = false;
+        //  bool                                m_dragging_out                  = true;
+        //  VertexID                            m_drag_vid                      = 0;
+        //
+        //
+        //
+        //                              SELECTION STATE / LASSO TOOL:
+        //  bool                                m_dragging                      = false;
+        //  bool                                m_lasso_active                  = false;
+        //  bool                                m_pending_clear                 = false;    //  pending click selection state ---
+        //
+        //  std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
+        //  ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
+        //  ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
+        
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CLASS DATA-MEMBERS".
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     
@@ -673,6 +888,7 @@ protected:
     //
     //                              GLOBAL OPERATIONS:
     void                                _clear_all                          (void);
+    
 //
 //
 //
@@ -1090,7 +1306,7 @@ protected:
     //  "_clone_path"
     //      Duplicate an existing path with a vid-remap (copy/paste, boolean ops …).
     //
-    inline Path &                       _clone_path                         (const Path& src, const std::vector<VertexID> & vid_map) {
+    inline Path &                       _clone_path                         (const Path & src, const std::vector<VertexID> & vid_map) {
         Path dup = src;                // copy style / flags
         dup.id   = m_next_pid++;
         dup.set_default_label(dup.id);
@@ -1149,6 +1365,8 @@ protected:
     
     
     
+    // *************************************************************************** //
+    
 //
 //
 //
@@ -1156,222 +1374,7 @@ protected:
 // *************************************************************************** //   END INLINE FUNCITONS...
 
 
-   
-// *************************************************************************** //
-//
-//
-//      3.          PROTECTED DATA-MEMBERS...
-// *************************************************************************** //
-// *************************************************************************** //    
-    
-    // *************************************************************************** //
-    //      IMPORTANT DATA...
-    // *************************************************************************** //
-    app::AppState &                     CBAPP_STATE_NAME;
-    EditorStyle                         m_style                         {   };
-    //
-    std::vector<Vertex>                 m_vertices;
-    std::vector<Point>                  m_points;
-    std::vector<Line>                   m_lines;
-    std::vector<Path>                   m_paths;                //  New path container
-    std::unordered_set<HandleID>        m_show_handles;         //  List of which glyphs we WANT to display Bezier points for.
-    //
-    OverlayManager                      m_overlays;
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      SERIALIZATION STUFF...
-    // *************************************************************************** //
-    //  std::mutex                          m_task_mtx;
-    //  std::vector<std::function<void()>>  m_main_tasks;
-    //  std::atomic<bool>                   m_io_busy                       {false};
-    //  IOResult                            m_io_last                       {IOResult::Ok};
-    //  std::string                         m_io_msg                        {   };
-    //
-    //
-    //  std::atomic<bool>                   m_sdialog_open                  = {false};
-    //  std::atomic<bool>                   m_odialog_open                  = {false};
-    //
-    cb::FileDialog::Initializer         m_SAVE_DIALOG_DATA              = {
-        /* type               = */  cb::FileDialogType::Save,
-        /* window_name        = */  "Save Editor Session",
-        /* default_filename   = */  "canvas_settings.json",
-        /* required_extension = */  "json",
-        /* valid_extensions   = */  {".json", ".txt"},
-        /* starting_dir       = */  std::filesystem::current_path()
-    };
-    cb::FileDialog::Initializer         m_OPEN_DIALOG_DATA              = {
-        /* type               = */  cb::FileDialogType::Open,
-        /* window_name        = */  "Open Editor Session",
-        /* default_filename   = */  "",
-        /* required_extension = */  "",
-        /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
-        /* starting_dir       = */  std::filesystem::current_path()
-    };
-    cb::FileDialog                      m_save_dialog;
-    cb::FileDialog                      m_open_dialog;
-    //  std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/editor-fdtd_v0.json"};
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      BROWSER STUFF...
-    // *************************************************************************** //
-    std::string                         WinInfo_uuid                    = "Editor Browser";
-    ImGuiWindowFlags                    WinInfo_flags                   = ImGuiWindowFlags_None | ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY;
-    bool                                WinInfo_open                    = true;
-    ImGuiWindowClass                    m_window_class;
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      APPLICATION STATE...
-    // *************************************************************************** //
-    //                              OVERALL STATE:
-    //  EditorState                     m_S                             = {   };
-    Mode                                m_mode                          = Mode::Default;
-    ObjectTrait                         m_trait                         = ObjectTrait::Properties;
-    //
-    //
-    //                              MUTABLE / TRANSIENT STATE:
-    std::unique_ptr<Interaction>        m_it;
-    //
-    bool                                m_dragging                      = false;
-    bool                                m_lasso_active                  = false;
-    bool                                m_pending_clear                 = false;    //  pending click selection state ---
-    //
-    //                              PEN-TOOL STATE:
-    bool                                m_drawing                       = false;
-    bool                                m_dragging_handle               = false;
-    bool                                m_dragging_out                  = true;
-    VertexID                            m_drag_vid                      = 0;
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      OBJECTS...
-    // *************************************************************************** //
-    //
-    //                              SUBSIDIARY STATES:
-    EditorState                         m_editor_S                      {   };        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
-    BrowserState                        m_browser_S                     {   };
-    Selection                           m_sel;
-    mutable BoxDrag                     m_boxdrag;
-    MoveDrag                            m_movedrag;
-    Clipboard                           m_clipboard;
-    //
-    //                              TOOL STATES:
-    PenState                            m_pen;
-    ShapeState                          m_shape;
-    OverlayState                        m_overlay;
-    DebuggerState                       m_debugger;
-    //
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      CAMERA SYSTEM...
-    // *************************************************************************** //
-    ImPlotFlags                         m_plot_flags                    = ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
-    utl::AxisCFG                        m_axes [2]                      = {
-        {"##x-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit | ImPlotAxisFlags_Opposite },
-        {"##y-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit }
-    };
-    utl::LegendCFG                      m_legend                        = { ImPlotLocation_NorthWest, ImPlotLegendFlags_None };
-    //
-    //
-    //
-    Camera                              m_cam;
-    GridSettings                        m_grid                          = { 100.0f,  true,  false };
-    float                               m_ppw                           = 1.0f;
-    Bounds                              m_world_bounds                  = {
-        /*min_x=*/0.0f,        /*min_y=*/0.0f,
-        /*max_x=*/500.0f,      /*max_y=*/500.0f
-    };
-    //
-    //
-    static constexpr float              ms_GRID_STEP_MIN                = 2.0f;   // world-units
-    static constexpr float              ms_GRID_LABEL_PAD               = 2.0f;
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      VARIABLES FOR SPECIFIC MECHANICS...
-    // *************************************************************************** //
-    //                              RESIDENT STUFF:
-    //  bool                                m_show_sel_overlay              = false;
-    //
-    //                              LASSO TOOL / SELECTION:
-    ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
-    ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      NEED TO RE-HOUSE !!!
-    // *************************************************************************** //
-    //                              INDICES:
-    std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
-    VertexID                            m_next_id                       = 1;
-    PathID                              m_next_pid                      = 1;        // counter for new path IDs
-    //
-    //                              BBOX SCALING:
-    mutable int                         m_hover_handle                  = -1;
-    mutable ImVec2                      m_origin_scr                    = {0.f, 0.f};   // screen-space canvas origin                       //  -1 = none, 0-7 otherwise (corners+edges)
-    //
-    //                              UTILITY:
-    //  float                               m_bar_h                         = 0.0f;
-    //  ImVec2                              m_avail                         = ImVec2(0.0f, 0.0f);
-    //  ImVec2                              m_p0                            = ImVec2(0.0f, 0.0f);
-    //  ImVec2                              m_p1                            = ImVec2(0.0f, 0.0f);
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      BOOKMARK !!!
-    // *************************************************************************** //
-        //
-        //                              MAIN APPLICATION STATE:
-        //  bool                                m_show_grid                     = true;
-        //  Interaction                         m_it                            {   };
-        //
-        //
-        //
-        //                              PEN-TOOL STATE:
-        //  bool                                m_drawing                       = false;
-        //  bool                                m_dragging_handle               = false;
-        //  bool                                m_dragging_out                  = true;
-        //  VertexID                            m_drag_vid                      = 0;
-        //
-        //
-        //
-        //                              SELECTION STATE / LASSO TOOL:
-        //  bool                                m_dragging                      = false;
-        //  bool                                m_lasso_active                  = false;
-        //  bool                                m_pending_clear                 = false;    //  pending click selection state ---
-        //
-        //  std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
-        //  ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
-        //  ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
-        
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END PROTECTED DATA-MEMBERS...
+
 
 
 
