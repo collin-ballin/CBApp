@@ -40,7 +40,8 @@
 #include "app/delegators/_browser.h"
 #include "app/delegators/_controlbar.h"
 #include "app/delegators/_detail_view.h"
-//#include "app/titlebar/_titlebar.h"
+//
+#include "app/delegators/_cb_debugger.h"
 
 
 
@@ -173,6 +174,9 @@ protected:
     EditorApp                   m_editor_app;
     GraphApp                    m_graph_app;
     ui::ActionComposer          m_mimic_app;
+#ifdef _CBAPP_DEBUG_WINDOWS
+    CBDebugger                  m_cb_debugger;
+#endif  //  _CBAPP_DEBUG_WINDOWS  //
 #ifdef CBAPP_ENABLE_OPTIONAL_WINDOWS
     CBDemo                      m_cb_demo                       = CBDemo();
 #endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  //

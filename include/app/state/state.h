@@ -223,6 +223,34 @@ public:
     //  "GetCurrentAppletName"
     [[nodiscard]] inline const char *               GetCurrentAppletName        (void) noexcept         { return this->m_task_state.GetCurrentAppletName(); }
     
+    
+    
+    //  "GetMainDockNodeID"
+    [[nodiscard]] inline ImGuiDockNode *            GetMainDockNodeID           (void) noexcept         { return ImGui::DockBuilderGetNode( this->m_main_dock_id ); }
+    [[nodiscard]] inline ImGuiDockNode const *      GetMainDockNodeID           (void) const noexcept   { return ImGui::DockBuilderGetNode( this->m_main_dock_id ); }
+    
+    //  "GetMainDockedWindowID"
+    [[nodiscard]] inline ImGuiID                    GetMainDockedWindowID       (void) const noexcept   {
+        const ImGuiDockNode *   node    = ImGui::DockBuilderGetNode( this->m_main_dock_id );    IM_ASSERT(node != nullptr);
+        return ( (node->TabBar) ? node->TabBar->VisibleTabId  : 0 );
+    }
+    
+    
+    
+    
+    //  "GetDetViewDockNodeID"
+    [[nodiscard]] inline ImGuiDockNode *            GetDetViewDockNodeID        (void) noexcept         { return ImGui::DockBuilderGetNode( this->m_detview_dockspace_id ); }
+    [[nodiscard]] inline ImGuiDockNode const *      GetDetViewDockNodeID        (void) const noexcept   { return ImGui::DockBuilderGetNode( this->m_detview_dockspace_id ); }
+    
+    //  "GetDetViewDockedWindowID"
+    [[nodiscard]] inline ImGuiID                    GetDetViewDockedWindowID    (void) const noexcept   {
+        const ImGuiDockNode *   node    = ImGui::DockBuilderGetNode( this->m_detview_dockspace_id );    IM_ASSERT(node != nullptr);
+        return ( (node->TabBar) ? node->TabBar->VisibleTabId  : 0 );
+    }
+    
+    
+    
+    
     //  "GetNavWindowName"
     [[nodiscard]] inline const char *               GetNavWindowName            (void) noexcept         { return this->m_task_state.m_nav_window_name.c_str(); }
     
@@ -258,11 +286,11 @@ public:
 
     //  "current_app_color_style"
     inline const char *                 current_app_color_style     (void) const
-    {  return this->m_app_color_style_names[ static_cast<size_t>(this->m_current_app_color_style) ];  }
+    {  return this->ms_APP_COLOR_STYLE_NAMES[ static_cast<size_t>(this->m_current_app_color_style) ];  }
 
     //  "current_plot_color_style"
     inline const char *                 current_plot_color_style    (void) const
-    {  return this->m_plot_color_style_names[ static_cast<size_t>(this->m_current_plot_color_style) ];  }
+    {  return this->ms_PLOT_COLOR_STYLE_NAMES[ static_cast<size_t>(this->m_current_plot_color_style) ];  }
     
     
 
@@ -657,8 +685,9 @@ public:
     // *************************************************************************** //
     //      std::array< std::string *, static_cast<size_t>(Applet_t::Count) >       //  No CONSTEXPR arr for this bc I want it to copy the
     //                                          m_applets                       = {};   //  window names EXACTLY in case we ever rename them.
-    static constexpr auto &             m_app_color_style_names         = APPLICATION_COLOR_STYLE_NAMES;
-    static constexpr auto &             m_plot_color_style_names        = APPLICATION_PLOT_COLOR_STYLE_NAMES;
+    static constexpr auto &             ms_APP_COLOR_STYLE_NAMES        = APPLICATION_COLOR_STYLE_NAMES;        //  m_app_color_style_names
+    static constexpr auto &             ms_PLOT_COLOR_STYLE_NAMES       = APPLICATION_PLOT_COLOR_STYLE_NAMES;   //  m_plot_color_style_names
+    static constexpr auto &             ms_DOCK_LOCATION_NAMES          = APPLICATION_DOCK_LOCATION_NAMES;
     static constexpr AppleSystemColors_t
                                         SystemColor                     = {   };
     
@@ -673,7 +702,7 @@ public:
     //
     //                      1.1.        ALL Windows.
     static constexpr size_t             ms_WINDOWS_BEGIN            = static_cast<size_t>(Window::Dockspace);
-    static constexpr size_t             ms_RHS_WINDOWS_BEGIN        = static_cast<size_t>(Window::MainApp);
+    static constexpr size_t             ms_RHS_WINDOWS_BEGIN        = static_cast<size_t>(Window::HomeApp);
     static constexpr size_t             ms_WINDOWS_END              = static_cast<size_t>(Window::Count);
     //
     //
@@ -709,7 +738,7 @@ public:
     //
     //                      2.1.        Debugger Tools.
 # if defined(CBAPP_ENABLE_DEBUG_WINDOWS)
-    static constexpr size_t             ms_DEBUG_WINDOWS_BEGIN      = static_cast<size_t>(Window::ImGuiMetrics);
+    static constexpr size_t             ms_DEBUG_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBDebugger);
     #if defined( CBAPP_ENABLE_OPTIONAL_WINDOWS )
         static constexpr size_t             ms_DEBUG_WINDOWS_END        = static_cast<size_t>(Window::CBDemo);              //  2.1A.   CB_DEMO ENABLED.
     # else

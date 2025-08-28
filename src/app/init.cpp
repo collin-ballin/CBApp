@@ -31,8 +31,11 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 App::App(void)
-    : m_menubar(S)          , m_controlbar(S)           , m_browser(S)          , m_detview(S),
-      m_counter_app(S)      , m_editor_app(S)           , m_graph_app(S)        , m_mimic_app(S)
+    : m_menubar(S)          , m_controlbar(S)           , m_browser(S)          , m_detview(S)
+    , m_counter_app(S)      , m_editor_app(S)           , m_graph_app(S)        , m_mimic_app(S)
+#ifdef _CBAPP_DEBUG_WINDOWS
+    , m_cb_debugger(S)
+#endif  //  _CBAPP_DEBUG_WINDOWS  //
 {
     this->install_signal_handlers();
     
@@ -353,7 +356,7 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
                           { this->m_detview.Begin(n, nullptr, f); };
             break;
         }
-        case Window::MainApp:               {
+        case Window::HomeApp:               {
             render_fn   = [this](const char * n, [[maybe_unused]] bool * o, ImGuiWindowFlags f)
                           { this->ShowMainWindow(n, nullptr, f); };
             break;
@@ -449,6 +452,11 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
         //
         //      2.1.    DEBUG-ONLY TOOLS...
 #ifdef CBAPP_ENABLE_DEBUG_WINDOWS
+        case Window::CBDebugger:            {
+            render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
+                          { this->m_cb_debugger.Begin(n, o, f); };
+            break;
+        }
         case Window::ImGuiMetrics:          {
             render_fn   = [this](const char * n, bool * o, ImGuiWindowFlags f)
                           { this->ShowImGuiMetricsWindow(n, o, f); };

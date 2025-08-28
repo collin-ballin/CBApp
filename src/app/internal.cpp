@@ -306,7 +306,7 @@ void App::SaveHandler_Default(void)
 
     }
     
-    CB_LOG( LogLevel::Info, "Applet::MainApp--save" );
+    CB_LOG( LogLevel::Info, "Applet::HomeApp--save" );
     
     return;
 }
@@ -331,7 +331,7 @@ void App::PasteHandler_Default(void)
 //  "UndoHandler_Default"
 //
 void App::UndoHandler_Default(void) {
-    S.m_logger.info( "Applet::MainApp--undo" );
+    S.m_logger.info( "Applet::HomeApp--undo" );
     return;
 }
 
@@ -339,7 +339,7 @@ void App::UndoHandler_Default(void) {
 //  "RedoHandler_Default"
 //
 void App::RedoHandler_Default(void) {
-    S.m_logger.info( "Applet::MainApp--undo" );
+    S.m_logger.info( "Applet::HomeApp--undo" );
     return;
 }
 

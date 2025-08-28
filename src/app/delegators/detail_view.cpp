@@ -73,7 +73,7 @@ void DetailView::initialize(void)
 
 //  "init"          | protected
 //
-void DetailView::init(void) {
+inline void DetailView::init(void) {
     //  INITIALIZE THE DOCK NODE THAT IS HOSTED BY THE DETAIL-VIEW WINDOW...
     S.m_detview_dockspace_id                        = ImHashStr(S.m_detview_dockspace_uuid);
     
@@ -147,19 +147,20 @@ void DetailView::Begin([[maybe_unused]] const char *        uuid,
     
     
     
-    //  1.  IF NO UPDATE ON VISIBILITY STATUS, EXIT...
-    if (!update && !S.m_show_detview_window)
-        return;
+    //      1.      IF NO UPDATE ON VISIBILITY STATUS, EXIT...
+    if ( !update  &&  !S.m_show_detview_window )    { return; }
 
     
     
-    //  2.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, S.m_detview_bg);   // Push before ImGui::Begin()
+    //      2.      CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
+    ImGui::PushStyleColor( ImGuiCol_WindowBg, S.m_detview_bg );
     this->m_window_class.DockNodeFlagsOverrideSet   = S.m_detview_window_flags;
-    ImGui::SetNextWindowClass(&this->m_window_class);
+    ImGui::SetNextWindowClass( &this->m_window_class );
+    //
     ImGui::Begin(uuid, p_open, flags);
+    //
+    //
         ImGui::PopStyleColor();
-        
         ImGui::DockSpace(S.m_detview_dockspace_id, ImVec2(0,0), S.m_detview_dockspace_flags);
         
         if (update)
@@ -168,21 +169,231 @@ void DetailView::Begin([[maybe_unused]] const char *        uuid,
             set_visibility_IMPL(S.m_show_detview_window);
         
         }
-
-
+    //
+    //
     ImGui::End();
+    
+    
+    
+    //      3.      RE-FOCUS LAST FOCUSED WINDOW AFTER CLOSE-AND_REOPEN...
+    if ( this->m_queue_refocus )
+    {
+        this->m_queue_refocus   = false;
+        
+        if (this->m_top_win) {
+            ImGui::SetWindowFocus( this->m_top_win->Name );
+        }
+    }
+    
+    
+    
+    return;
+}
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.      "MAIN UI FUNCTIONS"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+//  "set_visibility_IMPL"
+//
+inline void DetailView::set_visibility_IMPL(const bool p_open) {
+
+    //  CASE 1 :    CLOSE THE WINDOW...
+    if (!p_open) {
+        this->close_all();
+    }
+    //
+    //  CASE 2 :    OPEN THE WINDOW...
+    else {
+        this->open_all();
+    }
+
+
+    return;
+}
+
+
+//  "close_all"
+//
+inline void DetailView::close_all(void)
+{
+    this->cache_current_window();
+    
+    for (auto & win : S.m_detview_windows)
+    {
+        if (win) {
+            win->open = false;
+        }
+    }
+    this->m_is_open                         = false;
+    this->m_queue_refocus                   = false;
+    return;
+}
+
+
+//  "open_all"
+//
+inline void DetailView::open_all(void)
+{
+    S.m_detview_dockspace_flags     = (S.m_detview_windows.size() < 1)
+        ? (S.m_detview_dockspace_flags | ImGuiDockNodeFlags_HiddenTabBar)  // set the bit
+        : (S.m_detview_dockspace_flags & ~ImGuiDockNodeFlags_HiddenTabBar);  // clear the bit
+        
+    for (auto & win : S.m_detview_windows)
+    {
+        if (win) {
+            win->open = true;   S.DockAtDetView( win->uuid.c_str() );
+        }
+    }
+    
+    this->m_is_open                         = true;
+    this->m_queue_refocus                   = true;
+    
+    return;
+}
+
+
+//  void DetailView::open_all(void)
+//  {
+//      for (auto & win : S.m_detview_windows) {
+//          if (win) {
+//              win->open = true;
+//              S.DockAtDetView( win->uuid.c_str() );
+//          }
+//      }
+//      this->m_is_open                         = true;
+//      //this->S.m_show_detview_window           = true;
+//      return;
+//  }
+
+
+
+
+//  "cache_current_window"
+//
+inline void DetailView::cache_current_window(void) noexcept
+{
+
+
+
+    ImGuiDockNode &                     dock        = *S.GetDetViewDockNodeID();
+    const ImVector<ImGuiWindow*> &      windows     = dock.Windows;
+    
+    
+    
+    for ( const auto * win : windows )
+    {
+        const char *    name    = win->Name;
+        
+        
+        
+        std::cout << "\"" << win->Name << "\"\t" << std::endl;
+        
+        
+            //  char*                   Name;                               // Window name, owned by the window.
+            //  ImGuiID                 ID;
+    
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //this->m_top_win_ID          = S.GetDetViewDockedWindowID();
+
+    //ImGuiContext &      g       = *GImGui;
+
+    //ImGuiWindow *       win     = (ImGuiWindow*)g.WindowsById.GetVoidPtr( m_top_win_ID );;
+    
+    
+
+
+
+
+    //  this->m_top_win_ID          = S.GetDetViewDockedWindowID();
+    //  this->m_top_win             = (this->m_top_win_ID)
+    //                                  ? ImGui::FindWindowByID(this->m_top_win_ID)
+    //                                  : nullptr;
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    //  ImGuiWindow * docked_window = ImGui::FindWindowByName("YourWindowName");
+    //  if (docked_window && docked_window->DockNode && docked_window->DockNode->TabBar)
+    //  {
+    //      ImGuiTabBar* tab_bar = docked_window->DockNode->TabBar;
+    //      if (tab_bar->VisibleTabId != 0) {
+    //          ImGuiID active_window_id = tab_bar->VisibleTabId;
+    //          // Now use this ID to lookup the window if needed:
+    //          ImGuiWindow* active_window = ImGui::FindWindowByID(active_window_id);
+    //          if (active_window) {
+    //              // active_window->Name or active_window->ID gives you the currently visible docked window
+    //          }
+    //      }
+    //  }
+
+    
     return;
 }
 
 
 
-// *************************************************************************** //
-//
-//
-//  2.      PROTECTED MEMBER FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
 
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MAIN UI FUNCTIONS".
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//  ?.      ???...
+// *************************************************************************** //
+// *************************************************************************** //
 
 // Dummy data structure that we use for the Table demo.
 // (pre-C++11 doesn't allow us to instantiate ImVector<MyItem> template if this structure is defined inside the demo function)
@@ -258,94 +469,6 @@ struct MyItem
 const ImGuiTableSortSpecs* MyItem::s_current_sort_specs = NULL;
 }
 
-
-
-//  "set_visibility_IMPL"
-//
-void DetailView::set_visibility_IMPL(const bool p_open) {
-
-    //  CASE 1 :    CLOSE THE WINDOW...
-    if (!p_open) {
-        this->close_all();
-    }
-    //
-    //  CASE 2 :    OPEN THE WINDOW...
-    else {
-        this->open_all();
-    }
-
-
-    return;
-}
-
-
-//  "close_all"
-//
-void DetailView::close_all(void)
-{
-    for (auto & win : S.m_detview_windows) {
-        if (win) {
-            win->open = false;
-        }
-    }
-    this->m_is_open                         = false;
-    return;
-}
-
-
-//  "open_all"
-//
-void DetailView::open_all(void)
-{
-    S.m_detview_dockspace_flags     = (S.m_detview_windows.size() < 1)
-        ? (S.m_detview_dockspace_flags | ImGuiDockNodeFlags_HiddenTabBar)  // set the bit
-        : (S.m_detview_dockspace_flags & ~ImGuiDockNodeFlags_HiddenTabBar);  // clear the bit
-        
-    for (auto & win : S.m_detview_windows) {
-        if (win) {
-            win->open = true;   S.DockAtDetView( win->uuid.c_str() );
-        }
-    }
-    this->m_is_open                         = true;
-    return;
-}
-//
-//
-//  void DetailView::open_all(void)
-//  {
-//      for (auto & win : S.m_detview_windows) {
-//          if (win) {
-//              win->open = true;
-//              S.DockAtDetView( win->uuid.c_str() );
-//          }
-//      }
-//      this->m_is_open                         = true;
-//      //this->S.m_show_detview_window           = true;
-//      return;
-//  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//  ?.      ???...
-// *************************************************************************** //
-// *************************************************************************** //
 
 //  "TestTabBar"
 //
@@ -429,6 +552,7 @@ void DetailView::TestTabBar(void)
     //
     ImGui::DockSpace(S.m_detview_dockspace_id, ImVec2(0,0), S.m_detview_dockspace_flags);
     
+    
 
     // Optional: class to tweak the appearance of windows once docked
     static ImGuiWindowClass docked_window_class;
@@ -472,9 +596,10 @@ void DetailView::TestTabBar(void)
 // *************************************************************************** //
 //
 //
-//  2.      PROTECTED MEMBER FUNCTIONS...
+//
 // *************************************************************************** //
-// *************************************************************************** //
+// *************************************************************************** //   END "???".
+
 
 
 

@@ -80,11 +80,11 @@ AppState::AppState(void)
     # elif defined(__CBAPP_BUILD_FDTD_APP__)
         m_task_state.m_current_task     = Applet::GraphApp;
     # else
-        m_task_state.m_current_task     = Applet::MainApp;
+        m_task_state.m_current_task     = Applet::HomeApp;
     #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
     //
     m_task_state.m_applets   = {
-        std::addressof( m_windows[ Window::MainApp          ].uuid      ),
+        std::addressof( m_windows[ Window::HomeApp          ].uuid      ),
         std::addressof( m_windows[ Window::CCounterApp      ].uuid      ),
         std::addressof( m_windows[ Window::EditorApp        ].uuid      ),
         std::addressof( m_windows[ Window::GraphApp         ].uuid      ),

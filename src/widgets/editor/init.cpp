@@ -69,8 +69,8 @@ Editor::Editor(app::AppState & src)
     //      3.      INITIALIZE FUNCTIONS FOR DEBUGGER OVERLAY WINDOW...
     //  using               DebugItem                   = DebuggerState::DebugItem;
     this->m_debugger.windows    = {{
-            {   "Hit Detection",    true,       DebuggerState::ms_FLAGS,        [this]{ this->_debugger_hit_detection   (); }       }
-        ,   {   "Interaction",      false,      DebuggerState::ms_FLAGS,        [this]{ this->_debugger_interaction     (); }       }
+            {   "Hit Detection",    false,      DebuggerState::ms_FLAGS,        [this]{ this->_debugger_hit_detection   (); }       }
+        ,   {   "Interaction",      true,       DebuggerState::ms_FLAGS,        [this]{ this->_debugger_interaction     (); }       }
         ,   {   "More Info",        false,      DebuggerState::ms_FLAGS,        [this]{ this->_debugger_more_info       (); }       }
     }};
 

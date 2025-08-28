@@ -194,10 +194,11 @@ void Browser::disp_appearance_mode(void)
     int     plot_idx        = static_cast<int>(S.m_current_plot_color_style);
 
 
+
     //  1.  COMBO-BOX FOR APP COLOR STYLE.
     if (ImGui::Combo( "##Browser_SetAppColorStyle",
                       &app_idx,
-                      S.m_app_color_style_names.data(),                         //  Names table
+                      S.ms_APP_COLOR_STYLE_NAMES.data(),                        //  Names table
                       static_cast<int>(app::AppColorStyle_t::COUNT)) )          //  Item count
     {
         S.SetAppColorStyle( static_cast<app::AppColorStyle_t>(app_idx) );
@@ -207,7 +208,7 @@ void Browser::disp_appearance_mode(void)
     //  2.  COMBO-BOX FOR PLOT COLOR STYLE.
     if (ImGui::Combo( "##Browser_SetPlotColorStyle",
                       &plot_idx,
-                      S.m_plot_color_style_names.data(),                        //  Names table
+                      S.ms_PLOT_COLOR_STYLE_NAMES.data(),                       //  Names table
                       static_cast<int>(app::PlotColorStyle_t::COUNT)) )         //  Item count
     {
         S.SetPlotColorStyle( static_cast<app::PlotColorStyle_t>(plot_idx) );

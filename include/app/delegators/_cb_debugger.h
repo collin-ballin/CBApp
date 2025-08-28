@@ -1,11 +1,11 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****         _ D E T A I L _ V I E W . H  ____  F I L E         ****
+*       ****         _ C B _ D E B U G G E R . H  ____  F I L E         ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond
-*               DATED:      June 05, 2025.
+*               DATED:      August 28, 2025.
 *
 *       ********************************************************************
 *                FILE:      [./DetailView.h]
@@ -14,8 +14,8 @@
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CBAPP_APP_DETAIL_VIEW_H
-#define _CBAPP_APP_DETAIL_VIEW_H  1
+#ifndef _CBAPP_APP_DEBUGGER_H
+#define _CBAPP_APP_DEBUGGER_H  1
 
 
 
@@ -68,11 +68,11 @@ namespace cb { // BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 //                PRIMARY CLASS INTERFACE:
-// 		Class-Interface for the "DetailView" Abstraction.
+// 		Class-Interface for the "CBDebugger" Abstraction.
 // *************************************************************************** //
 // *************************************************************************** //
 
-class DetailView
+class CBDebugger
 {
 //      0.          CONSTANTS AND ALIASES...
 // *************************************************************************** //
@@ -129,9 +129,6 @@ protected:
     std::vector<app::WinInfo *>         m_detview_children              = {   };
     //
     //                              CACHE:
-    bool                                m_queue_refocus                 = false;
-    ImGuiID                             m_top_win_ID                    = 0;            //  ID of the window that is in focus...
-    ImGuiWindow *                       m_top_win                       = nullptr;
     
     // *************************************************************************** //
     //
@@ -140,10 +137,9 @@ protected:
     //      GENERIC DATA.
     // *************************************************************************** //
     ImGuiWindowClass                    m_window_class;
+    ImGuiDockNodeFlags                  m_docknode_override_flags       = ImGuiDockNodeFlags_NoDocking;
     //
     bool                                m_initialized                   = false;
-    bool                                m_first_frame                   = false;
-    bool                                m_is_open                       = false;
     
 //
 //
@@ -164,18 +160,18 @@ public:
     // *************************************************************************** //
     //      INITIALIZATION METHODS.         |   "init.cpp" ...
     // *************************************************************************** //
-    explicit                            DetailView              (app::AppState & );                             //  Def. Constructor.
-                                        ~DetailView             (void);                                         //  Def. Destructor.
+    explicit                            CBDebugger              (app::AppState & );                             //  Def. Constructor.
+                                        ~CBDebugger             (void);                                         //  Def. Destructor.
     //
     void                                initialize              (void);
     
     // *************************************************************************** //
     //      DELETED FUNCTIONS.              |   ...
     // *************************************************************************** //
-                                        DetailView              (const DetailView &    src)        = delete;   //  Copy. Constructor.
-                                        DetailView              (DetailView &&         src)        = delete;   //  Move Constructor.
-    DetailView &                        operator =              (const DetailView &    src)        = delete;   //  Assgn. Operator.
-    DetailView &                        operator =              (DetailView &&         src)        = delete;   //  Move-Assgn. Operator.
+                                        CBDebugger              (const CBDebugger &    src)        = delete;   //  Copy. Constructor.
+                                        CBDebugger              (CBDebugger &&         src)        = delete;   //  Move Constructor.
+    CBDebugger &                        operator =              (const CBDebugger &    src)        = delete;   //  Assgn. Operator.
+    CBDebugger &                        operator =              (CBDebugger &&         src)        = delete;   //  Move-Assgn. Operator.
     
     // *************************************************************************** //
     //
@@ -208,7 +204,7 @@ protected:
     // *************************************************************************** //
     //      "RULE-OF ..." FUNCTIONS.        |   "init.cpp" ...
     // *************************************************************************** //
-    inline void                         init                                (void);
+    void                                init                                (void);
     void                                load                                (void);
     void                                destroy                             (void);
     
@@ -219,20 +215,9 @@ protected:
     // *************************************************************************** //
     //      MAIN UI FUNCTIONS.              |   "interface.cpp" ...
     // *************************************************************************** //
-    //                              MAIN GUI FUNCTIONS:
-    inline void                         set_visibility_IMPL                 (const bool);
-    inline void                         open_all                            (void);
-    inline void                         close_all                           (void);
-    inline void                         cache_current_window                (void) noexcept;
-    //
-    //
-    //                              UTILITIES FOR MAIN GUI FUNCTIONS:
-    void                                add_child_window                    (app::WinInfo * );
-    void                                remove_child_window                 (app::WinInfo * );
-    //
-    //
-    //                              ???:
-    void                                TestTabBar                          (void);
+    inline void                         Begin_IMPL                          (void);
+    
+    
     
     // *************************************************************************** //
     

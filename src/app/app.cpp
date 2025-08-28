@@ -490,7 +490,7 @@ void App::RebuildDockLayout(void)
     //      2.      ENABLE WINDOW VISIBILITY...
     S.m_windows[ Window::ControlBar     ].open      = true;
     S.m_windows[ Window::Browser        ].open      = true;
-    S.m_windows[ Window::MainApp        ].open      = true;
+    S.m_windows[ Window::HomeApp        ].open      = true;
     S.m_windows[ Window::DetailView     ].open      = true;
 
 
@@ -516,7 +516,7 @@ void App::RebuildDockLayout(void)
     # elif defined(__CBAPP_BUILD_EDITOR_APP__)
         ImGui::SetWindowFocus( this->S.m_windows[Window::EditorApp].uuid.c_str() );
     # else
-        ImGui::SetWindowFocus( this->S.m_windows[Window::MainApp].uuid.c_str() );
+        ImGui::SetWindowFocus( this->S.m_windows[Window::HomeApp].uuid.c_str() );
     #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
 
     return;

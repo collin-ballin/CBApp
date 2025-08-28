@@ -181,8 +181,25 @@ enum class Window_t : int {
 };
 
 
+//  "DockLoc"
+//
+enum class DockLoc : uint8_t {
+    None = 0,
+    Home,
+    DetView,
+//
+    COUNT
+};
+//
+//  "APPLICATION_DOCK_LOCATION_NAMES"
+static inline const cblib::EnumArray< DockLoc, const char * >
+    APPLICATION_DOCK_LOCATION_NAMES     = { "None", "Home", "Detail View" };
+
+
+
 //  "WinInfo"
 //      Plain‑old‑data (POD) to hold each window’s compile‑time defaults.
+//
 struct WinInfo {
     inline const char * get_uuid(void) const { return this->uuid.c_str(); }
 //
@@ -191,6 +208,7 @@ struct WinInfo {
     bool                                                            open;           //  Current visibility state.
     std::function<void(const char*, bool*, ImGuiWindowFlags)>       render_fn;      //  To be bound later...
 //
+    DockLoc                                                         dock_location   = DockLoc::Home;
     ImGuiID                                                         dockspace_id    = 0;      //  To be bound later...
 };
 
@@ -546,7 +564,7 @@ private:
 //  "Applet_t"
 //
 enum class Applet_t : uint8_t {
-    MainApp = 0,
+    HomeApp = 0,
     CCounterApp,
     EditorApp,
     GraphApp,

@@ -131,12 +131,14 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DETVIEW_WINDOW_FLAGS         = _C
 inline constexpr ImGuiWindowFlags       _CBAPP_HOME_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
 
-inline constexpr ImGuiWindowFlags       _CBAPP_EDITOR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+inline constexpr ImGuiWindowFlags       _CBAPP_EDITOR_WINDOW_FLAGS          = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNav;
 inline constexpr ImGuiWindowFlags       _CBAPP_CORE_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
 
 
 inline constexpr ImGuiWindowFlags       _CBAPP_ABOUT_WINDOW_FLAGS           = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
 inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = ImGuiWindowFlags_None | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings;
+//
+inline constexpr ImGuiWindowFlags       _CBAPP_DEBUGGER_WINDOW_FLAGS        = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNav;
 
 
 
@@ -160,13 +162,14 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 //      1.3A.       _CBAPP_DEBUG_WINDOWS                -- "DEBUG-ONLY" WINDOWS.
 //
 #if defined(CBAPP_ENABLE_DEBUG_WINDOWS)                     // IF [ CBAPP_ENABLE_DEBUG_WINDOWS IS #DEFINED ]        --- this expands to one extra X(...).
-    #define _CBAPP_DEBUG_WINDOWS(X)                                                                                                                 \
-/*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                                                  */      \
-/*|========================================================================================================================|                */      \
-    X(ImGuiMetrics,         "Dear ImGui Metrics/Debugger",  false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImPlotMetrics,        "ImPlot Metrics",               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImGuiIDStackTool,     "ImGui ID Stack Tool",          false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImGuiItemPickerTool,  "ImGui Item Picker Tool",       false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
+    #define _CBAPP_DEBUG_WINDOWS(X)                                                                                                                         \
+/*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                              DOCKSPACE.                  */      \
+/*|========================================================================================================================================|        */      \
+    X(CBDebugger          , "CBDebugger"                  , true                  , _CBAPP_DEBUGGER_WINDOW_FLAGS        /**/                        )       \
+    X(ImGuiMetrics        , "Dear ImGui Metrics/Debugger" , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+    X(ImPlotMetrics       , "ImPlot Metrics"              , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+    X(ImGuiIDStackTool    , "ImGui ID Stack Tool"         , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+    X(ImGuiItemPickerTool , "ImGui Item Picker Tool"      , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       // END
 //
 //
 //
@@ -182,10 +185,10 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 //      1.3B.       CBAPP_ENABLE_OPTIONAL_WINDOWS       -- "CB-DEMO" WINDOW.
 //
 #if defined(CBAPP_ENABLE_OPTIONAL_WINDOWS)                  // IF [ CBAPP_ENABLE_CB_DEMO IS #DEFINED ]              --- this expands to one extra X(...).
-    #define _CBAPP_OPTIONAL_WINDOWS(X)                                                                                                      \
-/*| NAME.                       TITLE.                      DEFAULT OPEN.       FLAGS.                                                  */  \
-/*|========================================================================================================================|            */  \
-    X(CBDemo,                   "CBDemo",                   true,               _CBAPP_CORE_WINDOW_FLAGS                                )
+    #define _CBAPP_OPTIONAL_WINDOWS(X)                                                                                                                      \
+/*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                              DOCKSPACE.                  */      \
+/*|========================================================================================================================================|        */      \
+    X(CBDemo              , "CBDemo",                     , true                  , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       // END
 //
 //
 //
@@ -242,52 +245,53 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEFAULT_WINDOW_FLAGS         = Im
 ///
 /// @todo       TODO
 //
-#define _CBAPP_WINDOW_LIST(X)                                                                                                                       \
-/*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                                                  */      \
-/*|========================================================================================================================|                */      \
-/*  1.  PRIMARY GUI STRUCTURE / "CORE WINDOWS"...                                                                                           */      \
-    X(Host,                 _CBAPP_APP_TITLE,               true,                   _CBAPP_HOST_WINDOW_FLAGS                                )       \
-    X(Dockspace,            "##RootDockspace",              true,                   _CBAPP_DOCKSPACE_WINDOW_FLAGS                           )       \
-    X(MenuBar,              "##Menubar",                    true,                   _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ControlBar,           "##ControlBar",                 true,                   _CBAPP_CONTROLBAR_WINDOW_FLAGS                          )       \
-    X(Browser,              "##Browser",                    true,                   _CBAPP_BROWSER_WINDOW_FLAGS                             )       \
-    X(DetailView,           "##DetailView",                 true,                   _CBAPP_DETVIEW_WINDOW_FLAGS                             )       \
-    X(MainApp,              "Home",                         true,                   _CBAPP_HOME_WINDOW_FLAGS                                )       \
-/*                                                                                                                                          */      \
-/*                                                                                                                                          */      \
-/*  2.  MAIN APPLICATION WINDOWS...                                                                                                         */      \
-/*                                                                                                                                          */      \
-/*          COINCIDENCE COUNTER APP...                                                                                                      */      \
-    X(CCounterApp,          "Coincidence Counter",          DEF_CCOUNTER_APP_VIS,   _CBAPP_CORE_WINDOW_FLAGS                                )       \
-/*                                                                                                                                          */      \
-/*          EDITOR APP...                                                                                                                   */      \
-    X(EditorApp,            "Editor App",                   DEF_EDITOR_APP_VIS,     _CBAPP_EDITOR_WINDOW_FLAGS                              )       \
-/*                                                                                                                                          */      \
-/*          FDTD APP...                                                                                                                     */      \
-    X(GraphApp,             "Graph App",                    DEF_FDTD_APP_VIS,       _CBAPP_CORE_WINDOW_FLAGS                                )       \
-/*                                                                                                                                          */      \
-/*          MIMIC APP...                                                                                                                    */      \
-    X(MimicApp,             "Mimic App",                    false,                  _CBAPP_CORE_WINDOW_FLAGS                                )       \
-/*                                                                                                                                          */      \
-/*                                                                                                                                          */      \
-/*  3.  BASIC TOOLS...                                                                                                                      */      \
-    X(ImGuiStyleEditor,     "Style Editor (ImGui)",         false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImPlotStyleEditor,    "Style Editor (ImPlot)",        false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImGuiDemo,            _IMGUI_DEMO_UUID,               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ImPlotDemo,           _IMPLOT_DEMO_UUID,              false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-/*                                                                                                                                          */      \
-/*                                                                                                                                          */      \
-/*  4.  CUSTOM TOOLS, ETC...                                                                                                                */      \
-    X(Logs,                 "Logs",                         false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(Console,              "Console",                      false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(ColorTool,            "Color Tool",                   false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-    X(CustomRendering,      "Custom Rendering",             false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )       \
-/*                                                                                                                                          */      \
-/*                                                                                                                                          */      \
-/*  6.  MISC / ADDITIONAL WINDOWS...                                                                                                        */      \
-    X(AboutMyApp,           "About This App",               false,                  _CBAPP_DEFAULT_WINDOW_FLAGS                             )   // END
-/*                                                                                                                                          */
-/*|========================================================================================================================|                */
+#define _CBAPP_WINDOW_LIST(X)                                                                                                                               \
+/*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                              DOCKSPACE.                  */      \
+/*|========================================================================================================================================|        */      \
+/*  1.  PRIMARY GUI STRUCTURE / "CORE WINDOWS"...                                                                                                   */      \
+    X(Host                , _CBAPP_APP_TITLE              , true                  , _CBAPP_HOST_WINDOW_FLAGS            /**/                        )       \
+    X(Dockspace           , "##RootDockspace"             , true                  , _CBAPP_DOCKSPACE_WINDOW_FLAGS       /**/                        )       \
+    X(MenuBar             , "##Menubar"                   , true                  , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+    X(ControlBar          , "##ControlBar"                , true                  , _CBAPP_CONTROLBAR_WINDOW_FLAGS      /**/                        )       \
+    X(Browser             , "##Browser"                   , true                  , _CBAPP_BROWSER_WINDOW_FLAGS         /**/                        )       \
+    X(DetailView          , "##DetailView"                , true                  , _CBAPP_DETVIEW_WINDOW_FLAGS         /**/                        )       \
+    X(HomeApp             , "Home"                        , true                  , _CBAPP_HOME_WINDOW_FLAGS            /**/                        )       \
+/*                                                                                                                                                  */      \
+/*                                                                                                                                                  */      \
+/*  2.  MAIN APPLICATION WINDOWS...                                                                                                                 */      \
+/*                                                                                                                                                  */      \
+/*          COINCIDENCE COUNTER APP...                                                                                                              */      \
+    X(CCounterApp         , "Coincidence Counter"         , DEF_CCOUNTER_APP_VIS  , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       \
+/*                                                                                                                                                  */      \
+/*          EDITOR APP...                                                                                                                           */      \
+    X(EditorApp           , "Editor App"                  , DEF_EDITOR_APP_VIS    , _CBAPP_EDITOR_WINDOW_FLAGS          /**/                        )       \
+/*                                                                                                                                                  */      \
+/*          FDTD APP...                                                                                                                             */      \
+    X(GraphApp            , "Graph App"                   , DEF_FDTD_APP_VIS      , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       \
+/*                                                                                                                                                  */      \
+/*          MIMIC APP...                                                                                                                            */      \
+    X(MimicApp            , "Mimic App"                   , false                 , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       \
+/*                                                                                                                                                  */      \
+/*                                                                                                                                                  */      \
+/*  3.  BASIC TOOLS...                                                                                                                              */      \
+    X(ImGuiStyleEditor    , "Style Editor (ImGui)"        , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+    X(ImPlotStyleEditor   , "Style Editor (ImPlot)"       , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+    X(ImGuiDemo           , _IMGUI_DEMO_UUID              , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+    X(ImPlotDemo          , _IMPLOT_DEMO_UUID             , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+/*                                                                                                                                                  */      \
+/*                                                                                                                                                  */      \
+/*  4.  CUSTOM TOOLS, ETC...                                                                                                                        */      \
+    X(Logs                , "Logs"                        , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+    X(Console             , "Console"                     , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+    X(ColorTool           , "Color Tool"                  , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+    X(CustomRendering     , "Custom Rendering"            , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+/*                                                                                                                                                  */      \
+/*                                                                                                                                                  */      \
+/*  6.  MISC / ADDITIONAL WINDOWS...                                                                                                                */      \
+    X(AboutMyApp          , "About This App"              , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       // END
+/*                                                                                                                                                  */
+/*|========================================================================================================================|                        */
+
 
 
 
