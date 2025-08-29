@@ -72,6 +72,8 @@ void App::init(void)
     
     //  3.      THIRD PART OF INITIALIZATION...             | INITIALIZE DELEGATOR CLASSES
     //          (SOME OF THESE HAVE TO BE DONE **AFTER** WE CREATE IMGUI CONTEXT)...
+    //
+    //
     this->m_controlbar      .initialize();
     this->m_browser         .initialize();
     this->m_detview         .initialize();
@@ -79,6 +81,10 @@ void App::init(void)
     this->m_editor_app      .initialize();
     this->m_graph_app       .initialize();
     this->m_mimic_app       .initialize();
+#ifdef _CBAPP_DEBUG_WINDOWS
+    this->m_cb_debugger     .initialize();
+#endif  //  _CBAPP_DEBUG_WINDOWS  //
+    //
     //
     this->init_appstate_post();
        

@@ -81,7 +81,7 @@ enum class AnchorType : uint8_t     {
     COUNT
 };
 //
-static constexpr std::array<const char *, static_cast<size_t>(AnchorType::COUNT)>
+static constexpr cblib::EnumArray <AnchorType, const char *>
 DEF_ANCHOR_TYPE_NAMES               = {
     "Corner",
     "Smooth",
