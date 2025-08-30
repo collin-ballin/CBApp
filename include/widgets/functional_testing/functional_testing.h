@@ -323,6 +323,7 @@ public:
     // *************************************************************************** //
     using                               State                                       = ComposerState;
     using                               Composition                                 = Composition_t;
+    //  using                               Action                                      = Action;
     CBAPP_CBLIB_TYPES_API
     
     // *************************************************************************** //
@@ -364,8 +365,8 @@ public:
     static constexpr float              ms_VIS_THICK                                = 3.0f;
     //
     //                              WIDGET CONSTANTS:
-    static constexpr size_t             ms_COMPOSITION_NAME_LIMIT                   = 64ULL;
-    static constexpr size_t             ms_COMPOSITION_DESCRIPTION_LIMIT            = 512ULL;
+    static constexpr auto &             ms_COMPOSITION_NAME_LIMIT                   = Composition::ms_NAME_LENGTH_LIMIT;
+    static constexpr auto &             ms_COMPOSITION_DESCRIPTION_LIMIT            = Composition::ms_DESCRIPTION_LENGTH_LIMIT;
     static constexpr size_t             ms_ACTION_NAME_LIMIT                        = 64ULL;
     static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT                 = 256ULL;
     //
@@ -444,7 +445,7 @@ protected:
     std::unique_ptr<app::WinInfo>       m_detview_window;
     bool                                m_initialized                               = false;
     //
-    ActionExecutor                      m_executor                                  {  };
+    ActionExecutor                      m_executor                                  {   };
     std::vector<Composition>            m_compositions                              { 1 };
     std::vector<Action> *               m_actions                                   = nullptr;
     //
@@ -458,11 +459,12 @@ protected:
     //
     //                              STATE:
     State                               m_state                                     = State::Idle;
+    ActionComposerState                 m_action_state_S                            = {   };
     //
     //                              SUB-STATES:
-    KeyCaptureState                     m_key_capture                               = {  };
-    MouseCaptureState                   m_mouse_capture                             = {  };
-    OverlayCache                        m_overlay_cache                             = {  };
+    KeyCaptureState                     m_key_capture                               = {   };
+    MouseCaptureState                   m_mouse_capture                             = {   };
+    OverlayCache                        m_overlay_cache                             = {   };
     //
     //                              SETTINGS VARIABLES:
     bool                                m_show_overlay                              = false;
@@ -559,13 +561,15 @@ protected:
     // *************************************************************************** //
     //                              COMPOSITION UI:
     void                                _draw_composition_selector          (void);
-    void                                _draw_composition_table             (void);
-    void                                _draw_composition_inspector         (Composition & );
+    void                                    _draw_composition_table             (void);
+    [[nodiscard]] inline bool               _draw_composition_selectable        (const int , const bool);
+    void                                    _draw_composition_inspector         (Composition & );
     //
     //                              ACTION UI:
     void                                _draw_action_selector               (void);
-    void                                _draw_action_table                  (void);
-    void                                _draw_action_inspector              (void);
+    void                                    _draw_action_table                  (void);
+    [[nodiscard]] inline bool               _draw_action_selectable             (const int , const bool);
+    void                                    _draw_action_inspector              (void);
     //
     //                              OTHER:
     void                                _draw_renderer_visuals              (void);

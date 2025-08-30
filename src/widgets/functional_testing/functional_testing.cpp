@@ -395,88 +395,84 @@ void ActionComposer::_draw_composition_selector(void)
 //
 void ActionComposer::_draw_composition_table(void)
 {
-    static constexpr const char *           COMPOSITION_DRAGDROP_ID     = "COMP_PAYLOAD";
+    static constexpr const char *               COMPOSITION_DRAGDROP_ID     = "COMP_PAYLOAD";
     
     /// column & table flags
-    static constexpr ImGuiTableFlags        TABLE_FLAGS                 = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
-    static constexpr ImGuiTableColumnFlags  COL_HANDLE                  = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
-    static constexpr ImGuiTableColumnFlags  COL_NAME                    = ImGuiTableColumnFlags_WidthStretch;
-    static constexpr ImGuiTableColumnFlags  COL_DELETE                  = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
-    static constexpr ImGuiSelectableFlags   SELECT_FLAGS                = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
+    static constexpr ImGuiTableFlags            TABLE_FLAGS                 = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
+    static constexpr ImGuiTableColumnFlags      COL_NAME                    = ImGuiTableColumnFlags_WidthStretch;
+    static constexpr ImGuiTableColumnFlags      COL_DELETE                  = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    //
+    ActionComposerState &                       AS                          = this->m_action_state_S;
+    ImGuiListClipper                            clip;
 
 
+    if ( !ImGui::BeginTable("##ActionComposer_Composition_Table", 2, TABLE_FLAGS, ImVec2(0, -1)) )      { return; }
 
-    if ( !ImGui::BeginTable("##ActionComposer_Composition_Table", 3, TABLE_FLAGS, ImVec2(0, -1)) )      { return; }
 
-
-    ImGui::TableSetupColumn( "Handle",      COL_HANDLE, ImGui::GetFrameHeight()     );
     ImGui::TableSetupColumn( "Name",        COL_NAME                                );
     ImGui::TableSetupColumn( "Delete",      COL_DELETE, ImGui::GetFrameHeight()     );
 
-    ImGuiListClipper clip;
+
+    
     clip.Begin( static_cast<int>(m_compositions.size()) );
     while ( clip.Step() )
     {
+    
         for (int row = clip.DisplayStart; row < clip.DisplayEnd; ++row)
         {
-            const bool is_selected = (row == m_comp_sel);
+            const bool          selected        = (row == m_comp_sel);
 
             ImGui::PushID(row);
             ImGui::TableNextRow();
+            
+            
 
-            //  1.  DRAG/DROP HANDLE...
+
+            //      0.1.    COMPOSITION SELECTABLE.
             ImGui::TableSetColumnIndex(0);
-            utl::SmallCButton(ms_DRAG_DROP_HANDLE, 0x00000000);
+            if ( this->_draw_composition_selectable(row, selected) )    //  Returns TRUE if a modification was made that requires early-out.
+            {
+                ImGui::PopID();
+                clip.End();
+                ImGui::EndTable();
+                return;
+            }
             //
-            if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) ) {
-                ImGui::SetDragDropPayload(COMPOSITION_DRAGDROP_ID, &row, sizeof row);
-                ImGui::EndDragDropSource();
-            }
-            if ( ImGui::BeginDragDropTarget() ) {
-                if ( const ImGuiPayload* p = ImGui::AcceptDragDropPayload(COMPOSITION_DRAGDROP_ID) )
+            //
+            //      0.1A.   "DRAG/DROP" HANDLE FOR SELECTABLE.
+            if ( AS.m_comp_rename_idx != row )
+            {
+                //      DRAG-DROP SOURCE :      Only when user actually drags (prevents double-click conflicts).
+                if ( ImGui::IsItemActive() &&
+                     ImGui::IsMouseDragging(ImGuiMouseButton_Left, 2.0f) &&
+                     ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) )
                 {
-                    _reorder_composition(*static_cast<const int*>(p->Data), row);
+                    ImGui::SetDragDropPayload(COMPOSITION_DRAGDROP_ID, &row, sizeof row);
+                    ImGui::EndDragDropSource();
+                }
+                //
+                //      DRAG-DROP TARGET :      Same cell accepts the row payload.
+                if ( ImGui::BeginDragDropTarget() )
+                {
+                    if ( const ImGuiPayload* p = ImGui::AcceptDragDropPayload(COMPOSITION_DRAGDROP_ID) )
+                    {
+                        _reorder_composition(*static_cast<const int*>(p->Data), row);
 
-                    /* ── abort drawing after the vector changed ────────────────── */
+                        //  abort drawing after the vector changed ────────────────── //
+                        ImGui::EndDragDropTarget();
+                        ImGui::PopID();
+                        clip.End();
+                        ImGui::EndTable();
+                        return;                      // ← exit the function safely
+                    }
                     ImGui::EndDragDropTarget();
-                    ImGui::PopID();
-                    clip.End();
-                    ImGui::EndTable();
-                    return;                      // ← exit the function safely
                 }
-                ImGui::EndDragDropTarget();
             }
 
 
-            //  2.  COMPOSITION SELECTABLE...
+
+            //      0.2.    DELETE BUTTON...
             ImGui::TableSetColumnIndex(1);
-            if ( ImGui::Selectable(m_compositions[row].name.c_str(), is_selected, SELECT_FLAGS) )
-            {
-                _save_actions_to_comp();
-                _load_actions_from_comp(row);
-            }
-
-            //  3.  RIGHT-CLICK CONTEXT MENU...
-            if ( ImGui::BeginPopupContextItem("##ActionComposer_Composition_ContextMenu") )
-            {
-                //  3A.     "DUPLICATE" BUTTON.
-                if ( ImGui::MenuItem("Duplicate") )
-                {
-                    _save_actions_to_comp();
-                    m_compositions.insert(m_compositions.begin() + row + 1,
-                                          m_compositions[row]);          // deep copy
-                    _load_actions_from_comp(row + 1);
-                    ImGui::EndPopup();
-                    ImGui::PopID();
-                    clip.End();
-                    ImGui::EndTable();
-                    return;
-                }
-                ImGui::EndPopup();
-            }
-
-            //  3.  DELETE BUTTON...
-            ImGui::TableSetColumnIndex(2);
             if ( utl::SmallCButton(ms_DELETE_BUTTON_HANDLE, this->ms_DELETE_BUTTON_COLOR) )
             {
                 _save_actions_to_comp();
@@ -491,13 +487,148 @@ void ActionComposer::_draw_composition_table(void)
 
             ImGui::PopID();
         }
+        
+        
     }
-
     clip.End();
     ImGui::EndTable();
     
     
     return;
+}
+
+
+//  "_draw_composition_selectable"
+//
+inline bool ActionComposer::_draw_composition_selectable(const int idx, const bool selected )
+{
+    static constexpr ImGuiSelectableFlags   SELECT_FLAGS        = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick;
+    static constexpr ImGuiInputTextFlags    TEXT_FLAGS          = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
+    constexpr auto &                        BUFFER_SIZE         = ActionComposerState::ms_MAX_COMPOSITION_NAME_LENGTH;
+    //
+    ActionComposerState &                   AS                  = this->m_action_state_S;
+    Composition &                           comp                = m_compositions[idx];
+    const bool                              renaming            = (AS.m_comp_rename_idx == idx);
+    
+    
+    
+    //  CASE 1 :    NORMAL "SELECTABLE" BEHAVIOR    [ NOT RENAMING ]...
+    if ( !renaming )
+    {
+        //      1.1.    CREATE SELECTABLE.
+        //
+        //
+            const bool      ctrl            = ImGui::GetIO().KeyCtrl;
+            const bool      shift           = ImGui::GetIO().KeyShift;
+            //
+            const bool      single_click    = ImGui::Selectable( comp.name.c_str(), selected, SELECT_FLAGS);
+            const bool      double_click    = ImGui::IsItemHovered()
+                                                && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
+                                                && !ctrl
+                                                && !shift;
+        //
+        //
+        //      1.2.    DOUBLE CLICKED.
+        if ( double_click )
+        {
+            AS.m_comp_rename_idx     = idx;
+            std::strncpy( AS.m_comp_buffer, comp.name.c_str(), BUFFER_SIZE );
+                          
+            AS.m_comp_buffer[ BUFFER_SIZE - 1 ] = '\0';
+            AS.m_renaming_comp       = true;
+            return false;
+        //
+        }// END "DOUBLE CLICK".
+    
+    
+    
+        //      1.3.    SINGLE CLICKED.
+        if ( single_click  &&  !renaming )
+        {
+        //
+        //
+            _save_actions_to_comp();
+            _load_actions_from_comp(idx);
+            
+                    
+            //      0.1B.   RIGHT-CLICK CONTEXT MENU...
+            if ( ImGui::BeginPopupContextItem("##ActionComposer_Composition_ContextMenu") )
+            {
+                //  3A.     "DUPLICATE" BUTTON.
+                if ( ImGui::MenuItem("Duplicate") )
+                {
+                    _save_actions_to_comp();
+                    m_compositions.insert(m_compositions.begin() + idx + 1,
+                                          m_compositions[idx]);          // deep copy
+                    _load_actions_from_comp(idx + 1);
+                    ImGui::EndPopup();
+                    return true;
+                }
+                ImGui::EndPopup();
+            }
+        //
+        //
+        }// END "SINGLE CLICK".
+    
+
+        return false;
+        
+    //
+    //
+    }// END "NORMAL SELECTABLE".
+  
+  
+  
+  
+    
+  
+    //  CASE 2 :    NORMAL "SELECTABLE" BEHAVIOR...
+    //
+    {
+        AS.m_renaming_comp                              = true;
+        static int              last_rename_idx         = -1;
+        
+        
+        //      2.1.    SET KEYBOARD FOCUS ON FIRST ENTRY IN ROW.
+        if ( last_rename_idx != idx ) {
+            ImGui::SetKeyboardFocusHere();
+            last_rename_idx = idx;
+        }
+        //
+        //
+        //      2.2.    CREATE RE-NAME WIDGET AND LISTEN FOR USER ENTER/CANCEL SIGNALS.
+        ImGui::PushItemWidth(-FLT_MIN);
+            const bool      pressed_enter   = ImGui::InputText( "##Editor_ObjSelector_RenameObj", AS.m_comp_buffer, BUFFER_SIZE, TEXT_FLAGS );
+            const bool      pressed_esc     = ImGui::IsKeyPressed(ImGuiKey_Escape);
+            const bool      lost_focus      = (!ImGui::IsItemActive() && ImGui::IsItemDeactivated());
+        ImGui::PopItemWidth();
+        //
+        //
+        //      2.3A.   COMMIT CHANGES TO THE NAME.
+        if ( pressed_enter || (lost_focus && !pressed_esc) )
+        {
+            comp.name                   = AS.m_comp_buffer;   // commit
+            AS.m_comp_rename_idx        = -1;
+            AS.m_renaming_comp          = false;
+            last_rename_idx             = -1;
+            return false;
+        }
+        //
+        //
+        //      2.3B.   DISCARD CHANGES AND REVERT TO PREVIOUS NAME.
+        if ( pressed_esc ) {
+            AS.m_comp_rename_idx        = -1;
+            AS.m_renaming_comp          = false;
+            last_rename_idx             = -1;
+            return false;
+        }
+        
+    //
+    //
+    }// END "RENAMING".
+    
+
+    return false;
 }
 
 
@@ -592,15 +723,18 @@ inline void ActionComposer::_draw_action_table(void)
     static constexpr ImGuiTableColumnFlags      C1_FLAGS            = ImGuiTableColumnFlags_WidthStretch;
     static constexpr ImGuiTableColumnFlags      C2_FLAGS            = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
     //
-    static constexpr ImGuiSelectableFlags       SELECTABLE_FLAGS    = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
+    constexpr const char *                      ACTION_DRAGDROP_ID  = "ACTION_ROW";
+    //
+    ActionComposerState &                       AS                  = this->m_action_state_S;
     ImGuiListClipper                            clip;
+
+
 
     // ── 3. list body (table) ────────────────────────────────────────
     //      fixed: [handle] | stretchy name | fixed delete
     //
-    if ( ImGui::BeginTable( "##actions",   3,    TABLE_FLAGS,    ImVec2(0, -1)) )           // full remaining height
+    if ( ImGui::BeginTable( "##actions",   2,    TABLE_FLAGS,    ImVec2(0, -1)) )           // full remaining height
     {
-        ImGui::TableSetupColumn( "H",       C0_FLAGS,     ImGui::GetFrameHeight()   );      // ~ square
         ImGui::TableSetupColumn( "Name",    C1_FLAGS                                );
         ImGui::TableSetupColumn( "Del",     C2_FLAGS,     ImGui::GetFrameHeight()   );
 
@@ -618,37 +752,51 @@ inline void ActionComposer::_draw_action_table(void)
                 ImGui::TableNextRow();
 
 
-                //      3.1.    DRAG / DROP HANDLE...
+                //      3.2A.       SELECTIBLE WIDGET...
                 ImGui::TableSetColumnIndex(0);
-                utl::SmallCButton(this->ms_DRAG_DROP_HANDLE, 0x00000000);
-                if ( ImGui::IsItemActive() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) ) {
-                    ImGui::SetDragDropPayload("ACTION_ROW", &i, sizeof i);
-                    ImGui::EndDragDropSource();
+                if ( this->_draw_action_selectable(i, selected) )
+                {
+                    ImGui::PopID();
+                    clip.End();          // ← ensure clipper is closed
+                    ImGui::EndTable();   // close the table
+                    return;              // abort safely after mutation
                 }
-                if ( ImGui::BeginDragDropTarget() ) {
-                    if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("ACTION_ROW") )
-                        { _reorder(*(int*)p->Data, i); }
-                    ImGui::EndDragDropTarget();
-                }
-
-
-                //      3.2A.   SELECTIBLE WIDGET...
-                ImGui::TableSetColumnIndex(1);
-                if ( ImGui::Selectable((*m_actions)[i].name.c_str(), selected, SELECTABLE_FLAGS) )     { m_sel = i; }
                 //
-                //      3.2B.   RIGHT-CLICK CONTEXT MENU...
-                if ( ImGui::BeginPopupContextItem("##ActionComposer_ActionRowContextMenu") ) {        // opens on RMB...
-                    if ( ImGui::MenuItem("Duplicate") ) {   // duplicate current element and insert right below...
-                        Action copy               = (*m_actions)[i];           // deep copy
-                        m_actions->insert(m_actions->begin() + i + 1, copy);
-                        m_sel                     = i + 1;                     // highlight new row
+                //
+                //      3.2B.       "DRAG/DROP" HANDLE FOR SELECTABLE.
+                if ( AS.m_action_rename_idx != i )
+                {
+                    //      DRAG-DROP SOURCE :      Only when user actually drags (prevents double-click conflicts).
+                    if ( ImGui::IsItemActive() &&
+                         ImGui::IsMouseDragging(ImGuiMouseButton_Left, 2.0f) &&
+                         ImGui::BeginDragDropSource( ImGuiDragDropFlags_SourceNoPreviewTooltip ) )
+                    {
+                        ImGui::SetDragDropPayload(ACTION_DRAGDROP_ID, &i, sizeof(i) );
+                        ImGui::EndDragDropSource();
                     }
-                    ImGui::EndPopup();
-                }
-                
+                    //
+                    //      DRAG-DROP TARGET :      Same cell accepts the row payload.
+                    if ( ImGui::BeginDragDropTarget() )
+                    {
+                        if ( const ImGuiPayload* p = ImGui::AcceptDragDropPayload(ACTION_DRAGDROP_ID) )
+                        {
+                            _reorder( *(int*)p->Data, i);
 
-                //      3.3.    DELETE BUTTON...
-                ImGui::TableSetColumnIndex(2);
+                            //  abort drawing after the vector changed ────────────────── //
+                            ImGui::EndDragDropTarget();
+                            ImGui::PopID();
+                            clip.End();
+                            ImGui::EndTable();
+                            return;                      // ← exit the function safely
+                        }
+                        ImGui::EndDragDropTarget();
+                    }
+                }
+            
+        
+
+                //      3.2.    DELETE BUTTON...
+                ImGui::TableSetColumnIndex(1);
                 if ( utl::SmallCButton(ms_DELETE_BUTTON_HANDLE, this->ms_DELETE_BUTTON_COLOR) )
                 {
                     m_actions->erase(m_actions->begin() + i);
@@ -670,6 +818,139 @@ inline void ActionComposer::_draw_action_table(void)
         
     return;
 }
+
+
+
+
+//  "_draw_action_selectable"
+//
+inline bool ActionComposer::_draw_action_selectable(const int idx, const bool selected )
+{
+    static constexpr ImGuiSelectableFlags   SELECT_FLAGS        = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick;
+    static constexpr ImGuiInputTextFlags    TEXT_FLAGS          = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
+    constexpr auto &                        BUFFER_SIZE         = ActionComposerState::ms_MAX_ACTION_NAME_LENGTH;
+    //
+    ActionComposerState &                   AS                  = this->m_action_state_S;
+    Action &                                action              = (*m_actions)[idx];
+    const bool                              renaming            = (AS.m_action_rename_idx == idx);
+    
+    
+    
+    //  CASE 1 :    NORMAL "SELECTABLE" BEHAVIOR    [ NOT RENAMING ]...
+    if ( !renaming )
+    {
+        //      1.1.    CREATE SELECTABLE.
+        //
+        //
+            const bool      ctrl            = ImGui::GetIO().KeyCtrl;
+            const bool      shift           = ImGui::GetIO().KeyShift;
+            //
+            const bool      single_click    = ImGui::Selectable( action.name.c_str(), selected, SELECT_FLAGS);
+            const bool      double_click    = ImGui::IsItemHovered()
+                                                && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
+                                                && !ctrl
+                                                && !shift;
+        //
+        //
+        //      1.2.    DOUBLE CLICKED.
+        if ( double_click )
+        {
+            AS.m_action_rename_idx     = idx;
+            std::strncpy( AS.m_action_buffer, action.name.c_str(), BUFFER_SIZE );
+                          
+            AS.m_action_buffer[ BUFFER_SIZE - 1 ] = '\0';
+            AS.m_renaming_action        = true;
+            return false;
+        //
+        }// END "DOUBLE CLICK".
+    
+    
+    
+        //      1.3.    SINGLE CLICKED.
+        if ( single_click  &&  !renaming )
+        {
+        //
+        //
+            m_sel   = idx;
+            
+                    
+            //      0.1B.   RIGHT-CLICK CONTEXT MENU...
+            if ( ImGui::BeginPopupContextItem("##ActionComposer_ActionRowContextMenu") )
+            {
+                //  3A.     "DUPLICATE" BUTTON.
+                if ( ImGui::MenuItem("Duplicate") )
+                {
+                    Action copy               = (*m_actions)[idx];           // deep copy
+                    m_actions->insert(m_actions->begin() + idx + 1, copy);
+                    m_sel                     = idx + 1;                     // highlight new row
+                }
+                ImGui::EndPopup();
+            }
+        //
+        //
+        }// END "SINGLE CLICK".
+    
+
+        return false;
+        
+    //
+    //
+    }// END "NORMAL SELECTABLE".
+  
+  
+  
+  
+    
+  
+    //  CASE 2 :    NORMAL "SELECTABLE" BEHAVIOR...
+    //
+    {
+        AS.m_renaming_action                              = true;
+        static int              last_rename_idx         = -1;
+        
+        
+        //      2.1.    SET KEYBOARD FOCUS ON FIRST ENTRY IN ROW.
+        if ( last_rename_idx != idx ) {
+            ImGui::SetKeyboardFocusHere();
+            last_rename_idx = idx;
+        }
+        //
+        //
+        //      2.2.    CREATE RE-NAME WIDGET AND LISTEN FOR USER ENTER/CANCEL SIGNALS.
+        ImGui::PushItemWidth(-FLT_MIN);
+            const bool      pressed_enter   = ImGui::InputText( "##Editor_ObjSelector_RenameObj", AS.m_action_buffer, BUFFER_SIZE, TEXT_FLAGS );
+            const bool      pressed_esc     = ImGui::IsKeyPressed(ImGuiKey_Escape);
+            const bool      lost_focus      = (!ImGui::IsItemActive() && ImGui::IsItemDeactivated());
+        ImGui::PopItemWidth();
+        //
+        //
+        //      2.3A.   COMMIT CHANGES TO THE NAME.
+        if ( pressed_enter || (lost_focus && !pressed_esc) )
+        {
+            action.name                 = AS.m_action_buffer;   // commit
+            AS.m_action_rename_idx      = -1;
+            AS.m_renaming_action        = false;
+            last_rename_idx             = -1;
+            return false;
+        }
+        //
+        //
+        //      2.3B.   DISCARD CHANGES AND REVERT TO PREVIOUS NAME.
+        if ( pressed_esc ) {
+            AS.m_action_rename_idx      = -1;
+            AS.m_renaming_action        = false;
+            last_rename_idx             = -1;
+            return false;
+        }
+        
+    //
+    //
+    }// END "RENAMING".
+    
+
+    return false;
+}
+
 
 
 //  "_draw_action_inspector"

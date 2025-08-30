@@ -141,7 +141,7 @@ public:
     //                              OVERLOADED OPERATORS:
         //  inline Param<T> &                       operator =                          (const Param<T> & src) {
         //
-        //      this->value = std::clamp( src.value, this->limits.min, this->limits.max );\
+        //      this->value = std::clamp( src.value, this->limits.min, this->limits.max );
         //      return (*this);
         //  }
     //

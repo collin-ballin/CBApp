@@ -455,6 +455,10 @@ inline void from_json(const nlohmann::json& j, HotkeyParams& p)
 //  "Action"
 //
 struct Action {
+    static constexpr size_t             ms_NAME_LENGTH_LIMIT                        = 64ULL;
+    static constexpr size_t             ms_DESCRIPTION_LENGTH_LIMIT                 = 256ULL;
+//
+//
 //
     inline void swap(void)
     { std::swap(cursor.first, cursor.last); }
@@ -549,7 +553,12 @@ DEF_EXEC_STATE_NAMES = {
 
 //  "Composition_t"
 //
-struct Composition_t {
+struct Composition_t
+{
+    static constexpr size_t             ms_NAME_LENGTH_LIMIT                = 64ULL;
+    static constexpr size_t             ms_DESCRIPTION_LENGTH_LIMIT         = 512ULL;
+//
+//
 //
     std::vector<Action>     actions;
     std::string             name                { "New Composition"     };
@@ -702,6 +711,113 @@ struct OverlayCache
 
 
 
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "...".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//      NEW...
+// *************************************************************************** //
+
+//  "ActionComposerState"
+//
+struct ActionComposerState {
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+    // *************************************************************************** //
+    //      1.      NESTED TYPENAME ALIASES...
+    // *************************************************************************** //
+    using                       Composition                             = Composition_t;
+    using                       Action                                  = Action;
+
+    // *************************************************************************** //
+    //      2.      CONSTEXPR VALUES...
+    // *************************************************************************** //
+    static constexpr size_t     ms_MAX_COMPOSITION_NAME_LENGTH          = Composition::ms_NAME_LENGTH_LIMIT + 64ULL;
+    static constexpr size_t     ms_MAX_ACTION_NAME_LENGTH               = Action::ms_NAME_LENGTH_LIMIT + 32ULL;
+
+    // *************************************************************************** //
+    //      3.      MEMBER FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "reset"
+    inline void                 reset(void) { this->clear(); }
+    
+    //  "clear"
+    inline void                 clear(void)
+    {
+        //  Renaming "Active" State.
+        m_renaming_comp             = false;
+        m_renaming_action           = false;
+        
+        
+        //  Rename Index.
+        m_comp_rename_idx           = -1;
+        m_action_rename_idx         = -1;
+        
+        return;
+    }
+    
+    // *************************************************************************** //
+
+
+    // *************************************************************************** //
+    //      3.      DATA MEMBERS...
+    // *************************************************************************** //
+    //                      MUTABLE STATE VARIABLES:
+    bool                        m_renaming_comp                             = false;    //  TRUE when user is in the middle of MODIFYING NAME.
+    bool                        m_renaming_action                           = false;    //
+    //
+    //
+    //
+    //
+    //                      INDICES:
+    int                         m_comp_rename_idx                           = -1;       //  LAYER that is BEING RENAMED     (–1 = none)
+    int                         m_action_rename_idx                         = -1;       //  OBJECT that is BEING RENAMED    (–1 = none)
+    //
+    //
+    //                      CACHE AND MISC. DATA:
+    char                        m_comp_buffer       [ ms_MAX_COMPOSITION_NAME_LENGTH ]      = {   };    //  scratch text
+    char                        m_action_buffer     [ ms_MAX_ACTION_NAME_LENGTH      ]      = {   };    //  scratch text
+    //
+    //
+    //
+    //                      OTHER DATA ITEMS:
+    //  ImGuiTextFilter             m_layer_filter;                                         //  search box for "LAYER" browser.
+    //  ImGuiTextFilter             m_obj_filter;                                           //  search box for "OBJECT" browser.
+    
+    
+    
+    // *************************************************************************** //
+
+// *************************************************************************** //
+// *************************************************************************** //   END "ActionComposerState".
+};
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "...".
+
+
+
+
+
+
 
 
 
@@ -778,6 +894,19 @@ struct OverlayCache
                                         // down == false → release
     io.AppAcceptingEvents = prev;
 }
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "...".
+
+
+
+
+
+
 
 
 
