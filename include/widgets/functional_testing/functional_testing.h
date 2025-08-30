@@ -138,6 +138,7 @@ struct ActionExecutor
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
     static constexpr float              ms_MIN_DURATION_S               = 0.001f;
+    static constexpr Range<double>      ms_PLAYBACK_SPEED_LIMITS        = { 0.10f,  4.0f };
     
     // *************************************************************************** //
     //
@@ -164,8 +165,8 @@ struct ActionExecutor
     //      IMPORTANT DATA-MEMBERS.
     // *************************************************************************** //
     GLFWwindow *                        m_window                        { nullptr };
-    KeyHoldManager                      m_key_manager                   {  };
-    Param<double>                       m_playback_speed                { 1.0f,  {0.10f, 4.0f} };
+    KeyHoldManager                      m_key_manager                   {   };
+    Param<double>                       m_playback_speed                { 1.0f,  ms_PLAYBACK_SPEED_LIMITS };
     
     // *************************************************************************** //
     //
@@ -798,11 +799,13 @@ protected:
     {
         if ( m_compositions.empty() )   { return; }
 
-        comp_index              = std::clamp( comp_index, 0, static_cast<int>(m_compositions.size()) - 1 );
+        comp_index                              = std::clamp( comp_index, 0, static_cast<int>(m_compositions.size()) - 1 );
         this->reset_all();
         
-        m_comp_sel              = comp_index;
-        m_actions               = &m_compositions[m_comp_sel].actions;
+        m_comp_sel                              = comp_index;
+        m_actions                               = &m_compositions[m_comp_sel].actions;
+        m_executor.m_playback_speed.SetValue( m_compositions[m_comp_sel].playback_speed );
+        
         return;
     }
 
@@ -810,7 +813,9 @@ protected:
     //  "_save_actions_to_comp"
     //
     inline void                         _save_actions_to_comp           (void) {
-        m_compositions[m_comp_sel].actions = *m_actions;
+        m_compositions[m_comp_sel].actions          = *m_actions;
+        m_compositions[m_comp_sel].playback_speed   = this->m_executor.m_playback_speed.Value();
+        
         return;
     }
     
@@ -831,19 +836,23 @@ protected:
     //  "_reorder_composition"
     inline void                         _reorder_composition            (int from, int to)
     {
-        if (from == to) { return; }
+        if ( from == to )       { return; }
 
         /* persist edits to currently open composition before we shuffle */
         _save_actions_to_comp();
-
+        
+        
         /* move the element -------------------------------------------------- */
         Composition_t tmp = std::move(m_compositions[static_cast<size_t>(from)]);
         m_compositions.erase(m_compositions.begin() + from);
         m_compositions.insert(m_compositions.begin() + to, std::move(tmp));
 
+
         /* update selection & action pointer -------------------------------- */
         m_comp_sel = to;
         _load_actions_from_comp(m_comp_sel);      // resets m_actions to new slot
+        
+        return;
     }
     
     //  "need_step"

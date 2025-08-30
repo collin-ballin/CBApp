@@ -132,7 +132,7 @@ struct Vertex_t {
     static constexpr const char *   ms_DEF_VERTEX_SELECTOR_FMT_STRING       = "V%03u";
     static constexpr size_t         ms_MAX_VERTEX_NAME_LENGTH               = 10ULL;
 //
-    uint32_t    id              = 0;
+    VID         id              = 0;
     float       x               = 0.0f,
                 y               = 0.0f;
     //
@@ -146,12 +146,12 @@ template <typename IdT>
 inline void to_json(nlohmann::json& j, const Vertex_t<IdT>& v)
 {
     j = {
-        { "id",          v.id },
-        { "x",           v.x  },
-        { "y",           v.y  },
-        { "in_handle",   { v.in_handle.x,  v.in_handle.y } },
-        { "out_handle",  { v.out_handle.x, v.out_handle.y } },
-        { "kind",        v.kind }
+        { "id",             v.id                                    },
+        { "x",              v.x                                     },
+        { "y",              v.y                                     },
+        { "in_handle",      { v.in_handle.x,  v.in_handle.y    }    },
+        { "out_handle",     { v.out_handle.x, v.out_handle.y   }    },
+        { "kind",           v.kind                                  }
     };
 }
 //
@@ -159,12 +159,12 @@ inline void to_json(nlohmann::json& j, const Vertex_t<IdT>& v)
 template <typename IdT>
 inline void from_json(const nlohmann::json& j, Vertex_t<IdT>& v)
 {
-    j.at("id")  .get_to(v.id);
-    j.at("x")   .get_to(v.x);
-    j.at("y")   .get_to(v.y);
-    auto ih = j.at("in_handle");  v.in_handle  = { ih[0], ih[1] };
-    auto oh = j.at("out_handle"); v.out_handle = { oh[0], oh[1] };
-    j.at("kind").get_to(v.kind);
+    j.at("id")          .get_to(v.id);
+    j.at("x")           .get_to(v.x);
+    j.at("y")           .get_to(v.y);
+    auto    ih          = j.at("in_handle");        v.in_handle  = { ih[0], ih[1] };
+    auto    oh          = j.at("out_handle");       v.out_handle = { oh[0], oh[1] };
+    j.at("kind")        .get_to(v.kind);
 }
 
 // *************************************************************************** //
@@ -222,18 +222,24 @@ struct Point_t        {
 //
 //  "to_json"
 template <typename PtID>
-inline void to_json(nlohmann::json& j, const Point_t<PtID>& p)
+inline void to_json(nlohmann::json & j, const Point_t<PtID> & p)
 {
-    j = { { "v", p.v },
-          { "sty", p.sty } };
+    j = {
+        { "v",          p.v         },
+        { "sty",        p.sty       }
+    };
+    
+    return;
 }
 //
 //  "from_json"
 template <typename PtID>
-inline void from_json(const nlohmann::json& j, Point_t<PtID>& p)
+inline void from_json(const nlohmann::json & j, Point_t<PtID> & p)
 {
-    j.at("v"  ).get_to(p.v  );
-    j.at("sty").get_to(p.sty);
+    j.at("v"  )         .get_to(p.v     );
+    j.at("sty")         .get_to(p.sty   );
+    
+    return;
 }
 
 // *************************************************************************** //

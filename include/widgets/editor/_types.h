@@ -474,16 +474,16 @@ struct Selection_t {
 //
 //
 //
-    std::unordered_set<uint32_t>    vertices                {};
-    std::unordered_set<size_t>      points                  {};
-    std::unordered_set<size_t>      lines                   {};
-    std::unordered_set<size_t>      paths                   {};     // ← NEW
+    std::unordered_set<uint32_t>    vertices                {   };
+    std::unordered_set<size_t>      points                  {   };
+    std::unordered_set<size_t>      lines                   {   };
+    std::unordered_set<size_t>      paths                   {   };     // ← NEW
 //
 };
 //
 //  "to_json"
 template<typename VID, typename PtID, typename LID, typename PID>
-inline void to_json(nlohmann::json& j,
+inline void to_json(nlohmann::json & j,
                     const Selection_t<VID,PtID,LID,PID>& s)
 {
     j = { { "vertices",  std::vector<VID>  (s.vertices.begin(), s.vertices.end()) },
@@ -494,7 +494,7 @@ inline void to_json(nlohmann::json& j,
 //
 //  "from_json"
 template<typename VID, typename PtID, typename LID, typename PID>
-inline void from_json(const nlohmann::json& j,
+inline void from_json(const nlohmann::json & j,
                       Selection_t<VID,PtID,LID,PID>& s)
 {
     std::vector<VID >  vs;  j.at("vertices").get_to(vs);
@@ -578,7 +578,7 @@ struct ShapeState_t {
     OID                 overlay_id              = OID(0);           // contextual UI (0 ⇒ none)
     ShapeKind           kind                    = ShapeKind::Rectangle;
     float               radius                  = 25.0f;            // corner- or major-radius (placeholder)
-    float               params[5]               = {0.0f};           // Array to hold multiple geometric descriptors for more complex shapes.
+    //  float               params[5]               = {0.0f};           // Array to hold multiple geometric descriptors for more complex shapes.
     //
     //
     //  Live-preview drag info (world-space)
@@ -606,6 +606,7 @@ inline void from_json(const nlohmann::json & j, ShapeState_t<OID> & o)
 {
     j.at("kind"         ).get_to(o.kind         );
     j.at("radius"       ).get_to(o.radius       );
+    
     return;
 }
 
@@ -700,7 +701,7 @@ struct BrowserState_t {
         //      bool                        m_layer_filter_dirty                        = false;    //  Flag to queue Browser to RE-COMPUTE sorted items.
         //      int                         m_layer_rows_paths_rev                      = -1;
     //
-    std::vector<int>            m_obj_rows                                  {  };
+    std::vector<int>            m_obj_rows                                  {   };
     bool                        m_obj_filter_dirty                          = false;    //
     int                         m_obj_rows_paths_rev                        = -1;
     //
@@ -716,7 +717,7 @@ struct BrowserState_t {
     //
     //
     //                      CACHE AND MISC. DATA:
-    char                        m_name_buffer[ ms_MAX_PATH_TITLE_LENGTH ]   = {  };     //  scratch text
+    char                        m_name_buffer[ ms_MAX_PATH_TITLE_LENGTH ]   = {   };    //  scratch text
     //
     //
     //

@@ -263,7 +263,7 @@ enum class ActionType : uint8_t {
 //  "DEF_ACTION_TYPE_NAMES"
 static constexpr std::array<const char *, static_cast<size_t>( ActionType::COUNT )>
 DEF_ACTION_TYPE_NAMES = {
-    "Move Cursor",
+    "Move",
     "Mouse Click",      "Mouse Press",      "Mouse Release",        "Mouse Drag",
     "Hotkey",           "Key Press",        "Key Release"
 };
@@ -552,24 +552,45 @@ DEF_EXEC_STATE_NAMES = {
 struct Composition_t {
 //
     std::vector<Action>     actions;
-    std::string             name            { "New Composition"     };
-    std::string             description     { "description..."      };
+    std::string             name                { "New Composition"     };
+    std::string             description         { "description..."      };
+//
+    double                  playback_speed      { 1.0f                  };
 };
 
+
+//  "to_json"
+//
 inline void to_json(nlohmann::json & j, const Composition_t & c)
 {
     j = {
             {"actions",             c.actions                       },
             {"name",                c.name                          },
-            {"description",         c.description                   }
+            {"description",         c.description                   },
+            {"playback_speed",      c.playback_speed                }
     };
+    
+    return;
 }
 
+
+//  "from_json"
+//
 inline void from_json(const nlohmann::json & j, Composition_t & c)
 {
     j.at("actions"                  ).get_to(c.actions              );
     j.at("name"                     ).get_to(c.name                 );
     j.at("description"              ).get_to(c.description          );
+    
+    if ( auto it = j.find("playback_speed"); it != j.end() && it->is_number() ) {
+        it->get_to(c.playback_speed);
+    }
+    else {
+        c.playback_speed = 1.0f; // default
+    }
+        
+        
+    return;
 }
 
 
@@ -640,13 +661,20 @@ struct MouseCaptureState {
 struct OverlayCache
 {
     //  "update_cache"
-    inline bool     update_cache        (const int action, const int composition, Action * & current)
+    inline bool     update_cache        (const bool first_action, const int action, const int composition, Action * & current)
     {
-        if ( !this->is_invalid(action, composition, current) )   { return false; }
+        if ( !this->is_invalid(action, composition, current)  &&  !first_action )    { return false; }      //  CHECK IF THE CURRENT CACHE IS OUT-OF-DATE...
     
+    
+        //      1.      UPDATE THE LATEST VALUES...
         m_action_sel            = action;
         m_composition_sel       = composition;
         m_action                = current;
+        
+        
+        //      2.      CACHE THE CURRENT ACTION'S DESCRIPTION...
+        if ( m_action  && !m_action->descr.empty() )    { this->m_desc_cache = std::string( m_action->descr ); }
+        
         return true;
     }
     
@@ -662,13 +690,14 @@ struct OverlayCache
     
     //  "reset"
     inline void     reset               (void)
-    { m_action_sel = -1;    m_composition_sel = -1;    m_action = nullptr;   return; }
+    { m_action_sel = -1;    m_composition_sel = -1;    m_action = nullptr;   m_desc_cache.clear();      return; }
 //
 //
 //
     int             m_action_sel            = -1;
     int             m_composition_sel       = -1;
     Action *        m_action                = nullptr;
+    std::string     m_desc_cache            = {   };
 };
 
 

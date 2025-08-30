@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #############################################################################################
-#   setup_cbapp.command – one-click bootstrap for Collin’s Dear ImGui project               #
+#   setup_cbapp – one-click bootstrap for Collin’s Dear ImGui project               #
 #                                                                                           #
 #   SECTIONS:                                                                               #
 #       1.  Initial safeguards & helpers                                                    #
@@ -10,7 +10,7 @@
 #       5.  Completion                                                                      #
 #                                                                                           #
 #  USAGE:                                                                                   #
-#       ./setup_cbapp.command [--branch <name>] [--force]                                   #
+#       ./setup_cbapp.sh [--branch <name>] [--force]                                   #
 #                                                                                           #
 #############################################################################################
 #  TO-DO:                                                                                   #
@@ -55,22 +55,22 @@
 #############################################################################################
 #   EXAMPLE INVOCATIONS:
 #       1.  DEFAULT :           // Clone/update code from the main branch of my repository.
-#               ./setup_cbapp.command
+#               ./setup_cbapp.sh
 #
 #       2.  DIFFERENT BRANCH :  // Check out code from a different branch of my repository (e.g., dev).
-#               ./setup_cbapp.command --branch dev
+#               ./setup_cbapp.sh --branch dev
 #           Or, the short form,
-#               ./setup_cbapp.command -b dev
+#               ./setup_cbapp.sh -b dev
 #
 #       3.  HARD-RESET :        // Discard any local changes and revert to the code on my repository.
-#               ./setup_cbapp.command --force
+#               ./setup_cbapp.sh --force
 #
 #       4.  HYBRID :            // Combine (2.) and (3.) : Discards local edits AND installs from a different branch.
-#               ./setup_cbapp.command --branch feature/ui-overhaul --force
+#               ./setup_cbapp.sh --branch feature/ui-overhaul --force
 #
 #       5.  HELP :              // Display a short "help" message to the CMD-Line and exit.
-#               ./setup_cbapp.command --help
-#               ./setup_cbapp.command -h
+#               ./setup_cbapp.sh --help
+#               ./setup_cbapp.sh -h
 #
 #############################################################################################
 #############################################################################################
@@ -86,7 +86,7 @@ FORCE_RESET=false
 
 print_help() {
     cat <<'EOF'
-Usage: ./setup_cbapp.command [--branch <name>] [--force]
+Usage: ./setup_cbapp.sh [--branch <name>] [--force]
 
 Options:
   -b, --branch <name>   Checkout the named branch instead of 'main'.
@@ -95,22 +95,22 @@ Options:
 
 EXAMPLE INVOCATIONS:
     1.  DEFAULT :           // Clone/update code from the main branch of my repository.
-            ./setup_cbapp.command
+            ./setup_cbapp.sh
 
     2.  DIFFERENT BRANCH :  // Check out code from a different branch of my repository (e.g., dev).
-            ./setup_cbapp.command --branch dev
+            ./setup_cbapp.sh --branch dev
         Or, the short form,
-            ./setup_cbapp.command -b dev
+            ./setup_cbapp.sh -b dev
 
     3.  HARD-RESET :        // Discard any local changes and revert to the code on my repository.
-            ./setup_cbapp.command --force
+            ./setup_cbapp.sh --force
 
     4.  HYBRID :            // Combine (2.) and (3.) : Discards local edits AND installs from a different branch.
-            ./setup_cbapp.command --branch feature/ui-overhaul --force
+            ./setup_cbapp.sh --branch feature/ui-overhaul --force
 
     5.  HELP :              // Display a short "help" message to the CMD-Line and exit.
-            ./setup_cbapp.command --help
-            ./setup_cbapp.command -h
+            ./setup_cbapp.sh --help
+            ./setup_cbapp.sh -h
 EOF
     exit 0
 }

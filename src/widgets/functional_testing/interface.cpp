@@ -132,7 +132,7 @@ void ActionComposer::_draw_controlbar(void)
         //
         ImGui::SetNextItemWidth( WIDGET_SIZE.x );
         if ( ImGui::SliderScalar( "##ActionComposer_PlaybackSpeed",         ImGuiDataType_Double,
-                                  &m_executor.m_playback_speed.value,       &m_executor.m_playback_speed.limits.min,       &m_executor.m_playback_speed.limits.max,
+                                  &m_executor.m_playback_speed.Value(),       &m_executor.m_playback_speed.Min(),       &m_executor.m_playback_speed.Max(),
                                   "%.1f", SLIDER_FLAGS ) )
         { }
 
@@ -325,26 +325,29 @@ inline void ActionComposer::_overlay_ui_none(void)
 inline void ActionComposer::_overlay_ui_run(void)
 {
     static constexpr const char *   FMT                 = "%s";
-    const bool                      first_action        = m_play_index < 0;
+    //const bool                      first_action        = m_play_index < 0;
+    const bool                      first_action        = m_play_index <= 1;
     Action *                        act                 = nullptr;
+    OverlayCache &                  cache               = this->m_overlay_cache;
     
-    if (first_action)//  _drive_execution increments the counter,
-    {   act = (m_play_index == 0) ? &(*m_actions)[m_play_index] : &(*m_actions)[m_play_index - 1];  }
+    act = (m_play_index <= 0)
+        ? &(*m_actions)[m_play_index]
+        : &(*m_actions)[m_play_index - 1];
     
-    static std::string              cache_descr         = "";                                                               //  ...so we need to grab the PREVIOUS action...
-    //
-    [[maybe_unused]] const bool     updated             = this->m_overlay_cache.update_cache( m_play_index, m_comp_sel, act );
-    Action *                        proxy               = this->m_overlay_cache.m_action;
     
-
-    if (first_action)                                   { cache_descr.clear(); }                                    //  1.  CLEAR CACHE ON FIRST FRAME...
-    if ( proxy != nullptr && !proxy->descr.empty() )    { cache_descr = std::string( proxy->descr.c_str() );  }     //  2.  CACHE THE NEXT DESCRIPTION FIELD THAT WE FIND...
+    //if ( first_action ) {//  _drive_execution increments the counter,
+    //  act = (m_play_index == 0)
+    //      ? &(*m_actions)[m_play_index]
+    //      : &(*m_actions)[m_play_index - 1];
+    //}
     
+    
+    [[maybe_unused]] const bool     updated             = cache.update_cache( first_action, m_play_index, m_comp_sel, act );
     
     
     //  3.  IF WE HAVE A NON-EMPTY DESCR. CACHE, PRINT IT TO THE OVERLAY...
-    if ( !cache_descr.empty() ) {
-        ImGui::TextColored( S.SystemColor.Gray,     FMT,    cache_descr.c_str() );
+    if ( !cache.m_desc_cache.empty() ) {
+        ImGui::TextColored( S.SystemColor.Gray,     FMT,    cache.m_desc_cache.c_str() );
     }
     
     

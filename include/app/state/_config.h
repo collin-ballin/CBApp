@@ -270,7 +270,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEBUGGER_WINDOW_FLAGS        = Im
     X(GraphApp            , "Graph App"                   , DEF_FDTD_APP_VIS      , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       \
 /*                                                                                                                                                  */      \
 /*          MIMIC APP...                                                                                                                            */      \
-    X(MimicApp            , "Mimic App"                   , false                 , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       \
+    X(MimicApp            , "Mimic App"                   , true                  , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       \
 /*                                                                                                                                                  */      \
 /*                                                                                                                                                  */      \
 /*  3.  BASIC TOOLS...                                                                                                                              */      \

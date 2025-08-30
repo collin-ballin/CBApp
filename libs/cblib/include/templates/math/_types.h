@@ -54,8 +54,206 @@ struct Range {
 };
 
 
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+//                PRIMARY CLASS INTERFACE:
+// 		Class-Interface for the "Param" Abstraction.
+// *************************************************************************** //
+// *************************************************************************** //
+
 //  "Param"
 //      - 2.    A parameter that carries both a value and its valid range
+//
+template<typename T>
+struct Param
+{
+//      0.          CONSTANTS AND ALIASES...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//
+//      1.          CLASS DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    T                                   value;
+    Range<T>                            limits;
+    
+    // *************************************************************************** //
+    
+    
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CLASS DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//
+//      2.C.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      "RULE OF ..." FUNCTIONS.
+    // *************************************************************************** //
+    //                              INITIALIZATIONS:
+        //  inline                              Param                               (void) noexcept                 = default;
+        //  inline                              Param                               (const Param<T> &) noexcept     = default;
+        //  inline virtual                      ~Param                              (void)                          = default;
+    //
+    //
+    //                              OVERLOADED OPERATORS:
+        //  inline Param<T> &                       operator =                          (const Param<T> & src) {
+        //
+        //      this->value = std::clamp( src.value, this->limits.min, this->limits.max );\
+        //      return (*this);
+        //  }
+    //
+    //
+    //                              VALUE:
+    //inline void                         SetValue                            (const T & value_) noexcept     { this->value = std::clamp( value_, limits.min, limits.max ); }
+    
+    // *************************************************************************** //
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      UTILITY FUNCTIONS.
+    // *************************************************************************** //
+    
+    [[nodiscard]] inline bool               within_range                        (const T & value_) const
+    noexcept( noexcept(value_ < limits.min)  &&  noexcept(limits.max < value_) )
+    {
+        return !(value_ < limits.min) && !(limits.max < value_);
+    }
+    
+    // *************************************************************************** //
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      GETTER FUNCTIONS.
+    // *************************************************************************** //
+    //                              VALUE:
+    inline void                         SetValue                            (const T & value_) noexcept         { this->value = std::clamp( value_, limits.min, limits.max ); }
+    inline void                         SetValue                            (const Param<T> & obj) noexcept     { this->value = std::clamp( obj.Value(), limits.min, limits.max ); }
+    //
+    //
+    //
+    //                              RANGE:
+    inline void                         SetRange                            (const Range<T> & limits_) noexcept {
+        this->limits    = limits_;
+        this->value     = std::clamp( this->value, limits_.min, limits_.max );
+    }
+    
+    // *************************************************************************** //
+    
+    
+    
+    // *************************************************************************** //
+    //      SETTER FUNCTIONS.
+    // *************************************************************************** //
+    //                              VALUE:
+    inline T &                          Value                               (void) noexcept                 { return value;         }       //  Get Value.
+    inline T &                          Value                               (void) const noexcept           { return value;         }       //  Get Value   [ CONST ].
+    inline T &                          GetValue                            (void) noexcept                 { return value;         }       //  Get Value.
+    inline T &                          GetValue                            (void) const noexcept           { return value;         }       //  Get Value   [ CONST ].
+    //
+    //                              MINIMUM RANGE:
+    inline T &                          min                                 (void) noexcept                 { return limits.min;    }       //  Get Min.
+    inline T &                          min                                 (void) const noexcept           { return limits.min;    }       //  Get Min     [ CONST ].
+    inline T &                          Min                                 (void) noexcept                 { return limits.min;    }       //  Get Min.
+    inline T &                          Min                                 (void) const noexcept           { return limits.min;    }       //  Get Min     [ CONST ].
+    inline T &                          GetMin                              (void) noexcept                 { return limits.min;    }       //  Get Min.
+    inline T &                          GetMin                              (void) const noexcept           { return limits.min;    }       //  Get Min     [ CONST ].
+    inline T &                          RangeMin                            (void) noexcept                 { return limits.min;    }       //  Get Min.
+    inline T &                          RangeMin                            (void) const noexcept           { return limits.min;    }       //  Get Min     [ CONST ].
+    //
+    //                              MAXIMUM RANGE:
+    inline T &                          max                                 (void) noexcept                 { return limits.max;    }       //  Get Max.
+    inline T &                          max                                 (void) const noexcept           { return limits.min;    }       //  Get Max     [ CONST ].
+    inline T &                          Max                                 (void) noexcept                 { return limits.max;    }       //  Get Max.
+    inline T &                          Max                                 (void) const noexcept           { return limits.min;    }       //  Get Max     [ CONST ].
+    inline T &                          GetMax                              (void) noexcept                 { return limits.max;    }       //  Get Max.
+    inline T &                          GetMax                              (void) const noexcept           { return limits.min;    }       //  Get Max     [ CONST ].
+    inline T &                          RangeMax                            (void) noexcept                 { return limits.max;    }       //  Get Max.
+    inline T &                          RangeMax                            (void) const noexcept           { return limits.min;    }       //  Get Max     [ CONST ].
+    //
+    //
+    //
+    //                              ENTIRE RANGE:
+    inline Range<T> &                   GetRange                            (void) noexcept                 { return limits;        }       //  Get Range.
+    inline Range<T> &                   GetRange                            (void) const noexcept           { return limits;        }       //  Get Range   [ CONST ].
+    
+    // *************************************************************************** //
+    
+    
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "Param" INLINE CLASS DEFINITION.
+
+
+
+
+
+
+//  "Param"
+//      - 2.    A parameter that carries both a value and its valid range
+/*
 template<typename T>
 struct Param {
 //
@@ -75,7 +273,7 @@ struct Param {
     T                           value;
     Range<T>                    limits;
 };
-
+*/
 
 
 
