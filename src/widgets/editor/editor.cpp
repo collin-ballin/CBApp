@@ -202,7 +202,7 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     
     
     //      5.      OTHER PER-FRAME CACHE...
-    ES.m_plot_limits                = ImPlot::GetPlotLimits();          //     current X/Y axes
+    //      ES.m_plot_limits                = ImPlot::GetPlotLimits();          //     current X/Y axes
         
     
     return;
@@ -226,8 +226,9 @@ void Editor::Begin(const char * /*id*/)
     EditorStyle &           EStyle                  = this->m_style;
     EditorState &           ES                      = this->m_editor_S;
     Interaction &           it                      = *this->m_it;
-    //
-    //
+    
+    
+    //      1.      FETCH INITIAL PER-FRAME VALUES (USER-INTERACTION INPUT, ETC)...
     //
     const bool              block_input             = it.BlockInput();
     const bool              space                   = ( !block_input  &&  ImGui::IsKeyDown(ImGuiKey_Space) );
@@ -237,11 +238,9 @@ void Editor::Begin(const char * /*id*/)
     const bool              zoom_enabled            = (  (!block_input)  &&  _mode_has(CBCapabilityFlags_Zoom)  &&   (!io.MouseDown[0]) );
     //
     //
-    //
     ImPlotInputMap          backup                  = ImPlot::GetInputMap();                            //  Adjust ImPlot input map (backup, edit, restore at end)
     ImPlotInputMap &        map                     = ImPlot::GetInputMap();
     //  ImPlotInputMap          m_state.m_backup        = ImPlot::GetInputMap();
-    //
     //
     //
     map.Pan                                         = ImGuiMouseButton_Left;
@@ -250,109 +249,97 @@ void Editor::Begin(const char * /*id*/)
     map.ZoomRate                                    = EStyle.ms_ZOOM_RATE;                              //
 
 
+
+    //      2A.     HANDLE ANY I/O OPERATIONS BEFORE PLOT BEGINS...
     this->pump_main_tasks();
     this->_handle_io();
-
-
-    //  2.  CREATING THE CANVAS/GRID...
     //
-    //      2A.     CONTROL BAR...
+    //      2B.     DRAW THE EDITOR CONTROL BAR UI...
     this->_draw_controls();
     //
+    //      2C.     STORE ADDITIONAL PER-FRAME VALUES (AFTER PLACING CONTROLBAR UI)...
     ES.m_avail                                      = ImGui::GetContentRegionAvail();       //  1. Canvas size & plot flags
-    ES.m_avail.x                                    = std::max(ES.m_avail.x, 50.f);
-    ES.m_avail.y                                    = std::max(ES.m_avail.y, 50.f);
-    //
-    //
-    //          CASE 2B     : FAILURE TO CREATE CANVAS.
-    if ( !ImPlot::BeginPlot("##Editor_CanvasGrid", ImVec2(ES.m_avail.x, ES.m_avail.y), m_plot_flags) )
-        { ImPlot::GetInputMap() = backup;       return; }
-    //
-    //          CASE 2B     : SUCCESSFULLY CREATED THE "IMPLOT" PLOT...
-    {
+    ES.m_avail.x                                    = std::max( ES.m_avail.x,   50.f );
+    ES.m_avail.y                                    = std::max( ES.m_avail.y,   50.f );
     
-        //      3.      CONFIGURE THE "IMPLOT" APPEARANCE...
-        ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  3A.     Axis Names & Flags.
-                          m_axes[0].flags,          m_axes[1].flags);
-        //
-        ImPlot::SetupAxesLimits( m_world_bounds.min_x, m_world_bounds.max_x,    //  3B.     Auto-fit axes *before* any other ImPlot call.
-                                 m_world_bounds.min_y, m_world_bounds.max_y, ImPlotCond_Once );
-        //
-        this->_update_grid_info();                                              //  3C.     Fetch Grid-Quantization Info.
+    
+    
+    //      3.      CREATE THE MAIN IMPLOT "GRID" / "CANVAS"...
+    //
+    //      CASE 3A         : FAILURE TO CREATE CANVAS.
+    if ( !ImPlot::BeginPlot("##Editor_CanvasGrid", ImVec2(ES.m_avail.x, ES.m_avail.y), m_plot_flags) )
+    {
+        ImPlot::GetInputMap() = backup;
+        return;
+    }
+    //
+    //      CASE 3B         : SUCCESSFULLY CREATED THE "IMPLOT" PLOT...
+    {
+        //          3.1.    CONFIGURE THE "IMPLOT" APPEARANCE, UPDATE GRID INFORMATION, ETC...
+        this->_handle_grid(it);
         
         
         
-        //      4.      CREATE THE  "Interaction"  OBJECT FOR THIS FRAME...
-        //  ImDrawList *        dl              = ImPlot::GetPlotDrawList();
-        //  ImVec2              plotTL          = ImPlot::GetPlotPos();
-        //  const bool          hovered         = ImPlot::IsPlotHovered();
-        //  const bool          active          = ImPlot::IsPlotSelected();
-        //  ImVec2              origin_scr      = plotTL;
-        //  ImVec2              mouse_canvas    { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
-        //
-        //  Interaction         it              { hovered, active, space, mouse_canvas, origin_scr, plotTL, dl };
-        //
-        
+        //          3.2.    UPDATE THE EDITOR'S CACHE / STORE "PER-FRAME" VALUES IN THE "Interaction" OBJECT FOR THIS FRAME...
         this->_per_frame_cache_begin();
 
 
 
-
-
-
-        //      5.      MODE SWITCH BEHAVIORS AND OVERLAY WINDOWS...
-        //
+        //          3.3.    MODE SWITCH BEHAVIORS AND OVERLAY WINDOWS...
         this->_mode_switch_hotkeys(it);
         this->_handle_overlays(it);
 
 
-        //      6.      CURSOR HINTS AND SHORTCUTS...
-        //
+
+        //          3.4.    CURSOR HINTS AND SHORTCUTS...
         if ( space && it.hovered && _mode_has(CBCapabilityFlags_Pan) )
-            { ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); }
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+        }
         //
         else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
-            { _update_cursor_select(it); }
+        {
+            _update_cursor_select(it);
+        }
 
 
 
-        //  7.      SELECTION BEHAVIOR...
-        //
+        //          3.5.    SELECTION BEHAVIOR...
         if  ( !space && _mode_has(CBCapabilityFlags_Select) )
         {
             _process_selection(it);
-            
-            //  if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )        { _join_selected_open_path();   }   //  JOINING CLOSED PATHS...
-            //  if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )                 { this->reset_selection();      }   //  [Esc]       CANCEL SELECTION...
-            //  if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) )        { this->copy_to_clipboard();    }   //  [CTRL+C]    COPY SELECTION...
         }
         
     
     
-    
-        //  8.      MODE/STATE/TOOL DISPATCHER...
+        //          3.6.    MODE/STATE/TOOL DISPATCHER...
         this->_dispatch_mode_handler(it);
 
 
-        //  9.     RENDERING LOOP...
+        //          3.7.    RENDERING LOOP...
         ImPlot::PushPlotClipRect();
         //
         //
-            _render_points( it.dl );                //  Already ported
-            // _render_lines( it.dl );              //  Enable once ported
-            _render_paths( it.dl );                 //  Enable once ported
-            _render_selection_highlight( it.dl );
+            //  this->_render_lines             ( it.dl );              //  Enable once ported
+            this->_render_paths                 ( it.dl );            //  Enable once ported
+            this->_render_selection_highlight   ( it.dl );
+            this->_render_points                ( it.dl );            //  Already ported
         //
         //
         ImPlot::PopPlotClipRect();
+        //
+        //      [ AUG. 29, 2025]    this->_clamp_plot_axes();
 
-        this->_clamp_plot_axes();
 
-
+    //
+    //
     }// END "IMPLOT".
+    //
+    //
     //
     ImPlot::EndPlot();
     ImPlot::GetInputMap() = backup;   // restore map
+    
     
     
     this->_draw_io_overlay();
@@ -366,6 +353,11 @@ void Editor::Begin(const char * /*id*/)
     return;
 }
 
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MAIN API".
+
 
 
 
@@ -375,7 +367,122 @@ void Editor::Begin(const char * /*id*/)
 //
 //
 //
-//  3.  MAIN MANAGER FUNCTIONS...
+//      2B.      SECONDARY MANAGERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_handle_grid"
+//
+inline void Editor::_handle_grid([[maybe_unused]] const Interaction & it)
+{
+    EditorState &       ES                  = this->m_editor_S;
+    //
+    static bool         show_grid_cache     = m_grid.visible;
+    
+    
+    //      1.      QUERY THE "SHOW GRID" STATUS...
+    if ( show_grid_cache != m_grid.visible) [[unlikely]]
+    {
+        show_grid_cache = m_grid.visible;
+        
+        if ( show_grid_cache ) {    //  1A.     SET the flags.
+            m_axes[0].flags     |= ~ImPlotAxisFlags_NoGridLines;
+            //m_axes[1].flags     |= ~ImPlotAxisFlags_NoGridLines;
+        }
+        else {                      //  1B.     REMOVE the flags.
+            m_axes[0].flags     &= ~ImPlotAxisFlags_NoGridLines;
+            //m_axes[1].flags     &= ~ImPlotAxisFlags_NoGridLines;
+        }
+    }
+    
+    
+    
+
+    //ImPlot::SetupAxesLimits( -0, 1, -0, 1 );
+    ImPlot::SetupAxesLimits( 0.0f, 100.0f, 0.0f, 100.0, ImPlotCond_Once );
+    //
+    ImPlot::SetupAxisLimitsConstraints  (   ImAxis_X1,
+                                            ES.m_world_size[0].Min()   - ES.m_world_slop[0].Value(),
+                                            ES.m_world_size[0].Value() + ES.m_world_slop[0].Value()     );
+    ImPlot::SetupAxisLimitsConstraints  (   ImAxis_Y1,
+                                            ES.m_world_size[1].Min()   - ES.m_world_slop[1].Value(),
+                                            ES.m_world_size[1].Value() + ES.m_world_slop[1].Value()     );
+    //
+    //
+    //
+    ImPlot::SetupAxisZoomConstraints    (   ImAxis_X1,      ES.m_zoom_size[0].Min(),            ES.m_zoom_size[0].Value()        );
+    ImPlot::SetupAxisZoomConstraints    (   ImAxis_Y1,      ES.m_zoom_size[1].Min(),            ES.m_zoom_size[1].Value()       );
+    
+    
+    
+    //      1.      CONFIGURE THE "IMPLOT" APPEARANCE...
+    ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  1A.     Axis Names & Flags.
+                      m_axes[0].flags,          m_axes[1].flags);
+    //
+    //  ImPlot::SetupAxesLimits( m_world_bounds.min_x, m_world_bounds.max_x,    //  1B.     Auto-fit axes *before* any other ImPlot call.
+    //                           m_world_bounds.min_y, m_world_bounds.max_y, ImPlotCond_Once );
+    
+    
+    //m_world_slop
+    
+    
+    
+    
+    
+    ES.m_window_size = ImPlot::GetPlotLimits();          //     current X/Y axes
+    
+    
+    
+            
+    //  ImGui::DragFloat2("Limits Constraints", &constraints[0], 0.01f);
+    //  ImGui::DragFloat2("Zoom Constraints", &constraints[2], 0.01f);
+    //  CHECKBOX_FLAG(flags, ImPlotAxisFlags_PanStretch);
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //this->_clamp_plot_axes();
+    //
+    //
+    //
+    this->_update_grid_info();                                              //  3C.     Fetch Grid-Quantization Info.
+
+    return;
+}
+
+
+//  "_handle_rendering"
+//
+inline void Editor::_handle_rendering(const Interaction & it)
+{
+
+
+    return;
+}
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "SECONDARY MANAGERS".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      3.      MAIN MANAGER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 

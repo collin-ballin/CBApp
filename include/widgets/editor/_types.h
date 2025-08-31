@@ -909,6 +909,7 @@ struct OverlayStyle {
     int                                     window_rounding         = 8;
 //
     std::optional< Param<ImVec2> >          window_size             = { std::nullopt };      // {     {120.0f,    -1.0f},     { {80.0f,       1.0f},      {220.0f,    FLT_MAX} }   };
+    bool                                    collapsed               = false;
 //
 //
 //
@@ -958,7 +959,7 @@ struct OverlayInfo_t {
 //
 //
     static constexpr ImGuiWindowFlags       ms_DEF_WINDOW_FLAGS     = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-    static constexpr ImGuiWindowFlags       ms_CUSTOM_WINDOW_FLAGS  = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    static constexpr ImGuiWindowFlags       ms_CUSTOM_WINDOW_FLAGS  = ImGuiWindowFlags_NoTitleBar  | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
 //
 //
     OverlayID                               id                      = 0;
@@ -1193,7 +1194,7 @@ public:
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    //                              //  ...
+    CBAPP_CBLIB_TYPES_API
     
     // *************************************************************************** //
     //
@@ -1238,7 +1239,6 @@ public:
     //                  TRANSIENT STATE...
     // *************************************************************************** //
     //                                  OVERALL STATE / ENABLED BEHAVIORS:
-    bool                                    m_show_grid                     = true;
     bool                                    m_show_debug_overlay            = true;     //  Persistent/Resident Overlays.
     //
     bool                                    m_show_ui_traits_overlay        = true;     //  UI-Overlays
@@ -1247,7 +1247,24 @@ public:
     //
     //
     //                                  TRANSIENT OBJECTS:
-    ImPlotRect                              m_plot_limits                   = {   };
+    ImPlotRect                              m_window_size                   = {   };
+    //
+    //
+    Param<double>                           m_world_size [2]                = {
+                                                                                { 1000.0f,  { 0.0f,     5e4f } },
+                                                                                { 1000.0f,  { 0.0f,     5e4f } }
+                                                                            };
+    Param<double>                           m_world_slop [2]                = {                                     //  Panning area outside of the canvas size.
+                                                                                { 100.0f,     { 2.5e3f,   .5e3f } },
+                                                                                { 100.0f,     { 2.5e3f,   .5e3f } }
+                                                                            };
+    //
+    //
+    Param<double>                           m_zoom_size [2]                 = {
+                                                                                { 1000.0f,  { 1.0f,     5e4f } },
+                                                                                { 1000.0f,  { 1.0f,     5e4f } }
+                                                                            };
+    //
     //
     //                                  TRANSIENT STATE:
     //
@@ -1731,8 +1748,10 @@ struct EditorStyle
 //                              WIDGETS / UI-CONSTANTS / APP-APPEARANCE...
 // *************************************************************************** //
     //                      SYSTEM PREFERENCES WIDGETS:
-    float                       ms_SETTINGS_LABEL_WIDTH         = 196.0f;
-    float                       ms_SETTINGS_WIDGET_WIDTH        = 256.0f;
+    float                       ms_SETTINGS_LABEL_WIDTH             = 196.0f;
+    float                       ms_SETTINGS_WIDGET_AVAIL            = 256.0f;
+    float                       ms_SETTINGS_INDENT_SPACING_CACHE    = 0.0f;
+    float                       ms_SETTINGS_WIDGET_WIDTH            = -1.0f;
     
 // *************************************************************************** //
 //
@@ -1772,11 +1791,45 @@ struct EditorStyle
 
 // *************************************************************************** //
 
+    
+   
+// *************************************************************************** //
+//
+//
+//      2.C.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "PushSettingsWidgetW"
+    inline void                         PushSettingsWidgetW                 (const uint8_t mult = 1) noexcept
+    { this->ms_SETTINGS_WIDGET_WIDTH = this->ms_SETTINGS_WIDGET_AVAIL - static_cast<float>( mult ) * ms_SETTINGS_INDENT_SPACING_CACHE; }
+    
+    //  "PopSettingsWidgetW"
+    inline void                         PopSettingsWidgetW                  (void) noexcept
+    { this->ms_SETTINGS_WIDGET_WIDTH = this->ms_SETTINGS_WIDGET_AVAIL; }
+    
+    
+    
+    // *************************************************************************** //
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+
 
 
 // *************************************************************************** //
-// *************************************************************************** //   END "EditorStyle"
-};
+// *************************************************************************** //
+};//	END "MyClass" INLINE CLASS DEFINITION.
 
 
 

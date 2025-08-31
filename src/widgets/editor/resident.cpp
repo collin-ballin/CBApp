@@ -192,10 +192,10 @@ void Editor::_debugger_hit_detection(void)
     
     //      1.      SHORTCUTS ENABLED/DISABLED...
     this->S.labelf("X-Range:", LABEL_W, WIDGET_W);
-    ImGui::Text( "(%.0f, %.0f)",      ES.m_plot_limits.X.Min,     ES.m_plot_limits.X.Max);
+    ImGui::Text( "(%.0f, %.0f)",      ES.m_window_size.X.Min,     ES.m_window_size.X.Max);
     
     this->S.labelf("Y-Range:", LABEL_W, WIDGET_W);
-    ImGui::Text( "(%4.0f, %4.0f)",      ES.m_plot_limits.Y.Min,     ES.m_plot_limits.Y.Max);
+    ImGui::Text( "(%4.0f, %4.0f)",      ES.m_window_size.Y.Min,     ES.m_window_size.Y.Max);
     
 
 

@@ -138,7 +138,7 @@ struct ActionExecutor
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
     static constexpr float              ms_MIN_DURATION_S               = 0.001f;
-    static constexpr Range<double>      ms_PLAYBACK_SPEED_LIMITS        = { 0.10f,  4.0f };
+    static constexpr Range<double>      ms_PLAYBACK_SPEED_LIMITS        = { 0.10f,  8.0f };
     
     // *************************************************************************** //
     //
@@ -332,6 +332,16 @@ public:
     // *************************************************************************** //
     //  0.2.                            BROWSER CONSTANTS...
     // *************************************************************************** //
+    //                              BROWSER UUIDs:
+    static constexpr const char *       ms_COMPOSITION_TABLE_UUID                   = "##ActionComposer_Composition_Table";
+    static constexpr const char *       ms_COMPOSITION_DRAGDROP_ID                  = "COMP_PAYLOAD";
+    static constexpr const char *       ms_COMPOSITION_CTX_MENU_ID                  = "ActionComposer_ComposerRowContextMenu";
+    //
+    static constexpr const char *       ms_ACTION_TABLE_UUID                        = "##ActionComposer_Action_Table";
+    static constexpr const char *       ms_ACTION_DRAGDROP_ID                       = "ACTION_PAYLOAD";
+    static constexpr const char *       ms_ACTION_CTX_MENU_ID                       = "ActionComposer_ActionRowContextMenu";
+    //
+    //
     //                              BROWSER CHILD-WINDOW COLORS:
     ImVec4                              ms_CHILD_FRAME_BG1                          = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
     ImVec4                              ms_CHILD_FRAME_BG1L                         = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
@@ -560,16 +570,18 @@ protected:
     //      MAIN UI FUNCTIONS...
     // *************************************************************************** //
     //                              COMPOSITION UI:
-    void                                _draw_composition_selector          (void);
-    void                                    _draw_composition_table             (void);
+    inline void                         _draw_composition_selector          (void);
+    inline void                             _draw_composition_table             (void);
     [[nodiscard]] inline bool               _draw_composition_selectable        (const int , const bool);
-    void                                    _draw_composition_inspector         (Composition & );
+    [[nodiscard]] inline bool               _draw_composition_ctx_menu          (const int idx);
+    inline void                             _draw_composition_inspector         (Composition & );
     //
     //                              ACTION UI:
-    void                                _draw_action_selector               (void);
-    void                                    _draw_action_table                  (void);
+    inline void                             _draw_action_selector               (void);
+    inline void                             _draw_action_table                  (void);
     [[nodiscard]] inline bool               _draw_action_selectable             (const int , const bool);
-    void                                    _draw_action_inspector              (void);
+    [[nodiscard]] inline bool               _draw_action_ctx_menu               (const int idx);
+    inline void                             _draw_action_inspector              (void);
     //
     //                              OTHER:
     void                                _draw_renderer_visuals              (void);
@@ -708,6 +720,8 @@ protected:
         this->m_sel         = -1;
         //m_play_index        = (m_sel >= 0               ? m_sel             : 0);
         m_play_index        = 0;
+        m_action_state_S    .reset();
+        //
         m_is_running        = !m_actions->empty();
         m_state             = (m_actions->empty())      ? State::Idle       : State::Run;
         return;

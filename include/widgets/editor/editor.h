@@ -137,10 +137,8 @@ public:
     static constexpr float              ms_WIDGET_WIDTH                 = 250.0f;
     //
     //                              SETTINGS TAB:
-    static constexpr float              ms_SETTINGS_LABEL_WIDTH         = 196.0f;
-    static constexpr float              ms_SETTINGS_WIDGET_WIDTH        = 300.0f;
     static constexpr const char *       ms_NO_ASSIGNED_FILE_STRING      = "UNASSIGNED";      // Used when there is no "File > Save As..." assigned to app...
-    static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE         = ImVec2( 100,   25 );
+    static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE         = ImVec2( 125,   25 );
     //
     //
     //  static constexpr const char *       ms_SELECTION_CONTEXT_MENU_ID    = "Editor_Selection_ContextMenu";       //  selection_popup_id
@@ -212,7 +210,7 @@ public:
                 /*  placement       */  OverlayPlacement::CanvasTL,
                 /*  src_anchor      */  Anchor::NorthWest,
                 /*  offscreen       */  OffscreenPolicy::Clamp,
-                /*  anchor_px       */  ImVec2{ 8,      8 }                 //  nudge below bbox
+                /*  anchor_px       */  ImVec2{ 50.0f,          35.0f }                 //  nudge below bbox
             },
             {//     STYLE...
                 /*  alpha           */  0.80f,
@@ -272,7 +270,7 @@ public:
                 /*  anchor_px       */  ImVec2{ 8,      8 },                //  Offset Position.
             //
             //
-                /*  anchor_ws       */  ImVec2{ 0,      0 }                 //  ws anchor filled each frame
+                /*  anchor_ws       */  ImVec2{ 15.0f,      35.0f }                 //  ws anchor filled each frame
             },
             {//     STYLE...
                 /*  alpha           */  0.80f,
@@ -292,7 +290,7 @@ public:
                 /*  placement       */  OverlayPlacement::CanvasBL,
                 /*  src_anchor      */  Anchor::SouthWest,
                 /*  offscreen       */  OffscreenPolicy::Clamp,
-                /*  anchor_px       */  ImVec2{ 8,      8 },                //  Offset Position.
+                /*  anchor_px       */  ImVec2{ 50.0f,      12.5f },                //  Offset Position.
             },
             {//     STYLE...
                 /*  alpha           */  0.80f,
@@ -427,7 +425,7 @@ protected:
     ImPlotFlags                         m_plot_flags                    = ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
     utl::AxisCFG                        m_axes [2]                      = {
         {"##x-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit | ImPlotAxisFlags_Opposite },
-        {"##y-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit }
+        {"##y-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit  }
     };
     utl::LegendCFG                      m_legend                        = { ImPlotLocation_NorthWest, ImPlotLegendFlags_None };
     //
@@ -591,6 +589,10 @@ protected:
     //      PRIMARY STATE HANDLERS.         |   "editor.cpp" ...
     // *************************************************************************** //
     inline void                         _handle_default                     (const Interaction & );
+    //
+    inline void                             _handle_grid                    ([[maybe_unused]] const Interaction & );
+    inline void                             _handle_rendering               ([[maybe_unused]] const Interaction & );
+    //
     inline void                         _handle_hand                        ([[maybe_unused]] const Interaction & );
     inline void                         _handle_line                        (const Interaction & );
     inline void                         _handle_point                       (const Interaction & );
@@ -939,6 +941,8 @@ protected:
     { return m_grid.snap_on || ImGui::GetIO().KeyShift; }
        
        
+       
+       
     //  "_update_grid"
     inline void                         _update_grid_info                   (void)
     {
@@ -962,9 +966,31 @@ protected:
         return;
     }
        
+       
     //  "_clamp_plot_axes"
     inline void                         _clamp_plot_axes                    (void) const
     {
+        //  static float                constraints[4]      = {-10,10,1,20};
+        //  static ImPlotAxisFlags      flags;
+        
+        
+        //  ImGui::DragFloat2("Limits Constraints", &constraints[0], 0.01f);
+        //  ImGui::DragFloat2("Zoom Constraints", &constraints[2], 0.01f);
+        //  CHECKBOX_FLAG(flags, ImPlotAxisFlags_PanStretch);
+    
+        //  if (ImPlot::BeginPlot("##AxisConstraints",ImVec2(-1,0))) {
+        //      ImPlot::SetupAxes("X","Y",flags,flags);
+        //      ImPlot::SetupAxesLimits(-1,1,-1,1);
+        //      ImPlot::SetupAxisLimitsConstraints(ImAxis_X1,constraints[0], constraints[1]);
+        //      ImPlot::SetupAxisZoomConstraints(ImAxis_X1,constraints[2], constraints[3]);
+        //      ImPlot::SetupAxisLimitsConstraints(ImAxis_Y1,constraints[0], constraints[1]);
+        //      ImPlot::SetupAxisZoomConstraints(ImAxis_Y1,constraints[2], constraints[3]);
+        //      ImPlot::EndPlot();
+        //  }
+    
+    
+    
+    
         return;
     }
     

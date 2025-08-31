@@ -1379,14 +1379,14 @@
             "left": true
           },
           "cursor": {
-            "duration": 0.75,
+            "duration": 0.009999999776482582,
             "first": [
               1463.0,
               229.0
             ],
             "last": [
-              1709.23046875,
-              418.33203125
+              287.8125,
+              729.0859375
             ]
           },
           "descr": "",
@@ -1455,7 +1455,7 @@
       ],
       "description": "Basic mechanics of the Pen Tool:\n- Basic Usage\n- Click-And-Drag to edit Bezier\ncurvature during path creation",
       "name": "Pen Tool --- Basic (1/4)",
-      "playback_speed": 1.5
+      "playback_speed": 8.0
     },
     {
       "actions": [
@@ -1464,127 +1464,10 @@
             "left": true
           },
           "cursor": {
-            "duration": 1.0,
-            "first": [
-              0.0,
-              0.0
-            ],
-            "last": [
-              0.0,
-              0.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": false,
-            "key": 567,
-            "shift": false,
-            "super": false
-          },
-          "name": "TOOL = DEFAULT",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 5
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
             "duration": 0.5,
             "first": [
-              1667.0,
-              376.0
-            ],
-            "last": [
-              1709.0,
-              418.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "first move",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 0
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 1.0,
-            "first": [
-              0.0,
-              0.0
-            ],
-            "last": [
-              0.0,
-              0.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": false,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "TOOL = SCISSOR",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 5
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 1.0,
-            "first": [
-              1680.0,
-              229.0
+              68.0,
+              734.0
             ],
             "last": [
               745.265625,
@@ -1640,6 +1523,45 @@
           "enabled": true,
           "hotkey": {
             "alt": false,
+            "ctrl": false,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "TOOL = SCISSOR",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 5
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
             "ctrl": true,
             "key": 548,
             "shift": false,
@@ -1653,84 +1575,6 @@
             "left": true
           },
           "type": 1
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 0.25,
-            "first": [
-              692.0,
-              375.640625
-            ],
-            "last": [
-              692.265625,
-              536.21875
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "---",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 0
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 1.2000000476837158,
-            "first": [
-              692.0,
-              536.0
-            ],
-            "last": [
-              692.0,
-              536.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "---",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 0
         },
         {
           "click": {
@@ -1776,7 +1620,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 0.5,
+            "duration": 1.25,
             "first": [
               745.0,
               376.0
@@ -1815,7 +1659,7 @@
             "left": true
           },
           "cursor": {
-            "duration": 1.5,
+            "duration": 1.0,
             "first": [
               1078.26171875,
               443.6171875
@@ -1825,7 +1669,7 @@
               244.90234375
             ]
           },
-          "descr": "",
+          "descr": "Dragging the other path",
           "drag": {
             "from": [
               0.0,
@@ -1848,84 +1692,6 @@
             "left": true
           },
           "type": 4
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 1.5,
-            "first": [
-              1553.1171875,
-              244.90234375
-            ],
-            "last": [
-              1115.015625,
-              560.80078125
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "move to - MOVE CANVAS",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 0
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 1.5,
-            "first": [
-              1115.015625,
-              560.80078125
-            ],
-            "last": [
-              716.65625,
-              571.33984375
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "MOVE CANVAS",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 0
         },
         {
           "click": {
@@ -1971,6 +1737,123 @@
             "left": true
           },
           "cursor": {
+            "duration": 0.75,
+            "first": [
+              1553.1171875,
+              244.90234375
+            ],
+            "last": [
+              1115.0,
+              561.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "Drag P2",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.2000000476837158,
+            "first": [
+              1115.015625,
+              560.80078125
+            ],
+            "last": [
+              1538.0,
+              558.203125
+            ]
+          },
+          "descr": "Panning on the canvas with the \"hand\" tool",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "MOVE CANVAS",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 666,
+            "shift": false,
+            "super": false
+          },
+          "name": "---",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 7
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
             "duration": 1.0,
             "first": [
               0.0,
@@ -2004,27 +1887,20 @@
             "left": true
           },
           "type": 5
-        }
-      ],
-      "description": "Auxiliary Tools to edit paths:\n\n- \"-\": Remove Anchor Tool,\n- \"+\": Add Anchor Tool,\n- \"SHIFT+C\": Scissor Tool",
-      "name": "Pen Tool --- Basic (2/4)",
-      "playback_speed": 1.0
-    },
-    {
-      "actions": [
+        },
         {
           "click": {
             "left": true
           },
           "cursor": {
-            "duration": 1.5,
+            "duration": 1.0,
             "first": [
-              87.97265625,
-              736.11328125
+              1538.0,
+              558.203125
             ],
             "last": [
-              1855.0234375,
-              139.828125
+              773.44921875,
+              499.7734375
             ]
           },
           "descr": "",
@@ -2042,7 +1918,7 @@
             "shift": false,
             "super": false
           },
-          "name": "clear",
+          "name": "Move to V1",
           "press": {
             "left": true
           },
@@ -2058,12 +1934,51 @@
           "cursor": {
             "duration": 1.5,
             "first": [
-              87.97265625,
-              736.11328125
+              773.44921875,
+              499.7734375
             ],
             "last": [
-              330.01953125,
-              538.98828125
+              391.17578125,
+              582.41796875
+            ]
+          },
+          "descr": "Modifying vertices with an existing path",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "Drag V1",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.5,
+            "first": [
+              391.17578125,
+              582.41796875
+            ],
+            "last": [
+              1167.88671875,
+              373.34375
             ]
           },
           "descr": "",
@@ -2081,7 +1996,7 @@
             "shift": false,
             "super": false
           },
-          "name": "first move",
+          "name": "Move to V2",
           "press": {
             "left": true
           },
@@ -2089,6 +2004,45 @@
             "left": true
           },
           "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              1167.88671875,
+              373.34375
+            ],
+            "last": [
+              1550.88671875,
+              397.58203125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "Drag V2",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
         },
         {
           "click": {
@@ -2105,7 +2059,7 @@
               0.0
             ]
           },
-          "descr": "",
+          "descr": "Delete a vertex",
           "drag": {
             "from": [
               0.0,
@@ -2116,11 +2070,11 @@
           "hotkey": {
             "alt": false,
             "ctrl": false,
-            "key": 561,
+            "key": 598,
             "shift": false,
             "super": false
           },
-          "name": "TOOL = PEN",
+          "name": "TOOL = REMOVE ANCHOR",
           "press": {
             "left": true
           },
@@ -2136,12 +2090,12 @@
           "cursor": {
             "duration": 1.0,
             "first": [
-              0.0,
-              0.0
+              1550.88671875,
+              397.58203125
             ],
             "last": [
-              0.0,
-              0.0
+              1010.98828125,
+              488.703125
             ]
           },
           "descr": "",
@@ -2159,46 +2113,7 @@
             "shift": false,
             "super": false
           },
-          "name": "V0",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 1
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 0.20000000298023224,
-            "first": [
-              330.0,
-              539.0
-            ],
-            "last": [
-              330.0,
-              271.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "move to V1",
+          "name": "Move to V3",
           "press": {
             "left": true
           },
@@ -2214,12 +2129,12 @@
           "cursor": {
             "duration": 1.0,
             "first": [
-              0.0,
-              0.0
+              1550.88671875,
+              397.58203125
             ],
             "last": [
-              0.0,
-              0.0
+              1010.98828125,
+              488.703125
             ]
           },
           "descr": "",
@@ -2237,241 +2152,7 @@
             "shift": false,
             "super": false
           },
-          "name": "V1",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 1
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 0.20000000298023224,
-            "first": [
-              323.046875,
-              270.7578125
-            ],
-            "last": [
-              616.1796875,
-              271.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "move to V2",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 0
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 1.0,
-            "first": [
-              0.0,
-              0.0
-            ],
-            "last": [
-              0.0,
-              0.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "V2",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 1
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 0.20000000298023224,
-            "first": [
-              616.1796875,
-              272.78125
-            ],
-            "last": [
-              616.08203125,
-              539.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "move to V3",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 0
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 1.0,
-            "first": [
-              0.0,
-              0.0
-            ],
-            "last": [
-              0.0,
-              0.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "V3",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 1
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 0.20000000298023224,
-            "first": [
-              616.08203125,
-              539.0
-            ],
-            "last": [
-              330.0,
-              539.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "move to V4",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 0
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 1.0,
-            "first": [
-              0.0,
-              0.0
-            ],
-            "last": [
-              0.0,
-              0.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "CLOSE",
+          "name": "Delete V3",
           "press": {
             "left": true
           },
@@ -2495,7 +2176,7 @@
               0.0
             ]
           },
-          "descr": "",
+          "descr": "Modify a vertex",
           "drag": {
             "from": [
               0.0,
@@ -2506,11 +2187,11 @@
           "hotkey": {
             "alt": false,
             "ctrl": false,
-            "key": 564,
-            "shift": false,
+            "key": 548,
+            "shift": true,
             "super": false
           },
-          "name": "TOOL = SHAPE",
+          "name": "TOOL = EDIT ANCHOR",
           "press": {
             "left": true
           },
@@ -2524,14 +2205,14 @@
             "left": true
           },
           "cursor": {
-            "duration": 2.0,
+            "duration": 1.0,
             "first": [
-              330.0,
-              539.0
+              1010.98828125,
+              488.703125
             ],
             "last": [
-              1100.0,
-              422.0
+              857.5859375,
+              371.91796875
             ]
           },
           "descr": "",
@@ -2549,7 +2230,7 @@
             "shift": false,
             "super": false
           },
-          "name": "---",
+          "name": "Move to V4",
           "press": {
             "left": true
           },
@@ -2565,12 +2246,12 @@
           "cursor": {
             "duration": 1.0,
             "first": [
-              0.0,
-              0.0
+              1010.98828125,
+              488.703125
             ],
             "last": [
-              0.0,
-              0.0
+              857.5859375,
+              371.91796875
             ]
           },
           "descr": "",
@@ -2588,7 +2269,7 @@
             "shift": false,
             "super": false
           },
-          "name": "Shape IN",
+          "name": "DRAG V4 | BEGIN",
           "press": {
             "left": true
           },
@@ -2602,14 +2283,14 @@
             "left": true
           },
           "cursor": {
-            "duration": 1.5,
+            "duration": 1.0,
             "first": [
-              1100.0,
-              422.0
+              857.5859375,
+              371.91796875
             ],
             "last": [
-              1100.0,
-              299.0
+              1070.1328125,
+              256.09765625
             ]
           },
           "descr": "",
@@ -2627,46 +2308,7 @@
             "shift": false,
             "super": false
           },
-          "name": "Shape MOVE 1",
-          "press": {
-            "left": true
-          },
-          "release": {
-            "left": true
-          },
-          "type": 0
-        },
-        {
-          "click": {
-            "left": true
-          },
-          "cursor": {
-            "duration": 1.5,
-            "first": [
-              1100.0,
-              299.0
-            ],
-            "last": [
-              1100.0,
-              378.0
-            ]
-          },
-          "descr": "",
-          "drag": {
-            "from": [
-              0.0,
-              0.0
-            ]
-          },
-          "enabled": true,
-          "hotkey": {
-            "alt": false,
-            "ctrl": true,
-            "key": 548,
-            "shift": false,
-            "super": false
-          },
-          "name": "Shape MOVE 2",
+          "name": "Drag V4 | 1",
           "press": {
             "left": true
           },
@@ -2682,12 +2324,12 @@
           "cursor": {
             "duration": 1.0,
             "first": [
-              0.0,
-              0.0
+              1010.98828125,
+              488.703125
             ],
             "last": [
-              0.0,
-              0.0
+              857.5859375,
+              371.91796875
             ]
           },
           "descr": "",
@@ -2705,7 +2347,7 @@
             "shift": false,
             "super": false
           },
-          "name": "Shape OUT",
+          "name": "DRAG V4 | END",
           "press": {
             "left": true
           },
@@ -2713,10 +2355,49 @@
             "left": true
           },
           "type": 3
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.009999999776482582,
+            "first": [
+              251.0,
+              731.0
+            ],
+            "last": [
+              251.39453125,
+              730.84765625
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "END",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
         }
       ],
-      "description": "Maybe Closed-Path Stuff?",
-      "name": "Pen Tool --- Basic (4/4)",
+      "description": "Auxiliary Tools to edit paths:\n\n- \"-\": Remove Anchor Tool,\n- \"+\": Add Anchor Tool,\n- \"SHIFT+C\": Scissor Tool",
+      "name": "Pen Tool --- Basic (2/4)",
       "playback_speed": 1.0
     },
     {
@@ -4642,6 +4323,1424 @@
       ],
       "description": "Auxiliary Tools to edit paths:\n\n- \"-\": Remove Anchor Tool,\n- \"+\": Add Anchor Tool,\n- \"SHIFT+C\": Scissor Tool",
       "name": "Pen Tool --- Basic (3/4)",
+      "playback_speed": 1.0
+    },
+    {
+      "actions": [
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.5,
+            "first": [
+              227.89453125,
+              672.69140625
+            ],
+            "last": [
+              1095.0,
+              350.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "dock",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              1095.0,
+              362.0
+            ],
+            "last": [
+              249.0,
+              674.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "---",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        }
+      ],
+      "description": "",
+      "name": "---",
+      "playback_speed": 1.0
+    },
+    {
+      "actions": [
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.25,
+            "first": [
+              68.0,
+              734.0
+            ],
+            "last": [
+              488.25,
+              364.8515625
+            ]
+          },
+          "descr": "Create some objects on the canvas",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "First move",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 564,
+            "shift": false,
+            "super": false
+          },
+          "name": "TOOL = SHAPE",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 5
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.25,
+            "first": [
+              488.0,
+              365.0
+            ],
+            "last": [
+              1645.0,
+              575.5078125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "Move to RADIUS",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.75,
+            "first": [
+              1645.0,
+              575.5078125
+            ],
+            "last": [
+              1676.0,
+              576.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "SET RADIUS",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.800000011920929,
+            "first": [
+              1690.0,
+              575.5078125
+            ],
+            "last": [
+              488.0,
+              365.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "Move to CANVAS",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 564,
+            "shift": false,
+            "super": false
+          },
+          "name": "S1",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.25,
+            "first": [
+              488.0,
+              365.0
+            ],
+            "last": [
+              681.18359375,
+              493.76953125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to S2",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 564,
+            "shift": false,
+            "super": false
+          },
+          "name": "S2",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              0.0,
+              0.0
+            ],
+            "last": [
+              0.0,
+              0.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 567,
+            "shift": false,
+            "super": false
+          },
+          "name": "TOOL = DEFAULT",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 5
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              681.18359375,
+              493.76953125
+            ],
+            "last": [
+              379.44921875,
+              282.6875
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to Lasso",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              379.44921875,
+              282.6875
+            ],
+            "last": [
+              792.5625,
+              573.953125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "DRAG LASSO",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              792.5625,
+              573.953125
+            ],
+            "last": [
+              691.2265625,
+              353.3828125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "CTX MENU",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": false
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              792.5625,
+              573.953125
+            ],
+            "last": [
+              691.2265625,
+              353.3828125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "right click",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              691.2265625,
+              353.3828125
+            ],
+            "last": [
+              759.0,
+              499.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to \"copy\" (1)",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              759.0,
+              499.0
+            ],
+            "last": [
+              915.0,
+              499.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to \"copy\" (2)",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              792.5625,
+              573.953125
+            ],
+            "last": [
+              691.2265625,
+              353.3828125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "copy",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              915.0,
+              499.0
+            ],
+            "last": [
+              1038.0,
+              424.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to \"PASTE\" (1)",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              792.5625,
+              573.953125
+            ],
+            "last": [
+              691.2265625,
+              353.3828125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "click",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              1038.0,
+              424.0
+            ],
+            "last": [
+              1159.6875,
+              336.53125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to \"PASTE\" (2)",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": false
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              792.5625,
+              573.953125
+            ],
+            "last": [
+              691.2265625,
+              353.3828125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "right click",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              1160.0,
+              337.0
+            ],
+            "last": [
+              1245.0,
+              379.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to \"PASTE\" (3)",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.0,
+            "first": [
+              792.5625,
+              573.953125
+            ],
+            "last": [
+              691.2265625,
+              353.3828125
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "PASTE",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              1245.0,
+              379.0
+            ],
+            "last": [
+              1488.48046875,
+              327.34375
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to DRAG",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              1488.48046875,
+              327.34375
+            ],
+            "last": [
+              988.98046875,
+              518.80859375
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 664,
+            "shift": true,
+            "super": false
+          },
+          "name": "SHIFT IN",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 6
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.2000000476837158,
+            "first": [
+              1488.48046875,
+              327.34375
+            ],
+            "last": [
+              967.73828125,
+              443.9765625
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "DRAG",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 4
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.5,
+            "first": [
+              1488.48046875,
+              327.34375
+            ],
+            "last": [
+              988.98046875,
+              518.80859375
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": false,
+            "key": 664,
+            "shift": true,
+            "super": false
+          },
+          "name": "SHIFT OUT",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 7
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.75,
+            "first": [
+              967.73828125,
+              443.9765625
+            ],
+            "last": [
+              1238.85546875,
+              539.12109375
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "de-select",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.2000000476837158,
+            "first": [
+              967.73828125,
+              443.9765625
+            ],
+            "last": [
+              1238.85546875,
+              539.12109375
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "click",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.800000011920929,
+            "first": [
+              1238.85546875,
+              539.12109375
+            ],
+            "last": [
+              967.73828125,
+              443.9765625
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "Select S3",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.2000000476837158,
+            "first": [
+              967.73828125,
+              443.9765625
+            ],
+            "last": [
+              1238.85546875,
+              539.12109375
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "click",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.800000011920929,
+            "first": [
+              967.73828125,
+              443.9765625
+            ],
+            "last": [
+              1785.52734375,
+              329.484375
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "move to PROPERTIES",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 1.2000000476837158,
+            "first": [
+              967.73828125,
+              443.9765625
+            ],
+            "last": [
+              1238.85546875,
+              539.12109375
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "click",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 1
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.800000011920929,
+            "first": [
+              1785.52734375,
+              329.484375
+            ],
+            "last": [
+              1866.0,
+              649.0
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "Select S3",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        },
+        {
+          "click": {
+            "left": true
+          },
+          "cursor": {
+            "duration": 0.009999999776482582,
+            "first": [
+              251.0,
+              731.0
+            ],
+            "last": [
+              251.39453125,
+              730.84765625
+            ]
+          },
+          "descr": "",
+          "drag": {
+            "from": [
+              0.0,
+              0.0
+            ]
+          },
+          "enabled": true,
+          "hotkey": {
+            "alt": false,
+            "ctrl": true,
+            "key": 548,
+            "shift": false,
+            "super": false
+          },
+          "name": "END",
+          "press": {
+            "left": true
+          },
+          "release": {
+            "left": true
+          },
+          "type": 0
+        }
+      ],
+      "description": "Auxiliary Tools to edit paths:\n\n- \"-\": Remove Anchor Tool,\n- \"+\": Add Anchor Tool,\n- \"SHIFT+C\": Scissor Tool",
+      "name": "Selection --- (1/3)",
       "playback_speed": 1.0
     },
     {

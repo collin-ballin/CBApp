@@ -31,7 +31,15 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::_draw_editor_settings([[maybe_unused]] popup::Context & ctx)
 {
+    [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
+    [[maybe_unused]] float &        LABEL_W             = m_style.ms_SETTINGS_LABEL_WIDTH;
+    [[maybe_unused]] float &        WIDGET_AVAIL        = m_style.ms_SETTINGS_WIDGET_AVAIL;
+    [[maybe_unused]] float &        WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    this->m_style.ms_SETTINGS_INDENT_SPACING_CACHE      = 4.0f * style.IndentSpacing;
     S.PushFont(Font::Small);
+    
+    WIDGET_AVAIL    = ImGui::GetContentRegionAvail().x - LABEL_W;
+    WIDGET_W        = WIDGET_AVAIL;
 
 
     //  1.  SAVE/LOAD SERIALIZATION...
@@ -75,12 +83,13 @@ void Editor::_draw_settings_serialize(void)
 {
     namespace                   fs                      = std::filesystem;
     EditorState &               ES                      = this->m_editor_S;
+    EditorStyle &               Style                   = this->m_style;
+    const float &               LABEL_W                 = m_style.ms_SETTINGS_LABEL_WIDTH;
+    const float &               WIDGET_W                = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    //
     const bool                  has_file                = this->has_file();
     [[maybe_unused]] bool       force_save_as           = false;
     bool                        requested_close         = false;
-    //
-    //  const float &           LABEL_W             = m_style.ms_SETTINGS_LABEL_WIDTH;
-    //  const float &           WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
     
     
     
@@ -93,19 +102,19 @@ void Editor::_draw_settings_serialize(void)
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::TreeNode("Session Metadata") )
     {
-        ImGui::Indent();
+        ImGui::Indent();        Style.PushSettingsWidgetW(1);
         //
         //
         S.PushFont(Font::Main);
         
-            this->S.labelf("Current File:",                 this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+            this->S.labelf("Current File:",             LABEL_W,    WIDGET_W);
             if ( has_file )     { ImGui::TextColored( app::DEF_APPLE_BLUE, "%s", ES.m_filepath.filename().string().c_str() ); }
             else                { ImGui::TextDisabled( "%s", ms_NO_ASSIGNED_FILE_STRING ); }
             
         S.PopFont();
         //
         //
-        ImGui::Unindent();
+        ImGui::Unindent();        Style.PopSettingsWidgetW();
         //
         //
         //
@@ -123,11 +132,11 @@ void Editor::_draw_settings_serialize(void)
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::TreeNode("I/O Operations") )
     {
-        ImGui::Indent();
+        ImGui::Indent();        Style.PushSettingsWidgetW(1);
         
         
         //      2.1.    SAVE DIALOGUE...
-        this->S.labelf("Save:",                         this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        this->S.labelf("Save:",                         LABEL_W,    WIDGET_W);
         if ( ImGui::Button("Save", ms_SETTINGS_BUTTON_SIZE) )
         {
             
@@ -138,7 +147,7 @@ void Editor::_draw_settings_serialize(void)
         
         
         //      2.2.    "SAVE AS..." DIALOGUE...
-        this->S.labelf("Save As...:",                   this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        this->S.labelf("Save As...:",                   LABEL_W,    WIDGET_W);
         if ( /*force_save_as || */ ImGui::Button("Save As...", ms_SETTINGS_BUTTON_SIZE) )
         {
             requested_close = true;
@@ -147,7 +156,7 @@ void Editor::_draw_settings_serialize(void)
 
 
         //      2.3.    "OPEN" DIALOGUE...
-        this->S.labelf("Open File:",                    this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        this->S.labelf("Open File:",                    LABEL_W,    WIDGET_W);
         if ( ImGui::Button("Load", ms_SETTINGS_BUTTON_SIZE) )
         {
             CB_LOG( LogLevel::Info, "Editor | requesting file dialog to load from disk" );
@@ -157,7 +166,7 @@ void Editor::_draw_settings_serialize(void)
 
 
         //      2.4.    "NEW" DIALOGUE...
-        this->S.labelf("New File:",                     this->ms_SETTINGS_LABEL_WIDTH,      this->ms_SETTINGS_WIDGET_WIDTH);
+        this->S.labelf("New File:",                     LABEL_W,    WIDGET_W);
         ImGui::BeginDisabled(true);
             if ( ImGui::Button("New", ms_SETTINGS_BUTTON_SIZE) )
             {
@@ -168,7 +177,7 @@ void Editor::_draw_settings_serialize(void)
         
         
         
-        ImGui::Unindent();
+        ImGui::Unindent();      Style.PopSettingsWidgetW();
         //
         //
         //
@@ -190,12 +199,14 @@ void Editor::_draw_settings_serialize(void)
 //
 void Editor::_draw_settings_mechanics(void)
 {
-    const float &                   LABEL_W             = m_style.ms_SETTINGS_LABEL_WIDTH;
-    const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    EditorStyle &                   Style               = this->m_style;
+    EditorState &                   ES                  = this->m_editor_S;
+    //
+    const float &                   LABEL_W             = Style.ms_SETTINGS_LABEL_WIDTH;
+    const float &                   WIDGET_W            = Style.ms_SETTINGS_WIDGET_WIDTH;
     constexpr ImGuiSliderFlags      SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
     //constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
     //
-    EditorState &                   ES                  = this->m_editor_S;
     //  BrowserState &                  BState              = this->m_browser_S;
     
     
@@ -208,7 +219,7 @@ void Editor::_draw_settings_mechanics(void)
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::TreeNode("Behaviors") )
     {
-        ImGui::Indent();
+        ImGui::Indent();        Style.PushSettingsWidgetW(2);
         //
         //
             this->S.labelf("Show Grid:",              LABEL_W, WIDGET_W);           //  1.1.        SHOW GRID.
@@ -229,7 +240,7 @@ void Editor::_draw_settings_mechanics(void)
             ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUIObjectsOverlay",     &ES.m_show_ui_objects_overlay);
         //
         //
-        ImGui::Unindent();
+        ImGui::Unindent();      Style.PopSettingsWidgetW();
         //
         //
         //
@@ -240,41 +251,100 @@ void Editor::_draw_settings_mechanics(void)
     //
     //
     ImGui::Unindent();  //  END "Behaviors".
-        
     
-
+    
+    
     //      2.      MECHANICS...
     ImGui::NewLine();
     this->S.DisabledSeparatorText("Mechanics");
     //
-    //              2.1.    INTERACTIVITY.
+    //
+    //              2.1.    CANVAS.
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if ( ImGui::TreeNode("Canvas") )
+    {
+        ImGui::Indent();        Style.PushSettingsWidgetW(1);
+        //
+        //
+        {
+        //
+            constexpr float     SLIDER_SEP      = 10;
+            const float         SLIDER_W        = 0.5f * (WIDGET_W - SLIDER_SEP);
+            
+            
+            this->S.labelf("World Size:", LABEL_W, SLIDER_W);                   //  2.1A.       WINDOW LIMITS.
+            //
+            ImGui::SliderScalar( "##Mechanics_World_Limits_ConstraintsX",
+                                 ImGuiDataType_Double,
+                                 &ES.m_world_size[0].Value(),
+                                 &ES.m_world_size[0].Min(),
+                                 &ES.m_world_size[0].Max(),
+                                 "%.0f",
+                                 SLIDER_FLAGS );
+            //
+            ImGui::SameLine(0, SLIDER_SEP);         ImGui::SetNextItemWidth( SLIDER_W );
+            ImGui::SliderScalar( "##Mechanics_World_Limits_ConstraintsY",
+                                 ImGuiDataType_Double,
+                                 &ES.m_world_size[1].Value(),
+                                 &ES.m_world_size[1].Min(),
+                                 &ES.m_world_size[1].Max(),
+                                 "%.0f",
+                                 SLIDER_FLAGS );
+            
+            
+            this->S.labelf("Zoom Constraints:", LABEL_W, SLIDER_W);               //  2.1B.     CANVAS ZOOM-LEVEL LIMITS.
+            //
+            ImGui::SliderScalar( "##Mechanics_Zoom_Limits_X",
+                                 ImGuiDataType_Double,
+                                 &ES.m_zoom_size[0].Value(),
+                                 &ES.m_zoom_size[0].Min(),
+                                 &ES.m_zoom_size[0].Max(),
+                                 "%.0f",
+                                 SLIDER_FLAGS );
+            //
+            ImGui::SameLine(0, SLIDER_SEP);         ImGui::SetNextItemWidth( SLIDER_W );
+            ImGui::SliderScalar( "##Mechanics_Zoom_Limits_Y",
+                                 ImGuiDataType_Double,
+                                 &ES.m_zoom_size[1].Value(),
+                                 &ES.m_zoom_size[1].Min(),
+                                 &ES.m_zoom_size[1].Max(),
+                                 "%.0f",
+                                 SLIDER_FLAGS );
+         //
+        }
+        
+        
+        this->S.labelf("Mousewheel Zoom Rate:", LABEL_W, WIDGET_W);         //  2.1C.       HANDLE SIZE.
+        //
+        {
+            constexpr float     s_SCALE         = 100.0f;
+            float               zoom_rate       = s_SCALE * m_style.ms_ZOOM_RATE;
+            const bool          dirty           = ImGui::SliderFloat( "##Mechanics_Canvas_ZoomRate", &zoom_rate,         0.10f,   35.0f,  "%.2f",  SLIDER_FLAGS);
+            if (dirty)
+            {
+                m_style.ms_ZOOM_RATE = (zoom_rate / s_SCALE);
+            }
+        }
+        //
+        ImGui::Unindent();      Style.PopSettingsWidgetW();
+        //
+        //
+        //
+        ImGui::NewLine();
+        ImGui::TreePop();
+    }
+    //
+    //
+    //              2.2.    INTERACTIVITY.
+    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     if ( ImGui::TreeNode("Interactivity") )
     {
-        ImGui::Indent();
+        ImGui::Indent();        Style.PushSettingsWidgetW(1);
         //
             this->S.labelf("Vertex Hit Radius:", LABEL_W, WIDGET_W);          //  2.1.        HIT THRESHOLD.
-            ImGui::SliderFloat( "##Editor_Settings_Mechanics_HitThreshold",     &m_style.HIT_THRESH_SQ,       4.0f,   81.0f,  "%.1f units-squared",  SLIDER_FLAGS);
-            //
-            //
-            this->S.labelf("Mousewheel Zoom Rate:", LABEL_W, WIDGET_W);            //  1.1.    HANDLE SIZE
-            //
-            {
-                constexpr float     s_SCALE         = 100.0f;
-                //
-                float               zoom_rate       = s_SCALE * m_style.ms_ZOOM_RATE;
-                const bool          dirty           = ImGui::SliderFloat( "##Editor_Settings_Style_ZoomRate", &zoom_rate,         0.10f,   35.0f,  "%.2f",  SLIDER_FLAGS);
-                //
-                if (dirty)
-                {
-                    m_style.ms_ZOOM_RATE = (zoom_rate / s_SCALE);
-                }
-                
-                
-            }
-
+            ImGui::SliderFloat( "##Mechanics_Canvas_HitThreshold",     &m_style.HIT_THRESH_SQ,       4.0f,   81.0f,  "%.1f units-squared",  SLIDER_FLAGS);
         //
-        ImGui::Unindent();
+        ImGui::Unindent();        Style.PopSettingsWidgetW();
         //
         //
         //
@@ -292,34 +362,16 @@ void Editor::_draw_settings_mechanics(void)
 //
 void Editor::_draw_settings_style_and_preferences(void)
 {
-    const float &                   LABEL_W             = m_style.ms_SETTINGS_LABEL_WIDTH;
-    const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
-    constexpr ImGuiSliderFlags      SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
-    constexpr ImGuiColorEditFlags   COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
+    [[maybe_unused]] EditorState &      ES                  = this->m_editor_S;
+    [[maybe_unused]] EditorStyle &      Style               = this->m_style;
+    const float &                       LABEL_W             = Style.ms_SETTINGS_LABEL_WIDTH;
+    const float &                       WIDGET_W            = Style.ms_SETTINGS_WIDGET_WIDTH;
+    constexpr ImGuiSliderFlags          SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
+    constexpr ImGuiColorEditFlags       COLOR_FLAGS         = ImGuiColorEditFlags_NoInputs;
 
 
 
-    //      1.      CANVAS...
-    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-    if ( ImGui::TreeNode("Canvas") )
-    {
-        ImGui::Indent();
-        //
-            this->S.labelf("Mousewheel Zoom Rate:", LABEL_W, WIDGET_W);            //  1.1.    HANDLE SIZE
-            ImGui::SliderFloat( "##Editor_Settings_Style_ZoomRate", &m_style.ms_ZOOM_RATE,         0.0f,   1.0f,  "%.2f",  SLIDER_FLAGS);
-
-        //
-        ImGui::Unindent();
-        //
-        //
-        //
-        ImGui::NewLine();
-        ImGui::TreePop();
-    }
-    
-    
-    
-    //      2.      SELECTION...
+    //      1.      SELECTION...
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::TreeNode("Selection") )
     {
@@ -328,7 +380,7 @@ void Editor::_draw_settings_style_and_preferences(void)
         ImVec4          selection_bbox_color         = u32_to_f4(m_style.SELECTION_BBOX_COL);
     
     
-        ImGui::Indent();
+        ImGui::Indent();        Style.PushSettingsWidgetW(1);
         //
             this->S.labelf("Lasso Line Color:", LABEL_W, WIDGET_W);               //  2.1.    COL_LASSO_OUT
             if ( ImGui::ColorEdit4( "##Editor_Settings_Style_Selection_LassoLineColor",     (float*)&lasso_line_color_f,    COLOR_FLAGS ) )
@@ -342,7 +394,7 @@ void Editor::_draw_settings_style_and_preferences(void)
             if ( ImGui::ColorEdit4( "##Editor_Settings_Style_Selection_BBoxColor",          (float*)&selection_bbox_color,  COLOR_FLAGS ) )
             { m_style.SELECTION_BBOX_COL = f4_to_u32(selection_bbox_color); }
         //
-        ImGui::Unindent();
+        ImGui::Unindent();      Style.PopSettingsWidgetW();
         //
         //
         //
@@ -352,7 +404,7 @@ void Editor::_draw_settings_style_and_preferences(void)
     
 
 
-    //      3.      INTERACTIVITY...
+    //      2.      INTERACTIVITY...
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::TreeNode("Handles") )
     {
@@ -360,7 +412,7 @@ void Editor::_draw_settings_style_and_preferences(void)
         ImVec4          handle_hover_color_f        = u32_to_f4(m_style.ms_HANDLE_HOVER_COLOR);
     
     
-        ImGui::Indent();
+        ImGui::Indent();        Style.PushSettingsWidgetW(1);
         //
             this->S.labelf("Handle Size:", LABEL_W, WIDGET_W);            //  1.1.    HANDLE SIZE
             ImGui::SliderFloat( "##Editor_Settings_Style_Handle_Size", &m_style.ms_HANDLE_SIZE,         1.0f,   32.0f,  "%.2f px",  SLIDER_FLAGS);
@@ -378,7 +430,7 @@ void Editor::_draw_settings_style_and_preferences(void)
             if ( ImGui::ColorEdit4( "##Editor_Settings_Style_Handle_HoverColor",     (float*)&handle_hover_color_f,  COLOR_FLAGS ) )
             { m_style.ms_HANDLE_HOVER_COLOR = f4_to_u32(handle_hover_color_f); }
         //
-        ImGui::Unindent();
+        ImGui::Unindent();      Style.PopSettingsWidgetW();
         //
         //
         //

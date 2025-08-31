@@ -257,46 +257,49 @@ void Editor::_render_points(ImDrawList* dl) const
 //
 void Editor::_render_selection_highlight(ImDrawList * dl) const
 {
-    const ImU32 col = m_style.COL_SELECTION_OUT;
+    const ImU32     col         = m_style.COL_SELECTION_OUT;
+    auto            ws2px       = [this](ImVec2 w){ return world_to_pixels(w); };
 
-    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
 
     // ───── Highlight selected points
     for (size_t idx : m_sel.points)
     {
-        if (idx >= m_points.size()) continue;
-        const Point& pt = m_points[idx];
-        if (const Vertex* v = find_vertex(m_vertices, pt.v))
+        if ( idx >= m_points.size() )       { continue; }
+        const Point &           pt  = m_points[idx];
+        if (const Vertex *      v   = find_vertex(m_vertices, pt.v))
         {
-            ImVec2 scr = ws2px({ v->x, v->y });
-            dl->AddCircle(scr,
-                          pt.sty.radius + 2.f,        // small outset
-                          col, 0, 2.f);               // thickness 2 px
+            ImVec2  scr     = ws2px({ v->x, v->y });
+            dl->AddCircle( scr,
+                           pt.sty.radius + 2.f,        // small outset
+                           col, 0, 2.f);               // thickness 2 px
         }
     }
 
     // ───── Highlight selected standalone lines
     for (size_t idx : m_sel.lines)
     {
-        if (idx >= m_lines.size()) continue;
-        const Line& ln = m_lines[idx];
-        const Vertex* a = find_vertex(m_vertices, ln.a);
-        const Vertex* b = find_vertex(m_vertices, ln.b);
-        if (a && b)
+        if ( idx >= m_lines.size() )        { continue; }
+        const Line &        ln      = m_lines[idx];
+        const Vertex *      a       = find_vertex(m_vertices, ln.a);
+        const Vertex *      b       = find_vertex(m_vertices, ln.b);
+        
+        if ( a && b ) {
             dl->AddLine(ws2px({ a->x, a->y }),
                         ws2px({ b->x, b->y }),
                         col, ln.thickness + 2.f);
+        }
     }
 
     // ───── Highlight selected paths
     for (size_t idx : m_sel.paths)
     {
-        if (idx >= m_paths.size()) continue;
-        const Path& p = m_paths[idx];
-        const size_t N = p.verts.size();
-        if (N < 2) continue;
+        if ( idx >= m_paths.size() )            { continue; }
+        const Path &        p           = m_paths[idx];
+        const size_t        N           = p.verts.size();
+        if (N < 2)                              { continue; }
 
-        auto draw_seg = [&](const Vertex* a, const Vertex* b){
+        auto                draw_seg    = [&](const Vertex * a, const Vertex * b)
+        {
             const float w = p.style.stroke_width + 2.0f;
             if ( is_curved<VertexID>(a,b) )
             {
@@ -315,18 +318,27 @@ void Editor::_render_selection_highlight(ImDrawList * dl) const
         };
 
         for (size_t i = 0; i < N - 1; ++i)
-            if (const Vertex* a = find_vertex(m_vertices, p.verts[i]))
-                if (const Vertex* b = find_vertex(m_vertices, p.verts[i+1]))
+        {
+            if ( const Vertex* a = find_vertex(m_vertices, p.verts[i]) )
+            {
+                if (const Vertex * b = find_vertex(m_vertices, p.verts[i+1]))
                     draw_seg(a, b);
+            }
+        }
 
-        if (p.closed)
-            if (const Vertex* a = find_vertex(m_vertices, p.verts.back()))
-                if (const Vertex* b = find_vertex(m_vertices, p.verts.front()))
+        if ( p.closed ) {
+            if ( const Vertex * a = find_vertex(m_vertices, p.verts.back()) )
+            {
+                if ( const Vertex* b = find_vertex(m_vertices, p.verts.front()) )
                     draw_seg(a, b);
+            }
+        }
     }
 
-    _render_selected_handles(dl);
-    _render_selection_bbox(dl);
+
+    this->_render_selection_bbox      (dl);
+    this->_render_selected_handles    (dl);
+    return;
 }
 
 
@@ -355,6 +367,8 @@ inline void Editor::_render_selected_handles(ImDrawList* dl) const
         draw_handle(v.out_handle);
         draw_handle(v.in_handle);
     }
+    
+    return;
 }
 
 
@@ -362,17 +376,17 @@ inline void Editor::_render_selected_handles(ImDrawList* dl) const
 //
 inline void Editor::_render_selection_bbox(ImDrawList* dl) const
 {
-    const bool has_paths_or_lines = !m_sel.paths.empty() || !m_sel.lines.empty();
-    const bool single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
-    if (single_vertex_only) return;
+    const bool      has_paths_or_lines      = !m_sel.paths.empty() || !m_sel.lines.empty();
+    const bool      single_vertex_only      = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
+    
+    if ( single_vertex_only )               { return; }
 
-    ImVec2 tl, br;
-    if (!_selection_bounds(tl, br)) { m_hover_handle = -1; return; }
+    ImVec2      tl, br;
+    if ( !_selection_bounds(tl, br) )       { m_hover_handle = -1; return; }
 
-    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
-
-    ImVec2 p0 = ws2px(tl);
-    ImVec2 p1 = ws2px(br);
+    auto        ws2px       = [this](ImVec2 w){ return world_to_pixels(w); };
+    ImVec2      p0          = ws2px(tl);
+    ImVec2      p1          = ws2px(br);
 
     dl->AddRect(p0, p1, m_style.SELECTION_BBOX_COL, 0.0f,
                 ImDrawFlags_None, m_style.SELECTION_BBOX_TH);
@@ -403,6 +417,8 @@ inline void Editor::_render_selection_bbox(ImDrawList* dl) const
         dl->AddRectFilled(min, max, hovered ? m_style.ms_HANDLE_HOVER_COLOR
                                             : m_style.ms_HANDLE_COLOR);
     }
+    
+    return;
 }
 
 

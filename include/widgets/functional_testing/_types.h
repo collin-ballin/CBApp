@@ -761,11 +761,24 @@ struct ActionComposerState {
         //  Renaming "Active" State.
         m_renaming_comp             = false;
         m_renaming_action           = false;
+        //
+        //
+        //  Context Menu "Active" State.
+        m_comp_menu_open            = false;
+        m_action_menu_open          = false;
+        
         
         
         //  Rename Index.
         m_comp_rename_idx           = -1;
         m_action_rename_idx         = -1;
+        //
+        //
+        //  Context Menu Index.
+        m_comp_menu_idx             = -1;
+        m_action_menu_idx           = -1;
+        
+        
         
         return;
     }
@@ -780,12 +793,18 @@ struct ActionComposerState {
     bool                        m_renaming_comp                             = false;    //  TRUE when user is in the middle of MODIFYING NAME.
     bool                        m_renaming_action                           = false;    //
     //
+    bool                        m_comp_menu_open                            = false;    //  RIGHT-CLICK CONTEXT MENU...
+    bool                        m_action_menu_open                          = false;
+    //
     //
     //
     //
     //                      INDICES:
     int                         m_comp_rename_idx                           = -1;       //  LAYER that is BEING RENAMED     (–1 = none)
     int                         m_action_rename_idx                         = -1;       //  OBJECT that is BEING RENAMED    (–1 = none)
+    //
+    int                         m_comp_menu_idx                             = -1;       //  RIGHT-CLICK CONTEXT MENU...
+    int                         m_action_menu_idx                           = -1;
     //
     //
     //                      CACHE AND MISC. DATA:

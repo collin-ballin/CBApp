@@ -306,6 +306,10 @@ void OverlayManager::_draw_context_menu(Overlay & ov)
         //      5.      WINDOW SIZE...
         ImGui::BeginDisabled( !can_resize );
         //
+        //
+            if ( ImGui::MenuItem("Collapsed", nullptr, ov.style.collapsed) )         { ov.style.collapsed = !ov.style.collapsed; }
+            
+            
             if ( can_resize && ImGui::BeginMenu("Window Size") )
             {
                 auto &  size    = *ov.style.window_size;
@@ -507,15 +511,19 @@ void OverlayManager::_render_custom_overlay(
 
 
     // ───────────────────────────────────────────────────────────── 1. anchor
-    auto            [pos, pivot]    = _anchor_to_pos(ov, world_to_px, cursor_px, plot_rect);
-    const bool      is_custom       = (ov.cfg.placement == OverlayPlacement::Custom);
-    const bool      custom_size     = ( ov.style.window_size.has_value() );
-    const ImVec2    anchor_px       = (ov.cfg.placement == OverlayPlacement::CanvasPoint)// pixel coords of anchor itself (CanvasPoint only)
-                                        ? world_to_px(ov.cfg.anchor_ws) : ImVec2{0, 0};
+    constexpr ImGuiHoveredFlags         HOVER_FLAGS	            = ImGuiHoveredFlags_NoPopupHierarchy | ImGuiHoveredFlags_ChildWindows;
+    auto                                [pos, pivot]            = _anchor_to_pos(ov, world_to_px, cursor_px, plot_rect);
+    const bool                          is_custom               = (ov.cfg.placement == OverlayPlacement::Custom);
+    const bool                          custom_size             = ( ov.style.window_size.has_value() );
+    bool &                              collapsed               = ( ov.style.collapsed );
+    const ImVec2                        anchor_px               = (ov.cfg.placement == OverlayPlacement::CanvasPoint)// pixel coords of anchor itself (CanvasPoint only)
+                                                                    ? world_to_px(ov.cfg.anchor_ws) : ImVec2{0, 0};
     //
     //
     ImGuiWindow *                       win                     = nullptr;
     ImGuiWindowFlags                    win_flags               = ov.info.flags;
+    if ( collapsed )                    { win_flags = win_flags | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize; }     //  NEW: "Collapse" Feature.
+    //
     //
     static std::optional<OverlayID>     resize_ID               = std::nullopt;
     static bool                         resizing                = false;
@@ -557,7 +565,6 @@ void OverlayManager::_render_custom_overlay(
     //
     ImGuiCond                   cond            = (is_custom)   ? ImGuiCond_Once : ImGuiCond_Always;
     const ImGuiViewport *       vp              = ImGui::GetMainViewport();
-    //  const std::string           win_name        = "##EditorOverlay_" + std::to_string(ov.info.id);
     
     if (!is_custom)             { ImGui::SetNextWindowViewport(vp->ID); }
 
@@ -578,8 +585,16 @@ void OverlayManager::_render_custom_overlay(
 
     if (custom_size) {
         win_flags      &= ~(ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
-        ImGui::SetNextWindowSize                (   (*style.window_size).Value(),       ImGuiCond_Appearing             );
-        ImGui::SetNextWindowSizeConstraints     (   (*style.window_size).Min(),         (*style.window_size).Max()      );
+        
+        if ( !collapsed )   {
+            ImGui::SetNextWindowSizeConstraints     (   (*style.window_size).Min(),                 (*style.window_size).Max()                  );
+            ImGui::SetNextWindowSize                (   (*style.window_size).Value(),               ImGuiCond_Once                              );
+        }
+        else                {
+            //ImGui::SetNextWindowSize(               { (*style.window_size).Value().x, 0.0f },       ImGuiCond_Once                              );
+            ImGui::SetNextWindowSizeConstraints(    { (*style.window_size).Value().x, 0.0f },       { (*style.window_size).Value().x, 0.0f }    );
+        }
+        
     }
     
 
@@ -592,9 +607,17 @@ void OverlayManager::_render_custom_overlay(
         
         win         = ImGui::GetCurrentWindowRead();
         
-        ov.cfg.draw_fn();
-        if ( !ov.cfg.locked )   { _draw_context_menu(ov);                                   }
-        if ( custom_size )      { (*style.window_size).value = ImGui::GetItemRectSize();    }
+        
+        //      2.      DOUBLE-CLICK TO COLLAPSE WINDOW...
+        if ( ImGui::IsWindowHovered(HOVER_FLAGS)  &&  ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) )  { collapsed = !collapsed; }
+        
+        
+        //      3.      INVOKE THE RENDER FUNCTION...
+        if ( !collapsed )                       { ov.cfg.draw_fn(); }
+        
+        
+        if ( !ov.cfg.locked )                   { _draw_context_menu(ov);                                   }
+        //  if ( custom_size  &&  !collapsed)       { (*style.window_size).value = ImGui::GetItemRectSize();    }
         
         
         //      CASE 1 :    CHECK IF *THIS* WINDOW HAS STARTED RE-SIZING...
