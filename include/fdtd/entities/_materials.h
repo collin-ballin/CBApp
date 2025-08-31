@@ -1,11 +1,11 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****             _ O B J E C T S . H  ____  F I L E             ****
+*       ****           _ M A T E R I A L S . H  ____  F I L E           ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond
-*               DATED:      August 16, 2025.
+*               DATED:      August 31, 2025.
 *
 *       ********************************************************************
 *                FILE:      [include/fdtd.h]
@@ -14,8 +14,8 @@
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CB_FDTD_OBJECTS_H
-#define _CB_FDTD_OBJECTS_H  1
+#ifndef _CB_FDTD_ENTITIES_MATERIALS_H
+#define _CB_FDTD_ENTITIES_MATERIALS_H  1
 
 
 //  0.1.        ** MY **  HEADERS...
@@ -52,53 +52,11 @@ namespace cb { namespace fdtd {//     BEGINNING NAMESPACE "cb" :: "fdtd"...
 
 
 
-//      0.      ENUM TYPES...
-// *************************************************************************** //
-// *************************************************************************** //
 
 
-//  "SourceType"
+
 //
-enum class SourceType : uint8_t {
-    Gaussian,
-    TimeHarmonic,
-    RickerWavelet,
 //
-    COUNT
-};
-//
-//  "DEF_SOURCE_TYPE_NAMES"
-//      COMPILE-TIME ARRAY CONTAINING THE NAME OF ALL FDTD SOURCE TYPES.
-//
-inline static const std::array<const char *, static_cast<size_t>(SourceType::COUNT)>
-DEF_SOURCE_TYPE_NAMES        = {{
-    "Gaussian Pulse",       "Time-Harmonic",        "Ricker Wavelet"
-}};
-
-
-
-
-
-
-//  "BoundaryType"
-//
-enum class BoundaryType : uint8_t {
-    Mur,
-//
-    COUNT
-};
-//
-//  "DEF_BOUNDARY_TYPE_NAMES"
-//      COMPILE-TIME ARRAY CONTAINING THE NAME OF ALL FDTD BOUNDARY CONDITION TYPES.
-//
-inline static const std::array<const char *, static_cast<size_t>(BoundaryType::COUNT)>
-DEF_BOUNDARY_TYPE_NAMES        = {{
-    "Mur ABC"
-}};
-
-
-
-
 // *************************************************************************** //
 // *************************************************************************** //   END "ENUM Types".
 
@@ -127,7 +85,7 @@ DEF_BOUNDARY_TYPE_NAMES        = {{
 
 
 
-#endif      //  _CB_FDTD_OBJECTS_H  //
+#endif      //  _CB_FDTD_ENTITIES_MATERIALS_H  //
 // *************************************************************************** //
 // *************************************************************************** //
 //

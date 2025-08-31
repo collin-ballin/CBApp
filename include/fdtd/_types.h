@@ -21,7 +21,6 @@
 //  0.1.        ** MY **  HEADERS...
 #include CBAPP_USER_CONFIG
 #include "cblib.h"
-#include "fdtd/_objects.h"
 
 
 //  0.2     STANDARD LIBRARY HEADERS...

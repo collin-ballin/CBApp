@@ -1,11 +1,11 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****                 F D T D . H  ____  F I L E                 ****
+*       ****               E N G I N E . H  ____  F I L E               ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond
-*               DATED:      May 18, 2025.
+*               DATED:      August 31, 2025.
 *
 *       ********************************************************************
 *                FILE:      [include/fdtd.h]
@@ -14,8 +14,8 @@
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CB_FDTD_H
-#define _CB_FDTD_H  1
+#ifndef _CB_FDTD_ENGINE_H
+#define _CB_FDTD_ENGINE_H  1
 #include CBAPP_USER_CONFIG
 
 
@@ -23,24 +23,10 @@
 //      1.      SUBSIDIARY HEADER FILES...
 // *************************************************************************** //
 // *************************************************************************** //
-
-//              1A.     MODULES.
-#ifndef _CB_FDTD_ENTITIES_H
-# include "fdtd/entities/entities.h"
-#endif	// _CB_FDTD_ENTITIES_H  //
-
-#ifndef _CB_FDTD_ENGINE_H
-//# include "fdtd/engine/engine.h"
-#endif	// _CB_FDTD_ENGINE_H  //
-
-
-
-//              1B.     INDIVIDUAL FILES.
-#include "fdtd/_types.h"
-#include "fdtd/_fdtd_impl.h"
-#include "fdtd/_fdtd_1d.h"
-
-
+//              1A.     INDIVIDUAL FILES.
+//      #ifndef _CB_FDTD_ENGINE_MODULE1_H
+//      # include "fdtd/engine/module1.h"
+//      #endif	// _CB_FDTD_ENGINE_MODULE1_H  //
 
 //
 //
@@ -60,13 +46,6 @@ namespace cb { namespace fdtd {//     BEGINNING NAMESPACE "cb" :: "fdtd"...
 
 
 
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-} }//   END OF "cb" :: "fdtd" NAMESPACE.
 
 
 
@@ -74,13 +53,7 @@ namespace cb { namespace fdtd {//     BEGINNING NAMESPACE "cb" :: "fdtd"...
 
 
 
-
-
-
-
-
-
-#endif      //  _CB_FDTD_H  //
+#endif      //  _CB_FDTD_ENGINE_H  //
 // *************************************************************************** //
 // *************************************************************************** //
 //
