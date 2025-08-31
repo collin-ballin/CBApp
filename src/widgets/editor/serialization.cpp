@@ -230,14 +230,19 @@ void Editor::_draw_settings_mechanics(void)
             
             
             
-            this->S.labelf("Show Debugger Overlay:",  LABEL_W, WIDGET_W);           //  2.1.        SHOW DEBUG OVERLAY.
-            ImGui::Checkbox("##Editor_Settings_Mechanics_ShowDebugOverlay",         &ES.m_show_debug_overlay);
+            this->S.labelf("Disable Overlays:",  LABEL_W, WIDGET_W);                //  2.1.        BLOCK OVERLAY MENUS.
+            ImGui::Checkbox("##Editor_Settings_Mechanics_DisableOverlays",          &ES.m_block_overlays);
             //
-            this->S.labelf("Show UI-Traits Overlay:",  LABEL_W, WIDGET_W);          //  2.2.        SHOW UI-TRAITS OVERLAY.
-            ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUITraitsOverlay",      &ES.m_show_ui_traits_overlay);
-            //
-            this->S.labelf("Show UI-Objects Overlay:",  LABEL_W, WIDGET_W);         //  2.3.        SHOW UI-TRAITS OVERLAY.
-            ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUIObjectsOverlay",     &ES.m_show_ui_objects_overlay);
+            ImGui::BeginDisabled(ES.m_block_overlays);
+                this->S.labelf("Show Debugger Overlay:",  LABEL_W, WIDGET_W);           //  2.2.        SHOW DEBUG OVERLAY.
+                ImGui::Checkbox("##Editor_Settings_Mechanics_ShowDebugOverlay",         &ES.m_show_debug_overlay);
+                //
+                this->S.labelf("Show UI-Traits Overlay:",  LABEL_W, WIDGET_W);          //  2.3.        SHOW UI-TRAITS OVERLAY.
+                ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUITraitsOverlay",      &ES.m_show_ui_traits_overlay);
+                //
+                this->S.labelf("Show UI-Objects Overlay:",  LABEL_W, WIDGET_W);         //  2.4.        SHOW UI-TRAITS OVERLAY.
+                ImGui::Checkbox("##Editor_Settings_Mechanics_ShowUIObjectsOverlay",     &ES.m_show_ui_objects_overlay);
+            ImGui::EndDisabled();
         //
         //
         ImGui::Unindent();      Style.PopSettingsWidgetW();

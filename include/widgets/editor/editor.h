@@ -267,10 +267,10 @@ public:
                 /*  placement       */  OverlayPlacement::CanvasTR,
                 /*  src_anchor      */  Anchor::NorthEast,
                 /*  offscreen       */  OffscreenPolicy::Clamp,
-                /*  anchor_px       */  ImVec2{ 8,      8 },                //  Offset Position.
+                /*  anchor_px       */  ImVec2{ 8.0f,       35.0f },           //  Offset Position.
             //
             //
-                /*  anchor_ws       */  ImVec2{ 15.0f,      35.0f }                 //  ws anchor filled each frame
+                /*  anchor_ws       */  ImVec2{ 0.0f,       0.0f }          //  ws anchor filled each frame
             },
             {//     STYLE...
                 /*  alpha           */  0.80f,
@@ -816,6 +816,7 @@ protected:
     //
     //                              SELECTION BEHAVIOR STUFF:
     void                                _selection_handle_shortcuts         ([[maybe_unused]] const Interaction & );
+    inline void                             _selection_no_selection_shortcuts   ([[maybe_unused]] const Interaction & );
     inline void                             _selection_read_only_shortcuts      ([[maybe_unused]] const Interaction & );
     inline void                             _selection_mutable_shortcuts        ([[maybe_unused]] const Interaction & );
     inline void                             _selection_advanced_shortcuts       ([[maybe_unused]] const Interaction & );

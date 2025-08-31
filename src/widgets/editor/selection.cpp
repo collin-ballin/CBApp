@@ -386,8 +386,11 @@ void Editor::_process_selection(const Interaction & it)
     resolve_pending_selection           (it);   //  ...
     dispatch_selection_context_menus    (it);   //  Right-Click CONTEXT MENU...
     
-    if ( m_sel.is_empty() )             { return; }
-    else                                { this->m_editor_S.m_show_sel_overlay = true; }
+    
+    //      [REMOVED AUG 30]    if ( m_sel.is_empty() )             { return; }
+    //                          else                                { this->m_editor_S.m_show_sel_overlay = true; }
+    if ( it.BlockShortcuts() )          { return; }                 //  PREVENT SHORTCUTS / HOT-KEYS...
+    
     
     _selection_handle_shortcuts         (it);   // NEW: selection-aware hot-keys
     
@@ -1104,12 +1107,19 @@ void Editor::_update_bbox(void)
 //
 void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it)
 {
+    this->_selection_no_selection_shortcuts     ( it );             //  0.  HOT-KEYS FOR NO-SELECTION STATUS...
+
+
+
+    if ( m_sel.is_empty() )             { return; }
+    else                                { this->m_editor_S.m_show_sel_overlay = true; }
+
+
     this->_selection_read_only_shortcuts        ( it );             //  1.  READ-ONLY HOTKEYS...
     
     
     //  CASE 1 :    If NO SELECTION -- There is no need for the additional hotkeys.
     if ( m_sel.empty() )                    { return; }
-    
     
 
     if ( _mode_has(CBCapabilityFlags_EnableMutableHotkeys) )        //  2.  MUTABLE HOTKEYS...
@@ -1119,7 +1129,27 @@ void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it
         { this->_selection_advanced_shortcuts( it ); }
     
     
+    return;
+}
+
+
+//  "_selection_no_selection_shortcuts"
+//
+inline void Editor::_selection_no_selection_shortcuts([[maybe_unused]] const Interaction & it)
+{
+    ImGuiIO &           io      = ImGui::GetIO();
+    EditorState &       ES      = this->m_editor_S;
+
+
+
+    //      1.1.    HIDE ALL OVERLAYS.      [ SHIFT + H ].
+    if ( io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_H) )       { ES.m_block_overlays = !ES.m_block_overlays; return; }   //  [SHIFT + H]       HIDE ALL OVERLAYS...
     
+    //      1.2.    PASTE.                  [ CTRL + V ].
+    if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_V) )        { /* this->copy_to_clipboard(); */      return;     }
+
+
+
     return;
 }
 
@@ -1128,25 +1158,22 @@ void Editor::_selection_handle_shortcuts([[maybe_unused]] const Interaction & it
 //
 inline void Editor::_selection_read_only_shortcuts([[maybe_unused]] const Interaction & it)
 {
-    ImGuiIO &   io          = ImGui::GetIO();
+    ImGuiIO &           io      = ImGui::GetIO();
+    
     
     
     //      1.1.    COPY.                   [ CTRL + C ].
     if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) )        { this->copy_to_clipboard();    return;     }
-            
-    //      1.2.    PASTE.                  [ CTRL + V ].
-    if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) )        { /* this->copy_to_clipboard(); */      return;     }
-    
     
     
     //      CASE 2 :    THE HOTKEYS BELOW SHOULD BE  **BLOCKED**  BY  "it.BlockShortcuts()" ...
-    //
     if ( it.BlockShortcuts() )              { return; }
-    
     
    
     //      2.1.    CLEAR SELECTION.        [ ESC ].
     if ( ImGui::IsKeyPressed(ImGuiKey_Escape) )                 { this->reset_selection();      return;     }   //  [ESC]       CANCEL SELECTION...
+    
+    
     
     return;
 }
@@ -1160,7 +1187,7 @@ inline void Editor::_selection_mutable_shortcuts([[maybe_unused]] const Interact
     const float     step    = m_grid.snap_step * ( (io.KeyShift) ? 10.0f : 1.0f );         //  Always one “grid unit”.
     
     
-    if ( m_sel.empty() || !!it.BlockShortcuts() )           { return; }                     //  Nothing selected  OR  Not In-Focus  ===> nothing to do.
+    if ( m_sel.empty() || it.BlockShortcuts() )             { return; }                     //  Nothing selected  OR  Not In-Focus  ===> nothing to do.
 
 
 

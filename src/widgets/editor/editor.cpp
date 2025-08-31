@@ -952,6 +952,10 @@ inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
     [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO();
     EditorState &                   ES                  = this->m_editor_S;
     
+    if ( ES.m_block_overlays )                          { return; }
+    
+    
+    
     //  RESIDENTIAL WINDOWS...
     //
     static bool             debug_overlay_cache         = !ES.m_show_debug_overlay;                         //  1.  Debugger/Info Overlay.

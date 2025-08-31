@@ -1239,6 +1239,7 @@ public:
     //                  TRANSIENT STATE...
     // *************************************************************************** //
     //                                  OVERALL STATE / ENABLED BEHAVIORS:
+    mutable bool                            m_block_overlays                = false;
     bool                                    m_show_debug_overlay            = true;     //  Persistent/Resident Overlays.
     //
     bool                                    m_show_ui_traits_overlay        = true;     //  UI-Overlays

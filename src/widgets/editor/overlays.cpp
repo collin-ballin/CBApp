@@ -511,7 +511,7 @@ void OverlayManager::_render_custom_overlay(
 
 
     // ───────────────────────────────────────────────────────────── 1. anchor
-    constexpr ImGuiHoveredFlags         HOVER_FLAGS	            = ImGuiHoveredFlags_NoPopupHierarchy | ImGuiHoveredFlags_ChildWindows;
+    constexpr ImGuiHoveredFlags         HOVER_FLAGS	            = ImGuiHoveredFlags_NoPopupHierarchy;// | ImGuiHoveredFlags_ChildWindows;
     auto                                [pos, pivot]            = _anchor_to_pos(ov, world_to_px, cursor_px, plot_rect);
     const bool                          is_custom               = (ov.cfg.placement == OverlayPlacement::Custom);
     const bool                          custom_size             = ( ov.style.window_size.has_value() );
