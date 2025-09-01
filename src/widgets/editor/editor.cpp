@@ -320,10 +320,10 @@ void Editor::Begin(const char * /*id*/)
         ImPlot::PushPlotClipRect();
         //
         //
-            //  this->_render_lines             ( it.dl );              //  Enable once ported
-            this->_render_paths                 ( it.dl );            //  Enable once ported
+            //  this->_render_lines             ( it.dl );          //  Enable once ported
+            this->_render_paths                 ( it.dl );          //  Enable once ported
             this->_render_selection_highlight   ( it.dl );
-            this->_render_points                ( it.dl );            //  Already ported
+            this->_render_points                ( it.dl );          //  Already ported
         //
         //
         ImPlot::PopPlotClipRect();

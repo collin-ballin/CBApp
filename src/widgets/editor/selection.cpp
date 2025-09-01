@@ -958,15 +958,15 @@ void Editor::_update_lasso(const Interaction & it)
 
 //  "_start_bbox_drag"
 //
-void Editor::_start_bbox_drag(uint8_t handle_idx, const ImVec2 tl, const ImVec2 br)
+void Editor::_start_bbox_drag(uint8_t handle_idx, const ImVec2 tl_tight, const ImVec2 br_tight)
 {
     ImGuiIO& io = ImGui::GetIO();
 
+    const auto [tl, br] = _expand_bbox_by_pixels(tl_tight, br_tight, this->m_style.SELECTION_BBOX_MARGIN_PX);
 
-    m_boxdrag = {}; // clear everything consistently
+    m_boxdrag = {};
     m_boxdrag.active      = true;
     m_boxdrag.first_frame = true;
-
     m_boxdrag.handle_idx  = handle_idx;
     m_boxdrag.bbox_tl_ws  = tl;
     m_boxdrag.bbox_br_ws  = br;
@@ -975,24 +975,17 @@ void Editor::_start_bbox_drag(uint8_t handle_idx, const ImVec2 tl, const ImVec2 
 
     m_boxdrag.mouse_ws0   = pixels_to_world(io.MousePos);
     m_boxdrag.handle_ws0  = _bbox_handle_pos_ws(handle_idx, tl, br);
-
-    // Default pivot is the opposite corner/side midpoint.
-    // (When Alt is held during update we temporarily switch to center pivot.)
     m_boxdrag.anchor_ws   = _bbox_pivot_opposite(handle_idx, tl, br);
 
-    // Freeze current selection geometry (IDs + original positions)
     m_boxdrag.v_ids.clear();
     m_boxdrag.v_orig.clear();
     m_boxdrag.v_ids.reserve(m_sel.vertices.size());
     m_boxdrag.v_orig.reserve(m_sel.vertices.size());
-
     for (uint32_t vid : m_sel.vertices)
-    {
         if (const Vertex* v = find_vertex(m_vertices, vid)) {
             m_boxdrag.v_ids .push_back(vid);
             m_boxdrag.v_orig.push_back(ImVec2{v->x, v->y});
         }
-    }
     
     return;
 }

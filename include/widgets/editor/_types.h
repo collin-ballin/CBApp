@@ -1342,7 +1342,7 @@ public:
     //
     std::atomic<bool>                       m_sdialog_open                  = { false };
     std::atomic<bool>                       m_odialog_open                  = { false };
-    std::string                             m_project_name                  = {   }; 
+    std::string                             m_project_name                  = {   };
     std::filesystem::path                   m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-default.json"};   //    {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
     //  std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
     //
@@ -1628,8 +1628,6 @@ struct EditorStyle
     
     
 // *************************************************************************** //
-// *************************************************************************** //
-//
 //
 //
 // *************************************************************************** //
@@ -1641,8 +1639,8 @@ struct EditorStyle
 //
     int                         PEN_DRAG_TIME_THRESHOLD         = 0.05;                             //  PEN_DRAG_TIME_THRESHOLD         // seconds.
     float                       PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;                             //  PEN_DRAG_MOVEMENT_THRESHOLD     // px  (was 2)
+    
 // *************************************************************************** //
-//
 //
 //
 // *************************************************************************** //
@@ -1652,8 +1650,8 @@ struct EditorStyle
     ImU32                       COL_POINT_HELD                  = IM_COL32(255,100,0,255);      // while dragging
     ImU32                       COL_SELECTION_OUT               = IM_COL32(255,215,0,255);      // gold outline
     float                       DEFAULT_POINT_RADIUS            = 12.0f;                        // px
+    
 // *************************************************************************** //
-//
 //
 //
 // *************************************************************************** //
@@ -1664,8 +1662,8 @@ struct EditorStyle
     ImU32                       ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);       //  ms_HANDLE_HOVER_COLOR       //  yellow
     float                       ms_HANDLE_SIZE                  = 3.0f;
     float                       HANDLE_BOX_SIZE                 = 4.f;                              //  ms_HANDLE_SIZE              //  px half-side
+    
 // *************************************************************************** //
-//
 //
 //
 // *************************************************************************** //
@@ -1674,8 +1672,8 @@ struct EditorStyle
 //                          VERTICES:
     float                       VERTEX_PREVIEW_RADIUS           = 4.0f;
     ImU32                       VERTEX_PREVIEW_COLOR            = IM_COL32(255, 255, 0, 160);
+    
 // *************************************************************************** //
-//
 //
 //
 // *************************************************************************** //
@@ -1692,10 +1690,11 @@ struct EditorStyle
     ImU32                       COL_LASSO_FILL                  = IM_COL32(255,215,0,40);  // translucent fill
 //
 //                          BOUNDING BOX:
+    float                       SELECTION_BBOX_MARGIN_PX        = 8.0f;
     ImU32                       SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 153);   //  cyan-blue
     float                       SELECTION_BBOX_TH               = 1.5f;
+    
 // *************************************************************************** //
-//
 //
 //
 // *************************************************************************** //
@@ -1711,48 +1710,8 @@ struct EditorStyle
     //
     ImU32                       PEN_COL_NORMAL                  = IM_COL32(255,255,0,255);          //  PEN_COL_NORMAL      // yellow
     ImU32                       PEN_COL_EXTEND                  = IM_COL32(  0,255,0,255);          //  PEN_COL_EXTEND      // green
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                              BROWSER STYLE...
-// *************************************************************************** //
-    //                      BROWSER CHILD-WINDOW COLORS:
-    //      ImVec4                      ms_CHILD_FRAME_BG1              = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
-    //      ImVec4                      ms_CHILD_FRAME_BG1L             = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
-    //      ImVec4                      ms_CHILD_FRAME_BG1R             = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
-    //
-    //      ImVec4                      ms_CHILD_FRAME_BG2              = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
-    //      ImVec4                      ms_CHILD_FRAME_BG2L             = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
-    //      ImVec4                      ms_CHILD_FRAME_BG2R             = ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
-    //      //
-    //      //                      BROWSER CHILD-WINDOW STYLE:
-    //      float                       ms_VERTEX_SUBBROWSER_HEIGHT     = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
-    //      float                       ms_CHILD_BORDER1                = 2.0f;     //  ms_CHILD_BORDER1
-    //      float                       ms_CHILD_BORDER2                = 1.0f;     //  ms_CHILD_BORDER2
-    //      float                       ms_CHILD_ROUND1                 = 8.0f;     //  ms_CHILD_ROUND1
-    //      float                       ms_CHILD_ROUND2                 = 4.0f;     //  ms_CHILD_ROUND2
-    //      //
-    //      //                      BROWSER CHILD-WINDOW DIMENSIONS:
-    //      float                       OBJ_PROPERTIES_REL_WIDTH        = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
-    //      float                       VERTEX_SELECTOR_REL_WIDTH       = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
-    //      float                       VERTEX_INSPECTOR_REL_WIDTH      = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
-    //      //
-    //      //                      BROWSER **ALL** WIDGET STUFF:
-    //      float                       ms_BROWSER_BUTTON_SEP           = 8.0f;
-    //      float                       ms_BROWSER_SELECTABLE_SEP       = 16.0f;
-    //      //
-    //      //                      BROWSER PATH WIDGET STUFF:
-    //      float                       ms_BROWSER_OBJ_LABEL_WIDTH      = 55.0f;
-    //      float                       ms_BROWSER_OBJ_WIDGET_WIDTH     = 256.0f;
-    //      //
-    //      //                      BROWSER VERTEX WIDGET STUFF:
-    //      float                       ms_BROWSER_VERTEX_LABEL_WIDTH   = 55.0f;
-    //      float                       ms_BROWSER_VERTEX_WIDGET_WIDTH  = 196.0f;
 
 // *************************************************************************** //
-//
 //
 //
 // *************************************************************************** //
@@ -1765,7 +1724,6 @@ struct EditorStyle
     float                       ms_SETTINGS_WIDGET_WIDTH            = -1.0f;
     
 // *************************************************************************** //
-//
 //
 //
 // *************************************************************************** //
@@ -1782,7 +1740,6 @@ struct EditorStyle
 // *************************************************************************** //
 //
 //
-//
 // *************************************************************************** //
 //                              UTILITY...
 // *************************************************************************** //
@@ -1791,7 +1748,6 @@ struct EditorStyle
                                 //
                                 
 // *************************************************************************** //
-//
 //
 //
 // *************************************************************************** //

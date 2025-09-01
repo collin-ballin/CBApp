@@ -61,6 +61,13 @@ void Editor::_draw_editor_settings([[maybe_unused]] popup::Context & ctx)
     if ( ImGui::CollapsingHeader("User Preferences") ) {
         this->_settings_H3();
     }
+
+
+    //  4.  OPERATIONS...
+    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+    if ( ImGui::CollapsingHeader("Operations") ) {
+        this->_settings_H4();
+    }
     
     
     
@@ -317,10 +324,17 @@ inline void Editor::_settings_H2(void)
         //
         //  //  2.1A.       HIT THRESHOLD.
             this->S.labelf("Vertex Hit Radius:", LABEL_W, WIDGET_W);
-            ImGui::SliderFloat( "##H2_Editor_HitThreshold",     &m_style.HIT_THRESH_SQ,       4.0f,   81.0f,  "%.1f units-squared",  SLIDER_FLAGS);
+            ImGui::SliderFloat( "##H2_Editor_HitThreshold",             &m_style.HIT_THRESH_SQ,             4.0f,   81.0f,  "%.1f units-squared",  SLIDER_FLAGS);
             
             
-            //  2.1B.       MOUSEWHEEL ZOOM RATE.
+            
+            //  2.1B.       HIT THRESHOLD.
+            this->S.labelf("Selection BBox Margin:", LABEL_W, WIDGET_W);
+            ImGui::SliderFloat( "##H2_Editor_SelectionBBox_Margin",     &m_style.SELECTION_BBOX_MARGIN_PX,  1.0f,   100.0f,  "%.1f px",  SLIDER_FLAGS);
+            
+            
+
+            //  2.1C.       MOUSEWHEEL ZOOM RATE.
             this->S.labelf("Mousewheel Zoom Rate:", LABEL_W, WIDGET_W);
             //
             {
@@ -381,13 +395,16 @@ inline void Editor::_settings_H3(void)
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::TreeNode("Selection") )
     {
-        ImVec4          lasso_line_color_f           = u32_to_f4(m_style.COL_LASSO_OUT);
-        ImVec4          lasso_fill_color_f           = u32_to_f4(m_style.COL_LASSO_FILL);
-        ImVec4          selection_bbox_color         = u32_to_f4(m_style.SELECTION_BBOX_COL);
+        ImVec4          lasso_line_color_f          = u32_to_f4(m_style.COL_LASSO_OUT);
+        ImVec4          lasso_fill_color_f          = u32_to_f4(m_style.COL_LASSO_FILL);
+        //
+        ImVec4          selection_bbox_color        = u32_to_f4(m_style.SELECTION_BBOX_COL);
     
     
         ImGui::Indent();        Style.PushSettingsWidgetW(1);
         //
+        //
+            //      1.      LASSO TOOL.
             this->S.labelf("Lasso Line Color:", LABEL_W, WIDGET_W);               //  2.1.    COL_LASSO_OUT
             if ( ImGui::ColorEdit4( "##Editor_Settings_Style_Selection_LassoLineColor",     (float*)&lasso_line_color_f,    COLOR_FLAGS ) )
             { m_style.COL_LASSO_OUT = f4_to_u32(lasso_line_color_f); }
@@ -396,9 +413,12 @@ inline void Editor::_settings_H3(void)
             if ( ImGui::ColorEdit4( "##Editor_Settings_Style_Selection_LassoFillColor",     (float*)&lasso_fill_color_f,    COLOR_FLAGS ) )
             { m_style.COL_LASSO_FILL = f4_to_u32(lasso_fill_color_f); }
         
+        
+            //      2.      SELECTION BOUNDING BOX.
             this->S.labelf("Selection Bounding-Box Color:", LABEL_W, WIDGET_W);   //  2.3.    SELECTION_BBOX_COL
             if ( ImGui::ColorEdit4( "##Editor_Settings_Style_Selection_BBoxColor",          (float*)&selection_bbox_color,  COLOR_FLAGS ) )
             { m_style.SELECTION_BBOX_COL = f4_to_u32(selection_bbox_color); }
+        //
         //
         ImGui::Unindent();      Style.PopSettingsWidgetW();
         //
@@ -483,7 +503,7 @@ inline void Editor::_settings_H4(void)
 
     
     //      1.      I/O OPERATIONS...
-    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if ( ImGui::TreeNode("I/O Operations") )
     {
         ImGui::Indent();        Style.PushSettingsWidgetW(1);

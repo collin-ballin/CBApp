@@ -923,6 +923,26 @@ protected:
     //      NEW INLINE FUNCS...
     // *************************************************************************** //
     
+    //  "_expand_bbox_by_pixels"
+    inline std::pair<ImVec2, ImVec2>    _expand_bbox_by_pixels              (const ImVec2& tl_ws_in, const ImVec2& br_ws_in, float margin_px) const {
+        ImVec2 p0 = world_to_pixels(tl_ws_in);
+        ImVec2 p1 = world_to_pixels(br_ws_in);
+
+        // Normalize to pixel-space min/max first (left/top, right/bottom)
+        ImVec2 min_px{ std::min(p0.x, p1.x), std::min(p0.y, p1.y) };
+        ImVec2 max_px{ std::max(p0.x, p1.x), std::max(p0.y, p1.y) };
+
+        // Expand outward in pixel space
+        min_px.x -= margin_px;  min_px.y -= margin_px;
+        max_px.x += margin_px;  max_px.y += margin_px;
+
+        // Convert back; these are world TL (left, top) and BR (right, bottom)
+        ImVec2 tl_ws_out = pixels_to_world(min_px);
+        ImVec2 br_ws_out = pixels_to_world(max_px);
+        return { tl_ws_out, br_ws_out };
+    }
+
+
     //  "_bbox_handle_pos_ws"
     static inline ImVec2                _bbox_handle_pos_ws                 (uint8_t i, const ImVec2 & tl, const ImVec2 & br) {
         const ImVec2    c   { (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };

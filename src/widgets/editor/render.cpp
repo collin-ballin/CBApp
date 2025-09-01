@@ -376,6 +376,49 @@ inline void Editor::_render_selected_handles(ImDrawList* dl) const
 //
 inline void Editor::_render_selection_bbox(ImDrawList* dl) const
 {
+    const bool has_paths_or_lines = !m_sel.paths.empty() || !m_sel.lines.empty();
+    const bool single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
+    if (single_vertex_only) return;
+
+    ImVec2 tl_tight, br_tight;
+    if (!_selection_bounds(tl_tight, br_tight)) { m_hover_handle = -1; return; }
+
+    // NEW: robust expansion (pixel-space min/max)
+    const auto [tl, br] = _expand_bbox_by_pixels(tl_tight, br_tight, this->m_style.SELECTION_BBOX_MARGIN_PX);
+
+    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
+    ImVec2 p0 = ws2px(tl);
+    ImVec2 p1 = ws2px(br);
+
+    dl->AddRect(p0, p1, m_style.SELECTION_BBOX_COL, 0.0f,
+                ImDrawFlags_None, m_style.SELECTION_BBOX_TH);
+
+    // Handle positions from expanded WS box
+    ImVec2 hw{ (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
+    const ImVec2 ws[8] = {
+        tl, { hw.x, tl.y }, { br.x, tl.y }, { br.x, hw.y },
+        br, { hw.x, br.y }, { tl.x, br.y }, { tl.x, hw.y }
+    };
+
+    m_hover_handle = -1;
+    for (int i = 0; i < 8; ++i)
+    {
+        ImVec2 s = ws2px(ws[i]);
+        ImVec2 min{ s.x - m_style.HANDLE_BOX_SIZE, s.y - m_style.HANDLE_BOX_SIZE };
+        ImVec2 max{ s.x + m_style.HANDLE_BOX_SIZE, s.y + m_style.HANDLE_BOX_SIZE };
+
+        bool hovered = ImGui::IsMouseHoveringRect(min, max);
+        if (hovered) m_hover_handle = i;
+
+        dl->AddRectFilled(min, max, hovered ? m_style.ms_HANDLE_HOVER_COLOR
+                                            : m_style.ms_HANDLE_COLOR);
+    }
+    
+    return;
+}
+
+
+/*{
     const bool      has_paths_or_lines      = !m_sel.paths.empty() || !m_sel.lines.empty();
     const bool      single_vertex_only      = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
     
@@ -419,7 +462,7 @@ inline void Editor::_render_selection_bbox(ImDrawList* dl) const
     }
     
     return;
-}
+}*/
 
 
 
