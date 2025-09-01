@@ -1202,7 +1202,7 @@ public:
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr float                  ms_IO_MESSAGE_DURATION          = 10.0f;
+    static constexpr float                  ms_IO_MESSAGE_DURATION          = 6.0f;
     
     // *************************************************************************** //
     //
@@ -1234,43 +1234,52 @@ public:
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                  TRANSIENT STATE...
+    //                  PERSISTENT STATE INFORMATION...
     // *************************************************************************** //
     //                                  OVERALL STATE / ENABLED BEHAVIORS:
     mutable bool                            m_block_overlays                = false;
-    bool                                    m_show_debug_overlay            = true;     //  Persistent/Resident Overlays.
     //
-    bool                                    m_show_ui_traits_overlay        = true;     //  UI-Overlays
+    bool                                    m_show_debug_overlay            = true;     //  Persistent UI Resident Overlays.
+    bool                                    m_show_ui_traits_overlay        = true;
     bool                                    m_show_ui_objects_overlay       = true;
+    
+    // *************************************************************************** //
     //
     //
+    // *************************************************************************** //
+    //                  IMPLOT INFORMATION...
+    // *************************************************************************** //
+    //                                  CONSTANTS:
+    static constexpr double                 ms_INITIAL_CANVAS_SIZE [4]      = { 0.0f, 256.0f, 0.0f, 256.0f };
+    static constexpr double                 ms_INPUT_DOUBLE_INCREMENTS [2]  = { 1.0f, 10.0f };                      //  Snap value of "+" and "-" BUTTONS.
     //
-    //                                  TRANSIENT OBJECTS:
-    ImPlotRect                              m_window_size                   = {   };
     //
-    //
-    Param<double>                           m_world_size [2]                = {
-                                                                                { 1000.0f,  { 0.0f,     5e4f } },
-                                                                                { 1000.0f,  { 0.0f,     5e4f } }
+    //                                  PERSISTENT STATE INFORMATION:
+    Param<double>                           m_world_size [2]                = {                                     //  MAXIMUM SIZE OF THE CANVAS (World Size).
+                                                                                { 512.0f,       { 10.0f,        1e4f } },
+                                                                                { 512.0f,       { 10.0f,        1e4f } }
                                                                             };
-    Param<double>                           m_world_slop [2]                = {                                     //  Panning area outside of the canvas size.
-                                                                                { 100.0f,     { 2.5e3f,   .5e3f } },
-                                                                                { 100.0f,     { 2.5e3f,   .5e3f } }
+    Param<double>                           m_world_slop [2]                = {                                     //  (Allow user to scroll a bit beyond canvas limits).
+                                                                                { 128.0f,       { 32.0f,        512.0f } },
+                                                                                { 128.0f,       { 32.0f,        512.0f } }
+                                                                            };
+    Param<double>                           m_zoom_size [2]                 = {                                     //  MAX + MIN "ZOOM" RESOLUTION OF THE CANVAS.
+                                                                                { 1024.0f,      { 1.0f,         2e4f } },
+                                                                                { 1024.0f,      { 1.0f,         2e4f } }
                                                                             };
     //
     //
-    Param<double>                           m_zoom_size [2]                 = {
-                                                                                { 1000.0f,  { 1.0f,     5e4f } },
-                                                                                { 1000.0f,  { 1.0f,     5e4f } }
-                                                                            };
+    //                                  TRANSIENT STATE INFORMATION:
+    mutable ImPlotRect                      m_window_size                   = {   };        //  DOMAIN + RANGE OF CURRENT CANVAS:   ( [X0, Xf], [Y0, Yf] ).
+    mutable ImVec2                          m_plot_px_dims                  = {   };
+    
+    // *************************************************************************** //
     //
     //
-    //                                  TRANSIENT STATE:
-    //
-    //
-    //
+    // *************************************************************************** //
+    //                  TRANSIENT STATE INFORMATION...
+    // *************************************************************************** //
     //                                  UTILITY:
     float                                   m_bar_h                         = 0.0f;
     ImVec2                                  m_avail                         = ImVec2(0.0f,      0.0f);
@@ -1333,6 +1342,7 @@ public:
     //
     std::atomic<bool>                       m_sdialog_open                  = { false };
     std::atomic<bool>                       m_odialog_open                  = { false };
+    std::string                             m_project_name                  = {   }; 
     std::filesystem::path                   m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-default.json"};   //    {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
     //  std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
     //

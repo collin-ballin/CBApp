@@ -811,7 +811,8 @@ protected:
     void                                _update_lasso                       (const Interaction & );
     //
     //                              BOUNDING BOX MECHANICS:
-    void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
+    void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 tl, const ImVec2 br);
+    //  void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
     void                                _update_bbox                        (void);
     //
     //                              SELECTION BEHAVIOR STUFF:
@@ -829,9 +830,20 @@ protected:
     // *************************************************************************** //
     //                              EDITOR SETTINGS:
     void                                _draw_editor_settings               ([[maybe_unused]] popup::Context & ctx);
-    void                                    _draw_settings_serialize                (void);
-    void                                    _draw_settings_mechanics                (void);
-    void                                    _draw_settings_style_and_preferences    (void);
+    //
+    //                              HEADER 1, "PROJECT DATA":
+    inline void                             _settings_H1                    (void);
+    inline void                             _H1_project_data                (void);
+    //
+    //                              HEADER 2, "EDITOR SETTINGS":
+    inline void                             _settings_H2                    (void);
+    //
+    //                              HEADER 3, "USER PREFERENCES":
+    inline void                             _settings_H3                    (void);
+    //
+    //                              HEADER 4, "OPERATIONS":
+    inline void                             _settings_H4                    (void);
+    //
     //
     //
     //                              SERIALIZATION ORCHESTRATORS:
@@ -906,7 +918,53 @@ protected:
 //      2.C.            INLINE FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      NEW INLINE FUNCS...
+    // *************************************************************************** //
+    
+    //  "_bbox_handle_pos_ws"
+    static inline ImVec2                _bbox_handle_pos_ws                 (uint8_t i, const ImVec2 & tl, const ImVec2 & br) {
+        const ImVec2    c   { (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
+        switch (i) {
+            case 0  :   { return { tl.x    , tl.y }; }      // NW
+            case 1  :   { return { c.x     , tl.y }; }      // N
+            case 2  :   { return { br.x    , tl.y }; }      // NE
+            case 3  :   { return { br.x    , c.y  }; }      // E
+            case 4  :   { return { br.x    , br.y }; }      // SE
+            case 5  :   { return { c.x     , br.y }; }      // S
+            case 6  :   { return { tl.x    , br.y }; }      // SW
+            default :   { return { tl.x    , c.y  }; }      // W (7)
+        }
+    }
+    
+    //  "_bbox_pivot_opposite"
+    static inline ImVec2                _bbox_pivot_opposite                 (uint8_t i, const ImVec2 & tl, const ImVec2 & br) {
+        const ImVec2 c{ (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
+        switch (i) {
+            case 0  :   { return { br.x   , br.y };    }   // NW → pivot SE
+            case 1  :   { return { c.x    , br.y };    }   // N  → pivot S-mid
+            case 2  :   { return { tl.x   , br.y };    }   // NE → pivot SW
+            case 3  :   { return { tl.x   , c.y  };    }   // E  → pivot W-mid
+            case 4  :   { return { tl.x   , tl.y };    }   // SE → pivot NW
+            case 5  :   { return { c.x    , tl.y };    }   // S  → pivot N-mid
+            case 6  :   { return { br.x   , tl.y };    }   // SW → pivot NE
+            default :   { return { br.x   , c.y  };    }   // W  → pivot E-mid
+        }
+    }
+    
+    //  "_safe_div"
+    static inline float                 _safe_div                           (float num, float den)
+    { constexpr float eps = 1e-6f;  return (std::fabs(den) > eps) ? (num / den) : 1.0f; }
 
+    
+    // *************************************************************************** //
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
     // *************************************************************************** //
     //      INLINE GRID/WORLD FUNCTIONS...
     // *************************************************************************** //
@@ -947,16 +1005,18 @@ protected:
     //  "_update_grid"
     inline void                         _update_grid_info                   (void)
     {
-        ImPlotRect      lim         = ImPlot::GetPlotLimits();          // world extent
-        ImVec2          size        = ImPlot::GetPlotSize();           // in pixels
+        EditorState &       ES              = this->m_editor_S;
+        ImPlotRect &        lim             = ES.m_window_size;
+        ImVec2 &            size            = ES.m_plot_px_dims;
+        //
+        float               range_x         = static_cast<float>(lim.X.Max - lim.X.Min);
+        float               ppw             = size.x / range_x;                         //  pixels‑per‑world‑unit
+        float               raw_step        = m_style.TARGET_PX / ppw;                  //  world units per 20 px
 
-        float           range_x     = static_cast<float>(lim.X.Max - lim.X.Min);
-        float           ppw         = size.x / range_x;                  // pixels‑per‑world‑unit
-    
-        float           raw_step    = m_style.TARGET_PX / ppw;                  // world units per 20 px
 
-        //  Quantize to     1·10^n, 2·10^n, or 5·10^n
-        float           exp10       = std::pow(10.0f, std::floor(std::log10(raw_step)));
+        //      QUANTIZE TO:    1·10^n, 2·10^n,     *OR*     5·10^n
+        //
+        float           exp10       = std::pow( 10.0f, std::floor(std::log10(raw_step)) );
         float           mant        = raw_step / exp10;
         if      ( mant < 1.5f )     { mant = 1.0f;    }
         else if ( mant < 3.5f )     { mant = 2.0f;    }
@@ -971,27 +1031,6 @@ protected:
     //  "_clamp_plot_axes"
     inline void                         _clamp_plot_axes                    (void) const
     {
-        //  static float                constraints[4]      = {-10,10,1,20};
-        //  static ImPlotAxisFlags      flags;
-        
-        
-        //  ImGui::DragFloat2("Limits Constraints", &constraints[0], 0.01f);
-        //  ImGui::DragFloat2("Zoom Constraints", &constraints[2], 0.01f);
-        //  CHECKBOX_FLAG(flags, ImPlotAxisFlags_PanStretch);
-    
-        //  if (ImPlot::BeginPlot("##AxisConstraints",ImVec2(-1,0))) {
-        //      ImPlot::SetupAxes("X","Y",flags,flags);
-        //      ImPlot::SetupAxesLimits(-1,1,-1,1);
-        //      ImPlot::SetupAxisLimitsConstraints(ImAxis_X1,constraints[0], constraints[1]);
-        //      ImPlot::SetupAxisZoomConstraints(ImAxis_X1,constraints[2], constraints[3]);
-        //      ImPlot::SetupAxisLimitsConstraints(ImAxis_Y1,constraints[0], constraints[1]);
-        //      ImPlot::SetupAxisZoomConstraints(ImAxis_Y1,constraints[2], constraints[3]);
-        //      ImPlot::EndPlot();
-        //  }
-    
-    
-    
-    
         return;
     }
     
@@ -1000,7 +1039,6 @@ protected:
     
     
     // *************************************************************************** //
-    //
     //
     //
     // *************************************************************************** //
@@ -1445,6 +1483,7 @@ public:
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
+        //  _EDITOR_APP_INTERNAL_API
         using                           Font                            = Editor::Font                      ;
         using                           Logger                          = Editor::Logger                    ;
         using                           LogLevel                        = Editor::LogLevel                  ;

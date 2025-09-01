@@ -958,6 +958,112 @@ void Editor::_update_lasso(const Interaction & it)
 
 //  "_start_bbox_drag"
 //
+void Editor::_start_bbox_drag(uint8_t handle_idx, const ImVec2 tl, const ImVec2 br)
+{
+    ImGuiIO& io = ImGui::GetIO();
+
+
+    m_boxdrag = {}; // clear everything consistently
+    m_boxdrag.active      = true;
+    m_boxdrag.first_frame = true;
+
+    m_boxdrag.handle_idx  = handle_idx;
+    m_boxdrag.bbox_tl_ws  = tl;
+    m_boxdrag.bbox_br_ws  = br;
+    m_boxdrag.orig_w      = br.x - tl.x;
+    m_boxdrag.orig_h      = br.y - tl.y;
+
+    m_boxdrag.mouse_ws0   = pixels_to_world(io.MousePos);
+    m_boxdrag.handle_ws0  = _bbox_handle_pos_ws(handle_idx, tl, br);
+
+    // Default pivot is the opposite corner/side midpoint.
+    // (When Alt is held during update we temporarily switch to center pivot.)
+    m_boxdrag.anchor_ws   = _bbox_pivot_opposite(handle_idx, tl, br);
+
+    // Freeze current selection geometry (IDs + original positions)
+    m_boxdrag.v_ids.clear();
+    m_boxdrag.v_orig.clear();
+    m_boxdrag.v_ids.reserve(m_sel.vertices.size());
+    m_boxdrag.v_orig.reserve(m_sel.vertices.size());
+
+    for (uint32_t vid : m_sel.vertices)
+    {
+        if (const Vertex* v = find_vertex(m_vertices, vid)) {
+            m_boxdrag.v_ids .push_back(vid);
+            m_boxdrag.v_orig.push_back(ImVec2{v->x, v->y});
+        }
+    }
+    
+    return;
+}
+
+
+void Editor::_update_bbox(void)
+{
+    if (!m_boxdrag.active) return;
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    // 1) Read/snaps the mouse in *world* space
+    ImVec2 M = pixels_to_world(io.MousePos);
+    if (want_snap()) M = snap_to_grid(M);
+
+    // 2) Establish original box & the pivot for this frame
+    const ImVec2 tl0 = m_boxdrag.bbox_tl_ws;
+    const ImVec2 br0 = m_boxdrag.bbox_br_ws;
+    const ImVec2 c0  { (tl0.x + br0.x) * 0.5f, (tl0.y + br0.y) * 0.5f };
+
+    // Allow “scale from center” while Alt is held *during* drag
+    const bool   scale_from_center = alt_down();
+    const ImVec2 P = scale_from_center ? c0
+                                       : _bbox_pivot_opposite(m_boxdrag.handle_idx, tl0, br0);
+
+    // Initial handle position relative to pivot (frozen at start)
+    const ImVec2 H0 = _bbox_handle_pos_ws(m_boxdrag.handle_idx, tl0, br0);
+
+    // 3) Compute per-axis scale from the ratio (mouse-to-pivot) / (handle0-to-pivot)
+    float sx = 1.0f, sy = 1.0f;
+
+    const bool is_corner   = (m_boxdrag.handle_idx % 2 == 0);           // 0,2,4,6
+    const bool is_side_ns  = (m_boxdrag.handle_idx == 1 || m_boxdrag.handle_idx == 5);
+    const bool is_side_ew  = (m_boxdrag.handle_idx == 3 || m_boxdrag.handle_idx == 7);
+
+    // Corner or E/W side affect X
+    if (is_corner || is_side_ew) sx = _safe_div(M.x - P.x, H0.x - P.x);
+    // Corner or N/S side affect Y
+    if (is_corner || is_side_ns) sy = _safe_div(M.y - P.y, H0.y - P.y);
+
+    // Constrain side handles to one axis
+    if (is_side_ns) sx = 1.0f;
+    if (is_side_ew) sy = 1.0f;
+
+    // Optional: hold Shift → uniform scaling (match larger magnitude)
+    if (is_corner && io.KeyShift) {
+        const float s = (std::fabs(sx) > std::fabs(sy)) ? sx : sy;
+        sx = sy = s;
+    }
+
+    // 4) Apply affine x' = P + S*(x - P) to *original* positions
+    const std::size_t n = m_boxdrag.v_ids.size();
+    for (std::size_t i = 0; i < n; ++i)
+        if (Vertex* v = find_vertex_mut(m_vertices, m_boxdrag.v_ids[i])) {
+            const ImVec2 q0 { m_boxdrag.v_orig[i].x - P.x, m_boxdrag.v_orig[i].y - P.y };
+            const ImVec2 q1 { q0.x * sx,                  q0.y * sy };
+            v->x = P.x + q1.x;
+            v->y = P.y + q1.y;
+        }
+
+    // 5) End gesture
+    if (!io.MouseDown[ImGuiMouseButton_Left]) {
+        m_boxdrag.active = false;
+        m_boxdrag.first_frame = true;
+    } else {
+        m_boxdrag.first_frame = false;
+    }
+}
+
+
+/*
 void Editor::_start_bbox_drag(uint8_t hidx, const ImVec2& tl, const ImVec2& br)
 {
     // reset drag state first
@@ -981,7 +1087,7 @@ void Editor::_start_bbox_drag(uint8_t hidx, const ImVec2& tl, const ImVec2& br)
     };
     m_boxdrag.anchor_ws = pivots[hidx];
 
-    /* snapshot affected vertices */
+    // snapshot affected vertices //
     for (uint32_t vid : m_sel.vertices)
         if (const Vertex* v = find_vertex(m_vertices, vid))
         {
@@ -989,10 +1095,10 @@ void Editor::_start_bbox_drag(uint8_t hidx, const ImVec2& tl, const ImVec2& br)
             m_boxdrag.v_orig.push_back({ v->x, v->y });
         }
 
-    /* store mouse position in world coords AFTER reset */
+    // store mouse position in world coords AFTER reset //
     m_boxdrag.mouse_ws0 = pixels_to_world(ImGui::GetIO().MousePos);   // NEW
 
-    /* reset first-frame flag for update routine */
+    // reset first-frame flag for update routine //
     m_boxdrag.first_frame = true;
 }
 
@@ -1001,10 +1107,9 @@ void Editor::_start_bbox_drag(uint8_t hidx, const ImVec2& tl, const ImVec2& br)
 //
 void Editor::_update_bbox(void)
 {
-    if (!m_boxdrag.active)
-        return;
+    if (!m_boxdrag.active)  { return; }
 
-    /* if cursor hasn't moved since click, keep original scale */
+    // if cursor hasn't moved since click, keep original scale //
     if (m_boxdrag.first_frame &&
         ImGui::GetIO().MouseDelta.x == 0.f &&
         ImGui::GetIO().MouseDelta.y == 0.f)
@@ -1012,7 +1117,7 @@ void Editor::_update_bbox(void)
 
     m_boxdrag.first_frame = false;   // first frame handled
 
-    /* stop drag */
+    // stop drag //
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
     {
         m_boxdrag.first_frame = true;          // reset for next drag
@@ -1020,16 +1125,16 @@ void Editor::_update_bbox(void)
         return;
     }
 
-    /* current mouse in world coords */
+    // current mouse in world coords //
     ImVec2 cur_ws = pixels_to_world(ImGui::GetIO().MousePos);   // NEW
 
-    /* reference point for scaling */
+    // reference point for scaling //
     ImVec2 ref_ws = m_boxdrag.first_frame ? m_boxdrag.mouse_ws0 : cur_ws;
 
     ImVec2 h_ws{ ref_ws.x - m_boxdrag.anchor_ws.x,
                  ref_ws.y - m_boxdrag.anchor_ws.y };
 
-    /* original vector from anchor to handle */
+    // original vector from anchor to handle //
     ImVec2 h0_ws;
     switch (m_boxdrag.handle_idx)
     {
@@ -1054,7 +1159,7 @@ void Editor::_update_bbox(void)
     float sx = (h0_ws.x != 0.f) ? h_ws.x / h0_ws.x : 1.f;
     float sy = (h0_ws.y != 0.f) ? h_ws.y / h0_ws.y : 1.f;
 
-    /* lock one axis for edge handles (1=T,3=R,5=B,7=L) */
+    // lock one axis for edge handles (1=T,3=R,5=B,7=L) //
     const bool handle_top    = (m_boxdrag.handle_idx == 1);
     const bool handle_right  = (m_boxdrag.handle_idx == 3);
     const bool handle_bottom = (m_boxdrag.handle_idx == 5);
@@ -1063,7 +1168,7 @@ void Editor::_update_bbox(void)
     if (handle_top || handle_bottom)  sx = 1.f;   // vertical edge → X scale locked
     if (handle_left || handle_right)  sy = 1.f;   // horizontal edge → Y scale locked
 
-    /* Shift → uniform scale */
+    // Shift → uniform scale //
     if (ImGui::GetIO().KeyShift)
     {
         float s = std::max(std::fabs(sx), std::fabs(sy));
@@ -1071,11 +1176,11 @@ void Editor::_update_bbox(void)
         sy = (sy < 0.f ? -s : s);
     }
 
-    /* re‑assert locked axis after uniform adjustment */
+    // re‑assert locked axis after uniform adjustment //
     if (handle_top || handle_bottom)  sx = 1.f;
     if (handle_left || handle_right)  sy = 1.f;
 
-    /* apply to vertices */
+    // apply to vertices //
     for (size_t i = 0; i < m_boxdrag.v_ids.size(); ++i)
     {
         Vertex* v = find_vertex(m_vertices, m_boxdrag.v_ids[i]);
@@ -1088,7 +1193,7 @@ void Editor::_update_bbox(void)
             v->y = m_boxdrag.anchor_ws.y + d.y * sy;
         }
     }
-}
+}*/
 
 
 

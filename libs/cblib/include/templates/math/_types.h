@@ -166,6 +166,8 @@ public:
         return !(value_ < limits.min) && !(limits.max < value_);
     }
     
+    inline void                             Clamp                               (void) noexcept                     { this->value = std::clamp( this->value, limits.min, limits.max ); }
+    
     // *************************************************************************** //
 
 

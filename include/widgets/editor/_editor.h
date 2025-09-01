@@ -100,64 +100,7 @@
 //
 // *************************************************************************** //
 // *************************************************************************** //
-//
-#define                 _EDITOR_APP_INTERNAL_API                                                                                        \
-public:                                                                                                                                 \
-    /*                                                                                                                          */      \
-    /*      1.      GENERIC TYPES...                                                                                            */      \
-    using                           Font                        = app::Font_t                                                   ;       \
-    using                           Logger                      = utl::Logger                                                   ;       \
-    using                           LogLevel                    = utl::LogLevel                                                 ;       \
-                                                                                                                                        \
-    using                           CBCapabilityFlags           = CBCapabilityFlags_                                            ;       \
-    using                           Anchor                      = BBoxAnchor                                                    ;       \
-                                                                                                                                        \
-    using                           PopupHandle                 = EditorPopupBits                                               ;       \
-    using                           CBEditorPopupFlags          = CBEditorPopupFlags_                                           ;       \
-    using                           PopupInfo                   = EditorPopupInfo                                               ;       \
-                                                                                                                                        \
-    using                           LabelFn                     = std::function<void(const char *)>                             ;       \
-    /*                                                                                                                          */      \
-    /*      2.      ID/INDEX TYPES...                                                                                           */      \
-    template<typename T, typename Tag>                                                                                                  \
-    using                           ID                          = cblib::utl::IDType<T, Tag>                                    ;       \
-    using                           VertexID                    = uint32_t                                                      ;       \
-    using                           HandleID                    = uint8_t                                                       ;       \
-    using                           PointID                     = uint32_t                                                      ;       \
-    using                           LineID                      = uint32_t                                                      ;       \
-    using                           PathID                      = uint32_t                                                      ;       \
-    using                           ZID                         = uint32_t                                                      ;       \
-    using                           OverlayID                   = OverlayManager::OverlayID                                     ;       \
-    using                           HitID                       = uint32_t                                                      ;       \
-    /*                                                                                                                          */      \
-    /*      3.      OBJECT TYPES...                                                                                             */      \
-    using                           Vertex                      = Vertex_t          <VertexID>                                  ;       \
-/*  using                           Handle                      = Handle_t          <HandleID>;                                 */      \
-    using                           Point                       = Point_t           <PointID>                                   ;       \
-    using                           Line                        = Line_t            <LineID, ZID>                               ;       \
-    using                           Path                        = Path_t            <PathID, VertexID, ZID>                     ;       \
-    using                           PathKind                    = Path::PathKind                                                ;       \
-    using                           Payload                     = Path::Payload                                                 ;       \
-    using                           Overlay                     = Overlay_t         <OverlayID>                                 ;       \
-    using                           Hit                         = Hit_t             <HitID>                                     ;       \
-    using                           PathHit                     = PathHit_t         <PathID, VertexID>                          ;       \
-    using                           EndpointInfo                = EndpointInfo_t    <PathID>                                    ;       \
-    /*                                                                                                                          */      \
-    /*      4.      PRIMARY STATE OBJECTS...                                                                                    */      \
-    using                           EditorState                 = EditorState_t     <VertexID, PointID, LineID, PathID, ZID>    ;       \
-    using                           BrowserState                = BrowserState_t    <VertexID, PointID, LineID, PathID, ZID>    ;       \
-    using                           IndexState                  = IndexState_t      <VertexID, PointID, LineID, PathID, ZID>    ;       \
-    /*                                                                                                                          */      \
-    /*      5.      SUBSIDIARY STATE OBJECTS...                                                                                 */      \
-    using                           Clipboard                   = Clipboard_t       <Vertex, Point, Line, Path>                 ;       \
-    using                           Selection                   = Selection_t       <VertexID, PointID, LineID, PathID>         ;       \
-    /*                                                                                                                          */      \
-    /*      6.      TOOL STATE OBJECTS...                                                                                       */      \
-    using                           PenState                    = PenState_t        <VertexID>                                  ;       \
-    using                           ShapeState                  = ShapeState_t      <OverlayID>                                 ;       \
-    using                           DebuggerState               = DebuggerState_t   <VertexID, PointID, LineID, PathID, ZID>    ;       \
-    using                           ResidentEntry               = ResidentEntry_t   <OverlayID>                                 ;
-//
+
 //
 //
 // *************************************************************************** //

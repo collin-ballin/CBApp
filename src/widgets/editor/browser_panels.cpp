@@ -426,8 +426,8 @@ void Editor::_draw_vertex_inspector_column(Path & path)
     const float &               WIDGET_W        = BStyle.ms_BROWSER_OBJ_WIDGET_WIDTH;
     
     
-    //  CASE 0 :    NO VALID SELECTION...
-    if ( m_browser_S.m_inspector_vertex_idx < 0 || m_browser_S.m_inspector_vertex_idx >= static_cast<int>(path.verts.size()) ) 
+    //      CASE 0 :    NO VALID SELECTION...
+    if ( m_browser_S.m_inspector_vertex_idx < 0 || m_browser_S.m_inspector_vertex_idx >= static_cast<int>(path.verts.size()) )
     {
         this->S.PushFont(Font::Main);
             ImGui::TextDisabled("No vertex selected...");
@@ -436,7 +436,7 @@ void Editor::_draw_vertex_inspector_column(Path & path)
     }
 
                       
-    //  0.  OBTAIN POINTER TO VERTEX...
+    //      0.          OBTAIN POINTER TO VERTEX...
     VertexID                    vid             = path.verts[static_cast<size_t>(m_browser_S.m_inspector_vertex_idx)];
     Vertex *                    v               = find_vertex_mut(m_vertices, vid);
     VertexID                    cache_id        = static_cast<VertexID>(-1);
@@ -444,7 +444,8 @@ void Editor::_draw_vertex_inspector_column(Path & path)
     
     
     //      0.1.    UPDATE TITLE IF SELECTION CHANGED...
-    if (cache_id != vid) {
+    if (cache_id != vid)
+    {
         cache_id        = vid;
         int retcode     = std::snprintf( title, TITLE_SIZE, Vertex::ms_DEF_VERTEX_TITLE_FMT_STRING, m_browser_S.m_inspector_vertex_idx, vid );
         

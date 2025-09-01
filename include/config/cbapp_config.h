@@ -47,13 +47,14 @@
 // *************************************************************************** //
 //
 //
-//  2.  MY-OWN GLOBALLY DEFINED PRE-PROCESSOR MACROS...
+//
+//      2.      MY-OWN GLOBALLY DEFINED PRE-PROCESSOR MACROS...
 // *************************************************************************** //
 // *************************************************************************** //
 
 
 
-//      2.0.    PREVENT USER FROM "-DMY_FLAG_NAME" FOR INTERNAL MACRO NAMES...
+//              2.0.    PREVENT USER FROM "-DMY_FLAG_NAME" FOR INTERNAL MACRO NAMES...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -184,7 +185,8 @@
 // *************************************************************************** //
 //
 //
-//  3.  DEBUG BUILD.                    | __CBAPP_DEBUG__ MACROS...
+//
+//      3.      DEBUG BUILD.                    | __CBAPP_DEBUG__ MACROS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -237,7 +239,8 @@
 // *************************************************************************** //
 //
 //
-//  4.  RELEASE BUILD.                  | __CBAPP_RELEASE__ MACROS...
+//
+//      4.      RELEASE BUILD.                  | __CBAPP_RELEASE__ MACROS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -269,7 +272,8 @@
 // *************************************************************************** //
 //
 //
-//  5.  RELEASE WITH DEBUG INFO.        | __CBLIB_RELEASE_WITH_DEBUG_INFO__
+//
+//      5.      RELEASE WITH DEBUG INFO.        | __CBLIB_RELEASE_WITH_DEBUG_INFO__
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -301,7 +305,8 @@
 // *************************************************************************** //
 //
 //
-//  6.  MINIMUM SIZE RELEASE BUILD.     | __CBLIB_MIN_SIZE_RELEASE__ MACROS...
+//
+//      6.      MINIMUM SIZE RELEASE BUILD.     | __CBLIB_MIN_SIZE_RELEASE__ MACROS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -330,22 +335,32 @@
 // *************************************************************************** //
 //
 //
+//
 //      3.1     APPLICATION APIs AND INTERNAL TYPENAME ALIASES...
 // *************************************************************************** //
 // *************************************************************************** //
+
 //  MEMBER VARIABLE NAME FOR "AppState" OBJECT IN EACH CLASS...
 //      - Using this to consosolidate the lengthy member-accessor statements "this->m_state.my_object.my_data_member", etc ...
+// *************************************************************************** //
 #define                 CBAPP_STATE_NAME                S
 
+//
+// *************************************************************************** //
 
 
-//  _CBAPP_APPSTATE_INTERNAL_ALIAS_API           |   ** INTERNAL **
+
+
+
+
+//  _CBAPP_APPSTATE_INTERNAL_ALIAS_API              |   ** INTERNAL **
 //
 //      - ** **.
 //
 //      - "API" USED **EXCLUSIVELY** INSIDE "AppState" CLASS.
 //      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
 //
+// *************************************************************************** //
 #define                 _CBAPP_APPSTATE_INTERNAL_ALIAS_API                                                      \
 public:                                                                                                         \
     using               CBSignalFlags                   = std::uint32_t;                                        \
@@ -368,37 +383,155 @@ public:                                                                         
     using               LogLevel                        = Logger::Level;                                        \
     using               Tab_t                           = utl::Tab_t;
 
-
-
-//  "CBAPP_CBLIB_TYPES_API"             |   ** EXPORTED**
-//      - Exported API to provide alias for types afforded by "cblib".
 //
-#define                 CBAPP_CBLIB_TYPES_API                                                   \
-    template<typename T_>                                                                       \
-    using               Param                           = cblib::math::Param<T_>;               \
-    template<typename T_>                                                                       \
-    using               Range                           = cblib::math::Range<T_>;
+// *************************************************************************** //   _CBAPP_APPSTATE_INTERNAL_ALIAS_API
 
 
 
-//  "CBAPP_APPSTATE_ALIAS_API"          |   ** EXPORTED**
+
+
+
+//  "CBAPP_APPSTATE_ALIAS_API"                      |   ** EXPORTED**
 //
 //      - "API" USED BY "CBApp" DELEGATOR CLASSES THAT USE AN "AppState" OBJECT.
 //      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
 //
+// *************************************************************************** //
 #define                 CBAPP_APPSTATE_ALIAS_API                                                \
     using               AppState                        = app::AppState;                        \
     using               WinInfo                         = app::WinInfo;                         \
                                                         CBAPP_CBLIB_TYPES_API                   \
                                                         _CBAPP_APPSTATE_INTERNAL_ALIAS_API
 
+//                                                      
+// *************************************************************************** //   CBAPP_APPSTATE_ALIAS_API
 
 
+
+
+
+
+//  "CBAPP_CBLIB_TYPES_API"                         |   ** EXPORTED**
+//      - Exported API to provide alias for types afforded by "cblib".
+//
 // *************************************************************************** //
+#define                 CBAPP_CBLIB_TYPES_API                                                   \
+    template<typename T_>                                                                       \
+    using               Param                           = cblib::math::Param<T_>;               \
+    template<typename T_>                                                                       \
+    using               Range                           = cblib::math::Range<T_>;
+
+//
+// *************************************************************************** //   CBAPP_CBLIB_TYPES_API
+
+
+
+
+
+
+//  "_EDITOR_APP_INTERNAL_API"                      |   ** EXPORTED**
+//
+//      - "API" USED **EXCLUSIVELY** INSIDE "AppState" CLASS.
+//      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
+//
+//      ** ID-VALUE TEMPLATE CONVENTIONS **
+//      ID Template Parameters MUST ALWAYS follow this order:
+//              template< typename VertexID, typename PointID, typename LineID, typename PathID >
+//
 // *************************************************************************** //
+#define                 _EDITOR_APP_INTERNAL_API                                                                                        \
+public:                                                                                                                                 \
+    /*                                                                                                                          */      \
+    /*      1.      GENERIC TYPES...                                                                                            */      \
+    using                           Font                        = app::Font_t                                                   ;       \
+    using                           Logger                      = utl::Logger                                                   ;       \
+    using                           LogLevel                    = utl::LogLevel                                                 ;       \
+                                                                                                                                        \
+    using                           CBCapabilityFlags           = CBCapabilityFlags_                                            ;       \
+    using                           Anchor                      = BBoxAnchor                                                    ;       \
+                                                                                                                                        \
+    using                           PopupHandle                 = EditorPopupBits                                               ;       \
+    using                           CBEditorPopupFlags          = CBEditorPopupFlags_                                           ;       \
+    using                           PopupInfo                   = EditorPopupInfo                                               ;       \
+                                                                                                                                        \
+    using                           LabelFn                     = std::function<void(const char *)>                             ;       \
+    /*                                                                                                                          */      \
+    /*      2.      ID/INDEX TYPES...                                                                                           */      \
+    template<typename T, typename Tag>                                                                                                  \
+    using                           ID                          = cblib::utl::IDType<T, Tag>                                    ;       \
+    using                           VertexID                    = uint32_t                                                      ;       \
+    using                           HandleID                    = uint8_t                                                       ;       \
+    using                           PointID                     = uint32_t                                                      ;       \
+    using                           LineID                      = uint32_t                                                      ;       \
+    using                           PathID                      = uint32_t                                                      ;       \
+    using                           ZID                         = uint32_t                                                      ;       \
+    using                           OverlayID                   = OverlayManager::OverlayID                                     ;       \
+    using                           HitID                       = uint32_t                                                      ;       \
+    /*                                                                                                                          */      \
+    /*      3.      OBJECT TYPES...                                                                                             */      \
+    using                           Vertex                      = Vertex_t          <VertexID>                                  ;       \
+/*  using                           Handle                      = Handle_t          <HandleID>;                                 */      \
+    using                           Point                       = Point_t           <PointID>                                   ;       \
+    using                           Line                        = Line_t            <LineID, ZID>                               ;       \
+    using                           Path                        = Path_t            <PathID, VertexID, ZID>                     ;       \
+    using                           PathKind                    = Path::PathKind                                                ;       \
+    using                           Payload                     = Path::Payload                                                 ;       \
+    using                           Overlay                     = Overlay_t         <OverlayID>                                 ;       \
+    using                           Hit                         = Hit_t             <HitID>                                     ;       \
+    using                           PathHit                     = PathHit_t         <PathID, VertexID>                          ;       \
+    using                           EndpointInfo                = EndpointInfo_t    <PathID>                                    ;       \
+    /*                                                                                                                          */      \
+    /*      4.      PRIMARY STATE OBJECTS...                                                                                    */      \
+    using                           EditorState                 = EditorState_t     <VertexID, PointID, LineID, PathID, ZID>    ;       \
+    using                           BrowserState                = BrowserState_t    <VertexID, PointID, LineID, PathID, ZID>    ;       \
+    using                           IndexState                  = IndexState_t      <VertexID, PointID, LineID, PathID, ZID>    ;       \
+    /*                                                                                                                          */      \
+    /*      5.      SUBSIDIARY STATE OBJECTS...                                                                                 */      \
+    using                           Clipboard                   = Clipboard_t       <Vertex, Point, Line, Path>                 ;       \
+    using                           Selection                   = Selection_t       <VertexID, PointID, LineID, PathID>         ;       \
+    /*                                                                                                                          */      \
+    /*      6.      TOOL STATE OBJECTS...                                                                                       */      \
+    using                           PenState                    = PenState_t        <VertexID>                                  ;       \
+    using                           ShapeState                  = ShapeState_t      <OverlayID>                                 ;       \
+    using                           DebuggerState               = DebuggerState_t   <VertexID, PointID, LineID, PathID, ZID>    ;       \
+    using                           ResidentEntry               = ResidentEntry_t   <OverlayID>                                 ;
+
+//
+// *************************************************************************** //   _EDITOR_APP_INTERNAL_API
+
+
+
+
+
+
+//  "CB_FDTD_TYPES_API"                             |   ** EXPORTED**
+//      - Typename aliases to define types used for the FDTD engine.
+//
+// *************************************************************************** //
+#define                 CB_FDTD_TYPES_API                                                   \
+    template<typename T_>                                                                       \
+    using               Param                           = cblib::math::Param<T_>;               \
+    template<typename T_>                                                                       \
+    using               Range                           = cblib::math::Range<T_>;
+
+//
+// *************************************************************************** //   CB_FDTD_TYPES_API
+
+
+
+
+
+
+
+
+
+
+
+
 //
 //
-// *************************************************************************** //               //  END.
+// *************************************************************************** //
+// *************************************************************************** //               //  END "NAMESPACE API MACROS".
 
 
 
@@ -415,19 +548,3 @@ public:                                                                         
 // *************************************************************************** //
 //
 //  END.
-
-
-
-
-
-
-
-
- //       using                   Vertex                          = Vertex_t      <VertexID>                              ;
- //       using                   Point                           = Point_t       <PointID>                               ;
- //       using                   Line                            = Line_t        <LineID>                                ;
- //       using                   Path                            = Path_t        <PathID, VertexID>                      ;
- //       using                   Overlay                         = Overlay_t     <OverlayID>                             ;
- //       using                   Hit                             = Hit_t         <HitID>                                 ;
- //       using                   PathHit                         = PathHit_t     <PathID, VertexID>                      ;
- //       using                   Selection                       = Selection_t   <VertexID, PointID, LineID, PathID>     ;

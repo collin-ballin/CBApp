@@ -111,7 +111,7 @@ inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it
 
 //  "_dispatch_mode_handler"
 //
-inline void Editor::_dispatch_mode_handler( [[maybe_unused]] const Interaction & it )
+inline void Editor::_dispatch_mode_handler([[maybe_unused]] const Interaction & it )
 {
     if ( !(it.space && ImGui::IsMouseDown(ImGuiMouseButton_Left)) )
     {
@@ -140,7 +140,7 @@ inline void Editor::_dispatch_mode_handler( [[maybe_unused]] const Interaction &
 inline void Editor::_per_frame_cache_begin(void) noexcept
 {
     ImGuiIO &               io                      = ImGui::GetIO();
-    EditorState &           ES                      = this->m_editor_S;
+    //  EditorState &           ES                      = this->m_editor_S;
     Interaction &           it                      = *m_it;
     EditorInteraction &     eit                     = it.obj;
     
@@ -157,7 +157,7 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     //
     //
     //      1.3.    SELECTION DATA...
-    const size_t            N_obj_selected          = this->m_sel.paths.size();
+    //  const size_t            N_obj_selected          = this->m_sel.paths.size();
     //
     //
     //      1.4.    OTHER DATA...
@@ -381,77 +381,58 @@ inline void Editor::_handle_grid([[maybe_unused]] const Interaction & it)
     
     
     //      1.      QUERY THE "SHOW GRID" STATUS...
-    if ( show_grid_cache != m_grid.visible) [[unlikely]]
+    //  if ( show_grid_cache != m_grid.visible) [[unlikely]]
+    if ( false ) [[unlikely]]
     {
         show_grid_cache = m_grid.visible;
         
         if ( show_grid_cache ) {    //  1A.     SET the flags.
             m_axes[0].flags     |= ~ImPlotAxisFlags_NoGridLines;
-            //m_axes[1].flags     |= ~ImPlotAxisFlags_NoGridLines;
+            m_axes[1].flags     |= ~ImPlotAxisFlags_NoGridLines;
         }
         else {                      //  1B.     REMOVE the flags.
             m_axes[0].flags     &= ~ImPlotAxisFlags_NoGridLines;
-            //m_axes[1].flags     &= ~ImPlotAxisFlags_NoGridLines;
+            m_axes[1].flags     &= ~ImPlotAxisFlags_NoGridLines;
         }
     }
     
     
+    //      2.      SET THE INITIAL SIZE OF THE CANVAS...
+    ImPlot::SetupAxesLimits( ES.ms_INITIAL_CANVAS_SIZE[0], ES.ms_INITIAL_CANVAS_SIZE[1], ES.ms_INITIAL_CANVAS_SIZE[2], ES.ms_INITIAL_CANVAS_SIZE[3], ImPlotCond_Once );
     
-
-    //ImPlot::SetupAxesLimits( -0, 1, -0, 1 );
-    ImPlot::SetupAxesLimits( 0.0f, 100.0f, 0.0f, 100.0, ImPlotCond_Once );
-    //
+    
+    //      3.      SETUP MIN + MAX AXIS DIMENSIONS...
     ImPlot::SetupAxisLimitsConstraints  (   ImAxis_X1,
                                             ES.m_world_size[0].Min()   - ES.m_world_slop[0].Value(),
                                             ES.m_world_size[0].Value() + ES.m_world_slop[0].Value()     );
     ImPlot::SetupAxisLimitsConstraints  (   ImAxis_Y1,
                                             ES.m_world_size[1].Min()   - ES.m_world_slop[1].Value(),
                                             ES.m_world_size[1].Value() + ES.m_world_slop[1].Value()     );
-    //
-    //
-    //
+                                            
+                                            
+    //      4.      SETUP MIN + MAX AXIS "ZOOM" RESOLUTION...
     ImPlot::SetupAxisZoomConstraints    (   ImAxis_X1,      ES.m_zoom_size[0].Min(),            ES.m_zoom_size[0].Value()        );
     ImPlot::SetupAxisZoomConstraints    (   ImAxis_Y1,      ES.m_zoom_size[1].Min(),            ES.m_zoom_size[1].Value()       );
     
     
-    
-    //      1.      CONFIGURE THE "IMPLOT" APPEARANCE...
-    ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  1A.     Axis Names & Flags.
-                      m_axes[0].flags,          m_axes[1].flags);
-    //
-    //  ImPlot::SetupAxesLimits( m_world_bounds.min_x, m_world_bounds.max_x,    //  1B.     Auto-fit axes *before* any other ImPlot call.
-    //                           m_world_bounds.min_y, m_world_bounds.max_y, ImPlotCond_Once );
+    //      5.      CONFIGURE THE "IMPLOT" APPEARANCE...
+    ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  5A.     Axis Names & Flags.
+                      (m_grid.visible) ? m_axes[0].flags    : m_axes[0].flags | ImPlotAxisFlags_NoGridLines,
+                      (m_grid.visible) ? m_axes[1].flags    : m_axes[1].flags | ImPlotAxisFlags_NoGridLines
+    );
     
     
-    //m_world_slop
+    //      6.      PER-FRAME CACHE OPERATIONS FOR IMPLOT CANVAS...
+    ES.m_window_size            = ImPlot::GetPlotLimits();                  //  6A.     DOMAIN + RANGE OF PLOT.
+    ES.m_plot_px_dims           = ImPlot::GetPlotSize();                    //  6B.     PIXEL SIZE OF THE PLOT.
     
     
-    
-    
-    
-    ES.m_window_size = ImPlot::GetPlotLimits();          //     current X/Y axes
-    
-    
-    
-            
-    //  ImGui::DragFloat2("Limits Constraints", &constraints[0], 0.01f);
-    //  ImGui::DragFloat2("Zoom Constraints", &constraints[2], 0.01f);
-    //  CHECKBOX_FLAG(flags, ImPlotAxisFlags_PanStretch);
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    //this->_clamp_plot_axes();
-    //
-    //
+    //      X.      REMAINING FUNCTIONS...
+    this->_clamp_plot_axes();
     //
     this->_update_grid_info();                                              //  3C.     Fetch Grid-Quantization Info.
+
+
 
     return;
 }
@@ -459,7 +440,7 @@ inline void Editor::_handle_grid([[maybe_unused]] const Interaction & it)
 
 //  "_handle_rendering"
 //
-inline void Editor::_handle_rendering(const Interaction & it)
+inline void Editor::_handle_rendering([[maybe_unused]] const Interaction & it)
 {
 
 
