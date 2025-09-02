@@ -51,9 +51,9 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_mode_switch_hotkeys"
+//  "_MECH_change_state"
 //
-inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it)
+inline void Editor::_MECH_change_state([[maybe_unused]] const Interaction & it)
 {
     //  I/O INPUTS...
     ImGuiIO &           io                  = ImGui::GetIO();
@@ -109,9 +109,9 @@ inline void Editor::_mode_switch_hotkeys([[maybe_unused]] const Interaction & it
 }
 
 
-//  "_dispatch_mode_handler"
+//  "_MECH_dispatch_tool_handler"
 //
-inline void Editor::_dispatch_mode_handler([[maybe_unused]] const Interaction & it )
+inline void Editor::_MECH_dispatch_tool_handler([[maybe_unused]] const Interaction & it )
 {
     if ( !(it.space && ImGui::IsMouseDown(ImGuiMouseButton_Left)) )
     {
@@ -251,11 +251,11 @@ void Editor::Begin(const char * /*id*/)
 
 
     //      2A.     HANDLE ANY I/O OPERATIONS BEFORE PLOT BEGINS...
-    this->pump_main_tasks();
-    this->_handle_io();
+    this->_MECH_pump_main_tasks();
+    this->_MECH_drive_io();
     //
     //      2B.     DRAW THE EDITOR CONTROL BAR UI...
-    this->_draw_controls();
+    this->_MECH_draw_controls();
     //
     //      2C.     STORE ADDITIONAL PER-FRAME VALUES (AFTER PLACING CONTROLBAR UI)...
     ES.m_avail                                      = ImGui::GetContentRegionAvail();       //  1. Canvas size & plot flags
@@ -276,7 +276,7 @@ void Editor::Begin(const char * /*id*/)
     //      CASE 3B         : SUCCESSFULLY CREATED THE "IMPLOT" PLOT...
     {
         //          3.1.    CONFIGURE THE "IMPLOT" APPEARANCE, UPDATE GRID INFORMATION, ETC...
-        this->_handle_grid(it);
+        this->_MECH_update_canvas(it);
         
         
         
@@ -286,8 +286,8 @@ void Editor::Begin(const char * /*id*/)
 
 
         //          3.3.    MODE SWITCH BEHAVIORS AND OVERLAY WINDOWS...
-        this->_mode_switch_hotkeys(it);
-        this->_handle_overlays(it);
+        this->_MECH_change_state(it);
+        this->_MECH_draw_ui(it);
 
 
 
@@ -299,7 +299,7 @@ void Editor::Begin(const char * /*id*/)
         //
         else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
         {
-            _update_cursor_select(it);
+            this->_MECH_hit_detection(it);
         }
 
 
@@ -307,30 +307,16 @@ void Editor::Begin(const char * /*id*/)
         //          3.5.    SELECTION BEHAVIOR...
         if  ( !space && _mode_has(CBCapabilityFlags_Select) )
         {
-            _process_selection(it);
+            _MECH_process_selection(it);
         }
         
     
-    
         //          3.6.    MODE/STATE/TOOL DISPATCHER...
-        this->_dispatch_mode_handler(it);
+        this->_MECH_dispatch_tool_handler(it);
 
 
         //          3.7.    RENDERING LOOP...
-        ImPlot::PushPlotClipRect();
-        //
-        //
-            //  this->_render_lines             ( it.dl );          //  Enable once ported
-            this->_render_paths                 ( it.dl );          //  Enable once ported
-            this->_render_selection_highlight   ( it.dl );
-            this->_render_points                ( it.dl );          //  Already ported
-        //
-        //
-        ImPlot::PopPlotClipRect();
-        //
-        //      [ AUG. 29, 2025]    this->_clamp_plot_axes();
-
-
+        this->_MECH_render_frame(it);
     //
     //
     }// END "IMPLOT".
@@ -367,13 +353,13 @@ void Editor::Begin(const char * /*id*/)
 //
 //
 //
-//      2B.      SECONDARY MANAGERS...
+//      3.      CORE MECHANIC-HANDLERS OF THE APPLICATION...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_handle_grid"
+//  "_MECH_update_canvas"
 //
-inline void Editor::_handle_grid([[maybe_unused]] const Interaction & it)
+inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
 {
     EditorState &       ES                  = this->m_editor_S;
     //
@@ -438,21 +424,244 @@ inline void Editor::_handle_grid([[maybe_unused]] const Interaction & it)
 }
 
 
-//  "_handle_rendering"
+//  "_MECH_render_frame"
 //
-inline void Editor::_handle_rendering([[maybe_unused]] const Interaction & it)
+inline void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it)
 {
-
+    ImPlot::PushPlotClipRect();
+    //
+    //
+        //  this->_render_lines             ( it.dl );          //  Enable once ported
+        this->_render_paths                 ( it.dl );          //  Enable once ported
+        this->_render_selection_highlight   ( it.dl );
+        this->_render_points                ( it.dl );          //  Already ported
+    //
+    //
+    ImPlot::PopPlotClipRect();
+    //
+    //      [ AUG. 29, 2025]    this->_clamp_plot_axes();
 
     return;
 }
 
 
+//  "_MECH_draw_ui"
+//
+inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
+{
+    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO();
+    EditorState &                   ES                  = this->m_editor_S;
+    
+    if ( ES.m_block_overlays )                          { return; }
+    
+    
+    
+    //  RESIDENTIAL WINDOWS...
+    //
+    static bool             debug_overlay_cache         = !ES.m_show_debug_overlay;                         //  1.  Debugger/Info Overlay.
+    static auto &           debugger_entry              = m_residents[Resident::Debugger];
+    static Overlay &        debugger_resident           = *m_overlays.lookup_resident(debugger_entry.id);
+    //
+    static bool             sel_overlay_cache           = !ES.m_show_sel_overlay;                           //  2.  Selection Overlay.
+    static auto &           selection_entry             = m_residents[Resident::Selection];
+    static Overlay &        selection_resident          = *m_overlays.lookup_resident(selection_entry.id);
+    //
+    static auto &           shape_entry                 = m_residents[Resident::Shape];                     //  3.  Shape Resident.
+    static Overlay &        shape_resident              = *m_overlays.lookup_resident(shape_entry.id);
+    //
+    //
+    //
+    //  UI-RESIDENT OVERLAYS...
+    static bool             ui_traits_overlay_cache     = !ES.m_show_debug_overlay;                         //  4.  UI-Traits Resident.
+    static auto &           ui_traits_entry             = m_residents[Resident::UITraits];
+    static Overlay &        ui_traits_resident          = *m_overlays.lookup_resident(ui_traits_entry.id);
+    //
+    static bool             ui_objects_overlay_cache    = !ES.m_show_ui_objects_overlay;                    //  5.  UI-Objects Resident.
+    static auto &           ui_objects_entry            = m_residents[Resident::UIObjects];
+    static Overlay &        ui_objects_resident         = *m_overlays.lookup_resident(ui_objects_entry.id);
+
+    
+    
+    //      1.      UPDATE "DEBUGGER" OVERLAY...
+    if ( ES.m_show_debug_overlay != debug_overlay_cache ) [[unlikely]] {
+        debug_overlay_cache                     = ES.m_show_debug_overlay;
+        debugger_resident.info.visible          = ES.m_show_debug_overlay;
+    }
+    
+
+    //      2.      UPDATE SELECTION OVERLAY...
+    if ( ES.m_show_sel_overlay != sel_overlay_cache ) [[unlikely]] {
+        sel_overlay_cache                       = ES.m_show_sel_overlay;
+        selection_resident.info.visible         = ES.m_show_sel_overlay;
+    }
+    if (selection_resident.info.visible) {
+        ImVec2 tl, br;
+        if ( _selection_bounds(tl, br) ) {
+            selection_resident.cfg.anchor_ws = { (tl.x + br.x) * 0.5f, tl.y }; // bottom-centre in world
+        }
+    }
+    
+    
+    //      3.      UPDATE "SHAPE" OVERLAY...
+    shape_resident.info.visible                 = ( m_mode == Mode::Shape );                //  Leaving the Shape-Tool closes the overlay window.
+    
+    
+    
+    //      4.      UPDATE "UI-TRAITS" OVERLAY...
+    if ( ES.m_show_ui_traits_overlay != ui_traits_overlay_cache ) [[unlikely]] {
+        ui_traits_overlay_cache                 = ES.m_show_ui_traits_overlay;
+        ui_traits_resident.info.visible         = ES.m_show_ui_traits_overlay;
+    }
+    
+    
+    
+    //      5.      UPDATE "UI-OBJECTS" OVERLAY...
+    if ( ES.m_show_ui_objects_overlay != ui_objects_overlay_cache ) [[unlikely]] {
+        ui_objects_overlay_cache                = ES.m_show_ui_objects_overlay;
+        ui_objects_resident.info.visible        = ES.m_show_ui_objects_overlay;
+    }
+    
+    
+    
+    //  DRAW EACH OVERLAY WINDOW...
+    //
+    ImVec2 bb_min = ImGui::GetItemRectMin();   // full ImPlot widget (axes included)
+    ImVec2 bb_max = ImGui::GetItemRectMax();
+    //
+    m_overlays.Begin(
+        /* world→pixel */ [this](ImVec2 ws){ return world_to_pixels(ws); },
+        /* cursor      */ ImGui::GetIO().MousePos,
+        /* full rect   */ ImRect(bb_min, bb_max));          // ← use full item rect
+
+    return;
+}
+
+
+//  "_MECH_drive_io"
+//
+inline void Editor::_MECH_drive_io(void)
+{
+    namespace           fs                  = std::filesystem;
+    //using             Initializer         = cb::FileDialog::Initializer;
+    ImGuiIO &           io                  = ImGui::GetIO();
+    EditorState &       ES                  = this->m_editor_S;
+
+
+
+    //      0.      TOOL-TIP I/O MESSAGING...
+    if ( ES.m_show_io_message.load(std::memory_order_acquire) ) {
+        ES.DisplayIOStatus();
+    }
+
+
+    //      1.      SAVE DIALOGUE...
+    if ( ES.m_sdialog_open.load(std::memory_order_acquire) )
+    {
+        ES.m_sdialog_open.store(false, std::memory_order_release);
+        this->m_save_dialog.initialize(this->m_SAVE_DIALOG_DATA );
+    }
+    //
+    if ( this->m_save_dialog.is_open() )
+    {
+        ES.m_sdialog_open.store(false, std::memory_order_release);
+        
+        if ( this->m_save_dialog.Begin() )      // returns true when finished
+        {
+        
+            //  CASE 1.1. :     FILE DIALOG SELECTED A FILE.
+            if ( auto path = this->m_save_dialog.result() )
+            {
+                const bool result   = save_async( *path );        // your own handler
+                
+                
+                //  CASE 1.1A.      SAVE SUCCESS...
+                if (result)
+                {
+                    ES.m_filepath       = *path;
+                    CB_LOG( LogLevel::Info, "Editor | saved data to file \"{}\"", ES.m_filepath.filename().string() );
+                }
+                //
+                //  CASE 1.1B.      SAVE FAILURE...
+                else
+                {
+                    CB_LOG( LogLevel::Error, "Editor | failure to save data to file \"{}\"", (*path).filename().string() );
+                    //
+                    //  ES.m_filepath       = fs::path{   };
+                    //  this->RESET_ALL();
+                }
+                
+        
+            }
+            //
+            //  CASE 1.2. :     USER HAS CANCELLED FILE DIALOG.
+            else
+            {
+                CB_LOG( LogLevel::Debug, "Editor | cancelled file dialog menu (\"save file\")" );
+            }
+            
+        }
+    
+    
+    }
+    
+    
+    
+    //      2.      LOAD DIALOGUE...
+    if ( ES.m_odialog_open.load(std::memory_order_acquire) )
+    {
+        ES.m_odialog_open.store(false, std::memory_order_release);
+        this->m_open_dialog.initialize(m_OPEN_DIALOG_DATA );
+    }
+    //
+    if ( this->m_open_dialog.is_open() )
+    {
+        if ( this->m_open_dialog.Begin() )      // returns true when finished
+        {
+        
+            //  CASE 2.1. :     FILE DIALOG SELECTED A FILE.
+            if ( auto path = this->m_open_dialog.result() )
+            {
+                this->RESET_ALL();
+                const bool result   = load_async( *path );        // your own handler
+                
+                
+                
+                //  CASE 2.1A.      LOAD SUCCESS...
+                if (result)
+                {
+                    ES.m_filepath       = *path;
+                    CB_LOG( LogLevel::Info, "Editor | loaded session from file \"{}\"", ES.m_filepath.filename().string() );
+                }
+                //
+                //  CASE 2.1B.      LOAD FAILURE...
+                else
+                {
+                    CB_LOG( LogLevel::Error, "Editor | failure to load file \"{}\"", (*path).filename().string() );
+                    ES.m_filepath       = fs::path{   };
+                    this->RESET_ALL();
+                }
+                
+            }
+            //
+            //  CASE 2.2. :     USER HAS CANCELLED FILE DIALOG.
+            else
+            {
+                CB_LOG( LogLevel::Debug, "Editor | cancelled file dialog menu (\"open file\")" );
+            }
+            
+        }
+    }
+
+
+    //  popup::Begin();
+    return;
+}
+
 
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "SECONDARY MANAGERS".
+// *************************************************************************** //   END "CORE MECHANICS".
 
 
 
@@ -463,7 +672,7 @@ inline void Editor::_handle_rendering([[maybe_unused]] const Interaction & it)
 //
 //
 //
-//      3.      MAIN MANAGER FUNCTIONS...
+//      4.      TOOL / "MODE" HANDLER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -916,6 +1125,13 @@ inline void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
     return;
 }
 
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "TOOL HANDLERS".
+
+
+
 
 
 
@@ -925,218 +1141,6 @@ inline void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
 //
 // *************************************************************************** //
 // *************************************************************************** //
-
-//  "_handle_overlays"
-//
-inline void Editor::_handle_overlays([[maybe_unused]] const Interaction & it)
-{
-    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO();
-    EditorState &                   ES                  = this->m_editor_S;
-    
-    if ( ES.m_block_overlays )                          { return; }
-    
-    
-    
-    //  RESIDENTIAL WINDOWS...
-    //
-    static bool             debug_overlay_cache         = !ES.m_show_debug_overlay;                         //  1.  Debugger/Info Overlay.
-    static auto &           debugger_entry              = m_residents[Resident::Debugger];
-    static Overlay &        debugger_resident           = *m_overlays.lookup_resident(debugger_entry.id);
-    //
-    static bool             sel_overlay_cache           = !ES.m_show_sel_overlay;                           //  2.  Selection Overlay.
-    static auto &           selection_entry             = m_residents[Resident::Selection];
-    static Overlay &        selection_resident          = *m_overlays.lookup_resident(selection_entry.id);
-    //
-    static auto &           shape_entry                 = m_residents[Resident::Shape];                     //  3.  Shape Resident.
-    static Overlay &        shape_resident              = *m_overlays.lookup_resident(shape_entry.id);
-    //
-    //
-    //
-    //                  UI-RESIDENT OVERLAYS:
-    static bool             ui_traits_overlay_cache     = !ES.m_show_debug_overlay;                         //  4.  UI-Traits Resident.
-    static auto &           ui_traits_entry             = m_residents[Resident::UITraits];
-    static Overlay &        ui_traits_resident          = *m_overlays.lookup_resident(ui_traits_entry.id);
-    //
-    static bool             ui_objects_overlay_cache    = !ES.m_show_ui_objects_overlay;                    //  5.  UI-Objects Resident.
-    static auto &           ui_objects_entry            = m_residents[Resident::UIObjects];
-    static Overlay &        ui_objects_resident         = *m_overlays.lookup_resident(ui_objects_entry.id);
-
-    
-    
-    //      1.      UPDATE "DEBUGGER" OVERLAY...
-    if ( ES.m_show_debug_overlay != debug_overlay_cache ) [[unlikely]] {
-        debug_overlay_cache                     = ES.m_show_debug_overlay;
-        debugger_resident.info.visible          = ES.m_show_debug_overlay;
-    }
-    
-
-    //      2.      UPDATE SELECTION OVERLAY...
-    if ( ES.m_show_sel_overlay != sel_overlay_cache ) [[unlikely]] {
-        sel_overlay_cache                       = ES.m_show_sel_overlay;
-        selection_resident.info.visible         = ES.m_show_sel_overlay;
-    }
-    if (selection_resident.info.visible) {
-        ImVec2 tl, br;
-        if ( _selection_bounds(tl, br) ) {
-            selection_resident.cfg.anchor_ws = { (tl.x + br.x) * 0.5f, tl.y }; // bottom-centre in world
-        }
-    }
-    
-    
-    //      3.      UPDATE "SHAPE" OVERLAY...
-    shape_resident.info.visible                 = ( m_mode == Mode::Shape );                //  Leaving the Shape-Tool closes the overlay window.
-    
-    
-    
-    //      4.      UPDATE "UI-TRAITS" OVERLAY...
-    if ( ES.m_show_ui_traits_overlay != ui_traits_overlay_cache ) [[unlikely]] {
-        ui_traits_overlay_cache                 = ES.m_show_ui_traits_overlay;
-        ui_traits_resident.info.visible         = ES.m_show_ui_traits_overlay;
-    }
-    
-    
-    
-    //      5.      UPDATE "UI-OBJECTS" OVERLAY...
-    if ( ES.m_show_ui_objects_overlay != ui_objects_overlay_cache ) [[unlikely]] {
-        ui_objects_overlay_cache                = ES.m_show_ui_objects_overlay;
-        ui_objects_resident.info.visible        = ES.m_show_ui_objects_overlay;
-    }
-    
-    
-    
-    //  DRAW EACH OVERLAY WINDOW...
-    //
-    ImVec2 bb_min = ImGui::GetItemRectMin();   // full ImPlot widget (axes included)
-    ImVec2 bb_max = ImGui::GetItemRectMax();
-    //
-    m_overlays.Begin(
-        /* world→pixel */ [this](ImVec2 ws){ return world_to_pixels(ws); },
-        /* cursor      */ ImGui::GetIO().MousePos,
-        /* full rect   */ ImRect(bb_min, bb_max));          // ← use full item rect
-
-    return;
-}
-
-
-//  "_handle_io"
-//
-inline void Editor::_handle_io(void)
-{
-    namespace           fs                  = std::filesystem;
-    //using             Initializer         = cb::FileDialog::Initializer;
-    ImGuiIO &           io                  = ImGui::GetIO();
-    EditorState &       ES                  = this->m_editor_S;
-
-
-
-    //      0.      TOOL-TIP I/O MESSAGING...
-    if ( ES.m_show_io_message.load(std::memory_order_acquire) ) {
-        ES.DisplayIOStatus();
-    }
-
-
-    //      1.      SAVE DIALOGUE...
-    if ( ES.m_sdialog_open.load(std::memory_order_acquire) )
-    {
-        ES.m_sdialog_open.store(false, std::memory_order_release);
-        this->m_save_dialog.initialize(this->m_SAVE_DIALOG_DATA );
-    }
-    //
-    if ( this->m_save_dialog.is_open() )
-    {
-        ES.m_sdialog_open.store(false, std::memory_order_release);
-        
-        if ( this->m_save_dialog.Begin() )      // returns true when finished
-        {
-        
-            //  CASE 1.1. :     FILE DIALOG SELECTED A FILE.
-            if ( auto path = this->m_save_dialog.result() )
-            {
-                const bool result   = save_async( *path );        // your own handler
-                
-                
-                //  CASE 1.1A.      SAVE SUCCESS...
-                if (result)
-                {
-                    ES.m_filepath       = *path;
-                    CB_LOG( LogLevel::Info, "Editor | saved data to file \"{}\"", ES.m_filepath.filename().string() );
-                }
-                //
-                //  CASE 1.1B.      SAVE FAILURE...
-                else
-                {
-                    CB_LOG( LogLevel::Error, "Editor | failure to save data to file \"{}\"", (*path).filename().string() );
-                    //
-                    //  ES.m_filepath       = fs::path{   };
-                    //  this->RESET_ALL();
-                }
-                
-        
-            }
-            //
-            //  CASE 1.2. :     USER HAS CANCELLED FILE DIALOG.
-            else
-            {
-                CB_LOG( LogLevel::Debug, "Editor | cancelled file dialog menu (\"save file\")" );
-            }
-            
-        }
-    
-    
-    }
-    
-    
-    
-    //      2.      LOAD DIALOGUE...
-    if ( ES.m_odialog_open.load(std::memory_order_acquire) )
-    {
-        ES.m_odialog_open.store(false, std::memory_order_release);
-        this->m_open_dialog.initialize(m_OPEN_DIALOG_DATA );
-    }
-    //
-    if ( this->m_open_dialog.is_open() )
-    {
-        if ( this->m_open_dialog.Begin() )      // returns true when finished
-        {
-        
-            //  CASE 2.1. :     FILE DIALOG SELECTED A FILE.
-            if ( auto path = this->m_open_dialog.result() )
-            {
-                this->RESET_ALL();
-                const bool result   = load_async( *path );        // your own handler
-                
-                
-                
-                //  CASE 2.1A.      LOAD SUCCESS...
-                if (result)
-                {
-                    ES.m_filepath       = *path;
-                    CB_LOG( LogLevel::Info, "Editor | loaded session from file \"{}\"", ES.m_filepath.filename().string() );
-                }
-                //
-                //  CASE 2.1B.      LOAD FAILURE...
-                else
-                {
-                    CB_LOG( LogLevel::Error, "Editor | failure to load file \"{}\"", (*path).filename().string() );
-                    ES.m_filepath       = fs::path{   };
-                    this->RESET_ALL();
-                }
-                
-            }
-            //
-            //  CASE 2.2. :     USER HAS CANCELLED FILE DIALOG.
-            else
-            {
-                CB_LOG( LogLevel::Debug, "Editor | cancelled file dialog menu (\"open file\")" );
-            }
-            
-        }
-    }
-
-
-    //  popup::Begin();
-    return;
-}
 
 
 

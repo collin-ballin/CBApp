@@ -574,24 +574,37 @@ public:
 protected:
 
     // *************************************************************************** //
-    //      "Begin" HELPERS.                |   "editor.cpp" ...
+    //      CORE MECHANICS                  |   "editor.cpp" ...
     // *************************************************************************** //
-    inline void                         _mode_switch_hotkeys                ([[maybe_unused]] const Interaction & );
-    inline void                         _dispatch_mode_handler              ([[maybe_unused]] const Interaction & );
+    //
+    //                              SMALLER HELPERS / UTILITIES:
+    inline void                         _MECH_change_state                  ([[maybe_unused]] const Interaction & );
+    inline void                         _MECH_dispatch_tool_handler         ([[maybe_unused]] const Interaction & );
     //
     inline void                         _per_frame_cache_begin              (void) noexcept;
     inline void                         _per_frame_cache_end                (void) noexcept;
+    //
+    //
+    //                              PRIMARY MECHANIC HANDLERS:
+    void                                _MECH_hit_detection                 (const Interaction & ) const;
+    inline void                         _MECH_update_canvas                 ([[maybe_unused]] const Interaction & );
+    inline void                         _MECH_render_frame                  ([[maybe_unused]] const Interaction & );
+    //
+    inline void                         _MECH_draw_ui                       ([[maybe_unused]] const Interaction & );
+    inline void                         _MECH_drive_io                      (void);
+    //
+    //                              LOCATED ELSEWHERE:
+    void                                _MECH_pump_main_tasks               (void);                     //  "serialization.cpp".
+    void                                _MECH_draw_controls                 (void);                     //  "browser.cpp".
+    void                                _MECH_process_selection             (const Interaction & );     //  "selection.cpp".
     
     // *************************************************************************** //
     //
     //
     // *************************************************************************** //
-    //      PRIMARY STATE HANDLERS.         |   "editor.cpp" ...
+    //      TOOL / "MODE" HANDLERS.         |   "editor.cpp" ...
     // *************************************************************************** //
     inline void                         _handle_default                     (const Interaction & );
-    //
-    inline void                             _handle_grid                    ([[maybe_unused]] const Interaction & );
-    inline void                             _handle_rendering               ([[maybe_unused]] const Interaction & );
     //
     inline void                         _handle_hand                        ([[maybe_unused]] const Interaction & );
     inline void                         _handle_line                        (const Interaction & );
@@ -601,9 +614,6 @@ protected:
     inline void                         _handle_add_anchor                  ([[maybe_unused]] const Interaction & );
     inline void                         _handle_remove_anchor               ([[maybe_unused]] const Interaction & );
     inline void                         _handle_edit_anchor                 ([[maybe_unused]] const Interaction & );
-    inline void                         _handle_overlays                    ([[maybe_unused]] const Interaction & );
-    //
-    inline void                         _handle_io                          (void);
     
     // *************************************************************************** //
     //
@@ -611,10 +621,6 @@ protected:
     // *************************************************************************** //
     //      BROWSER STUFF.                  |   "browser.cpp" ...
     // *************************************************************************** //
-    //                              MAIN UI FUNCTIONS:
-    void                                _draw_controls                      (void);
-    //
-    //
     //                              BROWSER ORCHESTRATORS:
     void                                _dispatch_obj_inspector_column          (void);     //  PREVIOUSLY:     _draw_path_inspector_column
     //
@@ -792,9 +798,7 @@ protected:
     std::optional<Hit>                  _hit_any                            ([[maybe_unused]] const Interaction & ) const;
     std::optional<PathHit>              _hit_path_segment                   ([[maybe_unused]] const Interaction & ) const;
     //
-    //                              PRIMARY SELECTION OPERATION:
-    void                                _process_selection                  (const Interaction & );
-    //
+    //                              PRIMARY SELECTION OPERATIONS:
     void                                resolve_pending_selection           (const Interaction & it);
     void                                update_move_drag_state              (const Interaction & it);
     void                                start_move_drag                     (const ImVec2 & anchor_ws);
@@ -802,7 +806,6 @@ protected:
     void                                _rebuild_vertex_selection           (void);   // decl
     //
     //                              SELECTION HIGHLIGHT / USER-INTERACTION / APPEARANCE:
-    void                                _update_cursor_select               (const Interaction & ) const;
     //void                                _render_selection_highlight         (ImDrawList *) const;
     bool                                _selection_bounds                   (ImVec2 & tl, ImVec2 & br) const;
     //
@@ -848,7 +851,6 @@ protected:
     //
     //                              SERIALIZATION ORCHESTRATORS:
     void                                _draw_io_overlay                    (void);
-    void                                pump_main_tasks                     (void);
     //
     inline EditorSnapshot               make_snapshot                       (void) const;
     void                                load_from_snapshot                  (EditorSnapshot && );

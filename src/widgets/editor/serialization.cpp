@@ -605,9 +605,9 @@ inline void Editor::_settings_H4(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "pump_main_tasks"
+//  "_MECH_pump_main_tasks"
 //
-void Editor::pump_main_tasks(void)
+void Editor::_MECH_pump_main_tasks(void)
 {
     std::vector<std::function<void()>> tasks;
     {

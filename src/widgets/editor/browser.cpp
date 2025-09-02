@@ -173,9 +173,9 @@ void Editor::DrawBrowser(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_draw_controls"
+//  "_MECH_draw_controls"
 //
-void Editor::_draw_controls(void)
+void Editor::_MECH_draw_controls(void)
 {
     static constexpr const char *       uuid                = "##Editor_Controls_Columns";
     static constexpr int                ms_NC               = 10;

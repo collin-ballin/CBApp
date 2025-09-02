@@ -376,11 +376,12 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_process_selection"
+//  "_MECH_process_selection"
+//
 //      THIS IS WHERE "SELECTION" STARTS...
 //      ---This functon is called by "Begin()" to handle ALL sunsequent selection operations.
 //
-void Editor::_process_selection(const Interaction & it)
+void Editor::_MECH_process_selection(const Interaction & it)
 {
     update_move_drag_state              (it);   //  Helpers (2-4 merged)...
     resolve_pending_selection           (it);   //  ...
@@ -714,10 +715,10 @@ void Editor::_rebuild_vertex_selection()
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_update_cursor_select"
+//  "_MECH_hit_detection"
 //      pointer-cursor hint ───────────────────────────
 //
-void Editor::_update_cursor_select(const Interaction& it) const
+void Editor::_MECH_hit_detection(const Interaction& it) const
 {
     if (!it.hovered) return;                        // cursor not over canvas
     if (m_dragging || m_boxdrag.active) return;     // ignore while dragging
