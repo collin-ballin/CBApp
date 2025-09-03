@@ -482,6 +482,7 @@ public:                                                                         
     using                           EndpointInfo                = EndpointInfo_t    <PathID>                                    ;       \
     /*                                                                                                                          */      \
     /*      4.      PRIMARY STATE OBJECTS...                                                                                    */      \
+    using                           EditorRuntime               = EditorRuntime_t   <VertexID, PointID, LineID, PathID, ZID>    ;       \
     using                           EditorState                 = EditorState_t     <VertexID, PointID, LineID, PathID, ZID>    ;       \
     using                           BrowserState                = BrowserState_t    <VertexID, PointID, LineID, PathID, ZID>    ;       \
     using                           IndexState                  = IndexState_t      <VertexID, PointID, LineID, PathID, ZID>    ;       \

@@ -222,10 +222,10 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
 //
 void Editor::Begin(const char * /*id*/)
 {
-    ImGuiIO &               io                      = ImGui::GetIO();
-    EditorStyle &           EStyle                  = this->m_style;
-    EditorState &           ES                      = this->m_editor_S;
-    Interaction &           it                      = *this->m_it;
+    ImGuiIO &                           io          = ImGui::GetIO();
+    [[maybe_unused]] EditorStyle &      EStyle      = this->m_style;
+    EditorState &                       ES          = this->m_editor_S;
+    Interaction &                       it          = *this->m_it;
     
     
     //      1.      FETCH INITIAL PER-FRAME VALUES (USER-INTERACTION INPUT, ETC)...
@@ -246,7 +246,7 @@ void Editor::Begin(const char * /*id*/)
     map.Pan                                         = ImGuiMouseButton_Left;
     map.PanMod                                      = (pan_enabled)     ? 0                         : ImGuiMod_Ctrl;        //  disable pan unless current TOOL allows PANNING...
     map.ZoomMod                                     = (zoom_enabled)    ? 0                         : ImGuiMod_Ctrl;        //  disable zoom unless current TOOL allows ZOOMING...
-    map.ZoomRate                                    = EStyle.ms_ZOOM_RATE;                              //
+    map.ZoomRate                                    = ES.m_mousewheel_zoom_rate.value;    //
 
 
 
@@ -293,22 +293,22 @@ void Editor::Begin(const char * /*id*/)
 
         //          3.4.    CURSOR HINTS AND SHORTCUTS...
         if ( space && it.hovered && _mode_has(CBCapabilityFlags_Pan) )
-        {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-        }
+            { ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); }
         //
         else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
-        {
-            this->_MECH_hit_detection(it);
-        }
+            { this->_MECH_hit_detection(it); }
 
 
 
         //          3.5.    SELECTION BEHAVIOR...
-        if  ( !space && _mode_has(CBCapabilityFlags_Select) )
-        {
-            _MECH_process_selection(it);
-        }
+        if  ( !space  &&  _mode_has(CBCapabilityFlags_Select) )
+            { _MECH_process_selection(it); }
+
+
+
+        //          3.6.    SELECTION BEHAVIOR...
+        if  ( !space  &&  !it.BlockShortcuts() )
+            { _MECH_query_shortcuts(it); }
         
     
         //          3.6.    MODE/STATE/TOOL DISPATCHER...
@@ -328,7 +328,7 @@ void Editor::Begin(const char * /*id*/)
     
     
     
-    this->_draw_io_overlay();
+    //  this->_draw_io_overlay();
     //
     //
     //  show_icon_preview_window();
@@ -411,6 +411,7 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
     //      6.      PER-FRAME CACHE OPERATIONS FOR IMPLOT CANVAS...
     ES.m_window_size            = ImPlot::GetPlotLimits();                  //  6A.     DOMAIN + RANGE OF PLOT.
     ES.m_plot_px_dims           = ImPlot::GetPlotSize();                    //  6B.     PIXEL SIZE OF THE PLOT.
+    ES.m_plot_bbox              = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
     
     
     //      X.      REMAINING FUNCTIONS...
@@ -525,13 +526,14 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
     
     //  DRAW EACH OVERLAY WINDOW...
     //
-    ImVec2 bb_min = ImGui::GetItemRectMin();   // full ImPlot widget (axes included)
-    ImVec2 bb_max = ImGui::GetItemRectMax();
+    //  ImVec2 bb_min = ImGui::GetItemRectMin();   // full ImPlot widget (axes included)
+    //  ImVec2 bb_max = ImGui::GetItemRectMax();
     //
     m_overlays.Begin(
         /* world→pixel */ [this](ImVec2 ws){ return world_to_pixels(ws); },
         /* cursor      */ ImGui::GetIO().MousePos,
-        /* full rect   */ ImRect(bb_min, bb_max));          // ← use full item rect
+        /* full rect   */ ES.m_plot_bbox /*ImRect(bb_min, bb_max) */       // ← use full item rect
+    );
 
     return;
 }

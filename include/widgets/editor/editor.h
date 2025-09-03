@@ -228,7 +228,7 @@ public:
                 /*  placement       */  OverlayPlacement::CanvasPoint,
                 /*  src_anchor      */  Anchor::North,
                 /*  offscreen       */  OffscreenPolicy::Hide,
-                /*  anchor_px       */  ImVec2{0,   8}                      //  Window Offset.
+                /*  anchor_px       */  ImVec2{0,   25}                      //  Window Offset.
             },
             {//     STYLE...
                 /*  alpha           */  0.95f,
@@ -586,11 +586,11 @@ protected:
     //
     //
     //                              PRIMARY MECHANIC HANDLERS:
-    void                                _MECH_hit_detection                 (const Interaction & ) const;
+    void                                _MECH_hit_detection                 (const Interaction & ) const;               //  formerly "_update_cursor_detection".
     inline void                         _MECH_update_canvas                 ([[maybe_unused]] const Interaction & );
     inline void                         _MECH_render_frame                  ([[maybe_unused]] const Interaction & );
     //
-    inline void                         _MECH_draw_ui                       ([[maybe_unused]] const Interaction & );
+    inline void                         _MECH_draw_ui                       ([[maybe_unused]] const Interaction & );    //  formerly "_handle_overlays".
     inline void                         _MECH_drive_io                      (void);
     //
     //                              LOCATED ELSEWHERE:
@@ -817,13 +817,20 @@ protected:
     void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 tl, const ImVec2 br);
     //  void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
     void                                _update_bbox                        (void);
+    
+    // *************************************************************************** //
     //
-    //                              SELECTION BEHAVIOR STUFF:
-    void                                _selection_handle_shortcuts         ([[maybe_unused]] const Interaction & );
-    inline void                             _selection_no_selection_shortcuts   ([[maybe_unused]] const Interaction & );
-    inline void                             _selection_read_only_shortcuts      ([[maybe_unused]] const Interaction & );
-    inline void                             _selection_mutable_shortcuts        ([[maybe_unused]] const Interaction & );
-    inline void                             _selection_advanced_shortcuts       ([[maybe_unused]] const Interaction & );
+    //
+    // *************************************************************************** //
+    //      SHORTCUT MECHANICS.            |   "shortcuts.cpp" ...
+    // *************************************************************************** //
+    void                                _MECH_query_shortcuts               ([[maybe_unused]] const Interaction & );
+    //
+    //                              SUBSIDIARY SHORTCUT HANDLERRS:
+    inline void                         _selection_no_selection_shortcuts   ([[maybe_unused]] const Interaction & );
+    inline void                         _selection_read_only_shortcuts      ([[maybe_unused]] const Interaction & );
+    inline void                         _selection_mutable_shortcuts        ([[maybe_unused]] const Interaction & );
+    inline void                         _selection_advanced_shortcuts       ([[maybe_unused]] const Interaction & );
     
     // *************************************************************************** //
     //
@@ -1505,39 +1512,7 @@ public:
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-        //  _EDITOR_APP_INTERNAL_API
-        using                           Font                            = Editor::Font                      ;
-        using                           Logger                          = Editor::Logger                    ;
-        using                           LogLevel                        = Editor::LogLevel                  ;
-        using                           CBCapabilityFlags               = Editor::CBCapabilityFlags         ;
-        using                           Anchor                          = Editor::Anchor                    ;
-    //
-    //                              ID / INDEX TYPES:
-    //  using                           ID                              = Editor::ID                        ;
-        using                           VertexID                        = Editor::VertexID                  ;
-        using                           HandleID                        = Editor::HandleID                  ;
-        using                           PointID                         = Editor::PointID                   ;
-        using                           LineID                          = Editor::LineID                    ;
-        using                           PathID                          = Editor::PathID                    ;
-        using                           ZID                             = Editor::ZID                       ;
-        using                           OverlayID                       = Editor::OverlayID                 ;
-        using                           HitID                           = Editor::HitID                     ;
-    //
-    //                              TYPENAME ALIASES (BASED ON INDEX TYPES):
-        using                           Vertex                          = Editor::Vertex                    ;
-    //  using                           Handle                          = Editor::Handle                    ;
-        using                           Point                           = Editor::Point                     ;
-        using                           Line                            = Editor::Line                      ;
-        using                           Path                            = Editor::Path                      ;
-        using                           Overlay                         = Editor::Overlay                   ;
-        using                           Hit                             = Editor::Hit                       ;
-        using                           PathHit                         = Editor::PathHit                   ;
-        using                           Selection                       = Editor::Selection                 ;
-    //
-        using                           EndpointInfo                    = Editor::EndpointInfo              ;
-        using                           PenState                        = Editor::PenState                  ;
-        using                           ShapeState                      = Editor::ShapeState                ;
-        using                           Clipboard                       = Editor::Clipboard                 ;
+        _EDITOR_APP_INTERNAL_API
     
     // *************************************************************************** //
     //
@@ -1545,8 +1520,8 @@ public:
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr uint8_t           ms_MAJOR_VERSION                 = EditorIMPL::ms_EDITOR_JSON_MAJ_VERSION;
-    static constexpr uint8_t           ms_MINOR_VERSION                 = EditorIMPL::ms_EDITOR_JSON_MIN_VERSION;
+    static constexpr uint8_t            ms_MAJOR_VERSION                = EditorIMPL::ms_EDITOR_JSON_MAJ_VERSION;
+    static constexpr uint8_t            ms_MINOR_VERSION                = EditorIMPL::ms_EDITOR_JSON_MIN_VERSION;
     
 //
 //
@@ -1579,6 +1554,22 @@ public:
     //                                  APPLICATION SUB-STATES...
     // *************************************************************************** //
     Selection                           selection;
+    
+    //                              SUBSIDIARY STATES:
+    //  EditorState                         editor_S                        {   };        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
+    //  BrowserState                        m_browser_S                     {   };
+    //  Selection                           m_sel;
+    //  mutable BoxDrag                     m_boxdrag;
+    //  MoveDrag                            m_movedrag;
+    //  Clipboard                           m_clipboard;
+    //
+    //                              TOOL STATES:
+    //  PenState                            m_pen;
+    //  ShapeState                          m_shape;
+    //  OverlayState                        m_overlay;
+    //  DebuggerState                       m_debugger;
+    
+    
     
     // *************************************************************************** //
     //

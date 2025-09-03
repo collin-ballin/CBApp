@@ -42,7 +42,7 @@ namespace cblib { namespace math {   //     BEGINNING NAMESPACE "cblib" :: "math
 
 
 
-//  1.  GENERAL MATH TYPES AND DATA ABSTRACTIONS...
+//      1.  GENERAL MATH TYPES AND DATA ABSTRACTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -290,6 +290,157 @@ struct Param {
 // *************************************************************************** //
 // *************************************************************************** //
 } }//   END OF "cblib" :: "math" NAMESPACE.
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      3.      JSON SERIALIZERS FOR CBLIB TYPES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+namespace nlohmann { //     BEGINNING NAMESPACE "nlohmann"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//      "Range<T>"              SERIALIZER...
+//
+template<typename T>
+struct adl_serializer<cblib::math::Range<T>>
+{
+    template<typename T_>   using Range = cblib::math::Range<T_>;
+    template<typename T_>   using Param = cblib::math::Param<T_>;
+    
+    
+    static void                 to_json                 (json & j, Range<T> const & r)
+    {
+        j = json{{"min", r.min}, {"max", r.max}};        // canonical
+        return;
+    }
+
+    static void                 from_json               (json const & j, Range<T> & r)
+    {
+        if ( j.is_array()  &&  j.size() == 2 )
+        {
+            r.min = j[0].get<T>();
+            r.max = j[1].get<T>();
+        }
+        else if ( j.is_object()  &&  j.contains("min")  &&  j.contains("max") )
+        {
+            r.min = j.at("min").get<T>();
+            r.max = j.at("max").get<T>();
+        }
+        else {
+            throw std::runtime_error("Range<T> expects [min,max] or {min,max}");
+        }
+        if constexpr ( std::is_arithmetic_v<T> )
+        {
+            if (r.min > r.max) std::swap(r.min, r.max);
+        }
+        
+        return;
+    }
+};
+
+
+//      "Param<T>"              SERIALIZER...
+//
+template<typename T>
+struct adl_serializer<cblib::math::Param<T>>
+{
+    template<typename T_>   using Range = cblib::math::Range<T_>;
+    template<typename T_>   using Param = cblib::math::Param<T_>;
+        
+
+    static void                 to_json                 (json & j, cblib::math::Param<T> const & p)
+    {
+        j = json{{"value", p.value}, {"limits", p.limits}};   // canonical
+    }
+
+    static void                 from_json               (json const & j, Range<T> & p)
+    {
+        
+        cblib::math::Range<T>    lims        {   };
+        T           val         {   };
+
+        // Accept [value, min, max]
+        if ( j.is_array()  &&  j.size() == 3 )
+        {
+            val      = j[0].get<T>();
+            lims.min = j[1].get<T>();
+            lims.max = j[2].get<T>();
+        }
+        else
+        {
+            // Limits: prefer nested object; allow flattened keys
+            if (j.contains("limits")) {
+                lims = j.at("limits").get<Range<T>>();
+            } else if (j.contains("min") && j.contains("max")) {
+                lims.min = j.at("min").get<T>();
+                lims.max = j.at("max").get<T>();
+            } else {
+                throw std::runtime_error("Param<T> missing limits");
+            }
+            // Value: required; if absent, default to min
+            if (j.contains("value")) {
+                val = j.at("value").get<T>();
+            } else if (j.is_array() && !j.empty()) {
+                val = j[0].get<T>();
+            } else {
+                val = lims.min;
+            }
+        }
+
+        //  Sanitize & clamp where meaningful
+        if constexpr ( std::is_floating_point_v<T> )
+        {
+            if ( !std::isfinite(lims.min)   )   { lims.min  = T(0);      }
+            if ( !std::isfinite(lims.max)   )   { lims.max  = lims.min;  }
+            if ( !std::isfinite(val)        )   { val       = lims.min;  }
+        }
+        if constexpr (std::is_arithmetic_v<T>)
+        {
+            if ( lims.min > lims.max )      { std::swap(lims.min, lims.max); }
+            val = std::clamp(val, lims.min, lims.max);
+        }
+
+        p.limits = lims;
+        p.value  = val;
+        
+        return;
+    }
+};
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}//   END OF "nlohmann" NAMESPACE.
+
+
+
+
+
+
+
+
+
+
+
 
 
 

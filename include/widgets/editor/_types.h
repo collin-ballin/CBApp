@@ -577,7 +577,7 @@ struct ShapeState_t {
     bool                active                  = false;            // true while user is click-dragging a preview
     OID                 overlay_id              = OID(0);           // contextual UI (0 ⇒ none)
     ShapeKind           kind                    = ShapeKind::Rectangle;
-    float               radius                  = 25.0f;            // corner- or major-radius (placeholder)
+    float               radius                  = 10.0f;            // corner- or major-radius (placeholder)
     //  float               params[5]               = {0.0f};           // Array to hold multiple geometric descriptors for more complex shapes.
     //
     //
@@ -1181,6 +1181,103 @@ struct DebuggerState_t
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "EditorRuntime_t"
+//      Contains the NON-COPYABLE, NON-MOVABLE DATA that pertains to the Editor State.
+//
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
+struct EditorRuntime_t
+{
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    
+    // *************************************************************************** //
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    std::mutex                              m_task_mtx                      {   };
+    std::vector< std::function<void()> >    m_main_tasks                    {   };
+    
+    // *************************************************************************** //
+    //      STATE VARIABLES.
+    // *************************************************************************** //
+    std::atomic<bool>                       m_io_busy                       { false };
+    std::atomic<bool>                       m_sdialog_open                  { false };
+    std::atomic<bool>                       m_odialog_open                  { false };
+    std::atomic<bool>                       m_show_io_message               { false };
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+                                        EditorRuntime_t             (void) noexcept                     = default;
+                                        ~EditorRuntime_t            (void)                              = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+                                        EditorRuntime_t             (const EditorRuntime_t &    src)    = delete;   //  Copy. Constructor.
+                                        EditorRuntime_t             (EditorRuntime_t &&         src)    = delete;   //  Move Constructor.
+    EditorRuntime_t &                   operator =                  (const EditorRuntime_t &    src)    = delete;   //  Assgn. Operator.
+    EditorRuntime_t &                   operator =                  (EditorRuntime_t &&         src)    = delete;   //  Move-Assgn. Operator.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "PUBLIC MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "EditorRuntime" INLINE STRUCT DEFINITION.
+
+
+
+
+
+
 //  "EditorState_t"
 //
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
@@ -1202,7 +1299,7 @@ public:
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr float                  ms_IO_MESSAGE_DURATION          = 6.0f;
+    static constexpr float                  ms_IO_MESSAGE_DURATION          = 5.0f;
     
     // *************************************************************************** //
     //
@@ -1248,7 +1345,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //                  IMPLOT INFORMATION...
+    //                  IMPLOT CANVAS INFORMATION...
     // *************************************************************************** //
     //                                  CONSTANTS:
     static constexpr double                 ms_INITIAL_CANVAS_SIZE [4]      = { 0.0f, 256.0f, 0.0f, 256.0f };
@@ -1256,23 +1353,37 @@ public:
     //
     //
     //                                  PERSISTENT STATE INFORMATION:
-    Param<double>                           m_world_size [2]                = {                                     //  MAXIMUM SIZE OF THE CANVAS (World Size).
+    std::array< Param<double>, 2>           m_world_size                    = { {                                   //  MAXIMUM SIZE OF THE CANVAS (World Size).
                                                                                 { 512.0f,       { 10.0f,        1e4f } },
                                                                                 { 512.0f,       { 10.0f,        1e4f } }
-                                                                            };
-    Param<double>                           m_world_slop [2]                = {                                     //  (Allow user to scroll a bit beyond canvas limits).
+                                                                            } };
+    std::array< Param<double>, 2>           m_world_slop                    = { {                                   //  (Allow user to scroll a bit beyond canvas limits).
                                                                                 { 128.0f,       { 32.0f,        512.0f } },
                                                                                 { 128.0f,       { 32.0f,        512.0f } }
-                                                                            };
-    Param<double>                           m_zoom_size [2]                 = {                                     //  MAX + MIN "ZOOM" RESOLUTION OF THE CANVAS.
+                                                                            } };
+    std::array< Param<double>, 2>           m_zoom_size                     = { {                                   //  MAX + MIN "ZOOM" RESOLUTION OF THE CANVAS.
                                                                                 { 1024.0f,      { 1.0f,         2e4f } },
                                                                                 { 1024.0f,      { 1.0f,         2e4f } }
-                                                                            };
+                                                                            } };
     //
     //
     //                                  TRANSIENT STATE INFORMATION:
     mutable ImPlotRect                      m_window_size                   = {   };        //  DOMAIN + RANGE OF CURRENT CANVAS:   ( [X0, Xf], [Y0, Yf] ).
     mutable ImVec2                          m_plot_px_dims                  = {   };
+    mutable ImRect                          m_plot_bbox                     = {   };
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //                  IMPLOT SETTINGS INFORMATION...
+    // *************************************************************************** //
+    //                                  PERSISTENT STATE INFORMATION:
+    Param<float>                            m_mousewheel_zoom_rate          = { 0.050f,     { 0.010f,   0.350f } };
+    //
+    //
+    //                                  TRANSIENT STATE INFORMATION:
+    //                                      ...
     
     // *************************************************************************** //
     //
@@ -1344,7 +1455,7 @@ public:
     std::atomic<bool>                       m_odialog_open                  = { false };
     std::string                             m_project_name                  = {   };
     std::filesystem::path                   m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-default.json"};   //    {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
-    //  std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
+    //      std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/testing/editor-fdtd_v0.json"};
     //
     //
     //                                  PEN-TOOL STATE:
@@ -1357,12 +1468,43 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //   END "CLASS DATA-MEMBERS".
 
+
+
+// *************************************************************************** //
+//
+//
+//      2.A.        PUBLIC MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    //  explicit                        MyClass                 (app::AppState & );             //  Def. Constructor.
+                                        EditorState_t           (void) noexcept                 = default;
+                                        ~EditorState_t          (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+                                        EditorState_t           (const EditorState_t &    src)  = default;      //  Copy. Constructor.
+                                        EditorState_t           (EditorState_t &&         src)  = default;      //  Move Constructor.
+    EditorState_t &                     operator =              (const EditorState_t &    src)  = default;      //  Assgn. Operator.
+    EditorState_t &                     operator =              (EditorState_t &&         src)  = default;      //  Move-Assgn. Operator.
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "PUBLIC MEMBER FUNCS".
+
     
    
 // *************************************************************************** //
 //
 //
-//      2.A.        INLINE FUNCTIONS...
+//      2.B.        INLINE FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -1431,21 +1573,43 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //   END "EditorState"
 };
-//
-//
-//
+
+
+
+
 //      EditorState     : "to_json"
 //
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
 inline void to_json(nlohmann::json & j, const EditorState_t<VID, PtID, LID, PID, ZID> & obj)
 {
+    j ["m_world_size"]      = obj.m_world_size;
+
     //  j = {
-    //      { "Z_EDITOR_BACK",          obj.Z_EDITOR_BACK       },
-    //      { "Z_FLOOR_USER",           obj.Z_FLOOR_USER        },
-    //      { "Z_EDITOR_FRONT",         obj.Z_EDITOR_FRONT      },
-    //      { "Z_CEIL_USER",            obj.Z_CEIL_USER         },
-    //      { "RENORM_THRESHOLD",       obj.RENORM_THRESHOLD    }
+    //      { "m_world_size",          obj.m_world_size       }
     //  };
+    
+    
+    
+    
+    /*
+    Param<double>                           m_world_size [2]                = {                                     //  MAXIMUM SIZE OF THE CANVAS (World Size).
+                                                                                { 512.0f,       { 10.0f,        1e4f } },
+                                                                                { 512.0f,       { 10.0f,        1e4f } }
+                                                                            };
+    Param<double>                           m_world_slop [2]                = {                                     //  (Allow user to scroll a bit beyond canvas limits).
+                                                                                { 128.0f,       { 32.0f,        512.0f } },
+                                                                                { 128.0f,       { 32.0f,        512.0f } }
+                                                                            };
+    Param<double>                           m_zoom_size [2]                 = {                                     //  MAX + MIN "ZOOM" RESOLUTION OF THE CANVAS.
+                                                                                { 1024.0f,      { 1.0f,         2e4f } },
+                                                                                { 1024.0f,      { 1.0f,         2e4f } }
+              */
+    
+    
+    
+    
+    
+    
     
     return;
 }
@@ -1635,7 +1799,6 @@ struct EditorStyle
 // *************************************************************************** //
     float                       GRID_STEP                       = 64.0f;
     float                       HIT_THRESH_SQ                   = 6.0f * 6.0f;
-    float                       ms_ZOOM_RATE                    = 0.050f;
 //
     int                         PEN_DRAG_TIME_THRESHOLD         = 0.05;                             //  PEN_DRAG_TIME_THRESHOLD         // seconds.
     float                       PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;                             //  PEN_DRAG_MOVEMENT_THRESHOLD     // px  (was 2)
