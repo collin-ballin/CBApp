@@ -88,9 +88,10 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction & it) const
 
     //  "parent_path_of_vertex"
     //      Helper: map vertex-id → parent Path*, or nullptr if none.
-    auto            parent_path_of_vertex   = [&](VertexID vid) -> const Path*
+    auto            parent_path_of_vertex   = [&](VertexID vid) -> const Path *
     {
-        for (const Path & p : m_paths) {
+        for (const Path & p : m_paths)
+        {
             for (VertexID v : p.verts) {
                 if (v == vid) { return &p; }
             }
@@ -107,25 +108,32 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction & it) const
     // ───────────────────────────────────────────── 1. Bézier handles
     for (const Vertex & v : m_vertices)
     {
-        if (!m_sel.vertices.count(v.id)) continue;  // handles only for selected verts
+        if (!m_sel.vertices.count(v.id))            { continue; }  // handles only for selected verts
         const Path* pp = parent_path_of_vertex(v.id);
-        if (!pp || pp->locked || !pp->visible) continue;
+        
+        if ( !pp || pp->locked || !pp->visible )    { continue; }
 
-        if (v.out_handle.x || v.out_handle.y) {
+
+        if (v.out_handle.x || v.out_handle.y)
+        {
             ImVec2 scr = ws2px({ v.x + v.out_handle.x,
                                  v.y + v.out_handle.y });
-            if (overlap(scr))
+            if ( overlap(scr) )
                 return Hit{ Hit::Type::Handle,
                             static_cast<size_t>(v.id), true };
         }
-        if (v.in_handle.x || v.in_handle.y) {
+        if ( v.in_handle.x || v.in_handle.y )
+        {
             ImVec2 scr = ws2px({ v.x + v.in_handle.x,
                                  v.y + v.in_handle.y });
-            if (overlap(scr))
+            if ( overlap(scr) )
+            {
                 return Hit{ Hit::Type::Handle,
                             static_cast<size_t>(v.id), false };
+            }
         }
     }
+
 
     // ───────────────────────────────────────────── 2. point glyphs
     int pi = _hit_point(it);
@@ -136,6 +144,7 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction & it) const
         if (pp && !pp->locked && pp->visible)
             return Hit{ Hit::Type::Point, static_cast<size_t>(pi) };
     }
+
 
     // ───────────────────────────────────────────── 3. standalone lines (unchanged)
     for (size_t i = 0; i < m_lines.size(); ++i)
@@ -613,7 +622,7 @@ void Editor::update_move_drag_state(const Interaction & it)
 //
 void Editor::resolve_pending_selection(const Interaction & it)
 {
-    if (!it.hovered || m_dragging) return;
+    if ( !it.hovered || m_dragging )    { return; }
 
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
     {
@@ -658,6 +667,8 @@ void Editor::resolve_pending_selection(const Interaction & it)
         m_pending_hit.reset();
         m_pending_clear = false;
     }
+    
+    return;
 }
 
 
@@ -719,30 +730,50 @@ void Editor::_rebuild_vertex_selection()
 //
 void Editor::_MECH_hit_detection(const Interaction& it) const
 {
-    if (!it.hovered) return;                        // cursor not over canvas
-    if (m_dragging || m_boxdrag.active) return;     // ignore while dragging
+    if ( !it.hovered )                      { return; }         //  cursor not over canvas
+    if ( m_dragging || m_boxdrag.active )   { return; }         //  ignore while dragging
+    
+    
     // optional: also skip while a handle is already being dragged
     // if (m_dragging_handle) return;
 
-    auto hit = _hit_any(it);                        // point / path / line / handle / none
-    if (!hit) return;
+
+    //  auto hit = _hit_any(it);                        // point / path / line / handle / none
+    
+    this->m_sel.hovered = _hit_any(it);
+    
+    if ( !this->m_sel.hovered )     { return; }
 
 
-    switch (hit->type)
+
+
+    //  DISPATCH HIT-DETECTION...
+    //  switch (hit->type)
+    switch ( this->m_sel.hovered->type )
     {
-        case Hit::Type::Handle:                     // NEW — Bézier handle square
-        case Hit::Type::Point:                      // vertex glyph
+        //      1.  HOVERED OVER "BEZIER"-SQUARE HANDLE.
+        case Hit::Type::Handle : {
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
             break;
+        }
+        
+        //      2.  HOVERED OVER VERTEX-GLYPH.
+        case Hit::Type::Point: {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+            break;
+        }
 
-        case Hit::Type::Path:                       // open or closed path
-        case Hit::Type::Line:
+        //      3.  HOVERED OVER "LINE" OR "PATH".
+        case Hit::Type::Path :                       // open or closed path
+        case Hit::Type::Line : {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             break;
+        }
 
-        default:
-            break;
+        default :       { break; }
     }
+    
+    
     
     return;
 }

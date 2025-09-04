@@ -282,7 +282,7 @@ void Editor::Begin(const char * /*id*/)
         
         //          3.2.    UPDATE THE EDITOR'S CACHE / STORE "PER-FRAME" VALUES IN THE "Interaction" OBJECT FOR THIS FRAME...
         this->_per_frame_cache_begin();
-
+        this->_selbox_rebuild_view_if_needed(it);   //  NEW: prepares bbox view cache (noop for now)
 
 
         //          3.3.    MODE SWITCH BEHAVIORS AND OVERLAY WINDOWS...
@@ -307,7 +307,7 @@ void Editor::Begin(const char * /*id*/)
 
 
         //          3.6.    SELECTION BEHAVIOR...
-        if  ( !space  &&  !it.BlockShortcuts() )
+        if  ( !space  &&  !block_input )
             { _MECH_query_shortcuts(it); }
         
     
@@ -363,22 +363,21 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
 {
     EditorState &       ES                  = this->m_editor_S;
     //
-    static bool         show_grid_cache     = m_grid.visible;
+    static bool         show_grid_cache     = !m_grid.visible;
     
     
     //      1.      QUERY THE "SHOW GRID" STATUS...
-    //  if ( show_grid_cache != m_grid.visible) [[unlikely]]
-    if ( false ) [[unlikely]]
+    if ( show_grid_cache != m_grid.visible) [[unlikely]]
     {
         show_grid_cache = m_grid.visible;
         
         if ( show_grid_cache ) {    //  1A.     SET the flags.
-            m_axes[0].flags     |= ~ImPlotAxisFlags_NoGridLines;
-            m_axes[1].flags     |= ~ImPlotAxisFlags_NoGridLines;
-        }
-        else {                      //  1B.     REMOVE the flags.
             m_axes[0].flags     &= ~ImPlotAxisFlags_NoGridLines;
             m_axes[1].flags     &= ~ImPlotAxisFlags_NoGridLines;
+        }
+        else {                      //  1B.     REMOVE the flags.
+            m_axes[0].flags     |= ImPlotAxisFlags_NoGridLines;
+            m_axes[1].flags     |= ImPlotAxisFlags_NoGridLines;
         }
     }
     
@@ -397,15 +396,18 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
                                             
                                             
     //      4.      SETUP MIN + MAX AXIS "ZOOM" RESOLUTION...
-    ImPlot::SetupAxisZoomConstraints    (   ImAxis_X1,      ES.m_zoom_size[0].Min(),            ES.m_zoom_size[0].Value()        );
+    ImPlot::SetupAxisZoomConstraints    (   ImAxis_X1,      ES.m_zoom_size[0].Min(),            ES.m_zoom_size[0].Value()       );
     ImPlot::SetupAxisZoomConstraints    (   ImAxis_Y1,      ES.m_zoom_size[1].Min(),            ES.m_zoom_size[1].Value()       );
     
     
     //      5.      CONFIGURE THE "IMPLOT" APPEARANCE...
     ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  5A.     Axis Names & Flags.
-                      (m_grid.visible) ? m_axes[0].flags    : m_axes[0].flags | ImPlotAxisFlags_NoGridLines,
-                      (m_grid.visible) ? m_axes[1].flags    : m_axes[1].flags | ImPlotAxisFlags_NoGridLines
+                      m_axes[0].flags,          m_axes[1].flags
     );
+    //  ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  5A.     Axis Names & Flags.
+    //                    (m_grid.visible) ? m_axes[0].flags    : m_axes[0].flags | ImPlotAxisFlags_NoGridLines,
+    //                    (m_grid.visible) ? m_axes[1].flags    : m_axes[1].flags | ImPlotAxisFlags_NoGridLines
+    //  );
     
     
     //      6.      PER-FRAME CACHE OPERATIONS FOR IMPLOT CANVAS...
@@ -461,25 +463,25 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
     //
     static bool             debug_overlay_cache         = !ES.m_show_debug_overlay;                         //  1.  Debugger/Info Overlay.
     static auto &           debugger_entry              = m_residents[Resident::Debugger];
-    static Overlay &        debugger_resident           = *m_overlays.lookup_resident(debugger_entry.id);
+    static Overlay &        debugger_resident           = *m_ov_manager.lookup_resident(debugger_entry.id);
     //
     static bool             sel_overlay_cache           = !ES.m_show_sel_overlay;                           //  2.  Selection Overlay.
     static auto &           selection_entry             = m_residents[Resident::Selection];
-    static Overlay &        selection_resident          = *m_overlays.lookup_resident(selection_entry.id);
+    static Overlay &        selection_resident          = *m_ov_manager.lookup_resident(selection_entry.id);
     //
     static auto &           shape_entry                 = m_residents[Resident::Shape];                     //  3.  Shape Resident.
-    static Overlay &        shape_resident              = *m_overlays.lookup_resident(shape_entry.id);
+    static Overlay &        shape_resident              = *m_ov_manager.lookup_resident(shape_entry.id);
     //
     //
     //
     //  UI-RESIDENT OVERLAYS...
     static bool             ui_traits_overlay_cache     = !ES.m_show_debug_overlay;                         //  4.  UI-Traits Resident.
     static auto &           ui_traits_entry             = m_residents[Resident::UITraits];
-    static Overlay &        ui_traits_resident          = *m_overlays.lookup_resident(ui_traits_entry.id);
+    static Overlay &        ui_traits_resident          = *m_ov_manager.lookup_resident(ui_traits_entry.id);
     //
     static bool             ui_objects_overlay_cache    = !ES.m_show_ui_objects_overlay;                    //  5.  UI-Objects Resident.
     static auto &           ui_objects_entry            = m_residents[Resident::UIObjects];
-    static Overlay &        ui_objects_resident         = *m_overlays.lookup_resident(ui_objects_entry.id);
+    static Overlay &        ui_objects_resident         = *m_ov_manager.lookup_resident(ui_objects_entry.id);
 
     
     
@@ -529,7 +531,7 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
     //  ImVec2 bb_min = ImGui::GetItemRectMin();   // full ImPlot widget (axes included)
     //  ImVec2 bb_max = ImGui::GetItemRectMax();
     //
-    m_overlays.Begin(
+    m_ov_manager.Begin(
         /* world→pixel */ [this](ImVec2 ws){ return world_to_pixels(ws); },
         /* cursor      */ ImGui::GetIO().MousePos,
         /* full rect   */ ES.m_plot_bbox /*ImRect(bb_min, bb_max) */       // ← use full item rect

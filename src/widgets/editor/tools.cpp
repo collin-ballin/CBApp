@@ -61,7 +61,7 @@ static constexpr float  ms_SHAPE_ELLIPSE_KAPPA         = 0.5522847498f; // cubic
 void Editor::_handle_shape([[maybe_unused]] const Interaction & it)
 {
     auto &              shape_entry     = m_residents[Resident::Shape];
-    static Overlay *    resident        = m_overlays.lookup_resident(shape_entry.id);
+    static Overlay *    resident        = m_ov_manager.lookup_resident(shape_entry.id);
     
     
     // ── 0. Spawn overlay the first frame Shape mode is active ───────────

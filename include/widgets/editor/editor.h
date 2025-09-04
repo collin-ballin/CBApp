@@ -155,6 +155,7 @@ public:
     //                              ARRAYS:
     static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;
     static constexpr auto &             ms_MODE_CAPABILITIES            = DEF_MODE_CAPABILITIES;
+    static constexpr auto &             ms_HIT_TYPE_NAMES               = DEF_HIT_TYPE_NAMES;
     static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES;
     //
     static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
@@ -191,13 +192,9 @@ public:
     // *************************************************************************** //
     //                              RESIDENT OVERLAY DATA:
     // *************************************************************************** //
-    //  struct ResidentEntry {
-    //      OverlayID                   id;             //  runtime ID (filled in ctor)
-    //      Overlay *                   ptr;            //  Reference.
-    //      OverlayCFG                  cfg;            //  compile-time defaults
-    //      OverlayStyle                style;
-    //  };
     //
+    //
+    //  cblib::EnumArray< Resident, std::unique_ptr<Overlay> >              m_overlays;
     //
     std::array<ResidentEntry, Resident::COUNT>      m_residents { {
         //
@@ -332,7 +329,7 @@ protected:
     std::vector<Path>                   m_paths;                //  New path container
     std::unordered_set<HandleID>        m_show_handles;         //  List of which glyphs we WANT to display Bezier points for.
     //
-    OverlayManager                      m_overlays;
+    OverlayManager                      m_ov_manager;      //  formerly: "m_overlays".
     
     // *************************************************************************** //
     //
@@ -517,16 +514,6 @@ protected:
 
 
 
-
-
-
-
-
-
-
-
-
-    
 // *************************************************************************** //
 //
 //
@@ -838,21 +825,31 @@ protected:
     // *************************************************************************** //
     //      SERIALIZATION STUFF.            |   "serialization.cpp" ...
     // *************************************************************************** //
+    struct SettingsData {
+        EditorState &       ES          ;
+        EditorStyle &       Style       ;
+        float &             LABEL_W     ;
+        float &             WIDGET_W    ;
+    };
+    //
+    //
     //                              EDITOR SETTINGS:
     void                                _draw_editor_settings               ([[maybe_unused]] popup::Context & ctx);
     //
     //                              HEADER 1, "PROJECT DATA":
-    inline void                             _settings_H1                    (void);
-    inline void                             _H1_project_data                (void);
+    inline void                         _settings_H1                        (SettingsData & );
+    inline void                             _H1_project_data                (SettingsData & );
     //
     //                              HEADER 2, "EDITOR SETTINGS":
-    inline void                             _settings_H2                    (void);
+    inline void                         _settings_H2                        (SettingsData & );
+    inline void                             _H2_state                       (SettingsData & );
+    inline void                             _H2_mechanics                   (SettingsData & );
     //
     //                              HEADER 3, "USER PREFERENCES":
-    inline void                             _settings_H3                    (void);
+    inline void                         _settings_H3                        (SettingsData & );
     //
     //                              HEADER 4, "OPERATIONS":
-    inline void                             _settings_H4                    (void);
+    inline void                         _settings_H4                        (SettingsData & );
     //
     //
     //
@@ -929,11 +926,31 @@ protected:
 // *************************************************************************** //
     
     // *************************************************************************** //
+    //      NEW BBOX STUFF...
+    // *************************************************************************** //
+    
+    //  Add tiny revision counters in Editor (to drive “dirty”)
+    //      We’ll bump these when selection/geometry/camera/style change.
+    //      For now, just add them and bump the camera rev every frame; we’ll wire the others in a later tiny step.
+    //
+    uint64_t                            m_rev_sel                               = 1;   // selection changes
+    uint64_t                            m_rev_geom                              = 1;   // vertex/path geometry changes
+    uint64_t                            m_rev_cam                               = 1;   // plot limits / zoom / pan
+    uint64_t                            m_rev_style                             = 1;   // handle sizes, bbox margin, colors
+
+    //  Small helpers (use as we wire things up)
+    inline void                         _rev_bump_sel                           (void) noexcept     { ++m_rev_sel;   }
+    inline void                         _rev_bump_geom                          (void) noexcept     { ++m_rev_geom;  }
+    inline void                         _rev_bump_cam                           (void) noexcept     { ++m_rev_cam;   }
+    inline void                         _rev_bump_style                         (void) noexcept     { ++m_rev_style; }
+
+
+    // *************************************************************************** //
     //      NEW INLINE FUNCS...
     // *************************************************************************** //
     
     //  "_expand_bbox_by_pixels"
-    inline std::pair<ImVec2, ImVec2>    _expand_bbox_by_pixels              (const ImVec2& tl_ws_in, const ImVec2& br_ws_in, float margin_px) const {
+    inline std::pair<ImVec2, ImVec2>    _expand_bbox_by_pixels                  (const ImVec2& tl_ws_in, const ImVec2& br_ws_in, float margin_px) const {
         ImVec2 p0 = world_to_pixels(tl_ws_in);
         ImVec2 p1 = world_to_pixels(br_ws_in);
 
@@ -953,7 +970,7 @@ protected:
 
 
     //  "_bbox_handle_pos_ws"
-    static inline ImVec2                _bbox_handle_pos_ws                 (uint8_t i, const ImVec2 & tl, const ImVec2 & br) {
+    static inline ImVec2                _bbox_handle_pos_ws                     (uint8_t i, const ImVec2 & tl, const ImVec2 & br) {
         const ImVec2    c   { (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
         switch (i) {
             case 0  :   { return { tl.x    , tl.y }; }      // NW
@@ -968,7 +985,7 @@ protected:
     }
     
     //  "_bbox_pivot_opposite"
-    static inline ImVec2                _bbox_pivot_opposite                 (uint8_t i, const ImVec2 & tl, const ImVec2 & br) {
+    static inline ImVec2                _bbox_pivot_opposite                    (uint8_t i, const ImVec2 & tl, const ImVec2 & br) {
         const ImVec2 c{ (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
         switch (i) {
             case 0  :   { return { br.x   , br.y };    }   // NW → pivot SE
@@ -982,10 +999,31 @@ protected:
         }
     }
     
+    //  "_selbox_rebuild_view_if_needed"
+    inline void                         _selbox_rebuild_view_if_needed          (const Interaction& it)
+    {
+        // For Step 1: no behavior change — just stamp and exit
+        BoxDrag::ViewCache & V = m_boxdrag.view;
+
+        V.sel_seen   = m_rev_sel;
+        V.geom_seen  = m_rev_geom;
+        V.cam_seen   = m_rev_cam;
+        V.style_seen = m_rev_style;
+
+        V.visible    = false;     // we will compute this next step
+        V.valid      = true;      // avoid recomputing until we wire real logic
+        V.hover_idx  = -1;
+    }
+
+    
     //  "_safe_div"
-    static inline float                 _safe_div                           (float num, float den)
+    static inline float                 _safe_div                               (float num, float den)
     { constexpr float eps = 1e-6f;  return (std::fabs(den) > eps) ? (num / den) : 1.0f; }
 
+    
+    
+    
+    
     
     // *************************************************************************** //
     
@@ -1000,19 +1038,19 @@ protected:
     
     //  "world_to_pixels"
     //      ImPlot works in double precision; promote, convert back to float ImVec2
-    inline ImVec2                       world_to_pixels                     (ImVec2 w) const {
+    inline ImVec2                       world_to_pixels                         (ImVec2 w) const {
         ImPlotPoint p = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));
         return { static_cast<float>(p.x), static_cast<float>(p.y) };
     }
     
     //  "pixels_to_world"
-    inline ImVec2                       pixels_to_world                     (ImVec2 scr) const {
+    inline ImVec2                       pixels_to_world                         (ImVec2 scr) const {
         ImPlotPoint p = ImPlot::PixelsToPlot(scr);// ImPlot uses double; convert back to float for our structs
         return { static_cast<float>(p.x), static_cast<float>(p.y) };
     }
     
     //  "snap_to_grid"
-    inline ImVec2                       snap_to_grid                        (ImVec2 ws) const
+    inline ImVec2                       snap_to_grid                            (ImVec2 ws) const
     {
         if ( this->want_snap() ) {
             float s = m_grid.snap_step;
@@ -1025,14 +1063,14 @@ protected:
     }
     
     //  "want_snap"
-    inline bool                         want_snap                           (void) const
+    inline bool                         want_snap                               (void) const
     { return m_grid.snap_on || ImGui::GetIO().KeyShift; }
        
        
        
        
     //  "_update_grid"
-    inline void                         _update_grid_info                   (void)
+    inline void                         _update_grid_info                       (void)
     {
         EditorState &       ES              = this->m_editor_S;
         ImPlotRect &        lim             = ES.m_window_size;
@@ -1058,7 +1096,7 @@ protected:
        
        
     //  "_clamp_plot_axes"
-    inline void                         _clamp_plot_axes                    (void) const
+    inline void                         _clamp_plot_axes                        (void) const
     {
         return;
     }

@@ -187,17 +187,34 @@ void Editor::_debugger_hit_detection(void)
     EditorState &                       ES                  = this->m_editor_S;
     [[maybe_unused]] Interaction &      it                  = *this->m_it;
     //
+    //
     S.PushFont(Font::Small);
     
     
-    //      1.      SHORTCUTS ENABLED/DISABLED...
-    this->S.labelf("X-Range:", LABEL_W, WIDGET_W);
-    ImGui::Text( "(%.0f, %.0f)",      ES.m_window_size.X.Min,     ES.m_window_size.X.Max);
+    //      1.      CURRENT CANVAS WINDOW DIMENSIONS...
+    this->S.labelf("Canvas Window:", LABEL_W, WIDGET_W);
+    ImGui::Text( "X: (%.0f, %.0f).  Y: (%.0f, %.0f)",       ES.m_window_size.X.Min,     ES.m_window_size.X.Max,
+                                                            ES.m_window_size.Y.Min,     ES.m_window_size.Y.Max  );
+
+    //      2.      CURRENT "ZOOM" DIMENSIONS...
+    this->S.labelf("Canvas Zoom:", LABEL_W, WIDGET_W);
+    ImGui::Text( "X: (%.0f, %.0f).  Y: (%.0f, %.0f)",       ES.m_window_size.X.Min,     ES.m_window_size.X.Max,
+                                                            ES.m_window_size.Y.Min,     ES.m_window_size.Y.Max  );
     
-    this->S.labelf("Y-Range:", LABEL_W, WIDGET_W);
-    ImGui::Text( "(%4.0f, %4.0f)",      ES.m_window_size.Y.Min,     ES.m_window_size.Y.Max);
     
 
+    //      3.      HOVERED ITEM...
+    this->S.labelf("Hovered:", LABEL_W, WIDGET_W);
+    //
+    S.print_TF(
+        ( m_sel.hovered.has_value() ),
+        (m_sel.hovered)
+            ? ms_HIT_TYPE_NAMES[ (*m_sel.hovered).type ]
+            : "None",
+        "None"
+    );
+    
+    //  S.print_TF( !it.BlockShortcuts() );
 
 
 

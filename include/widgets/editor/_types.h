@@ -219,11 +219,29 @@ static constexpr cblib::EnumArray< IOResult, const char * >
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "HitType"
+//
+enum class HitType :uint8_t {
+    Point = 0, Line, Path, Handle,
+    COUNT
+};
+//
+//  "DEF_HIT_TYPE_NAMES"
+static constexpr cblib::EnumArray< HitType, const char * >
+    DEF_HIT_TYPE_NAMES  = { {
+        "Point",   "Line",     "Path",    "Handle"
+} };
+
+
+
 //  "Hit_t"
 //
 template <typename HID>
-struct Hit_t {
-    enum class Type { Point, Line, Path, Handle };
+struct Hit_t
+{
+    using Type = HitType;
+//
+//
     Type            type            = Type::Point;
     size_t          index           = 0;     // Point/Line/Path: original meaning
     bool            out             = false; // valid only when type == Handle
@@ -466,25 +484,33 @@ struct Interaction
 
 //  "Selection_t"
 //
-template<typename VID, typename PtID, typename LID, typename PID>
-struct Selection_t {
-    inline void                     clear           (void)          { vertices.clear(); points.clear(); lines.clear(); paths.clear();               }        // new
-    inline bool                     empty           (void) const    { return vertices.empty() && points.empty() && lines.empty() && paths.empty();  }
-    inline bool                     is_empty        (void) const    { return paths.empty();                                                         }
+template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
+struct Selection_t
+{
+    using                               Hit                     = Hit_t         <HitID>                 ;
+    using                               PathHit                 = PathHit_t     <PathID, VertexID>      ;
 //
 //
 //
-    std::unordered_set<uint32_t>    vertices                {   };
-    std::unordered_set<size_t>      points                  {   };
-    std::unordered_set<size_t>      lines                   {   };
-    std::unordered_set<size_t>      paths                   {   };     // ← NEW
+    inline void                         clear           (void)          { vertices.clear(); points.clear(); lines.clear(); paths.clear();               }        // new
+    inline bool                         empty           (void) const    { return vertices.empty() && points.empty() && lines.empty() && paths.empty();  }
+    inline bool                         is_empty        (void) const    { return paths.empty();                                                         }
+//
+//
+//
+    std::unordered_set<uint32_t>        vertices                {   };
+    std::unordered_set<size_t>          points                  {   };
+    std::unordered_set<size_t>          lines                   {   };
+    std::unordered_set<size_t>          paths                   {   };     // ← NEW
+//
+//                                  CACHED ITEMS:
+    mutable std::optional<Hit>          hovered                 { std::nullopt };
 //
 };
 //
 //  "to_json"
-template<typename VID, typename PtID, typename LID, typename PID>
-inline void to_json(nlohmann::json & j,
-                    const Selection_t<VID,PtID,LID,PID>& s)
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
+inline void to_json(nlohmann::json & j, const Selection_t<VID,PtID,LID,PID,ZID,HitID> & s)
 {
     j = { { "vertices",  std::vector<VID>  (s.vertices.begin(), s.vertices.end()) },
           { "points",    std::vector<PtID> (s.points  .begin(), s.points  .end()) },
@@ -493,9 +519,8 @@ inline void to_json(nlohmann::json & j,
 }
 //
 //  "from_json"
-template<typename VID, typename PtID, typename LID, typename PID>
-inline void from_json(const nlohmann::json & j,
-                      Selection_t<VID,PtID,LID,PID>& s)
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
+inline void from_json(const nlohmann::json & j, Selection_t<VID,PtID,LID,PID,ZID,HitID> & s)
 {
     std::vector<VID >  vs;  j.at("vertices").get_to(vs);
     std::vector<PtID>  ps;  j.at("points"  ).get_to(ps);
@@ -615,7 +640,7 @@ inline void from_json(const nlohmann::json & j, ShapeState_t<OID> & o)
 
 //  "BrowserState_t"
 //
-template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
+template< typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HID >
 struct BrowserState_t {
 // *************************************************************************** //
 // *************************************************************************** //
@@ -740,7 +765,7 @@ struct BrowserState_t {
 
 //  "IndexState_t"
 //
-template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
+template< typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HID >
 struct IndexState_t {
     VID                         next_vid                                = 0;    //  original:   "m_next_id"...
     PID                         next_pid                                = 0;    //  original:   "m_next_pid"...
@@ -1039,9 +1064,29 @@ struct MoveDrag {
 };
 
 
+
+
 //  "BoxDrag"
 //      struct (add fields for handle_ws0, orig_w, orig_h after mouse_ws0)
-struct BoxDrag {
+//
+struct BoxDrag
+{
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
     bool                        active              = false;
     uint8_t                     handle_idx          = 0;
     ImVec2                      anchor_ws           = {0.0f,    0.0f};
@@ -1050,11 +1095,69 @@ struct BoxDrag {
     std::vector<uint32_t>       v_ids;
     std::vector<ImVec2>         v_orig;
     ImVec2                      mouse_ws0           = {0.0f,    0.0f};
-    ImVec2                      handle_ws0;                     // initial world‑space position of the dragged handle
-    float                       orig_w              = 1.0f;          // original bbox width  (world units)
-    float                       orig_h              = 1.0f;          // original bbox height (world units)
+    ImVec2                      handle_ws0;                                 //  initial world‑space position of the dragged handle
+    float                       orig_w              = 1.0f;                 //  original bbox width  (world units)
+    float                       orig_h              = 1.0f;                 //  original bbox height (world units)
     bool                        first_frame         = true;
-};
+
+    // *************************************************************************** //
+    //      NEW STUFF.
+    // *************************************************************************** //
+    struct ViewCache {
+        bool                    valid               = false;    // recompute if false or revs changed
+        bool                    visible             = false;    // draw/hover only if true
+
+        // Expanded bbox (world & pixels)
+        ImVec2                  tl_ws               { 0.0f, 0.0f };
+        ImVec2                  br_ws               { 0.0f, 0.0f };
+        ImVec2                  tl_px               { 0.0f, 0.0f };
+        ImVec2                  br_px               { 0.0f, 0.0f };
+
+        // Handle anchors (world & pixels) and their pixel rects
+        ImVec2                  handle_ws[8]        { };
+        ImVec2                  handle_px[8]        { };
+        ImRect                  handle_rect_px[8]   { };
+
+        int                     hover_idx           = -1;       // -1 = none
+
+        // Last-seen revision stamps (compare to Editor’s counters)
+        uint64_t                sel_seen            = 0;
+        uint64_t                geom_seen           = 0;
+        uint64_t                cam_seen            = 0;
+        uint64_t                style_seen          = 0;
+    };
+    ViewCache                   view                {   };
+    
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MEMBER FUNCS".
+
+
+
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "BoxDrag" INLINE CLASS DEFINITION.
+
+
+
+
 
 
 //  "Bounds"
@@ -1087,7 +1190,7 @@ struct Camera {
 
 //  "DebuggerState_t"
 //
-template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
+template< typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HID >
 struct DebuggerState_t
 {
 // *************************************************************************** //
@@ -1184,7 +1287,7 @@ struct DebuggerState_t
 //  "EditorRuntime_t"
 //      Contains the NON-COPYABLE, NON-MOVABLE DATA that pertains to the Editor State.
 //
-template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
+template< typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HID >
 struct EditorRuntime_t
 {
     // *************************************************************************** //
@@ -1280,7 +1383,7 @@ struct EditorRuntime_t
 
 //  "EditorState_t"
 //
-template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
+template< typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HID >
 struct EditorState_t
 {
 //      0.          CONSTANTS AND ALIASES...
@@ -1579,10 +1682,17 @@ public:
 
 //      EditorState     : "to_json"
 //
-template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
-inline void to_json(nlohmann::json & j, const EditorState_t<VID, PtID, LID, PID, ZID> & obj)
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
+inline void to_json(nlohmann::json & j, const EditorState_t<VID, PtID, LID, PID, ZID, HitID> & obj)
 {
+
     j ["m_world_size"]      = obj.m_world_size;
+    
+    j ["m_world_slop"]      = obj.m_world_slop;
+    
+    j ["m_zoom_size"]       = obj.m_zoom_size;
+
+
 
     //  j = {
     //      { "m_world_size",          obj.m_world_size       }
@@ -1618,8 +1728,8 @@ inline void to_json(nlohmann::json & j, const EditorState_t<VID, PtID, LID, PID,
 //
 //      EditorState     : "from_json"
 //
-template<typename VID, typename PtID, typename LID, typename PID, typename ZID>
-inline void from_json(nlohmann::json & j, EditorState_t<VID, PtID, LID, PID, ZID> & obj)
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
+inline void from_json(nlohmann::json & j, EditorState_t<VID, PtID, LID, PID, ZID, HitID> & obj)
 {
 
     //  j.at("")        .get_to(obj.m_plot_limits);
@@ -1821,10 +1931,10 @@ struct EditorStyle
 //                              CANVAS  | USER-INTERFACE CONSTANTS...
 // *************************************************************************** //
 //                          HANDLES:
-    ImU32                       ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 255);       //  ms_HANDLE_COLOR             //  gold
-    ImU32                       ms_HANDLE_HOVER_COLOR           = IM_COL32(255, 255, 0, 255);       //  ms_HANDLE_HOVER_COLOR       //  yellow
-    float                       ms_HANDLE_SIZE                  = 3.0f;
-    float                       HANDLE_BOX_SIZE                 = 4.f;                              //  ms_HANDLE_SIZE              //  px half-side
+    ImU32                       ms_HANDLE_COLOR                 = IM_COL32(255, 215, 0, 170);       //  ms_HANDLE_COLOR             //  gold    IM_COL32(255, 215, 0, 255)
+    ImU32                       ms_HANDLE_HOVER_COLOR           = cblib::utl::compute_tint( IM_COL32(255, 215, 0, 255), 0.30f );       //  ms_HANDLE_HOVER_COLOR       //  yellow  IM_COL32(255, 255, 0, 255)
+    float                       ms_HANDLE_SIZE                  = 5.5f;
+    float                       HANDLE_BOX_SIZE                 = 5.5f;                              //  ms_HANDLE_SIZE              //  px half-side
     
 // *************************************************************************** //
 //
@@ -1853,7 +1963,7 @@ struct EditorStyle
     ImU32                       COL_LASSO_FILL                  = IM_COL32(255,215,0,40);  // translucent fill
 //
 //                          BOUNDING BOX:
-    float                       SELECTION_BBOX_MARGIN_PX        = 8.0f;
+    float                       SELECTION_BBOX_MARGIN_PX        = 12.0f;
     ImU32                       SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 153);   //  cyan-blue
     float                       SELECTION_BBOX_TH               = 1.5f;
     
@@ -1885,6 +1995,7 @@ struct EditorStyle
     float                       ms_SETTINGS_WIDGET_AVAIL            = 256.0f;
     float                       ms_SETTINGS_INDENT_SPACING_CACHE    = 0.0f;
     float                       ms_SETTINGS_WIDGET_WIDTH            = -1.0f;
+    float                       ms_SETTINGS_SMALL_LINE_HEIGHT       = -1.0f;
     
 // *************************************************************************** //
 //
@@ -1941,6 +2052,10 @@ struct EditorStyle
     //  "PopSettingsWidgetW"
     inline void                         PopSettingsWidgetW                  (void) noexcept
     { this->ms_SETTINGS_WIDGET_WIDTH = this->ms_SETTINGS_WIDGET_AVAIL; }
+    
+    //  "SmallNewLine"
+    inline void                         SmallNewLine                        (void) noexcept
+    { ImGui::Dummy({ 0.0f, this->ms_SETTINGS_SMALL_LINE_HEIGHT}); return; }
     
     
     

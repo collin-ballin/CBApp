@@ -69,8 +69,8 @@ Editor::Editor(app::AppState & src)
     //      3.      INITIALIZE FUNCTIONS FOR DEBUGGER OVERLAY WINDOW...
     //  using               DebugItem                   = DebuggerState::DebugItem;
     this->m_debugger.windows    = {{
-            {   "Hit Detection",    false,      DebuggerState::ms_FLAGS,        [this]{ this->_debugger_hit_detection   (); }       }
-        ,   {   "Interaction",      true,       DebuggerState::ms_FLAGS,        [this]{ this->_debugger_interaction     (); }       }
+            {   "Hit Detection",    true,      DebuggerState::ms_FLAGS,        [this]{ this->_debugger_hit_detection   (); }       }
+        ,   {   "Interaction",      false,       DebuggerState::ms_FLAGS,        [this]{ this->_debugger_interaction     (); }       }
         ,   {   "More Info",        false,      DebuggerState::ms_FLAGS,        [this]{ this->_debugger_more_info       (); }       }
     }};
 
@@ -123,8 +123,10 @@ void Editor::_dispatch_resident_draw_fn(Resident idx)
     }
 
 
-    entry.id    = m_overlays.add_resident(entry.cfg, entry.style);
-    entry.ptr   = m_overlays.get_resident(entry.id);   // now safe
+    entry.id            = m_ov_manager.add_resident(entry.cfg, entry.style);
+    entry.ptr           = m_ov_manager.get_resident(entry.id);   // now safe
+    //
+    //  m_overlays [idx]    = std::make_unique( entry.ptr );
     
     
     //  IF ANY ADDITIONAL FLAGS SET, FLIP THEIR VALUE IN THE OVERLAY...
