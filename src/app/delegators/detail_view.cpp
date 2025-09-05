@@ -297,19 +297,19 @@ inline void DetailView::cache_current_window(void) noexcept
     
     
     
-    for ( const auto * win : windows )
-    {
-        const char *    name    = win->Name;
-        
-        
-        
-        std::cout << "\"" << win->Name << "\"\t" << std::endl;
-        
-        
-            //  char*                   Name;                               // Window name, owned by the window.
-            //  ImGuiID                 ID;
-    
-    }
+    //  for ( const auto * win : windows )
+    //  {
+    //      const char *    name    = win->Name;
+    //  
+    //  
+    //  
+    //      std::cout << "\"" << win->Name << "\"\t" << std::endl;
+    //  
+    //  
+    //          //  char*                   Name;                               // Window name, owned by the window.
+    //          //  ImGuiID                 ID;
+    //  
+    //  }
     
     
     
