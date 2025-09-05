@@ -51,7 +51,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_MECH_change_state"
+//  "_MECH_change_state"            formerly named:     "_mode_switch_hotkeys".
 //
 inline void Editor::_MECH_change_state([[maybe_unused]] const Interaction & it)
 {
@@ -109,7 +109,7 @@ inline void Editor::_MECH_change_state([[maybe_unused]] const Interaction & it)
 }
 
 
-//  "_MECH_dispatch_tool_handler"
+//  "_MECH_dispatch_tool_handler"               formerly named:     "_dispatch_mode_handler".
 //
 inline void Editor::_MECH_dispatch_tool_handler([[maybe_unused]] const Interaction & it )
 {
@@ -148,6 +148,7 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     const bool              space                   = ImGui::IsKeyDown(ImGuiKey_Space);
     const bool              hovered                 = ImPlot::IsPlotHovered();
     const bool              active                  = ImPlot::IsPlotSelected();
+    eit.other_windows_open                          = (ImGui::GetTopMostPopupModal() != nullptr);
     //
     //
     //      1.2.    IMPLOT DATA...
@@ -193,6 +194,11 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
         set_bit(eit.open_menus, i, open);
 	}
     //
+    //              4.2.        SET BIT FOR OTHER MODAL (Settings, AskOKCancel, File Dialog, etc).
+    set_bit( eit.open_menus, EditorPopupBits::Other, eit.other_windows_open );
+    
+    
+    //
     //              4.2.        CACHE THE SELECTION STATE.
     //  ES.m_show_sel_overlay           = static_cast<bool>( N_obj_selected == 0 );
     //
@@ -231,6 +237,7 @@ void Editor::Begin(const char * /*id*/)
     //      1.      FETCH INITIAL PER-FRAME VALUES (USER-INTERACTION INPUT, ETC)...
     //
     const bool              block_input             = it.BlockInput();
+    const bool              block_shortcuts         = it.BlockShortcuts();
     const bool              space                   = ( !block_input  &&  ImGui::IsKeyDown(ImGuiKey_Space) );
     //
     const bool              pan_enabled_IMPL        = (  (!block_input)  &&  ( (this->m_mode == Mode::Hand)  ||  space)  ); // || (this->m_mode == Mode::Hand) )  );
@@ -292,7 +299,8 @@ void Editor::Begin(const char * /*id*/)
 
 
         //          3.4.    CURSOR HINTS AND SHORTCUTS...
-        if ( space && it.hovered && _mode_has(CBCapabilityFlags_Pan) )
+        //  if ( space  &&  it.hovered  &&  _mode_has(CBCapabilityFlags_Pan) )
+        if ( space  &&  block_shortcuts  &&  _mode_has(CBCapabilityFlags_Pan) )
             { ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); }
         //
         else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
@@ -357,7 +365,84 @@ void Editor::Begin(const char * /*id*/)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_MECH_update_canvas"
+
+//  "_selbox_rebuild_view_if_needed"
+//
+void Editor::_selbox_rebuild_view_if_needed([[maybe_unused]] const Interaction & it)
+{
+    //  EditorState &           ES      = this->m_editor_S;
+    EditorStyle &           Style       = this->m_style;
+    BoxDrag::ViewCache &    V           = m_boxdrag.view;
+
+    // Decide visibility: hide for single-vertex-only selection (matches your renderer)
+    const bool has_paths_or_lines = !m_sel.paths.empty() || !m_sel.lines.empty();
+    const bool single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
+
+    ImVec2 tl_tight{}, br_tight{};
+    if ( single_vertex_only || !_selection_bounds(tl_tight, br_tight) ) {
+        V.visible   = false;
+        V.valid     = true;
+        V.hover_idx = -1;
+        V.sel_seen   = m_rev_sel;
+        V.geom_seen  = m_rev_geom;
+        V.cam_seen   = m_rev_cam;
+        V.style_seen = m_rev_style;
+        return;
+    }
+
+    // Expand by pixel margin (so handles sit outside geometry)
+    const auto [tl_ws, br_ws] = _expand_bbox_by_pixels(tl_tight, br_tight, Style.SELECTION_BBOX_MARGIN_PX);
+
+    V.visible = true;
+    V.tl_ws   = tl_ws;
+    V.br_ws   = br_ws;
+    V.tl_px   = world_to_pixels(tl_ws);
+    V.br_px   = world_to_pixels(br_ws);
+
+    // Compute 8 handle anchors (WS → PX) and their pixel hit-rects
+    const ImVec2 c_ws{ (tl_ws.x + br_ws.x) * 0.5f, (tl_ws.y + br_ws.y) * 0.5f };
+    const ImVec2 ws[8] = {
+        tl_ws,
+        { c_ws.x, tl_ws.y },
+        { br_ws.x, tl_ws.y },
+        { br_ws.x, c_ws.y },
+        br_ws,
+        { c_ws.x, br_ws.y },
+        { tl_ws.x, br_ws.y },
+        { tl_ws.x, c_ws.y }
+    };
+
+    const float r = m_style.HANDLE_BOX_SIZE;        // half-size in pixels
+    for (int i = 0; i < 8; ++i) {
+        V.handle_ws[i] = ws[i];
+        const ImVec2 p = world_to_pixels(ws[i]);
+        V.handle_px[i]      = p;
+        V.handle_rect_px[i] = ImRect(ImVec2(p.x - r, p.y - r), ImVec2(p.x + r, p.y + r));
+    }
+
+    V.hover_idx  = -1;           // filled by hint stage next step
+    V.valid      = true;
+
+    // Stamp revs (we’ll start honoring these later if we want to skip recompute)
+    V.sel_seen   = m_rev_sel;
+    V.geom_seen  = m_rev_geom;
+    V.cam_seen   = m_rev_cam;
+    V.style_seen = m_rev_style;
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+//  "_MECH_update_canvas"       formerly: "_update_cursor_select"
 //
 inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
 {
@@ -427,7 +512,7 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
 }
 
 
-//  "_MECH_render_frame"
+//  "_MECH_render_frame"        * NEW  _MECH  FUNCTION *
 //
 inline void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it)
 {
@@ -448,7 +533,7 @@ inline void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it)
 }
 
 
-//  "_MECH_draw_ui"
+//  "_MECH_draw_ui"             formerly named:     "_handle_overlays".
 //
 inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
 {
@@ -541,7 +626,7 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
 }
 
 
-//  "_MECH_drive_io"
+//  "_MECH_drive_io"             formerly named:     "_handle_io".
 //
 inline void Editor::_MECH_drive_io(void)
 {
@@ -682,14 +767,71 @@ inline void Editor::_MECH_drive_io(void)
 
 //  "_handle_default"
 //
-inline void Editor::_handle_default(const Interaction& it)
+inline void Editor::_handle_default(const Interaction & it)
 {
+    [[maybe_unused]] ImGuiIO & io = ImGui::GetIO();
+
+    // 0) Bezier control-handle drag (Alt + LMB) — unchanged
+    if (_try_begin_handle_drag(it)) {
+        _pen_update_handle_drag(it);                 // keep guide visible on first frame
+        return;                                      // skip selection & other handlers this frame
+    }
+
+    //  1.   EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
+    if (!m_boxdrag.active
+        && _mode_has(CBCapabilityFlags_Select)
+        && m_boxdrag.view.visible
+        && m_boxdrag.view.hover_idx >= 0
+        && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+        // NOTE: view.tl_ws/br_ws are already the expanded bbox corners.
+        // Ensure _start_bbox_drag treats these as final (i.e., does NOT re-expand).
+        _start_bbox_drag(static_cast<uint8_t>(m_boxdrag.view.hover_idx),
+                         m_boxdrag.view.tl_ws, m_boxdrag.view.br_ws);
+        return;                                      // consume click; no lasso this frame
+    }
+
+    // 2) Active BBox drag — update and exit early
+    if (m_boxdrag.active) {
+        _update_bbox();
+        return;                                      // while dragging, ignore other inputs
+    }
+
+    // 3) Ignore input while Space (camera pan) is held
+    if (it.space) {
+        return;
+    }
+
+    // 4) Lasso start (selection engine) — only when not over a handle or other hit
+    if (_mode_has(CBCapabilityFlags_Select)
+        && !m_lasso_active
+        && it.hovered
+        && ImGui::IsMouseClicked(ImGuiMouseButton_Left)
+        && m_boxdrag.view.hover_idx < 0            // NEW: don't lasso from over BBox handle
+        && !_hit_any(it))                          // keep existing pick test
+    {
+        _start_lasso_tool();
+    }
+
+    // 5) Lasso update — unchanged
+    if (m_lasso_active) {
+        _update_lasso(it);
+        return;
+    }
+
+    return;
+}
+
+
+/*{
     [[maybe_unused]]    ImGuiIO &   io          = ImGui::GetIO();
     
     if (_try_begin_handle_drag(it)) {
         _pen_update_handle_drag(it);   // keep guide visible the very first frame
         return;                    // skip selection & mode handlers this frame
     }
+    
+    
     //  1.   EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
     //  if (_try_begin_handle_drag(it)) return;
     //  if (m_dragging_handle) { _pen_update_handle_drag(it); return; }
@@ -708,7 +850,7 @@ inline void Editor::_handle_default(const Interaction& it)
     
     
     //  4.  IGNORE ALL INPUT IF SPACE KEY IS HELD DOWN...
-    if (it.space)                                   { return; }
+    if ( it.space )                                 { return; }
 
 
     // 5. LASSO START — begin only when selection is enabled and the mouse
@@ -726,7 +868,7 @@ inline void Editor::_handle_default(const Interaction& it)
     if (m_lasso_active)                             { this->_update_lasso(it); return; }        // Skip zoom handling while dragging lasso
         
     return;
-}
+}*/
 
 
 //  "_handle_hand"

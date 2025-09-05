@@ -315,14 +315,40 @@ inline void Editor::_H2_state(SettingsData & args)
             ImGui::Indent();        args.Style.PushSettingsWidgetW(2);
             //
             //
-                this->S.labelf("Show Grid:",              args.LABEL_W, args.WIDGET_W);           //  1.1.        SHOW GRID.
-                ImGui::Checkbox("##Editor_Settings_Mechanics_ShowGrid",                 &m_grid.visible);
+                //      1.      GRID...
+                this->S.labelf("Snap-To-Grid:",                 args.LABEL_W, args.WIDGET_W);       //  1.1.        SNAP-TO-GRID.
+                ImGui::Checkbox("##H2_Grid_SnapToGrid",                 &m_grid.snap_on);
                 
-                this->S.labelf("Snap-To-Grid:",           args.LABEL_W, args.WIDGET_W);           //  1.2.        SNAP-TO-GRID.
-                ImGui::Checkbox("##Editor_Settings_Mechanics_SnapToGrid",               &m_grid.snap_on);
+                this->S.labelf("Show Grid:",                    args.LABEL_W, args.WIDGET_W);       //  1.2.        SHOW GRID.
+                ImGui::Checkbox("##H2_Grid_ShowGrid",                   &m_grid.visible);
+                
+                this->S.labelf("Lock XY Axes Dimensions:",      args.LABEL_W, args.WIDGET_W);       //  1.3.        GRID ASPECT RATIO.
+                ImGui::CheckboxFlags("##H2_Grid_EqualGrid",     &m_plot_flags,       ImPlotFlags_Equal );
+                
+                this->S.labelf("Show Cursor Coordinates:",      args.LABEL_W, args.WIDGET_W);       //  1.4.        GRID ASPECT RATIO.
+                ImGui::CheckboxFlags("##H2_Grid_CursorCoordinates",     &m_plot_flags,       ImPlotFlags_NoMouseText );
                 
                 
-                //  ImGui::CheckboxFlags("io.BackendFlags: RendererHasViewports",   &io.BackendFlags, ImGuiBackendFlags_RendererHasViewports);
+                
+                //      2.      AXES...
+                this->S.labelf("X-Axis On Top:",                args.LABEL_W, args.WIDGET_W);       //  2.1.        X-AXIS POSITION.
+                ImGui::CheckboxFlags( "##H2_Axes_XLocation",    &m_axes[0].flags,    ImPlotAxisFlags_Opposite );
+                
+                this->S.labelf("Y-Axis On Right:",              args.LABEL_W, args.WIDGET_W);       //  2.2.        Y-AXIS POSITION.
+                ImGui::CheckboxFlags( "##H2_Axes_YLocation",    &m_axes[1].flags,    ImPlotAxisFlags_Opposite );
+                
+                
+                //  m_axes[1].flags
+                //  ImGui::Checkbox("##H2_Grid_EqualGrid",                  &m_grid.visible);
+                
+                
+                
+
+
+
+
+                
+            //  ImGui::CheckboxFlags(); //"io.BackendFlags: RendererHasViewports",   &io.BackendFlags, ImGuiBackendFlags_RendererHasViewports);
     
             //
             //

@@ -376,6 +376,30 @@ inline void Editor::_render_selected_handles(ImDrawList* dl) const
 //
 inline void Editor::_render_selection_bbox(ImDrawList* dl) const
 {
+    const auto& V = m_boxdrag.view;
+    if (!V.visible) { return; }                       // nothing to draw
+
+    // Draw expanded bbox (from cache)
+    const ImVec2 p0 = world_to_pixels(V.tl_ws);
+    const ImVec2 p1 = world_to_pixels(V.br_ws);
+    dl->AddRect(p0, p1,
+                m_style.SELECTION_BBOX_COL, 0.0f,
+                ImDrawFlags_None, m_style.SELECTION_BBOX_TH);
+
+    // Draw the 8 handles using cached rectangles and cached hover index
+    for (int i = 0; i < 8; ++i)
+    {
+        const bool hovered = (i == V.hover_idx);      // ← read, don’t compute
+        const ImRect& r    = V.handle_rect_px[i];
+        dl->AddRectFilled(r.Min, r.Max,
+                          hovered ? m_style.ms_HANDLE_HOVER_COLOR
+                                  : m_style.ms_HANDLE_COLOR);
+    }
+    
+    return;
+}
+
+/*{
     const bool has_paths_or_lines = !m_sel.paths.empty() || !m_sel.lines.empty();
     const bool single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
     if (single_vertex_only) return;
@@ -415,7 +439,7 @@ inline void Editor::_render_selection_bbox(ImDrawList* dl) const
     }
     
     return;
-}
+}*/
 
 
 /*{

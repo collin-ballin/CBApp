@@ -565,25 +565,25 @@ protected:
     // *************************************************************************** //
     //
     //                              SMALLER HELPERS / UTILITIES:
-    inline void                         _MECH_change_state                  ([[maybe_unused]] const Interaction & );
-    inline void                         _MECH_dispatch_tool_handler         ([[maybe_unused]] const Interaction & );
+    inline void                         _MECH_change_state                  ([[maybe_unused]] const Interaction & );    //  formerly "_mode_switch_hotkeys"
+    inline void                         _MECH_dispatch_tool_handler         ([[maybe_unused]] const Interaction & );    //  formerly "_dispatch_mode_handler"
     //
     inline void                         _per_frame_cache_begin              (void) noexcept;
     inline void                         _per_frame_cache_end                (void) noexcept;
     //
     //
     //                              PRIMARY MECHANIC HANDLERS:
-    void                                _MECH_hit_detection                 (const Interaction & ) const;               //  formerly "_update_cursor_detection".
-    inline void                         _MECH_update_canvas                 ([[maybe_unused]] const Interaction & );
-    inline void                         _MECH_render_frame                  ([[maybe_unused]] const Interaction & );
+    void                                _MECH_hit_detection                 (const Interaction & ) const;               //  formerly "update_cursor_select"
+    inline void                         _MECH_update_canvas                 ([[maybe_unused]] const Interaction & );    //  * NEW  _MECH  FUNCTION *
+    inline void                         _MECH_render_frame                  ([[maybe_unused]] const Interaction & );    //  * NEW  _MECH  FUNCTION *
     //
-    inline void                         _MECH_draw_ui                       ([[maybe_unused]] const Interaction & );    //  formerly "_handle_overlays".
-    inline void                         _MECH_drive_io                      (void);
+    inline void                         _MECH_draw_ui                       ([[maybe_unused]] const Interaction & );    //  formerly "_handle_overlays()"
+    inline void                         _MECH_drive_io                      (void);                                     //  formerly "_handle_io()"
     //
     //                              LOCATED ELSEWHERE:
-    void                                _MECH_pump_main_tasks               (void);                     //  "serialization.cpp".
-    void                                _MECH_draw_controls                 (void);                     //  "browser.cpp".
-    void                                _MECH_process_selection             (const Interaction & );     //  "selection.cpp".
+    void                                _MECH_pump_main_tasks               (void);                     //  formerly "pump_main_tasks".         location: "serialization.cpp".
+    void                                _MECH_draw_controls                 (void);                     //  formerly "_draw_controls".          location: "browser.cpp".
+    void                                _MECH_process_selection             (const Interaction & );     //  formerly "_process_selection".      location: "selection.cpp".
     
     // *************************************************************************** //
     //
@@ -943,14 +943,33 @@ protected:
     inline void                         _rev_bump_geom                          (void) noexcept     { ++m_rev_geom;  }
     inline void                         _rev_bump_cam                           (void) noexcept     { ++m_rev_cam;   }
     inline void                         _rev_bump_style                         (void) noexcept     { ++m_rev_style; }
+    
+    
+    
+    //  "_selbox_rebuild_view_if_needed"
+    void                                _selbox_rebuild_view_if_needed          (const Interaction & it);
+    
+    //  "_expand_bbox_by_pixels"
+    inline std::pair<ImVec2, ImVec2>    _expand_bbox_by_pixels                  (const ImVec2& tl_ws_in, const ImVec2& br_ws_in, float margin_px) const {
+        ImVec2 p0 = world_to_pixels(tl_ws_in);
+        ImVec2 p1 = world_to_pixels(br_ws_in);
+        ImVec2 min_px{ std::min(p0.x, p1.x), std::min(p0.y, p1.y) };
+        ImVec2 max_px{ std::max(p0.x, p1.x), std::max(p0.y, p1.y) };
+        min_px.x -= margin_px;  min_px.y -= margin_px;
+        max_px.x += margin_px;  max_px.y += margin_px;
+        return { pixels_to_world(min_px), pixels_to_world(max_px) };
+    }
+    
+    // *************************************************************************** //
+
 
 
     // *************************************************************************** //
     //      NEW INLINE FUNCS...
     // *************************************************************************** //
     
-    //  "_expand_bbox_by_pixels"
-    inline std::pair<ImVec2, ImVec2>    _expand_bbox_by_pixels                  (const ImVec2& tl_ws_in, const ImVec2& br_ws_in, float margin_px) const {
+    /*{
+    inline std::pair<ImVec2, ImVec2>    _expand_bbox_by_pixels                  (const ImVec2& tl_ws_in, const ImVec2& br_ws_in, float margin_px) const
         ImVec2 p0 = world_to_pixels(tl_ws_in);
         ImVec2 p1 = world_to_pixels(br_ws_in);
 
@@ -966,8 +985,18 @@ protected:
         ImVec2 tl_ws_out = pixels_to_world(min_px);
         ImVec2 br_ws_out = pixels_to_world(max_px);
         return { tl_ws_out, br_ws_out };
+    }*/
+    
+    //  "_cursor_for_bbox_handle"
+    static inline ImGuiMouseCursor      _cursor_for_bbox_handle                 (int h) {
+    switch (h) {
+        case 0: case 4: return ImGuiMouseCursor_ResizeNWSE; // NW, SE
+        case 2: case 6: return ImGuiMouseCursor_ResizeNESW; // NE, SW
+        case 1: case 5: return ImGuiMouseCursor_ResizeNS;   // N, S
+        case 3: case 7: return ImGuiMouseCursor_ResizeEW;   // E, W
+        default:        return ImGuiMouseCursor_Arrow;
     }
-
+}
 
     //  "_bbox_handle_pos_ws"
     static inline ImVec2                _bbox_handle_pos_ws                     (uint8_t i, const ImVec2 & tl, const ImVec2 & br) {
@@ -999,32 +1028,10 @@ protected:
         }
     }
     
-    //  "_selbox_rebuild_view_if_needed"
-    inline void                         _selbox_rebuild_view_if_needed          (const Interaction& it)
-    {
-        // For Step 1: no behavior change — just stamp and exit
-        BoxDrag::ViewCache & V = m_boxdrag.view;
-
-        V.sel_seen   = m_rev_sel;
-        V.geom_seen  = m_rev_geom;
-        V.cam_seen   = m_rev_cam;
-        V.style_seen = m_rev_style;
-
-        V.visible    = false;     // we will compute this next step
-        V.valid      = true;      // avoid recomputing until we wire real logic
-        V.hover_idx  = -1;
-    }
-
-    
     //  "_safe_div"
     static inline float                 _safe_div                               (float num, float den)
     { constexpr float eps = 1e-6f;  return (std::fabs(den) > eps) ? (num / den) : 1.0f; }
 
-    
-    
-    
-    
-    
     // *************************************************************************** //
     
     

@@ -173,7 +173,7 @@ void Editor::DrawBrowser(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_MECH_draw_controls"
+//  "_MECH_draw_controls"           formerly named:     "_draw_controls".
 //
 void Editor::_MECH_draw_controls(void)
 {

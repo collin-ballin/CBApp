@@ -52,7 +52,7 @@ namespace cblib { namespace utl {   //     BEGINNING NAMESPACE "cblib" :: "math"
 
 
 
-//  ?.?     GENERAL INLINE UTILITY FUNCTIONS...
+//      1.0.    "COLOR"-BASED INLINE UTILITY FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -162,6 +162,80 @@ inline ImColor compute_tint(const ImColor & color, const float tint = 0.0484f) {
 
 
 
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "COLOR FUNCTIONS".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//      2.0.    IMGUI BITFLAG-BASED INLINE UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+//  "SetFlag"
+//
+template<typename T>
+inline void SetFlag(T * flags, T flags_value)
+{
+    bool all_on = (*flags & flags_value) == flags_value;
+    bool any_on = (*flags & flags_value) != 0;
+    //  bool pressed;
+    
+    
+    //  if (!all_on && any_on)
+    //  {
+    //      ImGuiContext& g = *GImGui;
+    //      g.NextItemData.ItemFlags |= ImGuiItemFlags_MixedValue;
+    //      pressed = Checkbox(label, &all_on);
+    //  }
+    //  else
+    //  { pressed = Checkbox(label, &all_on); }
+    
+
+    if (all_on)
+        *flags |= flags_value;
+    else
+        *flags &= ~flags_value;
+
+    
+    return;
+}
+
+
+//  "RemoveFlag"
+//
+template<typename T>
+inline void RemoveFlag(T * flags, T flags_value)
+{
+    bool all_on = (*flags & flags_value) == flags_value;
+    bool any_on = (*flags & flags_value) != 0;
+    //  bool pressed;
+    
+    
+    //  if (!all_on && any_on)
+    //  {
+    //      ImGuiContext& g = *GImGui;
+    //      g.NextItemData.ItemFlags |= ImGuiItemFlags_MixedValue;
+    //      pressed = Checkbox(label, &all_on);
+    //  }
+    //  else
+    //  { pressed = Checkbox(label, &all_on); }
+    
+    if (all_on)
+        *flags |= flags_value;
+    else
+        *flags &= ~flags_value;
+    
+    return;
+}
 
 
 

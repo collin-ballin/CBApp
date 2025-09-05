@@ -228,6 +228,32 @@ void Editor::_debugger_hit_detection(void)
 //
 void Editor::_debugger_interaction(void)
 {
+    const float                     LABEL_W                 = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
+    const float &                   WIDGET_W                = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    //
+    Interaction &                   it                      = *this->m_it;
+    //
+    
+    
+    //      1.      SHORTCUTS ENABLED/DISABLED...
+    this->S.labelf("Shortcuts:", LABEL_W, WIDGET_W);
+    S.print_TF( !it.BlockShortcuts() );
+    
+    
+    //      2.      INPUTS ENABLED/DISABLED...
+    this->S.labelf("Inputs:",       LABEL_W, WIDGET_W);
+    S.print_TF( !it.BlockInput() );
+    
+    
+
+    return;
+}
+
+
+//  "_debugger_more_info"
+//
+void Editor::_debugger_more_info(void)
+{
     constexpr size_t                N_POPUPS                = ms_POPUP_INFOS.size();
     const float                     LABEL_W                 = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
     const float &                   WIDGET_W                = m_style.ms_SETTINGS_WIDGET_WIDTH;
@@ -238,11 +264,6 @@ void Editor::_debugger_interaction(void)
     //
     static CBEditorPopupFlags       open_menus_cache        = it.obj.open_menus;
     static std::string              menu_buffer             = "";
-    
-    
-    //      1.      SHORTCUTS ENABLED/DISABLED...
-    this->S.labelf("Shortcuts:", LABEL_W, WIDGET_W);
-    S.print_TF( !it.BlockShortcuts() );
     
     
     
@@ -266,13 +287,12 @@ void Editor::_debugger_interaction(void)
                     const PopupInfo & info = ms_POPUP_INFOS[i];
                     
                     /*      Append each "info.name" into a char [512] BUFFER in a COMMA-SEPARATED FORMAT        */
-                    if (info.uuid)
+                    if ( info.name /* info.uuid*/ )
                     {
                         menu_buffer += info.name;
                         if ( (i != 0) && (i != (n-1)) )     { menu_buffer += ", ";  }
                         //  if ( i == (n-1) )                   { menu_buffer += ".";   }
                     }
-                    
                 }
             }
         }
@@ -281,29 +301,7 @@ void Editor::_debugger_interaction(void)
     
     this->S.labelf("Open Menus:", LABEL_W, WIDGET_W);
     S.print_TF( !no_menus_open, menu_buffer.c_str(), "NONE" );
-    
 
-
-
-
-
-    return;
-}
-
-
-//  "_debugger_more_info"
-//
-void Editor::_debugger_more_info(void)
-{
-    const float                     LABEL_W             = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
-    const float &                   WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
-    Interaction &                   it                  = *this->m_it;
-    
-    
-    //      1.      SHORTCUTS ENABLED/DISABLED...
-    this->S.labelf("Shortcuts:", LABEL_W, WIDGET_W);
-    S.print_TF( !it.BlockShortcuts() );
-    
 
 
     return;

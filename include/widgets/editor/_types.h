@@ -300,6 +300,8 @@ enum class EditorPopupBits : uint8_t {
     Settings,
     AskOkCancel,
 //
+    Other,
+//
     COUNT
 };
 
@@ -313,8 +315,10 @@ enum CBEditorPopupFlags_ : uint32_t {
     CBEditorPopupFlags_Canvas               = 1u << static_cast<unsigned>(  EditorPopupBits::Canvas         ),
     CBEditorPopupFlags_Browser              = 1u << static_cast<unsigned>(  EditorPopupBits::Browser        ),
 //
-    CBEditorPopupFlags_Settings             = 1u << static_cast<unsigned>(  EditorPopupBits::Settings),
+    CBEditorPopupFlags_Settings             = 1u << static_cast<unsigned>(  EditorPopupBits::Settings       ),
     CBEditorPopupFlags_AskOkCancel          = 1u << static_cast<unsigned>(  EditorPopupBits::AskOkCancel    ),
+    CBEditorPopupFlags_Other                = 1u << static_cast<unsigned>(  EditorPopupBits::Other          ),
+//
 //
     CBEditorPopupFlags_COUNT                            // helper: number of bits
 };
@@ -329,6 +333,14 @@ static inline void set_bit(CBEditorPopupFlags_ & m, size_t i, bool on)
 {
 	uint32_t    v   = to_u(m), b = bit_u(i);
 	m               = from_u(on ? (v | b) : (v & ~b));
+}
+//
+//  "set_bit"
+static inline void set_bit(CBEditorPopupFlags_ & m, EditorPopupBits idx, bool on)
+{
+    const size_t    i   = static_cast<size_t>( idx );
+	uint32_t        v   = to_u(m), b = bit_u(i);
+	m                   = from_u(on ? (v | b) : (v & ~b));
 }
 
 
@@ -349,8 +361,9 @@ DEF_EDITOR_POPUP_INFOS      = { {
     /* Selection    */  { "Editor_Selection_ContextMenu"    , "Selection"       },
     /* Canvas       */  { "Editor_Canvas_ContextMenu"       , "Canvas"          },
     /* Browser      */  { "Editor_Browser_ContextMenu"      , "Browser"         },
-    /* Settings     */  { "Editor System Preferences"       , ""                },
-    /* AskOkCancel  */  { nullptr                           , ""                }
+    /* Settings     */  { "Editor System Preferences"       , "Settings"        },
+    /* AskOkCancel  */  { nullptr                           , ""                },
+    /* Other        */  { nullptr                           , "Other"           }
 } };
 
 
@@ -403,6 +416,7 @@ struct EditorInteraction
 //
 //                              MENU STATE:
     CBEditorPopupFlags_             open_menus                      = CBEditorPopupFlags_None;
+    bool                            other_windows_open              = false;
 //
 //
 //
@@ -444,19 +458,30 @@ struct Interaction
 //
 //
 // *************************************************************************** //
-//                                  INLINE FUNCTIONS...
+//                                  MAIN INLINE FUNCTIONS...
 // *************************************************************************** //
 
     //  "BlockShortcuts"
     [[nodiscard]]
     inline bool                     BlockShortcuts              (void) const noexcept
-    { return ( !hovered ); }
-    //{ return ( (!hovered) || (obj.menus_open) ); }
+    //  { return ( !hovered ); }
+    { return ( (!hovered) || (obj.open_menus) ); }
 
     //  "BlockInput"
     [[nodiscard]]
     inline bool                     BlockInput                  (void) const noexcept
-    { return ( !hovered  &&  !ImGui::IsMouseDown(ImGuiMouseButton_Left) ); }   //  IsMouseDragging( ... )      IsMouseDragPastThreshold( ... )
+    { return ( !hovered  &&  !obj.other_windows_open  &&  !ImGui::IsMouseDown(ImGuiMouseButton_Left) ); }   //  IsMouseDragging( ... )      IsMouseDragPastThreshold( ... )
+//
+//
+//
+// *************************************************************************** //
+//                                  UTILITY FUNCTIONS...
+// *************************************************************************** //
+
+    //  "OtherWindowsOpen"
+    [[nodiscard]]
+    inline bool                     OtherWindowsOpen            (void) const noexcept
+    { return (  ( obj.open_menus >> static_cast<CBEditorPopupFlags_>( EditorPopupBits::Other ) & 1u) != CBEditorPopupFlags_None  ); }
 
 
 
