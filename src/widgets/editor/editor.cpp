@@ -300,7 +300,7 @@ void Editor::Begin(const char * /*id*/)
 
         //          3.4.    CURSOR HINTS AND SHORTCUTS...
         //  if ( space  &&  it.hovered  &&  _mode_has(CBCapabilityFlags_Pan) )
-        if ( space  &&  block_shortcuts  &&  _mode_has(CBCapabilityFlags_Pan) )
+        if ( space  &&  !block_shortcuts  &&  _mode_has(CBCapabilityFlags_Pan) )
             { ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); }
         //
         else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
@@ -777,6 +777,7 @@ inline void Editor::_handle_default(const Interaction & it)
         return;                                      // skip selection & other handlers this frame
     }
 
+
     //  1.   EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
     if (!m_boxdrag.active
         && _mode_has(CBCapabilityFlags_Select)
@@ -791,16 +792,19 @@ inline void Editor::_handle_default(const Interaction & it)
         return;                                      // consume click; no lasso this frame
     }
 
+
     // 2) Active BBox drag — update and exit early
     if (m_boxdrag.active) {
         _update_bbox();
         return;                                      // while dragging, ignore other inputs
     }
 
+
     // 3) Ignore input while Space (camera pan) is held
     if (it.space) {
         return;
     }
+
 
     // 4) Lasso start (selection engine) — only when not over a handle or other hit
     if (_mode_has(CBCapabilityFlags_Select)
@@ -812,6 +816,7 @@ inline void Editor::_handle_default(const Interaction & it)
     {
         _start_lasso_tool();
     }
+
 
     // 5) Lasso update — unchanged
     if (m_lasso_active) {

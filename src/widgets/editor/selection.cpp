@@ -393,7 +393,11 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
 void Editor::_MECH_process_selection(const Interaction & it)
 {
     update_move_drag_state              (it);   //  Helpers (2-4 merged)...
-    resolve_pending_selection           (it);   //  ...
+    
+    
+    if ( it.hovered && !m_dragging )    { resolve_pending_selection(it); }
+    
+    
     dispatch_selection_context_menus    (it);   //  Right-Click CONTEXT MENU...
     
     
@@ -478,32 +482,124 @@ void Editor::add_hit_to_selection(const Hit & hit)
 //
 void Editor::start_move_drag(const ImVec2 & press_ws)
 {
-    m_dragging           = true;
-    m_movedrag           = {};
-    m_movedrag.active    = true;
-    m_movedrag.press_ws  = press_ws;            // remember grab point
-
-    // compute rigid-snap reference = bbox top-left
-    ImVec2 tl, br;
-    if (_selection_bounds(tl, br))
-        m_movedrag.anchor_ws = tl;
+    m_dragging              = true;
+    m_movedrag              = {};
+    m_movedrag.active       = true;
+    m_movedrag.press_ws     = press_ws;
+    ImVec2                  tl{},   br{};
+    
+    if ( _selection_bounds(tl, br) )    { m_movedrag.anchor_ws = tl;        }
+    else                                { m_movedrag.anchor_ws = press_ws;  }
 
     m_movedrag.v_ids .reserve(m_sel.vertices.size());
     m_movedrag.v_orig.reserve(m_sel.vertices.size());
 
     for (uint32_t vid : m_sel.vertices)
-        if (const Vertex * v = find_vertex(m_vertices, vid)) {
+    {
+        if ( const Vertex * v = find_vertex(m_vertices, vid) ) {
             m_movedrag.v_ids .push_back(vid);
-            m_movedrag.v_orig.push_back({v->x, v->y});
+            m_movedrag.v_orig.push_back({ v->x, v->y });
         }
+    }
+    
+    return;
 }
 
 
 //  "update_move_drag_state"
 //      Press / drag / release handling ---------------------------------------
 //
-void Editor::update_move_drag_state(const Interaction & it)
+inline void Editor::update_move_drag_state(const Interaction & it)
 {
+    ImGuiIO & io           = ImGui::GetIO();
+    const bool lmb         = io.MouseDown[ImGuiMouseButton_Left];
+    const bool lmb_click   = ImGui::IsMouseClicked  (ImGuiMouseButton_Left);
+    const bool lmb_release = ImGui::IsMouseReleased (ImGuiMouseButton_Left);
+
+    const float drag_px    = _drag_threshold_px();
+    const bool  drag_past  = ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, drag_px);
+
+    static ImVec2 press_ws{};
+    static bool   press_hit_exists = false;
+    static bool   press_hit_in_sel = false;
+
+    if (lmb_click && it.hovered)
+    {
+        press_ws          = pixels_to_world(io.MousePos);
+        m_pending_hit     = _hit_any(it);                           // may be null
+        press_hit_exists  = m_pending_hit.has_value();
+        press_hit_in_sel  = press_hit_exists && _hit_is_in_current_selection(*m_pending_hit);
+
+        const bool modifiers   = (io.KeyCtrl || io.KeyShift);
+        const bool inside_bbox = (!m_sel.empty() && _press_inside_selection(press_ws));
+        const bool outside_sel = !press_hit_in_sel && !inside_bbox;
+
+        m_pending_clear        = (!modifiers) && outside_sel;       // only tentatively true here
+        // IMPORTANT: do NOT start drag yet; we wait for drag_past
+    }
+
+    // Begin drag once movement exceeds threshold
+    if (lmb && !m_dragging && drag_past && it.hovered)
+    {
+        if (m_pending_hit)
+        {
+            if (!press_hit_in_sel) {
+                if (m_pending_clear) this->reset_selection();
+                add_hit_to_selection(*m_pending_hit);
+            }
+            start_move_drag(press_ws);
+
+            // NEW: prevent click-resolution from firing on release
+            m_pending_hit.reset();
+            m_pending_clear = false;                   // ← key fix
+            press_hit_exists = false;
+            press_hit_in_sel = false;
+            return;
+        }
+
+        // No direct hit, but press inside current selection bbox → drag whole selection
+        if (!m_sel.empty() && _press_inside_selection(press_ws)) {
+            start_move_drag(press_ws);
+            m_pending_clear = false;                   // ← also important
+            return;
+        }
+
+        // Else: (optionally) start lasso after threshold if desired
+        // if (!m_lasso_active) _start_lasso_tool();
+    }
+
+    // Per-frame translation while dragging
+    if (m_dragging)
+    {
+        const ImVec2 w_mouse = pixels_to_world(io.MousePos);
+        ImVec2 delta { w_mouse.x - m_movedrag.press_ws.x,
+                       w_mouse.y - m_movedrag.press_ws.y };
+
+        if (want_snap()) {
+            const ImVec2 snapped = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,
+                                                  m_movedrag.anchor_ws.y + delta.y });
+            delta.x = snapped.x - m_movedrag.anchor_ws.x;
+            delta.y = snapped.y - m_movedrag.anchor_ws.y;
+        }
+
+        for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i)
+            if (Vertex* v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i])) {
+                const ImVec2& o = m_movedrag.v_orig[i];
+                v->x = o.x + delta.x;  v->y = o.y + delta.y;
+            }
+
+        if (lmb_release) {
+            m_dragging        = false;
+            m_pending_hit.reset();
+            m_pending_clear   = false;                 // ← guard against release clearing
+            press_hit_exists  = false;
+            press_hit_in_sel  = false;
+        }
+        return; // while dragging, skip click-resolution below
+    }
+}
+
+/*{
     ImGuiIO &       io              = ImGui::GetIO();
     const bool      lmb             = io.MouseDown[ImGuiMouseButton_Left];
     const bool      lmb_click       = ImGui::IsMouseClicked  (ImGuiMouseButton_Left);
@@ -511,17 +607,17 @@ void Editor::update_move_drag_state(const Interaction & it)
     const bool      dragging_now    = ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, 0.0f);
 
     ImVec2          w_mouse         = pixels_to_world(io.MousePos);      // NEW
+    static ImVec2   press_ws        {   };
 
 
     // remember exact press-position once ----------------------------------
-    static ImVec2 press_ws{};
-    if (lmb_click) press_ws = pixels_to_world(io.MousePos);   // NEW
+    if ( lmb_click )    { press_ws = pixels_to_world(io.MousePos); }   // NEW
 
 
     // --------------------------------------------------------------------
     // 0. NEW: start drag immediately on a fresh hit
     // --------------------------------------------------------------------
-    if (!m_dragging && lmb_click && it.hovered)
+    if ( !m_dragging  &&  lmb_click  &&  it.hovered )
     {
         m_pending_hit = _hit_any(it);               // fresh pick
 
@@ -529,6 +625,7 @@ void Editor::update_move_drag_state(const Interaction & it)
         {
             // clear selection unless additive
             if (!io.KeyCtrl && !io.KeyShift)        { this->reset_selection(); }
+            
             add_hit_to_selection(*m_pending_hit);   // select the hit
             m_pending_hit.reset();
             m_pending_clear = false;
@@ -615,16 +712,81 @@ void Editor::update_move_drag_state(const Interaction & it)
     
     
     return;
-}
+}*/
 
 
 //  "resolve_pending_selection"
 //
-void Editor::resolve_pending_selection(const Interaction & it)
+inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction & it)
 {
-    if ( !it.hovered || m_dragging )    { return; }
-
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+    {
+        ImGuiIO & io = ImGui::GetIO();
+
+        // If there is a pending hit, but it was on an already-selected item (no mods, no drag), do nothing.
+        if (m_pending_hit)
+        {
+            const bool modifiers   = (io.KeyCtrl || io.KeyShift);
+            const bool hit_in_sel  = _hit_is_in_current_selection(*m_pending_hit);
+            if (!modifiers && hit_in_sel) {
+                m_pending_hit.reset();
+                m_pending_clear = false;
+                return;
+            }
+        }
+
+        // Apply click selection semantics iff something is truly pending
+        if (m_pending_hit || m_pending_clear)
+        {
+            if (m_pending_clear) { this->reset_selection(); }
+
+            if (m_pending_hit)
+            {
+                const Hit & hit = *m_pending_hit;
+
+                if (hit.type == Hit::Type::Point)
+                {
+                    const size_t   idx = hit.index;
+                    const uint32_t vid = m_points[idx].v;
+                    if (!m_sel.points.erase(idx)) { m_sel.points.insert(idx); m_sel.vertices.insert(vid); }
+                    else                           { m_sel.vertices.erase(vid); }
+                }
+                else if (hit.type == Hit::Type::Path)
+                {
+                    const size_t idx = hit.index;
+                    const Path & p   = m_paths[idx];
+                    if (!m_sel.paths.erase(idx)) {
+                        m_sel.paths.insert(idx);
+                        for (uint32_t vid : p.verts) m_sel.vertices.insert(vid);
+                    } else {
+                        for (uint32_t vid : p.verts) m_sel.vertices.erase(vid);
+                        // (Optional) also clear point glyphs for those vids if you mirror points↔verts.
+                    }
+                }
+                else if (hit.type == Hit::Type::Line)
+                {
+                    const size_t  idx = hit.index;
+                    const uint32_t va = m_lines[idx].a, vb = m_lines[idx].b;
+                    if (!m_sel.lines.erase(idx)) {
+                        m_sel.lines.insert(idx); m_sel.vertices.insert(va); m_sel.vertices.insert(vb);
+                    } else {
+                        m_sel.vertices.erase(va); m_sel.vertices.erase(vb);
+                    }
+                }
+            }
+        }
+
+        // Clear edge state after processing
+        m_pending_hit.reset();
+        m_pending_clear = false;
+    }
+}
+
+/*
+{
+    //  if ( !it.hovered || m_dragging )    { return; }
+
+    if ( ImGui::IsMouseReleased(ImGuiMouseButton_Left) )
     {
         if (m_pending_hit || !m_pending_clear)
         {
@@ -670,6 +832,7 @@ void Editor::resolve_pending_selection(const Interaction & it)
     
     return;
 }
+*/
 
 
 
@@ -689,23 +852,30 @@ void Editor::resolve_pending_selection(const Interaction & it)
 void Editor::_rebuild_vertex_selection()
 {
     m_sel.vertices.clear();
-    for (size_t pi : m_sel.points) {
+    for (size_t pi : m_sel.points)
+    {
         if (pi < m_points.size())
             m_sel.vertices.insert(m_points[pi].v);
     }
 
-    for (size_t li : m_sel.lines) {
+
+    for (size_t li : m_sel.lines)
+    {
         if (li < m_lines.size()) {
             m_sel.vertices.insert(m_lines[li].a);
             m_sel.vertices.insert(m_lines[li].b);
         }
     }
+    
 
-    // Include vertices from any selected paths
-    for (size_t pi : m_sel.paths) {
-        if (pi < m_paths.size())
-            for (uint32_t vid : m_paths[pi].verts)
+    //  Include vertices from any selected paths
+    for (size_t pi : m_sel.paths)
+    {
+        if (pi < m_paths.size()) {
+            for (uint32_t vid : m_paths[pi].verts) {
                 m_sel.vertices.insert(vid);
+            }
+        }
     }
     
     return;
@@ -1038,11 +1208,14 @@ void Editor::_start_bbox_drag(uint8_t handle_idx, const ImVec2 tl_tight, const I
     m_boxdrag.v_orig.clear();
     m_boxdrag.v_ids.reserve(m_sel.vertices.size());
     m_boxdrag.v_orig.reserve(m_sel.vertices.size());
+    
     for (uint32_t vid : m_sel.vertices)
+    {
         if (const Vertex* v = find_vertex(m_vertices, vid)) {
             m_boxdrag.v_ids .push_back(vid);
             m_boxdrag.v_orig.push_back(ImVec2{v->x, v->y});
         }
+    }
     
     return;
 }
@@ -1244,6 +1417,108 @@ void Editor::_update_bbox(void)
         }
     }
 }*/
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //	END "NEW".
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      X.      NEW STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_drag_threshold_px"
+//
+inline float Editor::_drag_threshold_px(void) const
+{
+    ImGuiIO &       io      = ImGui::GetIO();
+    const float &   s       = m_style.DRAG_START_DIST_PX;     // define in your style; default 0
+    
+    return (s > 0.0f)
+                ? s
+                : io.MouseDragThreshold;
+}
+
+
+//  "_press_inside_selection"
+//
+//      True iff the press position was inside the current selection's bbox.
+//      Keep cheap; used only to allow "press inside selection → drag whole selection".
+//
+inline bool Editor::_press_inside_selection(const ImVec2 press_ws) const {
+    ImVec2  tl{}, br{};
+    
+    if ( m_sel.empty() )                { return false; }
+    
+    if ( !_selection_bounds(tl, br) )   { return false; }
+    
+    return (press_ws.x >= tl.x && press_ws.x <= br.x &&
+            press_ws.y >= tl.y && press_ws.y <= br.y);
+}
+
+
+//  "_press_inside_selection"
+//      True iff the hit corresponds to something already in the selection
+//
+inline bool Editor::_hit_is_in_current_selection(const Hit & hit) const
+{
+    switch (hit.type)
+    {
+        case Hit::Type::Point: {
+            const size_t idx = hit.index;
+            if (m_sel.points.count(idx)) return true;
+            if (idx < m_points.size()) {
+                const uint32_t vid = m_points[idx].v;
+                if (m_sel.vertices.count(vid)) return true;
+            }
+            return false;
+        }
+        case Hit::Type::Path: {
+            const size_t idx = hit.index;
+            return m_sel.paths.count(idx) != 0;
+        }
+        case Hit::Type::Line: {
+            const size_t idx = hit.index;
+            if (m_sel.lines.count(idx)) return true;
+            if (idx < m_lines.size()) {
+                const uint32_t va = m_lines[idx].a, vb = m_lines[idx].b;
+                if (m_sel.vertices.count(va) || m_sel.vertices.count(vb)) return true;
+            }
+            return false;
+        }
+        case Hit::Type::Handle: {
+            // Handle stores the vertex id in index; treat "selected vertex" as selected.
+            const uint32_t vid = static_cast<uint32_t>(hit.index);
+            return m_sel.vertices.count(vid) != 0;
+        }
+    }
+    return false;
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //	END "NEW".
 
 
 

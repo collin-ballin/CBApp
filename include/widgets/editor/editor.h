@@ -786,8 +786,8 @@ protected:
     std::optional<PathHit>              _hit_path_segment                   ([[maybe_unused]] const Interaction & ) const;
     //
     //                              PRIMARY SELECTION OPERATIONS:
-    void                                resolve_pending_selection           (const Interaction & it);
-    void                                update_move_drag_state              (const Interaction & it);
+    inline void                         resolve_pending_selection           (const Interaction & it);
+    inline void                         update_move_drag_state              (const Interaction & it);
     void                                start_move_drag                     (const ImVec2 & anchor_ws);
     void                                add_hit_to_selection                (const Hit & hit);
     void                                _rebuild_vertex_selection           (void);   // decl
@@ -804,6 +804,11 @@ protected:
     void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 tl, const ImVec2 br);
     //  void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
     void                                _update_bbox                        (void);
+    //
+    //                              NEW HELPER FUNCTIONS:
+    inline float                        _drag_threshold_px                  (void) const;
+    inline bool                         _press_inside_selection             (const ImVec2) const;
+    inline bool                         _hit_is_in_current_selection        (const Hit & ) const;
     
     // *************************************************************************** //
     //

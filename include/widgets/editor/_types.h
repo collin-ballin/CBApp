@@ -1934,6 +1934,7 @@ struct EditorStyle
 // *************************************************************************** //
     float                       GRID_STEP                       = 64.0f;
     float                       HIT_THRESH_SQ                   = 6.0f * 6.0f;
+    float                       DRAG_START_DIST_PX              = 4.0f;
 //
     int                         PEN_DRAG_TIME_THRESHOLD         = 0.05;                             //  PEN_DRAG_TIME_THRESHOLD         // seconds.
     float                       PEN_DRAG_MOVEMENT_THRESHOLD     = 4.0f;                             //  PEN_DRAG_MOVEMENT_THRESHOLD     // px  (was 2)
