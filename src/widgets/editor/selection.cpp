@@ -1492,10 +1492,12 @@ inline bool Editor::_hit_is_in_current_selection(const Hit & hit) const
             }
             return false;
         }
+        
         case Hit::Type::Path: {
             const size_t idx = hit.index;
             return m_sel.paths.count(idx) != 0;
         }
+        
         case Hit::Type::Line: {
             const size_t idx = hit.index;
             if (m_sel.lines.count(idx)) return true;
@@ -1505,11 +1507,14 @@ inline bool Editor::_hit_is_in_current_selection(const Hit & hit) const
             }
             return false;
         }
+        
         case Hit::Type::Handle: {
             // Handle stores the vertex id in index; treat "selected vertex" as selected.
             const uint32_t vid = static_cast<uint32_t>(hit.index);
             return m_sel.vertices.count(vid) != 0;
         }
+        
+        default : { IM_ASSERT( false ); }
     }
     return false;
 }

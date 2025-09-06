@@ -2004,9 +2004,11 @@ inline void mirror_handles(Vertex & v, bool dragged_out_handle) noexcept
 //  "find_vertex_mut"
 //
 template< typename ID, typename Vertex = Vertex_t<ID> >
-inline Vertex * find_vertex_mut( std::vector< Vertex > & arr, ID id ) noexcept {
-    for (Vertex & v : arr)
+inline Vertex * find_vertex_mut( std::vector< Vertex > & arr, ID id ) noexcept
+{
+    for (Vertex & v : arr) {
         if (v.id == id) return &v;
+    }
         
     return nullptr;
 }
