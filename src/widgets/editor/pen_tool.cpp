@@ -55,7 +55,7 @@ void Editor::_pen_begin_handle_drag(VertexID vid, bool out_handle, const bool fo
 
     // ── NEW: set vertex kind = Symmetric so mirror_handles links both arms
     if ( Vertex * v = find_vertex_mut(m_vertices, vid) )
-        v->kind = AnchorType::Symmetric;
+        v->m_bezier.kind = BezierCurvatureType::Symmetric;
 
 
     // --- NEW: make the vertex temporarily selected --------------------
@@ -103,8 +103,8 @@ void Editor::_pen_update_handle_drag(const Interaction& /*it*/)
 
     ImVec2      offset{ ws_mouse.x - ws_anchor.x,  ws_mouse.y - ws_anchor.y };
 
-    if (m_dragging_out) v->out_handle = offset;
-    else                v->in_handle  = offset;
+    if (m_dragging_out) v->m_bezier.out_handle = offset;
+    else                v->m_bezier.in_handle  = offset;
 
     mirror_handles<VertexID>(*v, m_dragging_out);
 

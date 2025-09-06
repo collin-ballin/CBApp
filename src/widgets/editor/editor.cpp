@@ -526,7 +526,7 @@ inline void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it)
         //  this->_render_lines             ( it.dl );          //  Enable once ported
         this->_render_paths                 ( it.dl );          //  Enable once ported
         this->_render_selection_highlight   ( it.dl );
-        this->_render_points                ( it.dl );          //  Already ported
+        //  this->_render_points                ( it.dl );          //  Already ported
     //
     //
     VS.PopDL();
@@ -1028,7 +1028,7 @@ inline void Editor::_handle_pen(const Interaction& it)
                                    /*force_select=*/true);
 
             if (Vertex* v = find_vertex_mut(m_vertices, m_pen.pending_vid))
-                v->in_handle = ImVec2(0,0);         // make new handle visible
+                v->m_bezier.in_handle = ImVec2(0,0);         // make new handle visible
 
             m_pen.pending_handle = false;
             m_pen.pending_time   = 0.0f;
@@ -1049,7 +1049,7 @@ inline void Editor::_handle_pen(const Interaction& it)
                                         /*out_handle=*/true,
                                         /*force_select=*/true);
                 if (Vertex* v = find_vertex_mut(m_vertices, m_drag_vid))
-                    v->out_handle = ImVec2(0,0);
+                    v->m_bezier.out_handle = ImVec2(0,0);
             }
         }
         _draw_pen_cursor(io.MousePos, m_style.PEN_COL_NORMAL);   // yellow bullseye
@@ -1271,7 +1271,7 @@ inline void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
             m_drag_vid         = vid;
             m_dragging_out     = true;        // start with out_handle
             if (Vertex * v = find_vertex_mut(m_vertices, vid))
-                v->out_handle  = ImVec2(0,0); // make handle distinct from anchor
+                v->m_bezier.out_handle  = ImVec2(0,0); // make handle distinct from anchor
 
             return;                           // drag continues next frame
         }

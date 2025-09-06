@@ -114,18 +114,18 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction & it) const
         if ( !pp || pp->locked || !pp->visible )    { continue; }
 
 
-        if (v.out_handle.x || v.out_handle.y)
+        if (v.m_bezier.out_handle.x || v.m_bezier.out_handle.y)
         {
-            ImVec2 scr = ws2px({ v.x + v.out_handle.x,
-                                 v.y + v.out_handle.y });
+            ImVec2 scr = ws2px({ v.x + v.m_bezier.out_handle.x,
+                                 v.y + v.m_bezier.out_handle.y });
             if ( overlap(scr) )
                 return Hit{ Hit::Type::Handle,
                             static_cast<size_t>(v.id), true };
         }
-        if ( v.in_handle.x || v.in_handle.y )
+        if ( v.m_bezier.in_handle.x || v.m_bezier.in_handle.y )
         {
-            ImVec2 scr = ws2px({ v.x + v.in_handle.x,
-                                 v.y + v.in_handle.y });
+            ImVec2 scr = ws2px({ v.x + v.m_bezier.in_handle.x,
+                                 v.y + v.m_bezier.in_handle.y });
             if ( overlap(scr) )
             {
                 return Hit{ Hit::Type::Handle,
@@ -300,7 +300,7 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
             const Vertex* b = find_vertex(m_vertices, p.verts[(si + 1) % N]);
             if (!a || !b) continue;
 
-            bool curved = !is_zero(a->out_handle) || !is_zero(b->in_handle);
+            bool curved = !is_zero(a->m_bezier.out_handle) || !is_zero(b->m_bezier.in_handle);
 
             if (!curved)
             {

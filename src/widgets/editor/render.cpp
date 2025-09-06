@@ -185,10 +185,10 @@ void Editor::_render_paths(ImDrawList * dl) const
                             p.style.stroke_width);
             }
             else {
-                ImVec2 P0 = world_to_pixels({ a->x,                         a->y });
-                ImVec2 P1 = world_to_pixels({ a->x + a->out_handle.x,       a->y + a->out_handle.y });
-                ImVec2 P2 = world_to_pixels({ b->x + b->in_handle.x,        b->y + b->in_handle.y  });
-                ImVec2 P3 = world_to_pixels({ b->x,                         b->y });
+                ImVec2 P0 = world_to_pixels({ a->x,                                     a->y                                });
+                ImVec2 P1 = world_to_pixels({ a->x + a->m_bezier.out_handle.x,          a->y + a->m_bezier.out_handle.y     });
+                ImVec2 P2 = world_to_pixels({ b->x + b->m_bezier.in_handle.x,           b->y + b->m_bezier.in_handle.y      });
+                ImVec2 P3 = world_to_pixels({ b->x,                                     b->y                                });
 
                 dl->AddBezierCubic(P0, P1, P2, P3,
                                    p.style.stroke_color,
@@ -309,10 +309,10 @@ void Editor::_render_selection_highlight(ImDrawList * dl) const
             const float w = p.style.stroke_width + 2.0f;
             if ( is_curved<VertexID>(a,b) )
             {
-                ImVec2 P0 = ws2px({ a->x,                         a->y });
-                ImVec2 P1 = ws2px({ a->x + a->out_handle.x,       a->y + a->out_handle.y });
-                ImVec2 P2 = ws2px({ b->x + b->in_handle.x,        b->y + b->in_handle.y  });
-                ImVec2 P3 = ws2px({ b->x,                         b->y });
+                ImVec2 P0 = ws2px({ a->x,                               a->y                                });
+                ImVec2 P1 = ws2px({ a->x + a->m_bezier.out_handle.x,    a->y + a->m_bezier.out_handle.y     });
+                ImVec2 P2 = ws2px({ b->x + b->m_bezier.in_handle.x,     b->y + b->m_bezier.in_handle.y      });
+                ImVec2 P3 = ws2px({ b->x,                               b->y                                });
                 dl->AddBezierCubic(P0, P1, P2, P3, col, w, m_style.ms_BEZIER_SEGMENTS);
             }
             else
@@ -380,8 +380,8 @@ inline void Editor::_render_selected_handles(ImDrawList * dl) const
                               m_style.ms_HANDLE_COLOR);
         };
 
-        draw_handle(v.out_handle);
-        draw_handle(v.in_handle);
+        draw_handle(v.m_bezier.out_handle);
+        draw_handle(v.m_bezier.in_handle);
     }
     
     return;
@@ -585,10 +585,10 @@ inline void Editor::_auxiliary_highlight_object(const Path & p, ImDrawList * dl)
     {
         if ( !a || !b )         { return; }
         if ( is_curved<VertexID>(a, b) ) {
-            ImVec2 P0 = ws2px({ a->x,                       a->y });
-            ImVec2 P1 = ws2px({ a->x + a->out_handle.x,     a->y + a->out_handle.y });
-            ImVec2 P2 = ws2px({ b->x + b->in_handle.x,      b->y + b->in_handle.y  });
-            ImVec2 P3 = ws2px({ b->x,                       b->y });
+            ImVec2 P0 = ws2px({ a->x,                                   a->y                                });
+            ImVec2 P1 = ws2px({ a->x + a->m_bezier.out_handle.x,        a->y + a->m_bezier.out_handle.y     });
+            ImVec2 P2 = ws2px({ b->x + b->m_bezier.in_handle.x,         b->y + b->m_bezier.in_handle.y      });
+            ImVec2 P3 = ws2px({ b->x,                                   b->y                                });
             dl->AddBezierCubic(P0, P1, P2, P3, col, w, m_style.ms_BEZIER_SEGMENTS);
         }
         else

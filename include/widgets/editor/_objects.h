@@ -70,41 +70,222 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-//      1.      ENUMS / UTILITIES...
+//      0.      MISC ENUMS / UTILITIES...
 // *************************************************************************** //
 // *************************************************************************** //
-
-//  "AnchorType"
-//
-enum class AnchorType : uint8_t     {
-    Corner, Smooth, Symmetric,
-    COUNT
-};
-//
-static constexpr cblib::EnumArray <AnchorType, const char *>
-DEF_ANCHOR_TYPE_NAMES               = {
-    "Corner",
-    "Smooth",
-    "Symmetric"
-};
-//
-static constexpr std::array< ImColor, static_cast<size_t>(AnchorType::COUNT) >
-ANCHOR_COLORS                       = { {
-    /*  Corner          */      ImColor(255,       255,        0,      255     ),      //   yellow
-    /*  Smooth          */      ImColor(  0,       255,        0,      255     ),      //   green
-    /*  Symmetric       */      ImColor(  0,       200,        255,    255     )       //   cyan
-} };
-
 
 //  "EndpointInfo"
-//
 template<typename PID>
 struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ first vertex
 
 
 
+//
+//
+//
 // *************************************************************************** //
-// *************************************************************************** //   END "Enums".
+// *************************************************************************** //   END "MISC/UTILITY".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      1.      BEZIER CONTROL POINT...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "BezierCurvatureType"
+//
+enum class BezierCurvatureType : uint8_t     { Corner,     Smooth,     Symmetric,      COUNT };
+//
+static constexpr cblib::EnumArray <BezierCurvatureType, const char *>
+DEF_BEZIER_CURVATURE_TYPE_NAMES             = { "Corner",       "Smooth",       "Symmetric" };
+
+
+
+//  "BezierCurvatureState"
+//
+enum class BezierCurvatureState : uint8_t {
+    None = 0, In, Out, All, COUNT
+};
+
+
+
+//  "BezierControl"
+//      Defines a "control point" for the Vertex/Path curvature.
+//
+struct BezierControl
+{
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    using                               CurvatureType                           = BezierCurvatureType;
+    using                               CurvatureState                          = BezierCurvatureState;
+    
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr float              ms_BEZIER_NUMERICAL_ERROR               = 1e-6;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      BéZIER HANDLE DATA.
+    // *************************************************************************** //
+    BezierCurvatureType                 kind                            = BezierCurvatureType::Corner;
+    ImVec2                              in_handle                       = ImVec2(0.0f, 0.0f);   // incoming Bézier handle (from previous vertex)
+    ImVec2                              out_handle                      = ImVec2(0.0f, 0.0f);   // outgoing Bézier handle (to next vertex)
+
+    // *************************************************************************** //
+    //      TRANSIENT STATE VARIABLES.
+    // *************************************************************************** //
+    mutable CurvatureState              m_curvature_state               = CurvatureState::None;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      SETTER / GETTER FUNCTIONS.
+    // *************************************************************************** //
+    //  "is_linear"
+    [[nodiscard]] inline bool           IsLinear                        (void) const noexcept       { return ( m_curvature_state == CurvatureState::None ); }
+
+    // *************************************************************************** //
+
+
+
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "UpdateCurvatureState"
+    inline CurvatureState               UpdateCurvatureState            (void) const noexcept
+    {
+        namespace           math            = cblib::math;
+        const float &       GATE            = this->ms_BEZIER_NUMERICAL_ERROR;
+        //
+        const bool          in_is_set       = ( !math::is_close( this->in_handle.x,  0.0f, GATE)  ||  !math::is_close( this->in_handle.y,  0.0f, GATE)  );
+        const bool          out_is_set      = ( !math::is_close( this->out_handle.x, 0.0f, GATE)  ||  !math::is_close( this->out_handle.y, 0.0f, GATE)  );
+        const bool          both            = ( in_is_set  &&  out_is_set );
+    
+    
+        if      ( both )            { this->m_curvature_state = CurvatureState::All;    }
+        else if ( in_is_set )       { this->m_curvature_state = CurvatureState::In;     }
+        else if ( out_is_set )      { this->m_curvature_state = CurvatureState::Out;    }
+        else                        { this->m_curvature_state = CurvatureState::None;   }
+    
+        return this->m_curvature_state;
+    }
+    
+    // *************************************************************************** //
+
+
+
+    // *************************************************************************** //
+    //      RENDERING FUNCTIONS.
+    // *************************************************************************** //
+    
+    // *************************************************************************** //
+
+
+
+    // *************************************************************************** //
+    //      UTILITY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "ResetCurvature"
+    inline void                         ResetCurvature                  (void) noexcept       {
+        this->m_curvature_state     = CurvatureState::None;
+        this->in_handle             = { };
+        this->out_handle            = { };
+        return;
+    }
+
+    // *************************************************************************** //
+    
+    
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "BezierControl" INLINE STRUCT DEFINITION.
+
+
+
+//  "to_json"
+//
+inline void to_json(nlohmann::json & j, const BezierControl & obj)
+{
+    j = {
+        { "in_handle",              { obj.in_handle.x,  obj.in_handle.y     }   },
+        { "out_handle",             { obj.out_handle.x, obj.out_handle.y    }   },
+        { "kind",                   obj.kind                                    },
+        { "curvature_state",        obj.m_curvature_state                       }
+    };
+
+    return;
+}
+
+
+//  "from_json"
+//
+inline void from_json(const nlohmann::json & j, BezierControl & obj)
+{
+    j.at("kind")                    .get_to(obj.kind                  );
+    j.at("curvature_state")         .get_to(obj.m_curvature_state     );
+
+    auto    ih                      = j.at("in_handle"      );
+    auto    oh                      = j.at("out_handle"     );
+    obj.in_handle                   = { ih[0], ih[1] };
+    obj.out_handle                  = { oh[0], oh[1] };
+    
+    return;
+}
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "BezierControl".
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
 
 
 
@@ -184,13 +365,19 @@ struct VertexStyle
 //
 // *************************************************************************** //
 // *************************************************************************** //
-};//	END "MyStruct" INLINE STRUCT DEFINITION.
+};//	END "VertexStyle" INLINE STRUCT DEFINITION.
 
 
 
-    
-    
-    
+
+
+
+
+
+
+
+
+
 //  "Vertex_t" / "Pos" / "Anchor Point"
 //
 //      A pure geometry node. `in_handle` and `out_handle` are offsets from
@@ -201,8 +388,18 @@ template<typename VID>
 struct Vertex_t
 {
     // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    using                               CurvatureType                           = BezierControl::CurvatureType;
+    using                               CurvatureState                          = BezierControl::CurvatureState;
+    
+    
+    
+    // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
+    //  static constexpr float              ms_BEZIER_NUMERICAL_ERROR               = 1e-6;
+    //
     static constexpr const char *       ms_DEF_VERTEX_TITLE_FMT_STRING          = "Vertex V%03d (ID #%06u)";
     static constexpr const char *       ms_DEF_VERTEX_SELECTOR_FMT_STRING       = "V%03u";
     static constexpr size_t             ms_MAX_VERTEX_NAME_LENGTH               = 10ULL;
@@ -224,14 +421,21 @@ struct Vertex_t
     // *************************************************************************** //
     VID                                 id                              = 0;
     float                               x                               = 0.0f,
-                                        y                               = 0.0f;
+                                        y                               = 0.0f,
+                                        z                               = 0.0f;
 
     // *************************************************************************** //
     //      BéZIER HANDLE DATA.
     // *************************************************************************** //
-    ImVec2                              in_handle                       = ImVec2(0.0f, 0.0f);   // incoming Bézier handle (from previous vertex)
-    ImVec2                              out_handle                      = ImVec2(0.0f, 0.0f);   // outgoing Bézier handle (to next vertex)
-    AnchorType                          kind                            = AnchorType::Corner;
+    BezierControl                       m_bezier                        = {   };
+    //  ImVec2                              in_handle                       = ImVec2(0.0f, 0.0f);   // incoming Bézier handle (from previous vertex)
+    //  ImVec2                              out_handle                      = ImVec2(0.0f, 0.0f);   // outgoing Bézier handle (to next vertex)
+    //  BezierCurvatureType                 kind                            = BezierCurvatureType::Corner;
+
+    // *************************************************************************** //
+    //      TRANSIENT STATE VARIABLES.
+    // *************************************************************************** //
+    //  mutable CurvatureState              m_curvature_state               = CurvatureState::None;
     
 //
 // *************************************************************************** //
@@ -246,79 +450,89 @@ struct Vertex_t
 // *************************************************************************** //
 
     // *************************************************************************** //
+    //      SETTER / GETTER FUNCTIONS.
+    // *************************************************************************** //
+    //  "is_linear"
+    [[nodiscard]] inline bool           IsLinear                        (void) const noexcept       { return m_bezier.IsLinear(); }
+
+    // *************************************************************************** //
+
+
+
+    // *************************************************************************** //
     //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
+    
+    //  "UpdateCurvatureState"
+    inline CurvatureState               UpdateCurvatureState            (void) const noexcept       { return this->m_bezier.UpdateCurvatureState(); }
+    
+    // *************************************************************************** //
+
+
 
     // *************************************************************************** //
     //      RENDERING FUNCTIONS.
     // *************************************************************************** //
     
-    
     //  "render"
     template <typename VStyle>
     inline void                         render                          (VStyle & style) const noexcept
     {
-        namespace           math            = cblib::math;
-        constexpr float     GATE            = 1e-6;
-        //
-        const bool          render_in       = ( math::is_close( this->in_handle.x, 0.0f, GATE)  &&  math::is_close( this->in_handle.y, 0.0f, GATE) );
-        const bool          render_out      = ( math::is_close( this->out_handle.x, 0.0f, GATE)  &&  math::is_close( this->out_handle.y, 0.0f, GATE) );
-        const bool          both            = ( render_in && render_out );
-        //
-        const ImVec2        pos             = style.ws_to_px(    { this->x,                          this->y                         }   );
-        const ImVec2        h_in            = style.ws_to_px(    { this->x + this->in_handle.x,      this->y + this->in_handle.y     }   );
-        const ImVec2        h_out           = style.ws_to_px(    { this->x + this->in_handle.x,      this->y + this->in_handle.y     }   );
+        const BezierControl &       BZ              = this->m_bezier;
+        const ImVec2                pos             = style.ws_to_px(    {  this->x                        , this->y                      }       );
+        const ImVec2                h_in            = style.ws_to_px(    {  this->x + BZ.in_handle.x       , this->y + BZ.in_handle.y     }       );
+        const ImVec2                h_out           = style.ws_to_px(    {  this->x + BZ.out_handle.x      , this->y + BZ.out_handle.y    }       );
+        
+        this->UpdateCurvatureState();
         
         
-        
-        
-        
-        //      CASE 1 :    RENDER BOTH HANDLES...
-        if ( both )
+        //      DISPATCH ACTION BASED ON BEZIER CURVATURE...
+        switch (BZ.m_curvature_state)
         {
-            style.dl->AddLine( h_in, h_out, style.line_color, style.line_width );       //  1A.     LINE.
-            style.dl->AddRectFilled(                                                    //  1B.     "IN" HANDLE.
-                { h_in.x - style.handle_size,       h_in.y - style.handle_size },
-                { h_in.x + style.handle_size,       h_in.y + style.handle_size },
-                style.handle_color
-            );
-            style.dl->AddRectFilled(                                                    //  1C.     "OUT" HANDLE.
-                { h_out.x - style.handle_size,      h_out.y - style.handle_size },
-                { h_out.x + style.handle_size,      h_out.y + style.handle_size },
-                style.handle_color
-            );
-        }
-        //
-        //      CASE 2 :    RENDER ONLY ONE HANDLE...
-        else
-        {
-            //      CASE 2 :    "IN" HANDLE.
-            if (render_in) {
-                style.dl->AddLine( pos, h_in, style.line_color, style.line_width );         //  2A.     LINE.
+            case CurvatureState::In : {
+                style.dl->AddLine( pos, h_in,  style.line_color, style.line_width );        //  2A.     LINE  V  |==>  IN.
                 style.dl->AddRectFilled(                                                    //  2B.     "IN" HANDLE.
                     { h_in.x - style.handle_size,   h_in.y - style.handle_size },
                     { h_in.x + style.handle_size,   h_in.y + style.handle_size },
                     style.handle_color
                 );
+                break;
             }
-            //      CASE 3 :    "OUT" HANDLE.
-            else if (render_out) {
-                style.dl->AddLine( pos, h_out, style.line_color, style.line_width );        //  3A.     LINE.
+            case CurvatureState::Out : {
+                style.dl->AddLine( pos, h_out, style.line_color, style.line_width );        //  3A.     LINE  V  |==>  OUT.
                 style.dl->AddRectFilled(                                                    //  3B.     "OUT" HANDLE.
-                    { h_in.x - style.handle_size,   h_in.y - style.handle_size },
-                    { h_in.x + style.handle_size,   h_in.y + style.handle_size },
+                    { h_out.x - style.handle_size,   h_out.y - style.handle_size },
+                    { h_out.x + style.handle_size,   h_out.y + style.handle_size },
                     style.handle_color
                 );
+                break;
+            }
+            case CurvatureState::All : {
+                style.dl->AddLine( pos, h_in,  style.line_color, style.line_width );        //  1A.     LINE  V  |==>  IN.
+                style.dl->AddLine( pos, h_out, style.line_color, style.line_width );        //  1B.     LINE  V  |==>  OUT.
+                style.dl->AddRectFilled(                                                    //  1C.     "IN" HANDLE.
+                    { h_in.x - style.handle_size,       h_in.y - style.handle_size },
+                    { h_in.x + style.handle_size,       h_in.y + style.handle_size },
+                    style.handle_color
+                );
+                style.dl->AddRectFilled(                                                    //  1D.     "OUT" HANDLE.
+                    { h_out.x - style.handle_size,      h_out.y - style.handle_size },
+                    { h_out.x + style.handle_size,      h_out.y + style.handle_size },
+                    style.handle_color
+                );
+                break;
+            }
+            default : {
+                break;
             }
         }
-        //
+        
+        
         //      LAST :      RENDER VERTEX...
         style.dl->AddCircleFilled( pos, style.vertex_radius, style.vertex_color, style.vertex_tesselation );
 
         return;
     }
-    
-    
     
     //  "render_vertex"
     template <typename F>
@@ -326,73 +540,20 @@ struct Vertex_t
     inline void                         render_vertex                       (ImDrawList * dl, F ws2px, const float radius, const ImU32 color, const int num_segments=12) const noexcept
     { dl->AddCircleFilled( ws2px({ this->x,this->y}), radius, color, num_segments ); }
     
-    
-    //  "render_handles"
-    template <typename F>
-    requires std::is_nothrow_invocable_r_v<ImVec2, F, ImVec2>
-    inline void                         render_handles                      (ImDrawList * dl, F ws2px, const float linewidth=1.0f) const noexcept
-    {
-        namespace           math            = cblib::math;
-        constexpr float     GATE            = 1e-6;
-        //
-        constexpr float     LINE_WIDTH      = 1.0f;
-        constexpr ImU32     LINE_COLOR      = IM_COL32(255, 215, 0, 170);
-        constexpr float     HANDLE_SIZE     = 6.0f;
-        constexpr ImU32     HANDLE_COLOR    = IM_COL32(255, 215, 0, 255);
-        //
-        const bool          render_in       = ( math::is_close( this->in_handle.x, 0.0f, GATE)  &&  math::is_close( this->in_handle.y, 0.0f, GATE) );
-        const bool          render_out      = ( math::is_close( this->out_handle.x, 0.0f, GATE)  &&  math::is_close( this->out_handle.y, 0.0f, GATE) );
-        const bool          both            = ( render_in && render_out );
-        //
-        const ImVec2        a               = ws2px(    { this->x,                          this->y                         }   );
-        const ImVec2        h_in            = ws2px(    { this->x + this->in_handle.x,      this->y + this->in_handle.y     }   );
-        const ImVec2        h_out           = ws2px(    { this->x + this->in_handle.x,      this->y + this->in_handle.y     }   );
-        
-        
-        
-        
-        
-        //      CASE 1 :    RENDER BOTH HANDLES...
-        if ( both )
-        {
-            dl->AddLine( h_in, h_out, LINE_COLOR, LINE_WIDTH );             //  1A.     LINE.
-            dl->AddRectFilled(                                              //  1B.     "IN" HANDLE.
-                { h_in.x - HANDLE_SIZE,         h_in.y - HANDLE_SIZE },
-                { h_in.x + HANDLE_SIZE,         h_in.y + HANDLE_SIZE },
-                HANDLE_COLOR
-            );
-            dl->AddRectFilled(                                              //  1C.     "OUT" HANDLE.
-                { h_out.x - HANDLE_SIZE,        h_out.y - HANDLE_SIZE },
-                { h_out.x + HANDLE_SIZE,        h_out.y + HANDLE_SIZE },
-                HANDLE_COLOR
-            );
-        }
-        //
-        //      CASE 2 :    RENDER ONLY ONE HANDLE...
-        else
-        {
-            //      CASE 2 :    "IN" HANDLE.
-            if (render_in) {
-                dl->AddLine( a, h_in, LINE_COLOR, LINE_WIDTH );                 //  2A.     LINE.
-                dl->AddRectFilled(                                              //  2B.     "IN" HANDLE.
-                    { h_in.x - HANDLE_SIZE,         h_in.y - HANDLE_SIZE },
-                    { h_in.x + HANDLE_SIZE,         h_in.y + HANDLE_SIZE },
-                    HANDLE_COLOR
-                );
-            }
-            //      CASE 3 :    "OUT" HANDLE.
-            else if (render_out) {
-                dl->AddLine( a, h_out, LINE_COLOR, LINE_WIDTH );                //  3A.     LINE.
-                dl->AddRectFilled(                                              //  3B.     "OUT" HANDLE.
-                    { h_in.x - HANDLE_SIZE,         h_in.y - HANDLE_SIZE },
-                    { h_in.x + HANDLE_SIZE,         h_in.y + HANDLE_SIZE },
-                    HANDLE_COLOR
-                );
-            }
-        }
+    // *************************************************************************** //
 
-        return;
-    }
+
+
+    // *************************************************************************** //
+    //      UTILITY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "ResetCurvature"
+    inline void                         ResetCurvature                  (void) noexcept       { this->m_bezier.ResetCurvature(); }
+
+    // *************************************************************************** //
+    
+    
     
 //
 // *************************************************************************** //
@@ -414,30 +575,58 @@ struct Vertex_t
 //  "to_json"
 //
 template <typename IdT>
-inline void to_json(nlohmann::json& j, const Vertex_t<IdT>& v)
+inline void to_json(nlohmann::json & j, const Vertex_t<IdT> & v)
 {
     j = {
-        { "id",             v.id                                    },
-        { "x",              v.x                                     },
-        { "y",              v.y                                     },
-        { "in_handle",      { v.in_handle.x,  v.in_handle.y    }    },
-        { "out_handle",     { v.out_handle.x, v.out_handle.y   }    },
-        { "kind",           v.kind                                  }
+        { "id",                     v.id                                    },
+        { "x",                      v.x                                     },
+        { "y",                      v.y                                     },
+        { "z",                      v.z                                     },
+        //  { "in_handle",              { v.in_handle.x,  v.in_handle.y    }    },
+        //  { "out_handle",             { v.out_handle.x, v.out_handle.y   }    },
+        //  { "kind",                   v.kind                                  },
+        //  { "curvature_state",        v.m_curvature_state                     },
+    //
+        { "bezier",                 v.m_bezier                              }
     };
+    
+    return;
 }
+//
 //
 //  "from_json"
 template <typename IdT>
-inline void from_json(const nlohmann::json& j, Vertex_t<IdT>& v)
+inline void from_json(const nlohmann::json & j, Vertex_t<IdT> & v)
 {
-    j.at("id")          .get_to(v.id);
-    j.at("x")           .get_to(v.x);
-    j.at("y")           .get_to(v.y);
-    auto    ih          = j.at("in_handle");        v.in_handle  = { ih[0], ih[1] };
-    auto    oh          = j.at("out_handle");       v.out_handle = { oh[0], oh[1] };
-    j.at("kind")        .get_to(v.kind);
+    j.at("id")                      .get_to(v.id                    );
+    j.at("x")                       .get_to(v.x                     );
+    j.at("y")                       .get_to(v.y                     );
+    j.at("z")                       .get_to(v.z                     );
+//
+    //  j.at("kind")                    .get_to(v.kind                  );
+    //  j.at("curvature_state")         .get_to(v.m_curvature_state     );
+    j.at("bezier")                  .get_to(v.m_bezier              );
+    
+    //  auto    ih                      = j.at("in_handle");
+    //  auto    oh                      = j.at("out_handle");
+    //  v.in_handle                     = { ih[0], ih[1] };
+    //  v.out_handle                    = { oh[0], oh[1] };
+    
+    
+    
+    
+    //  v.m_bezier.in_handle              = v.in_handle;
+    //  v.m_bezier.out_handle             = v.out_handle;
+    //  v.m_bezier.kind                   = v.kind;
+    //  v.m_bezier.m_curvature_state      = v.m_curvature_state;
+    
+    
+    return;
 }
 
+//
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //   END "Vertices".
 

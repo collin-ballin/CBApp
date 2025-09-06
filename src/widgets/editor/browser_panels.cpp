@@ -472,7 +472,7 @@ void Editor::_draw_vertex_inspector_column(Path & path)
         const float         grid            = m_style.GRID_STEP / m_cam.zoom_mag;
         const float         speed           = 0.1f * grid;
         bool                dirty           = false;
-        int                 kind_idx        = static_cast<int>(v->kind);
+        int                 kind_idx        = static_cast<int>(v->m_bezier.kind);
         auto                snap            = [grid](float f){ return std::round(f / grid) * grid; };
 
         //      3.1.    Position:
@@ -494,33 +494,33 @@ void Editor::_draw_vertex_inspector_column(Path & path)
         //              3.2A    ANCHOR TYPE (corner / smooth / symmetric):
         {
             this->S.labelf("Type:", LABEL_W, WIDGET_W);
-            dirty = ImGui::Combo("##Editor_VertexBrowser_AnchorType", &kind_idx, ms_ANCHOR_TYPE_NAMES.data(), static_cast<int>( AnchorType::COUNT ));          // <- int, not enum
+            dirty = ImGui::Combo("##Editor_VertexBrowser_AnchorType", &kind_idx, ms_BEZIER_CURVATURE_TYPE_NAMES.data(), static_cast<int>( BezierCurvatureType::COUNT ));          // <- int, not enum
             //
             if (dirty) {
-                v->kind     = static_cast<AnchorType>(kind_idx);
-                dirty       = false;
+                v->m_bezier.kind    = static_cast<BezierCurvatureType>(kind_idx);
+                dirty               = false;
             }
         }
         //
         //              3.2B    INWARD (from previous vertex):
         this->S.labelf("Inward:", LABEL_W, WIDGET_W);
         //
-        dirty              = ImGui::DragFloat2("##Editor_VertexBrowser_InwardControl",     &v->in_handle.x,    speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
+        dirty              = ImGui::DragFloat2("##Editor_VertexBrowser_InwardControl",     &v->m_bezier.in_handle.x,    speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
         if ( dirty && !ImGui::IsItemActive() ) {
-            v->in_handle.x      = snap(v->in_handle.x);
-            v->in_handle.y      = snap(v->in_handle.y);
+            v->m_bezier.in_handle.x     = snap(v->m_bezier.in_handle.x);
+            v->m_bezier.in_handle.y     = snap(v->m_bezier.in_handle.y);
             mirror_handles<VertexID>(*v, /*dragging_out=*/false);
-            dirty               = false;
+            dirty                       = false;
         }
         //
         //              3.2C    OUTWARD (to next vertex):
         this->S.labelf("Outward:", LABEL_W, WIDGET_W);
-        dirty               = ImGui::DragFloat2("##Editor_VertexBrowser_OutwardControl",    &v->out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
+        dirty               = ImGui::DragFloat2("##Editor_VertexBrowser_OutwardControl",    &v->m_bezier.out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
         if ( dirty && !ImGui::IsItemActive() ) {
-            v->out_handle.x     = snap(v->out_handle.x);
-            v->out_handle.y     = snap(v->out_handle.y);
+            v->m_bezier.out_handle.x    = snap(v->m_bezier.out_handle.x);
+            v->m_bezier.out_handle.y    = snap(v->m_bezier.out_handle.y);
             mirror_handles<VertexID>(*v, /*dragging_out=*/true);  // keep smooth/symmetric rule
-            dirty               = false;
+            dirty                       = false;
         }
     }
     

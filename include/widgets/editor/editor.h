@@ -159,7 +159,7 @@ public:
     static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES;
     //
     static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
-    static constexpr auto &             ms_ANCHOR_TYPE_NAMES            = DEF_ANCHOR_TYPE_NAMES;
+    static constexpr auto &             ms_BEZIER_CURVATURE_TYPE_NAMES  = DEF_BEZIER_CURVATURE_TYPE_NAMES;
     static constexpr auto &             ms_PATH_KIND_NAMES              = path::DEF_PATH_KIND_NAMES;
     //
     static constexpr auto &             ms_IORESULT_NAMES               = DEF_IORESULT_NAMES;
@@ -1853,8 +1853,8 @@ inline void from_json(const nlohmann::json & j, EditorSnapshot & s)
 template< std::integral ID, typename Vertex = Vertex_t<ID> >
 [[maybe_unused]] inline bool is_curved(const Vertex* a, const Vertex* b) noexcept
 {
-    return (a->out_handle.x || a->out_handle.y ||
-            b->in_handle.x  || b->in_handle.y);
+    return (a->m_bezier.out_handle.x || a->m_bezier.out_handle.y ||
+            b->m_bezier.in_handle.x  || b->m_bezier.in_handle.y);
 }
 
 
@@ -1870,8 +1870,8 @@ template< std::integral ID, typename Vertex = Vertex_t<ID> >
     const float w3 = t*t*t;
 
     ImVec2 P0{ a->x, a->y };
-    ImVec2 P1{ a->x + a->out_handle.x, a->y + a->out_handle.y };
-    ImVec2 P2{ b->x + b->in_handle.x,  b->y + b->in_handle.y  };
+    ImVec2 P1{ a->x + a->m_bezier.out_handle.x, a->y + a->m_bezier.out_handle.y };
+    ImVec2 P2{ b->x + b->m_bezier.in_handle.x,  b->y + b->m_bezier.in_handle.y  };
     ImVec2 P3{ b->x, b->y };
 
     return { w0*P0.x + w1*P1.x + w2*P2.x + w3*P3.x,
@@ -1975,23 +1975,23 @@ static inline ImVec2 vec_norm(const ImVec2& v)
 template< typename ID, typename Vertex = Vertex_t<ID> >
 inline void mirror_handles(Vertex & v, bool dragged_out_handle) noexcept
 {
-    ImVec2 &    h_dragged   = dragged_out_handle ? v.out_handle : v.in_handle;
-    ImVec2 &    h_other     = dragged_out_handle ? v.in_handle  : v.out_handle;
+    ImVec2 &    h_dragged   = (dragged_out_handle)  ? v.m_bezier.out_handle     : v.m_bezier.in_handle;
+    ImVec2 &    h_other     = (dragged_out_handle)  ? v.m_bezier.in_handle      : v.m_bezier.out_handle;
 
-    switch (v.kind)
+    switch (v.m_bezier.kind)
     {
-        case AnchorType::Corner: {
+        case BezierCurvatureType::Corner: {
             /* no coupling */ break;
         }
 
-        case AnchorType::Smooth: {
+        case BezierCurvatureType::Smooth: {
             const float  len    = vec_len(h_other);          // preserve length
             const ImVec2 dir    = vec_norm(h_dragged);
             h_other             = ImVec2{ -dir.x * len, -dir.y * len };
             break;
         }
 
-        case AnchorType::Symmetric:     {
+        case BezierCurvatureType::Symmetric:     {
             h_other = ImVec2{ -h_dragged.x, -h_dragged.y };
             break;
         }

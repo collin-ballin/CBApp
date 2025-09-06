@@ -232,7 +232,7 @@ bool Editor::_try_begin_handle_drag(const Interaction& it)
             m_drag_vid        = m_points[h->index].v;
             m_dragging_out    = true;      // always out first
             if (Vertex* v = find_vertex_mut(m_vertices, m_drag_vid))
-                v->out_handle = {0,0};
+                v->m_bezier.out_handle = {0,0};
             return true;
         }
     }

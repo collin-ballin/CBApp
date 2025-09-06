@@ -223,31 +223,31 @@ size_t Editor::_shape_build_rectangle(const ImVec2 & cen, float r)
 //
 size_t Editor::_shape_build_ellipse(const ImVec2 & cen, float r)
 {
-    float       k       = ms_SHAPE_ELLIPSE_KAPPA * r;
+    float       k               = ms_SHAPE_ELLIPSE_KAPPA * r;
 
-    ImVec2      p0      {cen.x - r, cen.y};
-    ImVec2      p1      {cen.x, cen.y - r};
-    ImVec2      p2      {cen.x + r, cen.y};
-    ImVec2      p3      {cen.x, cen.y + r};
+    ImVec2      p0              {cen.x - r, cen.y};
+    ImVec2      p1              {cen.x, cen.y - r};
+    ImVec2      p2              {cen.x + r, cen.y};
+    ImVec2      p3              {cen.x, cen.y + r};
 
-    VertexID    v0      = _shape_add_vertex(p0);
-    VertexID    v1      = _shape_add_vertex(p1);
-    VertexID    v2      = _shape_add_vertex(p2);
-    VertexID    v3      = _shape_add_vertex(p3);
+    VertexID    v0              = _shape_add_vertex(p0);
+    VertexID    v1              = _shape_add_vertex(p1);
+    VertexID    v2              = _shape_add_vertex(p2);
+    VertexID    v3              = _shape_add_vertex(p3);
 
-    Vertex *    a       = find_vertex_mut(m_vertices, v0);
-    Vertex *    b       = find_vertex_mut(m_vertices, v1);
-    Vertex *    c       = find_vertex_mut(m_vertices, v2);
-    Vertex *    d       = find_vertex_mut(m_vertices, v3);
+    Vertex *    a               = find_vertex_mut(m_vertices, v0);
+    Vertex *    b               = find_vertex_mut(m_vertices, v1);
+    Vertex *    c               = find_vertex_mut(m_vertices, v2);
+    Vertex *    d               = find_vertex_mut(m_vertices, v3);
 
-    a->out_handle       = { 0, -k };
-    b->in_handle        = {-k,  0};
-    b->out_handle       = { k,  0};
-    c->in_handle        = { 0, -k};
-    c->out_handle       = { 0,  k};
-    d->in_handle        = { k,  0};
-    d->out_handle       = {-k,  0};
-    a->in_handle        = { 0,  k};
+    a->m_bezier.out_handle      = { 0, -k };
+    b->m_bezier.in_handle       = {-k,  0};
+    b->m_bezier.out_handle      = { k,  0};
+    c->m_bezier.in_handle       = { 0, -k};
+    c->m_bezier.out_handle      = { 0,  k};
+    d->m_bezier.in_handle       = { k,  0};
+    d->m_bezier.out_handle      = {-k,  0};
+    a->m_bezier.in_handle       = { 0,  k};
 
 
 
