@@ -401,7 +401,9 @@ protected:
     // *************************************************************************** //
     //                              SUBSIDIARY STATES:
     EditorState                         m_editor_S                      {   };        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
+    //  RenderState                         m_render_S                      {   };
     BrowserState                        m_browser_S                     {   };
+//
     Selection                           m_sel;
     mutable BoxDrag                     m_boxdrag;
     MoveDrag                            m_movedrag;
@@ -410,7 +412,6 @@ protected:
     //                              TOOL STATES:
     PenState                            m_pen;
     ShapeState                          m_shape;
-    //  OverlayState                        m_overlay;
     DebuggerState                       m_debugger;
     
     // *************************************************************************** //
@@ -637,7 +638,7 @@ protected:
     //
     //                              "VERTICES" TRAIT:
     void                                _draw_vertex_panel                      (Path & path, [[maybe_unused]] const size_t , const LabelFn & callback);
-    void                                _draw_vertex_selector_column            (Path & );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
+    void                                _draw_vertex_selector_column            (Path & , const size_t );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
     void                                _draw_vertex_inspector_column           (Path & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
     //
     //                              "PAYLOAD" TRAIT:
@@ -742,24 +743,6 @@ protected:
     //
     //
     // *************************************************************************** //
-    //      OVERLAY TOOL STUFF.             |   "tools.cpp" ...
-    // *************************************************************************** //
-    void                                _handle_overlay                     ([[maybe_unused]] const Interaction & );
-    bool                                _overlay_begin_window               (void);
-    void                                _overlay_end_window                 (void);
-    //
-    void                                _overlay_draw_context_menu          (void);
-    void                                _overlay_update_position            (void);
-    void                                overlay_log                         (std::string msg, float secs = 2.0f);
-    //
-    void                                _overlay_draw_content               ([[maybe_unused]]const Interaction &);
-    void                                _overlay_display_main_content       ([[maybe_unused]]const Interaction &);
-    void                                _overlay_display_extra_content      ([[maybe_unused]]const Interaction &);
-    
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
     //      RENDERING FUNCTIONS.            |   "render.cpp" ...
     // *************************************************************************** //
     //                              GRID:
@@ -770,10 +753,14 @@ protected:
     void                                _render_lines                       (ImDrawList *, const ImVec2 & ) const;
     void                                _render_points                      (ImDrawList *) const;
     //
-    //                              ADDITIONAL RENDERING:
+    //
+    //                              SELECTION RENDERING:
     void                                _render_selection_highlight         (ImDrawList *) const;
-    inline void                         _render_selected_handles            (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
-    inline void                         _render_selection_bbox              (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
+    inline void                             _render_selected_handles        (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
+    inline void                             _render_selection_bbox          (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
+    inline void                             _render_auxiliary_highlights    (ImDrawList *) const;
+    inline void                             _auxiliary_highlight_object     (const Path & , ImDrawList *) const;
+    inline void                             _auxiliary_highlight_handle     (const Vertex & , ImDrawList *) const;
     
     // *************************************************************************** //
     //
@@ -793,7 +780,6 @@ protected:
     void                                _rebuild_vertex_selection           (void);   // decl
     //
     //                              SELECTION HIGHLIGHT / USER-INTERACTION / APPEARANCE:
-    //void                                _render_selection_highlight         (ImDrawList *) const;
     bool                                _selection_bounds                   (ImVec2 & tl, ImVec2 & br) const;
     //
     //                              LASSO TOOL MECHANICS:
@@ -802,7 +788,6 @@ protected:
     //
     //                              BOUNDING BOX MECHANICS:
     void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 tl, const ImVec2 br);
-    //  void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 & tl, const ImVec2 & br);
     void                                _update_bbox                        (void);
     //
     //                              NEW HELPER FUNCTIONS:
@@ -1050,7 +1035,7 @@ protected:
     
     //  "world_to_pixels"
     //      ImPlot works in double precision; promote, convert back to float ImVec2
-    inline ImVec2                       world_to_pixels                         (ImVec2 w) const {
+    static inline ImVec2                world_to_pixels                         (ImVec2 w) noexcept {
         ImPlotPoint p = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));
         return { static_cast<float>(p.x), static_cast<float>(p.y) };
     }
@@ -2019,6 +2004,17 @@ template< typename ID, typename Vertex = Vertex_t<ID> >
 inline Vertex * find_vertex_mut( std::vector< Vertex > & arr, ID id ) noexcept {
     for (Vertex & v : arr)
         if (v.id == id) return &v;
+        
+    return nullptr;
+}
+//
+template< typename ID, typename Vertex = Vertex_t<ID> >
+inline const Vertex * find_vertex_mut( const std::vector< Vertex > & arr, ID id ) noexcept
+{
+    for (const Vertex & v : arr)
+    {
+        if (v.id == id)     { return std::addressof(v); }
+    }
         
     return nullptr;
 }

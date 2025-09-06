@@ -141,6 +141,7 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
 {
     ImGuiIO &               io                      = ImGui::GetIO();
     //  EditorState &           ES                      = this->m_editor_S;
+    BrowserState &          BS                      = this->m_browser_S;
     Interaction &           it                      = *m_it;
     EditorInteraction &     eit                     = it.obj;
     
@@ -209,7 +210,7 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     
     //      5.      OTHER PER-FRAME CACHE...
     //      ES.m_plot_limits                = ImPlot::GetPlotLimits();          //     current X/Y axes
-        
+    
     
     return;
 }

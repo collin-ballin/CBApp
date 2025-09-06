@@ -273,7 +273,7 @@ void Editor::_draw_vertex_panel(Path & path, [[maybe_unused]] const size_t pidx,
     //  //  4B.1.    LEFT-HAND VERTEX BROWSER.
         ImGui::SetNextWindowSizeConstraints( BStyle.VERTEX_SELECTOR_DIMS.limits.min, BStyle.VERTEX_SELECTOR_DIMS.limits.max );
         ImGui::BeginChild("##Editor_Browser_VertexSelectorColumn",      BStyle.VERTEX_SELECTOR_DIMS.value,    BStyle.DYNAMIC_CHILD_FLAGS);
-            _draw_vertex_selector_column(path);
+            _draw_vertex_selector_column(path, pidx);
             BStyle.VERTEX_SELECTOR_DIMS.value.x        = ImGui::GetItemRectSize().x;
         ImGui::EndChild();
         ImGui::PopStyleColor();
@@ -300,7 +300,7 @@ void Editor::_draw_vertex_panel(Path & path, [[maybe_unused]] const size_t pidx,
 
 //  "_draw_vertex_selector_column"
 //
-void Editor::_draw_vertex_selector_column(Path & path)
+void Editor::_draw_vertex_selector_column(Path & path, const size_t path_idx)
 {
     using                                       namespace               icon;
     static constexpr ImGuiTableFlags            TABLE_FLAGS             = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
@@ -324,7 +324,7 @@ void Editor::_draw_vertex_selector_column(Path & path)
     //  CASE 0 :    INVALID OBJECT (0 Vertices should NEVER occur)...
     if (N_vertices < 1) {
         IM_ASSERT(true && "vertex selector table was called with ZERO vertices in the path");
-        ImGui::TextColored( this->S.SystemColor.Red, "%s", "[ invalid object ]");
+        ImGui::TextColored( this->S.SystemColor.Red, "%s", "[ STALE OBJECT ERROR ]");
         return;
     }
     
@@ -370,6 +370,14 @@ void Editor::_draw_vertex_selector_column(Path & path)
                 {
                     BS.m_inspector_vertex_idx   = ( (selected)  ? -1    : row );      //     toggle
                 }
+                const bool                  hovered         = ImGui::IsItemHovered(ImGuiHoveredFlags_None);
+                //
+                //      4.2.        CACHE THIS VERTEX AS THE HOVERED OBJECT...
+                if ( hovered )
+                {
+                    //  m_hovered_vertex
+                    BS.m_hovered_vertex = { path_idx, row };
+                }
                 
                 
 
@@ -388,32 +396,6 @@ void Editor::_draw_vertex_selector_column(Path & path)
     
     return;
 }
-
-
-/*
-void Editor::_draw_vertex_selector_column(Path & path)
-{
-    const int           total = static_cast<int>(path.verts.size());
-    ImGuiListClipper    clipper;
-    clipper.Begin(total, -1);
-
-    while ( clipper.Step() )
-    {
-        for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
-        {
-            char lbl[8]; std::snprintf(lbl, sizeof(lbl), Vertex::ms_DEF_VERTEX_SELECTOR_FMT_STRING, row);
-            
-            bool selected = (row == m_browser_S.m_inspector_vertex_idx);
-            
-            if (ImGui::Selectable(lbl, selected))
-                m_browser_S.m_inspector_vertex_idx = (selected ? -1 : row);      // toggle
-        }
-    }
-    
-    clipper.End();
-    return;
-}
-*/
 
 
 //  "_draw_vertex_inspector_column"
@@ -460,7 +442,11 @@ void Editor::_draw_vertex_inspector_column(Path & path)
     
     
     //  CASE 1 :    STALE VERTEX...
-    if ( !v )           { cache_id = static_cast<VertexID>(-1); ImGui::SeparatorText("[stale vertex]"); return; }
+    if ( !v )           {
+        cache_id = static_cast<VertexID>(-1);
+        ImGui::TextColored( this->S.SystemColor.Red, "%s", "[ STALE VERTEX ERROR ]");
+        return;
+    }
 
 
 

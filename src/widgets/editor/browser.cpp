@@ -646,8 +646,9 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
             const bool      shift           = ImGui::GetIO().KeyShift;
             //
             const bool      single_click    = ImGui::Selectable(path.label.c_str(), selected, SEL_FLAGS, {0.0f, 1.05f * CELL_SZ});
+            const bool      hovered         = ImGui::IsItemHovered(ImGuiHoveredFlags_None);
             const bool      double_click    = mutable_path
-                                                && ImGui::IsItemHovered()
+                                                && hovered
                                                 && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
                                                 && !ctrl
                                                 && !shift;
@@ -655,6 +656,14 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
         //
         ImGui::PopStyleColor();
     
+        
+        
+        //      1.1A.   ADD TO BROWSER-HOVER CACHE.
+        if ( mutable_path  &&  hovered )
+        {
+            BS.m_hovered_obj    = idx;
+        }
+                
     
         //      1.2.    DOUBLE CLICKED.
         if ( double_click )

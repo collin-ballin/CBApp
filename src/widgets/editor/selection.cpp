@@ -583,10 +583,12 @@ inline void Editor::update_move_drag_state(const Interaction & it)
         }
 
         for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i)
+        {
             if (Vertex* v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i])) {
                 const ImVec2& o = m_movedrag.v_orig[i];
                 v->x = o.x + delta.x;  v->y = o.y + delta.y;
             }
+        }
 
         if (lmb_release) {
             m_dragging        = false;

@@ -235,9 +235,14 @@ void Editor::_render_points(ImDrawList* dl) const
         ImVec2 pix = world_to_pixels({ v->x, v->y });   // NEW transform
         dl->AddCircleFilled(pix, pt.sty.radius, col, 12);
     }
+    
+    return;
 }
 
-
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "?".
 
 
 
@@ -248,7 +253,7 @@ void Editor::_render_points(ImDrawList* dl) const
 //
 //
 //
-//  3.  ADDITIONAL RENDERING / INTERACTIBLES...
+//      3.      "SELECTION HIGHLIGHT" RENDERING / INTERACTIBLES...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -257,8 +262,9 @@ void Editor::_render_points(ImDrawList* dl) const
 //
 void Editor::_render_selection_highlight(ImDrawList * dl) const
 {
-    const ImU32     col         = m_style.COL_SELECTION_OUT;
-    auto            ws2px       = [this](ImVec2 w){ return world_to_pixels(w); };
+    const ImU32 &               col         = m_style.COL_SELECTION_OUT;
+    auto                        ws2px       = [this](ImVec2 w){ return world_to_pixels(w); };
+    const BrowserState &        BS          = this->m_browser_S;
 
 
     // ───── Highlight selected points
@@ -336,27 +342,37 @@ void Editor::_render_selection_highlight(ImDrawList * dl) const
     }
 
 
+
     this->_render_selection_bbox      (dl);
     this->_render_selected_handles    (dl);
+    this->_render_selected_handles    (dl);
+    
+    if ( BS.HasAuxiliarySelection() )
+    {
+        _render_auxiliary_highlights(dl);
+    }
+    
+    
+
     return;
 }
 
-
 //  "_render_selected_handles"
 //
-inline void Editor::_render_selected_handles(ImDrawList* dl) const
+inline void Editor::_render_selected_handles(ImDrawList * dl) const
 {
     auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
 
-    for (const Vertex& v : m_vertices)
+    for (const Vertex & v : m_vertices)
     {
-        if (!m_show_handles.count(v.id))           // ← NEW visibility mask
-            continue;
+        if ( !m_show_handles.count(v.id) )      { continue; }   // ← NEW visibility mask
 
         ImVec2 a = ws2px({ v.x, v.y });
 
-        auto draw_handle = [&](const ImVec2& off){
-            if (off.x == 0.f && off.y == 0.f) return;
+        auto draw_handle = [&](const ImVec2 & off)
+        {
+            if ( (off.x == 0.f)  &&  (off.y == 0.f) )   { return; }
+            
             ImVec2 h = ws2px({ v.x + off.x, v.y + off.y });
             dl->AddLine(a, h, m_style.ms_HANDLE_COLOR, 1.0f);
             dl->AddRectFilled({ h.x - m_style.ms_HANDLE_SIZE, h.y - m_style.ms_HANDLE_SIZE },
@@ -374,7 +390,7 @@ inline void Editor::_render_selected_handles(ImDrawList* dl) const
 
 //  "_render_selection_bbox"
 //
-inline void Editor::_render_selection_bbox(ImDrawList* dl) const
+inline void Editor::_render_selection_bbox(ImDrawList * dl) const
 {
     const auto& V = m_boxdrag.view;
     if (!V.visible) { return; }                       // nothing to draw
@@ -389,8 +405,8 @@ inline void Editor::_render_selection_bbox(ImDrawList* dl) const
     // Draw the 8 handles using cached rectangles and cached hover index
     for (int i = 0; i < 8; ++i)
     {
-        const bool hovered = (i == V.hover_idx);      // ← read, don’t compute
-        const ImRect& r    = V.handle_rect_px[i];
+        const bool          hovered     = (i == V.hover_idx);      // ← read, don’t compute
+        const ImRect &      r           = V.handle_rect_px[i];
         dl->AddRectFilled(r.Min, r.Max,
                           hovered ? m_style.ms_HANDLE_HOVER_COLOR
                                   : m_style.ms_HANDLE_COLOR);
@@ -487,6 +503,190 @@ inline void Editor::_render_selection_bbox(ImDrawList* dl) const
     
     return;
 }*/
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MAIN HIGHLIGHT".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      4.      "AUXILIARY" HIGHLIGHT RENDERING...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_render_auxiliary_highlights"
+//
+inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const
+{
+    const BrowserState &            BS              = this->m_browser_S;
+    const int &                     pidx            = BS.m_hovered_obj;
+    const std::pair<int,int> &      vidx            = BS.m_hovered_vertex;
+    //
+    const bool                      draw_object     = ( pidx > 0 );
+    const bool                      draw_handle     = ( (vidx.first > 0)  &&  (vidx.second > 0) );
+    
+    
+    //      1.      RENDER THE OBJECT...
+    if ( draw_object )
+    {
+        const Path & path   = this->m_paths[ static_cast<size_t>( pidx ) ];
+        _auxiliary_highlight_object(path, dl);
+    }
+    
+    
+    //      2.      RENDER THE HANDLE...
+    if ( draw_handle )
+    {
+        const Path &        v_path      = this->m_paths[ static_cast<size_t>(vidx.first) ];
+        const VertexID      vid         = v_path.verts[ static_cast<size_t>(vidx.second) ];
+        const Vertex *      v           = find_vertex_mut( m_vertices, vid );     IM_ASSERT( v != nullptr );
+        
+        _auxiliary_highlight_handle( *v, dl );
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    BS.ClearAuxiliarySelection();
+    
+    return;
+}
+
+
+//  "_auxiliary_highlight_object"
+//
+inline void Editor::_auxiliary_highlight_object(const Path & p, ImDrawList * dl) const
+{
+    const ImU32 &               col             = ImGui::GetColorU32(ImGuiCol_FrameBgHovered); //  .AUX_HIGHLIGHT_COLOR;
+    const float &               w               = this->m_style.AUX_HIGHLIGHT_WIDTH;
+    //  const ImU32 &               col         = m_style.AUX_HIGHLIGHT_COLOR;
+    //  const float                 w           = p.style.stroke_width + 2.0f;
+    //
+    //
+    //
+    const size_t                N               = p.verts.size();
+    //
+    //
+    //  "ws2px"
+    auto                        ws2px           = [](ImVec2 w) {
+        ImPlotPoint pp = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));
+        return ImVec2{ static_cast<float>(pp.x), static_cast<float>(pp.y) };
+    };
+    //
+    //  "draw_seg"
+    auto                        draw_seg        = [&](const Vertex * a, const Vertex * b)
+    {
+        if ( !a || !b )         { return; }
+        if ( is_curved<VertexID>(a, b) ) {
+            ImVec2 P0 = ws2px({ a->x,                       a->y });
+            ImVec2 P1 = ws2px({ a->x + a->out_handle.x,     a->y + a->out_handle.y });
+            ImVec2 P2 = ws2px({ b->x + b->in_handle.x,      b->y + b->in_handle.y  });
+            ImVec2 P3 = ws2px({ b->x,                       b->y });
+            dl->AddBezierCubic(P0, P1, P2, P3, col, w, m_style.ms_BEZIER_SEGMENTS);
+        }
+        else
+        {
+            dl->AddLine( ws2px({ a->x, a->y }), ws2px({ b->x, b->y }), col, w );
+        }
+    };
+
+
+
+    for (size_t i = 0; i + 1 < N; ++i)
+    {
+        const Vertex *      a   = find_vertex(m_vertices, p.verts[i]);
+        const Vertex *      b   = find_vertex(m_vertices, p.verts[i + 1]);
+        draw_seg(a, b);
+    }
+    if ( p.closed )
+    {
+        const Vertex *      a   = find_vertex(m_vertices, p.verts.back());
+        const Vertex *      b   = find_vertex(m_vertices, p.verts.front());
+        draw_seg(a, b);
+    }
+    
+    
+    
+    return;
+}
+
+
+//  "_auxiliary_highlight_handle"
+//
+inline void Editor::_auxiliary_highlight_handle(const Vertex & v, ImDrawList * dl) const
+{
+    const ImU32 &               col             = ImGui::GetColorU32(ImGuiCol_FrameBgHovered);  //  m_style.AUX_HIGHLIGHT_COLOR;
+    const float &               w               = this->m_style.AUX_HIGHLIGHT_WIDTH;            //  p.style.stroke_width + 2.0f;
+    //
+    //  "ws2px"
+    auto                        ws2px           = [](ImVec2 w) {
+        ImPlotPoint pp = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));
+        return ImVec2{ static_cast<float>(pp.x), static_cast<float>(pp.y) };
+    };
+    //
+    //  "draw_handle"
+    auto                        draw_handle     = [&](const Vertex & v, const ImVec2 & off, const ImVec2 & a)
+    {
+        if ( (off.x == 0.f)  &&  (off.y == 0.f) )   { return; }
+        
+        ImVec2 h = ws2px({ v.x + off.x, v.y + off.y });
+        
+        dl->AddLine( a, h, m_style.ms_HANDLE_COLOR, 1.0f );
+        dl->AddRectFilled(
+            { h.x - m_style.ms_HANDLE_SIZE, h.y - m_style.ms_HANDLE_SIZE },
+            { h.x + m_style.ms_HANDLE_SIZE, h.y + m_style.ms_HANDLE_SIZE },
+            m_style.ms_HANDLE_COLOR
+        );
+    };
+    
+    
+    
+    //      2.      DRAW HOVERED VERTEX...
+    v.draw_handle( dl, &world_to_pixels );
+    
+    
+    
+    //  const ImVec2    a       = ws2px({ v.x, v.y });
+    //  draw_handle             ( v, v.out_handle, a );
+    //  draw_handle             ( v, v.in_handle,  a );
+    
+    
+    return;
+}
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "AUXILIARY HIGHLIGHT".
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

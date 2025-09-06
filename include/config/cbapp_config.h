@@ -484,6 +484,7 @@ public:                                                                         
     /*      4.      PRIMARY STATE OBJECTS...                                                                                            */      \
     using                           EditorRuntime               = EditorRuntime_t   <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     using                           EditorState                 = EditorState_t     <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
+    using                           RenderState                 = RenderState_t     <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     using                           BrowserState                = BrowserState_t    <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     using                           IndexState                  = IndexState_t      <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     /*                                                                                                                                  */      \
