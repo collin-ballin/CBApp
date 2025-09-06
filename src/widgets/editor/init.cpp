@@ -32,8 +32,9 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 Editor::Editor(app::AppState & src)
-    : CBAPP_STATE_NAME(src)
-    , m_it( std::make_unique<Interaction>() )
+    : CBAPP_STATE_NAME      ( src )
+    , m_vertex_style        ( world_to_pixels )
+    , m_it                  ( std::make_unique<Interaction>() )
 {
     namespace           fs                          = std::filesystem;
     this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_HiddenTabBar;

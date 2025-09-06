@@ -218,7 +218,7 @@ void Editor::_render_paths(ImDrawList * dl) const
 
 //  "_render_points"
 //
-void Editor::_render_points(ImDrawList* dl) const
+void Editor::_render_points(ImDrawList * dl) const
 {
     for (size_t i = 0; i < m_points.size(); ++i)
     {
@@ -242,7 +242,7 @@ void Editor::_render_points(ImDrawList* dl) const
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "?".
+// *************************************************************************** //   END "PRIMARY RENDER OPs".
 
 
 
@@ -345,7 +345,7 @@ void Editor::_render_selection_highlight(ImDrawList * dl) const
 
     this->_render_selection_bbox      (dl);
     this->_render_selected_handles    (dl);
-    this->_render_selected_handles    (dl);
+    //  this->_render_selected_handles    (dl);
     
     if ( BS.HasAuxiliarySelection() )
     {
@@ -392,12 +392,12 @@ inline void Editor::_render_selected_handles(ImDrawList * dl) const
 //
 inline void Editor::_render_selection_bbox(ImDrawList * dl) const
 {
-    const auto& V = m_boxdrag.view;
-    if (!V.visible) { return; }                       // nothing to draw
+    const auto &        V       = m_boxdrag.view;
+    if ( !V.visible )           { return; }                       // nothing to draw
 
-    // Draw expanded bbox (from cache)
-    const ImVec2 p0 = world_to_pixels(V.tl_ws);
-    const ImVec2 p1 = world_to_pixels(V.br_ws);
+    //      Draw expanded bbox (from cache)
+    const ImVec2        p0      = world_to_pixels(V.tl_ws);
+    const ImVec2        p1      = world_to_pixels(V.br_ws);
     dl->AddRect(p0, p1,
                 m_style.SELECTION_BBOX_COL, 0.0f,
                 ImDrawFlags_None, m_style.SELECTION_BBOX_TH);
@@ -555,14 +555,7 @@ inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const
     }
     
     
-    
-    
-    
-    
-    
-    
     BS.ClearAuxiliarySelection();
-    
     return;
 }
 
@@ -634,7 +627,7 @@ inline void Editor::_auxiliary_highlight_handle(const Vertex & v, ImDrawList * d
     
     
     //      2.      DRAW HOVERED VERTEX...
-    v.render( dl, &world_to_pixels );
+    v.render( this->m_vertex_style );
     
     
     

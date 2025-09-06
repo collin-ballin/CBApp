@@ -125,6 +125,72 @@ struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ fi
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "VertexStyle"
+//
+template <typename MappingFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MappingFn, ImVec2>
+struct VertexStyle
+{
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    MappingFn                       ws_to_px;
+    ImDrawList *                    dl                          = nullptr;
+    //
+    //
+    //
+    //                          Vertex Appearance:
+    float                           vertex_radius               = 4.0f;
+    ImU32                           vertex_color                = IM_COL32(0,       255,    0,      170);
+    int                             vertex_tesselation          = 12;
+    //
+    //                          Bézier Handles:
+    ImU32                           handle_color                = IM_COL32(255,     215,    0,      255);
+    float                           handle_size                 = 6.0f;
+    //
+    //                          Line-Style:
+    ImU32                           line_color                  = IM_COL32(255,     215,    0,      170);
+    float                           line_width                  = 1.0f;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    //  "_no_op"
+    inline void                         PushDL                              (ImDrawList * & dl_)    { this->dl = dl_;           };
+    inline void                         PopDL                               (void)                  { this->dl = nullptr;       };
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "MyStruct" INLINE STRUCT DEFINITION.
+
+
+
+    
+    
+    
 //  "Vertex_t" / "Pos" / "Anchor Point"
 //
 //      A pure geometry node. `in_handle` and `out_handle` are offsets from
@@ -135,11 +201,11 @@ template<typename VID>
 struct Vertex_t
 {
     // *************************************************************************** //
-    //      NESTED TYPENAME ALIASES.
+    //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr const char *   ms_DEF_VERTEX_TITLE_FMT_STRING          = "Vertex V%03d (ID #%06u)";
-    static constexpr const char *   ms_DEF_VERTEX_SELECTOR_FMT_STRING       = "V%03u";
-    static constexpr size_t         ms_MAX_VERTEX_NAME_LENGTH               = 10ULL;
+    static constexpr const char *       ms_DEF_VERTEX_TITLE_FMT_STRING          = "Vertex V%03d (ID #%06u)";
+    static constexpr const char *       ms_DEF_VERTEX_SELECTOR_FMT_STRING       = "V%03u";
+    static constexpr size_t             ms_MAX_VERTEX_NAME_LENGTH               = 10ULL;
     
 //
 // *************************************************************************** //
@@ -188,27 +254,20 @@ struct Vertex_t
     // *************************************************************************** //
     
     
-    
     //  "render"
-    template <typename F>
-    requires std::is_nothrow_invocable_r_v<ImVec2, F, ImVec2>
-    inline void                         render                          (ImDrawList * dl, F ws2px) const noexcept
+    template <typename VStyle>
+    inline void                         render                          (VStyle & style) const noexcept
     {
         namespace           math            = cblib::math;
         constexpr float     GATE            = 1e-6;
-        //
-        constexpr float     LINE_WIDTH      = 1.0f;
-        constexpr ImU32     LINE_COLOR      = IM_COL32(255, 215, 0, 170);
-        constexpr float     HANDLE_SIZE     = 6.0f;
-        constexpr ImU32     HANDLE_COLOR    = IM_COL32(255, 215, 0, 255);
         //
         const bool          render_in       = ( math::is_close( this->in_handle.x, 0.0f, GATE)  &&  math::is_close( this->in_handle.y, 0.0f, GATE) );
         const bool          render_out      = ( math::is_close( this->out_handle.x, 0.0f, GATE)  &&  math::is_close( this->out_handle.y, 0.0f, GATE) );
         const bool          both            = ( render_in && render_out );
         //
-        const ImVec2        a               = ws2px(    { this->x,                          this->y                         }   );
-        const ImVec2        h_in            = ws2px(    { this->x + this->in_handle.x,      this->y + this->in_handle.y     }   );
-        const ImVec2        h_out           = ws2px(    { this->x + this->in_handle.x,      this->y + this->in_handle.y     }   );
+        const ImVec2        pos             = style.ws_to_px(    { this->x,                          this->y                         }   );
+        const ImVec2        h_in            = style.ws_to_px(    { this->x + this->in_handle.x,      this->y + this->in_handle.y     }   );
+        const ImVec2        h_out           = style.ws_to_px(    { this->x + this->in_handle.x,      this->y + this->in_handle.y     }   );
         
         
         
@@ -217,16 +276,16 @@ struct Vertex_t
         //      CASE 1 :    RENDER BOTH HANDLES...
         if ( both )
         {
-            dl->AddLine( h_in, h_out, LINE_COLOR, LINE_WIDTH );             //  1A.     LINE.
-            dl->AddRectFilled(                                              //  1B.     "IN" HANDLE.
-                { h_in.x - HANDLE_SIZE,         h_in.y - HANDLE_SIZE },
-                { h_in.x + HANDLE_SIZE,         h_in.y + HANDLE_SIZE },
-                HANDLE_COLOR
+            style.dl->AddLine( h_in, h_out, style.line_color, style.line_width );       //  1A.     LINE.
+            style.dl->AddRectFilled(                                                    //  1B.     "IN" HANDLE.
+                { h_in.x - style.handle_size,       h_in.y - style.handle_size },
+                { h_in.x + style.handle_size,       h_in.y + style.handle_size },
+                style.handle_color
             );
-            dl->AddRectFilled(                                              //  1C.     "OUT" HANDLE.
-                { h_out.x - HANDLE_SIZE,        h_out.y - HANDLE_SIZE },
-                { h_out.x + HANDLE_SIZE,        h_out.y + HANDLE_SIZE },
-                HANDLE_COLOR
+            style.dl->AddRectFilled(                                                    //  1C.     "OUT" HANDLE.
+                { h_out.x - style.handle_size,      h_out.y - style.handle_size },
+                { h_out.x + style.handle_size,      h_out.y + style.handle_size },
+                style.handle_color
             );
         }
         //
@@ -235,26 +294,37 @@ struct Vertex_t
         {
             //      CASE 2 :    "IN" HANDLE.
             if (render_in) {
-                dl->AddLine( a, h_in, LINE_COLOR, LINE_WIDTH );                 //  2A.     LINE.
-                dl->AddRectFilled(                                              //  2B.     "IN" HANDLE.
-                    { h_in.x - HANDLE_SIZE,         h_in.y - HANDLE_SIZE },
-                    { h_in.x + HANDLE_SIZE,         h_in.y + HANDLE_SIZE },
-                    HANDLE_COLOR
+                style.dl->AddLine( pos, h_in, style.line_color, style.line_width );         //  2A.     LINE.
+                style.dl->AddRectFilled(                                                    //  2B.     "IN" HANDLE.
+                    { h_in.x - style.handle_size,   h_in.y - style.handle_size },
+                    { h_in.x + style.handle_size,   h_in.y + style.handle_size },
+                    style.handle_color
                 );
             }
             //      CASE 3 :    "OUT" HANDLE.
             else if (render_out) {
-                dl->AddLine( a, h_out, LINE_COLOR, LINE_WIDTH );                //  3A.     LINE.
-                dl->AddRectFilled(                                              //  3B.     "OUT" HANDLE.
-                    { h_in.x - HANDLE_SIZE,         h_in.y - HANDLE_SIZE },
-                    { h_in.x + HANDLE_SIZE,         h_in.y + HANDLE_SIZE },
-                    HANDLE_COLOR
+                style.dl->AddLine( pos, h_out, style.line_color, style.line_width );        //  3A.     LINE.
+                style.dl->AddRectFilled(                                                    //  3B.     "OUT" HANDLE.
+                    { h_in.x - style.handle_size,   h_in.y - style.handle_size },
+                    { h_in.x + style.handle_size,   h_in.y + style.handle_size },
+                    style.handle_color
                 );
             }
         }
+        //
+        //      LAST :      RENDER VERTEX...
+        style.dl->AddCircleFilled( pos, style.vertex_radius, style.vertex_color, style.vertex_tesselation );
 
         return;
     }
+    
+    
+    
+    //  "render_vertex"
+    template <typename F>
+    requires std::is_nothrow_invocable_r_v<ImVec2, F, ImVec2>
+    inline void                         render_vertex                       (ImDrawList * dl, F ws2px, const float radius, const ImU32 color, const int num_segments=12) const noexcept
+    { dl->AddCircleFilled( ws2px({ this->x,this->y}), radius, color, num_segments ); }
     
     
     //  "render_handles"

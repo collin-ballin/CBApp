@@ -517,7 +517,10 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
 //
 inline void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it)
 {
+    VertexStyle &       VS      = this->m_vertex_style;
+
     ImPlot::PushPlotClipRect();
+    VS.PushDL(it.dl);
     //
     //
         //  this->_render_lines             ( it.dl );          //  Enable once ported
@@ -526,6 +529,7 @@ inline void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it)
         this->_render_points                ( it.dl );          //  Already ported
     //
     //
+    VS.PopDL();
     ImPlot::PopPlotClipRect();
     //
     //      [ AUG. 29, 2025]    this->_clamp_plot_axes();

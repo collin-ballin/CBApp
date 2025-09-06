@@ -470,6 +470,8 @@ public:                                                                         
     /*                                                                                                                                  */      \
     /*      3.      OBJECT TYPES...                                                                                                     */      \
     using                           Vertex                      = Vertex_t          <VertexID>                                          ;       \
+    using                           MappingFn                   = ImVec2 (&)(ImVec2) noexcept                                           ;       \
+    using                           VertexStyle                 = VertexStyle<MappingFn>                                                ;       \
 /*  using                           Handle                      = Handle_t          <HandleID>;                                         */      \
     using                           Point                       = Point_t           <PointID>                                           ;       \
     using                           Line                        = Line_t            <LineID, ZID>                                       ;       \

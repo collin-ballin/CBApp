@@ -448,7 +448,7 @@ struct Interaction
 //
 //
 //                              OTHER DATA:
-    ImDrawList *                    dl                      {   };
+    mutable ImDrawList *            dl                      {   };
 //
 //
 //

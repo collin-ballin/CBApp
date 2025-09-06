@@ -322,12 +322,15 @@ protected:
     // *************************************************************************** //
     app::AppState &                     CBAPP_STATE_NAME;
     EditorStyle                         m_style                         {   };
+    VertexStyle                         m_vertex_style;
+    //
     //
     std::vector<Vertex>                 m_vertices;
     std::vector<Point>                  m_points;
     std::vector<Line>                   m_lines;
     std::vector<Path>                   m_paths;                //  New path container
     std::unordered_set<HandleID>        m_show_handles;         //  List of which glyphs we WANT to display Bezier points for.
+    //
     //
     OverlayManager                      m_ov_manager;      //  formerly: "m_overlays".
     
