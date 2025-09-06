@@ -206,16 +206,27 @@ include(${CMAKE_SOURCE_DIR}/macos/CMakeLists.txt)
 CB_newline(2)
 CB_Log(STATUS   "POST-BUILD DIAGNOSTICS...")
 
-CB_file_list_info(INFO      APP_HEADERS     "\t"      "CBApp Source Files")
-#   print_file_list(APP_HEADERS)
-#
-CB_file_list_info(INFO      APP_SRCS        "\t"      "CBApp Header Files")
-#   print_file_list(APP_SRCS)
+#           5.1.    CBAPP SOURCE + HEADERS.
+CB_file_list_SLOC( INFO             APP_HEADERS             "\t"            "CBApp Header Files"
+                   OUT_FILES        APP_HEADERS_FILES       OUT_LINES       APP_HEADERS_LINES
+                   OUT_BYTES        APP_HEADERS_BYTES       OUT_SLOC        APP_HEADERS_SLOC )
+
+CB_file_list_SLOC( INFO             APP_SRCS                "\t"            "CBApp Source Files"
+                   OUT_FILES        APP_SRCS_FILES          OUT_LINES       APP_SRCS_LINES
+                   OUT_BYTES        APP_SRCS_BYTES          OUT_SLOC        APP_SRCS_SLOC )
 
 
 
-CB_file_list_info(VERBOSE   CBLib_HEADERS   "\t"      "CBLib Header Files")
-CB_file_list_info(VERBOSE   CBLib_SRCS      "\t"      "CBLib Source Files")
+#           5.2.    CBLib SOURCE + HEADERS.
+CB_file_list_SLOC( VERBOSE          CBLib_HEADERS           "\t"            "CBLib Header Files"
+                   OUT_FILES        CBLib_HEADERS_FILES     OUT_LINES       CBLib_HEADERS_LINES
+                   OUT_BYTES        CBLib_HEADERS_BYTES     OUT_SLOC        CBLib_HEADERS_SLOC )
+
+CB_file_list_SLOC( VERBOSE          CBLib_SRCS              "\t"            "CBLib Source Files"
+                   OUT_FILES        CBLib_SRCS_FILES        OUT_LINES       CBLib_SRCS_LINES
+                   OUT_BYTES        CBLib_SRCS_BYTES        OUT_SLOC        CBLib_SRCS_SLOC )
+                   
+
 
 
 
@@ -227,7 +238,6 @@ CB_file_list_info(VERBOSE   CBLib_SRCS      "\t"      "CBLib Source Files")
 #       #   print_file_list(IMGUI_SRCS)
 #
 
-
 #
 #       print_file_list(CBLib_SRCS)
 #       #   print_file_list(CBLib_SRCS)
@@ -238,6 +248,36 @@ CB_file_list_info(VERBOSE   CBLib_SRCS      "\t"      "CBLib Source Files")
 
 
 
+
+
+
+#   FINAL PRINT STATEMENT...
+#
+#       Validate List Variables.
+#   if(NOT DEFINED ${list_var} OR NOT ${list_var})
+#       # Ensure OUT_* are defined even on early return
+#       if(ARG_OUT_FILES) set(${ARG_OUT_FILES} 0 PARENT_SCOPE) endif()
+#       if(ARG_OUT_LINES) set(${ARG_OUT_LINES} 0 PARENT_SCOPE) endif()
+#       if(ARG_OUT_BYTES) set(${ARG_OUT_BYTES} 0 PARENT_SCOPE) endif()
+#       if(ARG_OUT_SLOC)  set(${ARG_OUT_SLOC}  0 PARENT_SCOPE) endif()
+#
+#       CB_Log(STATUS "'${list_var}' is empty (relative to ${_root})")
+#       return()
+#   endif()
+#
+#       Aggregate Values Across Each List.
+#   math(   EXPR    PROJ_FILES      "${APP_HEADERS_FILES}   + ${APP_SRCS_FILES} + ${CBLIB_HEADERS_FILES}    + ${CBLIB_SRCS_FILES}"      )
+#   math(   EXPR    PROJ_LINES      "${APP_HEADERS_LINES}   + ${APP_SRCS_LINES} + ${CBLIB_HEADERS_LINES}    + ${CBLIB_SRCS_LINES}"      )
+#   math(   EXPR    PROJ_BYTES      "${APP_HEADERS_BYTES}   + ${APP_SRCS_BYTES} + ${CBLIB_HEADERS_BYTES}    + ${CBLIB_SRCS_BYTES}"      )
+#   math(   EXPR    PROJ_SLOC       "${APP_HEADERS_SLOC}    + ${APP_SRCS_SLOC}  + ${CBLIB_HEADERS_SLOC}     + ${CBLIB_SRCS_SLOC}"       )
+#   CB_Log(INFO "Project Totals\t: contains ${PROJ_FILES} file(s); (${PROJ_LINES} lines; ${PROJ_BYTES} characters; ${PROJ_SLOC} sloc)")
+
+
+
+
+
+#   FINAL PRINT STATEMENT...
+#
 CB_newline(2)
 CB_Log(NOTIFY   "build complete")
 

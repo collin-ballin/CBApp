@@ -296,6 +296,112 @@ endfunction()
 
 
 
+# ---------------------------------------------------------------------------
+#  CB_file_list_SLOC(<LEVEL> <LIST_VAR> <SEP> [<LABEL>]
+#                    [BASE_DIR <path>]
+#                    [OUT_FILES <var>] [OUT_LINES <var>]
+#                    [OUT_BYTES <var>] [OUT_SLOC <var>])
+#
+#  • Counts how many files are in <LIST_VAR>.
+#  • Sums total physical lines and bytes (characters) across existing files.
+#  • Also computes SLOC = non-blank lines that are not full-line '//' comments.
+#  • Emits one STATUS message with all figures.
+#  • Optionally returns totals via OUT_* variables (PARENT_SCOPE).
+# ---------------------------------------------------------------------------
+function(CB_file_list_SLOC level list_var sep)
+    set(_root "${CMAKE_SOURCE_DIR}")
+    cmake_parse_arguments(ARG "" "" "BASE_DIR;OUT_FILES;OUT_LINES;OUT_BYTES;OUT_SLOC" ${ARGN})
+    if(ARG_BASE_DIR)
+        set(_root "${ARG_BASE_DIR}")
+    endif()
+
+    # -------- verify list ----------------------------------------------------
+    if(NOT DEFINED ${list_var} OR NOT ${list_var})
+        CB_Log(STATUS "'${list_var}' is empty (relative to ${_root})")
+        return()
+    endif()
+
+    # -------- accumulate -----------------------------------------------------
+    set(_file_count   0)
+    set(_total_lines  0)
+    set(_total_chars  0)
+    set(_total_sloc   0)   # new: source lines of code
+
+    foreach(_abs IN LISTS ${list_var})
+        if(NOT EXISTS "${_abs}")
+            CB_Log(WARNING "Missing file in '${list_var}': ${_abs}")
+            continue()
+        endif()
+
+        # physical lines
+        file(STRINGS "${_abs}" _lines)
+        list(LENGTH _lines _n_lines)
+        math(EXPR _total_lines "${_total_lines}+${_n_lines}")
+
+        # SLOC: non-blank and not starting with '//' after trimming
+        set(_n_sloc 0)
+        foreach(_ln IN LISTS _lines)
+            string(STRIP "${_ln}" _s)
+            if(_s STREQUAL "")
+                continue()
+            endif()
+            if(_s MATCHES "^//")
+                continue()
+            endif()
+            math(EXPR _n_sloc "${_n_sloc}+1")
+        endforeach()
+        math(EXPR _total_sloc "${_total_sloc}+${_n_sloc}")
+
+        # characters (bytes)
+        file(READ "${_abs}" _content)        # read whole file
+        string(LENGTH "${_content}" _n_chars)
+        math(EXPR _total_chars "${_total_chars}+${_n_chars}")
+
+        math(EXPR _file_count "${_file_count}+1")
+    endforeach()
+
+
+
+    # -------- log message ----------------------------------------------------
+    if(ARGC GREATER 3)            # user provided a 4th positional argument
+        set(_list_name "${ARGV3}")
+    else()
+        set(_list_name "'${list_var}'")
+    endif()
+
+    set( _msg
+         "${_list_name}${sep}: ${_file_count} files"
+         " \t ${_total_sloc} sloc"
+    )
+    CB_Log(${level} "${_msg}")
+
+
+
+    # -------- optional outputs to caller -------------------------------------
+    if(ARG_OUT_FILES)
+        set(${ARG_OUT_FILES} "${_file_count}" PARENT_SCOPE)
+    endif()
+    if(ARG_OUT_LINES)
+        set(${ARG_OUT_LINES} "${_total_lines}" PARENT_SCOPE)
+    endif()
+    if(ARG_OUT_BYTES)
+        set(${ARG_OUT_BYTES} "${_total_chars}" PARENT_SCOPE)
+    endif()
+    if(ARG_OUT_SLOC)
+        set(${ARG_OUT_SLOC} "${_total_sloc}" PARENT_SCOPE)
+    endif()
+    
+endfunction()
+
+
+
+#
+#
+####################################################################################
+####################################################################################    #   END "ADVANCED LOGGING".
+
+
+
 
 
 

@@ -187,10 +187,80 @@ struct Vertex_t
     //      RENDERING FUNCTIONS.
     // *************************************************************************** //
     
-    //  "draw_handle"
+    
+    
+    //  "render"
     template <typename F>
     requires std::is_nothrow_invocable_r_v<ImVec2, F, ImVec2>
-    inline void                         draw_handle                         (ImDrawList * dl, F ws2px) const noexcept
+    inline void                         render                          (ImDrawList * dl, F ws2px) const noexcept
+    {
+        namespace           math            = cblib::math;
+        constexpr float     GATE            = 1e-6;
+        //
+        constexpr float     LINE_WIDTH      = 1.0f;
+        constexpr ImU32     LINE_COLOR      = IM_COL32(255, 215, 0, 170);
+        constexpr float     HANDLE_SIZE     = 6.0f;
+        constexpr ImU32     HANDLE_COLOR    = IM_COL32(255, 215, 0, 255);
+        //
+        const bool          render_in       = ( math::is_close( this->in_handle.x, 0.0f, GATE)  &&  math::is_close( this->in_handle.y, 0.0f, GATE) );
+        const bool          render_out      = ( math::is_close( this->out_handle.x, 0.0f, GATE)  &&  math::is_close( this->out_handle.y, 0.0f, GATE) );
+        const bool          both            = ( render_in && render_out );
+        //
+        const ImVec2        a               = ws2px(    { this->x,                          this->y                         }   );
+        const ImVec2        h_in            = ws2px(    { this->x + this->in_handle.x,      this->y + this->in_handle.y     }   );
+        const ImVec2        h_out           = ws2px(    { this->x + this->in_handle.x,      this->y + this->in_handle.y     }   );
+        
+        
+        
+        
+        
+        //      CASE 1 :    RENDER BOTH HANDLES...
+        if ( both )
+        {
+            dl->AddLine( h_in, h_out, LINE_COLOR, LINE_WIDTH );             //  1A.     LINE.
+            dl->AddRectFilled(                                              //  1B.     "IN" HANDLE.
+                { h_in.x - HANDLE_SIZE,         h_in.y - HANDLE_SIZE },
+                { h_in.x + HANDLE_SIZE,         h_in.y + HANDLE_SIZE },
+                HANDLE_COLOR
+            );
+            dl->AddRectFilled(                                              //  1C.     "OUT" HANDLE.
+                { h_out.x - HANDLE_SIZE,        h_out.y - HANDLE_SIZE },
+                { h_out.x + HANDLE_SIZE,        h_out.y + HANDLE_SIZE },
+                HANDLE_COLOR
+            );
+        }
+        //
+        //      CASE 2 :    RENDER ONLY ONE HANDLE...
+        else
+        {
+            //      CASE 2 :    "IN" HANDLE.
+            if (render_in) {
+                dl->AddLine( a, h_in, LINE_COLOR, LINE_WIDTH );                 //  2A.     LINE.
+                dl->AddRectFilled(                                              //  2B.     "IN" HANDLE.
+                    { h_in.x - HANDLE_SIZE,         h_in.y - HANDLE_SIZE },
+                    { h_in.x + HANDLE_SIZE,         h_in.y + HANDLE_SIZE },
+                    HANDLE_COLOR
+                );
+            }
+            //      CASE 3 :    "OUT" HANDLE.
+            else if (render_out) {
+                dl->AddLine( a, h_out, LINE_COLOR, LINE_WIDTH );                //  3A.     LINE.
+                dl->AddRectFilled(                                              //  3B.     "OUT" HANDLE.
+                    { h_in.x - HANDLE_SIZE,         h_in.y - HANDLE_SIZE },
+                    { h_in.x + HANDLE_SIZE,         h_in.y + HANDLE_SIZE },
+                    HANDLE_COLOR
+                );
+            }
+        }
+
+        return;
+    }
+    
+    
+    //  "render_handles"
+    template <typename F>
+    requires std::is_nothrow_invocable_r_v<ImVec2, F, ImVec2>
+    inline void                         render_handles                      (ImDrawList * dl, F ws2px, const float linewidth=1.0f) const noexcept
     {
         namespace           math            = cblib::math;
         constexpr float     GATE            = 1e-6;

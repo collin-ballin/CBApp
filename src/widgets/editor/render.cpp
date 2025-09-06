@@ -532,8 +532,8 @@ inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const
     const int &                     pidx            = BS.m_hovered_obj;
     const std::pair<int,int> &      vidx            = BS.m_hovered_vertex;
     //
-    const bool                      draw_object     = ( pidx > 0 );
-    const bool                      draw_handle     = ( (vidx.first > 0)  &&  (vidx.second > 0) );
+    const bool                      draw_object     = ( pidx >= 0 );
+    const bool                      draw_handle     = ( (vidx.first >= 0)  &&  (vidx.second >= 0) );
     
     
     //      1.      RENDER THE OBJECT...
@@ -631,32 +631,10 @@ inline void Editor::_auxiliary_highlight_handle(const Vertex & v, ImDrawList * d
 {
     const ImU32 &               col             = ImGui::GetColorU32(ImGuiCol_FrameBgHovered);  //  m_style.AUX_HIGHLIGHT_COLOR;
     const float &               w               = this->m_style.AUX_HIGHLIGHT_WIDTH;            //  p.style.stroke_width + 2.0f;
-    //
-    //  "ws2px"
-    auto                        ws2px           = [](ImVec2 w) {
-        ImPlotPoint pp = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));
-        return ImVec2{ static_cast<float>(pp.x), static_cast<float>(pp.y) };
-    };
-    //
-    //  "draw_handle"
-    auto                        draw_handle     = [&](const Vertex & v, const ImVec2 & off, const ImVec2 & a)
-    {
-        if ( (off.x == 0.f)  &&  (off.y == 0.f) )   { return; }
-        
-        ImVec2 h = ws2px({ v.x + off.x, v.y + off.y });
-        
-        dl->AddLine( a, h, m_style.ms_HANDLE_COLOR, 1.0f );
-        dl->AddRectFilled(
-            { h.x - m_style.ms_HANDLE_SIZE, h.y - m_style.ms_HANDLE_SIZE },
-            { h.x + m_style.ms_HANDLE_SIZE, h.y + m_style.ms_HANDLE_SIZE },
-            m_style.ms_HANDLE_COLOR
-        );
-    };
-    
     
     
     //      2.      DRAW HOVERED VERTEX...
-    v.draw_handle( dl, &world_to_pixels );
+    v.render( dl, &world_to_pixels );
     
     
     

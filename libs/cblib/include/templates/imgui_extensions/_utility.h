@@ -52,6 +52,10 @@ namespace cblib { namespace utl {   //     BEGINNING NAMESPACE "cblib" :: "math"
 
 
 
+// *************************************************************************** //
+//
+//
+//
 //      1.0.    "COLOR"-BASED INLINE UTILITY FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -162,6 +166,17 @@ inline ImColor compute_tint(const ImColor & color, const float tint = 0.0484f) {
 
 
 
+
+
+
+//  "SetAlpha"
+//      Uses BIT-WISE Operations to ASSIGN the alpha-value of an IMU32 color.
+//
+[[nodiscard]] inline constexpr ImU32 SetAlpha(const ImU32 col, const ImU32 a) noexcept
+    { return (col & ~IM_COL32_A_MASK) | (((a & 0xFFu) << IM_COL32_A_SHIFT)); }
+
+
+
 //
 //
 // *************************************************************************** //
@@ -173,6 +188,7 @@ inline ImColor compute_tint(const ImColor & color, const float tint = 0.0484f) {
 
 
 // *************************************************************************** //
+//
 //
 //
 //      2.0.    IMGUI BITFLAG-BASED INLINE UTILITY FUNCTIONS...
