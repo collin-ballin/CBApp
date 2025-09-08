@@ -158,6 +158,8 @@ public:
     static constexpr auto &             ms_HIT_TYPE_NAMES               = DEF_HIT_TYPE_NAMES;
     static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES;
     //
+    static constexpr auto &             ms_VERTEX_STYLES                = DEF_VERTEX_STYLES;
+    //
     static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
     static constexpr auto &             ms_BEZIER_CURVATURE_TYPE_NAMES  = DEF_BEZIER_CURVATURE_TYPE_NAMES;
     static constexpr auto &             ms_PATH_KIND_NAMES              = path::DEF_PATH_KIND_NAMES;
@@ -1463,11 +1465,6 @@ protected:
     // *************************************************************************** //
     //      INLINE MISC. FUNCTIONS...
     // *************************************************************************** //
-
-    inline bool                         has_file                        (void) const    { return ( std::filesystem::exists( m_editor_S.m_filepath ) ); }
-    
-    
-    
     
     //  "maybe_snap"
     inline ImVec2                       maybe_snap                          (ImVec2 w) const
@@ -1494,6 +1491,27 @@ protected:
         ov->info.visible    = vis;
         return;
     }
+    
+    // *************************************************************************** //
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //      INLINE CASUAL FUNCTIONS...
+    // *************************************************************************** //
+    inline bool                         has_file                            (void) const    { return ( std::filesystem::exists( m_editor_S.m_filepath ) ); }
+    
+    //  "PushVertexStyle"
+    inline void                         PushVertexStyle                     (const VertexStyleType type) const noexcept
+    { this->m_vertex_style.data = std::addressof( ms_VERTEX_STYLES[ type ] ); }
+    
+    //  "PopVertexStyle"
+    inline void                         PopVertexStyle                      (void) const noexcept
+    { this->m_vertex_style.data = std::addressof( ms_VERTEX_STYLES[ VertexStyleType::Default ] ); }
     
     
     

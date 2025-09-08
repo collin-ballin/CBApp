@@ -29,6 +29,7 @@
 #include "cblib.h"
 #include "utility/utility.h"
 #include "widgets/editor/_constants.h"
+#include "widgets/editor/objects/_internal.h"
 
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
@@ -76,8 +77,8 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 
 //  "EndpointInfo"
-template<typename PID>
-struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ first vertex
+//  template<typename PID>
+//  struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ first vertex
 
 
 
@@ -92,6 +93,12 @@ struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ fi
 
 
 
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
@@ -100,22 +107,9 @@ struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ fi
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "BezierCurvatureType"
-enum class BezierCurvatureType : uint8_t            { Corner,     Smooth,     Symmetric,      COUNT };
-//
-static constexpr cblib::EnumArray <BezierCurvatureType, const char *>
-DEF_BEZIER_CURVATURE_TYPE_NAMES                     = { "Corner",       "Smooth",       "Symmetric" };
-
-
-
-//  "BezierCurvatureState"
-enum class BezierCurvatureState : uint8_t           { None = 0, In, Out, All, COUNT };
-
-
 
 //  "VertexHoverState"
 enum class VertexHoverState : uint8_t               { None = 0, Vertex, InHandle, OutHandle, COUNT };
-
 
 
 //  "VertexStyleData"
@@ -126,14 +120,14 @@ struct VertexStyleData
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
     //  CBAPP_APPSTATE_ALIAS_API            //  *OR*    CBAPP_CBLIB_TYPES_API       //  FOR CBLIB...
-    using                               HoverState                      = VertexHoverState;
+    using                           HoverState                  = VertexHoverState;
     
     // *************************************************************************** //
     //
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr ImDrawFlags    ms_HANDLE_FLAGS             = ImDrawFlags_RoundCornersNone;
+    static constexpr ImDrawFlags    ms_HANDLE_FLAGS             = ImDrawFlags_RoundCornersNone; //ImDrawFlags_RoundCornersAll;
     
 //
 // *************************************************************************** //
@@ -148,27 +142,18 @@ struct VertexStyleData
 // *************************************************************************** //
 
     // *************************************************************************** //
-    //      STATE VARIABLES.
-    // *************************************************************************** //
-    HoverState                      hovered                     = HoverState::None;
-    
-    // *************************************************************************** //
-
-
-
-    // *************************************************************************** //
     //      STYLE VARIABLES.
     // *************************************************************************** //
     //                          Vertex Appearance:
-    float                           vertex_radius               = 4.0f;
-    ImU32                           vertex_color                = IM_COL32(0,       255,    0,      170);
+    float                           vertex_radius               = 6.5f;
+    ImU32                           vertex_color                = IM_COL32(0,       255,    0,      255);
     int                             vertex_tesselation          = 12;
     //
     //                          Bézier Handle "IN":
     ImU32                           handle_color                = IM_COL32(255,     215,    0,      255);
-    float                           handle_size                 = 6.0f;
-    float                           handle_rounding             = 6.0f;
-    float                           handle_thickness            = 2.0f;
+    float                           handle_size                 = 5.5f;
+    float                           handle_rounding             = 0.0f;
+    float                           handle_thickness            = 2.00f;
     //
     //                          Line-Style:
     ImU32                           line_color                  = IM_COL32(255,     215,    0,      170);
@@ -176,7 +161,18 @@ struct VertexStyleData
     //
     //                          Additional Stuff:
     ImU32                           hovered_color               = IM_COL32(0,       0,    255,      255);
-    float                           hovered_size                = 1.0f;
+    float                           hovered_size                = 11.0f;
+    
+    // *************************************************************************** //
+    
+    
+
+    // *************************************************************************** //
+    //      STATE VARIABLES.
+    // *************************************************************************** //
+    mutable HoverState              hovered                     = HoverState::None;
+    
+    // *************************************************************************** //
     
 //
 // *************************************************************************** //
@@ -190,6 +186,54 @@ struct VertexStyleData
 
 
 
+//  "VertexStyleType"
+//      Enum to define a HANDLE to access each PRESET STYLE of Vertex that is used by the Editor Application.
+//
+enum class VertexStyleType : uint8_t {
+    Default = 0,
+    Highlight,
+    COUNT
+};
+//
+static constexpr cblib::EnumArray< VertexStyleType, VertexStyleData >
+DEF_VERTEX_STYLES{
+{
+    VertexStyleData     //  0.  DEFAULT:
+    {
+    },
+//
+    VertexStyleData     //  0.  DEFAULT:
+    {
+    }
+//
+    //  VertexStyleData     //  1.  HIGHLIGHT:
+    //  {
+    //      /*  vertex_radius       */ 8.0f,
+    //      /*  vertex_color        */ IM_COL32(0,       0,    255,      170),
+    //  //
+    //      /*  vertex_tesselation  */ 12,
+    //      /*  handle_color        */ IM_COL32(215,     255,    0,      255),
+    //      /*  handle_size         */ 6.5f,
+    //      /*  handle_rounding     */ 6.5f,
+    //      /*  handle_thickness    */ 2.0f,
+    //  //
+    //      /*  line_color          */ IM_COL32(215,     255,    0,      170),
+    //      /*  line_width          */ 2.0f,
+    //      /*  hovered_color       */ IM_COL32(0,       0,    255,      255),
+    //      /*  hovered_size        */ 11.0f
+    //  }
+//
+} };
+
+
+
+
+
+
+
+
+
+
 //  "VertexStyle"
 //
 template <typename MappingFn>
@@ -200,6 +244,7 @@ struct VertexStyle
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
     //  CBAPP_APPSTATE_ALIAS_API            //  *OR*    CBAPP_CBLIB_TYPES_API       //  FOR CBLIB...
+    using                               StyleType                       = VertexStyleType;
     using                               StyleData                       = VertexStyleData;
     using                               HoverState                      = VertexStyleData::HoverState;
     
@@ -218,9 +263,9 @@ struct VertexStyle
 //      1.          DATA-MEMBERS...
 // *************************************************************************** //
 // *************************************************************************** //
-    MappingFn                       ws_to_px;
-    ImDrawList *                    dl                          = nullptr;
-    StyleData                       data                        {   };
+    MappingFn                           ws_to_px;
+    mutable StyleData const *           data;
+    ImDrawList *                        dl                              = nullptr;
     
 //
 // *************************************************************************** //
@@ -238,6 +283,9 @@ struct VertexStyle
     // *************************************************************************** //
     //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
+    inline                              VertexStyle                         (MappingFn callback, const StyleData & data_) noexcept
+                                        : ws_to_px(callback)    , data( std::addressof(data_) )   {   }
+    
     //  "_no_op"
     inline void                         PushDL                              (ImDrawList * & dl_)    { this->dl = dl_;           };
     inline void                         PopDL                               (void)                  { this->dl = nullptr;       };
@@ -255,12 +303,18 @@ struct VertexStyle
 };//	END "VertexStyle" INLINE STRUCT DEFINITION.
 
 
-    
+
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "VERTEX STYLE".
+// *************************************************************************** //   END "VertexStyle".
+
+
+
+
+
+
 
 
 
@@ -271,9 +325,22 @@ struct VertexStyle
 //
 //
 //
-//      2.      [DATA LAYER]    VERTICES...
+//      2.      [DATA LAYER]    BEZIER CONTROL-POINT...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "BezierCurvatureType"
+enum class BezierCurvatureType : uint8_t            { Corner,     Smooth,     Symmetric,      COUNT };
+//
+static constexpr cblib::EnumArray <BezierCurvatureType, const char *>
+DEF_BEZIER_CURVATURE_TYPE_NAMES                     = { "Corner",       "Smooth",       "Symmetric" };
+
+
+
+//  "BezierCurvatureState"
+enum class BezierCurvatureState : uint8_t           { None = 0, In, Out, All, COUNT };
+
+
 
 //  "BezierControl"
 //      Defines a "control point" for the Vertex/Path curvature.
@@ -390,7 +457,7 @@ struct BezierControl
     template <typename VStyle>
     inline void                         render                          (const ImVec2 & origin, VStyle & style) const noexcept
     {
-        const ImVec2                pos             = style.ws_to_px(    {  origin.x + this->in_handle.x    , origin.y + this->in_handle.y      }   );
+        const ImVec2                pos             = style.ws_to_px(    {  origin.x                        , origin.y                          }   );
         const ImVec2                h_in            = style.ws_to_px(    {  origin.x + this->in_handle.x    , origin.y + this->in_handle.y      }   );
         const ImVec2                h_out           = style.ws_to_px(    {  origin.x + this->out_handle.x   , origin.y + this->out_handle.y     }   );
         
@@ -398,13 +465,13 @@ struct BezierControl
         
         
         
-        switch (style.data.hovered)
+        switch (style.data->hovered)
         {
             //      CASE 1 :    EITHER "IN" / "OUT" HANDLE IS HOVERED.
             case HoverState::InHandle  :
             case HoverState::OutHandle :
             {
-                this->_render_hovered_IMPL      (pos, h_in, h_out, style);
+                this->_render_hovered_IMPL      (origin, h_in, h_out, style);
                 break;
             }
             //
@@ -426,7 +493,7 @@ struct BezierControl
     template <typename VStyle>
     inline void                         _render_IMPL                        (const ImVec2 & pos, const ImVec2 & h_in, const ImVec2 & h_out, VStyle & style) const noexcept
     {
-        const StyleData &           data            = style.data;
+        const StyleData &           data            = *style.data;
         
         
         //      DISPATCH ACTION BASED ON BEZIER CURVATURE...
@@ -434,23 +501,29 @@ struct BezierControl
         {
             case CurvatureState::In : {
                 style.dl->AddLine( pos, h_in,  data.line_color, data.line_width );          //  2A.     LINE  V  |==>  IN.
-                style.dl->AddRectFilled(                                                    //  2B.     "IN" HANDLE.
-                    { h_in.x - data.handle_size,   h_in.y - data.handle_size },
-                    { h_in.x + data.handle_size,   h_in.y + data.handle_size },
-                    data.handle_color
+                style.dl->AddRect(                                                          //  2B.     "IN" HANDLE.
+                    { h_in.x - data.handle_size,       h_in.y - data.handle_size },
+                    { h_in.x + data.handle_size,       h_in.y + data.handle_size },
+                    data.handle_color,
+                    data.handle_rounding,
+                    data.ms_HANDLE_FLAGS,
+                    data.handle_thickness
                 );
                 break;
             }
             case CurvatureState::Out : {
                 style.dl->AddLine( pos, h_out, data.line_color, data.line_width );          //  3A.     LINE  V  |==>  OUT.
-                style.dl->AddRectFilled(                                                    //  3B.     "OUT" HANDLE.
-                    { h_out.x - data.handle_size,   h_out.y - data.handle_size },
-                    { h_out.x + data.handle_size,   h_out.y + data.handle_size },
-                    data.handle_color
+                style.dl->AddRect(                                                          //  3B.     "OUT" HANDLE.
+                    { h_out.x - data.handle_size,      h_out.y - data.handle_size },
+                    { h_out.x + data.handle_size,      h_out.y + data.handle_size },
+                    data.handle_color,
+                    data.handle_rounding,
+                    data.ms_HANDLE_FLAGS,
+                    data.handle_thickness
                 );
                 break;
             }
-            default : {
+            case CurvatureState::All : {
                 style.dl->AddLine( pos, h_in,  data.line_color, data.line_width );          //  1A.     LINE  V  |==>  IN.
                 style.dl->AddLine( pos, h_out, data.line_color, data.line_width );          //  1B.     LINE  V  |==>  OUT.
                 style.dl->AddRect(                                                          //  1C.     "IN" HANDLE.
@@ -471,6 +544,7 @@ struct BezierControl
                 );
                 break;
             }
+            default : { break; }
         }
         
         return;
@@ -485,7 +559,19 @@ struct BezierControl
     template <typename VStyle>
     inline void                         _render_hovered_IMPL                (const ImVec2 & pos, const ImVec2 & h_in, const ImVec2 & h_out, VStyle & style) const noexcept
     {
-        const StyleData &           data            = style.data;
+        const StyleData &           data            = *style.data;
+        //
+        const bool                  ih_hovered      = ( data.hovered == HoverState::InHandle    );
+        const bool                  oh_hovered      = ( data.hovered == HoverState::OutHandle   );
+        //
+        const float &               ih_size         = (ih_hovered)  ? data.hovered_size     : data.handle_size;
+        const ImU32 &               ih_color        = (ih_hovered)  ? data.hovered_color    : data.handle_color;
+        const float &               oh_size         = (oh_hovered)  ? data.hovered_size     : data.handle_size;
+        const ImU32 &               oh_color        = (oh_hovered)  ? data.hovered_color    : data.handle_color;
+        
+        
+        
+        
         
         
         //      DISPATCH ACTION BASED ON BEZIER CURVATURE...
@@ -493,43 +579,50 @@ struct BezierControl
         {
             case CurvatureState::In : {
                 style.dl->AddLine( pos, h_in,  data.line_color, data.line_width );          //  2A.     LINE  V  |==>  IN.
-                style.dl->AddRectFilled(                                                    //  2B.     "IN" HANDLE.
-                    { h_in.x - data.handle_size,   h_in.y - data.handle_size },
-                    { h_in.x + data.handle_size,   h_in.y + data.handle_size },
-                    data.handle_color
+                style.dl->AddRect(                                                          //  2B.     "IN" HANDLE.
+                    { h_in.x - ih_size,         h_in.y - ih_size },
+                    { h_in.x + ih_size,         h_in.y + ih_size },
+                    ih_color,
+                    data.handle_rounding,
+                    data.ms_HANDLE_FLAGS,
+                    data.handle_thickness
                 );
                 break;
             }
             case CurvatureState::Out : {
                 style.dl->AddLine( pos, h_out, data.line_color, data.line_width );          //  3A.     LINE  V  |==>  OUT.
-                style.dl->AddRectFilled(                                                    //  3B.     "OUT" HANDLE.
-                    { h_out.x - data.handle_size,   h_out.y - data.handle_size },
-                    { h_out.x + data.handle_size,   h_out.y + data.handle_size },
-                    data.handle_color
+                style.dl->AddRect(                                                          //  3B.     "OUT" HANDLE.
+                    { h_out.x - oh_size,        h_out.y - oh_size },
+                    { h_out.x + oh_size,        h_out.y + oh_size },
+                    oh_color,
+                    data.handle_rounding,
+                    data.ms_HANDLE_FLAGS,
+                    data.handle_thickness
                 );
                 break;
             }
-            default : {
+            case CurvatureState::All : {
                 style.dl->AddLine( pos, h_in,  data.line_color, data.line_width );          //  1A.     LINE  V  |==>  IN.
                 style.dl->AddLine( pos, h_out, data.line_color, data.line_width );          //  1B.     LINE  V  |==>  OUT.
                 style.dl->AddRect(                                                          //  1C.     "IN" HANDLE.
-                    { h_in.x - data.handle_size,       h_in.y - data.handle_size },
-                    { h_in.x + data.handle_size,       h_in.y + data.handle_size },
-                    data.handle_color,
+                    { h_in.x - ih_size,         h_in.y - ih_size },
+                    { h_in.x + ih_size,         h_in.y + ih_size },
+                    ih_color,
                     data.handle_rounding,
                     data.ms_HANDLE_FLAGS,
                     data.handle_thickness
                 );
                 style.dl->AddRect(                                                          //  1D.     "OUT" HANDLE.
-                    { h_out.x - data.handle_size,      h_out.y - data.handle_size },
-                    { h_out.x + data.handle_size,      h_out.y + data.handle_size },
-                    data.handle_color,
+                    { h_out.x - oh_size,        h_out.y - oh_size },
+                    { h_out.x + oh_size,        h_out.y + oh_size },
+                    oh_color,
                     data.handle_rounding,
                     data.ms_HANDLE_FLAGS,
                     data.handle_thickness
                 );
                 break;
             }
+            default : { break; }
         }
         
         return;
@@ -596,18 +689,26 @@ inline void from_json(const nlohmann::json & j, BezierControl & obj)
 //
 //
 // *************************************************************************** //
+// *************************************************************************** //   END "BEZIER CONTROL-POINT".
+
+
+
+
+
+
+
+
+
+
+
+
 // *************************************************************************** //
-
-
-
-
-
-
-
-
-
-
-
+//
+//
+//
+//      3.      [DATA LAYER]    VERTEX...
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "Vertex_t" / "Pos" / "Anchor Point"
 //
@@ -707,7 +808,7 @@ struct Vertex_t
     {
         const ImVec2        origin          = ImVec2({ this->x, this->y });
     
-        switch (style.data.hovered)
+        switch (style.data->hovered)
         {
             case HoverState::Vertex : {
                 this->m_bezier.render           (origin, style);                //  Pass the RAW (x, y) to each function.
@@ -720,7 +821,8 @@ struct Vertex_t
                 break;
             }
         }
-    
+        
+        style.data->hovered = HoverState::None;
         return;
     }
     
@@ -729,12 +831,12 @@ struct Vertex_t
     //  "_render_vertex"
     template <typename VStyle>
     inline void                         _render_vertex                  (const ImVec2 & origin, VStyle & style) const noexcept
-    { style.dl->AddCircleFilled( style.ws_to_px(origin), style.data.vertex_radius, style.data.vertex_color, style.data.vertex_tesselation ); }
+    { style.dl->AddCircleFilled( style.ws_to_px(origin), style.data->vertex_radius, style.data->vertex_color, style.data->vertex_tesselation ); }
     
     //  "_render_vertex_IMPL"
     template <typename VStyle>
     inline void                         _render_vertex_hovered          (const ImVec2 & origin, VStyle & style) const noexcept
-    { style.dl->AddCircleFilled( style.ws_to_px(origin), style.data.vertex_radius, style.data.vertex_color, style.data.vertex_tesselation ); }
+    { style.dl->AddCircleFilled( style.ws_to_px(origin), style.data->vertex_radius, style.data->hovered_color, style.data->vertex_tesselation ); }
     
     // *************************************************************************** //
 
@@ -778,10 +880,6 @@ inline void to_json(nlohmann::json & j, const Vertex_t<IdT> & v)
         { "x",                      v.x                                     },
         { "y",                      v.y                                     },
         { "z",                      v.z                                     },
-        //  { "in_handle",              { v.in_handle.x,  v.in_handle.y    }    },
-        //  { "out_handle",             { v.out_handle.x, v.out_handle.y   }    },
-        //  { "kind",                   v.kind                                  },
-        //  { "curvature_state",        v.m_curvature_state                     },
     //
         { "bezier",                 v.m_bezier                              }
     };
@@ -831,11 +929,17 @@ inline void from_json(const nlohmann::json & j, Vertex_t<IdT> & v)
 
 
 
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
 //
-//      3.      [DATA LAYER]    POINTS...
+//      4.      [DATA LAYER]    POINTS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -909,11 +1013,17 @@ inline void from_json(const nlohmann::json & j, Point_t<PtID> & p)
 
 
 
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
 //
-//      4.      [DATA LAYER]    LINES...
+//      5.      [DATA LAYER]    LINES...
 // *************************************************************************** //
 // *************************************************************************** //
 

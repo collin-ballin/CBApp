@@ -359,7 +359,18 @@ void Editor::_render_selection_highlight(ImDrawList * dl) const
 
 //  "_render_selected_handles"
 //
-inline void Editor::_render_selected_handles(ImDrawList * dl) const
+inline void Editor::_render_selected_handles(ImDrawList * /* dl */) const
+{
+    for (const Vertex & v : m_vertices)
+    {
+        if ( !m_show_handles.count(v.id) )      { continue; }   // ← NEW visibility mask
+        v.render( this->m_vertex_style );
+    }
+
+
+    return;
+}
+/*
 {
     auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
 
@@ -385,7 +396,7 @@ inline void Editor::_render_selected_handles(ImDrawList * dl) const
     }
     
     return;
-}
+}*/
 
 
 //  "_render_selection_bbox"
@@ -534,6 +545,9 @@ inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const
     //
     const bool                      draw_object     = ( pidx >= 0 );
     const bool                      draw_handle     = ( (vidx.first >= 0)  &&  (vidx.second >= 0) );
+    //
+    this->PushVertexStyle( VertexStyleType::Highlight );
+    
     
     
     //      1.      RENDER THE OBJECT...
@@ -555,6 +569,7 @@ inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const
     }
     
     
+    this->PopVertexStyle();
     BS.ClearAuxiliarySelection();
     return;
 }

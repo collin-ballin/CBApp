@@ -33,7 +33,7 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //
 Editor::Editor(app::AppState & src)
     : CBAPP_STATE_NAME      ( src )
-    , m_vertex_style        ( world_to_pixels )
+    , m_vertex_style        ( world_to_pixels, ms_VERTEX_STYLES[ VertexStyleType::Default ] )
     , m_it                  ( std::make_unique<Interaction>() )
 {
     namespace           fs                          = std::filesystem;

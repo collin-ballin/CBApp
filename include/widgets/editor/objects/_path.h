@@ -29,6 +29,7 @@
 #include "cblib.h"
 #include "utility/utility.h"
 #include "widgets/editor/_constants.h"
+#include "widgets/editor/objects/_internal.h"
 
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
