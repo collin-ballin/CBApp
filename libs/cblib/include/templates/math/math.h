@@ -36,10 +36,29 @@
 
 
 
-//  MY OWN HEADERS...
-#include "templates/math/_types.h"
-#include "templates/math/_utility.h"
-#include "templates/math/_vectors.h"
+//      1.      THIS MODULE'S HEADER FILES...
+// *************************************************************************** //
+// *************************************************************************** //
+#ifndef _CBLIB_MATH_TYPES_H
+# include "templates/math/_types.h"
+#endif	// _CBLIB_MATH_TYPES_H  //
+	
+#ifndef _CBLIB_MATH_UTILITY_H
+# include "templates/math/_utility.h"
+#endif	// _CBLIB_MATH_UTILITY_H  //
+	
+#ifndef _CBLIB_MATH_VECTORS_H
+# include "templates/math/_vectors.h"
+#endif	// _CBLIB_MATH_VECTORS_H  //
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MODULE HEADERS".
+
+
+
 
 
 

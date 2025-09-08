@@ -4,7 +4,7 @@
 #       ****          C E N T R A L _ C M A K E ____  F I L E           ****
 #       *********************************************************************
 #
-#              AUTHOR:      Collin A. Bond
+#              AUTHOR:      Collin A. Bond.
 #               DATED:      July 02, 2025.
 #
 #       USAGE:

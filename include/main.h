@@ -4,7 +4,7 @@
 *       ****             M A I N . H  ____  F I L E             ****
 *       ************************************************************
 *
-*    STUDENT / AUTHOR:      Collin A. Bond.
+*    STUDENT / AUTHOR:      Collin A. Bond..
 *           PROFESSOR:      Dr. Erik J. Sánchez.
 *              COURSE:      N/A-XXX.
 *               DATED:      April 15, 2025.

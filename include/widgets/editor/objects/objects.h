@@ -1,11 +1,11 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****     I M G U I _ E X T E N S I O N S . H  ____  F I L E     ****
+*       ****              O B J E C T S . H  ____  F I L E              ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond.
-*               DATED:      August 12, 2025.
+*               DATED:      July 14, 2025.
 *
 *       ********************************************************************
 *                FILE:      [./PyStream.h]
@@ -14,25 +14,25 @@
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CBLIB_H
-#define	_CBLIB_IMGUI_EXTENSIONS_H	1
+#ifndef _CBAPP_EDITOR_OBJECTS_H
+#define _CBAPP_EDITOR_OBJECTS_H  1
+#include CBAPP_USER_CONFIG
 
 
 
 //      1.      THIS MODULE'S HEADER FILES...
 // *************************************************************************** //
 // *************************************************************************** //
-#ifndef _CBLIB_IMGUI_EXTENSIONS_UTILITY_H
-# include "templates/imgui_extensions/_utility.h"
-#endif	// _CBLIB_IMGUI_EXTENSIONS_UTILITY_H  //
 
-#ifndef _CBLIB_IMGUI_EXTENSIONS_TYPES_H
-# include "templates/imgui_extensions/_types.h"
-#endif	// _CBLIB_IMGUI_EXTENSIONS_TYPES_H  //
+#ifndef _CBAPP_EDITOR_OBJECTS_VERTEX_H
+    # include "widgets/editor/objects/_vertex.h"
+#endif	// _CBAPP_EDITOR_OBJECTS_VERTEX_H  //
 
-#ifndef _CBLIB_IMGUI_EXTENSIONS_JSON_H
-# include "templates/imgui_extensions/json/json.h"
-#endif	// _CBLIB_IMGUI_EXTENSIONS_JSON_H  //
+#ifndef _CBAPP_EDITOR_OBJECTS_PATH_H
+    # include "widgets/editor/objects/_path.h"
+#endif	// _CBAPP_EDITOR_OBJECTS_PATH_H  //
+
+
 
 //
 //
@@ -45,6 +45,8 @@
 
 
 
+
+
+#endif      //  _CBAPP_EDITOR_OBJECTS_H  //
 // *************************************************************************** //
-// *************************************************************************** //
-#endif 	//  _CBLIB_IMGUI_EXTENSIONS_H  //
+// *************************************************************************** //   END FILE.

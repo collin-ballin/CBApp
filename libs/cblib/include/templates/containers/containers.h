@@ -14,7 +14,8 @@
 
 
 
-//      1.      Module Header Files.
+//      1.      THIS MODULE'S HEADER FILES...
+// *************************************************************************** //
 // *************************************************************************** //
 #ifndef _CBLIB_ARRAY_H
 # include "templates/containers/array/array.h"
@@ -23,6 +24,12 @@
 #ifndef _CBLIB_MATRIX_H
 # include "templates/containers/matrix/matrix.h"
 #endif	// _CBLIB_MATRIX_H  //
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MODULE HEADERS".
 
 
 

@@ -4,7 +4,7 @@
 *       ****             R E N D E R . C P P  ____  F I L E              ****
 *       *********************************************************************
 *
-*              AUTHOR:      Collin A. Bond
+*              AUTHOR:      Collin A. Bond.
 *               DATED:      June 14, 2025.
 *
 **************************************************************************************
@@ -402,7 +402,7 @@ inline void Editor::_render_selection_bbox(ImDrawList * dl) const
                 m_style.SELECTION_BBOX_COL, 0.0f,
                 ImDrawFlags_None, m_style.SELECTION_BBOX_TH);
 
-    // Draw the 8 handles using cached rectangles and cached hover index
+    //      Draw the 8 handles using cached rectangles and cached hover index
     for (int i = 0; i < 8; ++i)
     {
         const bool          hovered     = (i == V.hover_idx);      // ← read, don’t compute

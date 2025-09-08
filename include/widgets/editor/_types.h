@@ -4,7 +4,7 @@
 *       ****               _ T Y P E S . H  ____  F I L E               ****
 *       ********************************************************************
 *
-*              AUTHOR:      Collin A. Bond
+*              AUTHOR:      Collin A. Bond.
 *               DATED:      June 13, 2025.
 *
 *       ********************************************************************
@@ -28,7 +28,10 @@
 #include "cblib.h"
 #include "utility/utility.h"
 #include "widgets/editor/_constants.h"
-#include "widgets/editor/_objects.h"
+//
+#ifndef _CBAPP_EDITOR_OBJECTS_H
+# include "widgets/editor/objects/objects.h"
+#endif //  _CBAPP_EDITOR_OBJECTS_H  //
 
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
