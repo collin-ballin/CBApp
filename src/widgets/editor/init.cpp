@@ -33,8 +33,9 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //
 Editor::Editor(app::AppState & src)
     : CBAPP_STATE_NAME      ( src )
-    , m_vertex_style        ( world_to_pixels, ms_VERTEX_STYLES[ VertexStyleType::Default ] )
+    , m_ov_manager          ( world_to_pixels )
     , m_it                  ( std::make_unique<Interaction>() )
+    , m_vertex_style        ( world_to_pixels, ms_VERTEX_STYLES[ VertexStyleType::Default ] )
 {
     namespace           fs                          = std::filesystem;
     this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_HiddenTabBar;

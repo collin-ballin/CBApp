@@ -323,9 +323,6 @@ protected:
     //      IMPORTANT DATA...
     // *************************************************************************** //
     app::AppState &                     CBAPP_STATE_NAME;
-    EditorStyle                         m_style                         {   };
-    VertexStyle                         m_vertex_style;
-    //
     //
     std::vector<Vertex>                 m_vertices;
     std::vector<Point>                  m_points;
@@ -402,7 +399,7 @@ protected:
     //
     //
     // *************************************************************************** //
-    //      OBJECTS...
+    //      STATE OBJECTS...
     // *************************************************************************** //
     //                              SUBSIDIARY STATES:
     EditorState                         m_editor_S                      {   };        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
@@ -418,6 +415,15 @@ protected:
     PenState                            m_pen;
     ShapeState                          m_shape;
     DebuggerState                       m_debugger;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STYLE OBJECTS...
+    // *************************************************************************** //
+    EditorStyle                         m_style                         {   };
+    VertexStyle                         m_vertex_style;
     
     // *************************************************************************** //
     //

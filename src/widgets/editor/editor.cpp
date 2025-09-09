@@ -141,7 +141,7 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
 {
     ImGuiIO &               io                      = ImGui::GetIO();
     //  EditorState &           ES                      = this->m_editor_S;
-    BrowserState &          BS                      = this->m_browser_S;
+    //  BrowserState &          BS                      = this->m_browser_S;
     Interaction &           it                      = *m_it;
     EditorInteraction &     eit                     = it.obj;
     
@@ -622,10 +622,15 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
     //  ImVec2 bb_max = ImGui::GetItemRectMax();
     //
     m_ov_manager.Begin(
-        /* world→pixel */ [this](ImVec2 ws){ return world_to_pixels(ws); },
         /* cursor      */ ImGui::GetIO().MousePos,
         /* full rect   */ ES.m_plot_bbox /*ImRect(bb_min, bb_max) */       // ← use full item rect
     );
+    //
+    //  m_ov_manager.Begin(
+    //      /* world→pixel */ [this](ImVec2 ws){ return world_to_pixels(ws); },
+    //      /* cursor      */ ImGui::GetIO().MousePos,
+    //      /* full rect   */ ES.m_plot_bbox /*ImRect(bb_min, bb_max) */       // ← use full item rect
+    //  );
 
     return;
 }
@@ -637,7 +642,7 @@ inline void Editor::_MECH_drive_io(void)
 {
     namespace           fs                  = std::filesystem;
     //using             Initializer         = cb::FileDialog::Initializer;
-    ImGuiIO &           io                  = ImGui::GetIO();
+    //  ImGuiIO &           io                  = ImGui::GetIO();
     EditorState &       ES                  = this->m_editor_S;
 
 

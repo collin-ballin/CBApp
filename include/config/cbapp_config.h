@@ -455,6 +455,7 @@ public:                                                                         
     using                           PopupInfo                   = EditorPopupInfo                                                       ;       \
                                                                                                                                         \
     using                           LabelFn                     = std::function<void(const char *)>                                     ;       \
+    using                           MappingFn                   = ImVec2 (&)(ImVec2) noexcept                                           ;       \
     /*                                                                                                                                  */      \
     /*      2.      ID/INDEX TYPES...                                                                                                   */      \
     template<typename T, typename Tag>                                                                                                  \
@@ -465,12 +466,11 @@ public:                                                                         
     using                           LineID                      = uint32_t                                                              ;       \
     using                           PathID                      = uint32_t                                                              ;       \
     using                           ZID                         = uint32_t                                                              ;       \
-    using                           OverlayID                   = OverlayManager::OverlayID                                             ;       \
+    using                           OverlayID                   = uint8_t                                                               ;       \
     using                           HitID                       = uint32_t                                                              ;       \
     /*                                                                                                                                  */      \
     /*      3.      OBJECT TYPES...                                                                                                     */      \
     using                           Vertex                      = Vertex_t          <VertexID>                                          ;       \
-    using                           MappingFn                   = ImVec2 (&)(ImVec2) noexcept                                           ;       \
     using                           VertexStyle                 = VertexStyle<MappingFn>                                                ;       \
     using                           VertexStyleType             = VertexStyle::StyleType                                                ;       \
 /*  using                           Handle                      = Handle_t          <HandleID>;                                         */      \
@@ -499,6 +499,8 @@ public:                                                                         
     using                           PenState                    = PenState_t        <VertexID>                                          ;       \
     using                           ShapeState                  = ShapeState_t      <OverlayID>                                         ;       \
     using                           DebuggerState               = DebuggerState_t   <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
+    /*                                                                                                                                  */      \
+    using                           OverlayManager              = OverlayManager_t<OverlayID, MappingFn>                                ;       \
     using                           ResidentEntry               = ResidentEntry_t   <OverlayID>                                         ;
 
 //

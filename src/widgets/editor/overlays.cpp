@@ -26,7 +26,9 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 
 //  "create_overlay"
 //
-OverlayManager::OverlayID OverlayManager::create_overlay(const OverlayCFG & cfg)
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+OverlayManager_t<OID, MapFn>::OverlayID OverlayManager_t<OID, MapFn>::create_overlay(const OverlayCFG & cfg)
 {
     if ( !cfg.draw_fn )     { return 0; }             //    guard against empty callback
     Overlay     ov;
@@ -45,7 +47,9 @@ OverlayManager::OverlayID OverlayManager::create_overlay(const OverlayCFG & cfg)
 
 //  "destroy_overlay"
 //
-void OverlayManager::destroy_overlay(OverlayID id)
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+void OverlayManager_t<OID, MapFn>::destroy_overlay(OverlayID id)
 {
     m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(),
                                    [id](const Overlay& o){ return o.info.id == id; }),
@@ -55,7 +59,10 @@ void OverlayManager::destroy_overlay(OverlayID id)
 
 //  "add_resident"
 //
-OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG & cfg)
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+//  OverlayManager_t<OID, MapFn>::OverlayID OverlayManager_t<OID, MapFn>::add_resident(const OverlayCFG & cfg)
+OID OverlayManager_t<OID, MapFn>::add_resident(const OverlayCFG & cfg)
 {
     Overlay             ov;
     //  ov.info.id          = m_next_id++;
@@ -66,8 +73,12 @@ OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG & cfg)
     return m_residents.back().info.id;
 }
 
+
 //  "add_resident"
-OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG & cfg, const OverlayStyle & style) {
+//
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+OverlayManager_t<OID, MapFn>::OverlayID OverlayManager_t<OID, MapFn>::add_resident(const OverlayCFG & cfg, const OverlayStyle & style) {
     Overlay             ov;
     
     //  ov.info.id              = m_next_id++;
@@ -82,7 +93,7 @@ OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG & cfg, c
 
 
 //  "add_resident"
-//  OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG & cfg, const OverlayStyle & style, const OverlayInfo & info) {
+//  OverlayManager_t<OID, MapFn>::OverlayID OverlayManager_t<OID, MapFn>::add_resident(const OverlayCFG & cfg, const OverlayStyle & style, const OverlayInfo & info) {
 //      Overlay             ov;
 //
 //      ov.info             = info;
@@ -101,7 +112,9 @@ OverlayManager::OverlayID OverlayManager::add_resident(const OverlayCFG & cfg, c
 
 //  "resident"
 //
-OverlayManager::Overlay * OverlayManager::resident(OverlayID id)
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+OverlayManager_t<OID, MapFn>::Overlay * OverlayManager_t<OID, MapFn>::resident(OverlayID id)
 {
     for ( auto & ov : m_residents ) {
         if (ov.info.id == id)   { return &ov; }
@@ -119,10 +132,43 @@ OverlayManager::Overlay * OverlayManager::resident(OverlayID id)
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "Begin"
+//
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+void OverlayManager_t<OID, MapFn>::Begin(ImVec2 cursor_px, const ImRect & plot_rect)
+{
+    // ---------- render always-present overlays ----------
+    for (auto & ov : m_residents)
+    {
+        if (ov.info.visible && ov.cfg.draw_fn) {
+            _render_overlay(ov, cursor_px, plot_rect);
+        }
+    }
+
+    // ---------- render & purge dynamic overlays ----------
+    for (auto & ov : m_windows)
+    {
+        if (ov.info.visible && ov.cfg.draw_fn) {
+            _render_overlay(ov, cursor_px, plot_rect);
+        }
+    }
+
+    m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(),
+                    [](const Overlay& o){ return !o.info.visible; }),
+                    m_windows.end());
+                    
+    return;
+}
+
+
 
 //  "Begin"
 //
-void OverlayManager::Begin(const std::function<ImVec2(ImVec2)> & world_to_px, ImVec2 cursor_px, const ImRect & plot_rect)
+#ifndef _USE_INTERNAL_CALLBACK
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+void OverlayManager_t<OID, MapFn>::Begin(const std::function<ImVec2(ImVec2)> & world_to_px, ImVec2 cursor_px, const ImRect & plot_rect)
 {
     // ---------- render always-present overlays ----------
     for (auto & ov : m_residents)
@@ -146,6 +192,7 @@ void OverlayManager::Begin(const std::function<ImVec2(ImVec2)> & world_to_px, Im
                     
     return;
 }
+#endif  //  _USE_INTERNAL_CALLBACK  //
 
 
 
@@ -165,7 +212,9 @@ void OverlayManager::Begin(const std::function<ImVec2(ImVec2)> & world_to_px, Im
 
 //  "_draw_context_menu"
 //
-void OverlayManager::_draw_context_menu(Overlay & ov)
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+void OverlayManager_t<OID, MapFn>::_draw_context_menu(Overlay & ov)
 {
     const bool  canvas_anchor       = ov.cfg.placement != OverlayPlacement::Custom &&
                                       ov.cfg.placement != OverlayPlacement::Cursor &&
@@ -368,17 +417,18 @@ void OverlayManager::_draw_context_menu(Overlay & ov)
 
 //  "_render_default_overlay"
 //
-void OverlayManager::_render_default_overlay(
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+void OverlayManager_t<OID, MapFn>::_render_default_overlay(
         Overlay &                               ov,
-        const std::function<ImVec2(ImVec2)> &   world_to_px,
         ImVec2                                  cursor_px,
         const ImRect &                          plot_rect)
 {
     // ───────────────────────────────────────────────────────────── 1. anchor
-    auto            [pos, pivot]    = _anchor_to_pos(ov, world_to_px, cursor_px, plot_rect);
+    auto            [pos, pivot]    = _anchor_to_pos(ov, cursor_px, plot_rect);
     const bool      is_custom       = (ov.cfg.placement == OverlayPlacement::Custom);
     const ImVec2    anchor_px       = (ov.cfg.placement == OverlayPlacement::CanvasPoint)// pixel coords of anchor itself (CanvasPoint only)
-                                        ? world_to_px(ov.cfg.anchor_ws) : ImVec2{0, 0};
+                                        ? this->ws_to_px(ov.cfg.anchor_ws) : ImVec2{0, 0};
     //
     //
     ImGuiWindow *                       win                     = nullptr;
@@ -499,9 +549,10 @@ void OverlayManager::_render_default_overlay(
 
 //  "_render_custom_overlay"
 //
-void OverlayManager::_render_custom_overlay(
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+void OverlayManager_t<OID, MapFn>::_render_custom_overlay(
         Overlay &                               ov,
-        const std::function<ImVec2(ImVec2)> &   world_to_px,
         ImVec2                                  cursor_px,
         const ImRect &                          plot_rect)
 {
@@ -512,12 +563,12 @@ void OverlayManager::_render_custom_overlay(
 
     // ───────────────────────────────────────────────────────────── 1. anchor
     constexpr ImGuiHoveredFlags         HOVER_FLAGS	            = ImGuiHoveredFlags_NoPopupHierarchy;// | ImGuiHoveredFlags_ChildWindows;
-    auto                                [pos, pivot]            = _anchor_to_pos(ov, world_to_px, cursor_px, plot_rect);
+    auto                                [pos, pivot]            = this->_anchor_to_pos(ov, cursor_px, plot_rect);
     const bool                          is_custom               = (ov.cfg.placement == OverlayPlacement::Custom);
     const bool                          custom_size             = ( ov.style.window_size.has_value() );
     bool &                              collapsed               = ( ov.style.collapsed );
     const ImVec2                        anchor_px               = (ov.cfg.placement == OverlayPlacement::CanvasPoint)// pixel coords of anchor itself (CanvasPoint only)
-                                                                    ? world_to_px(ov.cfg.anchor_ws) : ImVec2{0, 0};
+                                                                    ? this->ws_to_px(ov.cfg.anchor_ws) : ImVec2{0, 0};
     //
     //
     ImGuiWindow *                       win                     = nullptr;
@@ -719,15 +770,15 @@ void OverlayManager::_render_custom_overlay(
 
 //  "_anchor_to_pos"
 //
-[[nodiscard]]
-std::pair<ImVec2, ImVec2> OverlayManager::_anchor_to_pos(
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+[[nodiscard]] std::pair<ImVec2, ImVec2> OverlayManager_t<OID, MapFn>::_anchor_to_pos(
         Overlay &                               ov,
-        const std::function<ImVec2(ImVec2)> &   world_to_px,
         ImVec2                                  cursor_px,
         const ImRect &                          plot_rect)
 {
     ImVec2          pos{};
-    ImVec2          pivot = anchor_to_pivot(ov.cfg.src_anchor);
+    ImVec2          pivot       = anchor_to_pivot(ov.cfg.src_anchor);
     
     //  ImVec2          pos         = ImVec2(-1, -1);
     //  ImVec2          pivot       = ImVec2(0.0f, 0.0f);           // TL default
@@ -745,11 +796,11 @@ std::pair<ImVec2, ImVec2> OverlayManager::_anchor_to_pos(
     {
         case OverlayPlacement::Custom:          { pos = ov.cfg.anchor_px;                                                                   break; }
         case OverlayPlacement::Cursor:          { pos = { cursor_px.x + ov.cfg.anchor_px.x, cursor_px.y + ov.cfg.anchor_px.y };             break; }
-        case OverlayPlacement::World:           { pos = world_to_px(ov.cfg.anchor_ws);                                                      break; }
+        case OverlayPlacement::World:           { pos = this->ws_to_px(ov.cfg.anchor_ws);                                                   break; }
     //
     //
     //
-        case OverlayPlacement::CanvasPoint:     { pos = world_to_px(ov.cfg.anchor_ws) + ov.cfg.anchor_px;                                   break; }   // pixel offset // pivot stays {0,0} so pos is TL unless we add a pivot field later
+        case OverlayPlacement::CanvasPoint:     { pos = ws_to_px(ov.cfg.anchor_ws) + ov.cfg.anchor_px;                                      break; }   // pixel offset // pivot stays {0,0} so pos is TL unless we add a pivot field later
         case OverlayPlacement::CanvasTL:        { pos = { plot_rect.Min.x + ax, plot_rect.Min.y + ay };                                     break; }
         case OverlayPlacement::CanvasTR:        { pos = { plot_rect.Max.x - ax, plot_rect.Min.y + ay };                                     break; }
         case OverlayPlacement::CanvasBL:        { pos = { plot_rect.Min.x + ax, plot_rect.Max.y - ay };                                     break; }
@@ -783,8 +834,34 @@ std::pair<ImVec2, ImVec2> OverlayManager::_anchor_to_pos(
     return { pos, pivot };
 }
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "???".
 
 
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      DEFINE EACH OF THE TEMPLATES THAT WE SHIP...
+// *************************************************************************** //
+// *************************************************************************** //
+template class       OverlayManager_t   < int8_t,           ImVec2 (&)(ImVec2) noexcept >;
+template class       OverlayManager_t   < int16_t,          ImVec2 (&)(ImVec2) noexcept >;
+template class       OverlayManager_t   < int32_t,          ImVec2 (&)(ImVec2) noexcept >;
+template class       OverlayManager_t   < int64_t,          ImVec2 (&)(ImVec2) noexcept >;
+//
+//
+template class       OverlayManager_t   < uint8_t,          ImVec2 (&)(ImVec2) noexcept >;
+template class       OverlayManager_t   < uint16_t,         ImVec2 (&)(ImVec2) noexcept >;
+template class       OverlayManager_t   < uint32_t,         ImVec2 (&)(ImVec2) noexcept >;
+template class       OverlayManager_t   < uint64_t,         ImVec2 (&)(ImVec2) noexcept >;
 
 
 

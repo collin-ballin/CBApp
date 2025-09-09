@@ -84,50 +84,146 @@ struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ fi
 
 
 
-//  "CanvasChannel"
+//  "CanvasDrawChannel"
 //
-enum class CanvasChannel : int
+enum class CanvasDrawChannel : uint8_t
 {
-    Background = 0,         //  grid / guides
-    Geometry,               //  paths/points (ordered by z_index inside)
-    Highlights,             //  selection glow, browser-hover glow
-    Gizmos,                 //  handles, cursor hints
-    PlotTop,                //  must-be-top within the plot
+    Bottom = 0,             //  LOWEST-MOST LAYER    (RESERVED).
+//
+    Grid,                   //  Grid-Lines, Guides, etc.
+    Highlight,              //  selection glow, browser-hover glow
+    Object,                 //  ENCLOSED-AREA / FILL for each object.
+    Glyph,                  //  Handles, Cursor-Hints, etc
+//
+    Top,                    //  TOP-MOST LAYER       (RESERVED).
 //
     COUNT
 };
 
 
 
-//  "CanvasChannels"
+//  "RenderCTX"
 //
-struct CanvasChannels
+struct RenderCTX
 {
-    ImDrawList *        dl      = nullptr;
-    ImDrawListSplitter  split   { };
-    bool                active  = false;
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    using                               Channel                         = CanvasDrawChannel;
+    using                               CTX                             = RenderCTX;
+    
+    // *************************************************************************** //
+    //      INTERNAL TYPES.
+    // *************************************************************************** //
 
-    explicit CanvasChannels(ImDrawList * drawlist)
-    : dl(drawlist)
+    struct Scope
     {
-        split.Split(dl, static_cast<int>(CanvasChannel::COUNT));
-        active = true;
-    }
-
-    ~CanvasChannels() { if (active) split.Merge(dl); }
-
-    inline void set(CanvasChannel ch) {
-        split.SetCurrentChannel(dl, static_cast<int>(ch));
-    }
-
-    struct Scope {
-        CanvasChannels &    cm;
-        int                 prev;
-        Scope(CanvasChannels & mgr, CanvasChannel ch)
-        : cm(mgr), prev(cm.split._Current) { cm.set(ch); }
-        ~Scope() { cm.split.SetCurrentChannel(cm.dl, prev); }
+        using           Channel         = CanvasDrawChannel;
+        using           CTX             = RenderCTX;
+    //
+        CTX &           manager;
+        Channel         prev;
+    //
+    //
+    //
+                        Scope           (CTX & src, Channel ch)         : manager(src), prev( static_cast<Channel>( src.split._Current) )     { manager.Set(ch); }
+                        ~Scope          (void)                          { manager.split.SetCurrentChannel( manager.dl, static_cast<int>( prev ) ); }
+    //
+                        Scope           (const Scope & )                = delete;
+        Scope &         operator =      (const Scope & )                = delete;
     };
-};
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+    
+    
+    
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    ImDrawList *            dl              = nullptr;
+    ImDrawListSplitter      split           {   };
+    bool                    active          = false;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   ...
+    // *************************************************************************** //
+    inline                              RenderCTX               (void)                          = default;
+    inline explicit                     RenderCTX               (ImDrawList * dl_)              { Begin(dl_); }
+    inline                              ~RenderCTX              (void)                          { End(); }
+    //
+    //                              DELETED MEMBERS:
+                                        RenderCTX               (const RenderCTX & )            = delete;
+    RenderCTX &                         operator =              (const RenderCTX & )            = delete;
+    
+
+
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+
+    //  "Begin"
+    inline void                         Begin                   (ImDrawList * dl_)
+    {
+        IM_ASSERT( !this->active  &&  "Call to \"CanvasChannels.Begin()\" while struct is already active" );
+        IM_ASSERT( dl_ != nullptr );
+        
+        dl          = dl_;
+        split.Split( dl, static_cast<int>(Channel::COUNT) );
+        active      = true;
+        return;
+    }
+    
+    
+    //  "End"
+    inline void                         End                     (void)
+    {
+        if ( !this->active )        { return; }
+        
+        this->split     .Merge(dl);
+        this->active    = false;
+        this->dl        = nullptr;
+        return;
+    }
+    
+    
+    //  "Set"
+    inline void                         Set                     (Channel ch)
+    {
+        IM_ASSERT( this->active  &&  "Call to \"CanvasChannels.Set()\" before struct is active" );
+        this->split.SetCurrentChannel( this->dl, static_cast<int>(ch) );
+        return;
+    }
+
+
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "MyStruct" INLINE STRUCT DEFINITION.
+
 
 
 

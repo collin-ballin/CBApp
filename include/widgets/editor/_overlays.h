@@ -83,42 +83,108 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-class OverlayManager {
-public:
-        using                   OverlayID                       = uint32_t;
-        using                   Overlay                         = Overlay_t<OverlayID>;
-        using                   OverlayInfo                     = Overlay::OverlayInfo;
-        using                   WindowType                      = OverlayInfo::WindowType;
-        using                   Anchor                          = BBoxAnchor;
-//
-//      CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
-// *************************************************************************** //
-//
-//
-//      1.          PUBLIC FUNCTIONS...
+#define     _USE_INTERNAL_CALLBACK      1
+
+template <typename OID, typename MappingFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MappingFn, ImVec2>
+class OverlayManager_t
+{
+//      0.          CONSTANTS AND ALIASES...
 // *************************************************************************** //
 // *************************************************************************** //
 public:
 
-    void                    Begin                   (const std::function<ImVec2(ImVec2)> & world_to_px, ImVec2 cursor_px, const ImRect& plot_rect);
-    //
-    //
-    //
-    OverlayID               create_overlay          (const OverlayCFG & cfg);
-    void                    destroy_overlay         (OverlayID );
-    //
-    Overlay *               resident                (OverlayID id);
-    OverlayID               add_resident            (const OverlayCFG & cfg);
-    OverlayID               add_resident            (const OverlayCFG &, const OverlayStyle &);
-    OverlayID               add_resident            (const OverlayCFG &, const OverlayStyle &, const OverlayInfo &);
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    using                               OverlayID                       = OID;
+    using                               Overlay                         = Overlay_t<OverlayID>;
+    using                               OverlayInfo                     = Overlay::OverlayInfo;
+    using                               WindowType                      = OverlayInfo::WindowType;
+    using                               Anchor                          = BBoxAnchor;
     
-    
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//
+//      1.          CLASS DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+private:
 
     // *************************************************************************** //
-    //
-    //
-    //      INLINE FUNCTIONS...
+    //      IMPORTANT DATA-MEMBERS.
     // *************************************************************************** //
+    MappingFn                           ws_to_px;
+    OverlayID                           m_next_id                   { 1 };
+    //
+    std::vector<Overlay>                m_windows;                              //  dynamic overlays (current m_windows)
+    std::vector<Overlay>                m_residents;                            //  resident overlays never erased; their `visible` flag is toggled
+    //
+    //
+    //                              CACHE VARIABLES FOR RE-SIZE:
+    ImVec2                              m_pos_cache                 = { 0.0f,   0.0f };
+    ImVec2                              m_pivot_cache               = { 0.0f,   0.0f };
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CLASS DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//
+//      2.A.        PUBLIC MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+public:
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   ...
+    // *************************************************************************** //
+    inline                              OverlayManager_t        (MappingFn callback) noexcept   : ws_to_px(callback) {   }
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+                                        OverlayManager_t        (const OverlayManager_t &    src)        = delete;   //  Copy. Constructor.
+                                        OverlayManager_t        (OverlayManager_t &&         src)        = delete;   //  Move Constructor.
+    OverlayManager_t &                  operator =              (const OverlayManager_t &    src)        = delete;   //  Assgn. Operator.
+    OverlayManager_t &                  operator =              (OverlayManager_t &&         src)        = delete;   //  Move-Assgn. Operator.
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      MAIN API.                       |   "interface.cpp" ...
+    // *************************************************************************** //
+    void                                Begin                               (ImVec2 , const ImRect & );
+    void                                Begin                               (const std::function<ImVec2(ImVec2)> & world_to_px, ImVec2 cursor_px, const ImRect & plot_rect);
+    //
+    //                              OVERLAY API:
+    OverlayID                           create_overlay                      (const OverlayCFG & cfg);
+    void                                destroy_overlay                     (OverlayID );
+    //
+    //                              UTILITIES:
+    Overlay *                           resident                            (OverlayID id);
+    OverlayID                           add_resident                        (const OverlayCFG & cfg);
+    OverlayID                           add_resident                        (const OverlayCFG &, const OverlayStyle &);
+    OverlayID                           add_resident                        (const OverlayCFG &, const OverlayStyle &, const OverlayInfo &);
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      INLINE PUBLIC API.              |   "..."
     // *************************************************************************** //
     
     //  "lookup"
@@ -126,7 +192,6 @@ public:
         for (auto& ov : m_windows) {
             if (ov.info.id == id)   { return &ov; }
         }
-        
         return nullptr;                               // not found
     }
     
@@ -135,18 +200,8 @@ public:
         for (auto& ov : m_residents) {
             if (ov.info.id == id)   { return &ov; }
         }
-        
         return nullptr;                               // not found
     }
-
-    //  "lookup"
-    //const Overlay *         lookup                  (OverlayID id) const {
-    //    for (const auto & ov : m_windows)
-    //        if (ov.id == id)
-    //            return &ov;
-    //    return nullptr;
-    //}
-    
     
     //  "get_resident"
     inline Overlay *        get_resident            (OverlayID id)
@@ -154,10 +209,65 @@ public:
         for (auto & ov : m_residents) {
             if (ov.info.id == id)   { return std::addressof( ov ); }
         }
-            
         IM_ASSERT(false && "get_resident: id not found");           // debug-time catch
         return std::addressof( m_residents.front() );                // fallback (never hit in release)
     }
+
+    // *************************************************************************** //
+    
+    
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "PUBLIC MEMBER FUNCS".
+
+
+    
+// *************************************************************************** //
+//
+//
+//      2.B.        PROTECTED MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+protected:
+#ifdef _USE_INTERNAL_CALLBACK
+    void                                _render_default_overlay             ( Overlay & ov, ImVec2 cursor_px, const ImRect & );
+    void                                _render_custom_overlay              ( Overlay & ov, ImVec2 cursor_px, const ImRect & );
+//
+# else
+//
+    void                                _render_default_overlay             ( Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
+                                                                              ImVec2 cursor_px, const ImRect & );
+    void                                _render_custom_overlay              ( Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
+                                                                              ImVec2 cursor_px, const ImRect & );
+#endif  //  _USE_INTERNAL_CALLBACK  //
+    //
+    void                                _draw_context_menu                  (Overlay & );
+    //
+    //
+    [[nodiscard]] std::pair<ImVec2, ImVec2>
+                                        _anchor_to_pos                      ( Overlay & , ImVec2 cursor, const ImRect & plot);
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "PROTECTED" FUNCTIONS.
+
+    
+   
+// *************************************************************************** //
+//
+//
+//      2.C.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
     
     //  "anchor_to_pivot"
     inline static ImVec2    anchor_to_pivot         (const Anchor a) {
@@ -174,44 +284,39 @@ public:
             default:                    return {0.5f, 0.5f};
         }
     }
-
-
-    //
-    //
-    // *************************************************************************** //
-    // *************************************************************************** //
-
-
-// *************************************************************************** //
-//
-//
-//      2.          PROTECTED FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-protected:
-
-    //  void                    _render_overlay             ( Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
-    //                                                        ImVec2 cursor_px, const ImRect & );
-    //
-    //
-    void                        _render_default_overlay         ( Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
-                                                                  ImVec2 cursor_px, const ImRect & );
-    //
-    void                        _render_custom_overlay          ( Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
-                                                                  ImVec2 cursor_px, const ImRect & );
-    //
-    //
-    //
-    void                        _draw_context_menu              (Overlay & );
-    //
-    //
-    [[nodiscard]] std::pair<ImVec2, ImVec2>
-                                _anchor_to_pos                  ( Overlay & ov, const std::function<ImVec2(ImVec2)> & ,
-                                                                  ImVec2 cursor_px, const ImRect & );
-                            
-                              
+                       
     //  "_render_overlay"
-    //
+    inline void                 _render_overlay                 ( Overlay & ov, ImVec2 cursor_px, const ImRect & rect )
+    {
+        IM_ASSERT( ov.cfg.draw_fn  &&  "Overlay draw_fn must not be null" );
+        if ( !ov.info.visible )         { return; }
+        
+    
+        switch (ov.info.type)
+        {
+            //      1.      DEFAULT RESIDENTS.
+            case WindowType::Resident   : {
+                _render_default_overlay         (ov,    cursor_px,  rect);
+                break;
+            }
+            
+            //      2.      CUSTOM RESIDENTS.
+            case WindowType::Custom     : {
+                _render_custom_overlay          (ov,    cursor_px,  rect);
+                break;
+            }
+            
+            //      0.      EPHENERAL OVERLAY WINDOWS.
+            default                     : {
+                IM_ASSERT( true && "ephemeral overlays are NOT implemented yet" );
+            }
+        }
+        
+        return;
+    }
+                       
+    //  "_render_overlay"
+# ifndef _USE_INTERNAL_CALLBACK
     inline void                 _render_overlay                 ( Overlay & ov, const std::function<ImVec2(ImVec2)> & render_fn,
                                                                   ImVec2 cursor_px, const ImRect & rect )
     {
@@ -241,13 +346,9 @@ protected:
         
         return;
     }
-                            
-                  
-                  
-                  
-                  
+#endif     //  _USE_INTERNAL_CALLBACK  //
+               
     //  "_init_resident_overlay"
-    //
     inline void                 _init_resident_overlay              (Overlay & ov)
     {
         const bool  promote_to_custom   = ov.style.window_size.has_value();
@@ -278,42 +379,42 @@ protected:
         
         return;
     }
-                        
-
-
-// *************************************************************************** //
-//
-//
-//      3.          PROTECTED DATA-MEMBERS...
-// *************************************************************************** //
-// *************************************************************************** //
-private:
-
-    OverlayID                           m_next_id                   { 1 };
-    //
-    std::vector<Overlay>                m_windows;                              //  dynamic overlays (current m_windows)
-    std::vector<Overlay>                m_residents;                            //  resident overlays never erased; their `visible` flag is toggled
-    //
-    //
-    //                              CACHE VARIABLES FOR RE-SIZE:
-    ImVec2                              m_pos_cache                 = { 0.0f,   0.0f };
-    ImVec2                              m_pivot_cache               = { 0.0f,   0.0f };
     
+    // *************************************************************************** //
+   
+   
+   
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
 
 
 
 
 // *************************************************************************** //
-//
-//
-//
 // *************************************************************************** //
-// *************************************************************************** //
-};//    END "EDITOR" CLASS DEFINITION.
+};//	END "OverlayManager_t" INLINE CLASS DEFINITION.
 
 
 
 
+
+
+//  DEFINE THE TYPES THAT WE SHIP...
+//
+extern template class       OverlayManager_t   < int8_t,           ImVec2 (&)(ImVec2) noexcept >;
+extern template class       OverlayManager_t   < int16_t,          ImVec2 (&)(ImVec2) noexcept >;
+extern template class       OverlayManager_t   < int32_t,          ImVec2 (&)(ImVec2) noexcept >;
+extern template class       OverlayManager_t   < int64_t,          ImVec2 (&)(ImVec2) noexcept >;
+//
+extern template class       OverlayManager_t   < uint8_t,          ImVec2 (&)(ImVec2) noexcept >;
+extern template class       OverlayManager_t   < uint16_t,         ImVec2 (&)(ImVec2) noexcept >;
+extern template class       OverlayManager_t   < uint32_t,         ImVec2 (&)(ImVec2) noexcept >;
+extern template class       OverlayManager_t   < uint64_t,         ImVec2 (&)(ImVec2) noexcept >;
 
 
 
