@@ -471,7 +471,7 @@ public:                                                                         
     /*                                                                                                                                  */      \
     /*      3.      OBJECT TYPES...                                                                                                     */      \
     using                           Vertex                      = Vertex_t          <VertexID>                                          ;       \
-    using                           VertexStyle                 = VertexStyle<MappingFn>                                                ;       \
+    using                           VertexStyle                 = VertexStyle       <MappingFn>                                         ;       \
     using                           VertexStyleType             = VertexStyle::StyleType                                                ;       \
 /*  using                           Handle                      = Handle_t          <HandleID>;                                         */      \
     using                           Point                       = Point_t           <PointID>                                           ;       \
@@ -500,7 +500,7 @@ public:                                                                         
     using                           ShapeState                  = ShapeState_t      <OverlayID>                                         ;       \
     using                           DebuggerState               = DebuggerState_t   <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     /*                                                                                                                                  */      \
-    using                           OverlayManager              = OverlayManager_t<OverlayID, MappingFn>                                ;       \
+    using                           OverlayManager              = OverlayManager_t  <OverlayID, MappingFn>                              ;       \
     using                           ResidentEntry               = ResidentEntry_t   <OverlayID>                                         ;
 
 //

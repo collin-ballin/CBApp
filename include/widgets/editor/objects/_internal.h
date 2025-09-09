@@ -88,11 +88,11 @@ struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ fi
 //
 enum class CanvasDrawChannel : uint8_t
 {
-    Bottom = 0,             //  LOWEST-MOST LAYER    (RESERVED).
+    Grid = 0,               //  Grid-Lines, Guides, etc.
 //
-    Grid,                   //  Grid-Lines, Guides, etc.
     Highlight,              //  selection glow, browser-hover glow
     Object,                 //  ENCLOSED-AREA / FILL for each object.
+    Accent,                 //  Used for ACCENTUATING FEATURES (Top-Level "Points", etc).
     Glyph,                  //  Handles, Cursor-Hints, etc
 //
     Top,                    //  TOP-MOST LAYER       (RESERVED).

@@ -517,22 +517,63 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
 //
 inline void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it)
 {
-    VertexStyle &       VS      = this->m_vertex_style;
+    using               Layer       = RenderCTX::Channel;
+    VertexStyle &       VS          = this->m_vertex_style;
+
+    
 
     ImPlot::PushPlotClipRect();
-    VS.PushDL(it.dl);
+    RenderCTX           CTX         (it.dl);
+    //
+    VS.PushDL(CTX.dl);
     //
     //
-        //  this->_render_lines             ( it.dl );          //  Enable once ported
-        this->_render_paths                 ( it.dl );          //  Enable once ported
-        this->_render_selection_highlight   ( it.dl );
-        //  this->_render_points                ( it.dl );          //  Already ported
+    //
+    //  //      1.      RENDER "Grid" ELEMENTS...
+        {
+            RenderCTX::Scope            scope       ( CTX,      Layer::Grid         );
+            //  this->_render_selection_highlight       ( it.dl                         );
+        }
+        
+        
+        //      2.      RENDER "Highlight" ELEMENTS...
+        {
+            RenderCTX::Scope            scope       ( CTX,      Layer::Highlight    );
+            this->_render_selection_highlight       ( it.dl                         );
+        }
+        
+        
+        //      3.      RENDER "Object" ELEMENTS...
+        {
+            RenderCTX::Scope            scope       ( CTX,      Layer::Object       );
+            this->_render_paths                     ( it.dl                         );
+        }
+        
+        
+        //      4.      RENDER "Accent" ELEMENTS...
+        {
+            RenderCTX::Scope            scope       ( CTX,      Layer::Accent       );
+            this->_render_points                    ( it.dl                         );
+        }
+        
+        
+        //      5.      RENDER "Glyph" ELEMENTS...
+        {
+            RenderCTX::Scope            scope       ( CTX,      Layer::Glyph        );
+        }
+        
+        
+        //      6.      RENDER "Top" ELEMENTS...
+        {
+            RenderCTX::Scope            scope       ( CTX,      Layer::Top          );
+        }
+    //
     //
     //
     VS.PopDL();
     ImPlot::PopPlotClipRect();
-    //
-    //      [ AUG. 29, 2025]    this->_clamp_plot_axes();
+
+
 
     return;
 }
@@ -616,21 +657,11 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
     
     
     
-    //  DRAW EACH OVERLAY WINDOW...
-    //
-    //  ImVec2 bb_min = ImGui::GetItemRectMin();   // full ImPlot widget (axes included)
-    //  ImVec2 bb_max = ImGui::GetItemRectMax();
-    //
+    //      LAST:   DRAW EACH OVERLAY WINDOW...
     m_ov_manager.Begin(
         /* cursor      */ ImGui::GetIO().MousePos,
-        /* full rect   */ ES.m_plot_bbox /*ImRect(bb_min, bb_max) */       // ← use full item rect
+        /* full rect   */ ES.m_plot_bbox
     );
-    //
-    //  m_ov_manager.Begin(
-    //      /* world→pixel */ [this](ImVec2 ws){ return world_to_pixels(ws); },
-    //      /* cursor      */ ImGui::GetIO().MousePos,
-    //      /* full rect   */ ES.m_plot_bbox /*ImRect(bb_min, bb_max) */       // ← use full item rect
-    //  );
 
     return;
 }
@@ -782,18 +813,18 @@ inline void Editor::_handle_default(const Interaction & it)
     [[maybe_unused]] ImGuiIO & io = ImGui::GetIO();
 
     // 0) Bezier control-handle drag (Alt + LMB) — unchanged
-    if (_try_begin_handle_drag(it)) {
+    if ( _try_begin_handle_drag(it) ) {
         _pen_update_handle_drag(it);                 // keep guide visible on first frame
         return;                                      // skip selection & other handlers this frame
     }
 
 
     //  1.   EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
-    if (!m_boxdrag.active
-        && _mode_has(CBCapabilityFlags_Select)
-        && m_boxdrag.view.visible
-        && m_boxdrag.view.hover_idx >= 0
-        && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    if ( !m_boxdrag.active
+         && _mode_has(CBCapabilityFlags_Select)
+         && m_boxdrag.view.visible
+         && m_boxdrag.view.hover_idx >= 0
+         && ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
     {
         // NOTE: view.tl_ws/br_ws are already the expanded bbox corners.
         // Ensure _start_bbox_drag treats these as final (i.e., does NOT re-expand).
@@ -804,7 +835,7 @@ inline void Editor::_handle_default(const Interaction & it)
 
 
     // 2) Active BBox drag — update and exit early
-    if (m_boxdrag.active) {
+    if ( m_boxdrag.active ) {
         _update_bbox();
         return;                                      // while dragging, ignore other inputs
     }
@@ -997,7 +1028,7 @@ inline void Editor::_handle_point(const Interaction& it)
 //
 inline void Editor::_handle_pen(const Interaction& it)
 {
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO & io = ImGui::GetIO();
 
     // ───── 0.  [Esc] aborts live path
     //  if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
