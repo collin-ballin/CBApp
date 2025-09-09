@@ -756,6 +756,12 @@ protected:
     // *************************************************************************** //
     //      RENDERING FUNCTIONS.            |   "render.cpp" ...
     // *************************************************************************** //
+    //
+    //                              NEW RENDERING FUNCTIONS:
+    void                                _RENDER_object_channel              (ImDrawList * dl) const noexcept;
+    //
+    //
+    //
     //                              GRID:
     void                                _grid_handle_shortcuts              (void);
     //
@@ -1335,14 +1341,6 @@ protected:
             if ( !pp || !pp->is_mutable() )                                 { it = m_sel.vertices.erase(it); }
             else                                                            { ++it; }
         }
-
-        //  3.  STAND-ALONE LINES (Deprecated)...
-        for ( auto it = m_sel.lines.begin(); it != m_sel.lines.end(); )
-        {
-            LineID lid = static_cast<LineID>(*it);
-            if ( lid >= m_lines.size() || !m_lines[lid].is_mutable() )      { it = m_sel.lines.erase(it); }
-            else                                                            { ++it; }
-        }
         
         
         //      4.      IF NO OBJECTS REMAIN IN SELECTION, CLOSE SELECTION WINDOW...
@@ -1803,7 +1801,6 @@ inline void to_json(nlohmann::json & j, const EditorSnapshot & s)
         { "vertices",               s.vertices              },
         { "paths",                  s.paths                 },
         { "points",                 s.points                },
-        { "lines",                  s.lines                 },
         { "selection",              s.selection             }
         //
         //  add grid / view / mode when you serialize them
@@ -1821,7 +1818,6 @@ inline void from_json(const nlohmann::json & j, EditorSnapshot & s)
     j.at(   "vertices"              )       .get_to (   s.vertices             );
     j.at(   "paths"                 )       .get_to (   s.paths                );
     j.at(   "points"                )       .get_to (   s.points               );
-    j.at(   "lines"                 )       .get_to (   s.lines                );
     j.at(   "selection"             )       .get_to (   s.selection            );
     
     return;

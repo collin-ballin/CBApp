@@ -90,12 +90,13 @@ enum class CanvasDrawChannel : uint8_t
 {
     Grid = 0,               //  Grid-Lines, Guides, etc.
 //
-    Highlight,              //  selection glow, browser-hover glow
-    Object,                 //  ENCLOSED-AREA / FILL for each object.
-    Accent,                 //  Used for ACCENTUATING FEATURES (Top-Level "Points", etc).
-    Glyph,                  //  Handles, Cursor-Hints, etc
+    Objects,                //  The "AREA"/"FILL"/"BODY" for each object (ONLY for CLOSED-PATHS).
+    Highlights,             //  Selection or Browser glow/highlight to make an object STAND-OUT.  Must appear BELOW the FEATURES but ABOVE THE AREA of an object for "silhouette" effect to create contrast.
+    Features,               //  FEATURES of each object.  E.g.: the STROKE/PERIMETER (MUST appear ON-TOP of an object's area/fill).
+    Accents,                //  ACCENTUATING FEATURES ("Points"/"Vertices" MUST appear ON-TOP of PATH-STROKE, etc).
 //
-    Top,                    //  TOP-MOST LAYER       (RESERVED).
+    Glyphs,                 //  Handles, Selectables, Snapping-Locations (not implemented yet), USER-INTERACTIBLES, etc.  Must appear ON-TOP of ALL OBJECT GEOMETRY.
+    Top,                    //  TOP-MOST LAYER       (RESERVED FOR CURSORS, ETC).
 //
     COUNT
 };

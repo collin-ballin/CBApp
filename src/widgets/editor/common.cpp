@@ -414,16 +414,6 @@ void Editor::copy_to_clipboard(void)
         m_clipboard.paths.push_back(std::move(dup));
     }
 
-    // --- Lines ---
-    for (size_t li : m_sel.lines)
-    {
-        const Line& src = m_lines[li];
-        Line dup = src;
-        dup.a = static_cast<uint32_t>(add_vertex(src.a));
-        dup.b = static_cast<uint32_t>(add_vertex(src.b));
-        m_clipboard.lines.push_back(dup);
-    }
-
     // --- Points ---
     for (size_t pi : m_sel.points)
     {
@@ -501,19 +491,6 @@ void Editor::paste_from_clipboard(ImVec2 target_ws)
         m_sel.vertices.insert(dup.v);
     }
 
-    // 3. duplicate lines
-    for (const Line& l_src : m_clipboard.lines)
-    {
-        Line dup = l_src;
-        dup.a = map_vertex(l_src.a);
-        dup.b = map_vertex(l_src.b);
-
-        m_lines.push_back(dup);
-        m_sel.lines.insert(static_cast<LineID>(m_lines.size() - 1));
-        m_sel.vertices.insert(dup.a);
-        m_sel.vertices.insert(dup.b);
-    }
-
     // 4. duplicate paths
     for (const Path& p_src : m_clipboard.paths)
     {
@@ -534,6 +511,8 @@ void Editor::paste_from_clipboard(ImVec2 target_ws)
         for (VertexID vid : m_paths.back().verts)
             m_sel.vertices.insert(vid);
     }
+    
+    return;
 }
 
 
@@ -548,21 +527,15 @@ void Editor::delete_selection(void)
 
     // --- gather indices -------------------------------------------------
     std::vector<size_t> pts(m_sel.points.begin(),  m_sel.points.end());
-    std::vector<size_t> lns(m_sel.lines.begin(),   m_sel.lines.end());
     std::vector<size_t> pth(m_sel.paths.begin(),   m_sel.paths.end());
 
     // erase from back → front to keep indices stable
     std::sort(pts.rbegin(), pts.rend());
-    std::sort(lns.rbegin(), lns.rend());
     std::sort(pth.rbegin(), pth.rend());
 
     // --- points ---------------------------------------------------------
     for (size_t i : pts)
         m_points.erase(m_points.begin() + static_cast<long>(i));
-
-    // --- lines ----------------------------------------------------------
-    for (size_t i : lns)
-        m_lines.erase(m_lines.begin() + static_cast<long>(i));
 
     // --- paths (use existing helper so vertices/orphans are handled) ---
     for (size_t i : pth)

@@ -74,7 +74,6 @@ inline void Editor::_MECH_change_state([[maybe_unused]] const Interaction & it)
     {
         if ( ImGui::IsKeyPressed(ImGuiKey_V)                            )                   m_mode = Mode::Default;
         if ( ImGui::IsKeyPressed(ImGuiKey_H)                            )                   m_mode = Mode::Hand;
-        if ( ImGui::IsKeyPressed(ImGuiKey_N)                            )                   m_mode = Mode::Point;
         if ( ImGui::IsKeyPressed(ImGuiKey_P)                            )                   m_mode = Mode::Pen;
         if ( ImGui::IsKeyPressed(ImGuiKey_C)                            )                   m_mode = Mode::Scissor;
         if ( ImGui::IsKeyPressed(ImGuiKey_S)                            )                   m_mode = Mode::Shape;
@@ -118,8 +117,6 @@ inline void Editor::_MECH_dispatch_tool_handler([[maybe_unused]] const Interacti
         switch ( this->m_mode )
         {
             case Mode::Hand             :   { _handle_hand            (it);           break;    }
-            case Mode::Line             :   { _handle_line            (it);           break;    }
-            case Mode::Point            :   { _handle_point           (it);           break;    }
             case Mode::Pen              :   { _handle_pen             (it);           break;    }
             case Mode::Scissor          :   { _handle_scissor         (it);           break;    }
             case Mode::Shape            :   { _handle_shape           (it);           break;    }
@@ -376,7 +373,7 @@ void Editor::_selbox_rebuild_view_if_needed([[maybe_unused]] const Interaction &
     BoxDrag::ViewCache &    V           = m_boxdrag.view;
 
     // Decide visibility: hide for single-vertex-only selection (matches your renderer)
-    const bool has_paths_or_lines = !m_sel.paths.empty() || !m_sel.lines.empty();
+    const bool has_paths_or_lines = !m_sel.paths.empty();
     const bool single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
 
     ImVec2 tl_tight{}, br_tight{};
@@ -536,34 +533,41 @@ inline void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it)
         }
         
         
-        //      2.      RENDER "Highlight" ELEMENTS...
+        //      2.      RENDER "Object" ELEMENTS...
         {
-            RenderCTX::Scope            scope       ( CTX,      Layer::Highlight    );
-            this->_render_selection_highlight       ( it.dl                         );
-        }
-        
-        
-        //      3.      RENDER "Object" ELEMENTS...
-        {
-            RenderCTX::Scope            scope       ( CTX,      Layer::Object       );
+            RenderCTX::Scope            scope       ( CTX,      Layer::Objects      );
             this->_render_paths                     ( it.dl                         );
         }
         
         
-        //      4.      RENDER "Accent" ELEMENTS...
+        //      3.      RENDER "Highlight" ELEMENTS...
         {
-            RenderCTX::Scope            scope       ( CTX,      Layer::Accent       );
+            RenderCTX::Scope            scope       ( CTX,      Layer::Highlights   );
+            this->_render_selection_highlight       ( it.dl                         );
+        }
+        
+        
+        //      4.      RENDER "Feature" ELEMENTS...
+        {
+            RenderCTX::Scope            scope       ( CTX,      Layer::Features     );
+        }
+        
+        
+        //      5.      RENDER "Accent" ELEMENTS...
+        {
+            RenderCTX::Scope            scope       ( CTX,      Layer::Accents      );
             this->_render_points                    ( it.dl                         );
         }
         
         
-        //      5.      RENDER "Glyph" ELEMENTS...
+        
+        //      6.      RENDER "Glyph" ELEMENTS...
         {
-            RenderCTX::Scope            scope       ( CTX,      Layer::Glyph        );
+            RenderCTX::Scope            scope       ( CTX,      Layer::Glyphs       );
         }
         
         
-        //      6.      RENDER "Top" ELEMENTS...
+        //      7.      RENDER "Top" ELEMENTS...
         {
             RenderCTX::Scope            scope       ( CTX,      Layer::Top          );
         }

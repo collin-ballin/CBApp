@@ -145,29 +145,6 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction & it) const
             return Hit{ Hit::Type::Point, static_cast<size_t>(pi) };
     }
 
-
-    // ───────────────────────────────────────────── 3. standalone lines (unchanged)
-    for (size_t i = 0; i < m_lines.size(); ++i)
-    {
-        const Vertex* a = find_vertex(m_vertices, m_lines[i].a);
-        const Vertex* b = find_vertex(m_vertices, m_lines[i].b);
-        if (!a || !b) continue;
-
-        ImVec2 A = ws2px({ a->x, a->y });
-        ImVec2 B = ws2px({ b->x, b->y });
-
-        ImVec2 AB{ B.x - A.x, B.y - A.y };
-        ImVec2 AP{ ms.x - A.x, ms.y - A.y };
-        float  len_sq = AB.x*AB.x + AB.y*AB.y;
-        float  t = (len_sq > 0.f) ? (AP.x*AB.x + AP.y*AB.y) / len_sq : 0.f;
-        t = std::clamp(t, 0.f, 1.f);
-
-        ImVec2 C{ A.x + AB.x*t, A.y + AB.y*t };
-        float  dx = ms.x - C.x, dy = ms.y - C.y;
-        if (dx*dx + dy*dy <= m_style.HIT_THRESH_SQ)
-            return Hit{ Hit::Type::Line, i };
-    }
-
     // ───────────────────────────────────────────── 4. paths
     // Build vector of unlocked+visible paths, sort by z (low→high), iterate reverse
     std::vector<const Path*> vec;
@@ -464,15 +441,15 @@ void Editor::add_hit_to_selection(const Hit & hit)
     }
     //
     //  3.  CLICKED ON LINE.
-    else
-    {
-        size_t    idx = hit.index;
-        uint32_t  va  = m_lines[idx].a,
-                  vb  = m_lines[idx].b;
-        m_sel.lines.insert(idx);
-        m_sel.vertices.insert(va);
-        m_sel.vertices.insert(vb);
-    }
+    //  else
+    //  {
+    //      size_t    idx = hit.index;
+    //      uint32_t  va  = m_lines[idx].a,
+    //                vb  = m_lines[idx].b;
+    //      m_sel.lines.insert(idx);
+    //      m_sel.vertices.insert(va);
+    //      m_sel.vertices.insert(vb);
+    //  }
     
     return;
 }
@@ -765,16 +742,6 @@ inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction
                         // (Optional) also clear point glyphs for those vids if you mirror points↔verts.
                     }
                 }
-                else if (hit.type == Hit::Type::Line)
-                {
-                    const size_t  idx = hit.index;
-                    const uint32_t va = m_lines[idx].a, vb = m_lines[idx].b;
-                    if (!m_sel.lines.erase(idx)) {
-                        m_sel.lines.insert(idx); m_sel.vertices.insert(va); m_sel.vertices.insert(vb);
-                    } else {
-                        m_sel.vertices.erase(va); m_sel.vertices.erase(vb);
-                    }
-                }
             }
         }
 
@@ -858,15 +825,6 @@ void Editor::_rebuild_vertex_selection()
     {
         if (pi < m_points.size())
             m_sel.vertices.insert(m_points[pi].v);
-    }
-
-
-    for (size_t li : m_sel.lines)
-    {
-        if (li < m_lines.size()) {
-            m_sel.vertices.insert(m_lines[li].a);
-            m_sel.vertices.insert(m_lines[li].b);
-        }
     }
     
 
@@ -962,8 +920,7 @@ void Editor::_MECH_hit_detection(const Interaction& it) const
         }
 
         //      3.  HOVERED OVER "LINE" OR "PATH".
-        case Hit::Type::Path :                       // open or closed path
-        case Hit::Type::Line : {
+        case Hit::Type::Path : {                    // open or closed path
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             break;
         }
@@ -1122,19 +1079,15 @@ void Editor::_update_lasso(const Interaction & it)
         for (size_t i = 0; i < m_lines.size(); ++i)
         {
             const Line& ln = m_lines[i];
-            if (!ln.is_mutable()) continue;                     // NEW guard
+            if ( !ln.is_mutable() )     { continue; }                     // NEW guard
 
             const Vertex* a = find_vertex(m_vertices, ln.a);
             const Vertex* b = find_vertex(m_vertices, ln.b);
-            if (!a || !b) continue;
-            if (!seg_rect_intersect({a->x,a->y}, {b->x,b->y}, tl_w, br_w))
-                continue;
-
-            if (additive) {
-                if (!m_sel.lines.erase(i)) m_sel.lines.insert(i);
-            } else {
-                m_sel.lines.insert(i);
-            }
+            if ( !a || !b )     { continue; }
+            
+            if ( !seg_rect_intersect({a->x,a->y}, {b->x,b->y}, tl_w, br_w) )
+                { continue; }
+                
         }
 
         // ---------- Paths ----------
@@ -1496,16 +1449,6 @@ inline bool Editor::_hit_is_in_current_selection(const Hit & hit) const
         case Hit::Type::Path: {
             const size_t idx = hit.index;
             return m_sel.paths.count(idx) != 0;
-        }
-        
-        case Hit::Type::Line: {
-            const size_t idx = hit.index;
-            if (m_sel.lines.count(idx)) return true;
-            if (idx < m_lines.size()) {
-                const uint32_t va = m_lines[idx].a, vb = m_lines[idx].b;
-                if (m_sel.vertices.count(va) || m_sel.vertices.count(vb)) return true;
-            }
-            return false;
         }
         
         case Hit::Type::Handle: {

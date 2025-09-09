@@ -88,8 +88,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 enum class Mode : int {
     Default = 0,        //  "Select"                (KEY: "V").
     Hand,               //  "Hand"                  (KEY: "H").
-    Line,
-    Point,              //  "Point"                 (KEY: "N").
     Pen,                //  "Pen"                   (KEY: "P").
     Scissor,            //  "Scissors"              (KEY: "C").
     Shape,              //  "Scissors"              (KEY: "C").
@@ -103,9 +101,8 @@ enum class Mode : int {
 //  "DEF_EDITOR_STATE_NAMES"
 static constexpr std::array<const char *, static_cast<size_t>(Mode::COUNT)>
     DEF_EDITOR_STATE_NAMES  = { {
-        "Default",                      "Hand",                     "Line",                 "Point",
-        "Pen",                          "Scissor",                  "Shape",                "Add Anchor Point",
-        "Remove Anchor Point",          "Edit Anchor"
+        "Default"                    , "Hand"                     , "Pen"                     , "Scissor"
+      , "Shape"                      , "Add Anchor"               , "Remove Anchor"           , "Edit Anchor"
 } };
 
 
@@ -153,8 +150,6 @@ static constexpr std::array< std::underlying_type_t<CBCapabilityFlags_>, static_
 DEF_MODE_CAPABILITIES       = {
 /*  Default             */      CBCapabilityFlags_All,
 /*  Hand                */      CBCapabilityFlags_ReadOnly,
-/*  Line                */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
-/*  Point               */      CBCapabilityFlags_Navigation | CBCapabilityFlags_Select | CBCapabilityFlags_CursorHint,
 /*  Pen Tool,           */      CBCapabilityFlags_Navigation | CBCapabilityFlags_CursorHint,
 /*  Scisssor Tool       */      CBCapabilityFlags_Plain,
 /*  Shape               */      CBCapabilityFlags_Plain,
@@ -206,7 +201,7 @@ enum class IOResult {
 //  "DEF_IORESULT_NAMES"
 static constexpr cblib::EnumArray< IOResult, const char * >
     DEF_IORESULT_NAMES  = { {
-        "OK",   "IO Error",     "Parsing Error",    "Version Mismatch"
+        "OK",   "I/O Error",    "Parsing Error",    "Version Mismatch"
 } };
 
 
@@ -225,14 +220,17 @@ static constexpr cblib::EnumArray< IOResult, const char * >
 //  "HitType"
 //
 enum class HitType :uint8_t {
-    Point = 0, Line, Path, Handle,
+    Point = 0,
+    Path,
+    Handle,
+//
     COUNT
 };
 //
 //  "DEF_HIT_TYPE_NAMES"
 static constexpr cblib::EnumArray< HitType, const char * >
     DEF_HIT_TYPE_NAMES  = { {
-        "Point",   "Line",     "Path",    "Handle"
+        "Point",   "Path",     "Handle"
 } };
 
 
@@ -520,15 +518,14 @@ struct Selection_t
 //
 //
 //
-    inline void                         clear           (void)          { vertices.clear(); points.clear(); lines.clear(); paths.clear();               }        // new
-    inline bool                         empty           (void) const    { return vertices.empty() && points.empty() && lines.empty() && paths.empty();  }
-    inline bool                         is_empty        (void) const    { return paths.empty();                                                         }
+    inline void                         clear           (void)          { vertices.clear(); points.clear(); paths.clear();                  }        // new
+    inline bool                         empty           (void) const    { return vertices.empty() && points.empty() && paths.empty();       }
+    inline bool                         is_empty        (void) const    { return paths.empty();                                             }
 //
 //
 //
     std::unordered_set<uint32_t>        vertices                {   };
     std::unordered_set<size_t>          points                  {   };
-    std::unordered_set<size_t>          lines                   {   };
     std::unordered_set<size_t>          paths                   {   };     // ← NEW
 //
 //                                  CACHED ITEMS:
@@ -542,7 +539,6 @@ inline void to_json(nlohmann::json & j, const Selection_t<VID,PtID,LID,PID,ZID,H
 {
     j = { { "vertices",  std::vector<VID>  (s.vertices.begin(), s.vertices.end()) },
           { "points",    std::vector<PtID> (s.points  .begin(), s.points  .end()) },
-          { "lines",     std::vector<LID>  (s.lines   .begin(), s.lines   .end()) },
           { "paths",     std::vector<PID>  (s.paths   .begin(), s.paths   .end()) } };
 }
 //
@@ -552,12 +548,10 @@ inline void from_json(const nlohmann::json & j, Selection_t<VID,PtID,LID,PID,ZID
 {
     std::vector<VID >  vs;  j.at("vertices").get_to(vs);
     std::vector<PtID>  ps;  j.at("points"  ).get_to(ps);
-    std::vector<LID >  ls;  j.at("lines"   ).get_to(ls);
     std::vector<PID >  pa;  j.at("paths"   ).get_to(pa);
 
     s.vertices.clear();  s.vertices.insert(vs.begin(), vs.end());
     s.points  .clear();  s.points  .insert(ps.begin(), ps.end());
-    s.lines   .clear();  s.lines   .insert(ls.begin(), ls.end());
     s.paths   .clear();  s.paths   .insert(pa.begin(), pa.end());
 }
 

@@ -147,7 +147,7 @@ inline void Editor::_selection_mutable_shortcuts([[maybe_unused]] const Interact
 
     //      X.      CREATE GROUP.           [ CTRL + G ].
     if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_G) &&
-         ( m_sel.points.size() + m_sel.lines.size() + m_sel.paths.size() ) > 1 )
+         ( m_sel.points.size() + m_sel.paths.size() ) > 1 )
     {
         //
         //  TODO: group_selection();

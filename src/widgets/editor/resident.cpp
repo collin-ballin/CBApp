@@ -339,7 +339,6 @@ void Editor::_draw_selection_resident(void)
 {
     const size_t        N_vertices      = m_sel.vertices.size();
     const size_t        N_points        = m_sel.points.size();
-    const size_t        N_lines         = m_sel.lines.size();
     const size_t        N_paths         = m_sel.paths.size();
     
     
@@ -351,7 +350,7 @@ void Editor::_draw_selection_resident(void)
         //
         ImGui::SameLine(0.0f, 8.0f);
         //
-        ImGui::Text("Paths: %zu.  Lines: %zu.  Points: %zu.  Vertices: %zu.", N_paths, N_lines, N_points, N_vertices);
+        ImGui::Text("Paths: %zu.  Points: %zu.  Vertices: %zu.", N_paths, N_points, N_vertices);
     //
     //
     S.PopFont();
