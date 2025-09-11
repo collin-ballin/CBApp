@@ -96,12 +96,129 @@ struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ fi
 //
 //
 //
-//      1.      RENDERING UTILITIES...
+//      2.      RENDERING UTILITIES...
 // *************************************************************************** //
 // *************************************************************************** //
 
 
 
+namespace render { //     BEGINNING NAMESPACE "render"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+// *************************************************************************** //
+//              2A.     TYPE TRAITS.
+// *************************************************************************** //
+
+//  "ws_to_px_CallbackTT"
+//
+template<typename Func>
+concept     ws_to_px_CallbackTT     =
+    requires (Func tp, ImVec2 ws) {
+        { tp(ws) } noexcept -> std::same_as<ImVec2>;
+    }
+    && std::is_nothrow_invocable_r_v<ImVec2, Func, ImVec2>;
+
+
+//  "get_vertex_CallbackTT"
+//
+template<class Func, class V>
+concept     get_vertex_CallbackTT   =
+    requires (const std::vector<V>& vec, typename V::id_type id) {
+        { std::invoke(std::declval<std::decay_t<Func>>(), vec, id) }
+            noexcept -> std::same_as<const V*>;
+    } &&
+    std::is_nothrow_invocable_r_v<
+        const V*, std::decay_t<Func>, const std::vector<V>&, typename V::id_type>;
+
+
+
+
+// *************************************************************************** //
+//              2B.     SUBSIDIARY TYPES IMPLEMENTATION.
+// *************************************************************************** //
+
+//  "RenderCallbacks"
+//
+template< typename Vertex, typename MapFn, typename GVertexFn >
+    requires ws_to_px_CallbackTT        <MapFn>                     &&
+             get_vertex_CallbackTT      <GVertexFn, Vertex>
+struct RenderCallbacks
+{
+    MapFn                               ws_to_px            ;       //  e.g., lambda:   [this](ImVec2 ws)               { return world_to_pixels(ws);   }
+    GVertexFn                           get_vertex          ;       //  e.g., lambda:   [this](VID id) -> const V *     { return find_vertex(...);      }
+//
+//
+//
+    inline                              RenderCallbacks                     (MapFn ws_to_px_, GVertexFn get_vertex_) noexcept
+                                        : ws_to_px(ws_to_px_)    , get_vertex(get_vertex_)      {   }
+//
+//
+//
+//  [ LATER... ]        more hooks (selection tint, masks) with additional concepts
+//
+};
+
+
+
+//  "RenderCallbacks"
+//
+struct RenderFrameArgs
+{
+    ImDrawList *        dl                  ;       //  target draw list (already set to the channel)
+    const int           bezier_fill_steps   ;       //  e.g., style.ms_BEZIER_FILL_STEPS
+    const int           bezier_segments     ;       //  (for strokes later)
+//
+//
+//
+//  [ LATER... ]        const bool& aa, const float& width_scale, etc.
+//
+};
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}//   END OF "render" NAMESPACE.
+
+
+
+
+
+
+// *************************************************************************** //
+//              2C.     MAIN "RenderCTX" IMPLEMENTATION.
+// *************************************************************************** //
+
+//  "RenderCTX_t"
+//
+template<typename V, typename MapFn, typename GVertexFn>
+struct RenderCTX_t
+{
+    using                               Callbacks                           = render::RenderCallbacks<V, MapFn, GVertexFn>;
+    using                               Args                                = render::RenderFrameArgs;
+//
+    inline                              RenderCTX_t                         (MapFn ws_to_px_, GVertexFn get_vertex_) noexcept
+        : callbacks(ws_to_px_, get_vertex_)
+        //  , data( std::addressof(data_) )
+        {   }
+//
+//
+//
+    const Callbacks                     callbacks                   ;       //  persistent, safe to keep by ref
+    Args                                args            {   }       ;       //  per-frame, safe during draw pass
+};
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "RENDERING UTILITIES".
 
 
 
@@ -110,6 +227,17 @@ struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ fi
 
 
 
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      3.      RENDERING UTILITIES...
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "CanvasDrawChannel"
 //

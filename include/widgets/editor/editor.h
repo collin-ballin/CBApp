@@ -276,7 +276,7 @@ public:
                 /*  background      */  0x00000000,
                 /*  win_rounding    */  8,
             //
-                /*  window_size     */  {       {     { 275.0f,      500.0f },      { { 100.0f,        50.0f },     { 375.0f,       750.0f } }   }      }
+                /*  window_size     */  {       {     { 375.0f,      500.0f },      { { 100.0f,        100.0f },     { 450.0f,       750.0f } }   }      }
             }
         },
         //
@@ -327,7 +327,6 @@ protected:
     std::vector<Vertex>                 m_vertices;
     std::vector<Point>                  m_points;
     std::vector<Path>                   m_paths;                //  New path container
-    //  std::vector<Line>                   m_lines;
     std::unordered_set<HandleID>        m_show_handles;         //  List of which glyphs we WANT to display Bezier points for.
     //
     //
@@ -403,9 +402,9 @@ protected:
     // *************************************************************************** //
     //                              SUBSIDIARY STATES:
     EditorState                         m_editor_S                      {   };        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
-    //  RenderState                         m_render_S                      {   };
+    RenderCTX                           m_render_ctx;
     BrowserState                        m_browser_S                     {   };
-//
+    //
     Selection                           m_sel;
     mutable BoxDrag                     m_boxdrag;
     MoveDrag                            m_movedrag;
@@ -461,8 +460,8 @@ protected:
     //  bool                                m_show_sel_overlay              = false;
     //
     //                              LASSO TOOL / SELECTION:
-    ImVec2                              m_lasso_start                   = ImVec2(0.f, 0.f);
-    ImVec2                              m_lasso_end                     = ImVec2(0.f, 0.f);
+    ImVec2                              m_lasso_start                   = ImVec2(0.0f,  0.0f);
+    ImVec2                              m_lasso_end                     = ImVec2(0.0f,  0.0f);
     
     // *************************************************************************** //
     //
@@ -473,11 +472,11 @@ protected:
     //                              INDICES:
     std::optional<Hit>                  m_pending_hit;   // candidate under mouse when button pressed   | //  pending click selection state ---
     VertexID                            m_next_id                       = 1;
-    PathID                              m_next_pid                      = 1;        // counter for new path IDs
+    PathID                              m_next_pid                      = 1;                    // counter for new path IDs
     //
     //                              BBOX SCALING:
     mutable int                         m_hover_handle                  = -1;
-    mutable ImVec2                      m_origin_scr                    = {0.f, 0.f};   // screen-space canvas origin                       //  -1 = none, 0-7 otherwise (corners+edges)
+    mutable ImVec2                      m_origin_scr                    = {0.0f,    0.0f};      // screen-space canvas origin                       //  -1 = none, 0-7 otherwise (corners+edges)
     //
     //                              UTILITY:
     //  float                               m_bar_h                         = 0.0f;
@@ -650,7 +649,7 @@ protected:
     //                              "VERTICES" TRAIT:
     void                                _draw_vertex_panel                      (Path & path, [[maybe_unused]] const size_t , const LabelFn & callback);
     void                                _draw_vertex_selector_column            (Path & , const size_t );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
-    void                                _draw_vertex_inspector_column           (Path & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
+    void                                _draw_vertex_inspector_column           (Path & , [[maybe_unused]] const LabelFn & callback);  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
     //
     //                              "PAYLOAD" TRAIT:
     void                                _draw_payload_panel                     (Path & path, [[maybe_unused]] const size_t , const LabelFn & );
@@ -881,8 +880,8 @@ protected:
     //      UTILITIES.                      |   "utility.cpp" ...
     // *************************************************************************** //
     //                              GENERAL APPLICATION HELPERS:
-    Vertex *                            find_vertex                         (std::vector<Vertex> & , VertexID);
-    const Vertex *                      find_vertex                         (const std::vector<Vertex> & , VertexID) const;
+    //  Vertex *                            find_vertex                         (std::vector<Vertex> & , VertexID);
+    //  const Vertex *                      find_vertex                         (const std::vector<Vertex> & , VertexID) const;
     std::optional<EndpointInfo>         _endpoint_if_open                   (PathID vid) const;
     //
     //                              DATA MODIFIER UTILITIES
@@ -1057,6 +1056,18 @@ protected:
         ImPlotPoint p = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));
         return { static_cast<float>(p.x), static_cast<float>(p.y) };
     }
+    
+    //  "find_vertex"
+    static inline Vertex *              find_vertex                             (std::vector<Vertex> & verts, VertexID id) noexcept
+        { for (auto & v : verts) {  if (v.id == id) {return &v;}  } return nullptr; }
+    //
+    static inline const Vertex *        find_vertex                             (const std::vector<Vertex> & verts, VertexID id) noexcept
+        { for (auto & v : verts) if (v.id == id) return &v; return nullptr; }
+
+
+    
+    
+    
     
     //  "pixels_to_world"
     inline ImVec2                       pixels_to_world                         (ImVec2 scr) const {

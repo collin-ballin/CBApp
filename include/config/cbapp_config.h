@@ -332,34 +332,99 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
 //
-//      3.1     APPLICATION APIs AND INTERNAL TYPENAME ALIASES...
+//      3.1.    MAIN APPLICATION APIs AND INTERNAL TYPENAME ALIASES...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  MEMBER VARIABLE NAME FOR "AppState" OBJECT IN EACH CLASS...
-//      - Using this to consosolidate the lengthy member-accessor statements "this->m_state.my_object.my_data_member", etc ...
+
+
+// *************************************************************************** //
+//
+//              3.1A.   "CBLIB" ALIASES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+//  "CB_FDTD_TYPES_API"                             |   ** EXPORTED**
+//      - Typename aliases to define types used for the FDTD engine.
+// *************************************************************************** //
+#define                 CB_FDTD_TYPES_API                                                       \
+    template<typename T_>                                                                       \
+    using               Param                           = cblib::math::Param<T_>;               \
+    template<typename T_>                                                                       \
+    using               Range                           = cblib::math::Range<T_>;
+//
+// *************************************************************************** //   CB_FDTD_TYPES_API
+
+
+
+//  "CBAPP_CBLIB_TYPES_API"                         |   ** EXPORTED**
+//      - Exported API to provide alias for types afforded by "cblib".
+// *************************************************************************** //
+#define                 CBAPP_CBLIB_TYPES_API                                                   \
+    template<typename T_>                                                                       \
+    using               Param                           = cblib::math::Param<T_>;               \
+    template<typename T_>                                                                       \
+    using               Range                           = cblib::math::Range<T_>;
+//
+// *************************************************************************** //   CBAPP_CBLIB_TYPES_API
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CBLIB" ALIASES.
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//              3.1B.   "MAIN APPLICATION" ALIASES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "CBAPP_STATE_NAME
+//
+//      MEMBER VARIABLE NAME FOR "AppState" OBJECT IN EACH CLASS...
+//          - Using this to consosolidate the lengthy member-accessor statements "this->m_state.my_object.my_data_member", etc ...
 // *************************************************************************** //
 #define                 CBAPP_STATE_NAME                S
-
 //
 // *************************************************************************** //
-
-
-
 
 
 
 //  _CBAPP_APPSTATE_INTERNAL_ALIAS_API              |   ** INTERNAL **
 //
-//      - ** **.
-//
 //      - "API" USED **EXCLUSIVELY** INSIDE "AppState" CLASS.
 //      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
-//
 // *************************************************************************** //
 #define                 _CBAPP_APPSTATE_INTERNAL_ALIAS_API                                                      \
 public:                                                                                                         \
@@ -382,12 +447,8 @@ public:                                                                         
     using               Logger                          = utl::Logger;                                          \
     using               LogLevel                        = Logger::Level;                                        \
     using               Tab_t                           = utl::Tab_t;
-
 //
 // *************************************************************************** //   _CBAPP_APPSTATE_INTERNAL_ALIAS_API
-
-
-
 
 
 
@@ -395,41 +456,63 @@ public:                                                                         
 //
 //      - "API" USED BY "CBApp" DELEGATOR CLASSES THAT USE AN "AppState" OBJECT.
 //      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
-//
 // *************************************************************************** //
 #define                 CBAPP_APPSTATE_ALIAS_API                                                \
     using               AppState                        = app::AppState;                        \
     using               WinInfo                         = app::WinInfo;                         \
                                                         CBAPP_CBLIB_TYPES_API                   \
                                                         _CBAPP_APPSTATE_INTERNAL_ALIAS_API
-
 //                                                      
 // *************************************************************************** //   CBAPP_APPSTATE_ALIAS_API
 
 
 
-
-
-
-//  "CBAPP_CBLIB_TYPES_API"                         |   ** EXPORTED**
-//      - Exported API to provide alias for types afforded by "cblib".
+//
+//
 //
 // *************************************************************************** //
-#define                 CBAPP_CBLIB_TYPES_API                                                   \
-    template<typename T_>                                                                       \
-    using               Param                           = cblib::math::Param<T_>;               \
-    template<typename T_>                                                                       \
-    using               Range                           = cblib::math::Range<T_>;
+// *************************************************************************** //   END "MAIN APP" ALIASES.
 
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
 //
-// *************************************************************************** //   CBAPP_CBLIB_TYPES_API
+//              3.1C.   "EDITOR APPLICATION" ALIASES...
+// *************************************************************************** //
+// *************************************************************************** //
 
-
-
+//  "_EDITOR_APP_AUXILIARY_API"                     |   ** INTERNAL **
+//
+//      ** ID-VALUE TEMPLATE CONVENTIONS **
+//      ID Template Parameters MUST ALWAYS follow this order:
+//              template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >=
+// *************************************************************************** //
+#define                 _EDITOR_APP_AUXILIARY_API                                                                                               \
+public:                                                                                                                                         \
+    /*                                                                                                                                  */      \
+    /*      1.      CALLBACK TYPES...                                                                                                   */      \
+    using                           LabelFn                     = std::function<void(const char *)>                                     ;       \
+    /*                                                                                                                                  */      \
+    using                           MappingFn                   = ImVec2 (&)(ImVec2) noexcept                                           ;       \
+    /*  using                           GetVertexFn                 = const Vertex * (*)(void * , VertexID) ; */
+    
+//
+// *************************************************************************** //   _EDITOR_APP_AUXILIARY_API
 
 
 
 //  "_EDITOR_APP_INTERNAL_API"                      |   ** EXPORTED**
+//
+// *************************************************************************** //
 //
 //      - "API" USED **EXCLUSIVELY** INSIDE "AppState" CLASS.
 //      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
@@ -442,6 +525,9 @@ public:                                                                         
 #define                 _EDITOR_APP_INTERNAL_API                                                                                                \
 public:                                                                                                                                         \
     /*                                                                                                                                  */      \
+    /*      0.      OTHER MACROS...                                                                                                     */      \
+    _EDITOR_APP_AUXILIARY_API                                                                                                           \
+    /*                                                                                                                                  */      \
     /*      1.      GENERIC TYPES...                                                                                                    */      \
     using                           Font                        = app::Font_t                                                           ;       \
     using                           Logger                      = utl::Logger                                                           ;       \
@@ -453,9 +539,6 @@ public:                                                                         
     using                           PopupHandle                 = EditorPopupBits                                                       ;       \
     using                           CBEditorPopupFlags          = CBEditorPopupFlags_                                                   ;       \
     using                           PopupInfo                   = EditorPopupInfo                                                       ;       \
-                                                                                                                                        \
-    using                           LabelFn                     = std::function<void(const char *)>                                     ;       \
-    using                           MappingFn                   = ImVec2 (&)(ImVec2) noexcept                                           ;       \
     /*                                                                                                                                  */      \
     /*      2.      ID/INDEX TYPES...                                                                                                   */      \
     template<typename T, typename Tag>                                                                                                  \
@@ -471,8 +554,6 @@ public:                                                                         
     /*                                                                                                                                  */      \
     /*      3.      OBJECT TYPES...                                                                                                     */      \
     using                           Vertex                      = Vertex_t          <VertexID>                                          ;       \
-    using                           VertexStyle                 = VertexStyle       <MappingFn>                                         ;       \
-    using                           VertexStyleType             = VertexStyle::StyleType                                                ;       \
 /*  using                           Handle                      = Handle_t          <HandleID>;                                         */      \
     using                           Point                       = Point_t           <PointID>                                           ;       \
     using                           Line                        = Line_t            <LineID, ZID>                                       ;       \
@@ -500,41 +581,41 @@ public:                                                                         
     using                           ShapeState                  = ShapeState_t      <OverlayID>                                         ;       \
     using                           DebuggerState               = DebuggerState_t   <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     /*                                                                                                                                  */      \
+    /*                                                                                                                                  */      \
+    /*                                                                                                                                  */      \
+    /*      7.      MORE CALLBACKS...                                                                                                   */      \
+    using                           GetVertexFn                 = const Vertex* (&)(const std::vector<Vertex>&, VertexID) noexcept      ;       \
+    /*                                                                                                                                  */      \
+    /*      8.      OTHER OBJECT TYPES...                                                                                               */      \
     using                           OverlayManager              = OverlayManager_t  <OverlayID, MappingFn>                              ;       \
-    using                           ResidentEntry               = ResidentEntry_t   <OverlayID>                                         ;
-
+    using                           ResidentEntry               = ResidentEntry_t   <OverlayID>                                         ;       \
+    using                           VertexStyle                 = VertexStyle       <MappingFn>                                         ;       \
+    using                           VertexStyleType             = VertexStyle::StyleType                                                ;       \
+    using                           RenderCTX                   = RenderCTX_t       <Vertex, MappingFn, GetVertexFn>                    ;
 //
 // *************************************************************************** //   _EDITOR_APP_INTERNAL_API
 
 
 
-
-
-
-//  "CB_FDTD_TYPES_API"                             |   ** EXPORTED**
-//      - Typename aliases to define types used for the FDTD engine.
+//
+//
 //
 // *************************************************************************** //
-#define                 CB_FDTD_TYPES_API                                                   \
-    template<typename T_>                                                                       \
-    using               Param                           = cblib::math::Param<T_>;               \
-    template<typename T_>                                                                       \
-    using               Range                           = cblib::math::Range<T_>;
+// *************************************************************************** //   END "EDITOR APP" ALIASES.
 
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
 //
-// *************************************************************************** //   CB_FDTD_TYPES_API
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //
 // *************************************************************************** //

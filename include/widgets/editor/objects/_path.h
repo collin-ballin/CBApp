@@ -594,6 +594,8 @@ struct Path_t {
 // *************************************************************************** //
 // *************************************************************************** //
     //                          ALIASES:
+    using                           id_type                         = PID;
+    //
     using                           Path                            = Path_t<PID, VID, ZID>;
     using                           Payload                         = path::Payload;
     using                           PathKind                        = path::PathKind;

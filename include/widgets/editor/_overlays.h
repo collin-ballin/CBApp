@@ -103,6 +103,14 @@ public:
     using                               WindowType                      = OverlayInfo::WindowType;
     using                               Anchor                          = BBoxAnchor;
     
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr size_t             ms_INVALID_ID                   = cblib::maximum_value_of_type<OID>();
+    
 //
 //
 // *************************************************************************** //
@@ -131,6 +139,8 @@ private:
     //                              CACHE VARIABLES FOR RE-SIZE:
     ImVec2                              m_pos_cache                 = { 0.0f,   0.0f };
     ImVec2                              m_pivot_cache               = { 0.0f,   0.0f };
+    std::optional<OverlayID>            m_current_ctx_menu          = {std::nullopt};
+    std::optional<OverlayID>            m_request_update            = {std::nullopt};
     
 //
 //
@@ -245,6 +255,7 @@ protected:
 #endif  //  _USE_INTERNAL_CALLBACK  //
     //
     void                                _draw_context_menu                  (Overlay & );
+    void                                _draw_custom_context_menu           (Overlay & );
     //
     //
     [[nodiscard]] std::pair<ImVec2, ImVec2>

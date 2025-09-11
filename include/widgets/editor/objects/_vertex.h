@@ -722,6 +722,7 @@ struct Vertex_t
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
+    using                               id_type                                 = VID;
     using                               CurvatureType                           = BezierControl::CurvatureType;
     using                               CurvatureState                          = BezierControl::CurvatureState;
     using                               StyleData                               = BezierControl::StyleData;

@@ -279,14 +279,14 @@ void Editor::_draw_vertex_panel(Path & path, [[maybe_unused]] const size_t pidx,
         ImGui::PopStyleColor();
         //
         //
-        ImGui::SameLine(0.0f );
+        ImGui::SameLine(0.0f);
         //
         //
         //  4B.2.   RIGHT-HAND VERTEX BROWSER.
         const float             P1C1_w              = ImGui::GetContentRegionAvail().x;
         ImGui::PushStyleColor(ImGuiCol_ChildBg, BStyle.ms_VERTEX_INSPECTOR_FRAME_BG);
         ImGui::BeginChild("##Editor_Browser_VertexInspectorColumn",     ImVec2(P1C1_w, 0.0f),    BStyle.STATIC_CHILD_FLAGS);
-            _draw_vertex_inspector_column(path);
+            _draw_vertex_inspector_column(path, callback);
         ImGui::EndChild();
         ImGui::PopStyleColor();
     //
@@ -400,7 +400,7 @@ void Editor::_draw_vertex_selector_column(Path & path, const size_t path_idx)
 
 //  "_draw_vertex_inspector_column"
 //
-void Editor::_draw_vertex_inspector_column(Path & path)
+void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const LabelFn & callback)
 {
     static constexpr size_t     TITLE_SIZE      = 32ULL;
     BrowserStyle &              BStyle          = this->m_style.browser_style;
@@ -476,7 +476,7 @@ void Editor::_draw_vertex_inspector_column(Path & path)
         auto                snap            = [grid](float f){ return std::round(f / grid) * grid; };
 
         //      3.1.    Position:
-        this->S.labelf("Position:", LABEL_W, WIDGET_W);
+        callback("Position:");
         dirty                              |= ImGui::DragFloat2("##Editor_VertexBrowser_Pos", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
         //
         if ( dirty && /*!ImGui::IsItemActive() && */ this->want_snap() ) {
@@ -493,7 +493,8 @@ void Editor::_draw_vertex_inspector_column(Path & path)
         //
         //              3.2A    ANCHOR TYPE (corner / smooth / symmetric):
         {
-            this->S.labelf("Type:", LABEL_W, WIDGET_W);
+            //  this->S.labelf("Type:", LABEL_W, WIDGET_W);
+            callback("Type:");
             dirty = ImGui::Combo("##Editor_VertexBrowser_AnchorType", &kind_idx, ms_BEZIER_CURVATURE_TYPE_NAMES.data(), static_cast<int>( BezierCurvatureType::COUNT ));          // <- int, not enum
             //
             if (dirty) {
@@ -503,7 +504,8 @@ void Editor::_draw_vertex_inspector_column(Path & path)
         }
         //
         //              3.2B    INWARD (from previous vertex):
-        this->S.labelf("Inward:", LABEL_W, WIDGET_W);
+        //  this->S.labelf("Inward:", LABEL_W, WIDGET_W);
+        callback("Inward:");
         //
         dirty              = ImGui::DragFloat2("##Editor_VertexBrowser_InwardControl",     &v->m_bezier.in_handle.x,    speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
         if ( dirty && !ImGui::IsItemActive() ) {
@@ -514,7 +516,8 @@ void Editor::_draw_vertex_inspector_column(Path & path)
         }
         //
         //              3.2C    OUTWARD (to next vertex):
-        this->S.labelf("Outward:", LABEL_W, WIDGET_W);
+        //  this->S.labelf("Outward:", LABEL_W, WIDGET_W);
+        callback("Outward:");
         dirty               = ImGui::DragFloat2("##Editor_VertexBrowser_OutwardControl",    &v->m_bezier.out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
         if ( dirty && !ImGui::IsItemActive() ) {
             v->m_bezier.out_handle.x    = snap(v->m_bezier.out_handle.x);

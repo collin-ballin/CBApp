@@ -859,7 +859,7 @@ void Editor::_rebuild_vertex_selection()
 //
 //      pointer-cursor hint ───────────────────────────
 //
-void Editor::_MECH_hit_detection(const Interaction& it) const
+void Editor::_MECH_hit_detection(const Interaction & it) const
 {
     if ( !it.hovered )                      { return; }         //  cursor not over canvas
     if ( m_dragging || m_boxdrag.active )   { return; }         //  ignore while dragging
@@ -874,11 +874,13 @@ void Editor::_MECH_hit_detection(const Interaction& it) const
         m_boxdrag.view.hover_idx = -1;
         const ImVec2 mp = ImGui::GetIO().MousePos;
 
-        for (int i = 0; i < 8; ++i) {
-            if (m_boxdrag.view.handle_rect_px[i].Contains(mp)) {
+        for (int i = 0; i < 8; ++i)
+        {
+            if ( m_boxdrag.view.handle_rect_px[i].Contains(mp) )
+            {
                 m_boxdrag.view.hover_idx = i;
                 m_hover_handle           = i;                       // ← NEW: bridge for legacy checks
-                ImGui::SetMouseCursor(_cursor_for_bbox_handle(i));
+                ImGui::SetMouseCursor(_cursor_for_bbox_handle(i) );
                 return;
             }
         }

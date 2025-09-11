@@ -1,10 +1,14 @@
 #ifndef _CBLIB_TYPE_TRAITS_H
 #define _CBLIB_TYPE_TRAITS_H 1
-
+    
 #include <type_traits>
-#include <array>
-#include <vector>
 #include <iomanip>
+#include <limits>
+#include <concepts>
+//
+#include <vector>
+#include <array>
+//
 #if __cplusplus >= 201103L
 # include <initializer_list>
 #endif	// C++11.
@@ -21,7 +25,11 @@ namespace cblib 	{
 
 
 // *************************************************************************** //
-//	    Type-Trait Metafunctions.       [ NLOHMAN JSON ].
+//
+//
+//
+//	    1.      NLOHMAN'S JSON TYPE-TRAITS...
+// *************************************************************************** //
 // *************************************************************************** //
 
 //  "has_from_json"
@@ -81,6 +89,78 @@ struct has_to_json<
 
 
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "JSON" TYPE-TRAITS.
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//	    2.      MATHEMATICAL TYPE-TRAITS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+namespace traits {   //     BEGINNING "traits" ANONYMOUS NAMESPACE..
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "remove_cvref_t"
+template<class T>
+using       remove_cvref_t      = std::remove_cv_t< std::remove_reference_t<T> >;
+
+//  "numeric_base_t"
+template<class T>
+using       numeric_base_t      = std::conditional_t<
+      std::is_enum_v< remove_cvref_t<T> >
+    , std::underlying_type_t< std::underlying_type_t<T> >
+    , std::underlying_type_t<T>
+>;
+
+//  "numeric_or_enum"
+template<class T>
+concept     numeric_or_enum     = std::integral< numeric_base_t<T> >  ||  std::floating_point< numeric_base_t<T> >;
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}//   END OF "traits" ANONYMOUS NAMESPACE.
+
+
+
+//  //  "maximum_value_of_type"
+//  //
+//  template<traits::numeric_or_enum T>
+//  constexpr auto maximum_value_of_type(void) noexcept {
+//      using U = traits::numeric_base_t<T>;
+//      return std::numeric_limits<U>::max();
+//  }
+//
+//  //  "minimum_value_of_type"
+//  //
+//  template<traits::numeric_or_enum T>
+//  constexpr auto minimum_value_of_type(void) noexcept {
+//      using U = traits::numeric_base_t<T>;
+//      return std::numeric_limits<U>::lowest();    //  correct for both integral & floating
+//  }
 
 
 
@@ -117,11 +197,17 @@ constexpr auto minimum_value_of_type(void)
 
 
 
-
-
+//
+//
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "JSON".
+// *************************************************************************** //   END "MATH TYPE-TRAITS".
+
+
+
+
+
+
 
 
 
@@ -129,10 +215,17 @@ constexpr auto minimum_value_of_type(void)
 
 
 // *************************************************************************** //
-//	    Type-Trait Metafunctions.       [ STANDARD ].
+//
+//
+//
+//	    3.      GENERIC TYPE-TRAIT METAFUNCTIONS...     [ STANDARD ].
+// *************************************************************************** //
 // *************************************************************************** //
 
-//	1. Class-Member Defined Overloaded Operators.
+
+
+// *************************************************************************** //
+//	        3.1.      Class-Member Defined Overloaded Operators.
 // *************************************************************************** //
 
 //	"has_assignment_operator_impl"
@@ -377,8 +470,13 @@ struct has_postfix_decrement_operator
 };
 
 //
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //   END.
+
+
+
 
 
 
@@ -556,9 +654,10 @@ struct is_convertible
 //
 //
 // *************************************************************************** //
+// *************************************************************************** //
 
 // *************************************************************************** //
-//	2.1.    GENERAL / MISC. METAFUNCTIONS...
+//	        2.1.      GENERAL / MISC. METAFUNCTIONS...
 // *************************************************************************** //
 
 //	"is_floating_point"

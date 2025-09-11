@@ -25,16 +25,16 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 //  "find_vertex"
 //
-Editor::Vertex * Editor::find_vertex(std::vector<Vertex> & verts, VertexID id) {
-    for (auto & v : verts) if (v.id == id) return &v; return nullptr;
-}
+//  Editor::Vertex * Editor::find_vertex(std::vector<Vertex> & verts, VertexID id) {
+//      for (auto & v : verts) if (v.id == id) return &v; return nullptr;
+//  }
 
 
 //  "find_vertex"
 //
-const Editor::Vertex * Editor::find_vertex(const std::vector<Vertex> & verts, VertexID id) const {
-    for (auto & v : verts) if (v.id == id) return &v; return nullptr;
-}
+//  const Editor::Vertex * Editor::find_vertex(const std::vector<Vertex> & verts, VertexID id) const {
+//      for (auto & v : verts) if (v.id == id) return &v; return nullptr;
+//  }
 
 
 //  "_endpoint_if_open"
