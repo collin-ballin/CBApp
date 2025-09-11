@@ -23,37 +23,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//
-//      ...
-//
-
-
-
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//  1.  RENDERING CORE MECHANICS OF THE WINDOW...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-
-
-// -----------------------------------------------------------------------------
-// GRID HELPERS
-// -----------------------------------------------------------------------------
-
 //  "_grid_handle_shortcuts"
 //
 //      I think our policy should be to RETURN OUT after implementing a SINGLE hotkey.
@@ -92,109 +61,169 @@ void Editor::_grid_handle_shortcuts(void)
 
 
 
+
+
 // *************************************************************************** //
 //
 //
 //
-//      ?.      NEW RENDERING FUNCTIONS...
+//      1.      RENDERING CORE MECHANICS OF THE WINDOW...
 // *************************************************************************** //
 // *************************************************************************** //
 
-
-//  "_RENDER_object_channel"
+//  "_MECH_render_frame"        * NEW  _MECH  FUNCTION *
 //
-void Editor::_RENDER_object_channel(ImDrawList * dl) const noexcept
+void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
 {
-    //      1.      BUILD THE DRAW-LIST (USE VISIBLE PATHS ONLY)...
-    std::vector<const Path*>    draw_vec;
-    draw_vec.reserve(m_paths.size());
+    using                       Layer           = ChannelCTX::Channel;
+    const VertexStyle &         VS              = this->m_vertex_style;
 
+    
 
-    for (const Path & p : m_paths) {
-        if (p.visible)              { draw_vec.push_back(&p); }// NEW visibility filter
-    }
-
-
-    //  2.  STABLE-SORT BY Z-INDEX (Low Z: Background → High Z: Foreground)...
-    std::stable_sort( draw_vec.begin(), draw_vec.end(),
-                      [](const Path* a, const Path* b) { return a->z_index < b->z_index; } );
-
-
-    //  3.  DRAW EACH PATH IN SORTED ORDER...
-    for (const Path * pp : draw_vec)
-    {
-        const Path &    p   = *pp;
-        const size_t    N   = p.verts.size();
-        if (N < 2) continue;
-
-        // ───── Filled-area pass (only for closed paths with non-transparent fill)
-        if (p.is_area() && (p.style.fill_color & 0xFF000000))
+    ImPlot::PushPlotClipRect();
+    ChannelCTX          CTX         (it.dl);
+    //
+    VS.PushDL(CTX.dl);
+    //
+    //
+    //
+    //  //      1.      RENDER "Grid" ELEMENTS...
         {
-            dl->PathClear();
-
-            for (size_t i = 0; i < N; ++i)
-            {
-                const Vertex* a = find_vertex(m_vertices, p.verts[i]);
-                const Vertex* b = find_vertex(m_vertices, p.verts[(i + 1) % N]);
-                if (!a || !b) continue;
-
-                if (!is_curved<VertexID>(a, b)) {
-                    ImVec2 pa = world_to_pixels({ a->x, a->y });
-                    dl->PathLineTo(pa);
-                }
-                else {
-                    for (int step = 0; step <= m_style.ms_BEZIER_FILL_STEPS; ++step) {
-                        float  t  = static_cast<float>(step) / m_style.ms_BEZIER_FILL_STEPS;
-                        ImVec2 wp = cubic_eval<VertexID>(a, b, t);
-                        dl->PathLineTo(world_to_pixels(wp));
-                    }
-                }
-            }
-            dl->PathFillConvex(p.style.fill_color);
+            ChannelCTX::Scope           scope       ( CTX,      Layer::Grid         );
+            //  this->_render_selection_highlight       ( it.dl                         );
         }
-
-        // ───── Lambda to draw one segment (straight or cubic)
-        auto draw_seg = [&](const Vertex * a, const Vertex * b)
+        
+        
+        //      2.      RENDER "Object" ELEMENTS...
         {
-            const bool curved = is_curved<VertexID>(a, b);
-
-            if (!curved) {
-                dl->AddLine(world_to_pixels({ a->x, a->y }),
-                            world_to_pixels({ b->x, b->y }),
-                            p.style.stroke_color,
-                            p.style.stroke_width);
-            }
-            else {
-                ImVec2 P0 = world_to_pixels({ a->x,                                     a->y                                });
-                ImVec2 P1 = world_to_pixels({ a->x + a->m_bezier.out_handle.x,          a->y + a->m_bezier.out_handle.y     });
-                ImVec2 P2 = world_to_pixels({ b->x + b->m_bezier.in_handle.x,           b->y + b->m_bezier.in_handle.y      });
-                ImVec2 P3 = world_to_pixels({ b->x,                                     b->y                                });
-
-                dl->AddBezierCubic(P0, P1, P2, P3,
-                                   p.style.stroke_color,
-                                   p.style.stroke_width,
-                                   m_style.ms_BEZIER_SEGMENTS);   // 0 ⇒ default tessellation
-            }
-        };
-
-        // ───── Stroke contiguous segments
-        for ( size_t i = 0; i < N - 1; ++i ) {
-            if ( const Vertex* a = find_vertex(m_vertices, p.verts[i]) ) {
-                if ( const Vertex* b = find_vertex(m_vertices, p.verts[i + 1]) )    { draw_seg(a, b); }
-            }
+            ChannelCTX::Scope           scope       ( CTX,      Layer::Objects      );
+            this->_RENDER_object_channel            ( it.dl                         );
         }
-
-        // Close the loop if required
-        if (p.closed) {
-            if ( const Vertex* a = find_vertex(m_vertices, p.verts.back()) ) {
-                if ( const Vertex* b = find_vertex(m_vertices, p.verts.front()) )   { draw_seg(a, b); }
-            }
+        
+        
+        //      3.      RENDER "Highlight" ELEMENTS...
+        {
+            ChannelCTX::Scope           scope       ( CTX,      Layer::Highlights   );
+            this->_render_selection_highlight       ( it.dl                         );
         }
-    }
+        
+        
+        //      4.      RENDER "Feature" ELEMENTS...
+        {
+            ChannelCTX::Scope           scope       ( CTX,      Layer::Features     );
+        }
+        
+        
+        //      5.      RENDER "Accent" ELEMENTS...
+        {
+            ChannelCTX::Scope           scope       ( CTX,      Layer::Accents      );
+            this->_render_points                    ( it.dl                         );
+        }
+        
+        
+        
+        //      6.      RENDER "Glyph" ELEMENTS...
+        {
+            ChannelCTX::Scope           scope       ( CTX,      Layer::Glyphs       );
+        }
+        
+        
+        //      7.      RENDER "Top" ELEMENTS...
+        {
+            ChannelCTX::Scope           scope       ( CTX,      Layer::Top          );
+        }
+    //
+    //
+    //
+    VS.PopDL();
+    ImPlot::PopPlotClipRect();
+
 
 
     return;
 }
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MAIN RENDER FUNCTIONS".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.      NEW RENDERING FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_RENDER_object_channel"
+//
+inline void Editor::_RENDER_object_channel(ImDrawList * dl) const noexcept
+{
+    // Collect only visible, closed paths with non-transparent fill.
+    std::vector<const Path*> draw_vec;
+    draw_vec.reserve(m_paths.size());
+    for (const Path& p : m_paths)
+        if (p.visible && p.is_area() && (p.style.fill_color & 0xFF000000))
+            draw_vec.push_back(&p);
+
+    // Stable sort: low Z → high Z (background → foreground).
+    std::stable_sort(draw_vec.begin(), draw_vec.end(),
+                     [](const Path* a, const Path* b) {
+                         return a->z_index < b->z_index;
+                     });
+
+    //  Fill pass (no strokes/accents here).
+    for (const Path* pp : draw_vec)
+        _draw_path_fill_area(dl, *pp);
+}
+
+
+
+//  "_draw_path_fill_area"
+//
+inline void Editor::_draw_path_fill_area(ImDrawList * dl, const Path & p) const noexcept
+{
+    // Fast outs
+    if (!p.visible)                         return;
+    if (!p.is_area())                       return;                     // closed && verts.size() >= 3
+    if ((p.style.fill_color & 0xFF000000) == 0) return;                  // alpha == 0
+
+    const size_t N = p.verts.size();
+    if (N < 3) return;
+
+    dl->PathClear();
+
+    for (size_t i = 0; i < N; ++i)
+    {
+        const Vertex* a = find_vertex(m_vertices, p.verts[i]);
+        const Vertex* b = find_vertex(m_vertices, p.verts[(i + 1) % N]);
+        if (!a || !b) continue;
+
+        // Straight segment: just add the anchor point
+        if (!is_curved<VertexID>(a, b)) {
+            dl->PathLineTo(world_to_pixels({ a->x, a->y }));
+        }
+        // Curved segment: sample along the cubic
+        else {
+            for (int step = 0; step <= m_style.ms_BEZIER_FILL_STEPS; ++step) {
+                const float t = static_cast<float>(step) / m_style.ms_BEZIER_FILL_STEPS;
+                const ImVec2 wp = cubic_eval<VertexID>(a, b, t);
+                dl->PathLineTo(world_to_pixels(wp));
+            }
+        }
+    }
+
+    // Note: mirrors your current approach; unchanged semantics.
+    dl->PathFillConvex(p.style.fill_color);
+}
+
 
 
 

@@ -265,7 +265,7 @@ struct VertexStyle
 // *************************************************************************** //
     MappingFn                           ws_to_px;
     mutable StyleData const *           data;
-    ImDrawList *                        dl                              = nullptr;
+    mutable ImDrawList *                dl                              = nullptr;
     
 //
 // *************************************************************************** //
@@ -287,8 +287,8 @@ struct VertexStyle
                                         : ws_to_px(callback)    , data( std::addressof(data_) )   {   }
     
     //  "_no_op"
-    inline void                         PushDL                              (ImDrawList * & dl_)    { this->dl = dl_;           };
-    inline void                         PopDL                               (void)                  { this->dl = nullptr;       };
+    inline void                         PushDL                              (ImDrawList * & dl_) const noexcept     { this->dl = dl_;           };
+    inline void                         PopDL                               (void) const noexcept                   { this->dl = nullptr;       };
     
 //
 // *************************************************************************** //

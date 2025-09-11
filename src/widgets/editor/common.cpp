@@ -570,7 +570,6 @@ void Editor::_clear_all(void)
 {
     // ─── 1.  Wipe geometry containers in bulk ──────────────────────────
     m_paths         .clear();       // clears Path<…> vector
-    m_lines         .clear();       // clears standalone Line<…> list
     m_points        .clear();       // glyphs
     m_vertices      .clear();       // anchors
 

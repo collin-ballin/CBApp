@@ -81,6 +81,33 @@ struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ fi
 
 
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MISC".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      1.      RENDERING UTILITIES...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+
+
+
+
+
+
 
 
 
@@ -103,15 +130,15 @@ enum class CanvasDrawChannel : uint8_t
 
 
 
-//  "RenderCTX"
+//  "ChannelCTX"
 //
-struct RenderCTX
+struct ChannelCTX
 {
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
     using                               Channel                         = CanvasDrawChannel;
-    using                               CTX                             = RenderCTX;
+    using                               CTX                             = ChannelCTX;
     
     // *************************************************************************** //
     //      INTERNAL TYPES.
@@ -120,7 +147,7 @@ struct RenderCTX
     struct Scope
     {
         using           Channel         = CanvasDrawChannel;
-        using           CTX             = RenderCTX;
+        using           CTX             = ChannelCTX;
     //
         CTX &           manager;
         Channel         prev;
@@ -164,13 +191,13 @@ struct RenderCTX
     // *************************************************************************** //
     //      INITIALIZATION METHODS.         |   ...
     // *************************************************************************** //
-    inline                              RenderCTX               (void)                          = default;
-    inline explicit                     RenderCTX               (ImDrawList * dl_)              { Begin(dl_); }
-    inline                              ~RenderCTX              (void)                          { End(); }
+    inline                              ChannelCTX              (void)                          = default;
+    inline explicit                     ChannelCTX              (ImDrawList * dl_)              { Begin(dl_); }
+    inline                              ~ChannelCTX             (void)                          { End(); }
     //
     //                              DELETED MEMBERS:
-                                        RenderCTX               (const RenderCTX & )            = delete;
-    RenderCTX &                         operator =              (const RenderCTX & )            = delete;
+                                        ChannelCTX              (const ChannelCTX & )            = delete;
+    ChannelCTX &                        operator =              (const ChannelCTX & )            = delete;
     
 
 
@@ -235,7 +262,7 @@ struct RenderCTX
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "MISC/UTILITY".
+// *************************************************************************** //   END "RENDERING UTILITIES".
 
 
 

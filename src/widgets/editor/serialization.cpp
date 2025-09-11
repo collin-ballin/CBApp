@@ -811,7 +811,6 @@ EditorSnapshot Editor::make_snapshot(void) const
     s.vertices          = m_vertices;        // shallow copies fine
     s.paths             = m_paths;
     s.points            = m_points;
-    s.lines             = m_lines;
     s.selection         = m_sel;
     
     
@@ -835,7 +834,6 @@ void Editor::load_from_snapshot(EditorSnapshot && snap)
     m_vertices  = std::move(snap.vertices);
     m_paths     = std::move(snap.paths);
     m_points    = std::move(snap.points);
-    m_lines     = std::move(snap.lines);
     m_sel       = std::move(snap.selection);
     
     

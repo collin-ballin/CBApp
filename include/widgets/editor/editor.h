@@ -326,8 +326,8 @@ protected:
     //
     std::vector<Vertex>                 m_vertices;
     std::vector<Point>                  m_points;
-    std::vector<Line>                   m_lines;
     std::vector<Path>                   m_paths;                //  New path container
+    //  std::vector<Line>                   m_lines;
     std::unordered_set<HandleID>        m_show_handles;         //  List of which glyphs we WANT to display Bezier points for.
     //
     //
@@ -587,15 +587,15 @@ protected:
     //                              PRIMARY MECHANIC HANDLERS:
     void                                _MECH_hit_detection                 (const Interaction & ) const;               //  formerly "update_cursor_select"
     inline void                         _MECH_update_canvas                 ([[maybe_unused]] const Interaction & );    //  * NEW  _MECH  FUNCTION *
-    inline void                         _MECH_render_frame                  ([[maybe_unused]] const Interaction & );    //  * NEW  _MECH  FUNCTION *
     //
     inline void                         _MECH_draw_ui                       ([[maybe_unused]] const Interaction & );    //  formerly "_handle_overlays()"
     inline void                         _MECH_drive_io                      (void);                                     //  formerly "_handle_io()"
     //
     //                              LOCATED ELSEWHERE:
-    void                                _MECH_pump_main_tasks               (void);                     //  formerly "pump_main_tasks".         location: "serialization.cpp".
-    void                                _MECH_draw_controls                 (void);                     //  formerly "_draw_controls".          location: "browser.cpp".
-    void                                _MECH_process_selection             (const Interaction & );     //  formerly "_process_selection".      location: "selection.cpp".
+    void                                _MECH_render_frame                  ([[maybe_unused]] const Interaction & ) const;  //  * NEW  _MECH  FUNCTION *    location: "render.cpp".
+    void                                _MECH_pump_main_tasks               (void);                     //  formerly "pump_main_tasks".                     location: "serialization.cpp".
+    void                                _MECH_draw_controls                 (void);                     //  formerly "_draw_controls".                      location: "browser.cpp".
+    void                                _MECH_process_selection             (const Interaction & );     //  formerly "_process_selection".                  location: "selection.cpp".
     
     // *************************************************************************** //
     //
@@ -758,7 +758,8 @@ protected:
     // *************************************************************************** //
     //
     //                              NEW RENDERING FUNCTIONS:
-    void                                _RENDER_object_channel              (ImDrawList * dl) const noexcept;
+    inline void                         _RENDER_object_channel              (ImDrawList * dl) const noexcept;
+    inline void                         _draw_path_fill_area                (ImDrawList * dl, const Path & p) const noexcept;
     //
     //
     //
@@ -1714,7 +1715,7 @@ public:
         this->vertices                  = e.m_vertices              ;
         this->paths                     = e.m_paths                 ;
         this->points                    = e.m_points                ;
-        this->lines                     = e.m_lines                 ;
+        //  this->lines                     = e.m_lines                 ;
         //
         //
         //      2.      STATE OBJECTS...

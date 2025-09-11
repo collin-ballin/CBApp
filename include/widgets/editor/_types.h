@@ -99,8 +99,7 @@ enum class Mode : int {
 };
 //
 //  "DEF_EDITOR_STATE_NAMES"
-static constexpr std::array<const char *, static_cast<size_t>(Mode::COUNT)>
-    DEF_EDITOR_STATE_NAMES  = { {
+static constexpr cblib::EnumArray< Mode, const char * > DEF_EDITOR_STATE_NAMES  = { {
         "Default"                    , "Hand"                     , "Pen"                     , "Scissor"
       , "Shape"                      , "Add Anchor"               , "Remove Anchor"           , "Edit Anchor"
 } };

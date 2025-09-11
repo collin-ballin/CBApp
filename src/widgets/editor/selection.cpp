@@ -698,7 +698,7 @@ inline void Editor::update_move_drag_state(const Interaction & it)
 //
 inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction & it)
 {
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+    if ( ImGui::IsMouseReleased(ImGuiMouseButton_Left) )
     {
         ImGuiIO & io = ImGui::GetIO();
 
@@ -1075,20 +1075,6 @@ void Editor::_update_lasso(const Interaction & it)
             return intersect(a,b, tl,tr) || intersect(a,b,tr,br) ||
                    intersect(a,b, br,bl) || intersect(a,b, bl,tl);
         };
-
-        for (size_t i = 0; i < m_lines.size(); ++i)
-        {
-            const Line& ln = m_lines[i];
-            if ( !ln.is_mutable() )     { continue; }                     // NEW guard
-
-            const Vertex* a = find_vertex(m_vertices, ln.a);
-            const Vertex* b = find_vertex(m_vertices, ln.b);
-            if ( !a || !b )     { continue; }
-            
-            if ( !seg_rect_intersect({a->x,a->y}, {b->x,b->y}, tl_w, br_w) )
-                { continue; }
-                
-        }
 
         // ---------- Paths ----------
         for (size_t pi = 0; pi < m_paths.size(); ++pi)
