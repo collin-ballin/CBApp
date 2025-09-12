@@ -140,18 +140,24 @@ concept     get_vertex_CallbackTT   =
 
 //  "RenderCallbacks"
 //
-template< typename Vertex, typename MapFn, typename GVertexFn >
+template< typename V, typename MapFn, typename GVertexFn, typename container_type=std::vector<V> >
     requires ws_to_px_CallbackTT        <MapFn>                     &&
-             get_vertex_CallbackTT      <GVertexFn, Vertex>
+             get_vertex_CallbackTT      <GVertexFn, V>
 struct RenderCallbacks
 {
     MapFn                               ws_to_px            ;       //  e.g., lambda:   [this](ImVec2 ws)               { return world_to_pixels(ws);   }
     GVertexFn                           get_vertex          ;       //  e.g., lambda:   [this](VID id) -> const V *     { return find_vertex(...);      }
 //
+    const container_type &              vertices            ;       //  REFERENCE to the array of vertices...
 //
 //
-    inline                              RenderCallbacks                     (MapFn ws_to_px_, GVertexFn get_vertex_) noexcept
-                                        : ws_to_px(ws_to_px_)    , get_vertex(get_vertex_)      {   }
+//
+    //  inline                              RenderCallbacks                     (MapFn ws_to_px_, GVertexFn get_vertex_) noexcept
+    inline RenderCallbacks(MapFn ws_to_px_, GVertexFn get_vertex_, const container_type & vertices_) noexcept
+        : ws_to_px(ws_to_px_)
+        , get_vertex(get_vertex_)
+        , vertices(vertices_)
+    {   }
 //
 //
 //
@@ -195,7 +201,7 @@ struct RenderFrameArgs
 
 //  "RenderCTX_t"
 //
-template<typename V, typename MapFn, typename GVertexFn>
+template< typename V, typename MapFn, typename GVertexFn, typename container_type=std::vector<V> >
 struct RenderCTX_t
 {
     using                               Callbacks                           = render::RenderCallbacks<V, MapFn, GVertexFn>;
@@ -203,8 +209,9 @@ struct RenderCTX_t
     using                               Vertex                              = V;
     using                               VertexID                            = V::id_type;
 //
-    inline                              RenderCTX_t                         (MapFn ws_to_px_, GVertexFn get_vertex_) noexcept
-        : callbacks(ws_to_px_, get_vertex_)
+
+    inline RenderCTX_t(MapFn ws_to_px_, GVertexFn get_vertex_, const container_type & vertices_) noexcept
+        : callbacks(ws_to_px_, get_vertex_, vertices_)
         //  , data( std::addressof(data_) )
         {   }
 //

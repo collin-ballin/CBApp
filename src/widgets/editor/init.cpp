@@ -35,7 +35,7 @@ Editor::Editor(app::AppState & src)
     : CBAPP_STATE_NAME      ( src )
     , m_ov_manager          ( world_to_pixels )
     , m_it                  ( std::make_unique<Interaction>() )
-    , m_render_ctx          ( world_to_pixels, find_vertex )
+    , m_render_ctx          ( world_to_pixels, find_vertex, m_vertices )
     , m_vertex_style        ( world_to_pixels, ms_VERTEX_STYLES[ VertexStyleType::Default ] )
 {
     namespace           fs                          = std::filesystem;

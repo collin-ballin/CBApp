@@ -596,6 +596,7 @@ public:
     // *************************************************************************** //
     using                               id_type                         = PID;
     using                               container_type                  = std::vector<VID>;
+    using                               size_type                       = container_type::size_type;
     using                               iterator                        = typename container_type::iterator;
     //
     using                               Path                            = Path_t<PID, VID, ZID>;
@@ -689,15 +690,15 @@ public:
     // *************************************************************************** //
 
     //  "IsMutable"
-    [[nodiscard]] inline bool       IsMutable                       (void) const noexcept           { return ( this->visible  &&  !this->locked ); }
+    [[nodiscard]] inline bool           IsMutable                       (void) const noexcept           { return ( this->visible  &&  !this->locked ); }
     //  "IsArea"
-    [[nodiscard]] inline bool       IsArea                          (void) const noexcept           { return ( (this->closed)  &&  (this->verts.size() >= 3) ); }
+    [[nodiscard]] inline bool           IsArea                          (void) const noexcept           { return ( (this->closed)  &&  (this->verts.size() >= 3) ); }
     
     //  "IsVisible"
-    [[nodiscard]] inline bool       IsVisible                       (void) const noexcept           { return ( (this->visible) ); }
+    [[nodiscard]] inline bool           IsVisible                       (void) const noexcept           { return ( (this->visible) ); }
     
     //  "IsTransparent"
-    [[nodiscard]] inline bool       IsTransparent                   (void) const noexcept
+    [[nodiscard]] inline bool           IsTransparent                   (void) const noexcept
     {
         const bool      is_visible                  = this->IsVisible();
         const bool      is_area                     = this->IsArea();
@@ -710,13 +711,15 @@ public:
     }
     
     
-        
+    //  "size"
+    [[nodiscard]] inline size_type      size                            (void) const noexcept           { return this->verts.size(); }
+    
         
         
     //  "set_label"
-    inline void                     set_label                       (const char * src) noexcept     { this->label = std::string(src); this->_truncate_label(); }
+    inline void                         set_label                       (const char * src) noexcept     { this->label = std::string(src); this->_truncate_label(); }
     //  "set_default_label"
-    inline void                     set_default_label               (const PID id_) noexcept        { this->id = id_;   this->label = std::format("Path {:03}", id_);   this->_truncate_label(); }
+    inline void                         set_default_label               (const PID id_) noexcept        { this->id = id_;   this->label = std::format("Path {:03}", id_);   this->_truncate_label(); }
 
 
     // *************************************************************************** //
@@ -818,16 +821,15 @@ public:
     {
         switch (k)
         {
-            case PathKind::Generic :        { return path::GenericPayload{}; }          // default-constructed
+            case PathKind::Generic :        { return path::GenericPayload       {   };          }   //  default-constructed
             //
-            //
-            case PathKind::Boundary :       { return path::BoundaryPayload{}; }
-            case PathKind::Source :         { return path::SourcePayload{}; }
-            case PathKind::Dielectric :     { return path::DielectricPayload{}; }
-            default:                        { break; }                   // PathKind::None or unknown
+            case PathKind::Boundary :       { return path::BoundaryPayload      {   };          }
+            case PathKind::Source :         { return path::SourcePayload        {   };          }
+            case PathKind::Dielectric :     { return path::DielectricPayload    {   };          }
+            default:                        { break;                                            }   //  PathKind::None or unknown
         }
         
-        return std::monostate{};                  // no extra data
+        return ( std::monostate{   } );     //     no extra data
     }
     
     //  "_truncate_label"
@@ -847,7 +849,13 @@ public:
     template<class CTX>
     inline void                     render_fill_area                (const CTX & ctx) const noexcept
     {
-        using               V           = CTX::Vertex;
+        using               V                   = CTX::Vertex;
+        const auto &        callbacks           = ctx.callbacks;
+        const auto &        args                = ctx.args;
+        ImDrawList *        dl                  = args.dl;
+        const size_t        N                   = this->verts.size();
+
+
 
         //  Fast-outs: visibility, topology, alpha
         if ( !this->IsVisible()                             )   { return; }
@@ -855,40 +863,46 @@ public:
         if ( (this->style.fill_color & 0xFF000000) == 0     )   { return; }     //  fully transparent
 
 
-        const size_t        N           = this->verts.size();
-        if ( N < 3 )                    { return; }
-
-        ImDrawList *        dl          = ctx.frame.dl;
         dl->PathClear();
 
-        //  Build pixel-space outline around the closed path
+        //  Build the pixel-space outline by walking each segment (a -> b)
         for (size_t i = 0; i < N; ++i)
         {
-            const V *       a       = ctx.cbs.get_vertex(ctx.cbs.verts, this->verts[i]);
-            const V *       b       = ctx.cbs.get_vertex(ctx.cbs.verts, this->verts[(i + 1) % N]);
-            if ( !a || !b )     { continue; }
+            const V *       a           = callbacks.get_vertex(     callbacks.vertices,      static_cast<VID>( this->verts[i]            )   );
+            const V *       b           = callbacks.get_vertex(     callbacks.vertices,      static_cast<VID>( this->verts[(i + 1) % N]  )   );
+            if ( !a || !b )             { continue; }
 
 
-            if ( !is_curved<VID>(a, b) )
+            //  Segment curvature: depends on a's OUT and b's IN handles
+            const bool      curved      = !(a->m_bezier.IsOutLinear() && b->m_bezier.IsInLinear());
+
+            if ( !curved )
             {
-                //  Straight segment: emit anchor point
-                dl->PathLineTo(ctx.cbs.to_pixels(ImVec2{ a->x, a->y }));
+                //  Straight segment: append anchor 'a' in pixel space
+                dl->PathLineTo( callbacks.ws_to_px(ImVec2{ a->x, a->y }) );
             }
             else
             {
-                //  Curved segment: sample cubic in world space, append in pixel space
-                const int   steps   = ctx.frame.bezier_fill_steps;
-                for (int s = 0; s <= steps; ++s)
+                const int   steps   = ctx.args.bezier_fill_steps;
+                if ( steps <= 0 )
                 {
-                    const float     t       = (steps > 0) ? (static_cast<float>(s) / static_cast<float>(steps)) : 0.0f;
-                    const ImVec2    wp      = cubic_eval<VID>(a, b, t);     // world-space point along the cubic
-                    dl->PathLineTo( ctx.cbs.to_pixels(wp) );          // convert to pixels and append
+                    // Degenerate sampling: fall back to anchor 'a'
+                    dl->PathLineTo( callbacks.ws_to_px(ImVec2{ a->x, a->y }) );
+                }
+                else
+                {
+                    for (int s = 0; s <= steps; ++s)
+                    {
+                        const float     t       = static_cast<float>(s) / static_cast<float>(steps);
+                        const ImVec2    wp      = cubic_eval<VID>(a, b, t);             //  world-space point
+                        dl->PathLineTo( ctx.callbacks.ws_to_px(wp) );           //  append in pixel space
+                    }
                 }
             }
         }
 
         //  Fill the constructed outline
-        dl->PathFillConvex( this->style.fill_color );
+        dl->PathFillConvex(this->style.fill_color);
     
         return;
     }

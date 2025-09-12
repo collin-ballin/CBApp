@@ -188,8 +188,13 @@ inline void Editor::_RENDER_object_channel(ImDrawList * dl) const noexcept
                      });
 
     //  Fill pass (no strokes/accents here).
-    for (const Path* pp : draw_vec)
-        _draw_path_fill_area(dl, *pp);
+    for (const Path * pp : draw_vec)
+    {
+        (*pp).render_fill_area( this->m_render_ctx );
+        //  _draw_path_fill_area(dl, *pp);
+    }
+    
+    return;
 }
 
 
