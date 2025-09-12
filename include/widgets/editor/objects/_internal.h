@@ -166,8 +166,8 @@ struct RenderCallbacks
 struct RenderFrameArgs
 {
     ImDrawList *        dl                  ;       //  target draw list (already set to the channel)
-    const int           bezier_fill_steps   ;       //  e.g., style.ms_BEZIER_FILL_STEPS
-    const int           bezier_segments     ;       //  (for strokes later)
+    int                 bezier_fill_steps   ;       //  e.g., style.ms_BEZIER_FILL_STEPS
+    int                 bezier_segments     ;       //  (for strokes later)
 //
 //
 //
@@ -200,6 +200,8 @@ struct RenderCTX_t
 {
     using                               Callbacks                           = render::RenderCallbacks<V, MapFn, GVertexFn>;
     using                               Args                                = render::RenderFrameArgs;
+    using                               Vertex                              = V;
+    using                               VertexID                            = V::id_type;
 //
     inline                              RenderCTX_t                         (MapFn ws_to_px_, GVertexFn get_vertex_) noexcept
         : callbacks(ws_to_px_, get_vertex_)

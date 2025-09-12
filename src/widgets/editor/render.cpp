@@ -83,6 +83,12 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
     ImPlot::PushPlotClipRect();
     ChannelCTX          CTX         (it.dl);
     //
+    //
+    m_render_ctx.args.dl                        = CTX.dl;
+    m_render_ctx.args.bezier_fill_steps         = this->m_style.ms_BEZIER_FILL_STEPS;
+    m_render_ctx.args.bezier_segments           = 12;
+    //
+    //
     VS.PushDL(CTX.dl);
     //
     //
@@ -170,8 +176,10 @@ inline void Editor::_RENDER_object_channel(ImDrawList * dl) const noexcept
     std::vector<const Path*> draw_vec;
     draw_vec.reserve(m_paths.size());
     for (const Path& p : m_paths)
-        if (p.visible && p.is_area() && (p.style.fill_color & 0xFF000000))
+    {
+        if (p.visible && p.IsArea() && (p.style.fill_color & 0xFF000000))
             draw_vec.push_back(&p);
+    }
 
     // Stable sort: low Z → high Z (background → foreground).
     std::stable_sort(draw_vec.begin(), draw_vec.end(),
@@ -191,12 +199,12 @@ inline void Editor::_RENDER_object_channel(ImDrawList * dl) const noexcept
 inline void Editor::_draw_path_fill_area(ImDrawList * dl, const Path & p) const noexcept
 {
     // Fast outs
-    if (!p.visible)                         return;
-    if (!p.is_area())                       return;                     // closed && verts.size() >= 3
-    if ((p.style.fill_color & 0xFF000000) == 0) return;                  // alpha == 0
+    if ( !p.IsVisible() || !p.IsArea() )            { return; }         //  closed && verts.size() >= 3
+    if ( (p.style.fill_color & 0xFF000000) == 0 )   { return; }         //  alpha == 0
 
     const size_t N = p.verts.size();
-    if (N < 3) return;
+    
+    if (N < 3)      { return; }
 
     dl->PathClear();
 
@@ -308,7 +316,7 @@ void Editor::_render_paths(ImDrawList * dl) const
         if (N < 2) continue;
 
         // ───── Filled-area pass (only for closed paths with non-transparent fill)
-        if (p.is_area() && (p.style.fill_color & 0xFF000000))
+        if (p.IsArea() && (p.style.fill_color & 0xFF000000))
         {
             dl->PathClear();
 

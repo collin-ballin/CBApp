@@ -1126,7 +1126,7 @@ inline void Editor::_handle_add_anchor([[maybe_unused]] const Interaction & it)
     path                                    = &m_paths[p_hit->path_idx];
     
     //  1.  EARLY OUT IF: (1) PATH IS NOT MUTABLE (Locked, Invisible),  (2) CURSOR IS ABOVE A VERTEX...
-    if ( !path->is_mutable() || (_hit_point(it) > 0) )      { return; }
+    if ( !path->IsMutable() || (_hit_point(it) > 0) )      { return; }
 
 
 
@@ -1174,7 +1174,7 @@ inline void Editor::_handle_remove_anchor([[maybe_unused]] const Interaction & i
     path                                = parent_path_of_vertex_mut(vid);       //  Helper returning Path *
     
     
-    if ( !path || !path->is_mutable() )                     { return; }         //  Hidden / locked → ignore
+    if ( !path || !path->IsMutable() )                      { return; }         //  Hidden / locked → ignore
 
 
     //  3.  Remove glyph from list

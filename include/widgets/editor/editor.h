@@ -378,7 +378,8 @@ protected:
     //                              OVERALL STATE:
     //  EditorState                     m_S                             = {   };
     Mode                                m_mode                          = Mode::Default;
-    ObjectTrait                         m_trait                         = ObjectTrait::Properties;
+    ObjectTrait                         m_trait_browser                 = ObjectTrait::Properties;
+    ObjectTrait                         m_trait_overlay                 = ObjectTrait::Properties;
     //
     //
     //                              MUTABLE / TRANSIENT STATE:
@@ -402,7 +403,7 @@ protected:
     // *************************************************************************** //
     //                              SUBSIDIARY STATES:
     EditorState                         m_editor_S                      {   };        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
-    RenderCTX                           m_render_ctx;
+    mutable RenderCTX                   m_render_ctx;
     BrowserState                        m_browser_S                     {   };
     //
     Selection                           m_sel;
@@ -620,17 +621,18 @@ protected:
     //      BROWSER STUFF.                  |   "browser.cpp" ...
     // *************************************************************************** //
     //                              BROWSER ORCHESTRATORS:
-    void                                _dispatch_obj_inspector_column          (void);     //  PREVIOUSLY:     _draw_path_inspector_column
+    void                                _dispatch_obj_inspector_column          (void);
+    void                                _dispatch_obj_inspector_column          (ObjectTrait & );     //  PREVIOUSLY:     _draw_path_inspector_column
     //
     //                              OBJECT SELECTION:
     void                                _draw_obj_selector_table                (void);
     inline void                             _draw_obj_selectable                    (Path & , const int , const bool , const bool);
     //
     //                              TRAIT BEHAVIORS:
-    inline void                         _draw_trait_selector                    (void);
-    void                                _dispatch_trait_inspector               (const LabelFn & );
-        inline void                         _dispatch_trait_inspector_single        (const LabelFn & );
-        inline void                         _dispatch_trait_inspector_multi         (const LabelFn & );
+    inline void                         _draw_trait_selector                    (ObjectTrait & );
+    void                                _dispatch_trait_inspector               (ObjectTrait &, const LabelFn & );
+        inline void                         _dispatch_trait_inspector_single        (ObjectTrait &, const LabelFn & );
+        inline void                         _dispatch_trait_inspector_multi         (ObjectTrait &, const LabelFn & );
     //
     //
     //                              TEMPORARY:
@@ -1332,7 +1334,7 @@ protected:
         for ( auto it = m_sel.paths.begin(); it != m_sel.paths.end(); )
         {
             PathID  pid     = static_cast<PathID>(*it);
-            if ( pid >= m_paths.size() || !m_paths[pid].is_mutable() )      { it = m_sel.paths.erase(it); }
+            if ( pid >= m_paths.size() || !m_paths[pid].IsMutable() )       { it = m_sel.paths.erase(it); }
             else                                                            { ++it; }
         }
 
@@ -1343,14 +1345,14 @@ protected:
             if ( idx >= m_points.size() )                                   { it = m_sel.points.erase(it); continue; }
 
             const Path *    pp      = parent_path_of_vertex(m_points[idx].v);
-            if ( !pp || !pp->is_mutable() )                                 { it = m_sel.points.erase(it); }
+            if ( !pp || !pp->IsMutable() )                                  { it = m_sel.points.erase(it); }
             else                                                            { ++it; }
         }
         for ( auto it = m_sel.vertices.begin(); it != m_sel.vertices.end(); )
         {
             VertexID        vid     = static_cast<VertexID>(*it);
             const Path *    pp      = parent_path_of_vertex(vid);
-            if ( !pp || !pp->is_mutable() )                                 { it = m_sel.vertices.erase(it); }
+            if ( !pp || !pp->IsMutable() )                                  { it = m_sel.vertices.erase(it); }
             else                                                            { ++it; }
         }
         

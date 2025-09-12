@@ -50,7 +50,7 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx, const
     //
     //  const float &                       LABEL_W                 = BStyle.ms_BROWSER_VERTEX_LABEL_WIDTH;
     //  const float &                       WIDGET_W                = BStyle.ms_BROWSER_VERTEX_WIDGET_WIDTH;
-    const bool                          is_area                 = path.is_area();
+    const bool                          is_area                 = path.IsArea();
 
 
 

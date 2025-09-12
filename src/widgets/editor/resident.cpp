@@ -488,7 +488,7 @@ void Editor::_draw_ui_traits_resident(void)
 {
     BrowserStyle &      BStyle      = this->m_style.browser_style;
     const ImVec2        Avail       = ImGui::GetContentRegionAvail();
-    int                 trait_i     = static_cast<int>( this->m_trait );
+    int                 trait_i     = static_cast<int>( this->m_trait_overlay );
     
     
     this->S.PushFont(Font::Small);
@@ -504,7 +504,7 @@ void Editor::_draw_ui_traits_resident(void)
         if ( ImGui::Combo("##UITraits_TraitSelector",           &trait_i,
                           ms_OBJECT_TRAIT_NAMES.data(),         static_cast<int>(ObjectTrait::COUNT)) )
         {
-            m_trait = static_cast<ObjectTrait>(trait_i);
+            this->m_trait_overlay = static_cast<ObjectTrait>(trait_i);
         }
         
         
@@ -512,7 +512,7 @@ void Editor::_draw_ui_traits_resident(void)
         
         
         ImGui::BeginChild("##UITraits_Inspector",    {-1.0f, 0.0f},     BStyle.STATIC_CHILD_FLAGS);
-            _dispatch_trait_inspector(/*top_label = */this->S.ms_TopLabel);
+            _dispatch_trait_inspector( /*which_menu = */this->m_trait_overlay, /*top_label = */this->S.ms_TopLabel );
         ImGui::EndChild();
     //
     //

@@ -399,13 +399,23 @@ struct BezierControl
     // *************************************************************************** //
     //      SETTER / GETTER FUNCTIONS.
     // *************************************************************************** //
-    //  "is_linear"
-    [[nodiscard]] inline bool           IsLinear                        (void) const noexcept       { return ( m_curvature_state == CurvatureState::None ); }
+    //  "IsLinear"
+    [[nodiscard]] inline bool           IsLinear                        (void) const noexcept           { return ( m_curvature_state == CurvatureState::None );     }
+    
+    //  "IsInLinear"
+    [[nodiscard]] inline bool           IsInLinear                      (void) const noexcept           { return ( m_curvature_state != CurvatureState::In  &&  m_curvature_state != CurvatureState::All );     }
+    
+    //  "IsOutLinear"
+    [[nodiscard]] inline bool           IsOutLinear                      (void) const noexcept          { return ( m_curvature_state != CurvatureState::Out  &&  m_curvature_state != CurvatureState::All );     }
+    
+    
+    //  "SetInHandle"
+    inline void                         SetInHandle                     (const ImVec2 & ih_) noexcept   { this->in_handle = ih_; this->UpdateCurvatureState();      }
+    inline void                         SetOutHandle                    (const ImVec2 & oh_) noexcept   { this->out_handle = oh_; this->UpdateCurvatureState();     }
 
     // *************************************************************************** //
-
-
-
+    //
+    //
     // *************************************************************************** //
     //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
@@ -429,10 +439,11 @@ struct BezierControl
         return this->m_curvature_state;
     }
     
+    
+    
     // *************************************************************************** //
-
-
-
+    //
+    //
     // *************************************************************************** //
     //      UTILITY FUNCTIONS.
     // *************************************************************************** //
@@ -445,10 +456,11 @@ struct BezierControl
         return;
     }
 
+
+    
     // *************************************************************************** //
-
-
-
+    //
+    //
     // *************************************************************************** //
     //      RENDERING FUNCTIONS.
     // *************************************************************************** //
@@ -485,8 +497,6 @@ struct BezierControl
         
         return;
     }
-    
-    
     
     //  "_render_IMPL"
     //
@@ -788,6 +798,9 @@ struct Vertex_t
 
 
 
+    // *************************************************************************** //
+    //
+    //
     // *************************************************************************** //
     //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //

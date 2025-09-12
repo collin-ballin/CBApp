@@ -312,8 +312,15 @@ void Editor::_MECH_draw_controls(void)
 // *************************************************************************** //
 
 //  "_dispatch_obj_inspector_column"
+//      Simple wrapper that allows to pass a default argument WITHOUT having it declared static.
 //
 void Editor::_dispatch_obj_inspector_column(void)
+    { return _dispatch_obj_inspector_column(this->m_trait_browser); }
+
+
+//  "_dispatch_obj_inspector_column"
+//
+void Editor::_dispatch_obj_inspector_column(ObjectTrait & which_menu)
 {
     BrowserStyle &                  BStyle              = this->m_style.browser_style;
     
@@ -323,7 +330,7 @@ void Editor::_dispatch_obj_inspector_column(void)
     ImGui::SetNextWindowSizeConstraints(    BStyle.TRAIT_SELECTOR_DIMS.limits.min,    BStyle.TRAIT_SELECTOR_DIMS.limits.max );
     ImGui::BeginChild("##Editor_Browser_TraitSelector", BStyle.OBJ_SELECTOR_DIMS.value,     BStyle.DYNAMIC_CHILD_FLAGS);
     //
-        _draw_trait_selector();
+        _draw_trait_selector(which_menu);
         BStyle.TRAIT_SELECTOR_DIMS.value.x       = ImGui::GetItemRectSize().x;
     //
     ImGui::EndChild();
@@ -338,7 +345,7 @@ void Editor::_dispatch_obj_inspector_column(void)
     const float                     P1_w                = ImGui::GetContentRegionAvail().x;
     ImGui::BeginChild("##Editor_Browser_TraitInspector",    {P1_w, 0.0f},     BStyle.STATIC_CHILD_FLAGS);
     //
-        _dispatch_trait_inspector( this->S.ms_LeftLabel );
+        _dispatch_trait_inspector( which_menu, this->S.ms_LeftLabel );
     //
     ImGui::EndChild();
     
@@ -459,7 +466,7 @@ void Editor::_draw_obj_selector_table(void)
             {
                 Path &                  path                = m_paths[i];
                 bool                    selected            = m_sel.paths.count(static_cast<size_t>(i));
-                bool                    mutable_path        = path.is_mutable();
+                bool                    mutable_path        = path.IsMutable();
 
                 //  CASE 0 :    EARLY-OUT IF FILTER REMOVES OBJ.
                 if ( !BS.m_obj_filter.PassFilter(path.label.c_str()) )      { continue; }
@@ -695,7 +702,7 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
                 if ( !ctrl )            { reset_selection(); }
                 
                 for (int k = lo; k <= hi; ++k) {
-                    if ( m_paths[k].is_mutable() )      { m_sel.paths.insert(k); }
+                    if ( m_paths[k].IsMutable() )       { m_sel.paths.insert(k); }
                 }
             }
             //
@@ -792,7 +799,7 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
 
 //  "_draw_trait_selector"
 //
-inline void Editor::_draw_trait_selector(void)
+inline void Editor::_draw_trait_selector(ObjectTrait & which_menu)
 {
     using                                       namespace               icon;
     static constexpr ImGuiTableFlags            TABLE_FLAGS             = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
@@ -821,7 +828,7 @@ inline void Editor::_draw_trait_selector(void)
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
             {
                 const ObjectTrait       trait           = static_cast<ObjectTrait>( i );
-                const bool              selected        = ( this->m_trait == trait );
+                const bool              selected        = ( which_menu == trait );
                 
                 
                 //      3.      BEGIN THE ROW...
@@ -834,7 +841,7 @@ inline void Editor::_draw_trait_selector(void)
                 ImGui::TableSetColumnIndex(0);
                 if ( ImGui::Selectable( ms_OBJECT_TRAIT_NAMES[ trait ], selected, SELECTABLE_FLAGS, {0.0f, 1.05f * CELL_SZ}) )
                 {
-                    this->m_trait = trait;      //  Set the current trait to the selection.
+                    which_menu = trait;      //  Set the current trait to the selection.
                 }
                 
                 
@@ -856,7 +863,7 @@ inline void Editor::_draw_trait_selector(void)
 
 //  "_dispatch_trait_inspector"
 //
-void Editor::_dispatch_trait_inspector(const LabelFn & callback)
+void Editor::_dispatch_trait_inspector(ObjectTrait & which_menu, const LabelFn & callback)
 {
     const size_t                    N_paths             = this->m_sel.paths.size();
     const bool                      no_selection        = (N_paths == 0);
@@ -872,8 +879,8 @@ void Editor::_dispatch_trait_inspector(const LabelFn & callback)
 
 
 
-    if (single)                     { this->_dispatch_trait_inspector_single    (callback);         }
-    else                            { this->_dispatch_trait_inspector_multi     (callback);         }
+    if (single)                     { this->_dispatch_trait_inspector_single    (which_menu, callback);         }
+    else                            { this->_dispatch_trait_inspector_multi     (which_menu, callback);         }
 
     return;
 }
@@ -881,7 +888,7 @@ void Editor::_dispatch_trait_inspector(const LabelFn & callback)
 
 //  "_dispatch_trait_inspector_single"
 //
-inline void Editor::_dispatch_trait_inspector_single(const LabelFn & callback)
+inline void Editor::_dispatch_trait_inspector_single(ObjectTrait & which_menu, const LabelFn & callback)
 {
     IM_ASSERT( !(this->m_sel.paths.size() != 1ULL)       && "single trait inspector called with selection != one" );
 
@@ -892,7 +899,7 @@ inline void Editor::_dispatch_trait_inspector_single(const LabelFn & callback)
     
     
     //      DISPATCH THE APPROPRIATE PANEL DEPENDING ON WHICH "OBJECT-TRAIT" THE BROWSER IS ON...
-    switch (this->m_trait)
+    switch (which_menu)
     {
         case ObjectTrait::Vertices      : {         //  TRAIT #2:   VERTEX-EDITOR.
             _draw_vertex_panel(path, sel_idx, callback);
@@ -919,14 +926,14 @@ inline void Editor::_dispatch_trait_inspector_single(const LabelFn & callback)
 
 //  "_dispatch_trait_inspector_multi"
 //
-inline void Editor::_dispatch_trait_inspector_multi(const LabelFn & callback)
+inline void Editor::_dispatch_trait_inspector_multi(ObjectTrait & which_menu, const LabelFn & callback)
 {
     IM_ASSERT( !(this->m_sel.paths.size() < 1ULL)       && "multi trait inspector called with selection not greater-than one" );
     
     
     
     //      DISPATCH THE APPROPRIATE PANEL DEPENDING ON WHICH "OBJECT-TRAIT" THE BROWSER IS ON...
-    switch (this->m_trait)
+    switch (which_menu)
     {
         
         case ObjectTrait::Vertices      : {         //  TRAIT #1:   "PROPERTIES".

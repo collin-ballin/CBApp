@@ -1036,8 +1036,8 @@ void Editor::_update_lasso(const Interaction & it)
             const Vertex* v = find_vertex(m_vertices, m_points[i].v);
             if (!v) continue;
 
-            const Path* pp = parent_path_of_vertex(m_points[i].v);
-            if (!pp || !pp->is_mutable()) continue;          // NEW guard
+            const Path * pp = parent_path_of_vertex(m_points[i].v);
+            if ( !pp || !pp->IsMutable() ) continue;          // NEW guard
 
             bool inside = (v->x >= tl_w.x && v->x <= br_w.x &&
                            v->y >= tl_w.y && v->y <= br_w.y);
@@ -1082,7 +1082,7 @@ void Editor::_update_lasso(const Interaction & it)
         for (size_t pi = 0; pi < m_paths.size(); ++pi)
         {
             const Path& p = m_paths[pi];
-            if (!p.is_mutable()) continue;                      // NEW guard
+            if ( !p.IsMutable() )   { continue; }                      // NEW guard
 
             const size_t N = p.verts.size();
             if (N < 2) continue;

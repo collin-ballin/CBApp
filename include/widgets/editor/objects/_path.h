@@ -584,49 +584,176 @@ inline void from_json(const nlohmann::json& j, PathStyle& s)
 //      only stores ordering and style.
 //
 template<typename PID, typename VID, typename ZID>
-struct Path_t {
+struct Path_t
+{
+//      0.          CONSTANTS AND ALIASES...
 // *************************************************************************** //
 // *************************************************************************** //
-//
-//
-//
-//      0.  GLOBAL CONSTANTS, TYPENAME ALIASES, ETC...
-// *************************************************************************** //
-// *************************************************************************** //
-    //                          ALIASES:
-    using                           id_type                         = PID;
+public:
+
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    using                               id_type                         = PID;
+    using                               container_type                  = std::vector<VID>;
+    using                               iterator                        = typename container_type::iterator;
     //
-    using                           Path                            = Path_t<PID, VID, ZID>;
-    using                           Payload                         = path::Payload;
-    using                           PathKind                        = path::PathKind;
-    //
-    //                          CONSTANTS:
-    static constexpr size_t         ms_MAX_PATH_LABEL_LENGTH        = 64;
-    static constexpr const char *   ms_DEF_PATH_TITLE_FMT_STRING    = "%s (ID #%06u)";
-    static constexpr ImU32          ms_DEF_PATH_FILL_COLOR          = IM_COL32(0,110,255,45); 
+    using                               Path                            = Path_t<PID, VID, ZID>;
+    using                               Payload                         = path::Payload;
+    using                               PathKind                        = path::PathKind;
     
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr size_t             ms_MAX_PATH_LABEL_LENGTH        = 64;
+    static constexpr const char *       ms_DEF_PATH_TITLE_FMT_STRING    = "%s (ID #%06u)";
+    static constexpr ImU32              ms_DEF_PATH_FILL_COLOR          = IM_COL32(0,110,255,45);
+    
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
 // *************************************************************************** //
 //
 //
-//
-//      1.  MEMBER FUNCTIONS...
+//      1.          CLASS DATA-MEMBERS...
 // *************************************************************************** //
 // *************************************************************************** //
 
     // *************************************************************************** //
-    //                          OPERATION FUNCTIONS:
+    //                          CORE:
+    // *************************************************************************** //
+    container_type                  verts;   // ordered anchor IDs
+    PID                             id                              = 0;
+    bool                            closed                          = false;
+    PathStyle                       style                           = PathStyle();
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //                          NEW:
+    // *************************************************************************** //
+    ZID                             z_index                         = Z_FLOOR_USER;
+    bool                            locked                          = false;
+    bool                            visible                         = true;
+    std::string                     label                           = "";
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //                          NEW-ER:
+    // *************************************************************************** //
+    PathKind                        kind                            = PathKind::None;
+    Payload                         payload                         {  };
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CLASS DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//
+//      2.A.        PUBLIC MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "PUBLIC MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//
+//      2.C.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      SETTER / GETTER FUNCTIONS.
+    // *************************************************************************** //
+
+    //  "IsMutable"
+    [[nodiscard]] inline bool       IsMutable                       (void) const noexcept           { return ( this->visible  &&  !this->locked ); }
+    //  "IsArea"
+    [[nodiscard]] inline bool       IsArea                          (void) const noexcept           { return ( (this->closed)  &&  (this->verts.size() >= 3) ); }
+    
+    //  "IsVisible"
+    [[nodiscard]] inline bool       IsVisible                       (void) const noexcept           { return ( (this->visible) ); }
+    
+    //  "IsTransparent"
+    [[nodiscard]] inline bool       IsTransparent                   (void) const noexcept
+    {
+        const bool      is_visible                  = this->IsVisible();
+        const bool      is_area                     = this->IsArea();
+        const bool      stroke_is_transparent       = ( (this->style.stroke_color >> 24) == 0 );
+        const bool      fill_is_transparent         = ( (this->style.fill_color >> 24) == 0 );
+        
+        return (is_area)
+                    ? ( !is_visible  &&  (stroke_is_transparent || fill_is_transparent) )
+                    : ( !is_visible  &&  stroke_is_transparent );
+    }
+    
+    
+        
+        
+        
+    //  "set_label"
+    inline void                     set_label                       (const char * src) noexcept     { this->label = std::string(src); this->_truncate_label(); }
+    //  "set_default_label"
+    inline void                     set_default_label               (const PID id_) noexcept        { this->id = id_;   this->label = std::format("Path {:03}", id_);   this->_truncate_label(); }
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+        
+        
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      PATH OPERATION FUNCTIONS.
     // *************************************************************************** //
     
-                                    //
-                                    //  ...
-                                    //
-                                    
+    //  "remove_vertex"
+    inline bool                         remove_vertex                       (VID vid) noexcept {
+        verts.erase(std::remove(verts.begin(), verts.end(), vid), verts.end());
+        if ( closed && verts.size() < 3 )     { closed = false; }     // cannot stay a polygon
+
+        return ( verts.size() >= 2 );
+    }
+    
+    //  "insert_vertex_after"
+    inline iterator                     insert_vertex_after                 (size_t seg_idx, VID new_vid)
+    { return verts.insert(verts.begin() + seg_idx + 1, new_vid); }
+        
+        
+        
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                          UI HELPER FUNCTIONS:
+    //      UI HELPER FUNCTIONS.
     // *************************************************************************** //
     
     //  "ui_all"
@@ -676,36 +803,14 @@ struct Path_t {
         
         return modified;
     }
-                                    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //                          PATH OPERATION FUNCTIONS:
-    // *************************************************************************** //
     
-    //  "remove_vertex"
-    inline bool                     remove_vertex                   (VID vid) noexcept {
-        verts.erase(std::remove(verts.begin(), verts.end(), vid), verts.end());
-
-        if (closed && verts.size() < 3)     { closed = false; }     // cannot stay a polygon
-
-        return verts.size() >= 2;
-    }
     
-    inline typename std::vector<VID>::iterator
-    insert_vertex_after(size_t seg_idx, VID new_vid)
-    { return verts.insert(verts.begin() + seg_idx + 1, new_vid); }
-                                    
-                                    
-                                    
+    
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                          UTILITY FUNCTIONS:
+    //      UTILITY FUNCTIONS.
     // *************************************************************************** //
     
     //  "make_default_payload"
@@ -724,72 +829,91 @@ struct Path_t {
         
         return std::monostate{};                  // no extra data
     }
-
-
-    //  "is_area"
-    [[nodiscard]] inline bool       is_area                         (void) const noexcept
-    { return this->closed && this->verts.size() >= 3; }
-    
-    //  "is_mutable"
-    [[nodiscard]] inline bool       is_mutable                      (void) const noexcept
-    { return visible && !locked; }
-        
-    //  "set_label"
-    inline void                     set_label                       (const char * src) noexcept
-    { this->label = std::string(src); this->_truncate_label(); }
-    
-    //  "set_default_label"
-    inline void                     set_default_label               (const PID id_) noexcept
-    { this->id = id_;   this->label = std::format("Path {:03}", id_);   this->_truncate_label(); }
     
     //  "_truncate_label"
     inline void                     _truncate_label                 (void)
     { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
     
-// *************************************************************************** //
-//
-//
-//
-//      2.  DATA MEMBERS...
-// *************************************************************************** //
-// *************************************************************************** //
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      RENDER FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "render_fill_area"
+    template<class CTX>
+    inline void                     render_fill_area                (const CTX & ctx) const noexcept
+    {
+        using               V           = CTX::Vertex;
 
+        //  Fast-outs: visibility, topology, alpha
+        if ( !this->IsVisible()                             )   { return; }
+        if ( !this->IsArea()                                )   { return; }     //  requires closed && verts.size() >= 3
+        if ( (this->style.fill_color & 0xFF000000) == 0     )   { return; }     //  fully transparent
+
+
+        const size_t        N           = this->verts.size();
+        if ( N < 3 )                    { return; }
+
+        ImDrawList *        dl          = ctx.frame.dl;
+        dl->PathClear();
+
+        //  Build pixel-space outline around the closed path
+        for (size_t i = 0; i < N; ++i)
+        {
+            const V *       a       = ctx.cbs.get_vertex(ctx.cbs.verts, this->verts[i]);
+            const V *       b       = ctx.cbs.get_vertex(ctx.cbs.verts, this->verts[(i + 1) % N]);
+            if ( !a || !b )     { continue; }
+
+
+            if ( !is_curved<VID>(a, b) )
+            {
+                //  Straight segment: emit anchor point
+                dl->PathLineTo(ctx.cbs.to_pixels(ImVec2{ a->x, a->y }));
+            }
+            else
+            {
+                //  Curved segment: sample cubic in world space, append in pixel space
+                const int   steps   = ctx.frame.bezier_fill_steps;
+                for (int s = 0; s <= steps; ++s)
+                {
+                    const float     t       = (steps > 0) ? (static_cast<float>(s) / static_cast<float>(steps)) : 0.0f;
+                    const ImVec2    wp      = cubic_eval<VID>(a, b, t);     // world-space point along the cubic
+                    dl->PathLineTo( ctx.cbs.to_pixels(wp) );          // convert to pixels and append
+                }
+            }
+        }
+
+        //  Fill the constructed outline
+        dl->PathFillConvex( this->style.fill_color );
+    
+        return;
+    }
+    
+    
+    
     // *************************************************************************** //
-    //                          CORE:
-    // *************************************************************************** //
-    std::vector<VID>                verts;   // ordered anchor IDs
-    PID                             id                              = 0;
-    bool                            closed                          = false;
-    PathStyle                       style                           = PathStyle();
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //                          NEW:
-    // *************************************************************************** //
-    ZID                             z_index                         = Z_FLOOR_USER;
-    bool                            locked                          = false;
-    bool                            visible                         = true;
-    std::string                     label                           = "";
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //                          NEW-ER:
-    // *************************************************************************** //
-    PathKind                        kind                            = PathKind::None;
-    Payload                         payload                         {  };
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
     
 
+
+
+
+
+
 // *************************************************************************** //
-//
-//
-//
 // *************************************************************************** //
-// *************************************************************************** //   END "Path_t" CLASS DEFINITION.
-};//    END "Path_t" CLASS DEFINITION.
+};//	END "Path_t" INLINE CLASS DEFINITION.
+
+
 
 
 
