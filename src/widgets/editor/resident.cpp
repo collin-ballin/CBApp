@@ -55,16 +55,16 @@ void Editor::_draw_debugger_resident(void)
     
     
     //      1.      HEADER CONTENT...
-    S.PushFont(Font::Small);
+    //  S.PushFont(Font::Small);
     //
     //
     //  //          1.A.        RESIDENT TITLE.
-        ImGui::BeginDisabled(true);
-            ImGui::SeparatorText("Debugger Resident");
-        ImGui::EndDisabled();
+        //  ImGui::BeginDisabled(true);
+        //      ImGui::SeparatorText("Debugger Resident");
+        //  ImGui::EndDisabled();
     //
     //
-    S.PopFont();//  END "HEADER".
+    //  S.PopFont();//  END "HEADER".
     
     
     
@@ -384,11 +384,6 @@ void Editor::_draw_shape_resident(void)
 {
     int kind_idx = static_cast<int>(m_shape.kind);
     S.PushFont(Font::Small);
-
-
-    ImGui::BeginDisabled(true);
-        ImGui::SeparatorText("Shape Tool");
-    ImGui::EndDisabled();
     //
     //
     //
@@ -494,11 +489,6 @@ void Editor::_draw_ui_traits_resident(void)
     this->S.PushFont(Font::Small);
     //
     //
-        ImGui::BeginDisabled(true);
-            ImGui::SeparatorText("Traits");
-        ImGui::EndDisabled();
-        
-        
         ImGui::SetNextItemWidth( Avail.x );
         //ImGui::SetNextItemWidth( -1.0f );
         if ( ImGui::Combo("##UITraits_TraitSelector",           &trait_i,
@@ -506,10 +496,7 @@ void Editor::_draw_ui_traits_resident(void)
         {
             this->m_trait_overlay = static_cast<ObjectTrait>(trait_i);
         }
-        
-        
-        
-        
+    
         
         ImGui::BeginChild("##UITraits_Inspector",    {-1.0f, 0.0f},     BStyle.STATIC_CHILD_FLAGS);
             _dispatch_trait_inspector( /*which_menu = */this->m_trait_overlay, /*top_label = */this->S.ms_TopLabel );
@@ -534,15 +521,11 @@ void Editor::_draw_ui_objects_resident(void)
     this->S.PushFont(Font::Small);
     //
     //
-        ImGui::BeginDisabled(true);
-            ImGui::SeparatorText("Objects");
-        ImGui::EndDisabled();
-        
-        
-        
+    
         ImGui::BeginChild("##UIObjects_Inspector",    {-1.0f, 0.0f},     BStyle.STATIC_CHILD_FLAGS);
             _draw_obj_selector_table(/*top_label = this->S.ms_TopLabel*/);
         ImGui::EndChild();
+        
     //
     //
     this->S.PopFont();

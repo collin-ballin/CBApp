@@ -373,24 +373,6 @@ void OverlayManager_t<OID, MapFn>::_draw_context_menu(Overlay & ov)
                 ImGui::SliderFloat("##OverlayManager_WindowSizeY",      &size.Value().y,            size.Min().y,       size.Max().y,    "%.1f");
                 
                 
-                //  Minimum.
-                //      ImGui::SeparatorText("Minimum Size");
-                //      utl::LeftLabelSimple("X:");
-                //      ImGui::SliderFloat("##OverlayManager_WindowSizeMinX",     &size.Value().x,          size.Min().x,       size.Max().x,    "%.1f");
-                //      //
-                //      utl::LeftLabelSimple("Y:");
-                //      ImGui::SliderFloat("##OverlayManager_WindowSizeMinY",     &size.Value().y,          size.Min().y,       size.Max().y,    "%.1f");
-                
-                
-                //  Maximum.
-                //      ImGui::SeparatorText("Maximum Size");
-                //      utl::LeftLabelSimple("X:");
-                //      ImGui::SliderFloat("##OverlayManager_WindowSizeMaxX",     &size.Value().x,          size.Min().x,       size.Max().x,    "%.1f");
-                //      //
-                //      utl::LeftLabelSimple("Y:");
-                //      ImGui::SliderFloat("##OverlayManager_WindowSizeMaxY",     &size.Value().y,          size.Min().y,       size.Max().y,    "%.1f");
-                
-                
             ImGui::EndMenu();
             }
         //
@@ -693,6 +675,17 @@ void OverlayManager_t<OID, MapFn>::_render_default_overlay(
         ImGui::PopStyleVar();       //  ImGuiStyleVar_WindowRounding
         ImGui::PopStyleColor();     //  ImGuiCol_WindowBg
         
+        
+        
+        //          1.1.    DRAW WINDOW SEPARATOR TITLE...
+        if ( style.display_title != nullptr )
+        {
+            ImGui::BeginDisabled(true);
+                ImGui::SeparatorText(style.display_title);
+            ImGui::EndDisabled();
+        }
+        
+        
         ov.cfg.draw_fn();
         if ( !ov.cfg.locked )   { _draw_context_menu(ov);                                   }
     //
@@ -749,6 +742,244 @@ void OverlayManager_t<OID, MapFn>::_render_default_overlay(
 
 
 //  "_render_custom_overlay"
+//
+template <typename OID, typename MapFn>
+    requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
+void OverlayManager_t<OID, MapFn>::_render_custom_overlay(
+        Overlay &                               ov,
+        ImVec2                                  cursor_px,
+        const ImRect &                          plot_rect)
+{
+    IM_ASSERT(ov.cfg.draw_fn  &&  "Overlay draw_fn must not be null");
+    
+    if ( !ov.info.visible )             { return; }
+
+
+    // ───────────────────────────────────────────────────────────── 1. anchor
+    constexpr ImGuiHoveredFlags         HOVER_FLAGS                 = ImGuiHoveredFlags_NoPopupHierarchy;// | ImGuiHoveredFlags_ChildWindows;
+    auto                                [pos, pivot]                = this->_anchor_to_pos(ov, cursor_px, plot_rect);
+    const bool                          is_custom                   = (ov.cfg.placement == OverlayPlacement::Custom);
+    const bool                          custom_size                 = ( ov.style.window_size.has_value() );
+    bool &                              collapsed                   = ( ov.style.collapsed );
+    const ImVec2                        anchor_px                   = (ov.cfg.placement == OverlayPlacement::CanvasPoint)// pixel coords of anchor itself (CanvasPoint only)
+                                                                        ? this->ws_to_px(ov.cfg.anchor_ws) : ImVec2{0, 0};
+    //
+    //
+    ImGuiWindow *                       win                         = nullptr;
+    ImGuiWindowFlags                    win_flags                   = OverlayInfo::ms_CUSTOM_WINDOW_FLAGS;  //  = ov.info.flags;
+    if ( collapsed )                    {
+        win_flags   |= ImGuiWindowFlags_AlwaysAutoResize;
+        win_flags   |= ImGuiWindowFlags_NoResize;
+        win_flags   |= ImGuiWindowFlags_NoScrollWithMouse;
+    }     //  NEW: "Collapse" Feature.
+    //
+    //
+    static std::optional<OverlayID>     resize_ID                   = std::nullopt;
+    static bool                         resizing                    = false;
+    //
+    const OverlayID &                   current_ID                  = ov.info.id;
+    const bool                          resizing_this_window        = ( (resize_ID)  &&  (*resize_ID == current_ID) );
+    const bool                          set_pos                     = ( (!resizing)  ||  (!resizing_this_window) );
+    const bool                          this_ctx_menu_was_open      = ( current_ID == this->m_current_ctx_menu.value_or(ms_INVALID_ID)   );
+    const bool                          update_this_window          = ( current_ID == this->m_request_update.value_or(ms_INVALID_ID)     );
+
+
+    // ───────────────────────────────────────────────────────────── 2. off‑screen
+    if ( ov.cfg.placement == OverlayPlacement::CanvasPoint )
+    {
+        const bool inside =
+              (anchor_px.x >= plot_rect.Min.x)  &&  (anchor_px.x <= plot_rect.Max.x)  &&
+              (anchor_px.y >= plot_rect.Min.y)  &&  (anchor_px.y <= plot_rect.Max.y);
+
+        if (!inside)
+        {
+            if (ov.cfg.offscreen == OffscreenPolicy::Hide)      { return; }  // skip draw
+
+            if (ov.cfg.offscreen == OffscreenPolicy::Clamp)
+            {
+                ImVec2 clamped_anchor{
+                    std::clamp(anchor_px.x, plot_rect.Min.x, plot_rect.Max.x),
+                    std::clamp(anchor_px.y, plot_rect.Min.y, plot_rect.Max.y)
+                };
+                pos = clamped_anchor + ov.cfg.anchor_px;          // new pos
+            }
+        }
+    }
+
+
+    // ───────────────────────────────────────────────────────────── 3. flags/pos
+    ImGuiCond                   cond            = (is_custom)   ? ImGuiCond_Once : ImGuiCond_Always;
+    const ImGuiViewport *       vp              = ImGui::GetMainViewport();
+    
+    if (!is_custom)             { ImGui::SetNextWindowViewport(vp->ID); }
+
+
+
+    //      OVERLAY STYLE PUSH:
+    auto &                      style           = ov.style;
+    ImGui::PushStyleColor           ( ImGuiCol_WindowBg,                style.bg                    );
+    ImGui::PushStyleVar             ( ImGuiStyleVar_WindowRounding,     style.window_rounding       );
+    //
+    //
+    //      NEXT WINDOW:
+    if ( set_pos )                  { ImGui::SetNextWindowPos(pos, cond, pivot); }
+    else                            { ImGui::SetNextWindowPos(this->m_pos_cache, ImGuiCond_Once, this->m_pivot_cache); }
+    ImGui::SetNextWindowBgAlpha     ( style.alpha                                                   );
+
+
+
+    if ( custom_size  &&  !collapsed )
+    {
+        ImGui::SetNextWindowSizeConstraints     (   (*style.window_size).Min(),                     (*style.window_size).Max()          );
+        ImGui::SetNextWindowSize                (   (*style.window_size).Value(),                   ImGuiCond_Once                      );
+    }
+
+
+    //      5.      UPDATE.
+    if ( update_this_window )
+    {
+        if (!collapsed) {
+            ImGui::SetNextWindowSizeConstraints(    (*style.window_size).Value(),                   (*style.window_size).Value()        );
+            this->m_request_update.reset();
+        }
+        else {
+            ImGui::SetNextWindowSizeConstraints(    { (*style.window_size).Value().x, 0.0f },       { (*style.window_size).Min().x, 0.0f }    );
+            this->m_request_update.reset();
+        }
+    }
+
+
+
+    //      6.      DRAW THE OVERLAY WINDOW...
+    //
+    ImGui::Begin( ov.info.window_name.c_str(), nullptr, win_flags );
+    //
+    //              6.1.    OVERLAY STYLE POP:
+        ImGui::PopStyleVar();       //  ImGuiStyleVar_WindowRounding
+        ImGui::PopStyleColor();     //  ImGuiCol_WindowBg
+        
+                        win                 = ImGui::GetCurrentWindowRead();
+        const bool      double_clicked      = ( ImGui::IsWindowHovered(HOVER_FLAGS)  &&  ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) );
+        
+        //          6.2.    DOUBLE-CLICK TO COLLAPSE WINDOW...
+        if (double_clicked)
+        {
+            collapsed               = !collapsed;
+            this->m_request_update  = ov.info.id;    //  Request an UPDATE if OPEN/CLOSE the window.
+        }
+        
+        
+        //          6.3.    DRAW WINDOW SEPARATOR TITLE...
+        if ( style.display_title != nullptr )
+        {
+            ImGui::BeginDisabled(true);
+                ImGui::SeparatorText(style.display_title);
+            ImGui::EndDisabled();
+        }
+        
+        
+        //          6.4.    INVOKE THE RENDER FUNCTION...
+        if ( !collapsed ) {
+            ov.cfg.draw_fn();
+            //  (*style.window_size).value = ImGui::GetItemRectSize();
+        }
+        
+        
+        
+        //          6.5.    OVERLAY CONTEXT-MENU...
+        if ( !ov.cfg.locked )
+        {
+            if ( ImGui::BeginPopupContextWindow( ov.info.window_name.c_str(), ImGuiPopupFlags_MouseButtonRight ) )
+            {
+                this->m_current_ctx_menu = ov.info.id;
+                _draw_custom_context_menu(ov);
+            ImGui::EndPopup();
+            }
+        }
+        
+        
+        //          6.6.    CONTEXT MENU WAS CLOSED...
+        const bool ctx_menu_open = ImGui::IsPopupOpen( ov.info.window_name.c_str(), ImGuiPopupFlags_None );
+        if ( this_ctx_menu_was_open  &&  !ctx_menu_open )
+            { this->m_current_ctx_menu.reset(); }
+    
+        
+        //      CASE 1 :    CHECK IF *THIS* WINDOW HAS STARTED RE-SIZING...
+        if ( !resizing ) {
+            resizing    = ( (win->ResizeBorderHeld == ImGuiDir_None)  &&  ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f) );
+            
+            if ( win->ResizeBorderHeld == ImGuiDir_None )
+            {
+                //  ...
+            }
+            
+            if (resizing)
+            {
+                //  BEGAN RESIZING
+            }
+            resize_ID   = current_ID;
+        }
+        //
+        //      CASE 2 :    IF *THIS* WINDOW IS ALREADY RESIZING, UPDATE ITS STATUS...
+        else
+        {
+            resizing    = ( ImGui::IsMouseDown(ImGuiMouseButton_Left) );
+            if ( !resizing )
+            {
+                resize_ID               .reset();
+                this->m_pos_cache       = {   };
+                this->m_pivot_cache     = {   };
+            }
+        }
+    //
+    //
+    ImGui::End();
+
+
+    if ( resizing )             { return; }
+
+
+    //  ImGuiWindow * win = ImGui::FindWindowByName( win_name.c_str() );
+    //  ImGuiWindow * win = ImGui::FindWindowByName( ov.info.window_name.c_str() );
+    if ( !win )                 { return; }
+
+
+
+    // ───────────────────────────────────────────────────────────── 5. clamp rect
+    const bool want_rect_clamp =
+        (ov.cfg.placement == OverlayPlacement::CanvasPoint &&
+         ov.cfg.offscreen == OffscreenPolicy::Clamp) ||
+        (ov.cfg.placement != OverlayPlacement::Cursor &&
+         ov.cfg.placement != OverlayPlacement::Custom &&
+         ov.cfg.placement != OverlayPlacement::CanvasPoint);
+
+    if (want_rect_clamp)
+    {
+        ImVec2 win_min = win->Pos;
+        ImVec2 win_max = win_min + win->Size;
+        ImVec2 shift   {0,0};
+
+        // left vs right
+        if ( win_min.x < plot_rect.Min.x )          { shift.x = plot_rect.Min.x - win_min.x; }
+        else if ( win_max.x > plot_rect.Max.x )     { shift.x = plot_rect.Max.x - win_max.x; }
+
+        // top vs bottom
+        if ( win_min.y < plot_rect.Min.y )          { shift.y = plot_rect.Min.y - win_min.y; }
+        else if ( win_max.y > plot_rect.Max.y )     { shift.y = plot_rect.Max.y - win_max.y; }
+
+        if ( shift.x || shift.y )                   { win->Pos = win_min + shift; }
+    }
+
+    // ───────────────────────────────────────────────────────────── 6. persist drag
+    if (is_custom && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        ov.cfg.anchor_px = win->Pos;        // remember new TL
+
+
+    return;
+}
+
+
+/*  "_render_custom_overlay"
 //
 template <typename OID, typename MapFn>
     requires std::is_nothrow_invocable_r_v<ImVec2, MapFn, ImVec2>
@@ -983,11 +1214,7 @@ void OverlayManager_t<OID, MapFn>::_render_custom_overlay(
 
 
     return;
-}
-
-
-
-
+}*/
 
 
 

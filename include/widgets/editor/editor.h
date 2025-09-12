@@ -212,6 +212,7 @@ public:
                 /*  anchor_px       */  ImVec2{ 50.0f,          35.0f }                 //  nudge below bbox
             },
             {//     STYLE...
+                /*  display_title   */  "Debugger Resident",
                 /*  alpha           */  0.80f,
                 /*  background      */  0x00000000,
                 /*  win_rounding    */  8
@@ -230,6 +231,7 @@ public:
                 /*  anchor_px       */  ImVec2{0,   25}                      //  Window Offset.
             },
             {//     STYLE...
+                /*  display_title   */  nullptr,
                 /*  alpha           */  0.95f,
                 /*  background      */  0x00000000,
                 /*  win_rounding    */  10
@@ -248,6 +250,7 @@ public:
                 /*  anchor_px       */  ImVec2{-30.0f,   45.0f}             //  Window Offset.
             },
             {//     STYLE...
+                /*  display_title   */  "Shape Tool",
                 /*  alpha           */  0.65f,
                 /*  background      */  0xFF000000,
                 /*  win_rounding    */  5
@@ -272,6 +275,7 @@ public:
                 /*  anchor_ws       */  ImVec2{ 0.0f,       0.0f }          //  ws anchor filled each frame
             },
             {//     STYLE...
+                /*  display_title   */  "Traits",
                 /*  alpha           */  0.80f,
                 /*  background      */  0x00000000,
                 /*  win_rounding    */  8,
@@ -292,6 +296,7 @@ public:
                 /*  anchor_px       */  ImVec2{ 50.0f,      12.5f },                //  Offset Position.
             },
             {//     STYLE...
+                /*  display_title   */  "Objects",
                 /*  alpha           */  0.80f,
                 /*  background      */  0x00000000,
                 /*  win_rounding    */  8,

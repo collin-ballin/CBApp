@@ -982,11 +982,16 @@ struct OverlayCFG {
 struct OverlayStyle {
     CBAPP_CBLIB_TYPES_API
 //
+    const char *                            display_title           = nullptr;
+//
     float                                   alpha                   = 0.65f;
     ImU32                                   bg                      = 0x000000FF;
     int                                     window_rounding         = 8;
 //
     std::optional< Param<ImVec2> >          window_size             = { std::nullopt };      // {     {120.0f,    -1.0f},     { {80.0f,       1.0f},      {220.0f,    FLT_MAX} }   };
+//
+//
+//                                      CACHE VALUES...
     bool                                    collapsed               = false;
 //
 //
