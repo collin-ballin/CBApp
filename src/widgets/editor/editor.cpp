@@ -494,8 +494,11 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
     
     
     //      6.      PER-FRAME CACHE OPERATIONS FOR IMPLOT CANVAS...
-    ES.m_window_size            = ImPlot::GetPlotLimits();                  //  6A.     DOMAIN + RANGE OF PLOT.
-    ES.m_plot_px_dims           = ImPlot::GetPlotSize();                    //  6B.     PIXEL SIZE OF THE PLOT.
+    ES.m_window_coords          = ImPlot::GetPlotLimits();                                          //  6A.     DOMAIN + RANGE OF PLOT      [ IN (X,Y) PLOT UNITS ].
+    ES.m_window_size[0]         = std::abs(ES.m_window_coords.X.Max - ES.m_window_coords.X.Min);    //  6B.     SIZE OF THE PLOT            [ IN (X,Y) PLOT UNITS ].
+    ES.m_window_size[1]         = std::abs(ES.m_window_coords.Y.Max - ES.m_window_coords.Y.Min);    //
+    //
+    ES.m_plot_px_dims           = ImPlot::GetPlotSize();                                            //  6C.     PIXEL SIZE OF THE PLOT      [ IN PIXEL-DIMENSIONS ].
     ES.m_plot_bbox              = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
     
     

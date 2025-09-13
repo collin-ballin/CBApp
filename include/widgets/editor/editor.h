@@ -654,9 +654,10 @@ protected:
     void                                _draw_properties_panel_multi            ([[maybe_unused]] const LabelFn & );      //  PREVIOUSLY:     _draw_multi_path_inspector
     //
     //                              "VERTICES" TRAIT:
-    void                                _draw_vertex_panel                      (Path & path, [[maybe_unused]] const size_t , const LabelFn & callback);
+    void                                _draw_vertex_panel                      (Path & path, [[maybe_unused]] const size_t , const LabelFn & );
     void                                _draw_vertex_selector_column            (Path & , const size_t );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
-    void                                _draw_vertex_inspector_column           (Path & , [[maybe_unused]] const LabelFn & callback);  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
+    void                                _draw_vertex_inspector_column           (Path & , const LabelFn & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
+    void                                    _draw_vertex_panel                  (Vertex & , const LabelFn & );
     //
     //                              "PAYLOAD" TRAIT:
     void                                _draw_payload_panel                     (Path & path, [[maybe_unused]] const size_t , const LabelFn & );
@@ -763,9 +764,22 @@ protected:
     //      RENDERING FUNCTIONS.            |   "render.cpp" ...
     // *************************************************************************** //
     //
+    //
+    struct RenderCache
+    {
+        std::vector<size_t>     z_view;                 // indices into m_paths
+        size_t                  n_paths_last    = 0;
+        bool                    dirty           = true;
+    };
+    mutable RenderCache                 m_render_cache                      {   };      //  mutable if _MECH_render_frame() is const
+    //
+    //
+    //
     //                              NEW RENDERING FUNCTIONS:
-    inline void                         _RENDER_object_channel              (ImDrawList * dl) const noexcept;
-    inline void                         _draw_path_fill_area                (ImDrawList * dl, const Path & p) const noexcept;
+    inline void                         _RENDER_update_render_cache         (void) const noexcept;
+    //
+    inline void                         _RENDER_object_channel              (std::span<const size_t> , const RenderCTX & ) const noexcept;
+    inline void                         _RENDER_feature_channel             (std::span<const size_t> , const RenderCTX & ) const noexcept;
     //
     //
     //
@@ -1106,7 +1120,7 @@ protected:
     inline void                         _update_grid_info                       (void)
     {
         EditorState &       ES              = this->m_editor_S;
-        ImPlotRect &        lim             = ES.m_window_size;
+        ImPlotRect &        lim             = ES.m_window_coords;
         ImVec2 &            size            = ES.m_plot_px_dims;
         //
         float               range_x         = static_cast<float>(lim.X.Max - lim.X.Min);
@@ -1879,6 +1893,47 @@ inline void from_json(const nlohmann::json & j, EditorSnapshot & s)
 //  NEW STATIC HELPERS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "draw_vertex_slider"
+//
+inline bool s_draw_vertex_slider(const char * label, double & value, const double & range, const char * fmt = "%.3f")
+{
+    const bool      left_oob            = ( range < value );      //  "oob" = "OUT-OF-BOUNDS".
+    const bool      right_oob           = ( range < value );
+    bool            dirty               = false;
+    
+    dirty = ImGui::SliderScalar( label,
+                                 ImGuiDataType_Double,
+                                 &value,
+                                 (left_oob)     ? &value        : &range ,
+                                 (right_oob)    ? &value        : &range ,
+                                 fmt
+    );
+    return dirty;
+};
+
+
+
+//  "draw_vertex_slider"
+//
+inline bool s_draw_vertex_slider(const char * label, double & value, const ImPlotRange & range, const char * fmt = "%.1f")
+{
+    bool            dirty               = false;
+    
+    dirty = ImGui::SliderScalar(   label
+                                 , ImGuiDataType_Double
+                                 , &value
+                                 , &range.Min
+                                 , &range.Max
+                                 , fmt
+    );
+    return dirty;
+};
+    
+    
+    
+
+
 
 
 

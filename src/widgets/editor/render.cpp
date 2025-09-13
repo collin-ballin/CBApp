@@ -75,62 +75,65 @@ void Editor::_grid_handle_shortcuts(void)
 //
 void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
 {
-    using                       Layer           = ChannelCTX::Channel;
-    const VertexStyle &         VS              = this->m_vertex_style;
+    using                           Layer           = ChannelCTX::Channel;
+    const VertexStyle &             VS              = this->m_vertex_style;
+    RenderCache &                   cache           = this->m_render_cache;
 
     
 
     ImPlot::PushPlotClipRect();
     ChannelCTX          CTX         (it.dl);
+    VS                  .PushDL     (CTX.dl);
     //
     //
-    m_render_ctx.args.dl                        = CTX.dl;
-    m_render_ctx.args.bezier_fill_steps         = this->m_style.ms_BEZIER_FILL_STEPS;
-    m_render_ctx.args.bezier_segments           = 12;
+    //
+    this->m_render_ctx.args.dl                      = CTX.dl;
+    this->m_render_ctx.args.bezier_fill_steps       = this->m_style.ms_BEZIER_FILL_STEPS;
+    this->m_render_ctx.args.bezier_segments         = this->m_style.ms_BEZIER_SEGMENTS;
     //
     //
-    VS.PushDL(CTX.dl);
     //
-    //
+    this->_RENDER_update_render_cache();
+    const std::span<const size_t>   z_view      ( cache.z_view.data(), cache.z_view.size() );
     //
     //  //      1.      RENDER "Grid" ELEMENTS...
         {
-            ChannelCTX::Scope           scope       ( CTX,      Layer::Grid         );
-            //  this->_render_selection_highlight       ( it.dl                         );
+            ChannelCTX::Scope           scope       ( CTX,          Layer::Grid             );
+            //  this->_render_selection_highlight       ( it.dl                             );
         }
         
         
         //      2.      RENDER "Object" ELEMENTS...
         {
-            ChannelCTX::Scope           scope       ( CTX,      Layer::Objects      );
-            this->_RENDER_object_channel            ( it.dl                         );
+            ChannelCTX::Scope           scope       ( CTX,          Layer::Objects          );
+            this->_RENDER_object_channel            ( z_view,       this->m_render_ctx      );
         }
         
         
         //      3.      RENDER "Highlight" ELEMENTS...
         {
-            ChannelCTX::Scope           scope       ( CTX,      Layer::Highlights   );
-            this->_render_selection_highlight       ( it.dl                         );
+            ChannelCTX::Scope           scope       ( CTX,          Layer::Highlights       );
+            this->_render_selection_highlight       ( it.dl                                 );
         }
         
         
         //      4.      RENDER "Feature" ELEMENTS...
         {
-            ChannelCTX::Scope           scope       ( CTX,      Layer::Features     );
+            ChannelCTX::Scope           scope       ( CTX,          Layer::Features         );
+            this->_RENDER_feature_channel           ( z_view,       this->m_render_ctx      );
         }
         
         
         //      5.      RENDER "Accent" ELEMENTS...
         {
-            ChannelCTX::Scope           scope       ( CTX,      Layer::Accents      );
-            this->_render_points                    ( it.dl                         );
+            ChannelCTX::Scope           scope       ( CTX,          Layer::Accents          );
+            //  this->_render_points                    ( it.dl                             );
         }
-        
         
         
         //      6.      RENDER "Glyph" ELEMENTS...
         {
-            ChannelCTX::Scope           scope       ( CTX,      Layer::Glyphs       );
+            ChannelCTX::Scope           scope       ( CTX,          Layer::Glyphs           );
         }
         
         
@@ -148,6 +151,47 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
 
     return;
 }
+
+
+//  "_RENDER_update_render_cache"
+//
+void Editor::_RENDER_update_render_cache(void) const noexcept
+{
+    auto  &         cache       = m_render_cache;
+    auto  &         view        = cache.z_view;
+    const size_t    N           = m_paths.size();
+
+    //  Grow (or shrink) the view to match path count; re-use capacity.
+    if ( view.size() != N )
+    {
+        view.resize(N);
+        std::iota(view.begin(), view.end(), size_t{0});   // [0..N-1]
+        cache.n_paths_last  = N;
+        cache.dirty         = true;                        // content changed, must (re)sort
+    }
+
+    // Nothing to do if we’re clean and sizes match.
+    if ( !cache.dirty )     { return; }
+
+    //  Deterministic, stable-in-effect order: sort by z_index, then PathID.
+    //  Use std::sort (in-place) with a tie-breaker instead of stable_sort (avoids extra allocations).
+    std::sort( view.begin(), view.end(), [&](size_t ia, size_t ib) {
+        const Path &     a       = m_paths[ia];
+        const Path &     b       = m_paths[ib];
+
+        if ( a.z_index != b.z_index )    { return a.z_index < b.z_index; }
+
+        return a.id < b.id; // tie-breaker for deterministic render
+    } );
+
+
+
+    cache.dirty = false;
+
+    return;
+}
+
+
 
 //
 //
@@ -170,71 +214,35 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
 
 //  "_RENDER_object_channel"
 //
-inline void Editor::_RENDER_object_channel(ImDrawList * dl) const noexcept
+inline void Editor::_RENDER_object_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
 {
-    // Collect only visible, closed paths with non-transparent fill.
-    std::vector<const Path*> draw_vec;
-    draw_vec.reserve(m_paths.size());
-    for (const Path& p : m_paths)
+    for (size_t idx : z_view)
     {
-        if (p.visible && p.IsArea() && (p.style.fill_color & 0xFF000000))
-            draw_vec.push_back(&p);
-    }
-
-    // Stable sort: low Z → high Z (background → foreground).
-    std::stable_sort(draw_vec.begin(), draw_vec.end(),
-                     [](const Path* a, const Path* b) {
-                         return a->z_index < b->z_index;
-                     });
-
-    //  Fill pass (no strokes/accents here).
-    for (const Path * pp : draw_vec)
-    {
-        (*pp).render_fill_area( this->m_render_ctx );
-        //  _draw_path_fill_area(dl, *pp);
+        const Path &    p   = m_paths[idx];
+        
+        if ( p.visible && p.IsArea()  &&  (p.style.fill_color & IM_COL32_A_MASK) )
+            { p.render_fill_area(ctx); }
     }
     
     return;
 }
 
 
-
-//  "_draw_path_fill_area"
+//  "_RENDER_feature_channel"
 //
-inline void Editor::_draw_path_fill_area(ImDrawList * dl, const Path & p) const noexcept
+inline void Editor::_RENDER_feature_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
 {
-    // Fast outs
-    if ( !p.IsVisible() || !p.IsArea() )            { return; }         //  closed && verts.size() >= 3
-    if ( (p.style.fill_color & 0xFF000000) == 0 )   { return; }         //  alpha == 0
-
-    const size_t N = p.verts.size();
-    
-    if (N < 3)      { return; }
-
-    dl->PathClear();
-
-    for (size_t i = 0; i < N; ++i)
+    for ( size_t idx : z_view )
     {
-        const Vertex* a = find_vertex(m_vertices, p.verts[i]);
-        const Vertex* b = find_vertex(m_vertices, p.verts[(i + 1) % N]);
-        if (!a || !b) continue;
-
-        // Straight segment: just add the anchor point
-        if (!is_curved<VertexID>(a, b)) {
-            dl->PathLineTo(world_to_pixels({ a->x, a->y }));
-        }
-        // Curved segment: sample along the cubic
-        else {
-            for (int step = 0; step <= m_style.ms_BEZIER_FILL_STEPS; ++step) {
-                const float t = static_cast<float>(step) / m_style.ms_BEZIER_FILL_STEPS;
-                const ImVec2 wp = cubic_eval<VertexID>(a, b, t);
-                dl->PathLineTo(world_to_pixels(wp));
-            }
+        const Path &        p           = m_paths[idx];
+        const bool          has_alpha   = (p.style.stroke_color & IM_COL32_A_MASK) != 0;
+        const bool          render      = ( p.visible )  &&  ( has_alpha )  &&  ( p.style.stroke_width > 0.0f )  &&  ( p.size() >= 2 );
+        if ( render )       {
+            p.render_stroke(ctx);
         }
     }
-
-    // Note: mirrors your current approach; unchanged semantics.
-    dl->PathFillConvex(p.style.fill_color);
+    
+    return;
 }
 
 
@@ -258,40 +266,6 @@ inline void Editor::_draw_path_fill_area(ImDrawList * dl, const Path & p) const 
 //      2.      PRIMARY RENDERING OPERATIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-
-//  "_render_lines"
-//
-void Editor::_render_lines(ImDrawList* dl, const ImVec2& origin) const
-{
-#ifdef LEGACY_LINES
-    for (const auto& ln : m_lines)
-    {
-        const Vertex * a = find_vertex(m_vertices, ln.a);
-        const Vertex * b = find_vertex(m_vertices, ln.b);
-        if (!a || !b) continue;
-        dl->AddLine({ origin.x + a->x * m_cam.zoom_mag, origin.y + a->y * m_cam.zoom_mag },
-                    { origin.x + b->x * m_cam.zoom_mag, origin.y + b->y * m_cam.zoom_mag },
-                    ln.color, ln.thickness);
-    }
-#else
-    (void)dl; (void)origin; // suppress unused‑param warnings
-#endif
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 //  "_render_paths"
@@ -793,10 +767,10 @@ inline void Editor::_auxiliary_highlight_object(const Path & p, ImDrawList * dl)
 
 //  "_auxiliary_highlight_handle"
 //
-inline void Editor::_auxiliary_highlight_handle(const Vertex & v, ImDrawList * dl) const
+inline void Editor::_auxiliary_highlight_handle(const Vertex & v, ImDrawList * /*dl*/) const
 {
-    const ImU32 &               col             = ImGui::GetColorU32(ImGuiCol_FrameBgHovered);  //  m_style.AUX_HIGHLIGHT_COLOR;
-    const float &               w               = this->m_style.AUX_HIGHLIGHT_WIDTH;            //  p.style.stroke_width + 2.0f;
+    //  const ImU32 &               col             = ImGui::GetColorU32(ImGuiCol_FrameBgHovered);  //  m_style.AUX_HIGHLIGHT_COLOR;
+    //  const float &               w               = this->m_style.AUX_HIGHLIGHT_WIDTH;            //  p.style.stroke_width + 2.0f;
     
     
     //      2.      DRAW HOVERED VERTEX...

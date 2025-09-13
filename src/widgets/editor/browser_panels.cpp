@@ -404,6 +404,146 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
 {
     static constexpr size_t     TITLE_SIZE      = 32ULL;
     BrowserStyle &              BStyle          = this->m_style.browser_style;
+    
+    
+    //      CASE 0 :    NO VALID SELECTION...
+    if ( m_browser_S.m_inspector_vertex_idx < 0 || m_browser_S.m_inspector_vertex_idx >= static_cast<int>(path.verts.size()) )
+    {
+        this->S.PushFont(Font::Main);
+            ImGui::TextDisabled("No vertex selected...");
+        this->S.PopFont();
+        return;
+    }
+
+                      
+    //      0.          OBTAIN POINTER TO VERTEX...
+    VertexID                    vid             = path.verts[static_cast<size_t>(m_browser_S.m_inspector_vertex_idx)];
+    Vertex *                    v               = find_vertex_mut(m_vertices, vid);
+    VertexID                    cache_id        = static_cast<VertexID>(-1);
+    static char                 title [TITLE_SIZE];     // safe head-room
+    
+    
+    //      0.1.    UPDATE TITLE IF SELECTION CHANGED...
+    if (cache_id != vid)
+    {
+        cache_id        = vid;
+        int retcode     = std::snprintf( title, TITLE_SIZE, Vertex::ms_DEF_VERTEX_TITLE_FMT_STRING, m_browser_S.m_inspector_vertex_idx, vid );
+        
+        if (retcode < 0) [[unlikely]] {//  Log a warning message if truncation takes place.
+            auto message = std::format( "snprintf truncated Vertex title.\n"
+                                        "vertex-ID: {}.  title: \"{}\".  buffer-size: {}.  return value: \"{}\".",
+                                        vid, title, TITLE_SIZE, retcode );
+            CB_LOG( LogLevel::Warning, message );
+        }
+    }
+    
+    
+    
+    //  CASE 1 :    STALE VERTEX...
+    if ( !v )           {
+        cache_id = static_cast<VertexID>(-1);
+        ImGui::TextColored( this->S.SystemColor.Red, "%s", "[ STALE VERTEX ERROR ]");
+        return;
+    }
+
+
+    //  1.  HEADER CONTENT...       "Vertex ID"
+    ImGui::SeparatorText(title);
+
+
+    //  2.  "DELETE" BUTTON...
+    if ( ImGui::Button("Delete Vertex##Editor_VertexBrowser_DeleteVertexButton", {120,0}) )
+    {
+        _erase_vertex_and_fix_paths(vid);
+        m_browser_S.m_inspector_vertex_idx = -1;
+        _rebuild_vertex_selection();
+    }
+    
+    
+    //  3.  INVOKE FUNCTION TO DRAW REMAINING VERTEX PROPERTIES...
+    this->_draw_vertex_panel( *v, callback );
+    
+    
+    return;
+}
+
+
+//  "_draw_vertex_panel"
+//
+void Editor::_draw_vertex_panel(Vertex & v, const LabelFn & callback)
+{
+    EditorState &               ES                  = this->m_editor_S;
+    //
+    const float                 ms_SEP_WIDTH        = 5;
+    const float                 ms_HALF_WIDTH       = 0.5 * ( ms_WIDGET_WIDTH - ms_SEP_WIDTH );
+    
+    
+    
+    const float         grid            = m_style.GRID_STEP / m_cam.zoom_mag;
+    const float         speed           = 0.1f * grid;
+    auto                snap            = [grid](float f){ return std::round(f / grid) * grid; };
+    //
+    int                 kind_idx        = static_cast<int>( v.GetCurvatureType() );
+    //
+    ImVec2 &            in_handle       = v.GetInHandle();
+    double              ih_x            = static_cast<double>( in_handle.x );
+    double              ih_y            = static_cast<double>( in_handle.y );
+
+
+//  ES.m_world_size[0]
+
+
+    //  dirty   =    draw_slider( "##Vertex_InHandle_X", ih_x, ES.m_window_size.X, );
+
+
+
+
+    //      3.1.    Position:
+    callback("In-Handle:");
+    {
+        bool    dirty1     = false;
+        bool    dirty2     = false;
+        
+        ImGui::PushItemWidth( ms_HALF_WIDTH );
+        {
+            //  dirty1  = s_draw_vertex_slider("##Vertex_InHandle_X", ih_x, ES.m_window_coords.X );
+            dirty1  = s_draw_vertex_slider("##Vertex_InHandle_X", ih_x, Vertex::ms_BEZIER_SLIDER_LIMITS.X );
+            
+            
+            //
+            //  dirty1  = ImGui::SliderScalar("##Vertex_InHandle_X",  ImGuiDataType_Double, &ih_x, &ES.m_world_size[0].Min(), &ES.m_world_size[0].Max(), "%.6f");
+            //
+            ImGui::SameLine(0.0f,ms_SEP_WIDTH);
+            //
+            dirty2  = ImGui::SliderScalar("##Vertex_InHandle_Y",  ImGuiDataType_Double, &ih_y, &ES.m_world_size[1].Min(), &ES.m_world_size[1].Max(), "%.6f");
+            
+            
+            //  UPDATE VALUE.
+            if ( dirty1 || dirty2 ) {
+                v.SetInHandle( {static_cast<float>( ih_x ), static_cast<float>( ih_y )} );
+            }
+            
+        }
+        ImGui::PopItemWidth();
+    //
+    //
+    }
+        
+        
+        
+    
+    
+    return;
+}
+
+
+
+
+
+/* void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const LabelFn & callback)
+{
+    static constexpr size_t     TITLE_SIZE      = 32ULL;
+    BrowserStyle &              BStyle          = this->m_style.browser_style;
     const float &               LABEL_W         = BStyle.ms_BROWSER_OBJ_LABEL_WIDTH;
     const float &               WIDGET_W        = BStyle.ms_BROWSER_OBJ_WIDGET_WIDTH;
     
@@ -451,13 +591,10 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
 
 
     //  1.  HEADER CONTENT...       "Vertex ID"
-    //
-    //ImGui::Text( Vertex::ms_DEF_VERTEX_LABEL_FMT_STRING, m_browser_S.m_inspector_vertex_idx, vid );
     ImGui::SeparatorText(title);
 
 
     //  2.  "DELETE" BUTTON...
-    //  ImGui::SameLine();
     if ( ImGui::Button("Delete Vertex##Editor_VertexBrowser_DeleteVertexButton", {120,0}) )
     {
         _erase_vertex_and_fix_paths(vid);
@@ -471,15 +608,24 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
     {
         const float         grid            = m_style.GRID_STEP / m_cam.zoom_mag;
         const float         speed           = 0.1f * grid;
-        bool                dirty           = false;
-        int                 kind_idx        = static_cast<int>(v->m_bezier.kind);
         auto                snap            = [grid](float f){ return std::round(f / grid) * grid; };
+        auto                snap2           = [grid](ImVec2 v) -> ImVec2 { return { std::round(v.x / grid) * grid,  std::round(v.y / grid) * grid }; };
+        //
+        bool                dirty           = false;
+        int                 kind_idx        = static_cast<int>( v->GetCurvatureType() );
+        //
+        ImVec2              position        = v->GetXYPosition();
+        ImVec2 &            in_handle       = v->GetInHandle();
+        ImVec2              out_handle      = v->GetOutHandle();
+
+
 
         //      3.1.    Position:
         callback("Position:");
-        dirty                              |= ImGui::DragFloat2("##Editor_VertexBrowser_Pos", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
+        dirty                              |= ImGui::DragFloat2("##Vertex_Pos", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
         //
-        if ( dirty && /*!ImGui::IsItemActive() && */ this->want_snap() ) {
+        if ( dirty && this->want_snap() )
+        {
             dirty       = false;
             ImVec2 s    = snap_to_grid({v->x, v->y});
             v->x        = s.x;
@@ -493,43 +639,40 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
         //
         //              3.2A    ANCHOR TYPE (corner / smooth / symmetric):
         {
-            //  this->S.labelf("Type:", LABEL_W, WIDGET_W);
             callback("Type:");
-            dirty = ImGui::Combo("##Editor_VertexBrowser_AnchorType", &kind_idx, ms_BEZIER_CURVATURE_TYPE_NAMES.data(), static_cast<int>( BezierCurvatureType::COUNT ));          // <- int, not enum
+            dirty = ImGui::Combo("##Vertex_AnchorType", &kind_idx, ms_BEZIER_CURVATURE_TYPE_NAMES.data(), static_cast<int>( BezierCurvatureType::COUNT ));          // <- int, not enum
             //
             if (dirty) {
-                v->m_bezier.kind    = static_cast<BezierCurvatureType>(kind_idx);
+                v->SetCurvatureType( static_cast<BezierCurvatureType>(kind_idx) );
                 dirty               = false;
             }
         }
         //
         //              3.2B    INWARD (from previous vertex):
-        //  this->S.labelf("Inward:", LABEL_W, WIDGET_W);
         callback("Inward:");
         //
-        dirty              = ImGui::DragFloat2("##Editor_VertexBrowser_InwardControl",     &v->m_bezier.in_handle.x,    speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
-        if ( dirty && !ImGui::IsItemActive() ) {
-            v->m_bezier.in_handle.x     = snap(v->m_bezier.in_handle.x);
-            v->m_bezier.in_handle.y     = snap(v->m_bezier.in_handle.y);
-            mirror_handles<VertexID>(*v, /*dragging_out=*/false);
+        dirty              = ImGui::DragFloat2("##Vertex_InwardControl",     &v->m_bezier.in_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
+        if ( dirty && !ImGui::IsItemActive() )
+        {
+            v->SetInHandle( {snap(v->m_bezier.in_handle.x), snap(v->m_bezier.in_handle.y)} );
+            mirror_handles<VertexID>(*v, false);
             dirty                       = false;
         }
         //
         //              3.2C    OUTWARD (to next vertex):
-        //  this->S.labelf("Outward:", LABEL_W, WIDGET_W);
         callback("Outward:");
-        dirty               = ImGui::DragFloat2("##Editor_VertexBrowser_OutwardControl",    &v->m_bezier.out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
-        if ( dirty && !ImGui::IsItemActive() ) {
-            v->m_bezier.out_handle.x    = snap(v->m_bezier.out_handle.x);
-            v->m_bezier.out_handle.y    = snap(v->m_bezier.out_handle.y);
-            mirror_handles<VertexID>(*v, /*dragging_out=*/true);  // keep smooth/symmetric rule
+        dirty               = ImGui::DragFloat2("##Vertex_OutwardControl",    &out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
+        if ( dirty && !ImGui::IsItemActive() )
+        {
+            v->SetOutHandle( {snap(out_handle.x), snap(out_handle.y)} );
+            mirror_handles<VertexID>(*v, true);  // keep smooth/symmetric rule
             dirty                       = false;
         }
     }
     
     
     return;
-}
+}*/
 
 
 

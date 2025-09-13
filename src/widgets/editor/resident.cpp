@@ -193,13 +193,18 @@ void Editor::_debugger_hit_detection(void)
     
     //      1.      CURRENT CANVAS WINDOW DIMENSIONS...
     this->S.labelf("Canvas Window:", LABEL_W, WIDGET_W);
-    ImGui::Text( "X: (%.0f, %.0f).  Y: (%.0f, %.0f)",       ES.m_window_size.X.Min,     ES.m_window_size.X.Max,
-                                                            ES.m_window_size.Y.Min,     ES.m_window_size.Y.Max  );
-
+    ImGui::Text( "X: (%.0f, %.0f).  Y: (%.0f, %.0f)",       ES.m_window_coords.X.Min,   ES.m_window_coords.X.Max,
+                                                            ES.m_window_coords.Y.Min,   ES.m_window_coords.Y.Max    );
+    //
+    this->S.labelf("Window Size:",  LABEL_W, WIDGET_W);
+    ImGui::Text( "[%.0f x %.0f]",                           ES.m_window_size[0],        ES.m_window_size[1]         );
+    //
+    //
+    //
     //      2.      CURRENT "ZOOM" DIMENSIONS...
     this->S.labelf("Canvas Zoom:", LABEL_W, WIDGET_W);
-    ImGui::Text( "X: (%.0f, %.0f).  Y: (%.0f, %.0f)",       ES.m_window_size.X.Min,     ES.m_window_size.X.Max,
-                                                            ES.m_window_size.Y.Min,     ES.m_window_size.Y.Max  );
+    ImGui::Text( "X: (%.0f, %.0f).  Y: (%.0f, %.0f)",       ES.m_window_coords.X.Min,   ES.m_window_coords.X.Max,
+                                                            ES.m_window_coords.Y.Min,   ES.m_window_coords.Y.Max    );
     
     
 

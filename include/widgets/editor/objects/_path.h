@@ -609,9 +609,10 @@ public:
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr size_t             ms_MAX_PATH_LABEL_LENGTH        = 64;
-    static constexpr const char *       ms_DEF_PATH_TITLE_FMT_STRING    = "%s (ID #%06u)";
-    static constexpr ImU32              ms_DEF_PATH_FILL_COLOR          = IM_COL32(0,110,255,45);
+    static constexpr float              ms_MIN_STROKE_WIDTH                     = 1e-6;
+    static constexpr size_t             ms_MAX_PATH_LABEL_LENGTH                = 64;
+    static constexpr const char *       ms_DEF_PATH_TITLE_FMT_STRING            = "%s (ID #%06u)";
+    static constexpr ImU32              ms_DEF_PATH_FILL_COLOR                  = IM_COL32(0,110,255,45);
     
 //
 //
@@ -697,6 +698,12 @@ public:
     //  "IsVisible"
     [[nodiscard]] inline bool           IsVisible                       (void) const noexcept           { return ( (this->visible) ); }
     
+    //  "TransparentFill"
+    [[nodiscard]] inline bool           TransparentFill                 (void) const noexcept           { return ( (this->style.fill_color & 0xFF000000) == 0 );    }
+    
+    //  "TransparentStroke"
+    [[nodiscard]] inline bool           TransparentStroke               (void) const noexcept           { return ( ((this->style.stroke_color & 0xFF000000) == 0)  &&  (this->style.stroke_width <= this->ms_MIN_STROKE_WIDTH) );  }
+    
     //  "IsTransparent"
     [[nodiscard]] inline bool           IsTransparent                   (void) const noexcept
     {
@@ -760,13 +767,14 @@ public:
     // *************************************************************************** //
     
     //  "ui_all"
-    inline void                     ui_all                          (void)
+    inline void                         ui_all                              (void)
     {
         using namespace path;
         if ( this->ui_kind() )        { /*    "kind" was changes.     */ }
         
         //  2.  CALL THE "PROPERTIES UI" FOR THE
-        std::visit([&](auto & pl) {
+        std::visit([&](auto & pl)
+        {
             using T = std::decay_t<decltype(pl)>;
             //  skip monostate (has no draw_ui)
             if constexpr (!std::is_same_v<T, std::monostate>)
@@ -777,7 +785,7 @@ public:
     }
     
     //  "ui_properties"
-    inline void                     ui_properties                   (void)
+    inline void                         ui_properties                       (void)
     {
         using namespace path;
         
@@ -793,7 +801,7 @@ public:
     }
     
     //  "ui_kind"
-    inline bool                     ui_kind                         (void)
+    inline bool                         ui_kind                             (void)
     {
         bool    modified    = false;
         int     kind_idx    = static_cast<int>(this->kind);
@@ -817,7 +825,7 @@ public:
     // *************************************************************************** //
     
     //  "make_default_payload"
-    static inline Payload           make_default_payload(const PathKind k)
+    static inline Payload               make_default_payload                (const PathKind k)
     {
         switch (k)
         {
@@ -833,7 +841,7 @@ public:
     }
     
     //  "_truncate_label"
-    inline void                     _truncate_label                 (void)
+    inline void                         _truncate_label                     (void)
     { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
     
     
@@ -847,23 +855,24 @@ public:
     
     //  "render_fill_area"
     template<class CTX>
-    inline void                     render_fill_area                (const CTX & ctx) const noexcept
+    inline void                         render_fill_area                    (const CTX & ctx) const noexcept
     {
         using               V                   = CTX::Vertex;
         const auto &        callbacks           = ctx.callbacks;
         const auto &        args                = ctx.args;
         ImDrawList *        dl                  = args.dl;
-        const size_t        N                   = this->verts.size();
+        const size_t        N                   = this->size();
 
 
 
         //  Fast-outs: visibility, topology, alpha
-        if ( !this->IsVisible()                             )   { return; }
-        if ( !this->IsArea()                                )   { return; }     //  requires closed && verts.size() >= 3
-        if ( (this->style.fill_color & 0xFF000000) == 0     )   { return; }     //  fully transparent
+        if ( !this->IsVisible()         )       { return; }
+        if ( !this->IsArea()            )       { return; }     //  requires closed && verts.size() >= 3
+        if ( this->TransparentFill()    )       { return; }     //  fully transparent
 
 
         dl->PathClear();
+
 
         //  Build the pixel-space outline by walking each segment (a -> b)
         for (size_t i = 0; i < N; ++i)
@@ -874,7 +883,7 @@ public:
 
 
             //  Segment curvature: depends on a's OUT and b's IN handles
-            const bool      curved      = !(a->m_bezier.IsOutLinear() && b->m_bezier.IsInLinear());
+            const bool      curved      = !( a->IsOutLinear() && b->IsInLinear() );
 
             if ( !curved )
             {
@@ -904,6 +913,70 @@ public:
         //  Fill the constructed outline
         dl->PathFillConvex(this->style.fill_color);
     
+        return;
+    }
+    
+    //  "render_stroke"
+    template<class CTX>
+    inline void	                        render_stroke                       (const CTX & ctx) const noexcept
+    {
+        using		        V			    = typename CTX::Vertex;
+        const auto &        callbacks	    = ctx.callbacks;
+        ImDrawList *        dl			    = ctx.args.dl;
+        const size_t        N			    = this->verts.size();
+
+        // Fast-outs: visibility, topology, stroke enabled
+        if ( !this->IsVisible()         )	    { return; }
+        if ( N < 2                      )       { return; }
+        if ( this->TransparentStroke()  )	    { return; }
+
+        const int           segs	        = (ctx.args.bezier_segments > 0) ? ctx.args.bezier_segments : 0; // 0 = ImGui auto
+
+
+        // Local helper: draw one segment a -> b (straight or cubic)
+        auto draw_seg = [&](const V *a, const V *b)
+        {
+            if ( !a || !b )     { return; }
+
+            // Curvature rule: segment is curved iff a.Out NOT linear OR b.In NOT linear
+            const bool curved = !( a->IsOutLinear() && b->IsInLinear() );
+
+            if (!curved)
+            {
+                const ImVec2        A       = callbacks.ws_to_px({ a->x, a->y });
+                const ImVec2        B       = callbacks.ws_to_px({ b->x, b->y });
+                dl->AddLine(A, B, this->style.stroke_color, this->style.stroke_width);
+                return;
+            }
+
+            // Cubic Bezier: P0=a, P1=a+out, P2=b+in, P3=b — all mapped to pixels
+            const ImVec2 P0 = callbacks.ws_to_px({ a->x,                             a->y });
+            const ImVec2 P1 = callbacks.ws_to_px({ a->x + a->m_bezier.out_handle.x,  a->y + a->m_bezier.out_handle.y });
+            const ImVec2 P2 = callbacks.ws_to_px({ b->x + b->m_bezier.in_handle.x,   b->y + b->m_bezier.in_handle.y  });
+            const ImVec2 P3 = callbacks.ws_to_px({ b->x,                             b->y });
+
+            dl->AddBezierCubic( P0, P1, P2, P3,
+                                this->style.stroke_color,
+                                this->style.stroke_width,
+                                segs );
+        };
+
+        //  Open chain
+        for (size_t i = 0; i + 1 < N; ++i)
+        {
+            const V *a = callbacks.get_vertex(callbacks.vertices, static_cast<VID>(this->verts[i]));
+            const V *b = callbacks.get_vertex(callbacks.vertices, static_cast<VID>(this->verts[i + 1]));
+            draw_seg(a, b);
+        }
+
+        //  Close the loop if needed
+        if (this->closed)
+        {
+            const V *a = callbacks.get_vertex(callbacks.vertices, static_cast<VID>(this->verts[N - 1]));
+            const V *b = callbacks.get_vertex(callbacks.vertices, static_cast<VID>(this->verts[0]));
+            draw_seg(a, b);
+        }
+        
         return;
     }
     
@@ -1006,7 +1079,7 @@ inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
     else                            { p.kind = PathKind::None;                                          }
     //
     //  6C.     GET "payload"...
-    if ( has_payload && !invalid)
+    if ( has_payload  &&  !invalid )
     {
         const auto & jp = j.at("payload");
 

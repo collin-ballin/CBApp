@@ -1631,7 +1631,9 @@ public:
     //
     //
     //                                  TRANSIENT STATE INFORMATION:
-    mutable ImPlotRect                      m_window_size                   = {   };        //  DOMAIN + RANGE OF CURRENT CANVAS:   ( [X0, Xf], [Y0, Yf] ).
+    mutable ImPlotRect                      m_window_coords                 = {   };        //  DOMAIN + RANGE OF CURRENT CANVAS:   ( [X0, Xf], [Y0, Yf] ).
+    std::array< double, 2>                  m_window_size                   = {   };
+    //
     mutable ImVec2                          m_plot_px_dims                  = {   };
     mutable ImRect                          m_plot_bbox                     = {   };
     
@@ -1845,11 +1847,8 @@ public:
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
 inline void to_json(nlohmann::json & j, const EditorState_t<VID, PtID, LID, PID, ZID, HitID> & obj)
 {
-
     j ["m_world_size"]      = obj.m_world_size;
-    
     j ["m_world_slop"]      = obj.m_world_slop;
-    
     j ["m_zoom_size"]       = obj.m_zoom_size;
 
 

@@ -200,30 +200,39 @@ DEF_VERTEX_STYLES{
 {
     VertexStyleData     //  0.  DEFAULT:
     {
+        /*  vertex_radius       */ 6.50f,
+        /*  vertex_color        */ IM_COL32(0,       0,    255,      170),
+        /*  vertex_tesselation  */ 12,
+        /*  handle_color        */ IM_COL32(215,     255,    0,      255),
+        /*  handle_size         */ 5.50f,
+        /*  handle_rounding     */ 0.00f,
+        /*  handle_thickness    */ 2.00f,
+        /*  line_color          */ IM_COL32(215,     255,    0,      170),
+        /*  line_width          */ 1.00f,
+        /*  hovered_color       */ IM_COL32(0,       0,    255,      255),
+        /*  hovered_size        */ 11.0f
     },
 //
-    VertexStyleData     //  0.  DEFAULT:
+    VertexStyleData     //  1.  HIGHLIGHT:
     {
+        /*  vertex_radius       */ 8.00f,
+        /*  vertex_color        */ IM_COL32(0,       0,    255,      200),
+    //
+        /*  vertex_tesselation  */ 12,
+        /*  handle_color        */ IM_COL32(255,     215,    0,      255),
+        /*  handle_size         */ 6.50f,
+        /*  handle_rounding     */ 0.00f,
+        /*  handle_thickness    */ 2.50f,
+    //
+        /*  line_color          */ IM_COL32(255,     215,    0,      170),
+        /*  line_width          */ 2.50f,
+        /*  hovered_color       */ IM_COL32(0,       0,    255,      255),
+        /*  hovered_size        */ 12.0f
     }
 //
-    //  VertexStyleData     //  1.  HIGHLIGHT:
-    //  {
-    //      /*  vertex_radius       */ 8.0f,
-    //      /*  vertex_color        */ IM_COL32(0,       0,    255,      170),
-    //  //
-    //      /*  vertex_tesselation  */ 12,
-    //      /*  handle_color        */ IM_COL32(215,     255,    0,      255),
-    //      /*  handle_size         */ 6.5f,
-    //      /*  handle_rounding     */ 6.5f,
-    //      /*  handle_thickness    */ 2.0f,
-    //  //
-    //      /*  line_color          */ IM_COL32(215,     255,    0,      170),
-    //      /*  line_width          */ 2.0f,
-    //      /*  hovered_color       */ IM_COL32(0,       0,    255,      255),
-    //      /*  hovered_size        */ 11.0f
-    //  }
-//
 } };
+
+
 
 
 
@@ -375,7 +384,7 @@ struct BezierControl
     // *************************************************************************** //
     //      BéZIER HANDLE DATA.
     // *************************************************************************** //
-    BezierCurvatureType                 kind                            = BezierCurvatureType::Corner;
+    BezierCurvatureType                 kind                            = CurvatureType::Corner;
     ImVec2                              in_handle                       = ImVec2(0.0f, 0.0f);   // incoming Bézier handle (from previous vertex)
     ImVec2                              out_handle                      = ImVec2(0.0f, 0.0f);   // outgoing Bézier handle (to next vertex)
 
@@ -399,20 +408,41 @@ struct BezierControl
     // *************************************************************************** //
     //      SETTER / GETTER FUNCTIONS.
     // *************************************************************************** //
-    //  "IsLinear"
-    [[nodiscard]] inline bool           IsLinear                        (void) const noexcept           { return ( m_curvature_state == CurvatureState::None );     }
     
-    //  "IsInLinear"
-    [[nodiscard]] inline bool           IsInLinear                      (void) const noexcept           { return ( m_curvature_state != CurvatureState::In  &&  m_curvature_state != CurvatureState::All );     }
+    //  "_is_linear"
+    [[nodiscard]] inline bool           _is_linear                      (void) const noexcept           { return ( m_curvature_state == CurvatureState::None );     }
+    [[nodiscard]] inline bool           _is_in_linear                   (void) const noexcept           { return ( m_curvature_state != CurvatureState::In  &&  m_curvature_state != CurvatureState::All );     }
+    [[nodiscard]] inline bool           _is_out_linear                  (void) const noexcept           { return ( m_curvature_state != CurvatureState::Out  &&  m_curvature_state != CurvatureState::All );     }
     
-    //  "IsOutLinear"
-    [[nodiscard]] inline bool           IsOutLinear                      (void) const noexcept          { return ( m_curvature_state != CurvatureState::Out  &&  m_curvature_state != CurvatureState::All );     }
+    //  "_set_curvature_type"
+    inline void                         _set_curvature_type             (CurvatureType kind_) noexcept
+    {
+        if (kind_ == this->kind)    { return; }
+        
+        this->kind = kind_;
+        this->_update_curvature_type();
+        return;
+    }
+    
+    //  "_set_in_handle"
+    inline void                         _set_in_handle                  (const ImVec2 & ih_) noexcept   { this->in_handle = ih_;    this->_update_curvature_state();   }
+    inline void                         _set_out_handle                 (const ImVec2 & oh_) noexcept   { this->out_handle = oh_;   this->_update_curvature_state();   }
     
     
-    //  "SetInHandle"
-    inline void                         SetInHandle                     (const ImVec2 & ih_) noexcept   { this->in_handle = ih_; this->UpdateCurvatureState();      }
-    inline void                         SetOutHandle                    (const ImVec2 & oh_) noexcept   { this->out_handle = oh_; this->UpdateCurvatureState();     }
+    
+    //  "_get_curvature_type"
+    [[nodiscard]] inline CurvatureType  _get_curvature_type             (void) const noexcept           { return this->kind;            }
+    
+    //  "_get_in_handle"
+    [[nodiscard]] inline ImVec2         _get_in_handle                  (void) const noexcept           { return this->in_handle;       }
+    [[nodiscard]] inline ImVec2 &       _get_in_handle                  (void) noexcept                 { return this->in_handle;       }
+    //
+    //  "_get_out_handle"
+    [[nodiscard]] inline ImVec2         _get_out_handle                 (void) const noexcept           { return this->out_handle;      }
+    [[nodiscard]] inline ImVec2 &       _get_out_handle                 (void) noexcept                 { return this->out_handle;      }
 
+
+    
     // *************************************************************************** //
     //
     //
@@ -420,8 +450,15 @@ struct BezierControl
     //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
     
-    //  "UpdateCurvatureState"
-    inline CurvatureState               UpdateCurvatureState            (void) const noexcept
+    //  "_update_curvature_type"
+    inline void                         _update_curvature_type          (void) const noexcept
+    {
+        return;
+    }
+    
+    
+    //  "_update_curvature_state"
+    inline CurvatureState               _update_curvature_state         (void) const noexcept
     {
         namespace           math            = cblib::math;
         const float &       GATE            = this->ms_BEZIER_NUMERICAL_ERROR;
@@ -448,8 +485,8 @@ struct BezierControl
     //      UTILITY FUNCTIONS.
     // *************************************************************************** //
     
-    //  "ResetCurvature"
-    inline void                         ResetCurvature                  (void) noexcept       {
+    //  "_reset_curvature"
+    inline void                         _reset_curvature                (void) noexcept       {
         this->m_curvature_state     = CurvatureState::None;
         this->in_handle             = { };
         this->out_handle            = { };
@@ -473,7 +510,7 @@ struct BezierControl
         const ImVec2                h_in            = style.ws_to_px(    {  origin.x + this->in_handle.x    , origin.y + this->in_handle.y      }   );
         const ImVec2                h_out           = style.ws_to_px(    {  origin.x + this->out_handle.x   , origin.y + this->out_handle.y     }   );
         
-        this->UpdateCurvatureState();
+        this->_update_curvature_state();
         
         
         
@@ -570,19 +607,12 @@ struct BezierControl
     inline void                         _render_hovered_IMPL                (const ImVec2 & pos, const ImVec2 & h_in, const ImVec2 & h_out, VStyle & style) const noexcept
     {
         const StyleData &           data            = *style.data;
-        //
         const bool                  ih_hovered      = ( data.hovered == HoverState::InHandle    );
         const bool                  oh_hovered      = ( data.hovered == HoverState::OutHandle   );
-        //
         const float &               ih_size         = (ih_hovered)  ? data.hovered_size     : data.handle_size;
         const ImU32 &               ih_color        = (ih_hovered)  ? data.hovered_color    : data.handle_color;
         const float &               oh_size         = (oh_hovered)  ? data.hovered_size     : data.handle_size;
         const ImU32 &               oh_color        = (oh_hovered)  ? data.hovered_color    : data.handle_color;
-        
-        
-        
-        
-        
         
         //      DISPATCH ACTION BASED ON BEZIER CURVATURE...
         switch (this->m_curvature_state)
@@ -637,7 +667,6 @@ struct BezierControl
         
         return;
     }
-    
     
     // *************************************************************************** //
     
@@ -743,6 +772,7 @@ struct Vertex_t
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
+    static constexpr ImPlotRect         ms_BEZIER_SLIDER_LIMITS                 = { -128.0f, 128.0f,     -128.0f, 128.0f };
     static constexpr const char *       ms_DEF_VERTEX_TITLE_FMT_STRING          = "Vertex V%03d (ID #%06u)";
     static constexpr const char *       ms_DEF_VERTEX_SELECTOR_FMT_STRING       = "V%03u";
     static constexpr size_t             ms_MAX_VERTEX_NAME_LENGTH               = 10ULL;
@@ -791,8 +821,37 @@ struct Vertex_t
     // *************************************************************************** //
     //      SETTER / GETTER FUNCTIONS.
     // *************************************************************************** //
-    //  "is_linear"
-    [[nodiscard]] inline bool           IsLinear                        (void) const noexcept       { return m_bezier.IsLinear(); }
+    
+    //  "IsLinear"
+    [[nodiscard]] inline bool           IsLinear                        (void) const noexcept           { return m_bezier._is_linear();                 }
+    [[nodiscard]] inline bool           IsInLinear                      (void) const noexcept           { return m_bezier._is_in_linear();              }
+    [[nodiscard]] inline bool           IsOutLinear                     (void) const noexcept           { return m_bezier._is_out_linear();             }
+    
+    //  "SetCurvatureType"
+    inline void                         SetCurvatureType                (CurvatureType kind_) noexcept  { return m_bezier._set_curvature_type(kind_);   }
+    
+    //  "SetInHandle"
+    inline void                         SetInHandle                     (const ImVec2 & ih_) noexcept   { this->m_bezier._set_in_handle(ih_);           }
+    inline void                         SetOutHandle                    (const ImVec2 & oh_) noexcept   { this->m_bezier._set_out_handle(oh_);          }
+    
+    
+    
+    //  "GetCurvatureType"
+    [[nodiscard]] inline CurvatureType  GetCurvatureType                (void) const noexcept           { return m_bezier._get_curvature_type();        }
+    
+    //  "GetXYPosition"
+    [[nodiscard]] inline ImVec2         GetXYPosition                   (void) const noexcept           { return { this->x, this->y };                  }
+    [[nodiscard]] inline ImVec2         GetYZPosition                   (void) const noexcept           { return { this->y, this->z };                  }
+    [[nodiscard]] inline ImVec2         GetXZPosition                   (void) const noexcept           { return { this->x, this->z };                  }
+    //
+    //  "GetInHandle"
+    [[nodiscard]] inline ImVec2         GetInHandle                     (void) const noexcept           { return this->m_bezier._get_in_handle();       }
+    [[nodiscard]] inline ImVec2 &       GetInHandle                     (void) noexcept                 { return this->m_bezier._get_in_handle();       }
+    //
+    [[nodiscard]] inline ImVec2         GetOutHandle                    (void) const noexcept           { return this->m_bezier._get_out_handle();      }
+    [[nodiscard]] inline ImVec2 &       GetOutHandle                    (void) noexcept                 { return this->m_bezier._get_out_handle();      }
+    
+    
 
     // *************************************************************************** //
 
@@ -806,7 +865,7 @@ struct Vertex_t
     // *************************************************************************** //
     
     //  "UpdateCurvatureState"
-    inline CurvatureState               UpdateCurvatureState            (void) const noexcept       { return this->m_bezier.UpdateCurvatureState(); }
+    inline CurvatureState               UpdateCurvatureState            (void) const noexcept       { return this->m_bezier._update_curvature_state(); }
     
     // *************************************************************************** //
 
@@ -861,7 +920,7 @@ struct Vertex_t
     // *************************************************************************** //
     
     //  "ResetCurvature"
-    inline void                         ResetCurvature                  (void) noexcept       { this->m_bezier.ResetCurvature(); }
+    inline void                         ResetCurvature                  (void) noexcept       { this->m_bezier._reset_curvature(); }
 
     // *************************************************************************** //
     
