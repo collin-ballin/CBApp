@@ -490,27 +490,133 @@ public:                                                                         
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_EDITOR_APP_AUXILIARY_API"                     |   ** INTERNAL **
+//  1.  "_EDITOR_APP_GENERIC_API"                       |   ** INTERNAL **
 //
-//      ** ID-VALUE TEMPLATE CONVENTIONS **
-//      ID Template Parameters MUST ALWAYS follow this order:
-//              template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >=
+//          ** ID-VALUE TEMPLATE CONVENTIONS **
+//          ID Template Parameters MUST ALWAYS follow this order:
+//                  template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >=
 // *************************************************************************** //
-#define                 _EDITOR_APP_AUXILIARY_API                                                                                               \
-public:                                                                                                                                         \
+#define                 _EDITOR_APP_GENERIC_API                                                                                         \
     /*                                                                                                                                  */      \
     /*      1.      CALLBACK TYPES...                                                                                                   */      \
-    using                           LabelFn                     = std::function<void(const char *)>                                     ;       \
     /*                                                                                                                                  */      \
+    using                           LabelFn                     = std::function<void(const char *)>                                     ;       \
     using                           MappingFn                   = ImVec2 (&)(ImVec2) noexcept                                           ;       \
-    /*  using                           GetVertexFn                 = const Vertex * (*)(void * , VertexID) ; */
+    /*  using                           GetVertexFn                 = const Vertex * (*)(void * , VertexID) ;                           */      \
+    /*                                                                                                                                  */      \
+    /*                                                                                                                                  */      \
+    /*      2.      GENERIC TYPES...                                                                                                    */      \
+    using                           Font                        = app::Font_t                                                           ;       \
+    using                           Logger                      = utl::Logger                                                           ;       \
+    using                           LogLevel                    = utl::LogLevel                                                         ;       \
+                                                                                                                                        \
+    using                           CBCapabilityFlags           = CBCapabilityFlags_                                                    ;       \
+    using                           Anchor                      = BBoxAnchor                                                            ;       \
+                                                                                                                                        \
+    using                           PopupHandle                 = EditorPopupBits                                                       ;       \
+    using                           CBEditorPopupFlags          = CBEditorPopupFlags_                                                   ;       \
+    using                           PopupInfo                   = EditorPopupInfo                                                       ;
     
 //
-// *************************************************************************** //   _EDITOR_APP_AUXILIARY_API
+// *************************************************************************** //   _EDITOR_APP_GENERIC_API
 
 
 
-//  "_EDITOR_APP_INTERNAL_API"                      |   ** EXPORTED**
+//  2.  "_EDITOR_APP_CANVAS_OBJECTS_API"                |   ** INTERNAL **
+//          - Types to define ID-TYPES, TAG-TYPES,
+//
+// *************************************************************************** //
+#define                 _EDITOR_APP_CANVAS_OBJECTS_API                                                                                  \
+    /*                                                                                                                                  */      \
+    /*      3.      ID/INDEX TYPES...                                                                                                   */      \
+    template<typename T, typename Tag>                                                                                                  \
+    using                           ID                          = cblib::utl::IDType<T, Tag>                                            ;       \
+    using                           VertexID                    = uint32_t                                                              ;       \
+    using                           HandleID                    = uint8_t                                                               ;       \
+    using                           PointID                     = uint32_t                                                              ;       \
+    using                           LineID                      = uint32_t                                                              ;       \
+    using                           PathID                      = uint32_t                                                              ;       \
+    using                           ZID                         = uint32_t                                                              ;       \
+    using                           OverlayID                   = uint8_t                                                               ;       \
+    using                           HitID                       = uint32_t                                                              ;       \
+                                                                                                                                        \
+    using                           EditorCFG                   = EditorCFG_t       <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
+                                                                                                                                        \
+    /*                                                                                                                                  */      \
+    /*      4.      CAD/CANVAS OBJECTS...                                                                                               */      \
+    using                           Vertex                      = Vertex_t          <EditorCFG>                                         ;       \
+/*  using                           Vertex                      = Vertex_t          <VertexID>;                                         */      \
+/*  using                           Handle                      = Handle_t          <HandleID>;                                         */      \
+    using                           Point                       = Point_t           <PointID>                                           ;       \
+    using                           Line                        = Line_t            <LineID, ZID>                                       ;       \
+    using                           Path                        = Path_t            <PathID, VertexID, ZID>                             ;       \
+    using                           PathKind                    = Path::PathKind                                                        ;       \
+    using                           Payload                     = Path::Payload                                                         ;       \
+    using                           Overlay                     = Overlay_t         <OverlayID>                                         ;       \
+    using                           Hit                         = Hit_t             <HitID>                                             ;       \
+    using                           PathHit                     = PathHit_t         <PathID, VertexID>                                  ;       \
+    using                           EndpointInfo                = EndpointInfo_t    <PathID>                                            ;
+//
+// *************************************************************************** //   _EDITOR_APP_CANVAS_OBJECTS_API
+
+
+
+//  3.  "_EDITOR_APP_OBJECTS_API"                        |   ** INTERNAL **
+//          - Internal OBJECTS and STATE-TYPES for Editor class.
+//
+// *************************************************************************** //
+#define                 _EDITOR_APP_OBJECTS_API                                                                                         \
+    /*                                                                                                                                  */      \
+    /*      5.      PRIMARY STATE OBJECTS...                                                                                            */      \
+    using                           EditorRuntime               = EditorRuntime_t   <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
+    using                           EditorState                 = EditorState_t     <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
+    using                           BrowserState                = BrowserState_t    <EditorCFG>                                         ;       \
+    using                           IndexState                  = IndexState_t      <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
+    /*                                                                                                                                  */      \
+    /*      6.      SUBSIDIARY STATE OBJECTS...                                                                                         */      \
+    using                           Clipboard                   = Clipboard_t       <Vertex, Point, Line, Path>                         ;       \
+    using                           Cursor                      = Cursor_t          <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
+    using                           Selection                   = Selection_t       <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
+    /*                                                                                                                                  */      \
+    /*      7.      TOOL STATE OBJECTS...                                                                                               */      \
+    using                           PenState                    = PenState_t        <VertexID>                                          ;       \
+    using                           ShapeState                  = ShapeState_t      <OverlayID>                                         ;       \
+    using                           DebuggerState               = DebuggerState_t   <VertexID, PointID, LineID, PathID, ZID, HitID>     ;
+//
+// *************************************************************************** //   _EDITOR_APP_OBJECTS_API
+
+
+
+//  4.  "_EDITOR_APP_MISC_TYPES_API"                    |   ** INTERNAL **
+//          - Misc. types, callbacks, and other items.
+//
+// *************************************************************************** //
+#define                 _EDITOR_APP_MISC_TYPES_API                                                                                      \
+    /*                                                                                                                                  */      \
+    /*      8.      MORE CALLBACKS...                                                                                                   */      \
+    using                           GetVertexFn                 = const Vertex* (&)(const std::vector<Vertex>&, VertexID) noexcept      ;       \
+    /*                                                                                                                                  */      \
+    /*      9.      OTHER OBJECT TYPES...                                                                                               */      \
+    using                           OverlayManager              = OverlayManager_t  <OverlayID, MappingFn>                              ;       \
+    using                           ResidentEntry               = ResidentEntry_t   <OverlayID>                                         ;       \
+    using                           VertexStyle                 = VertexStyle       <MappingFn>                                         ;       \
+    using                           VertexStyleType             = VertexStyle::StyleType                                                ;       \
+    using                           RenderCTX                   = RenderCTX_t       <Vertex, MappingFn, GetVertexFn>                    ;
+//
+// *************************************************************************** //   _EDITOR_APP_MISC_TYPES_API
+
+
+
+
+
+
+
+
+
+
+
+
+//  LAST.   "_EDITOR_APP_INTERNAL_API"                  |   ** EXPORTED**
 //
 // *************************************************************************** //
 //
@@ -522,78 +628,48 @@ public:                                                                         
 //              template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
 //
 // *************************************************************************** //
-#define                 _EDITOR_APP_INTERNAL_API                                                                                                \
-public:                                                                                                                                         \
+#define                 _EDITOR_APP_INTERNAL_API                                                                                        \
+public:                                                                                                                                 \
     /*                                                                                                                                  */      \
-    /*      0.      OTHER MACROS...                                                                                                     */      \
-    _EDITOR_APP_AUXILIARY_API                                                                                                           \
-    /*                                                                                                                                  */      \
-    /*      1.      GENERIC TYPES...                                                                                                    */      \
-    using                           Font                        = app::Font_t                                                           ;       \
-    using                           Logger                      = utl::Logger                                                           ;       \
-    using                           LogLevel                    = utl::LogLevel                                                         ;       \
-                                                                                                                                        \
-    using                           CBCapabilityFlags           = CBCapabilityFlags_                                                    ;       \
-    using                           Anchor                      = BBoxAnchor                                                            ;       \
-                                                                                                                                        \
-    using                           PopupHandle                 = EditorPopupBits                                                       ;       \
-    using                           CBEditorPopupFlags          = CBEditorPopupFlags_                                                   ;       \
-    using                           PopupInfo                   = EditorPopupInfo                                                       ;       \
-    /*                                                                                                                                  */      \
-    /*      2.      ID/INDEX TYPES...                                                                                                   */      \
-    template<typename T, typename Tag>                                                                                                  \
-    using                           ID                          = cblib::utl::IDType<T, Tag>                                            ;       \
-    using                           VertexID                    = uint32_t                                                              ;       \
-    using                           HandleID                    = uint8_t                                                               ;       \
-    using                           PointID                     = uint32_t                                                              ;       \
-    using                           LineID                      = uint32_t                                                              ;       \
-    using                           PathID                      = uint32_t                                                              ;       \
-    using                           ZID                         = uint32_t                                                              ;       \
-    using                           OverlayID                   = uint8_t                                                               ;       \
-    using                           HitID                       = uint32_t                                                              ;       \
-    /*                                                                                                                                  */      \
-    /*      3.      OBJECT TYPES...                                                                                                     */      \
-    using                           Vertex                      = Vertex_t          <VertexID>                                          ;       \
-/*  using                           Handle                      = Handle_t          <HandleID>;                                         */      \
-    using                           Point                       = Point_t           <PointID>                                           ;       \
-    using                           Line                        = Line_t            <LineID, ZID>                                       ;       \
-    using                           Path                        = Path_t            <PathID, VertexID, ZID>                             ;       \
-    using                           PathKind                    = Path::PathKind                                                        ;       \
-    using                           Payload                     = Path::Payload                                                         ;       \
-    using                           Overlay                     = Overlay_t         <OverlayID>                                         ;       \
-    using                           Hit                         = Hit_t             <HitID>                                             ;       \
-    using                           PathHit                     = PathHit_t         <PathID, VertexID>                                  ;       \
-    using                           EndpointInfo                = EndpointInfo_t    <PathID>                                            ;       \
-    /*                                                                                                                                  */      \
-    /*      4.      PRIMARY STATE OBJECTS...                                                                                            */      \
-    using                           EditorRuntime               = EditorRuntime_t   <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
-    using                           EditorState                 = EditorState_t     <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
-    using                           RenderState                 = RenderState_t     <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
-    using                           BrowserState                = BrowserState_t    <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
-    using                           IndexState                  = IndexState_t      <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
-    /*                                                                                                                                  */      \
-    /*      5.      SUBSIDIARY STATE OBJECTS...                                                                                         */      \
-    using                           Clipboard                   = Clipboard_t       <Vertex, Point, Line, Path>                         ;       \
-    using                           Selection                   = Selection_t       <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
-    /*                                                                                                                                  */      \
-    /*      6.      TOOL STATE OBJECTS...                                                                                               */      \
-    using                           PenState                    = PenState_t        <VertexID>                                          ;       \
-    using                           ShapeState                  = ShapeState_t      <OverlayID>                                         ;       \
-    using                           DebuggerState               = DebuggerState_t   <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
-    /*                                                                                                                                  */      \
-    /*                                                                                                                                  */      \
-    /*                                                                                                                                  */      \
-    /*      7.      MORE CALLBACKS...                                                                                                   */      \
-    using                           GetVertexFn                 = const Vertex* (&)(const std::vector<Vertex>&, VertexID) noexcept      ;       \
-    /*                                                                                                                                  */      \
-    /*      8.      OTHER OBJECT TYPES...                                                                                               */      \
-    using                           OverlayManager              = OverlayManager_t  <OverlayID, MappingFn>                              ;       \
-    using                           ResidentEntry               = ResidentEntry_t   <OverlayID>                                         ;       \
-    using                           VertexStyle                 = VertexStyle       <MappingFn>                                         ;       \
-    using                           VertexStyleType             = VertexStyle::StyleType                                                ;       \
-    using                           RenderCTX                   = RenderCTX_t       <Vertex, MappingFn, GetVertexFn>                    ;
+    /*      1.      INCLUDE THE SUBSIDIARY MACROS...                                                                                    */      \
+    _EDITOR_APP_GENERIC_API                                                                                                             \
+    _EDITOR_APP_CANVAS_OBJECTS_API                                                                                                      \
+    _EDITOR_APP_OBJECTS_API                                                                                                             \
+    _EDITOR_APP_MISC_TYPES_API
 //
 // *************************************************************************** //   _EDITOR_APP_INTERNAL_API
+
+
+
+
+
+
+
+
+
+//      "_EDITOR_CFG_PRIMATIVES_ALIASES"                |   ** INTERNAL **
+//
+// *************************************************************************** //
+#define                 _EDITOR_CFG_PRIMATIVES_ALIASES                                                                                  \
+    using                           vertex_id                   = CFG::vertex_id                                                        ;       \
+    using                           point_id                    = CFG::point_id                                                         ;       \
+    using                           line_id                     = CFG::line_id                                                          ;       \
+    using                           path_id                     = CFG::path_id                                                          ;       \
+    using                           z_id                        = CFG::z_id                                                             ;       \
+    using                           hit_id                      = CFG::hit_id                                                           ;
+//
+// *************************************************************************** //   _EDITOR_CFG_PRIMATIVES_ALIASES
+
+
+
+//      "_EDITOR_CFG_OBJECTS_ALIASES"                |   ** INTERNAL **
+//
+// *************************************************************************** //
+#define                 _EDITOR_CFG_OBJECTS_ALIASES                                                                                     \
+    using                           Vertex                      = Vertex_t<vertex_id>                                                   ;       \
+    using                           Path                        = Path_t<path_id, vertex_id, z_id>                                      ;
+//
+// *************************************************************************** //   _EDITOR_CFG_OBJECTS_ALIASES
 
 
 

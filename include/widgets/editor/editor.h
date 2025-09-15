@@ -778,8 +778,13 @@ protected:
     //                              NEW RENDERING FUNCTIONS:
     inline void                         _RENDER_update_render_cache         (void) const noexcept;
     //
+    inline void                         _RENDER_grid_channel                (std::span<const size_t> , const RenderCTX & ) const noexcept;
     inline void                         _RENDER_object_channel              (std::span<const size_t> , const RenderCTX & ) const noexcept;
-    inline void                         _RENDER_feature_channel             (std::span<const size_t> , const RenderCTX & ) const noexcept;
+    inline void                         _RENDER_highlights_channel          (std::span<const size_t> , const RenderCTX & ) const noexcept;
+    inline void                         _RENDER_features_channel            (std::span<const size_t> , const RenderCTX & ) const noexcept;
+    inline void                         _RENDER_accents_channel             (std::span<const size_t> , const RenderCTX & ) const noexcept;
+    inline void                         _RENDER_glyphs_channel              (std::span<const size_t> , const RenderCTX & ) const noexcept;
+    inline void                         _RENDER_top_channel                 (std::span<const size_t> , const RenderCTX & ) const noexcept;
     //
     //
     //

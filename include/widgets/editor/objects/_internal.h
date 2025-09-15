@@ -33,10 +33,12 @@
 //  0.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
 #include <cstdlib>          // C-Headers...
+#include <cstdint>
 #include <stdio.h>
 #include <unistd.h>
 
 #include <algorithm>        //  SPECIAL...
+#include <concepts>
 #include <optional>
 #include <variant>
 #include <tuple>
@@ -50,7 +52,6 @@
 #include <stdexcept>        //                          //  <======| ...
 #include <limits.h>
 #include <math.h>
-#include <complex>
 #include <utility>
 
 
@@ -71,13 +72,87 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-//      0.      MISC / UTILITIES...
+// *************************************************************************** //
+//
+//
+//
+//      1.      CONFIGURATIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+
+//  "EditorCFG_t"
+//
+template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
+struct EditorCFG_t
+{
+    using                           vertex_id                   = VertexID                                                              ;
+    using                           point_id                    = PointID                                                               ;
+    using                           line_id                     = LineID                                                                ;
+    using                           path_id                     = PathID                                                                ;
+    using                           z_id                        = ZID                                                                   ;
+    using                           hit_id                      = HitID                                                                 ;
+//
+//
+//
+    //  using                           path_id                     = EndpointInfo_t    <PathID>                                            ;
+    //  using                           vertex_id                   = Vertex_t          <VertexID>                                          ;
+//
+};
+
+
+
+//  "EditorCFGTraits"
+//
+template<class CFG>
+concept EditorCFGTraits =
+    requires
+    {
+        typename CFG::vertex_id     ;
+        typename CFG::point_id      ;
+        typename CFG::line_id       ;
+        typename CFG::path_id       ;
+        typename CFG::z_id          ;
+        typename CFG::hit_id        ;
+    }                                                               &&
+    std::unsigned_integral  < typename CFG::vertex_id       >       &&
+    std::unsigned_integral  < typename CFG::point_id        >       &&
+    std::unsigned_integral  < typename CFG::line_id         >       &&
+    std::unsigned_integral  < typename CFG::path_id         >       &&
+    std::unsigned_integral  < typename CFG::z_id            >       &&
+    std::unsigned_integral  < typename CFG::hit_id          >;
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONFIGS".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.      MISC / UTILITIES...
+// *************************************************************************** //
+// *************************************************************************** //
+
 
 //  "EndpointInfo"
 template<typename PID>
 struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ first vertex
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MISC/UTILITIES".
 
 
 

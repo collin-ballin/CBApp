@@ -861,6 +861,9 @@ void Editor::_rebuild_vertex_selection()
 //
 void Editor::_MECH_hit_detection(const Interaction & it) const
 {
+    const BrowserState &    BS  = this->m_browser_S;
+    
+    
     if ( !it.hovered )                      { return; }         //  cursor not over canvas
     if ( m_dragging || m_boxdrag.active )   { return; }         //  ignore while dragging
     
@@ -868,8 +871,8 @@ void Editor::_MECH_hit_detection(const Interaction & it) const
     
     
     
-    //  NEW: Selection BBox handles take precedence
-    if (m_boxdrag.view.visible)
+    //  NEW:    Selection BBox handles take precedence
+    if ( m_boxdrag.view.visible )
     {
         m_boxdrag.view.hover_idx = -1;
         const ImVec2 mp = ImGui::GetIO().MousePos;
@@ -894,36 +897,42 @@ void Editor::_MECH_hit_detection(const Interaction & it) const
     
     // optional: also skip while a handle is already being dragged
     // if (m_dragging_handle) return;
-
-
-    //  auto hit = _hit_any(it);                        // point / path / line / handle / none
     
-    this->m_sel.hovered = _hit_any(it);
+    this->m_sel.hovered = _hit_any(it);                 // point / path / line / handle / none
     
-    if ( !this->m_sel.hovered )     { return; }
+    
+    //      CASE 1 :    NO ITEM IS HOVERED...
+    if ( !this->m_sel.hovered ) {
+        return;
+    }
 
 
 
-
-    //  DISPATCH HIT-DETECTION...
-    //  switch (hit->type)
+    //      CASE 2 :    DISPATCH HIT-DETECTION...
     switch ( this->m_sel.hovered->type )
     {
         //      1.  HOVERED OVER "BEZIER"-SQUARE HANDLE.
-        case Hit::Type::Handle : {
+        case Hit::Type::Handle :
+        {
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
             break;
         }
         
         //      2.  HOVERED OVER VERTEX-GLYPH.
-        case Hit::Type::Point: {
+        case Hit::Type::Point:
+        {
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
             break;
         }
 
-        //      3.  HOVERED OVER "LINE" OR "PATH".
-        case Hit::Type::Path : {                    // open or closed path
+        //      3.  HOVERED OVER "PATH".
+        case Hit::Type::Path :
+        {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            
+            
+            BS.m_hovered_canvas_obj      = -1;
+            
             break;
         }
 

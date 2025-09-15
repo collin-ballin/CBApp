@@ -201,32 +201,32 @@ DEF_VERTEX_STYLES{
     VertexStyleData     //  0.  DEFAULT:
     {
         /*  vertex_radius       */ 6.50f,
-        /*  vertex_color        */ IM_COL32(0,       0,    255,      170),
+        /*  vertex_color        */ IM_COL32(0,       255,    0,         240),
         /*  vertex_tesselation  */ 12,
-        /*  handle_color        */ IM_COL32(215,     255,    0,      255),
+        /*  handle_color        */ IM_COL32(215,     255,    0,         255),
         /*  handle_size         */ 5.50f,
         /*  handle_rounding     */ 0.00f,
         /*  handle_thickness    */ 2.00f,
-        /*  line_color          */ IM_COL32(215,     255,    0,      170),
-        /*  line_width          */ 1.00f,
-        /*  hovered_color       */ IM_COL32(0,       0,    255,      255),
+        /*  line_color          */ IM_COL32(215,     255,    0,         170),
+        /*  line_width          */ 1.50f,
+        /*  hovered_color       */ IM_COL32(0,       0,    255,         255),
         /*  hovered_size        */ 11.0f
     },
 //
     VertexStyleData     //  1.  HIGHLIGHT:
     {
         /*  vertex_radius       */ 8.00f,
-        /*  vertex_color        */ IM_COL32(0,       0,    255,      200),
+        /*  vertex_color        */ IM_COL32(10,      255,    250,       240),
     //
-        /*  vertex_tesselation  */ 12,
-        /*  handle_color        */ IM_COL32(255,     215,    0,      255),
-        /*  handle_size         */ 6.50f,
+        /*  vertex_tesselation  */ 15,
+        /*  handle_color        */ IM_COL32(255, 215, 0, 255), //   cblib::utl::compute_tint( IM_COL32(255, 215, 0, 255), 0.30f ),
+        /*  handle_size         */ 6.75f,
         /*  handle_rounding     */ 0.00f,
-        /*  handle_thickness    */ 2.50f,
+        /*  handle_thickness    */ 3.25f,
     //
-        /*  line_color          */ IM_COL32(255,     215,    0,      170),
+        /*  line_color          */ IM_COL32(255, 215, 0, 255), //   cblib::utl::compute_shade( IM_COL32(255, 215, 0, 170), 0.15f ),
         /*  line_width          */ 2.50f,
-        /*  hovered_color       */ IM_COL32(0,       0,    255,      255),
+        /*  hovered_color       */ IM_COL32(0,       255,    0,         255),
         /*  hovered_size        */ 12.0f
     }
 //
@@ -755,17 +755,21 @@ inline void from_json(const nlohmann::json & j, BezierControl & obj)
 //      `pos`; when they are both zero the segment attached to this vertex is
 //      straight. Handles live in world‑space units.
 //
-template<typename VID>
+//  template<typename VID>
+template<EditorCFGTraits CFG>
 struct Vertex_t
 {
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    using                               id_type                                 = VID;
-    using                               CurvatureType                           = BezierControl::CurvatureType;
-    using                               CurvatureState                          = BezierControl::CurvatureState;
-    using                               StyleData                               = BezierControl::StyleData;
-    using                               HoverState                              = BezierControl::HoverState;
+    _EDITOR_CFG_PRIMATIVES_ALIASES
+    //
+    //                              LOCAL TYPES:
+    using                               id_type                                 = vertex_id                         ;
+    using                               CurvatureType                           = BezierControl::CurvatureType      ;
+    using                               CurvatureState                          = BezierControl::CurvatureState     ;
+    using                               StyleData                               = BezierControl::StyleData          ;
+    using                               HoverState                              = BezierControl::HoverState         ;
     
     
     
@@ -792,7 +796,7 @@ struct Vertex_t
     // *************************************************************************** //
     //      IMPORTANT DATA-MEMBERS.
     // *************************************************************************** //
-    VID                                 id                              = 0;
+    id_type                             id                              = 0;
     float                               x                               = 0.0f,
                                         y                               = 0.0f,
                                         z                               = 0.0f;

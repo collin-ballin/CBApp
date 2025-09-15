@@ -100,6 +100,7 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Grid             );
             //  this->_render_selection_highlight       ( it.dl                             );
+            //  this->_RENDER_grid_channel              ( it.dl                                 );
         }
         
         
@@ -110,36 +111,40 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
         }
         
         
-        //      3.      RENDER "Highlight" ELEMENTS...
+        //      3.      RENDER "Highlights" ELEMENTS...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Highlights       );
             this->_render_selection_highlight       ( it.dl                                 );
+            //  this->_RENDER_highlights_channel        ( it.dl                                 );
         }
         
         
-        //      4.      RENDER "Feature" ELEMENTS...
+        //      4.      RENDER "Features" ELEMENTS...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Features         );
-            this->_RENDER_feature_channel           ( z_view,       this->m_render_ctx      );
+            this->_RENDER_features_channel          ( z_view,       this->m_render_ctx      );
         }
         
         
-        //      5.      RENDER "Accent" ELEMENTS...
+        //      5.      RENDER "Accents" ELEMENTS...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Accents          );
-            //  this->_render_points                    ( it.dl                             );
+            //  this->_render_points                    ( z_view,       this->m_render_ctx      );
+            this->_RENDER_accents_channel           ( z_view,       this->m_render_ctx      );
         }
         
         
         //      6.      RENDER "Glyph" ELEMENTS...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Glyphs           );
+            //  this->_RENDER_glyphs_channel            ( z_view,       this->m_render_ctx      );
         }
         
         
         //      7.      RENDER "Top" ELEMENTS...
         {
             ChannelCTX::Scope           scope       ( CTX,      Layer::Top          );
+            //  this->_RENDER_top_channel            ( z_view,       this->m_render_ctx      );
         }
     //
     //
@@ -228,9 +233,9 @@ inline void Editor::_RENDER_object_channel(std::span<const size_t> z_view, const
 }
 
 
-//  "_RENDER_feature_channel"
+//  "_RENDER_features_channel"
 //
-inline void Editor::_RENDER_feature_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
+inline void Editor::_RENDER_features_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
 {
     for ( size_t idx : z_view )
     {
@@ -245,6 +250,54 @@ inline void Editor::_RENDER_feature_channel(std::span<const size_t> z_view, cons
     return;
 }
 
+
+//  "_RENDER_accents_channel"
+//
+inline void Editor::_RENDER_accents_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
+{
+	ImDrawList *					dl	= ctx.args.dl;
+	const auto &					cb	= ctx.callbacks;
+
+
+	//  Helper: find glyph index for a vertex id (O(#points)); replace with cached map for O(1).
+	auto glyph_index_for_vid = [&](VertexID vid) -> int {
+		for (size_t i = 0; i < m_points.size(); ++i)
+			if (m_points[i].v == vid) return static_cast<int>(i);
+		return -1;
+	};
+
+	for (size_t pi : z_view)
+	{
+		const Path & p = m_paths[pi];
+		if (!p.visible) continue;
+
+		const size_t N = p.verts.size();
+		for (size_t k = 0; k < N; ++k)
+		{
+			const VertexID	vid = p.verts[k];
+
+			// Resolve glyph style for this vertex (Point entry)
+			const int gi = glyph_index_for_vid(vid);
+			if (gi < 0) continue;
+
+			const Point &	pt = m_points[static_cast<size_t>(gi)];
+			if (!pt.sty.visible) continue;
+
+			// Resolve vertex position from the shared vertex store
+			const auto * v = cb.get_vertex(cb.vertices, vid);
+			if (!v) continue;
+
+			// Color: held if dragging & selected, else glyph style color
+			const bool	selected_point = (m_sel.points.find(static_cast<size_t>(gi)) != m_sel.points.end());
+			const ImU32 col = (m_dragging && selected_point) ? m_style.COL_POINT_HELD : pt.sty.color;
+
+			const ImVec2 pix = cb.ws_to_px({ v->x, v->y });
+			dl->AddCircleFilled(pix, pt.sty.radius, col, 12); // 12 segs matches prior behavior
+		}
+	}
+
+    return;
+}
 
 
 

@@ -636,7 +636,8 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
     //
     //
     BrowserState &                          BS                  = m_browser_S;
-    const bool                              renaming            = (BS.m_obj_rename_idx == idx);
+    const bool                              renaming            = (BS.m_obj_rename_idx      == idx);
+    const bool                              canvas_hovered      = (BS.m_hovered_canvas_obj  == idx);
     
     
     
@@ -649,10 +650,21 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
         ImGui::PushStyleColor(ImGuiCol_Text, mutable_path ? col_text : col_dim);
         //
         //
-            const bool      ctrl            = ImGui::GetIO().KeyCtrl;
-            const bool      shift           = ImGui::GetIO().KeyShift;
+            const bool      ctrl                = ImGui::GetIO().KeyCtrl;
+            const bool      shift               = ImGui::GetIO().KeyShift;
+            bool            single_click        = false;
             //
-            const bool      single_click    = ImGui::Selectable(path.label.c_str(), selected, SEL_FLAGS, {0.0f, 1.05f * CELL_SZ});
+            //
+            if ( canvas_hovered ) [[unlikely]]
+            {
+                ImGui::PushStyleColor( ImGuiCol_HeaderActive, ImGui::GetColorU32(ImGuiCol_HeaderHovered) );
+                    single_click = ImGui::Selectable(path.label.c_str(), selected, SEL_FLAGS, {0.0f, 1.05f * CELL_SZ});
+                ImGui::PopStyleColor(1);
+            }
+            else
+            { single_click = ImGui::Selectable(path.label.c_str(), selected, SEL_FLAGS, {0.0f, 1.05f * CELL_SZ}); }
+            //
+            //
             const bool      hovered         = ImGui::IsItemHovered(ImGuiHoveredFlags_None);
             const bool      double_click    = mutable_path
                                                 && hovered

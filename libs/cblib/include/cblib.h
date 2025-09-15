@@ -46,6 +46,21 @@
 //
 // *************************************************************************** //
 
+//      1.      COMPILE-TIME MACRO ENFORCEMENT.
+#ifndef CBAPP_USER_CONFIG
+  #     error   "fatal error: CBLib requires preprocessor macro CBAPP_USER_CONFIG to specify build configurations."
+#endif  //  CBAPP_USER_CONFIG  //
+
+//  #ifndef CBLIB_USER_CONFIG
+//    #     error   "fatal error: CBLib requires preprocessor macro CBLIB_USER_CONFIG to specify build configurations."
+//  #endif  //  CBLIB_USER_CONFIG  //
+
+
+
+
+
+
+//      2.      C++ STANDARD ENFORCEMENT.
 #if __cplusplus < 201907L
 //
   #     error   "fatal error: CBLib is required to be build with \"cpp 201907L\" or greater.\n"     \

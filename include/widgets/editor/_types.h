@@ -243,8 +243,9 @@ struct Hit_t
 //
 //
     Type            type            = Type::Point;
-    size_t          index           = 0;     // Point/Line/Path: original meaning
-    bool            out             = false; // valid only when type == Handle
+//
+    size_t          index           = 0;                //  Point/Line/Path: original meaning
+    bool            out             = false;            //  valid only when type == Handle
 };
 
 
@@ -491,7 +492,9 @@ struct Interaction
 
 
 
-
+//
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //   END "INTERACTION STATES"
 
@@ -554,8 +557,164 @@ inline void from_json(const nlohmann::json & j, Selection_t<VID,PtID,LID,PID,ZID
     s.paths   .clear();  s.paths   .insert(pa.begin(), pa.end());
 }
 
+
+
+//
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //   END "SELECTION".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//      CURSOR STATE:
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "Cursor_t"
+//
+template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
+struct Cursor_t
+{
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    //  CBAPP_APPSTATE_ALIAS_API            //  *OR*    CBAPP_CBLIB_TYPES_API       //  FOR CBLIB...
+    //  using                               MyAlias                         = MyTypename_t;
+    //  using                               IDType                          = uint32_t;
+    //  using                               ObjectType                      = MyObject_t<IDType>;
+    //  using                               State                           = cb::MyAppState;
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    //  static constexpr float              ms_MY_CONSTEXPR_VALUE           = 240.0f;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      STATE VARIABLES.
+    // *************************************************************************** //
+    //  State                               m_state                         { State::None };
+
+    // *************************************************************************** //
+    //      IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    //  mutable std::optional<Hit>          hovered                 { std::nullopt };
+    
+    // *************************************************************************** //
+    //      GENERIC DATA.
+    // *************************************************************************** //
+    //  bool                                m_initialized                   = false;
+    //  bool                                m_first_frame                   = false;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+                                        Cursor_t                (void) noexcept                 = default;
+                                        ~Cursor_t               (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+                                        Cursor_t                (const Cursor_t &    src)       = delete;   //  Copy. Constructor.
+                                        Cursor_t                (Cursor_t &&         src)       = delete;   //  Move Constructor.
+    Cursor_t &                          operator =              (const Cursor_t &    src)       = delete;   //  Assgn. Operator.
+    Cursor_t &                          operator =              (Cursor_t &&         src)       = delete;   //  Move-Assgn. Operator.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "clear"
+    inline void                         clear                               (void) noexcept
+    {
+        return;
+    };
+    
+    
+    //  "_no_op"
+    inline void                         _no_op                              (void)      { return; };
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "Cursor_t" INLINE STRUCT DEFINITION.
+
+
+
+//  "to_json"
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
+inline void to_json([[maybe_unused]] nlohmann::json & j,
+                    [[maybe_unused]] const Cursor_t<VID,PtID,LID,PID,ZID,HitID> & s)
+{
+    return;
+}
+//
+//  "from_json"
+template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
+inline void from_json([[maybe_unused]] const nlohmann::json & j,
+                      [[maybe_unused]] Cursor_t<VID,PtID,LID,PID,ZID,HitID> & s)
+{
+    return;
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "Cursor_t".
     
     
     
@@ -661,7 +820,7 @@ inline void from_json(const nlohmann::json & j, ShapeState_t<OID> & o)
 
 //  "BrowserState_t"
 //
-template< typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HID >
+template<EditorCFGTraits CFG>
 struct BrowserState_t {
 // *************************************************************************** //
 // *************************************************************************** //
@@ -670,15 +829,18 @@ struct BrowserState_t {
     // *************************************************************************** //
     //      1.      NESTED TYPENAME ALIASES...
     // *************************************************************************** //
-    using                       Path                                    = Path_t        <PID, VID, ZID>         ;
-    using                       Vertex                                  = Vertex_t      <VID>                   ;
+    _EDITOR_CFG_PRIMATIVES_ALIASES
+    //  _EDITOR_CFG_OBJECTS_ALIASES
+    //
+    using                       Path                                    = Path_t        <path_id, vertex_id, z_id>          ;
+    using                       Vertex                                  = Vertex_t      <CFG>                               ;
 
     // *************************************************************************** //
     //      2.      CONSTEXPR VALUES...
     // *************************************************************************** //
     static constexpr size_t     ms_MAX_PATH_TITLE_LENGTH                = Path::ms_MAX_PATH_LABEL_LENGTH + 64ULL;
     //
-    static constexpr size_t     ms_MAX_VERTEX_TITLE_LENGTH              = Vertex:: ms_VERTEX_NAME_BUFFER_SIZE + 32ULL;
+    static constexpr size_t     ms_MAX_VERTEX_TITLE_LENGTH              = Vertex::ms_VERTEX_NAME_BUFFER_SIZE + 32ULL;
 
     // *************************************************************************** //
     //      3.      MEMBER FUNCTIONS...
@@ -720,9 +882,12 @@ struct BrowserState_t {
         
         
         
-        //  Hovered Items in Browser.
-        m_hovered_obj               = -1;
-        m_hovered_vertex            = { -1, -1 };
+        //  Hovered OBJECT in Browser.
+        m_hovered_obj               = -1;           //  Hovered OBJECT in Browser-Selectable.
+        m_hovered_canvas_obj        = -1;           //  Hovered OBJECT in Browser-Canvas.
+        
+        //  Hovered VERTEX in Browser.
+        m_hovered_vertex            = { -1, -1 };   //  Hovered VERTEX in Browser.
         
           
           
@@ -751,8 +916,10 @@ struct BrowserState_t {
     
     //  "ClearAuxiliarySelection"
     inline void                         ClearAuxiliarySelection         (void) const noexcept {
-        this->m_hovered_obj         = -1;
-        this->m_hovered_vertex      = { -1, -1 };
+        this->m_hovered_obj             = -1;
+        this->m_hovered_canvas_obj      = -1;
+        
+        this->m_hovered_vertex          = { -1, -1 };
         return;
     }
     
@@ -783,8 +950,12 @@ struct BrowserState_t {
     //                      INDICES:
     int                         m_layer_browser_anchor                      = -1;       //  ?? currently selected LAYER ??
     //
+    //
     int                         m_browser_anchor                            = -1;       //  ?? anchor index for Shift‑range select ??
+    //
     mutable int                 m_hovered_obj                               = -1;
+    mutable int                 m_hovered_canvas_obj                        = -1;
+    //
     //
     int                         m_inspector_vertex_idx                      = -1;       //  ...
     mutable std::pair<int,int>  m_hovered_vertex                            = {-1, -1};

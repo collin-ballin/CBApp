@@ -3,6 +3,26 @@
     "paths": [
       {
         "closed": true,
+        "id": 3,
+        "kind": 0,
+        "label": "Big Object",
+        "locked": false,
+        "style": {
+          "fill_color": 771714560,
+          "stroke_color": 4278255615,
+          "stroke_width": 2.0
+        },
+        "verts": [
+          9,
+          10,
+          11,
+          12
+        ],
+        "visible": true,
+        "z_index": 259
+      },
+      {
+        "closed": true,
         "id": 5,
         "kind": 0,
         "label": "Path 005",
@@ -19,7 +39,7 @@
           20
         ],
         "visible": true,
-        "z_index": 259
+        "z_index": 258
       },
       {
         "closed": true,
@@ -37,26 +57,6 @@
           14,
           15,
           16
-        ],
-        "visible": true,
-        "z_index": 258
-      },
-      {
-        "closed": true,
-        "id": 3,
-        "kind": 0,
-        "label": "Path 003",
-        "locked": false,
-        "style": {
-          "fill_color": 771714560,
-          "stroke_color": 4278255615,
-          "stroke_width": 2.0
-        },
-        "verts": [
-          9,
-          10,
-          11,
-          12
         ],
         "visible": true,
         "z_index": 257
@@ -266,12 +266,8 @@
     ],
     "selection": {
       "paths": [],
-      "points": [
-        8
-      ],
-      "vertices": [
-        9
-      ]
+      "points": [],
+      "vertices": []
     },
     "vertices": [
       {

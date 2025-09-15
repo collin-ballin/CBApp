@@ -168,7 +168,6 @@ public:
     //  using                           Path                            = Path_t            <PathID, VertexID, ZID>                     ;
     //  using                           Overlay                         = Overlay_t         <OverlayID>                                 ;
     //  using                           Hit                             = Hit_t             <HitID>                                     ;
-    //  using                           PathHit                         = PathHit_t         <PathID, VertexID>                          ;
     //  using                           EndpointInfo                    = EndpointInfo_t    <PathID>                                    ;
     //
     //

@@ -824,6 +824,22 @@ public:
     //      UTILITY FUNCTIONS.
     // *************************************************************************** //
     
+    //  "_truncate_label"
+    inline void                         _truncate_label                     (void)
+    { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
+    
+    
+    //  inline void                         _segment_is_curved                  (const V * a, const V * b) noexcept
+    //  {
+    //      constexpr float eps2 = 1e-8f; // or your ms_BEZIER_NUMERICAL_EPSILON_SQ
+    //      const float o2 = a->m_bezier.out_handle.x * a->m_bezier.out_handle.x
+    //                     + a->m_bezier.out_handle.y * a->m_bezier.out_handle.y;
+    //      const float i2 = b->m_bezier.in_handle.x  * b->m_bezier.in_handle.x
+    //                     + b->m_bezier.in_handle.y  * b->m_bezier.in_handle.y;
+    //      return (o2 > eps2) || (i2 > eps2);
+    //  };
+    
+    
     //  "make_default_payload"
     static inline Payload               make_default_payload                (const PathKind k)
     {
@@ -839,10 +855,6 @@ public:
         
         return ( std::monostate{   } );     //     no extra data
     }
-    
-    //  "_truncate_label"
-    inline void                         _truncate_label                     (void)
-    { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
     
     
     
