@@ -698,48 +698,69 @@ inline void Editor::update_move_drag_state(const Interaction & it)
 //
 inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction & it)
 {
+    using   HitType     = Hit::Type;
+    
+    
     if ( ImGui::IsMouseReleased(ImGuiMouseButton_Left) )
     {
         ImGuiIO & io = ImGui::GetIO();
 
         // If there is a pending hit, but it was on an already-selected item (no mods, no drag), do nothing.
-        if (m_pending_hit)
+        if ( m_pending_hit )
         {
             const bool modifiers   = (io.KeyCtrl || io.KeyShift);
             const bool hit_in_sel  = _hit_is_in_current_selection(*m_pending_hit);
-            if (!modifiers && hit_in_sel) {
+            
+            if ( !modifiers  &&  hit_in_sel )
+            {
                 m_pending_hit.reset();
                 m_pending_clear = false;
                 return;
             }
         }
 
-        // Apply click selection semantics iff something is truly pending
-        if (m_pending_hit || m_pending_clear)
+        //  Apply click selection semantics iff something is truly pending
+        if ( m_pending_hit  ||  m_pending_clear )
         {
             if (m_pending_clear) { this->reset_selection(); }
 
+
             if (m_pending_hit)
             {
-                const Hit & hit = *m_pending_hit;
+                const Hit &     hit     = *m_pending_hit;
+                const size_t    idx     = hit.index;
 
-                if (hit.type == Hit::Type::Point)
+                switch (hit.type)
                 {
-                    const size_t   idx = hit.index;
-                    const uint32_t vid = m_points[idx].v;
-                    if (!m_sel.points.erase(idx)) { m_sel.points.insert(idx); m_sel.vertices.insert(vid); }
-                    else                           { m_sel.vertices.erase(vid); }
-                }
-                else if (hit.type == Hit::Type::Path)
-                {
-                    const size_t idx = hit.index;
-                    const Path & p   = m_paths[idx];
-                    if (!m_sel.paths.erase(idx)) {
-                        m_sel.paths.insert(idx);
-                        for (uint32_t vid : p.verts) m_sel.vertices.insert(vid);
-                    } else {
-                        for (uint32_t vid : p.verts) m_sel.vertices.erase(vid);
-                        // (Optional) also clear point glyphs for those vids if you mirror points↔verts.
+                    //  CASE 1 :    HIT A POINT.
+                    case HitType::Point :
+                    {
+                        const uint32_t  vid     = m_points[idx].v;
+                        
+                        if ( !m_sel.points.erase(idx) )     { m_sel.points.insert(idx); m_sel.vertices.insert(vid); }
+                        else                                { m_sel.vertices.erase(vid); }
+                        
+                        break;
+                    }
+                    //
+                    //
+                    //  CASE 2 :    HIT A PATH  *OR*  EDGE.
+                    //  case HitType::Edge :
+                    //  case HitType::Path :
+                    default :
+                    {
+                        const Path &    p       = m_paths[idx];
+                        
+                        if ( !m_sel.paths.erase(idx) )
+                        {
+                            m_sel.paths.insert(idx);
+                            for (uint32_t vid : p.verts) m_sel.vertices.insert(vid);
+                        }
+                        else {
+                            for (uint32_t vid : p.verts) m_sel.vertices.erase(vid);
+                            // (Optional) also clear point glyphs for those vids if you mirror points↔verts.
+                        }
+                        break;
                     }
                 }
             }
@@ -749,6 +770,8 @@ inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction
         m_pending_hit.reset();
         m_pending_clear = false;
     }
+    
+    return;
 }
 
 /*

@@ -696,22 +696,31 @@ public:
 // *************************************************************************** //
 
     // *************************************************************************** //
-    //      SETTER / GETTER FUNCTIONS.
+    //      QUERY FUNCTIONS.
     // *************************************************************************** //
+
+    //  "IsSelectable"
+    [[nodiscard]] inline bool           IsSelectable                    (void) const noexcept           { return ( this->visible  &&  !this->locked ); }
 
     //  "IsMutable"
     [[nodiscard]] inline bool           IsMutable                       (void) const noexcept           { return ( this->visible  &&  !this->locked ); }
+    
+    
+    
+    //  "IsPath"
+    [[nodiscard]] inline bool           IsPath                          (void) const noexcept           { return ( 1 < this->verts.size() ); }   //  { return ( (1 < this->verts.size())  &&  (!this->closed) ); }
+    
     //  "IsArea"
     [[nodiscard]] inline bool           IsArea                          (void) const noexcept           { return ( (this->closed)  &&  (this->verts.size() >= 3) ); }
     
     //  "IsVisible"
     [[nodiscard]] inline bool           IsVisible                       (void) const noexcept           { return ( (this->visible) ); }
     
-    //  "TransparentFill"
-    [[nodiscard]] inline bool           TransparentFill                 (void) const noexcept           { return ( (this->style.fill_color & 0xFF000000) == 0 );    }
+    //  "FillIsVisible"
+    [[nodiscard]] inline bool           FillIsVisible                   (void) const noexcept           { return ( (this->style.fill_color & 0xFF000000) != 0 );    }
     
-    //  "TransparentStroke"
-    [[nodiscard]] inline bool           TransparentStroke               (void) const noexcept           { return ( ((this->style.stroke_color & 0xFF000000) == 0)  &&  (this->style.stroke_width <= this->ms_MIN_STROKE_WIDTH) );  }
+    //  "StrokeIsVisible"
+    [[nodiscard]] inline bool           StrokeIsVisible                 (void) const noexcept           { return ( ((this->style.stroke_color & 0xFF000000) != 0)  &&  (this->ms_MIN_STROKE_WIDTH < this->style.stroke_width) );  }
     
     //  "IsTransparent"
     [[nodiscard]] inline bool           IsTransparent                   (void) const noexcept
@@ -725,7 +734,15 @@ public:
                     ? ( !is_visible  &&  (stroke_is_transparent || fill_is_transparent) )
                     : ( !is_visible  &&  stroke_is_transparent );
     }
-    
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SETTER / GETTER FUNCTIONS.
+    // *************************************************************************** //
     
     //  "size"
     [[nodiscard]] inline size_type      size                            (void) const noexcept           { return this->verts.size(); }
@@ -888,9 +905,11 @@ public:
 
 
         //  Fast-outs: visibility, topology, alpha
-        if ( !this->IsVisible()         )       { return; }
-        if ( !this->IsArea()            )       { return; }     //  requires closed && verts.size() >= 3
-        if ( this->TransparentFill()    )       { return; }     //  fully transparent
+        const bool          dont_render         = ( !this->IsVisible()  &&  !this->IsArea()  &&  !this->FillIsVisible() );
+        
+        
+        
+        if ( dont_render )                      { return; }
 
 
         dl->PathClear();
@@ -946,11 +965,6 @@ public:
         const auto &        callbacks	    = ctx.callbacks;
         ImDrawList *        dl			    = ctx.args.dl;
         const size_t        N			    = this->verts.size();
-
-        // Fast-outs: visibility, topology, stroke enabled
-        if ( !this->IsVisible()         )	    { return; }
-        if ( N < 2                      )       { return; }
-        if ( this->TransparentStroke()  )	    { return; }
 
         const int           segs	        = (ctx.args.bezier_segments > 0) ? ctx.args.bezier_segments : 0; // 0 = ImGui auto
 

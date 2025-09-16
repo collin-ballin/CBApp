@@ -218,18 +218,16 @@ static constexpr cblib::EnumArray< IOResult, const char * >
 
 //  "HitType"
 //
-enum class HitType :uint8_t {
-    Point = 0,
-    Path,
-    Handle,
-//
+enum class HitType : uint8_t {
+    Handle = 0,
+    Point,      Edge,       Path,
     COUNT
 };
 //
 //  "DEF_HIT_TYPE_NAMES"
 static constexpr cblib::EnumArray< HitType, const char * >
     DEF_HIT_TYPE_NAMES  = { {
-        "Point",   "Path",     "Handle"
+        "Handle",       "Point",        "Edge",         "Path"
 } };
 
 

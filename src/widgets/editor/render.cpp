@@ -99,7 +99,6 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
     //  //      1.      RENDER "Grid" ELEMENTS...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Grid             );
-            //  this->_render_selection_highlight       ( it.dl                             );
             //  this->_RENDER_grid_channel              ( it.dl                                 );
         }
         
@@ -115,7 +114,7 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Highlights       );
             this->_render_selection_highlight       ( it.dl                                 );
-            //  this->_RENDER_highlights_channel        ( it.dl                                 );
+            this->_RENDER_highlights_channel        ( z_view,       this->m_render_ctx      );
         }
         
         
@@ -223,12 +222,63 @@ inline void Editor::_RENDER_object_channel(std::span<const size_t> z_view, const
 {
     for (size_t idx : z_view)
     {
-        const Path &    p   = m_paths[idx];
+        const Path &        path            = this->m_paths[idx];
+        const bool          should_render   = ( path.IsVisible()  &&  path.IsArea()  &&  path.FillIsVisible() );
         
-        if ( p.visible && p.IsArea()  &&  (p.style.fill_color & IM_COL32_A_MASK) )
-            { p.render_fill_area(ctx); }
+        if ( should_render )
+            { path.render_fill_area(ctx); }
     }
     
+    return;
+}
+
+
+//  "_RENDER_highlights_channel"
+//
+inline void Editor::_RENDER_highlights_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
+{
+
+
+
+
+/*
+    const ImU32         sel_col             = m_style.COL_SELECTION_OUT;
+    constexpr float     PATH_EXTRA_W        = 2.0f;   // halo added to path stroke
+    constexpr float     POINT_THICK         = 2.0f;   // ring thickness
+    constexpr float     POINT_OUTSET        = 2.0f;   // radius + outset
+
+    // 1) Selected PATH halos (above fills, below strokes)
+    for (size_t idx : z_view)
+    {
+        // draw only if this path is selected and visible
+        if ( m_sel.paths.find(idx) == m_sel.paths.end() )
+            continue;
+
+        const Path &    p   = m_paths[idx];
+        if (!p.visible)     { continue; }
+
+        //  p.render_highlight_stroke(ctx, sel_col, PATH_EXTRA_W);
+    }
+
+    // 2) Selected POINT rings (non-interactive accents tied to each path, in Z order)
+    //    Note: we defer all per-vertex logic to Path_t; Editor passes the glyph
+    //    container and the selected point indices as a view.
+    for (size_t idx : z_view)
+    {
+        const Path &    p   = m_paths[idx];
+        if (!p.visible)     { continue; }
+        //  p.render_selected_point_rings(ctx,
+        //                                m_points,
+        //                                m_sel.points,
+        //                                sel_col,
+        //                                POINT_THICK,
+        //                                POINT_OUTSET);
+    }
+    // Deliberately NOT drawn here (lives in Foreground/HUD):
+    //  - Selection BBox
+    //  - Handle guides / cursor hints
+    //  - Auxiliary overlays (unless we later decide to include a canvas-only hover glow)
+*/
     return;
 }
 
@@ -239,60 +289,79 @@ inline void Editor::_RENDER_features_channel(std::span<const size_t> z_view, con
 {
     for ( size_t idx : z_view )
     {
-        const Path &        p           = m_paths[idx];
-        const bool          has_alpha   = (p.style.stroke_color & IM_COL32_A_MASK) != 0;
-        const bool          render      = ( p.visible )  &&  ( has_alpha )  &&  ( p.style.stroke_width > 0.0f )  &&  ( p.size() >= 2 );
-        if ( render )       {
-            p.render_stroke(ctx);
+        const Path &        path                    = m_paths[idx];
+        const bool          should_render           = ( path.IsVisible()  &&  path.IsPath()  &&  path.StrokeIsVisible() );
+        
+        if ( should_render ) {
+            path.render_stroke(ctx);
         }
     }
     
     return;
 }
-
+        
 
 //  "_RENDER_accents_channel"
 //
 inline void Editor::_RENDER_accents_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
 {
-	ImDrawList *					dl	= ctx.args.dl;
-	const auto &					cb	= ctx.callbacks;
+	const auto &    cb	                    = ctx.callbacks;
 
 
 	//  Helper: find glyph index for a vertex id (O(#points)); replace with cached map for O(1).
-	auto glyph_index_for_vid = [&](VertexID vid) -> int {
-		for (size_t i = 0; i < m_points.size(); ++i)
-			if (m_points[i].v == vid) return static_cast<int>(i);
+	auto            glyph_index             = [&](VertexID vid) -> int
+    {
+		for ( size_t i = 0; i < m_points.size(); ++i )
+        {
+			if ( m_points[i].v == vid )     { return static_cast<int>( i ); }
+        }
 		return -1;
 	};
 
+
 	for (size_t pi : z_view)
 	{
-		const Path & p = m_paths[pi];
-		if (!p.visible) continue;
+		const Path &        p       = m_paths[pi];
+		const size_t        N       = p.size();
+  
+		if ( !p.IsVisible() )       { continue; }
 
-		const size_t N = p.verts.size();
+
+
 		for (size_t k = 0; k < N; ++k)
 		{
-			const VertexID	vid = p.verts[k];
+			const VertexID	    vid             = p.verts[k];
+			const int           gidx            = glyph_index(vid);     //  Resolve glyph style for this vertex (Point entry)
+			if ( gidx < 0 )                     { continue; }
 
-			// Resolve glyph style for this vertex (Point entry)
-			const int gi = glyph_index_for_vid(vid);
-			if (gi < 0) continue;
+			const Point &	    pt              = m_points[static_cast<size_t>(gidx)];
+			if ( !pt.sty.visible )              { continue; }
 
-			const Point &	pt = m_points[static_cast<size_t>(gi)];
-			if (!pt.sty.visible) continue;
 
-			// Resolve vertex position from the shared vertex store
-			const auto * v = cb.get_vertex(cb.vertices, vid);
-			if (!v) continue;
+			const Vertex *      v_ptr           = cb.get_vertex(cb.vertices, vid);       //  Resolve vertex position from the shared vertex store
+            IM_ASSERT( (v_ptr != nullptr) && "FETCHED VERTEX SHOULD NEVER BE NULL" );
+            const Vertex &      v               = *(v_ptr);     // cb.get_vertex(cb.vertices, vid);
+
+
+
 
 			// Color: held if dragging & selected, else glyph style color
-			const bool	selected_point = (m_sel.points.find(static_cast<size_t>(gi)) != m_sel.points.end());
-			const ImU32 col = (m_dragging && selected_point) ? m_style.COL_POINT_HELD : pt.sty.color;
+   
 
-			const ImVec2 pix = cb.ws_to_px({ v->x, v->y });
-			dl->AddCircleFilled(pix, pt.sty.radius, col, 12); // 12 segs matches prior behavior
+
+            this->PushVertexStyle( VertexStyleType::Default );
+                v.render( this->m_vertex_style );
+            this->PopVertexStyle();
+
+
+
+   
+			//  const bool	        selected_point  = ( m_sel.points.find( static_cast<size_t>(gidx) ) != m_sel.points.end() );
+			//  const ImU32         col             = ( m_dragging  &&  selected_point )
+            //                                          ? m_style.COL_POINT_HELD
+            //                                          : pt.sty.color;
+			//  const ImVec2        pix             = cb.ws_to_px({ v->x, v->y });
+			//  dl->AddCircleFilled(pix, pt.sty.radius, col, 12); // 12 segs matches prior behavior
 		}
 	}
 
@@ -422,15 +491,18 @@ void Editor::_render_points(ImDrawList * dl) const
 {
     for (size_t i = 0; i < m_points.size(); ++i)
     {
-        const Point& pt = m_points[i];
-        if (!pt.sty.visible) continue;
+        const Point &       pt      = m_points[i];
+        if (!pt.sty.visible)        { continue; }
 
-        const Vertex* v = find_vertex(m_vertices, pt.v);
-        if (!v) continue;
+        const Vertex *      v       = find_vertex(m_vertices, pt.v);
+        if ( !v )                   { continue; }
+
+
+
 
         ImU32 col = (m_dragging && m_sel.points.count(i))
-                    ? m_style.COL_POINT_HELD
-                    : pt.sty.color;
+                        ? m_style.COL_POINT_HELD
+                        : pt.sty.color;
 
         ImVec2 pix = world_to_pixels({ v->x, v->y });   // NEW transform
         dl->AddCircleFilled(pix, pt.sty.radius, col, 12);
@@ -824,7 +896,7 @@ inline void Editor::_auxiliary_highlight_handle(const Vertex & v, ImDrawList * /
     
     
     //      2.      DRAW HOVERED VERTEX...
-    v.render( this->m_vertex_style );
+    v.render_all( this->m_vertex_style );
     
     
     

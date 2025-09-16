@@ -962,6 +962,26 @@ struct Vertex_t
     inline void                         render                          (VStyle & style) const noexcept
     {
         const ImVec2        origin          = ImVec2({ this->x, this->y });
+        switch (style.data->hovered) {
+            case HoverState::Vertex : {
+                this->_render_vertex_hovered    (origin, style);                //      Each func. will invoke the "style.ws_2_px" as needed...
+                break;
+            }
+            default : {
+                this->_render_vertex            (origin, style);
+                break;
+            }
+        }
+        
+        style.data->hovered = HoverState::None;
+        return;
+    }
+    
+    //  "render_all"
+    template <typename VStyle>
+    inline void                         render_all                      (VStyle & style) const noexcept
+    {
+        const ImVec2        origin          = ImVec2({ this->x, this->y });
     
         switch (style.data->hovered)
         {
