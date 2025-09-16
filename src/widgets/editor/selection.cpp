@@ -397,59 +397,45 @@ void Editor::_MECH_process_selection(const Interaction & it)
 //
 void Editor::add_hit_to_selection(const Hit & hit)
 {
-    //  0.  CLICKED ON HANDLE.
-    if (hit.type == Hit::Type::Handle) return;
-
-
-    //  1.  CLICKED ON POINT.
-    if (hit.type == Hit::Type::Point)
+    using HitType = Hit::Type;
+    
+    
+    switch (hit.type)
     {
-        size_t    idx  = hit.index;
-        uint32_t  vid  = m_points[idx].v;
-        m_sel.points.insert(idx);
-        m_sel.vertices.insert(vid);
-        //  NEW.
-        m_show_handles.insert(vid);
-    }
-    //
-    //  else if (hit.type == Hit::Type::Path) {
-    //      size_t idx = hit.index;
-    //      const Path & p = m_paths[idx];
-    //      m_sel.paths.insert(idx);
-    //      for (uint32_t vid : p.verts)
-    //          m_sel.vertices.insert(vid);
-    //  }
-    //
-    //
-    //  2.  CLICKED ON PATH.
-    else if (hit.type == Hit::Type::Path)
-    {
-        size_t idx = hit.index;
-        const Path& p = m_paths[idx];
-
-        m_sel.paths.insert(idx);
-
-        // include every vertex + its glyph index
-        for (uint32_t vid : p.verts)
+        //      1.      CLICKED ON POINT.
+        case HitType::Point :
         {
+            size_t    idx       = hit.index;
+            uint32_t  vid       = m_points[idx].v;
+            m_sel.points.insert(idx);
             m_sel.vertices.insert(vid);
+            m_show_handles.insert(vid); //  NEW.
+            break;
+        }
+        //
+        //      2.      CLICKED ON PATH.
+        case HitType::Edge :
+        case HitType::Path :
+        {
+            size_t          idx     = hit.index;
+            const Path &    p       = m_paths[idx];
+            m_sel.paths.insert(idx);
 
-            for (size_t gi = 0; gi < m_points.size(); ++gi)
-                if (m_points[gi].v == vid)
-                    m_sel.points.insert(gi);
+            for (uint32_t vid : p.verts)        // include every vertex + its glyph index
+            {
+                m_sel.vertices.insert(vid);
+                for (size_t gi = 0; gi < m_points.size(); ++gi) {
+                    if (m_points[gi].v == vid)      { m_sel.points.insert(gi); }
+                }
+            }
+            break;
+        }
+        //
+        //      0.      CLICKED ON HANDLE  *OR*  OTHERWISE.
+        default: {
+            return;
         }
     }
-    //
-    //  3.  CLICKED ON LINE.
-    //  else
-    //  {
-    //      size_t    idx = hit.index;
-    //      uint32_t  va  = m_lines[idx].a,
-    //                vb  = m_lines[idx].b;
-    //      m_sel.lines.insert(idx);
-    //      m_sel.vertices.insert(va);
-    //      m_sel.vertices.insert(vb);
-    //  }
     
     return;
 }
