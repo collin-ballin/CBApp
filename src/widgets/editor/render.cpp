@@ -463,7 +463,6 @@ void Editor::_render_points(ImDrawList * dl) const
 void Editor::_render_selection_highlight(ImDrawList * dl) const
 {
     const ImU32 &               col         = m_style.COL_SELECTION_OUT;
-    auto                        ws2px       = [this](ImVec2 w){ return world_to_pixels(w); };
     const BrowserState &        BS          = this->m_browser_S;
 
 
@@ -474,7 +473,7 @@ void Editor::_render_selection_highlight(ImDrawList * dl) const
         const Point &           pt  = m_points[idx];
         if (const Vertex *      v   = find_vertex(m_vertices, pt.v))
         {
-            ImVec2  scr     = ws2px({ v->x, v->y });
+            ImVec2  scr     = world_to_pixels({ v->x, v->y });
             dl->AddCircle( scr,
                            pt.sty.radius + 2.f,        // small outset
                            col, 0, 2.f);               // thickness 2 px
@@ -494,17 +493,15 @@ void Editor::_render_selection_highlight(ImDrawList * dl) const
             const float w = p.style.stroke_width + 2.0f;
             if ( is_curved<VertexID>(a,b) )
             {
-                ImVec2 P0 = ws2px({ a->x,                               a->y                                });
-                ImVec2 P1 = ws2px({ a->x + a->m_bezier.out_handle.x,    a->y + a->m_bezier.out_handle.y     });
-                ImVec2 P2 = ws2px({ b->x + b->m_bezier.in_handle.x,     b->y + b->m_bezier.in_handle.y      });
-                ImVec2 P3 = ws2px({ b->x,                               b->y                                });
+                ImVec2 P0 = this->world_to_pixels({ a->x,                               a->y                                });
+                ImVec2 P1 = this->world_to_pixels({ a->x + a->m_bezier.out_handle.x,    a->y + a->m_bezier.out_handle.y     });
+                ImVec2 P2 = this->world_to_pixels({ b->x + b->m_bezier.in_handle.x,     b->y + b->m_bezier.in_handle.y      });
+                ImVec2 P3 = this->world_to_pixels({ b->x,                               b->y                                });
                 dl->AddBezierCubic(P0, P1, P2, P3, col, w, m_style.ms_BEZIER_SEGMENTS);
             }
             else
             {
-                dl->AddLine(ws2px({ a->x, a->y }),
-                            ws2px({ b->x, b->y }),
-                            col, w);
+                dl->AddLine( this->world_to_pixels({ a->x, a->y }), this->world_to_pixels({ b->x, b->y }), col, w );
             }
         };
 

@@ -657,7 +657,7 @@ protected:
     void                                _draw_vertex_panel                      (Path & path, [[maybe_unused]] const size_t , const LabelFn & );
     void                                _draw_vertex_selector_column            (Path & , const size_t );  //  PREVIOUSLY:     _draw_vertex_list_subcolumn
     void                                _draw_vertex_inspector_column           (Path & , const LabelFn & );  //  PREVIOUSLY:     _draw_vertex_inspector_subcolumn
-    void                                    _draw_vertex_panel                  (Vertex & , const LabelFn & );
+    inline void                             _draw_vertex_properties_panel       (Vertex & , const LabelFn & );
     //
     //                              "PAYLOAD" TRAIT:
     void                                _draw_payload_panel                     (Path & path, [[maybe_unused]] const size_t , const LabelFn & );
@@ -1921,17 +1921,26 @@ inline bool s_draw_vertex_slider(const char * label, double & value, const doubl
 
 //  "draw_vertex_slider"
 //
-inline bool s_draw_vertex_slider(const char * label, double & value, const ImPlotRange & range, const char * fmt = "%.1f")
+//  template < typename T, typename Param = cblib::math::Param<T> >
+//  inline bool s_draw_vertex_slider(const char * label, double & value, const float speed, const Param & range, const char * fmt = "%.1f")
+inline bool s_draw_vertex_slider(const char * label, double & value, const float speed, const double & min, const double & max, const char * fmt = "%.1f")
 {
-    bool            dirty               = false;
-    
-    dirty = ImGui::SliderScalar(   label
+    constexpr ImGuiSliderFlags      flags               = ImGuiSliderFlags_None;
+    constexpr int                   N                   = 1;
+    bool                            dirty               = false;
+        
+        
+    dirty = ImGui::DragScalarN(    label
                                  , ImGuiDataType_Double
                                  , &value
-                                 , &range.Min
-                                 , &range.Max
+                                 , N
+                                 , speed
+                                 , &min
+                                 , &max
                                  , fmt
+                                 , flags
     );
+    
     return dirty;
 };
     
@@ -1950,7 +1959,7 @@ inline bool s_draw_vertex_slider(const char * label, double & value, const ImPlo
 //  "is_curved"
 //
 template< std::integral ID, typename Vertex = Vertex_t<ID> >
-[[maybe_unused]] inline bool is_curved(const Vertex* a, const Vertex* b) noexcept
+[[maybe_unused]] inline bool is_curved(const Vertex * a, const Vertex * b) noexcept
 {
     return (a->m_bezier.out_handle.x || a->m_bezier.out_handle.y ||
             b->m_bezier.in_handle.x  || b->m_bezier.in_handle.y);
@@ -1960,7 +1969,7 @@ template< std::integral ID, typename Vertex = Vertex_t<ID> >
 //  "cubic_eval"
 //
 template< std::integral ID, typename Vertex = Vertex_t<ID> >
-[[maybe_unused]] static inline ImVec2 cubic_eval(const Vertex * a, const Vertex* b, float t)
+[[maybe_unused]] static inline ImVec2 cubic_eval(const Vertex * a, const Vertex * b, float t)
 {
     const float u  = 1.0f - t;
     const float w0 = u*u*u;
@@ -1981,7 +1990,7 @@ template< std::integral ID, typename Vertex = Vertex_t<ID> >
 //  "point_in_polygon"
 //
 [[maybe_unused]]
-static bool point_in_polygon(const std::vector<ImVec2>& poly, ImVec2 p)
+static bool point_in_polygon(const std::vector<ImVec2> & poly, ImVec2 p)
 {
     bool inside = false;
     const size_t n = poly.size();
@@ -1998,7 +2007,7 @@ static bool point_in_polygon(const std::vector<ImVec2>& poly, ImVec2 p)
 
 //  "is_convex_poly"
 //
-[[maybe_unused]] static bool is_convex_poly(const std::vector<ImVec2>& poly)
+[[maybe_unused]] static bool is_convex_poly(const std::vector<ImVec2> & poly)
 {
     const size_t n = poly.size();
     if (n < 4) return true;
@@ -2033,13 +2042,13 @@ static bool point_in_polygon(const std::vector<ImVec2>& poly, ImVec2 p)
 //  "vec_len"
 //      Returns length of a 2-D vector.
 //
-static inline float vec_len(const ImVec2& v) { return sqrtf(v.x*v.x + v.y*v.y); }
+static inline float vec_len(const ImVec2 & v) { return sqrtf(v.x*v.x + v.y*v.y); }
 
 
 //  "vec_norm"
 //      Normalises `v` unless zero; returns {0,0} if zero.
 //
-static inline ImVec2 vec_norm(const ImVec2& v)
+static inline ImVec2 vec_norm(const ImVec2 & v)
 {
     float l = vec_len(v);
     return (l > 0.f) ? ImVec2{ v.x / l, v.y / l } : ImVec2{0,0};
@@ -2079,7 +2088,7 @@ inline void mirror_handles(Vertex & v, bool dragged_out_handle) noexcept
 
     switch (v.m_bezier.kind)
     {
-        case BezierCurvatureType::Corner: {
+        case BezierCurvatureType::None: {
             /* no coupling */ break;
         }
 
@@ -2106,7 +2115,7 @@ template< typename ID, typename Vertex = Vertex_t<ID> >
 inline Vertex * find_vertex_mut( std::vector< Vertex > & arr, ID id ) noexcept
 {
     for (Vertex & v : arr) {
-        if (v.id == id) return &v;
+        if (v.id == id)     { return &v; }
     }
         
     return nullptr;

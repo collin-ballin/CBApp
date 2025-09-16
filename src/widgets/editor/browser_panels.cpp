@@ -461,77 +461,130 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
     
     
     //  3.  INVOKE FUNCTION TO DRAW REMAINING VERTEX PROPERTIES...
-    this->_draw_vertex_panel( *v, callback );
+    this->_draw_vertex_properties_panel( *v, callback );
     
     
     return;
 }
 
 
-//  "_draw_vertex_panel"
+//  "_draw_vertex_properties"
 //
-void Editor::_draw_vertex_panel(Vertex & v, const LabelFn & callback)
+inline void Editor::_draw_vertex_properties_panel(Vertex & v, const LabelFn & callback)
 {
-    EditorState &               ES                  = this->m_editor_S;
+    EditorState &                   ES                  = this->m_editor_S;
     //
-    const float                 ms_SEP_WIDTH        = 5;
-    const float                 ms_HALF_WIDTH       = 0.5 * ( ms_WIDGET_WIDTH - ms_SEP_WIDTH );
+    const float                     ms_SEP_WIDTH        = 5;
+    const float                     ms_HALF_WIDTH       = 0.5 * ( ms_WIDGET_WIDTH - ms_SEP_WIDTH );
+    constexpr float                 SPEED_SCALE         = 0.001f;
+    [[maybe_unused]] const float    grid                = m_style.GRID_STEP / m_cam.zoom_mag;
+    auto                            snap                = [/*grid*/](const double & x_, const double & y_) -> ImVec2 {
+        float   x     = x_;//  std::round(x_ / grid) * grid;
+        float   y     = y_;//  std::round(y_ / grid) * grid;
+        return ImVec2{ x, y };
+    };
     
-    
-    
-    const float         grid            = m_style.GRID_STEP / m_cam.zoom_mag;
-    const float         speed           = 0.1f * grid;
-    auto                snap            = [grid](float f){ return std::round(f / grid) * grid; };
+    const float                     speedx              = SPEED_SCALE * ES.m_window_size[0];
+    const float                     speedy              = SPEED_SCALE * ES.m_window_size[1];
+    const double &                  WS_xmax             = ES.m_world_size[0].value;
+    const double                    WS_xmin             = -WS_xmax;
+    const double &                  WS_ymax             = ES.m_world_size[1].value;
+    const double                    WS_ymin             = -WS_ymax;
     //
-    int                 kind_idx        = static_cast<int>( v.GetCurvatureType() );
     //
-    ImVec2 &            in_handle       = v.GetInHandle();
-    double              ih_x            = static_cast<double>( in_handle.x );
-    double              ih_y            = static_cast<double>( in_handle.y );
+    //
+    int                             kind_idx            = static_cast<int>( v.GetCurvatureType() );
+    //
+    ImVec2                          position            = v.GetXYPosition();
+    double                          pos_x               = static_cast<double>( position.x       );
+    double                          pos_y               = static_cast<double>( position.y       );
+    //
+    ImVec2                          in_handle           = v.GetInHandle();
+    double                          ih_x                = static_cast<double>( in_handle.x      );
+    double                          ih_y                = static_cast<double>( in_handle.y      );
+    //
+    ImVec2                          out_handle          = v.GetOutHandle();
+    double                          oh_x                = static_cast<double>( out_handle.x     );
+    double                          oh_y                = static_cast<double>( out_handle.y     );
+    //
+    bool                            dirty1              = false;
+    bool                            dirty2              = false;
 
-
-//  ES.m_world_size[0]
-
-
-    //  dirty   =    draw_slider( "##Vertex_InHandle_X", ih_x, ES.m_window_size.X, );
 
 
 
 
     //      3.1.    Position:
-    callback("In-Handle:");
+    callback("Position:");
     {
-        bool    dirty1     = false;
-        bool    dirty2     = false;
-        
         ImGui::PushItemWidth( ms_HALF_WIDTH );
         {
-            //  dirty1  = s_draw_vertex_slider("##Vertex_InHandle_X", ih_x, ES.m_window_coords.X );
-            dirty1  = s_draw_vertex_slider("##Vertex_InHandle_X", ih_x, Vertex::ms_BEZIER_SLIDER_LIMITS.X );
+            dirty1  = s_draw_vertex_slider( "##Vertex_Position_X", pos_x, speedx, WS_xmin, WS_xmax );
+            ImGui::SameLine(0.0f, ms_SEP_WIDTH);
+            dirty2  = s_draw_vertex_slider( "##Vertex_Position_Y", pos_y, speedy, WS_ymin, WS_ymax );
             
-            
-            //
-            //  dirty1  = ImGui::SliderScalar("##Vertex_InHandle_X",  ImGuiDataType_Double, &ih_x, &ES.m_world_size[0].Min(), &ES.m_world_size[0].Max(), "%.6f");
-            //
-            ImGui::SameLine(0.0f,ms_SEP_WIDTH);
-            //
-            dirty2  = ImGui::SliderScalar("##Vertex_InHandle_Y",  ImGuiDataType_Double, &ih_y, &ES.m_world_size[1].Min(), &ES.m_world_size[1].Max(), "%.6f");
-            
-            
-            //  UPDATE VALUE.
+            //      UPDATE VALUE.
             if ( dirty1 || dirty2 ) {
-                v.SetInHandle( {static_cast<float>( ih_x ), static_cast<float>( ih_y )} );
+                v.SetXYPosition( snap(pos_x, pos_y) );
+                dirty1 = false; dirty2 = false;
             }
-            
         }
         ImGui::PopItemWidth();
+    }
+    
+    
+    //      3.2.    Bézier Handles / Control Points
+    ImGui::NewLine();
+    ImGui::TextDisabled("Bezier Controls");
     //
-    //
+    //              3.2A    ANCHOR TYPE (corner / smooth / symmetric):
+    {
+        callback("Type:");
+        dirty1 = ImGui::Combo("##Vertex_AnchorType", &kind_idx, ms_BEZIER_CURVATURE_TYPE_NAMES.data(), static_cast<int>( BezierCurvatureType::COUNT ));          // <- int, not enum
+        //
+        if (dirty1) {
+            v.SetCurvatureType( static_cast<BezierCurvatureType>(kind_idx) );
+            dirty1 = false;
+        }
     }
         
         
-        
+    //      3.2A.   In-Handle:
+    callback("In-Handle:");
+    {
+        ImGui::PushItemWidth( ms_HALF_WIDTH );
+        {
+            dirty1  = s_draw_vertex_slider( "##Vertex_InHandle_X", ih_x, speedx, WS_xmin, WS_xmax );
+            ImGui::SameLine(0.0f, ms_SEP_WIDTH);
+            dirty2  = s_draw_vertex_slider( "##Vertex_InHandle_Y", ih_y, speedy, WS_ymin, WS_ymax );
+            
+            //      UPDATE VALUE.
+            if ( dirty1 || dirty2 ) {
+                v.SetInHandle( snap(ih_x, ih_y) );
+                dirty1 = false; dirty2 = false;
+            }
+        }
+        ImGui::PopItemWidth();
+    }
     
+    
+    //      3.2B.   Out-Handle:
+    callback("Out-Handle:");
+    {
+        ImGui::PushItemWidth( ms_HALF_WIDTH );
+        {
+            dirty1  = s_draw_vertex_slider( "##Vertex_OutHandle_X", oh_x, speedx, WS_xmin, WS_xmax );
+            ImGui::SameLine(0.0f, ms_SEP_WIDTH);
+            dirty2  = s_draw_vertex_slider( "##Vertex_OutHandle_Y", oh_y, speedy, WS_ymin, WS_ymax );
+            
+            //      UPDATE VALUE.
+            if ( dirty1 || dirty2 ) {
+                v.SetOutHandle( snap(oh_x, oh_y) );
+                dirty1 = false; dirty2 = false;
+            }
+        }
+        ImGui::PopItemWidth();
+    }
     
     return;
 }
@@ -730,6 +783,7 @@ void Editor::_draw_payload_panel(Path & path, [[maybe_unused]] const size_t pidx
 
 
 
+//
 //
 //
 // *************************************************************************** //

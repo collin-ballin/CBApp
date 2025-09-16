@@ -204,7 +204,7 @@ inline ImU32 compute_shade(const ImU32& color, const float shade = 0.0484f) noex
 //      ImColor → ImColor   (wrapper around ImVec4)
 //
 [[nodiscard]]
-inline constexpr ImColor compute_shade(const ImColor & color, const float shade = 0.0484f)
+inline ImColor compute_shade(const ImColor & color, const float shade = 0.0484f)
 {
     const ImVec4    src     = color;               // ImColor → ImVec4 implicit
     const ImVec4    dst     = compute_shade(src, shade);

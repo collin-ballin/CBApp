@@ -504,6 +504,9 @@ inline void to_json(nlohmann::json & j, const Payload & v)
 
     //  5.  DielectricPayload...
     if ( const auto * gp = std::get_if<DielectricPayload>(&v) )     { j = *gp;  return; }
+
+    
+    return;
 }
 
 
@@ -520,6 +523,8 @@ inline void from_json(const nlohmann::json & j, Payload & v)
     //  when adding more kinds:
     //      – inspect a “kind” key or structure to decide which get<>() to call...
     //
+    
+    return;
 }
 
 
@@ -559,20 +564,24 @@ struct PathStyle {
 inline void to_json(nlohmann::json& j, const PathStyle& s)
 {
     j = nlohmann::json{
-        { "stroke_color", s.stroke_color },
-        { "fill_color",   s.fill_color   },
-        { "stroke_width", s.stroke_width }
+        { "stroke_color"        , s.stroke_color    },
+        { "fill_color"          , s.fill_color      },
+        { "stroke_width"        , s.stroke_width    }
     };
+    
+    return;
 }
 
 
 //  "from_json"
 //
-inline void from_json(const nlohmann::json& j, PathStyle& s)
+inline void from_json(const nlohmann::json & j, PathStyle & s)
 {
-    j.at("stroke_color").get_to(s.stroke_color);
-    j.at("fill_color"  ).get_to(s.fill_color  );
-    j.at("stroke_width").get_to(s.stroke_width);
+    j.at("stroke_color"     ).get_to(   s.stroke_color      );
+    j.at("fill_color"       ).get_to(   s.fill_color        );
+    j.at("stroke_width"     ).get_to(   s.stroke_width      );
+    
+    return;
 }
 
 
@@ -654,7 +663,7 @@ public:
     //                          NEW-ER:
     // *************************************************************************** //
     PathKind                        kind                            = PathKind::None;
-    Payload                         payload                         {  };
+    Payload                         payload                         {   };
     
 //
 //
@@ -790,7 +799,8 @@ public:
         using namespace path;
         
         //  2.  CALL THE "PROPERTIES UI" FOR THE
-        std::visit([&](auto & pl) {
+        std::visit([&](auto & pl)
+        {
             using T = std::decay_t<decltype(pl)>;
             //  skip monostate (has no draw_ui)
             if constexpr (!std::is_same_v<T, std::monostate>)
@@ -916,7 +926,7 @@ public:
                     {
                         const float     t       = static_cast<float>(s) / static_cast<float>(steps);
                         const ImVec2    wp      = cubic_eval<VID>(a, b, t);             //  world-space point
-                        dl->PathLineTo( ctx.callbacks.ws_to_px(wp) );           //  append in pixel space
+                        dl->PathLineTo( ctx.callbacks.ws_to_px(wp) );                   //  append in pixel space
                     }
                 }
             }
@@ -1004,10 +1014,9 @@ public:
     
 
 
-
-
-
-
+//
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //
 };//	END "Path_t" INLINE CLASS DEFINITION.
@@ -1023,15 +1032,15 @@ template<typename PID, typename VID, typename ZID>
 inline void to_json(nlohmann::json & j, const Path_t<PID, VID, ZID> & p)
 {
     j={
-        { "verts",        p.verts                             },
-        { "id",           p.id                                },
-        { "closed",       p.closed                            },
-        { "style",        p.style                             },
-        { "z_index",      p.z_index                           },
-        { "locked",       p.locked                            },
-        { "visible",      p.visible                           },
-        { "label",        p.label                             },
-        { "kind",         static_cast<uint8_t>( p.kind )      }
+        { "verts"               , p.verts                           },
+        { "id"                  , p.id                              },
+        { "closed"              , p.closed                          },
+        { "style"               , p.style                           },
+        { "z_index"             , p.z_index                         },
+        { "locked"              , p.locked                          },
+        { "visible"             , p.visible                         },
+        { "label"               , p.label                           },
+        { "kind"                , static_cast<uint8_t>( p.kind )    }
     };
     
     //if ( !std::holds_alternative<std::monostate>(p.payload) )   { j["payload"] = p.payload; }   // Serialises only non-empty payload.
@@ -1128,9 +1137,9 @@ inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
     return;
 }
 
-
-
-
+//
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //   END "PATH".
 
