@@ -226,7 +226,7 @@ bool Editor::_try_begin_handle_drag(const Interaction& it)
 
     /* Alt-click fallback (pull new handle) --------------------------- */
     if (alt_down()) {
-        if (auto h = _hit_any(it); h && h->type == Hit::Type::Point)
+        if (auto h = _hit_any(it); h && h->type == Hit::Type::Vertex)
         {
             m_dragging_handle = true;
             m_drag_vid        = m_points[h->index].v;

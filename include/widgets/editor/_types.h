@@ -220,14 +220,14 @@ static constexpr cblib::EnumArray< IOResult, const char * >
 //
 enum class HitType : uint8_t {
     Handle = 0,
-    Point,      Edge,       Path,
+    Vertex,      Edge,       Surface,
     COUNT
 };
 //
 //  "DEF_HIT_TYPE_NAMES"
 static constexpr cblib::EnumArray< HitType, const char * >
     DEF_HIT_TYPE_NAMES  = { {
-        "Handle",       "Point",        "Edge",         "Path"
+        "Handle",       "Vertex",       "Edge",         "Surface"
 } };
 
 
@@ -240,7 +240,7 @@ struct Hit_t
     using Type = HitType;
 //
 //
-    Type            type            = Type::Point;
+    Type            type            = Type::Vertex;
 //
     size_t          index           = 0;                //  Point/Line/Path: original meaning
     bool            out             = false;            //  valid only when type == Handle
@@ -830,8 +830,8 @@ struct BrowserState_t {
     _EDITOR_CFG_PRIMATIVES_ALIASES
     //  _EDITOR_CFG_OBJECTS_ALIASES
     //
-    using                       Path                                    = Path_t        <path_id, vertex_id, z_id>          ;
     using                       Vertex                                  = Vertex_t      <CFG>                               ;
+    using                       Path                                    = Path_t        <CFG, Vertex>                       ;
 
     // *************************************************************************** //
     //      2.      CONSTEXPR VALUES...

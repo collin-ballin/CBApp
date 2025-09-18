@@ -596,11 +596,13 @@ protected:
     inline void                         _MECH_draw_ui                       ([[maybe_unused]] const Interaction & );    //  formerly "_handle_overlays()"
     inline void                         _MECH_drive_io                      (void);                                     //  formerly "_handle_io()"
     //
+    //
     //                              LOCATED ELSEWHERE:
     void                                _MECH_render_frame                  ([[maybe_unused]] const Interaction & ) const;  //  * NEW  _MECH  FUNCTION *    location: "render.cpp".
     void                                _MECH_pump_main_tasks               (void);                     //  formerly "pump_main_tasks".                     location: "serialization.cpp".
     void                                _MECH_draw_controls                 (void);                     //  formerly "_draw_controls".                      location: "browser.cpp".
     void                                _MECH_process_selection             (const Interaction & );     //  formerly "_process_selection".                  location: "selection.cpp".
+    void                                _MECH_query_shortcuts               ([[maybe_unused]] const Interaction & );        //  * NEW  _MECH  FUNCTION *    location: "shortcuts.cpp".
     
     // *************************************************************************** //
     //
@@ -763,8 +765,6 @@ protected:
     // *************************************************************************** //
     //      RENDERING FUNCTIONS.            |   "render.cpp" ...
     // *************************************************************************** //
-    //
-    //
     struct RenderCache
     {
         std::vector<size_t>     z_view;                 // indices into m_paths
@@ -809,13 +809,26 @@ protected:
     //
     //
     // *************************************************************************** //
-    //      SELECTION MECHANICS.            |   "selection.cpp" ...
+    //      HIT-DETECTION MECHANICS.        |   "hit_detection.cpp" ...
     // *************************************************************************** //
+    //                              PRIMARY HIT-DETECTION MECHANISMS:
+    [[nodiscard]] inline bool           _hit_bbox_handle                    ([[maybe_unused]] const Interaction & ) const;
     int                                 _hit_point                          ([[maybe_unused]] const Interaction & ) const;
     std::optional<Hit>                  _hit_any                            ([[maybe_unused]] const Interaction & ) const;
     std::optional<PathHit>              _hit_path_segment                   ([[maybe_unused]] const Interaction & ) const;
     //
-    //                              PRIMARY SELECTION OPERATIONS:
+    //                              HIT-DETECTION UTILITIES:
+    
+    inline void                         _dispatch_cursor_hint               (const Hit::Type) const noexcept; 
+    inline void                         _dispatch_cursor_icon               ([[maybe_unused]] const Interaction & ) const;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SELECTION MECHANICS.            |   "selection.cpp" ...
+    // *************************************************************************** //
+    //                              MAIN SELECTION OPERATIONS:
     inline void                         resolve_pending_selection           (const Interaction & it);
     inline void                         update_move_drag_state              (const Interaction & it);
     void                                start_move_drag                     (const ImVec2 & anchor_ws);
@@ -825,13 +838,13 @@ protected:
     //                              SELECTION HIGHLIGHT / USER-INTERACTION / APPEARANCE:
     bool                                _selection_bounds                   (ImVec2 & tl, ImVec2 & br) const;
     //
-    //                              LASSO TOOL MECHANICS:
-    void                                _start_lasso_tool                   (void);
-    void                                _update_lasso                       (const Interaction & );
-    //
     //                              BOUNDING BOX MECHANICS:
     void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 tl, const ImVec2 br);
     void                                _update_bbox                        (void);
+    //
+    //                              LASSO TOOL MECHANICS:
+    void                                _start_lasso_tool                   (void);
+    void                                _update_lasso                       (const Interaction & );
     //
     //                              NEW HELPER FUNCTIONS:
     inline float                        _drag_threshold_px                  (void) const;
@@ -844,8 +857,6 @@ protected:
     // *************************************************************************** //
     //      SHORTCUT MECHANICS.            |   "shortcuts.cpp" ...
     // *************************************************************************** //
-    void                                _MECH_query_shortcuts               ([[maybe_unused]] const Interaction & );
-    //
     //                              SUBSIDIARY SHORTCUT HANDLERRS:
     inline void                         _selection_no_selection_shortcuts   ([[maybe_unused]] const Interaction & );
     inline void                         _selection_read_only_shortcuts      ([[maybe_unused]] const Interaction & );

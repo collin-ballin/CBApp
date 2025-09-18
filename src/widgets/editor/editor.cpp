@@ -301,8 +301,11 @@ void Editor::Begin(const char * /*id*/)
         if ( space  &&  !block_shortcuts  &&  _mode_has(CBCapabilityFlags_Pan) )
             { ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); }
         //
-        else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
+        else if ( !space  &&  it.hovered  &&  !(m_dragging || m_boxdrag.active) )    //  ignore while dragging selection.
             { this->_MECH_hit_detection(it); }
+        //
+        //  else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
+        //      { this->_MECH_hit_detection(it); }
 
 
 
@@ -973,32 +976,32 @@ inline void Editor::_handle_pen(const Interaction& it)
     
 
     // ───── A. Handle‑drag already in progress
-    if (m_pen.dragging_handle) {
+    if ( m_pen.dragging_handle )
+    {
         _pen_update_handle_drag(it);
         return;                                     // nothing else this frame
     }
 
+
     // ───── B. Pending click‑hold test (detect curvature pull)
-    if (m_pen.pending_handle)
+    if ( m_pen.pending_handle )
     {
         m_pen.pending_time += io.DeltaTime;
 
-        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+        if ( ImGui::IsMouseReleased(ImGuiMouseButton_Left) ) {
             m_pen.pending_handle = false;
             m_pen.pending_time   = 0.0f;
             return;                                 // plain vertex click
         }
-
-        if ( m_pen.pending_time >= m_style.PEN_DRAG_TIME_THRESHOLD &&
-             ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left,
-                                             m_style.PEN_DRAG_MOVEMENT_THRESHOLD) )
+        if ( (m_pen.pending_time >= m_style.PEN_DRAG_TIME_THRESHOLD)  &&
+             ImGui::IsMouseDragPastThreshold( ImGuiMouseButton_Left, m_style.PEN_DRAG_MOVEMENT_THRESHOLD ) )
         {
             _pen_begin_handle_drag(m_pen.pending_vid,
                                    /*out_handle=*/false,
                                    /*force_select=*/true);
 
-            if (Vertex* v = find_vertex_mut(m_vertices, m_pen.pending_vid))
-                v->m_bezier.in_handle = ImVec2(0,0);         // make new handle visible
+            if ( Vertex * v = find_vertex_mut(m_vertices, m_pen.pending_vid) )
+                { v->m_bezier.in_handle = ImVec2(0,0); }        // make new handle visible
 
             m_pen.pending_handle = false;
             m_pen.pending_time   = 0.0f;
@@ -1008,13 +1011,15 @@ inline void Editor::_handle_pen(const Interaction& it)
         return;     // still waiting (mouse held but not past threshold)
     }
 
+
     // ───── C.  Alt‑mode : edit existing handles (no new vertices)
-    if (alt_down())
+    if ( alt_down() )
     {
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && it.hovered)
         {
             int pi = _hit_point(it);
-            if (pi >= 0) {
+            if ( pi >= 0 )
+            {
                 _pen_begin_handle_drag(m_points[pi].v,
                                         /*out_handle=*/true,
                                         /*force_select=*/true);
@@ -1026,30 +1031,36 @@ inline void Editor::_handle_pen(const Interaction& it)
         return;
     }
 
-    // ───── D. Normal pen behaviour (continue / add / close)
-    bool   can_extend = false, prepend = false;
-    size_t end_path   = static_cast<size_t>(-1);
 
-    int pt_idx = _hit_point(it);
-    if (pt_idx >= 0) {
+    // ───── D. Normal pen behaviour (continue / add / close)
+    bool        can_extend      = false, prepend = false;
+    size_t      end_path        = static_cast<size_t>(-1);
+    int         pt_idx          = _hit_point(it);
+    if ( pt_idx >= 0 )
+    {
         uint32_t vid = m_points[pt_idx].v;
-        if (auto ep = _endpoint_if_open(vid)) {
+        if ( auto ep = _endpoint_if_open(vid) ) {
             can_extend = true;
             prepend    = ep->prepend;
             end_path   = ep->path_idx;
         }
     }
 
+
     // Cursor hint colour
-    if (it.hovered && !it.space)
-        _draw_pen_cursor(io.MousePos,
-                         can_extend ? m_style.PEN_COL_EXTEND : m_style.PEN_COL_NORMAL);
+    if ( it.hovered  &&  !it.space )
+    {
+        _draw_pen_cursor( io.MousePos, (can_extend)
+                                            ? m_style.PEN_COL_EXTEND : m_style.PEN_COL_NORMAL );
+    }
+
 
     // ───── E. Mouse‑click handling
-    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && it.hovered)
+    if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left)  &&  it.hovered )
     {
         // (1) Pick open endpoint to continue
-        if (can_extend && !m_pen.active) {
+        if ( can_extend  &&  !m_pen.active )
+        {
             m_pen.active     = true;
             m_pen.path_index = end_path;
             m_pen.prepend    = prepend;
@@ -1057,7 +1068,8 @@ inline void Editor::_handle_pen(const Interaction& it)
         }
 
         // (2) Live path exists → append / prepend / close
-        if (m_pen.active) {
+        if ( m_pen.active )
+        {
             _pen_append_or_close_live_path(it);     // updates m_pen.last_vid
 
             // Allow click‑hold curvature on the vertex we just added
@@ -1073,7 +1085,7 @@ inline void Editor::_handle_pen(const Interaction& it)
         VertexID        vid     = _add_vertex(ws);
         _add_point_glyph(vid);
 
-        Path p;
+        Path            p;
         p.set_default_label(this->m_next_pid++);    // unique PathID
         p.verts.push_back(vid);
         m_paths.push_back(std::move(p));
@@ -1089,7 +1101,9 @@ inline void Editor::_handle_pen(const Interaction& it)
             m_pen.pending_vid       = vid;
         }
     }
+    
     return;
+    
 }
 
 
@@ -1097,17 +1111,20 @@ inline void Editor::_handle_pen(const Interaction& it)
 //
 inline void Editor::_handle_scissor(const Interaction & it)
 {
-    if (!it.hovered) return;
+    if ( !it.hovered )      { return; }
+
 
     // test once per frame
     std::optional<PathHit> hit = _hit_path_segment(it);
 
+
     // cursor hint (vertical beam) whenever a cut location is valid
-    if (hit) ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
+    if ( hit )
+        { ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW); }
 
     // left-click performs the cut
-    if (hit && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-        _scissor_cut(*hit);
+    if ( hit  &&  ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
+        { this->_scissor_cut(*hit); }
         
     return;
 }

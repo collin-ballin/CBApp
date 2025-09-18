@@ -592,7 +592,7 @@ inline void from_json(const nlohmann::json & j, PathStyle & s)
 //      back to the first. Vertices carry their own Bézier handles; this struct
 //      only stores ordering and style.
 //
-template<typename PID, typename VID, typename ZID>
+template< EditorCFGTraits CFG, typename V >
 struct Path_t
 {
 //      0.          CONSTANTS AND ALIASES...
@@ -603,14 +603,18 @@ public:
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    using                               id_type                         = PID;
-    using                               container_type                  = std::vector<VID>;
-    using                               size_type                       = container_type::size_type;
-    using                               iterator                        = typename container_type::iterator;
+    _EDITOR_CFG_PRIMATIVES_ALIASES
     //
-    using                               Path                            = Path_t<PID, VID, ZID>;
-    using                               Payload                         = path::Payload;
-    using                               PathKind                        = path::PathKind;
+    //                              LOCAL TYPES:
+    using                               id_type                                 = path_id;
+    using                               container_type                          = std::vector<vertex_id>;
+    using                               size_type                               = container_type::size_type;
+    using                               iterator                                = typename container_type::iterator;
+    //
+    using                               Vertex                                  = V;
+    using                               Path                                    = Path_t<CFG, V>;
+    using                               Payload                                 = path::Payload;
+    using                               PathKind                                = path::PathKind;
     
     // *************************************************************************** //
     //
@@ -641,7 +645,7 @@ public:
     //                          CORE:
     // *************************************************************************** //
     container_type                  verts;   // ordered anchor IDs
-    PID                             id                              = 0;
+    path_id                         id                              = 0;
     bool                            closed                          = false;
     PathStyle                       style                           = PathStyle();
     
@@ -651,7 +655,7 @@ public:
     // *************************************************************************** //
     //                          NEW:
     // *************************************************************************** //
-    ZID                             z_index                         = Z_FLOOR_USER;
+    z_id                            z_index                         = Z_FLOOR_USER;
     bool                            locked                          = false;
     bool                            visible                         = true;
     std::string                     label                           = "";
@@ -734,6 +738,12 @@ public:
                     ? ( !is_visible  &&  (stroke_is_transparent || fill_is_transparent) )
                     : ( !is_visible  &&  stroke_is_transparent );
     }
+    
+    //  "SegmentIsCurved"
+    //      Curvature rule: segment is curved   iff   a.Out NOT linear  *OR*  b.In NOT linear...
+    //
+    //  [[nodiscard]] inline bool           SegmentIsCurved                  (const V & a, const V & b) const noexcept   { return ( !a.IsOutLinear()  ||  !b.IsInLinear() );    }
+    //  [[nodiscard]] inline bool           SegmentIsLinear                  (const V & a, const V & b) const noexcept   { return ( a.IsOutLinear()  &&  b.IsInLinear() );      }
 
 
 
@@ -752,7 +762,7 @@ public:
     //  "set_label"
     inline void                         set_label                       (const char * src) noexcept     { this->label = std::string(src); this->_truncate_label(); }
     //  "set_default_label"
-    inline void                         set_default_label               (const PID id_) noexcept        { this->id = id_;   this->label = std::format("Path {:03}", id_);   this->_truncate_label(); }
+    inline void                         set_default_label               (const path_id id_) noexcept        { this->id = id_;   this->label = std::format("Path {:03}", id_);   this->_truncate_label(); }
 
 
     // *************************************************************************** //
@@ -761,7 +771,7 @@ public:
     // *************************************************************************** //
     //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
-        
+    
         
     
     // *************************************************************************** //
@@ -772,7 +782,7 @@ public:
     // *************************************************************************** //
     
     //  "remove_vertex"
-    inline bool                         remove_vertex                       (VID vid) noexcept {
+    inline bool                         remove_vertex                       (vertex_id vid) noexcept {
         verts.erase(std::remove(verts.begin(), verts.end(), vid), verts.end());
         if ( closed && verts.size() < 3 )     { closed = false; }     // cannot stay a polygon
 
@@ -780,8 +790,12 @@ public:
     }
     
     //  "insert_vertex_after"
-    inline iterator                     insert_vertex_after                 (size_t seg_idx, VID new_vid)
+    inline iterator                     insert_vertex_after                 (size_t seg_idx, vertex_id new_vid)
     { return verts.insert(verts.begin() + seg_idx + 1, new_vid); }
+    
+    //  "insert_vertex_between"
+    //  inline iterator                     insert_vertex_between               (size_t seg_idx, vertex_id new_vid)
+    //  { return verts.insert(verts.begin() + seg_idx + 1, new_vid); }
         
         
         
@@ -896,7 +910,6 @@ public:
     template<class CTX>
     inline void                         render_fill_area                    (const CTX & ctx) const noexcept
     {
-        using               V                   = CTX::Vertex;
         const auto &        callbacks           = ctx.callbacks;
         const auto &        args                = ctx.args;
         ImDrawList *        dl                  = args.dl;
@@ -918,8 +931,8 @@ public:
         //  Build the pixel-space outline by walking each segment (a -> b)
         for (size_t i = 0; i < N; ++i)
         {
-            const V *       a           = callbacks.get_vertex(     callbacks.vertices,      static_cast<VID>( this->verts[i]            )   );
-            const V *       b           = callbacks.get_vertex(     callbacks.vertices,      static_cast<VID>( this->verts[(i + 1) % N]  )   );
+            const V *       a           = callbacks.get_vertex(     callbacks.vertices,      static_cast<vertex_id>( this->verts[i]            )   );
+            const V *       b           = callbacks.get_vertex(     callbacks.vertices,      static_cast<vertex_id>( this->verts[(i + 1) % N]  )   );
             if ( !a || !b )             { continue; }
 
 
@@ -944,7 +957,7 @@ public:
                     for (int s = 0; s <= steps; ++s)
                     {
                         const float     t       = static_cast<float>(s) / static_cast<float>(steps);
-                        const ImVec2    wp      = cubic_eval<VID>(a, b, t);             //  world-space point
+                        const ImVec2    wp      = cubic_eval<vertex_id>(a, b, t);             //  world-space point
                         dl->PathLineTo( ctx.callbacks.ws_to_px(wp) );                   //  append in pixel space
                     }
                 }
@@ -957,11 +970,50 @@ public:
         return;
     }
     
+    
+    
+    
+    
+    
+    //  "_render_segment"
+    //
+    /*template<class CTX>
+    inline void	                        _render_segment                     (const V & a, const V & b, const CTX & ctx) const noexcept
+    {
+        const auto &        callbacks	    = ctx.callbacks;
+        ImDrawList *        dl			    = ctx.args.dl;
+        
+        
+        //  Curvature rule: segment is curved iff a.Out NOT linear OR b.In NOT linear
+        const bool          curved          = this->SegmentIsCurved( a, b );
+
+        if (!curved)
+        {
+            const ImVec2        A       = callbacks.ws_to_px({ a->x, a->y });
+            const ImVec2        B       = callbacks.ws_to_px({ b->x, b->y });
+            dl->AddLine(A, B, this->style.stroke_color, this->style.stroke_width);
+            return;
+        }
+
+        // Cubic Bezier: P0=a, P1=a+out, P2=b+in, P3=b — all mapped to pixels
+        const ImVec2 P0 = callbacks.ws_to_px({ a->x,                             a->y });
+        const ImVec2 P1 = callbacks.ws_to_px({ a->x + a->m_bezier.out_handle.x,  a->y + a->m_bezier.out_handle.y });
+        const ImVec2 P2 = callbacks.ws_to_px({ b->x + b->m_bezier.in_handle.x,   b->y + b->m_bezier.in_handle.y  });
+        const ImVec2 P3 = callbacks.ws_to_px({ b->x,                             b->y });
+
+        dl->AddBezierCubic( P0, P1, P2, P3,
+                            this->style.stroke_color,
+                            this->style.stroke_width,
+                            segs );
+        return;
+    }*/
+    
+    
     //  "render_stroke"
+    //
     template<class CTX>
     inline void	                        render_stroke                       (const CTX & ctx) const noexcept
     {
-        using		        V			    = typename CTX::Vertex;
         const auto &        callbacks	    = ctx.callbacks;
         ImDrawList *        dl			    = ctx.args.dl;
         const size_t        N			    = this->verts.size();
@@ -997,19 +1049,24 @@ public:
                                 segs );
         };
 
+
         //  Open chain
         for (size_t i = 0; i + 1 < N; ++i)
         {
-            const V *a = callbacks.get_vertex(callbacks.vertices, static_cast<VID>(this->verts[i]));
-            const V *b = callbacks.get_vertex(callbacks.vertices, static_cast<VID>(this->verts[i + 1]));
+            const V *   a   = callbacks.get_vertex( callbacks.vertices, static_cast<vertex_id>( this->verts[i])      );
+            const V *   b   = callbacks.get_vertex( callbacks.vertices, static_cast<vertex_id>( this->verts[i + 1])  );
+            IM_ASSERT( (a != nullptr) && (b != nullptr)  && "Cannot have NULL Vertices" );
+            //  this->_render_segment( *a, *b );
             draw_seg(a, b);
         }
 
         //  Close the loop if needed
         if (this->closed)
         {
-            const V *a = callbacks.get_vertex(callbacks.vertices, static_cast<VID>(this->verts[N - 1]));
-            const V *b = callbacks.get_vertex(callbacks.vertices, static_cast<VID>(this->verts[0]));
+            const V *   a   = callbacks.get_vertex( callbacks.vertices, static_cast<vertex_id>( this->verts[N - 1])  );
+            const V *   b   = callbacks.get_vertex( callbacks.vertices, static_cast<vertex_id>( this->verts[0])      );
+            IM_ASSERT( (a != nullptr) && (b != nullptr)  && "Cannot have NULL Vertices" );
+            //  this->_render_segment( *a, *b );
             draw_seg(a, b);
         }
         
@@ -1042,8 +1099,8 @@ public:
 
 //  "to_json"           | For Path_t...
 //
-template<typename PID, typename VID, typename ZID>
-inline void to_json(nlohmann::json & j, const Path_t<PID, VID, ZID> & p)
+template< EditorCFGTraits CFG, typename V >
+inline void to_json(nlohmann::json & j, const Path_t<CFG, V> & p)
 {
     j={
         { "verts"               , p.verts                           },
@@ -1077,8 +1134,8 @@ inline void to_json(nlohmann::json & j, const Path_t<PID, VID, ZID> & p)
 
 //  "from_json"         | For Path_t...
 //
-template<typename PID, typename VID, typename ZID>
-inline void from_json(const nlohmann::json & j, Path_t<PID, VID, ZID> & p)
+template< EditorCFGTraits CFG, typename V >
+inline void from_json(const nlohmann::json & j, Path_t<CFG, V> & p)
 {
     using   namespace       path;
     bool    has_kind        = j.contains("kind");

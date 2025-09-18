@@ -114,7 +114,7 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Highlights       );
             this->_render_selection_highlight       ( it.dl                                 );
-            //  this->_RENDER_highlights_channel        ( z_view,       this->m_render_ctx      );
+            this->_RENDER_highlights_channel        ( z_view,       this->m_render_ctx      );
         }
         
         
@@ -128,8 +128,8 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
         //      5.      RENDER "Accents" ELEMENTS...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Accents          );
-            this->_render_points                    ( it.dl                                 );
-            //this->_RENDER_accents_channel           ( z_view,       this->m_render_ctx      );
+            //  this->_render_points                    ( z_view,       this->m_render_ctx      );
+            this->_RENDER_accents_channel           ( z_view,       this->m_render_ctx      );
         }
         
         

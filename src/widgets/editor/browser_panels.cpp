@@ -403,12 +403,14 @@ void Editor::_draw_vertex_selector_column(Path & path, const size_t path_idx)
 void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const LabelFn & callback)
 {
     static constexpr size_t     TITLE_SIZE      = 32ULL;
-    BrowserStyle &              BStyle          = this->m_style.browser_style;
-    
+    //  BrowserStyle &              BStyle          = this->m_style.browser_style;
+    //
+    const int                   idx             = m_browser_S.m_inspector_vertex_idx;
+    const int                   n               = static_cast<int>(path.verts.size());
+
     
     //      CASE 0 :    NO VALID SELECTION...
-    if ( m_browser_S.m_inspector_vertex_idx < 0 || m_browser_S.m_inspector_vertex_idx >= static_cast<int>(path.verts.size()) )
-    {
+    if ( !(0 <= idx  &&  idx < n) ) {
         this->S.PushFont(Font::Main);
             ImGui::TextDisabled("No vertex selected...");
         this->S.PopFont();
@@ -424,7 +426,7 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
     
     
     //      0.1.    UPDATE TITLE IF SELECTION CHANGED...
-    if (cache_id != vid)
+    if ( cache_id != vid )
     {
         cache_id        = vid;
         int retcode     = std::snprintf( title, TITLE_SIZE, Vertex::ms_DEF_VERTEX_TITLE_FMT_STRING, m_browser_S.m_inspector_vertex_idx, vid );

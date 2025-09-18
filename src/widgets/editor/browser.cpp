@@ -209,10 +209,66 @@ void Editor::_MECH_draw_controls(void)
         {
             m_mode = static_cast<Mode>(mode_i);
         }
+        
+        
+        
+        //      2.      SELECTION STATE...
+        ImGui::NextColumn();        this->S.column_label("Selection State:");
+        //
+        //
+        //
+        static bool     custom_sel_state_available  = true;
+        static bool     ss_surfaces                 = false;
+        static bool     ss_edges                    = false;
+        static bool     ss_vertices                 = false;
+        //
+        ImGui::BeginDisabled( !custom_sel_state_available );
+        //
+            ImGui::PushItemWidth( BUTTON_SIZE.x );
+            //
+            {
+                //      2.1.        "SURFACE".
+                if ( !ss_surfaces ) {
+                    if ( utl::CButton("S",     this->S.SystemColor.Red     ) )
+                        { ss_surfaces = !ss_surfaces; }
+                }
+                else {
+                    if ( utl::CButton("S",      this->S.SystemColor.Green   ) )
+                        { ss_surfaces = !ss_surfaces; }
+                }
+                //
+                //
+                //      2.2.        "EDGE".
+                ImGui::SameLine(0.0f, 0.0f);
+                if ( !ss_edges ) {
+                    if ( utl::CButton("E",     this->S.SystemColor.Red     ) )
+                        { ss_edges = !ss_edges; }
+                }
+                else {
+                    if ( utl::CButton("E",      this->S.SystemColor.Green   ) )
+                        { ss_edges = !ss_edges; }
+                }
+                //
+                //
+                //      2.3.        "VERTEX".
+                ImGui::SameLine(0.0f, 0.0f);
+                if ( !ss_vertices ) {
+                    if ( utl::CButton("V",     this->S.SystemColor.Red     ) )
+                        { ss_vertices = !ss_vertices; }
+                }
+                else {
+                    if ( utl::CButton("V",      this->S.SystemColor.Green   ) )
+                        { ss_vertices = !ss_vertices; }
+                }
+            }
+            //
+            ImGui::PopItemWidth();
+        //
+        ImGui::EndDisabled();
     
     
     
-        //      2.      GRID VISIBILITY...
+        //      3.      GRID VISIBILITY...
         ImGui::NextColumn();        this->S.column_label("Show Grid:");
         //
         ImGui::SetNextItemWidth( BUTTON_SIZE.x );
@@ -220,7 +276,7 @@ void Editor::_MECH_draw_controls(void)
 
 
 
-        //      3.      SNAP-TO-GRID...
+        //      4.      SNAP-TO-GRID...
         ImGui::NextColumn();        this->S.column_label("Snap-To-Grid:");
         //
         ImGui::SetNextItemWidth( BUTTON_SIZE.x );
@@ -228,7 +284,7 @@ void Editor::_MECH_draw_controls(void)
         
         
         
-        //      4.      GRID-LINE DENSITY...
+        //      5.      GRID-LINE DENSITY...
         ImGui::NextColumn();        this->S.column_label("Grid Density:");
         //
         //
@@ -254,7 +310,7 @@ void Editor::_MECH_draw_controls(void)
 
 
 
-        //      5.      CLEAR ALL...
+        //      6.      CLEAR ALL...
         ImGui::NextColumn();        this->S.column_label("Clear Data:");
         if ( ImGui::Button("Clear", WIDGET_SIZE) ) {
             ui::ask_ok_cancel( "Clear Data",

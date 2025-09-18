@@ -549,7 +549,8 @@ public:                                                                         
 /*  using                           Handle                      = Handle_t          <HandleID>;                                         */      \
     using                           Point                       = Point_t           <PointID>                                           ;       \
     using                           Line                        = Line_t            <LineID, ZID>                                       ;       \
-    using                           Path                        = Path_t            <PathID, VertexID, ZID>                             ;       \
+    using                           Path                        = Path_t            <EditorCFG, Vertex>                                 ;       \
+/*  using                           Path                        = Path_t            <PathID, VertexID, ZID> ;                           */      \
     using                           PathKind                    = Path::PathKind                                                        ;       \
     using                           Payload                     = Path::Payload                                                         ;       \
     using                           Overlay                     = Overlay_t         <OverlayID>                                         ;       \
