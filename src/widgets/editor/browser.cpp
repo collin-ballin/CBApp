@@ -224,18 +224,38 @@ void Editor::_MECH_draw_controls(void)
         //
         ImGui::BeginDisabled( !custom_sel_state_available );
         //
+                //      2.1.        "SURFACE".
+                //  if ( utl::IconButton( (ss_surfaces)  ? "vis_on"      : "vis_off",
+                //                        (ss_surfaces)  ? ICON_FA_EYE   : ICON_FA_EYE_SLASH ) )
+                //  {
+                //      ss_surfaces = !ss_surfaces;
+                //  }
+                
+            const ImU32 c0 = ImGui::GetColorU32(ImGuiCol_Text);
+            const ImU32 c1 = ImGui::GetColorU32(ImGuiCol_TextDisabled);  // subtle hover alt
+            const ImU32 c2 = ImGui::GetColorU32(ImGuiCol_Text);          // or same as c0
+            //
+            if ( utl::IconFlatButton( "vis", ICON_FA_EYE, c0, c1, c2 ) )
+            {
+                ss_surfaces = !ss_surfaces;
+            }
+            
+            
+            
             ImGui::PushItemWidth( BUTTON_SIZE.x );
             //
             {
-                //      2.1.        "SURFACE".
-                if ( !ss_surfaces ) {
-                    if ( utl::CButton("S",     this->S.SystemColor.Red     ) )
-                        { ss_surfaces = !ss_surfaces; }
-                }
-                else {
-                    if ( utl::CButton("S",      this->S.SystemColor.Green   ) )
-                        { ss_surfaces = !ss_surfaces; }
-                }
+                
+                //
+                //
+                    //  if ( !ss_surfaces ) {
+                    //      if ( utl::CButton("S",     this->S.SystemColor.Red     ) )
+                    //          { ss_surfaces = !ss_surfaces; }
+                    //  }
+                    //  else {
+                    //      if ( utl::CButton("S",      this->S.SystemColor.Green   ) )
+                    //          { ss_surfaces = !ss_surfaces; }
+                    //  }
                 //
                 //
                 //      2.2.        "EDGE".

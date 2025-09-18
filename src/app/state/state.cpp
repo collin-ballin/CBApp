@@ -157,9 +157,30 @@ void AppState::RebuildFonts(float scale)
     for (int i = 0; i < static_cast<int>(Font::Count) && good_fonts; ++i)
     {
         const auto &    info                = cb::app::APPLICATION_FONT_STYLES[i];
+        const Font      which               = static_cast<Font>( i );
         
     #ifndef CBAPP_DISABLE_CUSTOM_FONTS
-        m_fonts[static_cast<Font>(i)]       = io.Fonts->AddFontFromFileTTF(info.path.c_str(), scale * info.size);
+    //
+        switch ( which )
+        {
+            //      1.      WHICH FONTS WILL CARRY THE "FA" ICONS...
+            case Font::Small    :
+            case Font::Main     : {
+                m_fonts[which]      = utl::AddFontWithFA( io,
+                                                          info.path.c_str(),        scale * info.size,
+                                                          app::DEF_ICON_FONT_PATH,  app::DEF_ICON_SIZE_SCALAR );
+                break;
+            }
+            //
+            //      2.      DEFAULT FONTS (DO-NOT CARRY ICONS)...
+            default             : {
+                m_fonts[which]      = io.Fonts->AddFontFromFileTTF(info.path.c_str(), scale * info.size);
+                break;
+            }
+        
+        }
+    //
+    //
     # else
         ImFontConfig    config;
         config.SizePixels                   = scale * info.size;

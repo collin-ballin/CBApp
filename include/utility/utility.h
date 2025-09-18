@@ -62,12 +62,108 @@
 #include "imgui_internal.h"
 #include "implot.h"
 #include "implot_internal.h"
+#include "IconsFontAwesome6.h"
 
 
 
 namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
+
+
+// *************************************************************************** //
+//
+//
+//
+//      0.      INLINE HELPERS (HEADER ONLY)            |   MISC...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "AddFontWithFA"
+//
+[[nodiscard]] static inline ImFont * AddFontWithFA( ImGuiIO & io, const char * fontpath, const float fontsize, const char * iconpath, const double scale = (2.0f/3.0f) ) noexcept
+{
+    static constexpr ImWchar    s_ICON_RANGES []    = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+    const float                 iconsize            = fontsize * scale;
+    ImFontConfig                cfg;
+
+    //      1.      ADD THE "BASE" FONT (same as before)...
+    ImFont *                    base                = io.Fonts->AddFontFromFileTTF(fontpath, fontsize);
+    IM_ASSERT( base != nullptr  && "\"AddFontWithFA\" CANNOT have a base font that is NULL.");
+
+
+
+    //      2.      MERGE FA-6 ICONS INTO THIS FONT...
+    cfg.MergeMode                                   = true;
+    cfg.PixelSnapH                                  = true;
+
+
+
+    //      3.      SET ICON SIZE (FA aligns nicely if sized ~2/3 of the fontsize).
+    cfg.GlyphMinAdvanceX                            = iconsize;  // compact/consistent spacing
+
+
+
+    io.Fonts->AddFontFromFileTTF( iconpath, iconsize, &cfg, s_ICON_RANGES );
+    return base;
+}
+
+
+
+
+
+//  "_icon_square_size"
+//
+[[nodiscard]] static inline ImVec2 _icon_square_size(float scale = 1.0f) {
+    const float h = ImGui::GetFrameHeight() * scale;
+    return {h, h};
+}
+
+//  "IconButton"
+//
+static inline bool IconButton(const char * id, const char * icon_utf8, float scale = 1.0f, ImGuiButtonFlags flags = ImGuiButtonFlags_None) noexcept {
+    ImGui::PushID(id);                                   // unique ID, separate from label
+        const ImVec2    size    = _icon_square_size(scale);
+        const bool      hit     = ImGui::ButtonEx(icon_utf8, size, flags); // label = icon only
+    ImGui::PopID();
+    
+    return hit;
+}
+
+
+//  "IconFlatButton"
+//
+static inline bool IconFlatButton(const char* id,
+                                  const char* icon_utf8,
+                                  ImU32 col,                  // normal
+                                  ImU32 col_hover,            // on hover
+                                  ImU32 col_active)           // on active
+{
+    ImVec2      pos  = ImGui::GetCursorScreenPos();
+    ImVec2      sz   = ImGui::CalcTextSize(icon_utf8);
+
+    ImGui::PushID(id);
+    ImGui::InvisibleButton("##icon", sz);                    // no background
+    const bool hovered = ImGui::IsItemHovered();
+    const bool active  = ImGui::IsItemActive();
+    ImGui::PopID();
+
+    ImU32 use = active ? col_active : (hovered ? col_hover : col);
+    ImGui::GetWindowDrawList()->AddText(pos, use, icon_utf8);
+
+    return ImGui::IsItemClicked(ImGuiMouseButton_Left);
+}
+
+
+
+
+/*inline bool visibility_toggle(const char* id, bool& visible, float scale = 1.0f)
+{
+    const char* icon = visible ? ICON_FA_EYE : ICON_FA_EYE_SLASH;
+    const bool  hit  = icon_button(id, icon, scale);
+    if (hit) visible = !visible;
+    return hit;
+}*/
 
 
 

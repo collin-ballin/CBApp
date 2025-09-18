@@ -83,6 +83,7 @@ find_package(glfw3 3.3 REQUIRED)
 set(THIRD_PARTY_INCLUDE_DIR
     ${CBLib_INCLUDE_DIR}
     ${CB_THIRD_PARTY_DIR}/nlohmann/include
+    ${CB_THIRD_PARTY_DIR}/iconfonts/include
 )
 
 #               3.  Aggregate each include directory path.

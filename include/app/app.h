@@ -75,6 +75,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
+#include "IconsFontAwesome6.h"
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 # include <GLES2/gl2.h>
 #endif      //  IMGUI_IMPL_OPENGL_ES2  //

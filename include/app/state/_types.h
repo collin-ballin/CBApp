@@ -422,7 +422,7 @@ public:
 	void                    on_scale_changed        (float xscale, float yscale)
     {
         const float ms = std::max(xscale, yscale);
-        if (std::abs(ms - m_last_monitor_scale) < 0.001f) return;
+        if ( std::abs(ms - m_last_monitor_scale) < 0.001f )     { return; }
         m_last_monitor_scale = ms;
         // Defer applying; handled in begin_frame()
     }
@@ -473,8 +473,8 @@ private:
     //
 	void                    apply_ui_scale          (float s)
     {
-        ImGuiIO&    io = ImGui::GetIO();
-        ImGuiStyle& st = ImGui::GetStyle();
+        ImGuiIO &       io      = ImGui::GetIO();
+        ImGuiStyle &    st      = ImGui::GetStyle();
 
         // Reset to baseline, then scale deterministically
         st = m_base_style;
@@ -485,7 +485,8 @@ private:
         io.ConfigDpiScaleFonts     = true;
         io.ConfigDpiScaleViewports = true;
     #else
-        if (m_cfg.rebuild_fonts) {
+        if (m_cfg.rebuild_fonts)
+        {
             IM_ASSERT(!io.Fonts->Locked && "Font atlas is locked (must rebuild outside NewFrame..Render)");
             // Rebuild your FULL custom font stack at the new size (also refresh GL texture inside your callback)
             m_cfg.rebuild_fonts(m_cfg.design_font_px * s);

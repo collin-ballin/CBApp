@@ -87,7 +87,9 @@ endif()
 set(GLFW_ROOT    ${PROJECT_ROOT}/other/glfw-win64-install)
 set(THIRD_PARTY_INCLUDE_DIR
     ${PROJECT_ROOT}/libs/cblib/include
-    ${PROJECT_ROOT}/libs/nlohmann/include)
+    ${PROJECT_ROOT}/libs/nlohmann/include
+    ${PROJECT_ROOT}/libs/iconfonts/include
+)
 
 
 

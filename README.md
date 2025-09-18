@@ -22,12 +22,16 @@
 
 [![Last commit](https://img.shields.io/github/last-commit/collin-ballin/CBApp.svg)](https://github.com/collin-ballin/CBApp/commits/main)
 \
-![Windows](https://img.shields.io/badge/Windows-supported-green)
-![macOS](https://img.shields.io/badge/macOS-supported-green)
+![Windows](https://img.shields.io/badge/Windows-supported-000000)
+![macOS](https://img.shields.io/badge/macOS-supported-000000)
 \
-![ImGui Docking](https://img.shields.io/badge/imgui-docking-green)
 ![GLFW](https://img.shields.io/badge/GLFW-3.3-success)
 ![OpenGL](https://img.shields.io/badge/OpenGL-3.3+-success)
+\
+![ImGui Docking](https://img.shields.io/badge/imgui-docking-1f425f)
+[![Plotting: ImPlot](https://img.shields.io/badge/plotting-ImPlot-1f425f)](https://github.com/epezent/implot)
+[![JSON: nlohmann/json](https://img.shields.io/badge/JSON-nlohmann%2Fjson-1f425f?logo=json&logoColor=white)](https://github.com/nlohmann/json)
+[![Icons: Font Awesome 6 Free](https://img.shields.io/badge/icons-Font%20Awesome%206%20Free-1f425f?logo=fontawesome&logoColor=white)](https://fontawesome.com)
 \
 ![C++20](https://img.shields.io/badge/C%2B%2B-20%2B-blue)
 ![Apple Clang](https://img.shields.io/badge/Compiler-Apple%20Clang%20%3E%3D16.0.2-blue)
@@ -47,7 +51,7 @@
 \
 ![Status](https://img.shields.io/badge/FDTD.Payloads-Work.In.Progress-FF9F0A?style=for-the-badge)
 \
-![Status](https://img.shields.io/badge/Graph.App-refactoring-FF453A?style=for-the-badge)
+![Status](https://img.shields.io/badge/Graph.App-out.of.data-FF453A?style=for-the-badge)
 
 
 

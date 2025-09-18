@@ -198,6 +198,8 @@ inline constexpr const char * get_font_path(void) {
 }
 
 inline constexpr const char *       DEF_FONT_PATH                       = get_font_path();
+inline constexpr const char *       DEF_ICON_FONT_PATH                  = "../../assets/fonts/icons/fa-solid-900.ttf";
+inline constexpr const double       DEF_ICON_SIZE_SCALAR                = static_cast<double>( 2.0f / 3.0f );
     
 
 
@@ -216,19 +218,19 @@ inline constexpr float              DEF_FOOTNOTE_FONT_SIZE              = 9.0f;
 //
 #if defined(__APPLE__)
     //  Fonts for MacOS Builds.
-    #define _CBAPP_FONT_LIST(X)         \
-        X(Main,             "/System/Library/Fonts/SFNS.ttf",                               DEF_FONT_SIZE)          \
-        X(Small,            "/System/Library/Fonts/SFNS.ttf",                               DEF_SMALL_FONT_SIZE)    \
-        X(FootNote,         "/System/Library/Fonts/SFNS.ttf",                               DEF_FOOTNOTE_FONT_SIZE) \
-        X(Mono,             "/System/Library/Fonts/SFNSMono.ttf",                           DEF_FONT_SIZE)          \
-        X(SanSerif,         "/System/Library/Fonts/NewYork.ttf",                            DEF_FONT_SIZE)          \
-        X(SanSerifSmall,    "/System/Library/Fonts/NewYork.ttf",                            DEF_SMALL_FONT_SIZE)
+    #define _CBAPP_FONT_LIST(X)                                                                                                     \
+        X(Main                  , "/System/Library/Fonts/SFNS.ttf"                          , DEF_FONT_SIZE                     )   \
+        X(Small                 , "/System/Library/Fonts/SFNS.ttf"                          , DEF_SMALL_FONT_SIZE               )   \
+        X(FootNote              , "/System/Library/Fonts/SFNS.ttf"                          , DEF_FOOTNOTE_FONT_SIZE            )   \
+        X(Mono                  , "/System/Library/Fonts/SFNSMono.ttf"                      , DEF_FONT_SIZE                     )   \
+        X(SanSerif              , "/System/Library/Fonts/NewYork.ttf"                       , DEF_FONT_SIZE                     )   \
+        X(SanSerifSmall         , "/System/Library/Fonts/NewYork.ttf"                       , DEF_SMALL_FONT_SIZE               )
 # else
     //  Fonts for Windows, Linux, or other Builds.
-    #define _CBAPP_FONT_LIST(X)         \
-        X(Main,             "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          DEF_FONT_SIZE)          \
-        X(Small,            "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          DEF_SMALL_FONT_SIZE)    \
-        X(FootNote,         "../../assets/fonts/Roboto/static/Roboto-Regular.ttf",          DEF_FOOTNOTE_FONT_SIZE)
+    #define _CBAPP_FONT_LIST(X)                                                                                                     \
+        X(Main                  , "../../assets/fonts/Roboto/static/Roboto-Regular.ttf"     , DEF_FONT_SIZE                     )   \
+        X(Small                 , "../../assets/fonts/Roboto/static/Roboto-Regular.ttf"     , DEF_SMALL_FONT_SIZE               )   \
+        X(FootNote              , "../../assets/fonts/Roboto/static/Roboto-Regular.ttf"     , DEF_FOOTNOTE_FONT_SIZE            )
 #endif  //  __APPLE__  //
 
 

@@ -52,6 +52,7 @@
 #include "imgui.h"
 #include "implot.h"
 #include "imgui_internal.h"
+#include "IconsFontAwesome6.h"
 
 
 
