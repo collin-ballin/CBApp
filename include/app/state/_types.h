@@ -730,6 +730,9 @@ struct AppleSystemColors_t {
     static constexpr ImVec4     Brown       = ImVec4(   0.675f,     0.557f,     0.408f,     1.000f      );
     static constexpr ImVec4     Blue        = ImVec4(   0.039f,     0.518f,     1.000f,     1.000f      );
     static constexpr ImVec4     Purple      = ImVec4(   0.749f,     0.353f,     0.949f,     1.000f      );
+//
+    static constexpr ImVec4     White       = ImVec4(   1.000f,     1.000f,     1.000f,     1.000f      );
+    static constexpr ImVec4     Black       = ImVec4(   0.000f,     0.000f,     0.000f,     1.000f      );
 };
 
 

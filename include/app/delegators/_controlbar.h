@@ -53,6 +53,7 @@
 #include "imgui.h"
 #include "implot.h"
 # include "imgui_internal.h"
+#include "IconsFontAwesome6.h"
 
 
 
@@ -99,7 +100,8 @@ public:
     //
     //                                      DIMENSIONS:
     static constexpr float                      ms_SMALL_ITEM_PAD                   = 4.0f;
-    static constexpr float                      ms_BIG_ITEM_PAD                     = 8.0f;
+    static constexpr float                      ms_MED_ITEM_PAD                     = 8.0f;
+    static constexpr float                      ms_BIG_ITEM_PAD                     = 16.0f;
     //
     //
     //                                      WIDGETS:

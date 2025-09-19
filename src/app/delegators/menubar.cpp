@@ -230,6 +230,10 @@ void MenuBar::CBAppMenubar(void)
 void MenuBar::FileMenubar(void)
 {
     using                               namespace               app;
+    static constexpr auto               s_NEW_FILE_LABEL        = cblib::utl::strcat_literals_cx( ICON_FA_FILE_LINES, "  ", "New File" );
+    //
+    //
+    //
     [[maybe_unused]] ImGuiIO &          io                      = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &       style                   = ImGui::GetStyle();
     //
@@ -246,9 +250,14 @@ void MenuBar::FileMenubar(void)
 
     //  1.  "New" SUB-MENU...
     ImGui::BeginDisabled( !has_file_new );
-        if ( has_file_new && ImGui::BeginMenu("New") )
+        if ( has_file_new  &&  ImGui::BeginMenu(s_NEW_FILE_LABEL.data()) )
         {
+        
+            //  ICON_FA_FILE_EXPORT
             ImGui::MenuItem("New File",         nullptr,        nullptr);
+            
+            
+            //  ImGui::MenuItem("New File",         nullptr,        nullptr);
             ImGui::EndMenu();
         }
     ImGui::EndDisabled();

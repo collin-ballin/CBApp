@@ -328,11 +328,15 @@ void ControlBar::Begin( [[maybe_unused]] const char *           uuid,
 //
 void ControlBar::draw_all(void)
 {
-    ImGuiStyle &                style               = ImGui::GetStyle();
+    using                                   IconAnchor                  = utl::icon_button::Anchor;
     //
-    this->SPACING                                   = ImVec2( 0.0f,                     style.ItemSpacing.y + style.FramePadding.y      );
-    this->WIDGET_SIZE                               = ImVec2( -1,                       ImGui::GetFrameHeight()                         );
-    this->BUTTON_SIZE                               = ImVec2( this->WIDGET_SIZE.y,      this->WIDGET_SIZE.y                             );
+    static constexpr float                  ms_CONTROLBAR_ICON_SCALE    = 1.50f;
+    static constexpr ImGuiHoveredFlags      HOVER_FLAGS                 = ImGuiHoveredFlags_DelayNormal;
+    ImGuiStyle &                            style                       = ImGui::GetStyle();
+    //
+    this->SPACING                                                       = ImVec2( 0.0f,                     style.ItemSpacing.y + style.FramePadding.y      );
+    this->WIDGET_SIZE                                                   = ImVec2( -1,                       ImGui::GetFrameHeight()                         );
+    this->BUTTON_SIZE                                                   = ImVec2( this->WIDGET_SIZE.y,      this->WIDGET_SIZE.y                             );
     S.PushFont(Font::Small);
     
 
@@ -342,28 +346,86 @@ void ControlBar::draw_all(void)
     //
     //
     //
-        //      1.      (1) OPEN/CLOSE SIDEBAR,     (2) OPEN/CLOSE DETAIL-VIEW      ...
-        //  column_label("...:");
-        //
-        ImGui::AlignTextToFramePadding();
-        if ( ImGui::ArrowButtonEx("##ControlBar_ToggleBrowser",     (this->S.m_show_browser_window) ? ImGuiDir_Left : ImGuiDir_Right,
-                                  BUTTON_SIZE,                      ms_BUTTON_FLAGS) )
+        this->S.PushFont( Font::Main );
         {
-            this->S.m_show_browser_window           = !this->S.m_show_browser_window;
-            S.m_windows[ Window::Browser ].open     = !S.m_windows[ Window::Browser ].open;
-        }
         //
-        ImGui::SameLine(0, ms_SMALL_ITEM_PAD);
         //
-        if ( ImGui::ArrowButtonEx("##ControlBar_ToggleDetailView",  (this->S.m_show_detview_window) ? ImGuiDir_Down : ImGuiDir_Up,
-                                  BUTTON_SIZE,                      ms_BUTTON_FLAGS) )
-        {
-            this->S.m_show_detview_window           = !this->S.m_show_detview_window;
+        //
+        //  //      1.        OPEN/CLOSE SIDEBAR BROWSER...
+            if ( utl::IconButton( "##ControlBar_ToggleBrowser"
+                                  , (this->S.m_show_browser_window)
+                                        ? this->S.SystemColor.Blue              : this->S.SystemColor.Gray
+                                  , ICON_FA_LIST
+                                  , ms_CONTROLBAR_ICON_SCALE
+                                  , IconAnchor::Center
+                                  , BUTTON_SIZE )
+            )
+            {
+                this->S.m_show_browser_window           = !this->S.m_show_browser_window;
+                S.m_windows[ Window::Browser ].open     = !S.m_windows[ Window::Browser ].open;
+            }
+            if ( ImGui::IsItemHovered(HOVER_FLAGS) ) {
+                ImGui::BeginTooltip();
+                    ImGui::TextUnformatted("Open/Close the \"Browser\" panel");
+                ImGui::EndTooltip();
+            }
+            //
+            //
+            //
+            //      2.        SWITCH BETWEEN BROWSER AND SYSTEM PREFERENCES...
+            ImGui::SameLine(0, ms_SMALL_ITEM_PAD);
+            ImGui::BeginDisabled( !this->S.m_show_browser_window );
+                if ( utl::IconButton(   "##ControlBar_BrowserToggle"
+                                      , this->S.SystemColor.White
+                                      , (this->S.m_show_system_preferences)
+                                            ? ICON_FA_FOLDER_TREE               : ICON_FA_GEARS
+                                      , ms_CONTROLBAR_ICON_SCALE
+                                      , IconAnchor::Center
+                                      , BUTTON_SIZE )
+                )
+                {
+                    this->S.m_show_system_preferences       = !this->S.m_show_system_preferences;
+                }
+            ImGui::EndDisabled();
+            //
+            if ( ImGui::IsItemHovered(HOVER_FLAGS) ) {
+                ImGui::BeginTooltip();
+                    ImGui::TextUnformatted("Toggle between \"Browser\" and \"System Preferences\" inside the Browser panel");
+                ImGui::EndTooltip();
+            }
+            //
+            //
+            //
+            //      3.        OPEN/CLOSE DETAIL VIEW...
+            ImGui::SameLine(0, 2.0f * ms_BIG_ITEM_PAD);
+            if ( utl::IconButton( "##ControlBar_ToggleDetailView"
+                                  , (this->S.m_show_detview_window)
+                                        ? this->S.SystemColor.Blue              : this->S.SystemColor.Gray
+                                  , (this->S.m_show_detview_window)
+                                        ? ICON_FA_BOOK_OPEN                     : ICON_FA_BOOK
+                                        //  ? ICON_FA_MAGNIFYING_GLASS_MINUS        : ICON_FA_MAGNIFYING_GLASS_PLUS
+                                  , ms_CONTROLBAR_ICON_SCALE
+                                  , IconAnchor::Center
+                                  , BUTTON_SIZE )
+            )
+            {
+                this->S.m_show_detview_window           = !this->S.m_show_detview_window;
+            }
+            if ( ImGui::IsItemHovered(HOVER_FLAGS) ) {
+                ImGui::BeginTooltip();
+                    ImGui::TextUnformatted("Open/Close the \"Detail View\" panel");
+                ImGui::EndTooltip();
+            }
+        //
+        //
+        //
         }
-        
-        
+        this->S.PopFont();
+        //  ImGui::SameLine(0, ms_BIG_ITEM_PAD);
+        //
+        //
+        //
         //      3.      TOGGLE BETWEEN BROWSER / SYS. PREFERENCES...
-        //
         ImGui::NextColumn();
         ImGui::BeginDisabled( !this->S.m_show_browser_window );
         if ( ImGui::Button( (this->S.m_show_system_preferences) ? "Browser##ControlBar" : "Preferences##ControlBar", ImVec2(120, BUTTON_SIZE.y)) )

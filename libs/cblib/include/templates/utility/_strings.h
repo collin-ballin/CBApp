@@ -52,7 +52,7 @@ namespace cblib { namespace utl {   //     BEGINNING NAMESPACE "cblib" :: "math"
 
 
 
-//  1.  GENERAL STRING OPERATIONS...
+//      1.      GENERAL STRING OPERATIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -70,7 +70,8 @@ namespace cblib { namespace utl {   //     BEGINNING NAMESPACE "cblib" :: "math"
 // *************************************************************************** //
 //
 //
-//  2.  COMPILE-TIME STRING STUFF...
+//
+//      2.      COMPILE-TIME STRING STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -117,13 +118,99 @@ constexpr std::size_t cc_strlen_IMPL(const char * s) noexcept {
 
 
 
+// *************************************************************************** //
+//      NEW COMPILE-TIME CONCATENATION...
+// *************************************************************************** //
+
+//  "to_array"
+//
+template <std::size_t N>
+consteval std::array<char, N> to_array(const char (&lit)[N])
+{
+    std::array<char, N> out{};
+    for (std::size_t i = 0; i < N; ++i) out[i] = lit[i];
+    return out;
+}
+
+
+//  "array_cat"
+//      2)  Pairwise array concat (drops lhs's trailing '\0', keeps rhs's '\0')
+//
+template <std::size_t A, std::size_t B>
+consteval std::array<char, A + B - 1>
+array_cat(const std::array<char, A> & lhs, const std::array<char, B> & rhs)
+{
+    std::array<char, A + B - 1>                 out {  };
+    for (std::size_t i = 0; i < A - 1; ++i)     { out[i] = lhs[i];          }
+    for (std::size_t j = 0; j < B;     ++j)     { out[A - 1 + j] = rhs[j];  }
+    return out;
+}
+
+
+//  "array_cat_all"
+//      3)  Variadic fold over arrays (no overload hops)
+//
+template <std::size_t A>
+consteval auto array_cat_all(const std::array<char, A>& a)                          { return a; }
+
+
+//  "array_cat_all"
+//
+template <std::size_t A, std::size_t B, std::size_t... Cs>
+consteval auto array_cat_all(const std::array<char, A> & a,
+                             const std::array<char, B> & b,
+                             const std::array<char, Cs> &... rest)
+{
+    auto ab = array_cat(a, b);
+    if constexpr ( sizeof...(rest) == 0 )   { return ab; }
+    return array_cat_all(ab, rest...);
+}
+
+
+//  "strcat_literals_cx"
+//      4) Public API: concat *literals* at compile time
+//
+template <std::size_t... Ns>
+consteval auto strcat_literals_cx(const char (&...parts)[Ns])                       { return array_cat_all(to_array(parts)...); }
+
+
+
+
+
+
+//  "make_icon_label"
+//
+template <std::size_t NI, std::size_t NT>
+consteval auto make_icon_label(const char (&icon)[NI], const char (&text)[NT])      { return strcat_literals_cx(icon, "  ", text); }
+
+//  "make_icon_label_id"
+//      "ICON  Text##id"  (avoids ID collisions in ImGui)
+//
+template <std::size_t NI, std::size_t NT, std::size_t NS>
+consteval auto make_icon_label_id(const char (&icon)[NI],
+                                  const char (&text)[NT],
+                                  const char (&id_suffix)[NS]) {
+    return strcat_literals_cx(icon, "  ", text, "##", id_suffix);
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "COMPILE-TIME STRINGS".
+
+
+
+
 
 
 // *************************************************************************** //
 //
 //
 //
-//  3.  COMPILE-TIME CONST CHAR * CONCATONATION...
+//      3.      COMPILE-TIME CONST CHAR * CONCATONATION...
 // *************************************************************************** //
 // *************************************************************************** //
 

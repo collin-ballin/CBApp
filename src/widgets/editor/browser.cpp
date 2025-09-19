@@ -177,25 +177,32 @@ void Editor::DrawBrowser(void)
 //
 void Editor::_MECH_draw_controls(void)
 {
-    static constexpr const char *       uuid                = "##Editor_Controls_Columns";
-    static constexpr int                ms_NC               = 10;
-    static constexpr int                ms_NE               = 1;
+    using                                   IconAnchor          = utl::icon_button::Anchor;
+    static constexpr const char *           uuid                = "##Editor_Controls_Columns";
+    static constexpr int                    ms_NC               = 7;
+    static constexpr int                    ms_NE               = 1;
+    static constexpr ImGuiHoveredFlags      HOVER_FLAGS         = ImGuiHoveredFlags_DelayNormal;
+    static ImGuiOldColumnFlags              COLUMN_FLAGS        = ImGuiOldColumnFlags_None;
     //
-    static ImGuiOldColumnFlags          COLUMN_FLAGS        = ImGuiOldColumnFlags_None;
-    const ImVec2                        WIDGET_SIZE         = ImVec2( -1,               ImGui::GetFrameHeight()               );
-    static ImVec2                       BUTTON_SIZE         = ImVec2( 32,   WIDGET_SIZE.y );
+    EditorStyle &                           Style               = this->m_style;
+    const ImVec2                            WIDGET_SIZE         = ImVec2( -1,               ImGui::GetFrameHeight()               );
     //
-    constexpr ImGuiButtonFlags          BUTTON_FLAGS        = ImGuiOldColumnFlags_NoPreserveWidths;
-    int                                 mode_i              = static_cast<int>(m_mode);
-    
-    this->S.PushFont( Font::Small );
-   
-    
-    
+    //
+    //
+    static ImVec2                           BUTTON_SIZE         = ImVec2( 32,   WIDGET_SIZE.y );
+    const ImVec4 &                          s_DISABLED_COLOR    = ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);  //  ImGui::GetColorU32(ImGuiCol_Text);
+    const ImVec4 &                          s_ENABLED_COLOR     = this->S.SystemColor.Blue;
+    //
+    //  constexpr ImGuiButtonFlags              BUTTON_FLAGS        = ImGuiOldColumnFlags_NoPreserveWidths;
+    int                                     mode_i              = static_cast<int>(m_mode);
+    //
+    static bool                             custom_sel_state_available  = true;
+        
    
    
     //  BEGIN COLUMNS...
     //
+    this->S.PushFont( Font::Small );
     ImGui::Columns(ms_NC, uuid, COLUMN_FLAGS);
     //
     //
@@ -217,120 +224,165 @@ void Editor::_MECH_draw_controls(void)
         //
         //
         //
-        static bool     custom_sel_state_available  = true;
-        static bool     ss_surfaces                 = false;
-        static bool     ss_edges                    = false;
-        static bool     ss_vertices                 = false;
-        //
         ImGui::BeginDisabled( !custom_sel_state_available );
+        ImGui::BeginGroup();
+        ImGui::PushItemWidth( BUTTON_SIZE.x );
+        this->S.PushFont(Font::Main);
+        {
         //
-                //      2.1.        "SURFACE".
-                //  if ( utl::IconButton( (ss_surfaces)  ? "vis_on"      : "vis_off",
-                //                        (ss_surfaces)  ? ICON_FA_EYE   : ICON_FA_EYE_SLASH ) )
-                //  {
-                //      ss_surfaces = !ss_surfaces;
-                //  }
-                
-            const ImU32 c0 = ImGui::GetColorU32(ImGuiCol_Text);
-            const ImU32 c1 = ImGui::GetColorU32(ImGuiCol_TextDisabled);  // subtle hover alt
-            const ImU32 c2 = ImGui::GetColorU32(ImGuiCol_Text);          // or same as c0
-            //
-            if ( utl::IconFlatButton( "vis", ICON_FA_EYE, c0, c1, c2 ) )
-            {
-                ss_surfaces = !ss_surfaces;
-            }
-            
-            
-            
-            ImGui::PushItemWidth( BUTTON_SIZE.x );
-            //
-            {
-                
-                //
-                //
-                    //  if ( !ss_surfaces ) {
-                    //      if ( utl::CButton("S",     this->S.SystemColor.Red     ) )
-                    //          { ss_surfaces = !ss_surfaces; }
-                    //  }
-                    //  else {
-                    //      if ( utl::CButton("S",      this->S.SystemColor.Green   ) )
-                    //          { ss_surfaces = !ss_surfaces; }
-                    //  }
-                //
-                //
-                //      2.2.        "EDGE".
-                ImGui::SameLine(0.0f, 0.0f);
-                if ( !ss_edges ) {
-                    if ( utl::CButton("E",     this->S.SystemColor.Red     ) )
-                        { ss_edges = !ss_edges; }
-                }
-                else {
-                    if ( utl::CButton("E",      this->S.SystemColor.Green   ) )
-                        { ss_edges = !ss_edges; }
-                }
-                //
-                //
-                //      2.3.        "VERTEX".
-                ImGui::SameLine(0.0f, 0.0f);
-                if ( !ss_vertices ) {
-                    if ( utl::CButton("V",     this->S.SystemColor.Red     ) )
-                        { ss_vertices = !ss_vertices; }
-                }
-                else {
-                    if ( utl::CButton("V",      this->S.SystemColor.Green   ) )
-                        { ss_vertices = !ss_vertices; }
-                }
-            }
-            //
-            ImGui::PopItemWidth();
         //
+        //
+            static bool         ss_surfaces                 = false;
+            static bool         ss_edges                    = false;
+            static bool         ss_vertices                 = false;
+            //
+            //
+            //
+            //      2.1.        "SURFACE".
+            const bool      dirty_surfaces      = utl::IconButton( "##SelectionState_Surface"
+                                                                   , (ss_surfaces)      ? s_ENABLED_COLOR       : s_DISABLED_COLOR
+                                                                   , ICON_FA_CUBE 
+                                                                   , Style.ms_TOOLBAR_ICON_SCALE );
+            //
+            //      2.2.        "EDGE".
+            ImGui::SameLine(0.0f, 0.0f);
+            const bool      dirty_edges         = utl::IconButton( "##SelectionState_Edges"
+                                                                   , (ss_edges)         ? s_ENABLED_COLOR       : s_DISABLED_COLOR
+                                                                   , ICON_FA_DRAW_POLYGON 
+                                                                   , Style.ms_TOOLBAR_ICON_SCALE );
+            //
+            //      2.3.        "VERTICES".
+            ImGui::SameLine(0.0f, 0.0f);
+            const bool      dirty_vertices      = utl::IconButton( "##SelectionState_Vertices"
+                                                                   , (ss_vertices)      ? s_ENABLED_COLOR       : s_DISABLED_COLOR
+                                                                   , ICON_FA_LOCATION_CROSSHAIRS
+                                                                   //, ICON_FA_CIRCLE       ICON_FA_ARROWS_TO_CIRCLE    ICON_FA_PIN
+                                                                   , Style.ms_TOOLBAR_ICON_SCALE );
+            //
+            //
+            //
+            //      2.4.        UPDATE EACH VALUE...
+            if ( dirty_surfaces )               { ss_surfaces   = !ss_surfaces;     }
+            if ( dirty_edges    )               { ss_edges      = !ss_edges;        }
+            if ( dirty_vertices )               { ss_vertices   = !ss_vertices;     }
+        //
+        //
+        //
+        //
+        }
+        this->S.PopFont();
+        ImGui::PopItemWidth();
+        ImGui::EndGroup();
         ImGui::EndDisabled();
-    
-    
-    
-        //      3.      GRID VISIBILITY...
-        ImGui::NextColumn();        this->S.column_label("Show Grid:");
         //
-        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
-        ImGui::Checkbox("##Editor_Controls_ShowGrid",           &m_grid.visible);
-
-
-
-        //      4.      SNAP-TO-GRID...
-        ImGui::NextColumn();        this->S.column_label("Snap-To-Grid:");
+        if ( ImGui::IsItemHovered(HOVER_FLAGS) ) {
+            ImGui::BeginTooltip();
+                ImGui::TextUnformatted( "Selection State:"
+                                        "\nEnable/Disable which types of objects are able to be selected (Surfaces, Edges, and Vertices, respectively)"
+                );
+            ImGui::EndTooltip();
+        }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        //      3.      GRID STATE...
+        ImGui::NextColumn();        this->S.column_label("Grid Settings:");
         //
-        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
-        ImGui::Checkbox("##Editor_Controls_SnapToGrid",         &m_grid.snap_on);
+        ImGui::PushItemWidth( BUTTON_SIZE.x );
+        this->S.PushFont(Font::Main);
+        {
+        //
+        //
+        //
+            //      3.1.        "SNAP-TO-GRID".
+            if ( utl::IconButton(   "##Editor_Controls_SnapToGridAlt"
+                                  , (this->m_grid.snap_on)  ? s_ENABLED_COLOR               : s_DISABLED_COLOR
+                                  , ICON_FA_MAGNET
+                                  //    , (this->m_grid.snap_on)  ? ICON_FA_TABLE_CELLS_LARGE     : ICON_FA_BORDER_NONE
+                                  , Style.ms_TOOLBAR_ICON_SCALE ) )
+            {
+                this->m_grid.snap_on    = !this->m_grid.snap_on;
+            }
+            //
+            //
+            //
+            //      3.2.        "SHOW GRID".
+            ImGui::SameLine(0.0f, 0.0f);
+            if ( utl::IconButton(   "##Editor_Controls_ShowGrid"
+                                  , (this->m_grid.visible)  ? s_ENABLED_COLOR               : s_DISABLED_COLOR
+                                  , (this->m_grid.visible)  ? ICON_FA_TABLE_CELLS           : ICON_FA_BORDER_TOP_LEFT
+                                  , Style.ms_TOOLBAR_ICON_SCALE ) )
+            {
+                this->m_grid.visible    = !this->m_grid.visible;
+            }
+            //
+            //
+            //
+            //      3.X.        "VERTICES".
+        //
+        //
+        //
+        }
+        this->S.PopFont();
+        ImGui::PopItemWidth();
+        //
+        if ( ImGui::IsItemHovered(HOVER_FLAGS) ) {
+            //  ImGui::BeginTooltip();
+            //      ImGui::TextUnformatted( "Selection State:"
+            //                              "\nEnable/Disable which types of objects are able to be selected (Surfaces, Edges, and Vertices, respectively)"
+            //      );
+            //  ImGui::EndTooltip();
+        }
+    
+    
+    
+    
+
         
-        
-        
-        //      5.      GRID-LINE DENSITY...
+        //      4.      GRID-LINE DENSITY...
         ImGui::NextColumn();        this->S.column_label("Grid Density:");
         //
-        //
-        //
-        if ( ImGui::ArrowButtonEx( "##Editor_Controls_GridDensityDown",     ImGuiDir_Down,
-                                   BUTTON_SIZE,                             BUTTON_FLAGS ) )
+        ImGui::PushItemWidth( BUTTON_SIZE.x );
+        this->S.PushFont(Font::Main);
         {
-            m_grid.snap_step *= 2.f;
+            if ( utl::IconButton(   "##Editor_Controls_GridDensityDown"
+                                  , this->S.SystemColor.White
+                                  , ICON_FA_ANGLE_DOWN    //  ICON_FA_GEARS   ICON_FA_GEAR    ICON_FA_SLIDERS
+                                  , Style.ms_TOOLBAR_ICON_SCALE 
+                                  , IconAnchor::TextBaseline ) )
+            { m_grid.snap_step *= 2.0f; }
+            //
+            //
+            //
+            ImGui::SameLine(0.0f, 0.0f);
+            if ( utl::IconButton(   "##Editor_Controls_GridDensityUp"
+                                  , this->S.SystemColor.White
+                                  , ICON_FA_ANGLE_UP    //  ICON_FA_GEARS   ICON_FA_GEAR    ICON_FA_SLIDERS
+                                  , Style.ms_TOOLBAR_ICON_SCALE
+                                  , IconAnchor::TextBaseline ) )
+            { m_grid.snap_step /= 2.0f; }
+            //
+            //
+            //
+            ImGui::SameLine(0.0f, 0.0f);
+            ImGui::Text("(%.1f)", m_grid.snap_step);
         }
-        //
-        ImGui::SameLine(0.0f, 0.0f);
-        //
-        if ( ImGui::ArrowButtonEx("##Editor_Controls_GridDensityUp",        ImGuiDir_Up,
-                          BUTTON_SIZE,                                      BUTTON_FLAGS) )
-        {
-            m_grid.snap_step = std::max(ms_GRID_STEP_MIN, m_grid.snap_step * 0.5f);
-        }
-        //
-        ImGui::SameLine();
-        //
-        ImGui::Text("(%.1f)", m_grid.snap_step);
+        this->S.PopFont();
+        ImGui::PopItemWidth();
+        
+        
         
 
 
 
-        //      6.      CLEAR ALL...
+        //      5.      CLEAR ALL...
+        //
         ImGui::NextColumn();        this->S.column_label("Clear Data:");
         if ( ImGui::Button("Clear", WIDGET_SIZE) ) {
             ui::ask_ok_cancel( "Clear Data",
@@ -351,9 +403,26 @@ void Editor::_MECH_draw_controls(void)
 
         //      X.      CANVAS SETTINGS...
         this->S.column_label("Settings:");
-        if ( ImGui::Button("+", BUTTON_SIZE) ) {
-            ui::open_preferences_popup( GetMenuID(PopupHandle::Settings), [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
+        //
+        ImGui::PushItemWidth( BUTTON_SIZE.x );
+        this->S.PushFont(Font::Main);
+        {
+            if ( utl::IconButton(   "##Editor_Controls_OpenSettings"
+                                  , this->S.SystemColor.White
+                                  , ICON_FA_SLIDERS    //  ICON_FA_GEARS   ICON_FA_GEAR    ICON_FA_SLIDERS
+                                  , Style.ms_TOOLBAR_ICON_SCALE ) )
+            {
+                ui::open_preferences_popup( GetMenuID(PopupHandle::Settings), [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
+            }
         }
+        this->S.PopFont();
+        ImGui::PopItemWidth();
+        
+        
+        
+        //  if ( ImGui::Button("+", BUTTON_SIZE) ) {
+        //      ui::open_preferences_popup( GetMenuID(PopupHandle::Settings), [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
+        //  }
         
         
         

@@ -110,63 +110,6 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 
 
 
-
-
-//  "_icon_square_size"
-//
-[[nodiscard]] static inline ImVec2 _icon_square_size(float scale = 1.0f) {
-    const float h = ImGui::GetFrameHeight() * scale;
-    return {h, h};
-}
-
-//  "IconButton"
-//
-static inline bool IconButton(const char * id, const char * icon_utf8, float scale = 1.0f, ImGuiButtonFlags flags = ImGuiButtonFlags_None) noexcept {
-    ImGui::PushID(id);                                   // unique ID, separate from label
-        const ImVec2    size    = _icon_square_size(scale);
-        const bool      hit     = ImGui::ButtonEx(icon_utf8, size, flags); // label = icon only
-    ImGui::PopID();
-    
-    return hit;
-}
-
-
-//  "IconFlatButton"
-//
-static inline bool IconFlatButton(const char* id,
-                                  const char* icon_utf8,
-                                  ImU32 col,                  // normal
-                                  ImU32 col_hover,            // on hover
-                                  ImU32 col_active)           // on active
-{
-    ImVec2      pos  = ImGui::GetCursorScreenPos();
-    ImVec2      sz   = ImGui::CalcTextSize(icon_utf8);
-
-    ImGui::PushID(id);
-    ImGui::InvisibleButton("##icon", sz);                    // no background
-    const bool hovered = ImGui::IsItemHovered();
-    const bool active  = ImGui::IsItemActive();
-    ImGui::PopID();
-
-    ImU32 use = active ? col_active : (hovered ? col_hover : col);
-    ImGui::GetWindowDrawList()->AddText(pos, use, icon_utf8);
-
-    return ImGui::IsItemClicked(ImGuiMouseButton_Left);
-}
-
-
-
-
-/*inline bool visibility_toggle(const char* id, bool& visible, float scale = 1.0f)
-{
-    const char* icon = visible ? ICON_FA_EYE : ICON_FA_EYE_SLASH;
-    const bool  hit  = icon_button(id, icon, scale);
-    if (hit) visible = !visible;
-    return hit;
-}*/
-
-
-
 // *************************************************************************** //
 //
 //
@@ -281,8 +224,212 @@ inline void TopLabel(const char * text, const float l_width=150.0f, const float 
 
 
 
+
 // *************************************************************************** //
-//              COLOR BUTTONS...
+//              CUSTOM "ICON" BUTTONS...
+// *************************************************************************** //
+
+namespace icon_button { //     BEGINNING NAMESPACE "cb::utl" :: "icon_button"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+enum class IconAlignment : uint8_t {
+    Center = 0,
+    North, South,   West,  East,
+    NorthWest, NorthEast, SouthWest, SouthEast,
+    TextBaseline,    // aligns icon’s top to the usual text/top padding
+//
+    COUNT
+};
+
+enum class PaddingPolicy : uint8_t { Tight = 0, UseStylePadding, COUNT };
+
+
+
+using Anchor            = IconAlignment;
+using PaddingPolicy     = PaddingPolicy;
+
+
+
+//  "align_in_rect"
+//      Return top-left position for placing a rect of size `sz` inside [pmin..pmax]
+//      according to `align`, plus an optional pixel nudge.
+//
+static inline ImVec2 align_in_rect(   const ImVec2 &            pmin
+                                    , const ImVec2 &            pmax
+                                    , const ImVec2 &            sz
+                                    , const IconAlignment       align
+                                    , const PaddingPolicy       pad     = PaddingPolicy::Tight
+                                    , const ImVec2 &            nudge   = ImVec2(0,0) )
+{
+    const ImVec2    rect        { pmax.x - pmin.x,                  pmax.y - pmin.y };
+    ImVec2          pos         { pmin.x + (rect.x - sz.x) * 0.5f,  pmin.y + (rect.y - sz.y) * 0.5f };
+    ImVec2          padxy       { 0, 0 };
+    
+    if ( pad == PaddingPolicy::UseStylePadding )
+    {
+        const ImGuiStyle &      s   = ImGui::GetStyle();
+        padxy                       = ImVec2(s.FramePadding.x, s.FramePadding.y);
+    }
+
+
+    switch (align)
+    {
+        case IconAlignment::North:          { pos.y   = pmin.y + padxy.y             ;       break; }
+        case IconAlignment::South:          { pos.y   = pmax.y - sz.y - padxy.y      ;       break; }
+        case IconAlignment::West:           { pos.x   = pmin.x + padxy.x             ;       break; }
+        case IconAlignment::East:           { pos.x   = pmax.x - sz.x - padxy.x      ;       break; }
+    //
+        case IconAlignment::NorthWest:      { pos.x   = pmin.x + padxy.x             ;
+                                              pos.y   = pmin.y + padxy.y             ;       break; }
+    //
+        case IconAlignment::NorthEast:      { pos.x   = pmax.x - sz.x - padxy.x      ;
+                                              pos.y   = pmin.y + padxy.y             ;       break; }
+    //
+        case IconAlignment::SouthWest:      { pos.x   = pmin.x + padxy.x             ;
+                                              pos.y   = pmax.y - sz.y - padxy.y      ;       break; }
+    //
+        case IconAlignment::SouthEast:      { pos.x   = pmax.x - sz.x - padxy.x      ;
+                                              pos.y   = pmax.y - sz.y - padxy.y      ;       break; }
+    //
+        case IconAlignment::TextBaseline:   { pos.y   = pmin.y + padxy.y             ;       break; }
+    //
+        default :                           { break; }
+    }
+    return ImVec2(pos.x + nudge.x, pos.y + nudge.y);
+}
+
+
+
+//  "_icon_square_size"
+//
+[[nodiscard]] static inline ImVec2 _icon_square_size(float scale = 1.0f) {
+    const float h = ImGui::GetFrameHeight() * scale;
+    return {h, h};
+}
+
+
+//  "draw_icon_aligned"
+//      Centers a scaled glyph in the last item rect and draws it.
+//
+template <typename T>
+static inline void draw_icon_aligned(    const char *           icon_utf8
+                                       , const T &              color
+                                       , const float            scale
+                                       , const IconAlignment    anchor
+                                       , const PaddingPolicy    pad
+                                       , const ImVec2 &         nudge ) noexcept
+{
+    ImDrawList *        dl          = ImGui::GetWindowDrawList();
+    ImFont *            font        = ImGui::GetFont();
+    const float         base_px     = ImGui::GetFontSize();
+    const float         icon_px     = base_px * scale;
+
+    //  Size of this UTF-8 glyph at icon_px
+    const ImVec2        isz         = font->CalcTextSizeA(icon_px, FLT_MAX, 0.0f, icon_utf8);
+    const ImVec2        pmin        = ImGui::GetItemRectMin();
+    const ImVec2        pmax        = ImGui::GetItemRectMax();
+    const ImVec2        pos         = align_in_rect(pmin, pmax, isz, anchor, pad, nudge);
+    
+    dl->AddText(font, icon_px, pos, color, icon_utf8);
+    return;
+}
+
+
+//  "IconButton_IMPL"
+//      Overload: explicit size
+//
+template <typename T>
+static inline bool IconButton_IMPL(   const char *          id
+                                    , const T &             color
+                                    , const char *          icon_utf8
+                                    , const float           scale
+                                    , const Anchor          anchor
+                                    , const PaddingPolicy   pad
+                                    , const ImVec2 &        nudge
+                                    , const ImVec2 &        size ) noexcept
+{
+    constexpr float     kShade          = 0.250f;
+    constexpr float     kActiveMul      = -0.07f;
+    
+    
+    //      1.      HIT-TEST (Invisible Button)...
+    ImGui::PushID(id);
+    ImGui::InvisibleButton("##icon_button", size);
+    const bool          pressed         = ImGui::IsItemClicked(ImGuiMouseButton_Left);
+    const bool          hovered         = ImGui::IsItemHovered();
+    const bool          active          = ImGui::IsItemActive();
+
+
+    //      2.      MATCH THE "CButton" SHADING POLICIES...
+    //                      normal  -> slightly shaded
+    //                      hovered -> base color
+    //                      active  -> a bit darker than base
+    const ImVec4        col_normal      = cblib::utl::compute_shade(color, kShade);
+    const ImVec4        col_hover       = color;
+    const ImVec4        col_active      = cblib::utl::compute_shade(color, kActiveMul);
+    const ImU32         draw_col        = ImGui::GetColorU32( active ? col_active
+                                            : (hovered ? col_hover : col_normal) );
+
+
+    //      3.      DRAW THE ICON (Center the glyph inside the hit-rect)...
+    draw_icon_aligned(icon_utf8, draw_col, scale, anchor, pad, nudge);
+
+
+    ImGui::PopID();
+    return pressed;
+}
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+} //   END OF "icon_button" NAMESPACE.
+
+
+//  "IconButton"
+//
+template <typename T>
+static inline bool IconButton(   const char *                       id
+                               , const T &                          color
+                               , const char *                       icon_utf8
+                               , const float                        scale       = 1.0f
+                               , const icon_button::Anchor          anchor      = icon_button::Anchor::North
+                               , const icon_button::PaddingPolicy   pad         = icon_button::PaddingPolicy::Tight
+                               , const ImVec2 &                     nudge       = ImVec2(0.0f, 0.0f) ) noexcept
+{
+    using namespace icon_button;
+    return IconButton_IMPL( id, color, icon_utf8, scale, anchor, pad, nudge, _icon_square_size(scale) );
+}
+//
+template <typename T>
+static inline bool IconButton(   const char *                       id
+                               , const T &                          color
+                               , const char *                       icon_utf8
+                               , const float                        scale
+                               , const icon_button::Anchor          anchor
+                               , const ImVec2 &                     size
+                               , const icon_button::PaddingPolicy   pad         = icon_button::PaddingPolicy::Tight
+                               , const ImVec2 &                     nudge       = ImVec2(0.0f, 0.0f) ) noexcept
+{
+    using namespace icon_button;
+    return IconButton_IMPL( id, color, icon_utf8, scale, anchor, pad, nudge, size );
+}
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//              CUSTOM COLOR BUTTONS...
 // *************************************************************************** //
 
 //  "CButton"

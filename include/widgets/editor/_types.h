@@ -86,22 +86,29 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //      - Enum type for each "tool" that we have in the application.
 //
 enum class Mode : int {
-    Default = 0,        //  "Select"                (KEY: "V").
-    Hand,               //  "Hand"                  (KEY: "H").
-    Pen,                //  "Pen"                   (KEY: "P").
-    Scissor,            //  "Scissors"              (KEY: "C").
-    Shape,              //  "Scissors"              (KEY: "C").
-    AddAnchor,          //  "Add Anchor"            (KEY: "+").
-    RemoveAnchor,       //  "Remove Anchor"         (KEY: "-").
-    EditAnchor,         //  "Edit Anchor"           (KEY: "SHIFT" + "C").
+      Default = 0           //  "Select"                (KEY: "V").
+    , Hand                  //  "Hand"                  (KEY: "H").
+    , Pen                   //  "Pen"                   (KEY: "P").
+    , Scissor               //  "Scissors"              (KEY: "C").
+    , Shape                 //  "Scissors"              (KEY: "C").
+    , AddAnchor             //  "Add Anchor"            (KEY: "+").
+    , RemoveAnchor          //  "Remove Anchor"         (KEY: "-").
+    , EditAnchor            //  "Edit Anchor"           (KEY: "SHIFT" + "C").
 //
-    COUNT
+    , COUNT
 };
 //
 //  "DEF_EDITOR_STATE_NAMES"
-static constexpr cblib::EnumArray< Mode, const char * > DEF_EDITOR_STATE_NAMES  = { {
-        "Default"                    , "Hand"                     , "Pen"                     , "Scissor"
-      , "Shape"                      , "Add Anchor"               , "Remove Anchor"           , "Edit Anchor"
+static constexpr cblib::EnumArray< Mode, const char * >
+DEF_EDITOR_STATE_NAMES  = { {
+      "Default"
+    , "Hand"
+    , "Pen"
+    , "Scissor"
+    , "Shape"
+    , "Add Anchor"
+    , "Remove Anchor"
+    , "Edit Anchor"
 } };
 
 
@@ -2227,7 +2234,13 @@ struct EditorStyle
 // *************************************************************************** //
     BrowserStyle                        browser_style                               = { };
     
-    
+// *************************************************************************** //
+//
+//
+// *************************************************************************** //
+//                              UI-APPEARANCE CONSTANTS...
+// *************************************************************************** //
+    float                       ms_TOOLBAR_ICON_SCALE           = 1.5f;
     
 // *************************************************************************** //
 //
