@@ -212,7 +212,7 @@ inline void LeftLabel(const char * text, const ImVec2 & l_dims, const ImVec2 & w
 //
 inline void TopLabel(const char * text, const float l_width=150.0f, const float w_width=250.0f)
 {
-    const ImVec2        padding             = ImVec2( l_width - ImGui::CalcTextSize(text).x,  0.0f );
+    //  const ImVec2        padding             = ImVec2( l_width - ImGui::CalcTextSize(text).x,  0.0f );
     ImGui::AlignTextToFramePadding();
     ImGui::SetNextItemWidth(l_width);
     ImGui::TextUnformatted(text);
@@ -242,7 +242,7 @@ enum class IconAlignment : uint8_t {
     COUNT
 };
 
-enum class PaddingPolicy : uint8_t { Tight = 0, UseStylePadding, COUNT };
+enum class PaddingPolicy : uint8_t { Tight = 0, ImGuiStyle, COUNT };
 
 
 
@@ -266,7 +266,7 @@ static inline ImVec2 align_in_rect(   const ImVec2 &            pmin
     ImVec2          pos         { pmin.x + (rect.x - sz.x) * 0.5f,  pmin.y + (rect.y - sz.y) * 0.5f };
     ImVec2          padxy       { 0, 0 };
     
-    if ( pad == PaddingPolicy::UseStylePadding )
+    if ( pad == PaddingPolicy::ImGuiStyle )
     {
         const ImGuiStyle &      s   = ImGui::GetStyle();
         padxy                       = ImVec2(s.FramePadding.x, s.FramePadding.y);

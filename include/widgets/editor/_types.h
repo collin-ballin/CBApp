@@ -98,6 +98,7 @@ enum class Mode : int {
     , COUNT
 };
 //
+//
 //  "DEF_EDITOR_STATE_NAMES"
 static constexpr cblib::EnumArray< Mode, const char * >
 DEF_EDITOR_STATE_NAMES  = { {
@@ -109,6 +110,20 @@ DEF_EDITOR_STATE_NAMES  = { {
     , "Add Anchor"
     , "Remove Anchor"
     , "Edit Anchor"
+} };
+//
+//
+//  "DEF_EDITOR_STATE_ICONS"
+static constexpr cblib::EnumArray< Mode, const char * >
+DEF_EDITOR_STATE_ICONS  = { {
+      ICON_FA_ARROW_POINTER
+    , ICON_FA_HAND
+    , ICON_FA_PEN_FANCY
+    , ICON_FA_SCISSORS
+    , ICON_FA_SHAPES
+    , ICON_FA_PLUS
+    , ICON_FA_MINUS
+    , ICON_FA_PEN_NIB
 } };
 
 
@@ -299,16 +314,17 @@ struct GridSettings {
 //  "EditorPopupBits"
 //
 enum class EditorPopupBits : uint8_t {
-    None = 0,
-    Selection,
-    Canvas,
-    Browser,
-    Settings,
-    AskOkCancel,
+      None = 0
+    , Selection
+    , Canvas
+    , ToolSelection
+    , Browser
+    , Settings
+    , AskOkCancel
 //
-    Other,
+    , Other
 //
-    COUNT
+    , COUNT
 };
 
 
@@ -363,13 +379,14 @@ struct EditorPopupInfo {
 //
 static constexpr std::array< EditorPopupInfo, static_cast<size_t>( EditorPopupBits::COUNT ) >
 DEF_EDITOR_POPUP_INFOS      = { {
-    /* None         */  { nullptr                           , "None"            },
-    /* Selection    */  { "Editor_Selection_ContextMenu"    , "Selection"       },
-    /* Canvas       */  { "Editor_Canvas_ContextMenu"       , "Canvas"          },
-    /* Browser      */  { "Editor_Browser_ContextMenu"      , "Browser"         },
-    /* Settings     */  { "Editor System Preferences"       , "Settings"        },
-    /* AskOkCancel  */  { nullptr                           , ""                },
-    /* Other        */  { nullptr                           , "Other"           }
+    /* None             */  { nullptr                                   , "None"                },
+    /* Selection        */  { "Editor_Selection_ContextMenu"            , "Selection"           },
+    /* Canvas           */  { "Editor_Canvas_ContextMenu"               , "Canvas"              },
+    /* ToolSelection    */  { "Editor_ControlBar_ToolSelectionMenu"     , "Tool Selection"      },
+    /* Browser          */  { "Editor_Browser_ContextMenu"              , "Browser"             },
+    /* Settings         */  { "Editor System Preferences"               , "Settings"            },
+    /* AskOkCancel      */  { nullptr                                   , ""                    },
+    /* Other            */  { nullptr                                   , "Other"               }
 } };
 
 

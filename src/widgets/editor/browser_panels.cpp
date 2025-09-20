@@ -126,7 +126,8 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx, const
             //
             callback("Fill Color:");
             ImGui::BeginDisabled( !is_area );
-                fill_dirty                      = ImGui::ColorEdit4( "##Editor_VertexInspector_FillColor",    (float*)&fill_f,    COLOR_FLAGS );
+                fill_dirty                      = ImGui::ColorEdit4( "##Editor_VertexInspector_FillColor",    (float*)&fill_f,
+                                                                     (is_area)  ? COLOR_FLAGS   : COLOR_FLAGS | ImGuiColorEditFlags_NoDragDrop );
             ImGui::EndDisabled();
             
             

@@ -530,10 +530,10 @@ inline bool ActionComposer::_draw_composition_selectable(const int idx, const bo
         //      1.2.    DOUBLE CLICKED.
         if ( single_click && double_click )
         {
-            AS.m_comp_rename_idx     = idx;
+            AS.m_comp_rename_idx                = idx;
             std::strncpy( AS.m_comp_buffer, comp.name.c_str(), BUFFER_SIZE );
             AS.m_comp_buffer[ BUFFER_SIZE - 1 ] = '\0';
-            AS.m_renaming_comp       = true;
+            AS.m_renaming_comp                  = true;
             return false;
         //
         }// END "DOUBLE CLICK".

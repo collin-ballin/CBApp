@@ -207,9 +207,35 @@ void Editor::_MECH_draw_controls(void)
     //
     //
     //
-        //      1.      EDITOR STATE...
-        this->S.column_label("State:");
+        //      1.      EDITOR TOOL...
+        this->S.column_label("Tool:");
         //
+        //
+        //
+        ImGui::PushItemWidth( BUTTON_SIZE.x );
+        this->S.PushFont(Font::Main);
+        {
+            utl::IconButton(   "##Editor_Controls_ToolIcon"
+                             , this->S.SystemColor.White
+                             , this->ms_EDITOR_STATE_ICONS[ static_cast<Mode>(mode_i) ]
+                             , Style.ms_TOOLBAR_ICON_SCALE );
+            //
+            //          1.1.    TOOL-SELECTOR CONTEXT MENU...
+            const bool  tool_menu_open  = ImGui::BeginPopupContextItem(GetMenuID(PopupHandle::ToolSelection), ImGuiPopupFlags_MouseButtonLeft);
+            if (tool_menu_open)
+            {
+                if ( this->_show_tool_selection_menu(this->m_mode) )
+                    { ImGui::CloseCurrentPopup(); }
+                //
+                ImGui::EndPopup();
+            }
+        }
+        this->S.PopFont();
+        ImGui::PopItemWidth();
+        //
+        //
+        //
+        ImGui::SameLine(0.0f, 0.0f);
         ImGui::SetNextItemWidth( WIDGET_SIZE.x );
         if ( ImGui::Combo("##Editor_Controls_EditorState",      &mode_i,
                           ms_EDITOR_STATE_NAMES.data(),         static_cast<int>(Mode::COUNT)) )

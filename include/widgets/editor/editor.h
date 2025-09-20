@@ -155,6 +155,7 @@ public:
     // *************************************************************************** //
     //                              ARRAYS:
     static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;
+    static constexpr auto &             ms_EDITOR_STATE_ICONS           = DEF_EDITOR_STATE_ICONS;
     static constexpr auto &             ms_MODE_CAPABILITIES            = DEF_MODE_CAPABILITIES;
     static constexpr auto &             ms_HIT_TYPE_NAMES               = DEF_HIT_TYPE_NAMES;
     static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES;
@@ -722,14 +723,17 @@ protected:
     //                              CONTEXT MENU ORCHESTRATORS:
     void                                dispatch_selection_context_menus    ([[maybe_unused]] const Interaction & it);
     //
-    //                              CANVAS CONTEXT MENU:
+    //                              CANVAS CONTEXT MENUS:
     inline void                         _show_canvas_context_menu           ([[maybe_unused]] const Interaction & it, const char * );
     //
-    //                              SELECTION CONTEXT MENU:
+    //                              SELECTION CONTEXT MENUS:
     inline void                         _show_selection_context_menu        ([[maybe_unused]] const Interaction & it, const char * );
     inline void                             _selection_context_primative        ([[maybe_unused]] const Interaction & );
     inline void                             _selection_context_single           ([[maybe_unused]] const Interaction & );
     inline void                             _selection_context_multi            ([[maybe_unused]] const Interaction & );
+    //
+    //                              MISC. CONTEXT MENUS:
+    bool                                _show_tool_selection_menu           (const Mode) noexcept;
     
     // *************************************************************************** //
     //

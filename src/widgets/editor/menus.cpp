@@ -10,6 +10,7 @@
 **************************************************************************************
 **************************************************************************************/
 #include "widgets/editor/editor.h"
+#include <ranges>
 
 
 
@@ -23,6 +24,7 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 
 
 // *************************************************************************** //
+//
 //
 //
 //      1.      CONTEXT MENU ORCHESTRATORS... 
@@ -72,6 +74,7 @@ void Editor::dispatch_selection_context_menus([[maybe_unused]] const Interaction
 // *************************************************************************** //
 //
 //
+//
 //      2.      CANVAS CONTEXT MENU...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -112,6 +115,7 @@ inline void Editor::_show_canvas_context_menu([[maybe_unused]] const Interaction
 
 //
 //
+//
 // *************************************************************************** //
 // *************************************************************************** //   END "CANVAS".
 
@@ -122,6 +126,7 @@ inline void Editor::_show_canvas_context_menu([[maybe_unused]] const Interaction
 
 
 // *************************************************************************** //
+//
 //
 //
 //      3.      SELECTION CONTEXT MENU...
@@ -318,8 +323,160 @@ inline void Editor::_selection_context_multi([[maybe_unused]] const Interaction 
 
 //
 //
+//
 // *************************************************************************** //
 // *************************************************************************** //   END "SELECTION".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      4.      OTHER CONTEXT MENUS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+
+//  "_show_tool_selection_menu"
+//
+bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
+{
+    using                           IconAnchor          = utl::icon_button::Anchor;
+    using                           Padding             = utl::icon_button::PaddingPolicy;
+    constexpr ImGuiTableFlags       FLAGS               = ImGuiTableFlags_SizingFixedFit; //    ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable;
+    constexpr ImGuiSelectableFlags  SELECTABLE_FLAGS    = ImGuiSelectableFlags_SpanAllColumns; //    ImGuiSelectableFlags_SpanAllColumns; ImGuiSelectableFlags_None
+    //
+    //
+    EditorStyle &                   Style               = this->m_style;
+    constexpr size_t                N                   = static_cast<size_t>( Mode::COUNT );
+    //
+    //
+    static ImVec2                   rect_size           = {-1, -1};
+    static float                    label_width         = -1;
+    //
+    Mode                            idx                 = static_cast<Mode>( 0 );
+    bool                            close               = false;
+    const ImVec2                    table_dims          = { label_width + rect_size.x,  -1 };
+
+    
+    //      1.      CACHE THE WIDTH OF THE LARGEST ITEM IN THE LIST-OF-NAMES...
+    if ( ImGui::IsWindowAppearing() )
+    {
+        auto    width_of    = [](const char * s) -> float   {  return ImGui::CalcTextSize(s ? s : "", nullptr, true).x;    };
+        auto    v           = this->ms_EDITOR_STATE_NAMES | std::views::transform(width_of);
+        label_width         = 1.60f * ( *std::ranges::max_element(v) );
+    }
+
+
+
+    //      CASE 0 :    IF NO TABLE, EXIT EARLY...
+    if ( !ImGui::BeginTable("ToolSelectionTable", 2, FLAGS, table_dims) )    { return false; }
+    
+    
+    //  BEGIN THE TABLE...
+    {
+        ImGui::TableSetupColumn("##ToolIconColumn"      , ImGuiTableColumnFlags_WidthFixed                      );
+        ImGui::TableSetupColumn("##ToolLabelColumn"     , ImGuiTableColumnFlags_WidthStretch        , 1         );
+        //  ImGui::TableHeadersRow();
+    
+    
+    
+        //      1.      ITERATE THROUGH EACH TOOL...
+        for (size_t i = 0; (!close) && (i < N);  ++i, idx = static_cast<Mode>( i ))
+        {
+            ImGui::TableNextRow(ImGuiTableRowFlags_None, rect_size.y );
+            const bool      selected    = (current_tool == idx);
+            
+            
+            //          1.1.    DRAW ICON (SELECTABLE) FOR THE TOOL...
+            ImGui::TableSetColumnIndex(0);
+            ImGui::PushID( static_cast<int>(i) );
+            const bool      dirty1      = utl::IconButton(   "##ToolIcon"
+                                                           , (selected)
+                                                                ? this->S.SystemColor.Blue      : this->S.SystemColor.White
+                                                           , this->ms_EDITOR_STATE_ICONS[ idx ]
+                                                           , Style.ms_TOOLBAR_ICON_SCALE
+                                                           , IconAnchor::TextBaseline    // TextBaseline    South   Center
+                                                           , Padding::ImGuiStyle );
+            rect_size                   = ImGui::GetItemRectSize();
+            ImGui::PopID();
+            
+            
+            
+            //          1.2.    DRAW "LABEL" FOR THE TOOL...
+            ImGui::TableSetColumnIndex(1);
+            const bool      dirty2      = ImGui::Selectable( this->ms_EDITOR_STATE_NAMES[ idx ], selected, SELECTABLE_FLAGS, {0.0f, rect_size.x} );
+            close                       = (dirty1 || dirty2);
+        
+        
+        
+            //          1.3.    IF ITEM IS SELECTED, UPDATE THE NEW TOOL STATE...
+            if ( close  &&  !selected )
+            {
+                this->m_mode = idx;
+            }
+            
+            
+        }//----END "FOR-LOOP".
+        
+        
+        
+        ImGui::EndTable();
+    }//----END TABLE.
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    //  #ifndef _TEMP_USE_SELECTABLE
+    //  //
+    //      ImGui::AlignTextToFramePadding();
+    //      if (!selected) {
+    //          ImGui::Text( "%s", this->ms_EDITOR_STATE_NAMES[ idx ] );
+    //      }
+    //      else {
+    //          ImGui::TextColored( this->S.SystemColor.Blue, "%s", this->ms_EDITOR_STATE_NAMES[ idx ] );
+    //      }
+    //      close                       = dirty1;
+    //  //
+    //  # else
+    //  //
+    //      const bool      dirty2      = ImGui::Selectable( this->ms_EDITOR_STATE_NAMES[ idx ], selected );
+    //      close                       = (dirty1 || dirty2);
+    //  //
+    //  #endif  //  _TEMP_USE_SELECTABLE  //
+    
+    
+    
+    
+    
+    
+    
+    return close;
+}
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MISC." CONTEXT MENUS.
 
 
 

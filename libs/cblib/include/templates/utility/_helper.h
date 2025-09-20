@@ -92,19 +92,41 @@ struct EnumArray
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    using                           array_type                                      = std::array<T, N>;
-    using                           size_type                                       = typename array_type::size_type; //    array_type::size_type;
+    using                                       array_type                      = std::array<T, N>                                  ;
     //
-    //                  COMPILE-TIME ENFORCEMENT MECHANISMS:
-    static constexpr bool           zero_based_contiguous                           = ( static_cast<std::size_t>( E{} ) == 0 );
-    static_assert( zero_based_contiguous, "Enum type must begin at 0 and be contiguous up to the final value, COUNT." );
+    //                                      VALUE TYPES:
+    using                                       value_type                      = typename array_type::value_type                   ;
+    using                                       pointer                         = typename array_type::pointer                      ;
+    using                                       const_pointer                   = typename array_type::const_pointer                ;
+    using                                       reference                       = typename array_type::reference                    ;
+    using                                       const_reference                 = typename array_type::const_reference              ;
+    //
+    //                                      SIZE / INDEX TYPES:
+    using                                       index_type                      = E                                                 ;
+    using                                       size_type                       = typename array_type::size_type                    ;   //  array_type::size_type;
+    using                                       difference_type                 = typename array_type::difference_type              ;
+    //
+    //                                      ITERATOR TYPES:
+    using                                       iterator                        = typename array_type::iterator                     ;
+    using                                       const_iterator                  = typename array_type::const_iterator               ;
+    using                                       reverse_iterator                = typename array_type::reverse_iterator             ;
+    using                                       const_reverse_iterator          = typename array_type::const_reverse_iterator       ;
+
+
+
+    // *************************************************************************** //
+    //      COMPILE-TIME ENFORCEMENT MECHANISMS.
+    // *************************************************************************** //
+    static constexpr bool                       zero_based_contiguous           = ( static_cast<size_type>( E{} ) == 0 );
+    static_assert( zero_based_contiguous            , "Enum type must begin at 0 and be contiguous up to the final value, COUNT."    );
+    static_assert( N > 0                            , "EnumArray requires N > 0 (empty enum domains are not supported)."             );
     
     
     
     // *************************************************************************** //
     //      DATA MEMBERS.
     // *************************************************************************** //
-    array_type                      m_data                                          {   };
+    array_type                                  m_data                          {   };
     
     
     
@@ -134,20 +156,51 @@ struct EnumArray
     // *************************************************************************** //
     //      OVERLOADED OPERATORS.
     // *************************************************************************** //
-    inline constexpr T &            operator [ ]        (E e)       noexcept        { return m_data[ static_cast<std::size_t>(e) ];     }
-    inline constexpr const T &      operator [ ]        (E e) const noexcept        { return m_data[ static_cast<std::size_t>(e) ];     }
+    inline constexpr reference                  operator [ ]        (index_type e)       noexcept           { return m_data[ static_cast<size_type>(e) ];     }
+    inline constexpr const_reference            operator [ ]        (index_type e) const noexcept           { return m_data[ static_cast<size_type>(e) ];     }
     
     
     // *************************************************************************** //
-    //      STANDARD MEMBER FUNCTIONS.
+    //      STANDARD-LIBRARY COMPLIANCE FUNCTIONS.
     // *************************************************************************** //
-    inline T *                      data                (void) noexcept             { return this->m_data.data(); }
-    inline const T *                data                (void) const noexcept       { return this->m_data.data(); }
+    //                                      INFORMATION FUNCTIONS:
+    inline size_type                            size                (void) const noexcept                   { return this->m_data.size();       }
+    inline constexpr bool                       max_size            (void) const noexcept                   { return this->m_data.max_size();   }
+    inline constexpr bool                       empty               (void) const noexcept                   { return this->m_data.empty();      }
     //
-    inline size_type                size                (void) const noexcept       { return this->m_data.size(); }
-  
-  
-  
+    //
+    //                                      ACCESSOR FUNCTIONS:
+    inline reference                            at                  (index_type idx)                        { return this->m_data.at(idx);      }
+    inline const_reference                      at                  (index_type idx) const                  { return this->m_data.at(idx);      }
+    //
+    inline reference                            front               (void)                                  { return this->m_data.front();      }
+    inline const_reference                      front               (void) const                            { return this->m_data.front();      }
+    inline reference                            back                (void)                                  { return this->m_data.back();       }
+    inline const_reference                      back                (void) const                            { return this->m_data.back();       }
+    //
+    inline pointer                              data                (void) noexcept                         { return this->m_data.data();       }
+    inline const_pointer                        data                (void) const noexcept                   { return this->m_data.data();       }
+    //
+    //
+    //
+    //                                      ITERATOR FUNCTIONS:
+    inline constexpr iterator                   begin               (void) noexcept                         { return m_data.begin();            }   //  Iterators (enable C++20 ranges/views pipelines)
+    inline constexpr const_iterator             begin               (void) const noexcept                   { return m_data.begin();            }
+    inline constexpr const_iterator             cbegin              (void) const noexcept                   { return m_data.cbegin();           }
+    inline constexpr reverse_iterator           rbegin              (void) const noexcept                   { return m_data.rbegin();           }
+    inline constexpr const_reverse_iterator     crbegin             (void) const noexcept                   { return m_data.crbegin();          }
+    //
+    //
+    inline constexpr iterator                   end                 (void) noexcept                         { return m_data.end();              }
+    inline constexpr const_iterator             end                 (void) const noexcept                   { return m_data.end();              }
+    inline constexpr const_iterator             cend                (void) const noexcept                   { return m_data.cend();             }
+    inline constexpr reverse_iterator           rend                (void) const noexcept                   { return m_data.rend();             }
+    inline constexpr const_reverse_iterator     crend               (void) const noexcept                   { return m_data.crend();            }
+    //
+    //
+    //                                      RANGES FUNCTIONS:
+
+//
 //
 //
 // *************************************************************************** //
