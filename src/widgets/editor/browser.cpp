@@ -178,9 +178,10 @@ void Editor::DrawBrowser(void)
 void Editor::_MECH_draw_controls(void)
 {
     using                                   IconAnchor          = utl::icon_button::Anchor;
+    using                                   Padding             = utl::icon_button::PaddingPolicy;
     static constexpr const char *           uuid                = "##Editor_Controls_Columns";
     static constexpr int                    ms_NC               = 7;
-    static constexpr int                    ms_NE               = 1;
+    static constexpr int                    ms_NE               = 2;
     static constexpr ImGuiHoveredFlags      HOVER_FLAGS         = ImGuiHoveredFlags_DelayNormal;
     static ImGuiOldColumnFlags              COLUMN_FLAGS        = ImGuiOldColumnFlags_None;
     //
@@ -218,7 +219,9 @@ void Editor::_MECH_draw_controls(void)
             utl::IconButton(   "##Editor_Controls_ToolIcon"
                              , this->S.SystemColor.White
                              , this->ms_EDITOR_STATE_ICONS[ static_cast<Mode>(mode_i) ]
-                             , Style.ms_TOOLBAR_ICON_SCALE );
+                             , Style.ms_TOOLBAR_ICON_SCALE 
+                             , IconAnchor::North    // TextBaseline    South   Center
+                             , Padding::Tight );
             //
             //          1.1.    TOOL-SELECTOR CONTEXT MENU...
             const bool  tool_menu_open  = ImGui::BeginPopupContextItem(GetMenuID(PopupHandle::ToolSelection), ImGuiPopupFlags_MouseButtonLeft);
@@ -237,11 +240,13 @@ void Editor::_MECH_draw_controls(void)
         //
         ImGui::SameLine(0.0f, 0.0f);
         ImGui::SetNextItemWidth( WIDGET_SIZE.x );
-        if ( ImGui::Combo("##Editor_Controls_EditorState",      &mode_i,
-                          ms_EDITOR_STATE_NAMES.data(),         static_cast<int>(Mode::COUNT)) )
-        {
-            m_mode = static_cast<Mode>(mode_i);
-        }
+        ImGui::TextColored( this->S.SystemColor.White, "%s", this->ms_EDITOR_STATE_NAMES[ this->m_mode ] );
+        
+        
+        
+        //  if ( ImGui::Combo("##Editor_Controls_EditorState",      &mode_i,
+        //                    ms_EDITOR_STATE_NAMES.data(),         static_cast<int>(Mode::COUNT)) )
+        //  { m_mode = static_cast<Mode>(mode_i); }
         
         
         
@@ -401,20 +406,7 @@ void Editor::_MECH_draw_controls(void)
         }
         this->S.PopFont();
         ImGui::PopItemWidth();
-        
-        
-        
 
-
-
-        //      5.      CLEAR ALL...
-        //
-        ImGui::NextColumn();        this->S.column_label("Clear Data:");
-        if ( ImGui::Button("Clear", WIDGET_SIZE) ) {
-            ui::ask_ok_cancel( "Clear Data",
-                               "This action will erase all unsaved data in the current session.\nDo you wish to proceed?",
-                               [this]{ _clear_all(); } );
-        }
 
 
 
@@ -427,8 +419,32 @@ void Editor::_MECH_draw_controls(void)
 
 
 
-        //      X.      CANVAS SETTINGS...
-        this->S.column_label("Settings:");
+
+
+
+        //      X.1.    CLEAR ALL...
+        this->S.column_label("Clear Data:");
+        //
+        ImGui::PushItemWidth( BUTTON_SIZE.x );
+        this->S.PushFont(Font::Main);
+        {
+            if ( utl::IconButton(   "##Editor_Controls_ClearAllData"
+                                  , this->S.SystemColor.Red
+                                  , ICON_FA_TRASH_CAN
+                                  , Style.ms_TOOLBAR_ICON_SCALE ) )
+            {
+                ui::ask_ok_cancel( "Clear Data",
+                                   "This action will erase all data in the current session.\n\nDo you wish to proceed?",
+                                   [this]{ _clear_all(); } );
+            }
+        }
+        this->S.PopFont();
+        ImGui::PopItemWidth();
+
+
+
+        //      X.2.    CANVAS SETTINGS...
+        ImGui::NextColumn();        this->S.column_label("Settings:");
         //
         ImGui::PushItemWidth( BUTTON_SIZE.x );
         this->S.PushFont(Font::Main);
@@ -443,12 +459,6 @@ void Editor::_MECH_draw_controls(void)
         }
         this->S.PopFont();
         ImGui::PopItemWidth();
-        
-        
-        
-        //  if ( ImGui::Button("+", BUTTON_SIZE) ) {
-        //      ui::open_preferences_popup( GetMenuID(PopupHandle::Settings), [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
-        //  }
         
         
         
