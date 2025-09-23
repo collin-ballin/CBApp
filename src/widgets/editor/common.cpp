@@ -401,7 +401,7 @@ void Editor::copy_to_clipboard(void)
 
     // 2. bbox top-left for offset
     ImVec2 tl, br;
-    _selection_bounds(tl, br);
+    _selection_bounds(tl, br, this->m_render_ctx);
     m_clipboard.ref_ws = tl;
 
     // --- Paths ---

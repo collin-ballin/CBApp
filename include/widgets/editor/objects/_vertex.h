@@ -896,6 +896,9 @@ struct Vertex_t
     
 
     // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
     //      SETTER / GETTER FUNCTIONS.
     // *************************************************************************** //
     
@@ -934,11 +937,7 @@ struct Vertex_t
     [[nodiscard]] inline ImVec2 &       GetOutHandle                    (void) noexcept                     { return this->m_bezier._get_out_handle();      }
     
     
-
-    // *************************************************************************** //
-
-
-
+    
     // *************************************************************************** //
     //
     //
@@ -949,10 +948,23 @@ struct Vertex_t
     //  "UpdateCurvatureState"
     inline CurvatureState               UpdateCurvatureState            (void) const noexcept               { return this->m_bezier._update_curvature_state(); }
     
+    
+    
     // *************************************************************************** //
-
-
-
+    //
+    //
+    // *************************************************************************** //
+    //      VERTEX OPERATION FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "EffectiveOutHandle"
+    inline ImVec2                       EffectiveOutHandle              (void) const noexcept               { return ( this->IsOutLinear() )    ? ImVec2(0.0f, 0.0f)    : this->m_bezier.out_handle;    }
+    inline ImVec2                       EffectiveInHandle               (void) const noexcept               { return ( this->IsInLinear()  )    ? ImVec2(0.0f, 0.0f)    : this->m_bezier.in_handle;     }
+    
+    
+    // *************************************************************************** //
+    //
+    //
     // *************************************************************************** //
     //      RENDERING FUNCTIONS.
     // *************************************************************************** //
@@ -1001,8 +1013,6 @@ struct Vertex_t
         return;
     }
     
-    
-    
     //  "_render_vertex"
     template <typename VStyle>
     inline void                         _render_vertex                  (const ImVec2 & origin, VStyle & style) const noexcept
@@ -1013,10 +1023,11 @@ struct Vertex_t
     inline void                         _render_vertex_hovered          (const ImVec2 & origin, VStyle & style) const noexcept
     { style.dl->AddCircleFilled( style.ws_to_px(origin), style.data->vertex_radius, style.data->hovered_color, style.data->vertex_tesselation ); }
     
+
+
     // *************************************************************************** //
-
-
-
+    //
+    //
     // *************************************************************************** //
     //      UTILITY FUNCTIONS.
     // *************************************************************************** //
@@ -1034,6 +1045,7 @@ struct Vertex_t
 
 
 
+//
 //
 //
 // *************************************************************************** //

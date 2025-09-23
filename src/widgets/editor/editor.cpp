@@ -380,7 +380,7 @@ void Editor::_selbox_rebuild_view_if_needed([[maybe_unused]] const Interaction &
     const bool single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
 
     ImVec2 tl_tight{}, br_tight{};
-    if ( single_vertex_only || !_selection_bounds(tl_tight, br_tight) ) {
+    if ( single_vertex_only || !_selection_bounds(tl_tight, br_tight, this->m_render_ctx) ) {
         V.visible   = false;
         V.valid     = true;
         V.hover_idx = -1;
@@ -567,7 +567,7 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
     }
     if (selection_resident.info.visible) {
         ImVec2 tl, br;
-        if ( _selection_bounds(tl, br) ) {
+        if ( _selection_bounds(tl, br, this->m_render_ctx) ) {
             selection_resident.cfg.anchor_ws = { (tl.x + br.x) * 0.5f, tl.y }; // bottom-centre in world
         }
     }
@@ -823,7 +823,7 @@ inline void Editor::_handle_default(const Interaction & it)
     //  2.  BBOX HANDLE HOVER...
     if ( !m_boxdrag.active && m_hover_handle != -1 && ImGui::IsMouseClicked(ImGuiMouseButton_Left) ) {
         ImVec2 tl, br;
-        if ( _selection_bounds(tl, br) )
+        if ( _selection_bounds(tl, br, this->m_render_ctx) )
             { _start_bbox_drag(static_cast<uint8_t>(m_hover_handle), tl, br); }
     }
         

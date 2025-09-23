@@ -791,11 +791,227 @@ public:
     
     //  "insert_vertex_after"
     inline iterator                     insert_vertex_after                 (size_t seg_idx, vertex_id new_vid)
-    { return verts.insert(verts.begin() + seg_idx + 1, new_vid); }
+        { return verts.insert(verts.begin() + seg_idx + 1, new_vid); }
     
     //  "insert_vertex_between"
     //  inline iterator                     insert_vertex_between               (size_t seg_idx, vertex_id new_vid)
     //  { return verts.insert(verts.begin() + seg_idx + 1, new_vid); }
+        
+        
+    //  "_bezier_eval_ws"
+    //
+    static inline ImVec2 _bezier_eval_ws(const ImVec2& P0, const ImVec2& P1,
+                                         const ImVec2& P2, const ImVec2& P3, float t) noexcept
+    {
+        const float u   = 1.0f - t;
+        const float uu  = u * u;
+        const float tt  = t * t;
+        const float uuu = uu * u;
+        const float ttt = tt * t;
+
+        ImVec2 r;
+        r.x = uuu * P0.x + 3.0f * uu * t * P1.x + 3.0f * u * tt * P2.x + ttt * P3.x;
+        r.y = uuu * P0.y + 3.0f * uu * t * P1.y + 3.0f * u * tt * P2.y + ttt * P3.y;
+        return r;
+    }
+
+
+    //  "_quad_unit_roots"
+    //      Solve quadratic a t^2 + b t + c = 0 in (0,1); append valid roots to out[]
+    //
+    static inline void _quad_unit_roots(float a, float b, float c, float out[2], int& count) noexcept
+    {
+        const float     eps     = 1e-8f;
+        count                   = 0;
+
+        if ( fabsf(a) < eps )
+        {
+            const float t = -c / b;
+            
+            if ( fabsf(b) < eps )               { return; }
+            if ( (t > 0.0f)  &&  (t < 1.0f) )   { out[count++] = t; }
+            return;
+        }
+
+        const float D = b*b - 4.0f*a*c;
+        if (D < 0.0f)   { return; }
+
+        const float     sD      = sqrtf(std::max(D, 0.0f));
+        const float     inv2    = 0.5f / a;
+        float           t1      = (-b - sD) * inv2;
+        float           t2      = (-b + sD) * inv2;
+
+        if ( (t1 > 0.0f)  &&  (t1 < 1.0f) )     { out[count++] = t1; }
+        if ( (t2 > 0.0f)  &&  (t2 < 1.0f)  &&  (count == 0 || fabsf(t2 - out[0]) > 1e-6f) )
+            { out[count++] = t2; }
+            
+        return;
+    }
+
+
+    //  "_aabb_cubic_tight"
+    //      Axis-aligned tight AABB for one cubic segment by analytic extrema (endpoints + interior roots)
+    //
+    static inline void _aabb_cubic_tight(const ImVec2 & P0, const ImVec2 & P1,
+                                         const ImVec2 & P2, const ImVec2 & P3,
+                                         ImVec2 & tl_ws, ImVec2 & br_ws, bool & first) noexcept
+    {
+        auto add = [&](const ImVec2 & q)
+        {
+            if (first)  { tl_ws = br_ws = q; first = false; }
+            else
+            {
+                tl_ws.x = std::min(tl_ws.x, q.x);  tl_ws.y = std::min(tl_ws.y, q.y);
+                br_ws.x = std::max(br_ws.x, q.x);  br_ws.y = std::max(br_ws.y, q.y);
+            }
+        };
+
+        add(P0); add(P3);   //  Always include endpoints
+
+        //  For cubic B(t), the derivative component coefficients are quadratic:
+        //
+        //      B'(t)   = 3 * ( a t^2 + b t + c ) ; with,
+        //            a = -P0 + 3P1 - 3P2 + P3
+        //            b = 2*( P0 - 2P1 + P2 )
+        //            c = -P0 + P1
+        //
+        auto deriv_coeffs = [](float p0, float p1, float p2, float p3, float & a, float & b, float & c)
+        {
+            a = (-p0 + 3.0f*p1 - 3.0f*p2 + p3);
+            b = 2.0f*( p0 - 2.0f*p1 + p2 );
+            c = (-p0 + p1);
+        };
+
+        float ax, bx, cx, ay, by, cy;
+        deriv_coeffs( P0.x, P1.x, P2.x, P3.x, ax, bx, cx );
+        deriv_coeffs( P0.y, P1.y, P2.y, P3.y, ay, by, cy );
+
+        float tx[2]; int nx = 0; _quad_unit_roots(ax, bx, cx, tx, nx);
+        float ty[2]; int ny = 0; _quad_unit_roots(ay, by, cy, ty, ny);
+
+        for (int i = 0; i < nx; ++i)    { add( _bezier_eval_ws(P0, P1, P2, P3, tx[i]) ); }
+        for (int i = 0; i < ny; ++i)    { add( _bezier_eval_ws(P0, P1, P2, P3, ty[i]) ); }
+        
+        return;
+    }
+    /*
+    static inline void _aabb_cubic_tight(const ImVec2 & P0, const ImVec2 & P1,
+                                         const ImVec2 & P2, const ImVec2 & P3,
+                                         ImVec2 & tl_ws, ImVec2 & br_ws, bool & first) noexcept
+    {
+        auto add = [&](const ImVec2 & q)
+        {
+            if (first) { tl_ws = br_ws = q; first = false; }
+            else
+            {
+                tl_ws.x = std::min(tl_ws.x, q.x);  tl_ws.y = std::min(tl_ws.y, q.y);
+                br_ws.x = std::max(br_ws.x, q.x);  br_ws.y = std::max(br_ws.y, q.y);
+            }
+        };
+
+        //  Endpoints...
+        add(P0); add(P3);
+
+        //  Derivative coefficients per component:
+        //
+        //      B'(t)   = 3 * ( a t^2 + b t + c ) ; with,
+        //            a = -P0 + 3P1 - 3P2 + P3
+        //            b = 2*( P0 - 2P1 + P2 )
+        //            c = -P0 + P1
+        //
+        const auto deriv_coeffs = [](float P0, float P1, float P2, float P3, float & a, float & b, float & c) {
+            a = (-P0 + 3.0f*P1 - 3.0f*P2 + P3);
+            b = 2.0f*( P0 - 2.0f*P1 + P2 );
+            c = (-P0 + P1);
+        };
+
+        float ax, bx, cx, ay, by, cy;
+        deriv_coeffs( P0.x, P1.x, P2.x, P3.x, ax, bx, cx );
+        deriv_coeffs( P0.y, P1.y, P2.y, P3.y, ay, by, cy );
+
+        // Roots in (0,1) where x'(t)=0 and y'(t)=0
+        float tx[2]; int nx = 0; _quad_unit_roots(ax, bx, cx, tx, nx);
+        float ty[2]; int ny = 0; _quad_unit_roots(ay, by, cy, ty, ny);
+
+        // Evaluate candidates
+        for (int i = 0; i < nx; ++i)    { add( _bezier_eval_ws(P0, P1, P2, P3, tx[i]) ); }
+        for (int i = 0; i < ny; ++i)    { add( _bezier_eval_ws(P0, P1, P2, P3, ty[i]) ); }
+        
+        return;
+    }*/
+    
+    
+    //  "aabb_geometry_tight"
+    //
+    template <class CTX>
+    inline bool aabb_geometry_tight(const CTX & ctx, ImVec2 & tl_ws, ImVec2 & br_ws) const noexcept
+    {
+        constexpr auto &    cb              = ctx.callbacks; // cb.get_vertex(cb.vertices, id)
+        const size_t        N               = this->size();
+        bool                first           = true;
+        const bool          is_area         = this->IsArea();
+        const size_t        seg_cnt         = N - (is_area ? 0 : 1);
+        
+        
+        if ( N < 2 )        { return false; }
+
+
+        for (size_t si = 0; si < seg_cnt; ++si)
+        {
+            const vertex_id     a_id    = static_cast<vertex_id>( this->verts[si]           );
+            const vertex_id     b_id    = static_cast<vertex_id>( this->verts[(si + 1) % N] );
+
+            const auto* a = cb.get_vertex(cb.vertices, a_id);
+            const auto* b = cb.get_vertex(cb.vertices, b_id);
+            if (!a || !b) continue;
+
+            const ImVec2 P0{ a->x, a->y };
+            const ImVec2 P3{ b->x, b->y };
+            const ImVec2 P1{ a->x + a->m_bezier.out_handle.x, a->y + a->m_bezier.out_handle.y };
+            const ImVec2 P2{ b->x + b->m_bezier.in_handle.x,  b->y + b->m_bezier.in_handle.y  };
+
+            _aabb_cubic_tight(P0, P1, P2, P3, tl_ws, br_ws, first);
+        }
+        return !first;
+    }
+    
+    
+    //  "segment_control_points"
+    //
+    template<class CTX>
+    inline bool	segment_control_points( size_t si, ImVec2 & P0, ImVec2 & P1, ImVec2 & P2, ImVec2 & P3, const CTX & ctx ) const noexcept
+    {
+        const size_t        N           = this->size();
+        if ( N < 2 )                    { return false; }
+
+        const auto &        cb          = ctx.callbacks;
+        const vertex_id	    a_id        = static_cast<vertex_id>( this->verts[si]               );
+        const vertex_id	    b_id        = static_cast<vertex_id>( this->verts[(si + 1) % N]     );
+
+        const auto *	    a           = cb.get_vertex(cb.vertices, a_id);
+        const auto *	    b           = cb.get_vertex(cb.vertices, b_id);
+        if ( !a  ||  !b )               { return false; }
+
+
+        P0                              = ImVec2{ a->x, a->y };
+        P3                              = ImVec2{ b->x, b->y };
+
+        // Model-aware handles: use effective_* so "None" (linear) doesn't bloat bounds.
+        const ImVec2        out_eff     = a->EffectiveOutHandle();
+        const ImVec2        in_eff      = b->EffectiveInHandle();
+
+        if ( a->IsOutLinear()  &&  b->IsInLinear() )
+        {
+            P1 = P0;              // linear segment
+            P2 = P3;
+        }
+        else
+        {
+            P1 = ImVec2{ P0.x + out_eff.x, P0.y + out_eff.y };
+            P2 = ImVec2{ P3.x + in_eff.x,  P3.y + in_eff.y  };
+        }
+        return true;
+    }
         
         
         
@@ -898,6 +1114,47 @@ public:
     }
     
     
+    //  "aabb_control_hull"
+    template <class CTX>
+    inline bool                         aabb_control_hull                   (ImVec2 & tl_ws, ImVec2 & br_ws, const CTX & ctx) const noexcept
+    {
+        const auto &        cb              = ctx.callbacks; // cb.get_vertex(cb.vertices, id)
+        const size_t        N               = this->size();
+        auto                add_pt          = [&](const ImVec2& p) {
+            tl_ws.x = std::min(tl_ws.x, p.x);  tl_ws.y = std::min(tl_ws.y, p.y);
+            br_ws.x = std::max(br_ws.x, p.x);  br_ws.y = std::max(br_ws.y, p.y);
+        };
+        bool                first           = true;
+        auto                init            = [&](const ImVec2& p){ tl_ws = br_ws = p; first = false; };
+
+        const bool          is_area         = this->IsArea();
+        const size_t        seg_cnt         = N - (is_area ? 0 : 1);
+        
+        
+        if ( N < 2 )        { return false; }
+
+
+        for (size_t si = 0; si < seg_cnt; ++si)
+        {
+            const vertex_id     a_id    = static_cast<vertex_id>( this->verts[si]           );
+            const vertex_id     b_id    = static_cast<vertex_id>( this->verts[(si + 1) % N] );
+
+            const auto *        a       = cb.get_vertex(cb.vertices, a_id);
+            const auto *        b       = cb.get_vertex(cb.vertices, b_id);
+            if ( !a || !b )     { continue; }
+
+            const ImVec2 P0{ a->x, a->y };
+            const ImVec2 P3{ b->x, b->y };
+            const ImVec2 P1{ a->x + a->m_bezier.out_handle.x, a->y + a->m_bezier.out_handle.y };
+            const ImVec2 P2{ b->x + b->m_bezier.in_handle.x,  b->y + b->m_bezier.in_handle.y  };
+
+            if (first) { init(P0); }
+            add_pt(P0); add_pt(P1); add_pt(P2); add_pt(P3);
+        }
+        return !first;
+    }
+    
+    
     
     // *************************************************************************** //
     //
@@ -916,14 +1173,11 @@ public:
         const size_t        N                   = this->size();
 
 
-
         //  Fast-outs: visibility, topology, alpha
         const bool          dont_render         = ( !this->IsVisible()  &&  !this->IsArea()  &&  !this->FillIsVisible() );
         
         
-        
         if ( dont_render )                      { return; }
-
 
         dl->PathClear();
 
@@ -1017,6 +1271,55 @@ public:
         const auto &        callbacks	    = ctx.callbacks;
         ImDrawList *        dl			    = ctx.args.dl;
         const size_t        N			    = this->verts.size();
+        const int           segs	        = (ctx.args.bezier_segments > 0) ? ctx.args.bezier_segments : 0; // 0 = ImGui auto
+
+
+        // Local helper: draw one segment a -> b (straight or cubic)
+        auto                draw_seg_si     = [&](size_t si)
+        {
+            ImVec2 P0, P1, P2, P3;
+            if ( !this->segment_control_points(si, P0, P1, P2, P3, ctx) )   { return; }
+
+            // Linear iff effective control points coincide with endpoints
+            const bool linear = (P1.x == P0.x && P1.y == P0.y &&
+                                 P2.x == P3.x && P2.y == P3.y);
+
+            const ImVec2 A = ctx.callbacks.ws_to_px(P0);
+            const ImVec2 B = ctx.callbacks.ws_to_px(P3);
+
+            if (linear) {
+                dl->AddLine(A, B, this->style.stroke_color, this->style.stroke_width);
+            }
+            else {
+                const ImVec2 Q1 = ctx.callbacks.ws_to_px(P1);
+                const ImVec2 Q2 = ctx.callbacks.ws_to_px(P2);
+                dl->AddBezierCubic(A, Q1, Q2, B,
+                                   this->style.stroke_color,
+                                   this->style.stroke_width,
+                                   segs);
+            }
+        };
+
+
+        //  Open chain
+        for (size_t i = 0; i + 1 < N; ++i)
+            draw_seg_si(i);
+
+        //  Close the loop if needed
+        if (this->closed)
+            draw_seg_si(N - 1);
+        
+        return;
+    }
+    
+    
+    
+    /*template<class CTX>
+    inline void	                        render_stroke                       (const CTX & ctx) const noexcept
+    {
+        const auto &        callbacks	    = ctx.callbacks;
+        ImDrawList *        dl			    = ctx.args.dl;
+        const size_t        N			    = this->verts.size();
 
         const int           segs	        = (ctx.args.bezier_segments > 0) ? ctx.args.bezier_segments : 0; // 0 = ImGui auto
 
@@ -1071,7 +1374,7 @@ public:
         }
         
         return;
-    }
+    }*/
     
     
     

@@ -686,7 +686,7 @@ inline void Editor::_render_selection_bbox(ImDrawList * dl) const
     if (single_vertex_only) return;
 
     ImVec2 tl_tight, br_tight;
-    if (!_selection_bounds(tl_tight, br_tight)) { m_hover_handle = -1; return; }
+    if (!_selection_bounds(tl_tight, br_tight, this->m_render_ctx)) { m_hover_handle = -1; return; }
 
     // NEW: robust expansion (pixel-space min/max)
     const auto [tl, br] = _expand_bbox_by_pixels(tl_tight, br_tight, this->m_style.SELECTION_BBOX_MARGIN_PX);
@@ -730,7 +730,7 @@ inline void Editor::_render_selection_bbox(ImDrawList * dl) const
     if ( single_vertex_only )               { return; }
 
     ImVec2      tl, br;
-    if ( !_selection_bounds(tl, br) )       { m_hover_handle = -1; return; }
+    if ( !_selection_bounds(tl, br, this->m_render_ctx) )       { m_hover_handle = -1; return; }
 
     auto        ws2px       = [this](ImVec2 w){ return world_to_pixels(w); };
     ImVec2      p0          = ws2px(tl);

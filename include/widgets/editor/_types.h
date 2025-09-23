@@ -213,6 +213,12 @@ static constexpr cblib::EnumArray< ObjectTrait, const char * >
         "Properties",       "Vertices",         "Payload"
 } };
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+
 
 
 
@@ -225,6 +231,102 @@ static constexpr cblib::EnumArray< ObjectTrait, const char * >
 //      3.      EDITOR "TOOL-STATE" INFORMATION...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "EditorSelectionBits"
+//
+enum class EditorSelectionBits : uint8_t {
+      Handles           = 0
+    , Vertices          = 1
+    , Edges             = 2
+    , Surfaces          = 3
+//
+    , _UNUSED_1         = 4
+    , _UNUSED_2         = 5
+    , _UNUSED_3         = 6
+//
+//  INTERNAL...
+    , Lock              = 7
+    , COUNT             = 8
+};
+
+
+//  "CBEditorSelectionFlags_"
+//
+enum class CBEditorSelectionFlags : uint8_t {
+      None              = 0
+    , Handles           = 1u << static_cast<uint8_t>(  EditorSelectionBits::Handles     )
+    , Vertices          = 1u << static_cast<uint8_t>(  EditorSelectionBits::Vertices    )
+    , Edges             = 1u << static_cast<uint8_t>(  EditorSelectionBits::Edges       )
+    , Surfaces          = 1u << static_cast<uint8_t>(  EditorSelectionBits::Surfaces    )
+//
+//
+    , Lock              = 1u << static_cast<uint8_t>(  EditorSelectionBits::Lock        )
+    , COUNT
+};
+
+
+//      BITWISE OPERATORS FOR ENUM CLASS...
+
+
+
+//  "SelectionMask"
+//
+template<class MaskT = uint8_t, class TagE = EditorSelectionBits>
+struct SelectionMask
+{
+    using underlying_tag_t = std::underlying_type_t<TagE>;
+    static_assert( std::is_integral_v<MaskT> && std::is_unsigned_v<MaskT>,      "MaskT must be an unsigned integral type"   );
+    static_assert( std::is_enum_v<TagE>,                                        "TagE must be an enum type"                 );
+
+
+    MaskT value {0};
+
+    // --- compile-time helpers
+    static constexpr int  digits()               noexcept { return std::numeric_limits<MaskT>::digits; }
+    static constexpr MaskT msb_mask()            noexcept { return MaskT(1) << (digits() - 1); }
+    static constexpr bool is_lock(TagE e)        noexcept { return e == TagE::Lock; }
+
+    // Map a Tag to its mask. Lock → MSB; others → 1 << index.
+    static constexpr MaskT bit(TagE e) noexcept {
+        if (is_lock(e)) return msb_mask();
+        const auto idx = static_cast<underlying_tag_t>(e);
+        // Guard: if someone defines a tag index beyond available user bits, map to 0.
+        return (idx >= static_cast<underlying_tag_t>(digits() - 1))
+                 ? MaskT(0)
+                 : (MaskT(1) << idx);
+    }
+
+    // --- core ops
+    constexpr void set(TagE e)                  noexcept { value |=  bit(e); }
+    constexpr void clear(TagE e)                noexcept { value &= ~bit(e); }
+    constexpr void toggle(TagE e)               noexcept { value ^=  bit(e); }
+    constexpr bool test(TagE e)           const noexcept { return (value & bit(e)) != 0; }
+
+    // bulk convenience
+    constexpr void set_all(std::initializer_list<TagE> tags) noexcept {
+        for (auto t : tags) set(t);
+    }
+    constexpr void clear_all(std::initializer_list<TagE> tags) noexcept {
+        for (auto t : tags) clear(t);
+    }
+
+    // --- lock (gate) semantics
+    constexpr void set_locked(bool on)          noexcept { on ? value |= msb_mask()
+                                                             : value &= ~msb_mask(); }
+    constexpr bool is_locked()            const noexcept { return (value & msb_mask()) != 0; }
+
+    // When locked, return (fallback | MSB). Otherwise, return user value as-is.
+    constexpr MaskT effective(MaskT fallback) const noexcept {
+        return is_locked() ? MaskT(fallback | msb_mask()) : value;
+    }
+
+    // explicit masks for clarity (computed once)
+    static constexpr MaskT user_bits_mask() noexcept {
+        // All bits except MSB (lock)
+        return (digits() == 0) ? MaskT(0) : MaskT(~msb_mask());
+    }
+    static constexpr MaskT lock_mask()     noexcept { return msb_mask(); }
+};
 
 
 

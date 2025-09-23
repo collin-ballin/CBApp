@@ -46,99 +46,22 @@
 #ifndef _CBLIB_MATH_UTILITY_H
 # include "templates/math/_utility.h"
 #endif	// _CBLIB_MATH_UTILITY_H  //
-	
+
+
+
 #ifndef _CBLIB_MATH_VECTORS_H
 # include "templates/math/_vectors.h"
 #endif	// _CBLIB_MATH_VECTORS_H  //
+	
+#ifndef _CBLIB_MATH_BEZIER_H
+# include "templates/math/_bezier.h"
+#endif	// _CBLIB_MATH_BEZIER_H  //
 
 //
 //
 //
 // *************************************************************************** //
 // *************************************************************************** //   END "MODULE HEADERS".
-
-
-
-
-
-
-namespace cblib { namespace math {   //     BEGINNING NAMESPACE "cblib" :: "math"...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-//  1.  GENERAL MATH STUFF...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-//  1.  MATH STUFF...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "is_close"
-//  checks if two floating-point values are close within
-//  an absolute tolerance and/or a relative tolerance.
-//  T must be a floating-point type; abs_tol and rel_tol are non-type template params
-//  Optimized via if constexpr to strip unused branches, constexpr for compile-time use,
-//  noexcept and [[nodiscard]] for clarity.
-//
-/*
-template<
-#if __cpp_concepts >= 201907L
-    std::floating_point T,
-#else
-    typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>,
-#endif
-    T AbsTol = static_cast<T>(1e-9),
-    T RelTol = static_cast<T>(0)
->
-[[nodiscard]]
-inline constexpr bool is_close(T a, T b) noexcept {
-    static_assert(AbsTol >= static_cast<T>(0), "abs_tol must be non-negative");
-    static_assert(RelTol >= static_cast<T>(0), "rel_tol must be non-negative");
-
-    T diff = std::fabs(a - b);
-    if constexpr (RelTol == static_cast<T>(0))      // only absolute tolerance
-    { return diff <= AbsTol; }
-    T max_ab = std::max(std::fabs(a), std::fabs(b));
-    T max_diff = std::max(RelTol * max_ab, AbsTol);
-    return diff <= max_diff;
-}
-*/
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//  2.  HELPFUL MATH OBJECTS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-} }//   END OF "cblib" :: "math" NAMESPACE.
-
 
 
 

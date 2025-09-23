@@ -422,17 +422,6 @@ void ControlBar::draw_all(void)
         }
         this->S.PopFont();
         //  ImGui::SameLine(0, ms_BIG_ITEM_PAD);
-        //
-        //
-        //
-        //      3.      TOGGLE BETWEEN BROWSER / SYS. PREFERENCES...
-        ImGui::NextColumn();
-        ImGui::BeginDisabled( !this->S.m_show_browser_window );
-        if ( ImGui::Button( (this->S.m_show_system_preferences) ? "Browser##ControlBar" : "Preferences##ControlBar", ImVec2(120, BUTTON_SIZE.y)) )
-        {
-            this->S.m_show_system_preferences       = !this->S.m_show_system_preferences;
-        }
-        ImGui::EndDisabled();
 
 
 

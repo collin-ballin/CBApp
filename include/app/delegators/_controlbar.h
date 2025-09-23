@@ -94,7 +94,7 @@ public:
     //
     //                                      CONFIGURATION:
     static constexpr const char *               ms_UUID                             = "##Controlbar_ControlsColumns";
-    static constexpr int                        ms_NC                               = 9;    //  # Entries in Column.
+    static constexpr int                        ms_NC                               = 10;    //  # Entries in Column.
     static constexpr int                        ms_NE                               = 4;    //  # Entries at END of Columns.
     //
     //

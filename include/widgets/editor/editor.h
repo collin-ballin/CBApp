@@ -841,7 +841,7 @@ protected:
     void                                _rebuild_vertex_selection           (void);   // decl
     //
     //                              SELECTION HIGHLIGHT / USER-INTERACTION / APPEARANCE:
-    bool                                _selection_bounds                   (ImVec2 & tl, ImVec2 & br) const;
+    bool                                _selection_bounds                   (ImVec2 & tl, ImVec2 & br, const RenderCTX & ) const;
     //
     //                              BOUNDING BOX MECHANICS:
     void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 tl, const ImVec2 br);
