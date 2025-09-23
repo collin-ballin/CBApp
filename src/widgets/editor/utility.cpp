@@ -41,20 +41,37 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 std::optional<Editor::EndpointInfo> Editor::_endpoint_if_open(VertexID vid) const
 {
-    const PathID    N   = static_cast<PathID>( m_paths.size() );
+    using           size_type   = Path::size_type;
+    const PathID    N           = static_cast<PathID>( m_paths.size() );
+    
     
     for (PathID i = 0; i < N; ++i)
     {
-        const Path &    p   = m_paths[i];
+        const Path &        path        = m_paths[i];
+        const size_type     M           = path.size();
         
-        if ( p.closed || p.verts.empty() )      { continue; }
-        if ( p.verts.front() == vid )           { return EndpointInfo{ i, /*prepend=*/true  };  }
-        if ( p.verts.back () == vid )           { return EndpointInfo{ i, /*prepend=*/false };  }
+        
+        //  CASE 1 :    SKIP THIS PATH...
+        if ( path.IsArea()  ||  (M < 2) ) {
+            continue;
+        }
+        
+        //  CASE 2 :    THIS ENDPOINT WAS THE LAST ENDPOINT WE PLACED...
+        if ( this->m_pen.active  &&  this->m_pen.last_vid == vid ) {
+            continue;
+        }
+        
+        
+        if ( path.verts.front() == vid )    { return EndpointInfo{ i, /*prepend=*/true  };  }
+        if ( path.verts.back () == vid )    { return EndpointInfo{ i, /*prepend=*/false };  }
     }
+    
+    
     return std::nullopt;
 }
 
 
+//
 //
 //
 // *************************************************************************** //
@@ -95,6 +112,30 @@ Editor::VertexID Editor::_add_vertex(ImVec2 w) {
     m_vertices.push_back({ m_next_id++, w.x, w.y });
     return m_vertices.back().id;
 }
+
+
+
+
+//  "_add_vertex_return_reference"
+//
+Editor::Vertex & Editor::_add_vertex_return_reference(ImVec2 w) noexcept
+{
+    w = snap_to_grid(w);                       // <- snap if enabled
+    m_vertices.push_back({ m_next_id++, w.x, w.y });
+    return m_vertices.back();
+}
+
+
+//  "_add_vertex_return_const_reference"
+//
+const Editor::Vertex & Editor::_add_vertex_return_const_reference(ImVec2 w) noexcept
+{
+    w = snap_to_grid(w);                       // <- snap if enabled
+    m_vertices.push_back({ m_next_id++, w.x, w.y });
+    return m_vertices.back();
+}
+
+
 
 
 //  "_add_point"

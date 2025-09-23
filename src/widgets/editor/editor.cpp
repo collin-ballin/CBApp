@@ -749,14 +749,15 @@ inline void Editor::_handle_default(const Interaction & it)
 {
     [[maybe_unused]] ImGuiIO & io = ImGui::GetIO();
 
-    // 0) Bezier control-handle drag (Alt + LMB) — unchanged
-    if ( _try_begin_handle_drag(it) ) {
-        _pen_update_handle_drag(it);                 // keep guide visible on first frame
-        return;                                      // skip selection & other handlers this frame
-    }
+    //      0.      Bezier control-handle drag (Alt + LMB) — unchanged
+    //  if ( _try_begin_handle_drag(it) )
+    //  {
+    //      _pen_update_handle_drag(it);                 // keep guide visible on first frame
+    //      return;                                      // skip selection & other handlers this frame
+    //  }
 
 
-    //  1.   EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
+    //      1.      EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
     if ( !m_boxdrag.active
          && _mode_has(CBCapabilityFlags_Select)
          && m_boxdrag.view.visible
@@ -771,21 +772,19 @@ inline void Editor::_handle_default(const Interaction & it)
     }
 
 
-    // 2) Active BBox drag — update and exit early
+    //      2.      Active BBox drag — update and exit early
     if ( m_boxdrag.active ) {
         _update_bbox();
         return;                                      // while dragging, ignore other inputs
     }
 
 
-    // 3) Ignore input while Space (camera pan) is held
-    if (it.space) {
-        return;
-    }
+    //      3.      Ignore input while Space (camera pan) is held
+    if ( it.space )     { return; }
 
 
-    // 4) Lasso start (selection engine) — only when not over a handle or other hit
-    if (_mode_has(CBCapabilityFlags_Select)
+    //      4.      Lasso start (selection engine) — only when not over a handle or other hit
+    if ( _mode_has(CBCapabilityFlags_Select )
         && !m_lasso_active
         && it.hovered
         && ImGui::IsMouseClicked(ImGuiMouseButton_Left)
@@ -796,8 +795,9 @@ inline void Editor::_handle_default(const Interaction & it)
     }
 
 
-    // 5) Lasso update — unchanged
-    if (m_lasso_active) {
+    //      5.      Lasso update — unchanged
+    if (m_lasso_active)
+    {
         _update_lasso(it);
         return;
     }
@@ -863,104 +863,6 @@ inline void Editor::_handle_hand([[maybe_unused]] const Interaction & it)
 }
 
 
-
-//  "_handle_line"
-//
-inline void Editor::_handle_line(const Interaction & it)
-{
-    if (it.space) return; // ignore while panning
-
-    ImVec2 w = { it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
-
-    // 1) Begin a brand‑new line/path on LMB press
-    if (it.hovered && !m_drawing && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-    {
-        uint32_t a = _add_vertex(w);
-        uint32_t b = _add_vertex(w);
-        // Create visible anchor glyphs so the endpoints behave like legacy points
-        m_points.push_back({ a, { m_style.COL_POINT_DEFAULT, m_style.DEFAULT_POINT_RADIUS, true } });
-        m_points.push_back({ b, { m_style.COL_POINT_DEFAULT, m_style.DEFAULT_POINT_RADIUS, true } });
-
-        // Legacy Line container (kept for now)
-        // m_lines.push_back({ a, b });
-
-        // NEW: provisional Path (open polyline of length 2)
-        Path p;
-        p.verts = { a, b };
-        p.closed = false;
-        m_paths.push_back(std::move(p));
-
-        m_drawing = true;
-    }
-
-    // 2) Rubber‑band the second vertex while the mouse is down
-    if (m_drawing)
-    {
-        // Update the Path’s second vertex while rubber‑banding
-        Path& last_path = m_paths.back();
-        if (last_path.verts.size() >= 2)
-        {
-            if (Vertex* v = find_vertex(m_vertices, last_path.verts[1]))
-            {
-                v->x = w.x; v->y = w.y;
-            }
-        }
-
-        // 3) Commit once the mouse button is released
-        if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
-            m_drawing = false;
-    }
-}
-
-
-//  "_handle_point"
-//
-inline void Editor::_handle_point(const Interaction& it)
-{
-    // handle-drag branch (unchanged)
-    if (m_pen.dragging_handle) {
-        _pen_update_handle_drag(it);
-        return;
-    }
-
-    // ── Click logic ──────────────────────────────────────────────────────
-    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && it.hovered)
-    {
-        // (A) If a path is already live → append / close as usual
-        if (m_pen.active) {
-            _pen_append_or_close_live_path(it);
-            return;
-        }
-
-        // (B) No live path: did we click on an existing point?
-        int pi = _hit_point(it);
-        if (pi >= 0) {
-            uint32_t vid = m_points[pi].v;
-            if (auto idx = _path_idx_if_last_vertex(vid)) {
-                // Continue that path on the NEXT click
-                m_pen.active     = true;
-                m_pen.path_index = *idx;
-                m_pen.last_vid   = vid;
-                return;          // wait for next click to add a vertex
-            }
-        }
-
-        // (C) Otherwise start a brand-new path
-        ImVec2 ws{ it.canvas.x / m_cam.zoom_mag, it.canvas.y / m_cam.zoom_mag };
-        uint32_t vid = _add_vertex(ws);
-        _add_point_glyph(vid);
-
-        Path p;
-        p.verts.push_back(vid);
-        m_paths.push_back(std::move(p));
-
-        m_pen.active     = true;
-        m_pen.path_index = m_paths.size() - 1;
-        m_pen.last_vid   = vid;
-    }
-}
-
-
 //  "_handle_pen"
 //
 inline void Editor::_handle_pen(const Interaction& it)
@@ -1015,7 +917,7 @@ inline void Editor::_handle_pen(const Interaction& it)
     // ───── C.  Alt‑mode : edit existing handles (no new vertices)
     if ( alt_down() )
     {
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && it.hovered)
+        if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left)  &&  it.hovered )
         {
             int pi = _hit_point(it);
             if ( pi >= 0 )
@@ -1038,11 +940,14 @@ inline void Editor::_handle_pen(const Interaction& it)
     int         pt_idx          = _hit_point(it);
     if ( pt_idx >= 0 )
     {
-        uint32_t vid = m_points[pt_idx].v;
-        if ( auto ep = _endpoint_if_open(vid) ) {
+        uint32_t    vid         = m_points[pt_idx].v;
+        auto        endpoint    = _endpoint_if_open(vid);
+        
+        if ( endpoint.has_value() )
+        {
             can_extend = true;
-            prepend    = ep->prepend;
-            end_path   = ep->path_idx;
+            prepend    = endpoint->prepend;
+            end_path   = endpoint->path_idx;
         }
     }
 
@@ -1058,7 +963,7 @@ inline void Editor::_handle_pen(const Interaction& it)
     // ───── E. Mouse‑click handling
     if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left)  &&  it.hovered )
     {
-        // (1) Pick open endpoint to continue
+        //      (1)     Pick open endpoint to continue
         if ( can_extend  &&  !m_pen.active )
         {
             m_pen.active     = true;
@@ -1067,36 +972,44 @@ inline void Editor::_handle_pen(const Interaction& it)
             return;                                 // wait for next click
         }
 
-        // (2) Live path exists → append / prepend / close
+        //      (2)     Live path exists → append / prepend / close
         if ( m_pen.active )
         {
             _pen_append_or_close_live_path(it);     // updates m_pen.last_vid
 
-            // Allow click‑hold curvature on the vertex we just added
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+            //  Allow click‑hold curvature on the vertex we just added
+            if ( ImGui::IsMouseDown(ImGuiMouseButton_Left) )
+            {
                 m_pen.pending_handle = true;
                 m_pen.pending_vid    = m_pen.last_vid;
             }
             return;
         }
 
-        // (3) Start a brand‑new path
-        ImVec2          ws      = pixels_to_world(io.MousePos);   // NEW conversion
-        VertexID        vid     = _add_vertex(ws);
-        _add_point_glyph(vid);
+        //      (3)     Start a brand‑new path
+        ImVec2                      ws          = pixels_to_world(io.MousePos);   // NEW conversion
+        //
+        //  VertexID        vid     = _add_vertex(ws);
+        //
+        Vertex &                    vertex      = _add_vertex_return_reference(ws);
+        vertex.SetCurvatureType     (BezierCurvatureType::Cubic);
+        const VertexID &            vid         = vertex.id;
+        _add_point_glyph            (vid);
+        //
 
         Path            p;
-        p.set_default_label(this->m_next_pid++);    // unique PathID
-        p.verts.push_back(vid);
-        m_paths.push_back(std::move(p));
+        p.set_default_label     (this->m_next_pid++);    // unique PathID
+        p.verts.push_back       (vid);
+        m_paths.push_back       (std::move(p));
 
         m_pen.active            = true;
         m_pen.path_index        = m_paths.size() - 1;
         m_pen.last_vid          = vid;
         m_pen.prepend           = false;
 
-        //  Possible click‑hold curvature on first segment
-        if ( ImGui::IsMouseDown(ImGuiMouseButton_Left) ) {
+        //      Possible click‑hold curvature on first segment
+        if ( ImGui::IsMouseDown(ImGuiMouseButton_Left) )
+        {
             m_pen.pending_handle    = true;
             m_pen.pending_vid       = vid;
         }
@@ -1155,7 +1068,8 @@ inline void Editor::_handle_add_anchor([[maybe_unused]] const Interaction & it)
                             m_style.VERTEX_PREVIEW_COLOR,       m_style.ms_VERTEX_NUM_SEGMENTS );
     //
     //  CASE 2 :    INSERT VERTEX   (Check condition TWICE so we can use the preview as an accurate reference)...
-    if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left) ) {
+    if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
+    {
         vid                                     = _add_vertex(p_hit->pos_ws);               //  Add new vertex...
         _add_point_glyph(vid);
         path->insert_vertex_after(p_hit->seg_idx, vid);                                     //  Insert into path right after seg_idx...
@@ -1206,7 +1120,8 @@ inline void Editor::_handle_remove_anchor([[maybe_unused]] const Interaction & i
     _erase_vertex_record_only(vid);                // helper: removes from m_vertices & handles
 
     //  5.  Repair path topology; if path now invalid, drop it entirely
-    if ( !path->remove_vertex(vid) ) {
+    if ( !path->remove_vertex(vid) )
+    {
         m_paths.erase( std::remove_if(m_paths.begin(), m_paths.end(),    //  Path has <2 verts; erase it from m_paths
                        [path](const Path& p){ return &p == path; }),
                        m_paths.end() );
@@ -1224,41 +1139,47 @@ inline void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
 {
     [[maybe_unused]] ImGuiIO & io = ImGui::GetIO();
 
-    auto select_vertex = [&](uint32_t vid)
+    auto select_vertex = [&](VertexID vid)
     {
         this->reset_selection();    // m_sel.clear();
         m_sel.vertices.insert(vid);
 
         // also select matching Point glyph so _render_selected_handles() knows which one
-        for (size_t i = 0; i < m_points.size(); ++i)
-            if (m_points[i].v == vid) { m_sel.points.insert(i); break; }
+        for (size_t i = 0; i < m_points.size(); ++i) {
+            if (m_points[i].v == vid)   { m_sel.points.insert(i); break; }
+        }
+        return;
     };
 
-    // 1. continue an active handle drag
-    if (m_dragging_handle) {
+
+    //      1.      continue an active handle drag
+    if ( m_dragging_handle )
+    {
         _pen_update_handle_drag(it);
         return;
     }
 
-    // 2. left-click on an existing handle square  → begin drag
-    if (_try_begin_handle_drag(it)) {
+    //      2.      left-click on an existing handle square  → begin drag
+    if ( _try_begin_handle_drag(it) )
+    {
         select_vertex(m_drag_vid);            // make its handles visible
         _pen_update_handle_drag(it);          // draw guide first frame
         return;
     }
 
-    // 3. left-click on a vertex  → pull / edit its out_handle
-    if (it.hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+    //      3.      left-click on a vertex  → pull / edit its out_handle
+    if ( it.hovered  &&  ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
+    {
         int pi = _hit_point(it);              // glyph index under cursor
-        if (pi >= 0) {
-            uint32_t vid       = m_points[pi].v;
+        if (pi >= 0)
+        {
+            VertexID    vid         = m_points[pi].v;
             select_vertex(vid);
 
-            m_dragging_handle  = true;
-            m_drag_vid         = vid;
-            m_dragging_out     = true;        // start with out_handle
-            if (Vertex * v = find_vertex_mut(m_vertices, vid))
-                v->m_bezier.out_handle  = ImVec2(0,0); // make handle distinct from anchor
+            m_dragging_handle       = true;
+            m_drag_vid              = vid;
+            m_dragging_out          = true;        // start with out_handle
+            if ( Vertex * v = find_vertex_mut(m_vertices, vid) )    { v->m_bezier.out_handle  = ImVec2(0,0); } // make handle distinct from anchor
 
             return;                           // drag continues next frame
         }
@@ -1268,6 +1189,7 @@ inline void Editor::_handle_edit_anchor([[maybe_unused]] const Interaction & it)
     return;
 }
 
+//
 //
 //
 // *************************************************************************** //

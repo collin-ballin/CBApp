@@ -615,8 +615,6 @@ protected:
     inline void                         _handle_default                     (const Interaction & );
     //
     inline void                         _handle_hand                        ([[maybe_unused]] const Interaction & );
-    inline void                         _handle_line                        (const Interaction & );
-    inline void                         _handle_point                       (const Interaction & );
     inline void                         _handle_pen                         (const Interaction & );
     inline void                         _handle_scissor                     (const Interaction & );
     inline void                         _handle_add_anchor                  ([[maybe_unused]] const Interaction & );
@@ -928,7 +926,10 @@ protected:
     //
     //                              DATA MODIFIER UTILITIES
     void                                _add_point_glyph                    (VertexID vid);
-    VertexID                            _add_vertex                         (ImVec2 w);
+    VertexID                            _add_vertex                         (ImVec2);
+    Vertex &                            _add_vertex_return_reference        (ImVec2) noexcept;
+    const Vertex &                      _add_vertex_return_const_reference  (ImVec2) noexcept;
+    //
     void                                _add_point                          (ImVec2 w);
     void                                _erase_vertex_and_fix_paths         (VertexID vid);
     void                                _erase_path_and_orphans             (VertexID vid);
@@ -2099,29 +2100,34 @@ static inline ImVec2 vec_norm(const ImVec2 & v)
 template< typename ID, typename Vertex = Vertex_t<ID> >
 inline void mirror_handles(Vertex & v, bool dragged_out_handle) noexcept
 {
-    ImVec2 &    h_dragged   = (dragged_out_handle)  ? v.m_bezier.out_handle     : v.m_bezier.in_handle;
-    ImVec2 &    h_other     = (dragged_out_handle)  ? v.m_bezier.in_handle      : v.m_bezier.out_handle;
+    ImVec2 &        h_dragged       = (dragged_out_handle)  ? v.m_bezier.out_handle     : v.m_bezier.in_handle;
+    ImVec2 &        h_other         = (dragged_out_handle)  ? v.m_bezier.in_handle      : v.m_bezier.out_handle;
+
 
     switch (v.m_bezier.kind)
     {
-        case BezierCurvatureType::None: {
-            /* no coupling */ break;
-        }
-
-        case BezierCurvatureType::Smooth: {
+        case BezierCurvatureType::Other:
+        {
             const float  len    = vec_len(h_other);          // preserve length
             const ImVec2 dir    = vec_norm(h_dragged);
             h_other             = ImVec2{ -dir.x * len, -dir.y * len };
             break;
         }
 
-        case BezierCurvatureType::Symmetric:     {
+        case BezierCurvatureType::Cubic:
+        {
             h_other = ImVec2{ -h_dragged.x, -h_dragged.y };
             break;
         }
         
-        default :                       { IM_ASSERT( false && "Function __func__ called with unknown AnchorType" ); }   //  Quiet the warning.
+        //  case BezierCurvatureType::None :
+        default :                       //  { IM_ASSERT( false && "Function __func__ called with unknown AnchorType" ); }   //  Quiet the warning.
+        {
+            break;
+        }
     }
+    
+    return;
 }
 
 

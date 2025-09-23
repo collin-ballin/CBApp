@@ -339,10 +339,10 @@ struct VertexStyle
 // *************************************************************************** //
 
 //  "BezierCurvatureType"
-enum class BezierCurvatureType : uint8_t            { None = 0,     Smooth,     Symmetric,      COUNT };
+enum class BezierCurvatureType : uint8_t                { None = 0,     Quadratic,      Cubic,      Other,      COUNT   };
 //
 static constexpr cblib::EnumArray <BezierCurvatureType, const char *>
-DEF_BEZIER_CURVATURE_TYPE_NAMES                     = { "None",       "Smooth",       "Symmetric" };
+DEF_BEZIER_CURVATURE_TYPE_NAMES                         = { "None",     "Quadratic",    "Cubic" ,   "Other"             };
 
 
 
@@ -438,20 +438,14 @@ struct BezierControl
     
     
     //  "_set_in_handle"
+    inline void                         _set_in_handle                  (const float  ih_x_, const float  ih_y_) noexcept       {  this->_set_in_handle( ImVec2{ih_x_, ih_y_} );  }
+    inline void                         _set_in_handle                  (const double ih_x_, const double ih_y_) noexcept
+        {  this->_set_in_handle( ImVec2{static_cast<float>(ih_x_), static_cast<float>(ih_y_)} );  }
+    //
     inline void                         _set_in_handle                  (const ImVec2 & ih_) & noexcept
     {
         switch (this->kind)
         {
-            //      1.          Smooth.
-            case CurvatureType::Smooth : {
-                this->in_handle = ih_;
-                break;
-            }
-            //      2.          Symmetric.
-            case CurvatureType::Symmetric : {
-                this->in_handle = ih_;
-                break;
-            }
             //      DEFAULT:    None.
             default : {
                 this->in_handle = ih_;
@@ -464,21 +458,16 @@ struct BezierControl
     }
     
     
+    
     //  "_set_out_handle"
+    inline void                         _set_out_handle                 (const float  oh_x_, const float  oh_y_) noexcept       {  this->_set_out_handle( ImVec2{oh_x_, oh_y_} );  }
+    inline void                         _set_out_handle                 (const double oh_x_, const double oh_y_) noexcept
+        {  this->_set_out_handle( ImVec2{static_cast<float>(oh_x_), static_cast<float>(oh_y_)} );  }
+    //
     inline void                         _set_out_handle                 (const ImVec2 & oh_) & noexcept
     {
         switch (this->kind)
         {
-            //      1.          Smooth.
-            case CurvatureType::Smooth : {
-                this->out_handle = oh_;   this->_update_curvature_state();
-                break;
-            }
-            //      2.          Symmetric.
-            case CurvatureType::Symmetric : {
-                this->out_handle = oh_;   this->_update_curvature_state();
-                break;
-            }
             //      DEFAULT:    None.
             default : {
                 this->out_handle = oh_;   this->_update_curvature_state();
@@ -911,13 +900,24 @@ struct Vertex_t
     inline void                         SetCurvatureType                (CurvatureType kind_) noexcept      { return m_bezier._set_curvature_type(kind_);   }
     
     //  "SetPosition"
-    inline void                         SetXYPosition                   (const ImVec2 & pos_) & noexcept    { this->x = pos_.x; this->y = pos_.y;           }
+    inline void                         SetXYPosition                   (const ImVec2 & pos_) & noexcept                { this->x = pos_.x; this->y = pos_.y;   }
+    inline void                         SetXYPosition                   (const float  x_, const float  y_) noexcept     { this->x = x_; this->y = y_;           }
+    inline void                         SetXYPosition                   (const double x_, const double y_) noexcept     { this->x = static_cast<float>(x_);
+                                                                                                                          this->y = static_cast<float>(y_);     }
+    //
     inline void                         SetYZPosition                   (const ImVec2 & pos_) & noexcept    { this->y = pos_.y; this->y = pos_.y;           }
     inline void                         SetXZPosition                   (const ImVec2 & pos_) & noexcept    { this->x = pos_.x; this->z = pos_.y;           }
     
     //  "SetInHandle"
-    inline void                         SetInHandle                     (const ImVec2 & ih_) & noexcept     { this->m_bezier._set_in_handle(ih_);           }
-    inline void                         SetOutHandle                    (const ImVec2 & oh_) & noexcept     { this->m_bezier._set_out_handle(oh_);          }
+    inline void                         SetInHandle                     (const ImVec2 & ih_) & noexcept                         { this->m_bezier._set_in_handle(ih_);               }
+    inline void                         SetInHandle                     (const float  ih_x_, const float  ih_y_) noexcept       { this->m_bezier._set_in_handle(ih_x_, ih_y_);      }
+    inline void                         SetInHandle                     (const double ih_x_, const double ih_y_) noexcept       { this->m_bezier._set_in_handle(ih_x_, ih_y_);      }
+    
+    //  "SetOutHandle"
+    inline void                         SetOutHandle                    (const ImVec2 & oh_) & noexcept                         { this->m_bezier._set_out_handle(oh_);              }
+    inline void                         SetOutHandle                    (const float  oh_x_, const float  oh_y_) noexcept       { this->m_bezier._set_out_handle(oh_x_, oh_y_);     }
+    inline void                         SetOutHandle                    (const double oh_x_, const double oh_y_) noexcept       { this->m_bezier._set_out_handle(oh_x_, oh_y_);     }
+    
     
     
     
@@ -1034,11 +1034,151 @@ struct Vertex_t
     
     //  "ResetCurvature"
     inline void                         ResetCurvature                  (void) noexcept       { this->m_bezier._reset_curvature(); }
-
+        
+        
+        
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      UI HELPER FUNCTIONS.
     // *************************************************************************** //
     
+    //  "_s_draw_vertex_slider"
+    static inline bool                  _s_draw_vertex_slider               (const char *       label  , double &        value    , const float     speed,
+                                                                             const double &     min    , const double &  max      , const char *    fmt = "%.1f") noexcept
+    {
+        constexpr ImGuiSliderFlags      flags               = ImGuiSliderFlags_None;
+        constexpr int                   N                   = 1;
+        bool                            dirty               = false;
+        dirty = ImGui::DragScalarN(    label
+                                     , ImGuiDataType_Double
+                                     , &value
+                                     , N
+                                     , speed
+                                     , &min
+                                     , &max
+                                     , fmt
+                                     , flags
+        );
+        return dirty;
+    };
     
     
+    
+    //  "ui_all"
+    inline void                         ui_all                              (void)
+    {
+        
+        return;
+    }
+    
+    
+    //  "ui_Position"
+    inline bool                         ui_Position                         ( const double xmax, const double ymax, const double speedx, const double speedy ) noexcept
+    {
+        ImVec2              position        = this->GetXYPosition();
+        double              pos_x           = static_cast<double>( position.x       );
+        double              pos_y           = static_cast<double>( position.y       );
+    
+        const bool          dirty1          = this->_s_draw_vertex_slider( "##Vertex_Position_X", pos_x, speedx, -xmax, xmax );
+        ImGui::SameLine();
+        const bool          dirty2          = this->_s_draw_vertex_slider( "##Vertex_Position_Y", pos_y, speedy, -ymax, ymax );
+        
+
+        if ( dirty1 || dirty2 )             { this->SetXYPosition( pos_x, pos_y ); }        //  UPDATE VALUE.
+        
+        return (dirty1 || dirty2);
+    }
+    
+    
+    //  "ui_CurvatureType"
+    inline bool                         ui_CurvatureType                    (void) noexcept
+    {
+        constexpr int   N           = static_cast<int>(CurvatureType::COUNT);
+        int             type_idx    = static_cast<int>(this->m_bezier.kind);
+        const bool      dirty       = ImGui::Combo( "##Path_UIInternal_Kind"
+                                                    , &type_idx
+                                                    , DEF_BEZIER_CURVATURE_TYPE_NAMES.data()
+                                                    , N );
+        //  UPDATE VALUE...
+        if ( dirty ) {
+            this->m_bezier._set_curvature_type( static_cast<CurvatureType>(type_idx) );
+        }
+        
+        return dirty;
+    }
+    
+    
+    //  "ui_InHandle"
+    inline bool                         ui_InHandle                         ( const double xmax, const double ymax, const double speedx, const double speedy ) noexcept
+    {
+        ImVec2          in_handle       = this->GetInHandle();
+        double          ih_x            = static_cast<double>( in_handle.x      );
+        double          ih_y            = static_cast<double>( in_handle.y      );
+    
+        const bool      dirty1          = this->_s_draw_vertex_slider( "##Vertex_InHandle_X", ih_x, speedx, -xmax, xmax );
+        ImGui::SameLine();
+        const bool      dirty2          = this->_s_draw_vertex_slider( "##Vertex_InHandle_Y", ih_y, speedy, -ymax, ymax );
+        
+        if ( dirty1 || dirty2 )         { this->SetInHandle( ih_x, ih_y ); }    //      UPDATE VALUE.
+        
+        return (dirty1 || dirty2);
+    }
+    
+    
+    //  "ui_OutHandle"
+    inline bool                         ui_OutHandle                        ( const double xmax, const double ymax, const double speedx, const double speedy ) noexcept
+    {
+        ImVec2          out_handle      = this->GetOutHandle();
+        double          oh_x            = static_cast<double>( out_handle.x      );
+        double          oh_y            = static_cast<double>( out_handle.y      );
+    
+    
+        ImGui::BeginDisabled( this->m_bezier.kind != CurvatureType::Cubic );
+        //
+            const bool      dirty1          = this->_s_draw_vertex_slider( "##Vertex_OutHandle_X", oh_x, speedx, -xmax, xmax );
+            ImGui::SameLine();
+            const bool      dirty2          = this->_s_draw_vertex_slider( "##Vertex_OutHandle_Y", oh_y, speedy, -ymax, ymax );
+        //
+        ImGui::EndDisabled();
+        
+        
+        if ( dirty1 || dirty2 )         { this->SetOutHandle( oh_x, oh_y ); }    //      UPDATE VALUE.
+        
+        
+        return (dirty1 || dirty2);
+    }
+    
+    
+    
+    
+    
+    
+    
+    //  "ui_properties"
+    inline void                         ui_properties                       (void)
+    {
+            //  using namespace path;
+            //
+            //  //  2.  CALL THE "PROPERTIES UI" FOR THE
+            //  std::visit([&](auto & pl)
+            //  {
+                //  using T = std::decay_t<decltype(pl)>;
+                //  //  skip monostate (has no draw_ui)
+                //  if constexpr (!std::is_same_v<T, std::monostate>)
+                    //  { pl.ui_properties(); }          // every real payload implements this
+            //  }, payload);
+            //
+            //  return;
+    }
+    
+    
+    
+    // *************************************************************************** //
+    
+//
+//
 //
 // *************************************************************************** //
 // *************************************************************************** //   END "INLINE" FUNCTIONS.

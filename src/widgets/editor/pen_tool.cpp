@@ -44,7 +44,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::_pen_begin_handle_drag(VertexID vid, bool out_handle, const bool force_select)
 {
-    // existing flag setup …
+    //  existing flag setup …
     m_pen.dragging_handle  = true;
     m_pen.handle_vid       = vid;
     m_pen.dragging_out     = out_handle;
@@ -53,13 +53,15 @@ void Editor::_pen_begin_handle_drag(VertexID vid, bool out_handle, const bool fo
     m_drag_vid             = vid;
     m_dragging_out         = out_handle;
 
+
     // ── NEW: set vertex kind = Symmetric so mirror_handles links both arms
     if ( Vertex * v = find_vertex_mut(m_vertices, vid) )
-        v->m_bezier.kind = BezierCurvatureType::Symmetric;
+        {  v->SetCurvatureType( BezierCurvatureType::Cubic );  }
 
 
     // --- NEW: make the vertex temporarily selected --------------------
-    if (force_select) {
+    if (force_select)
+    {
         this->reset_selection();    // m_sel.clear();                               //     optional: keep if you want solo-select
         //  m_show_handles.clear();
         //
@@ -67,51 +69,72 @@ void Editor::_pen_begin_handle_drag(VertexID vid, bool out_handle, const bool fo
         m_show_handles.insert(vid);
 
         for (size_t i = 0; i < m_points.size(); ++i) // select its Point glyph
-            if (m_points[i].v == vid) {
+        {
+            if ( m_points[i].v == vid )
+            {
                 m_sel.points.insert(i);
                 break;
             }
+        }
     }
+    
     return;
 }
 
+
 //  "_pen_update_handle_drag"
 //
-void Editor::_pen_update_handle_drag(const Interaction& /*it*/)
+void Editor::_pen_update_handle_drag(const Interaction & /*it*/)
 {
-    ImGuiIO &   io          = ImGui::GetIO();
-    Vertex *    v           = find_vertex_mut(m_vertices, m_drag_vid);
-    if ( !v )               { m_dragging_handle = false; m_pen.dragging_handle = false; return; }
-
-
-    ImVec2      ws_anchor   { v->x, v->y };
-    ImVec2      ws_mouse    = pixels_to_world(io.MousePos);          // NEW
+    ImGuiIO &       io              = ImGui::GetIO();
+    Vertex *        v_ptr           = find_vertex_mut(m_vertices, m_drag_vid);
     
     
-    m_show_handles.insert(v->id);
-
-
-    // Apply grid‑snap if desired
-    if ( want_snap() )      { ws_mouse = snap_to_grid(ws_mouse); }
-
-
-    // Optional inversion for in‑handle while using Pen tool
-    if ( m_mode == Mode::Pen && !m_dragging_out ) {
-        ws_mouse.x = ws_anchor.x - (ws_mouse.x - ws_anchor.x);
-        ws_mouse.y = ws_anchor.y - (ws_mouse.y - ws_anchor.y);
+    
+    //      CASE 0 :    NULL VERTEX...
+    if ( !v_ptr ) {
+        m_dragging_handle       = false;
+        m_pen.dragging_handle   = false;
+        return;
     }
 
-    ImVec2      offset{ ws_mouse.x - ws_anchor.x,  ws_mouse.y - ws_anchor.y };
+    Vertex &        v               = *v_ptr;
+    ImVec2          ws_anchor       { v.x, v.y };
+    ImVec2          ws_mouse        = pixels_to_world(io.MousePos);          // NEW
+    
+    
+    m_show_handles.insert( v.id );
 
-    if (m_dragging_out) v->m_bezier.out_handle = offset;
-    else                v->m_bezier.in_handle  = offset;
 
-    mirror_handles<VertexID>(*v, m_dragging_out);
+    //      Apply grid‑snap if desired
+    if ( want_snap() )              { ws_mouse = snap_to_grid(ws_mouse); }
 
-    if (!io.MouseDown[ImGuiMouseButton_Left]) {
-        m_dragging_handle = false;
-        m_pen.dragging_handle = false;
+
+    //      Optional inversion for in‑handle while using Pen tool
+    if ( m_mode == Mode::Pen  &&  !m_dragging_out )
+    {
+        ws_mouse.x  = ws_anchor.x - (ws_mouse.x - ws_anchor.x);
+        ws_mouse.y  = ws_anchor.y - (ws_mouse.y - ws_anchor.y);
     }
+
+    ImVec2          offset          { ws_mouse.x - ws_anchor.x,  ws_mouse.y - ws_anchor.y };
+
+    //  if (m_dragging_out)             { v.m_bezier.out_handle     = offset; }
+    //  else                            { v.m_bezier.in_handle      = offset; }
+    if (m_dragging_out)             { v.SetOutHandle(offset);   }
+    else                            { v.SetInHandle(offset);    }
+
+
+    mirror_handles<VertexID>(v, m_dragging_out);
+
+
+    if ( !io.MouseDown[ImGuiMouseButton_Left] )
+    {
+        m_dragging_handle       = false;
+        m_pen.dragging_handle   = false;
+    }
+    
+    
     
     return;
 }

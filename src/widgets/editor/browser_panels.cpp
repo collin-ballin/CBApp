@@ -471,17 +471,84 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
 }
 
 
-//  "_draw_vertex_properties"
+//  "_draw_vertex_properties_panel"
 //
 inline void Editor::_draw_vertex_properties_panel(Vertex & v, const LabelFn & callback)
 {
+    ImGuiStyle &                    style               = ImGui::GetStyle();
     EditorState &                   ES                  = this->m_editor_S;
     //
-    const float                     ms_SEP_WIDTH        = 5;
-    const float                     ms_HALF_WIDTH       = 0.5 * ( ms_WIDGET_WIDTH - ms_SEP_WIDTH );
+    static ImVec2                   ms_SEP_WIDTH        = ImVec2( 5, style.ItemSpacing.y );
+    const float                     ms_HALF_WIDTH       = 0.5 * ( ms_WIDGET_WIDTH - ms_SEP_WIDTH.x );
     constexpr float                 SPEED_SCALE         = 0.001f;
     [[maybe_unused]] const float    grid                = m_style.GRID_STEP / m_cam.zoom_mag;
     auto                            snap                = [/*grid*/](const double & x_, const double & y_) -> ImVec2 {
+        float   x     = x_;//  std::round(x_ / grid) * grid;
+        float   y     = y_;//  std::round(y_ / grid) * grid;
+        return ImVec2{ x, y };
+    };
+    
+    const float                     speedx              = SPEED_SCALE * ES.m_window_size[0];
+    const float                     speedy              = SPEED_SCALE * ES.m_window_size[1];
+    const double &                  WS_xmax             = ES.m_world_size[0].value;
+    const double &                  WS_ymax             = ES.m_world_size[1].value;
+
+
+
+    ImGui::PushStyleVar     ( ImGuiStyleVar_ItemSpacing,    ms_SEP_WIDTH        );
+    {
+    //
+    //
+    //
+    //  //      3.1.    Position:
+        callback("Position:");
+        ImGui::PushItemWidth( ms_HALF_WIDTH );
+            v.ui_Position(WS_xmax, WS_ymax, speedx, speedy);
+        ImGui::PopItemWidth();
+        
+        
+        //      3.2.    Bézier Handles / Control Points
+        ImGui::NewLine();
+        ImGui::TextDisabled("Bezier Controls");
+        //
+        //              3.2A    ANCHOR TYPE (corner / smooth / symmetric):
+        {
+            callback("Type:");
+            v.ui_CurvatureType();
+        }
+            
+            
+        //      3.2A.   In-Handle:
+        callback("In-Handle:");
+        ImGui::PushItemWidth( ms_HALF_WIDTH );
+            v.ui_InHandle(WS_xmax, WS_ymax, speedx, speedy);
+        ImGui::PopItemWidth();
+        
+        
+        //      3.2B.   Out-Handle:
+        callback("Out-Handle:");
+        ImGui::PushItemWidth( ms_HALF_WIDTH );
+            v.ui_OutHandle(WS_xmax, WS_ymax, speedx, speedy);
+        ImGui::PopItemWidth();
+    //
+    //
+    //
+    }
+    ImGui::PopStyleVar();   //  ImGuiStyleVar_ItemSpacing
+    
+    
+    return;
+}
+
+/* {
+    ImGuiStyle &                    style               = ImGui::GetStyle();
+    EditorState &                   ES                  = this->m_editor_S;
+    //
+    static ImVec2                   ms_SEP_WIDTH        = ImVec2( 5, style.ItemSpacing.y );
+    const float                     ms_HALF_WIDTH       = 0.5 * ( ms_WIDGET_WIDTH - ms_SEP_WIDTH.x );
+    constexpr float                 SPEED_SCALE         = 0.001f;
+    [[maybe_unused]] const float    grid                = m_style.GRID_STEP / m_cam.zoom_mag;
+    auto                            snap                = [grid](const double & x_, const double & y_) -> ImVec2 {
         float   x     = x_;//  std::round(x_ / grid) * grid;
         float   y     = y_;//  std::round(y_ / grid) * grid;
         return ImVec2{ x, y };
@@ -514,181 +581,32 @@ inline void Editor::_draw_vertex_properties_panel(Vertex & v, const LabelFn & ca
     bool                            dirty2              = false;
 
 
-
-
-
-    //      3.1.    Position:
-    callback("Position:");
+    ImGui::PushStyleVar     ( ImGuiStyleVar_ItemSpacing,    ms_SEP_WIDTH        );
     {
-        ImGui::PushItemWidth( ms_HALF_WIDTH );
-        {
-            dirty1  = s_draw_vertex_slider( "##Vertex_Position_X", pos_x, speedx, WS_xmin, WS_xmax );
-            ImGui::SameLine(0.0f, ms_SEP_WIDTH);
-            dirty2  = s_draw_vertex_slider( "##Vertex_Position_Y", pos_y, speedy, WS_ymin, WS_ymax );
-            
-            //      UPDATE VALUE.
-            if ( dirty1 || dirty2 ) {
-                v.SetXYPosition( snap(pos_x, pos_y) );
-                dirty1 = false; dirty2 = false;
-            }
-        }
-        ImGui::PopItemWidth();
-    }
-    
-    
-    //      3.2.    Bézier Handles / Control Points
-    ImGui::NewLine();
-    ImGui::TextDisabled("Bezier Controls");
     //
-    //              3.2A    ANCHOR TYPE (corner / smooth / symmetric):
-    {
-        callback("Type:");
-        dirty1 = ImGui::Combo("##Vertex_AnchorType", &kind_idx, ms_BEZIER_CURVATURE_TYPE_NAMES.data(), static_cast<int>( BezierCurvatureType::COUNT ));          // <- int, not enum
-        //
-        if (dirty1) {
-            v.SetCurvatureType( static_cast<BezierCurvatureType>(kind_idx) );
-            dirty1 = false;
-        }
-    }
-        
-        
-    //      3.2A.   In-Handle:
-    callback("In-Handle:");
-    {
-        ImGui::PushItemWidth( ms_HALF_WIDTH );
-        {
-            dirty1  = s_draw_vertex_slider( "##Vertex_InHandle_X", ih_x, speedx, WS_xmin, WS_xmax );
-            ImGui::SameLine(0.0f, ms_SEP_WIDTH);
-            dirty2  = s_draw_vertex_slider( "##Vertex_InHandle_Y", ih_y, speedy, WS_ymin, WS_ymax );
-            
-            //      UPDATE VALUE.
-            if ( dirty1 || dirty2 ) {
-                v.SetInHandle( snap(ih_x, ih_y) );
-                dirty1 = false; dirty2 = false;
-            }
-        }
-        ImGui::PopItemWidth();
-    }
-    
-    
-    //      3.2B.   Out-Handle:
-    callback("Out-Handle:");
-    {
-        ImGui::PushItemWidth( ms_HALF_WIDTH );
-        {
-            dirty1  = s_draw_vertex_slider( "##Vertex_OutHandle_X", oh_x, speedx, WS_xmin, WS_xmax );
-            ImGui::SameLine(0.0f, ms_SEP_WIDTH);
-            dirty2  = s_draw_vertex_slider( "##Vertex_OutHandle_Y", oh_y, speedy, WS_ymin, WS_ymax );
-            
-            //      UPDATE VALUE.
-            if ( dirty1 || dirty2 ) {
-                v.SetOutHandle( snap(oh_x, oh_y) );
-                dirty1 = false; dirty2 = false;
-            }
-        }
-        ImGui::PopItemWidth();
-    }
-    
-    return;
-}
-
-
-
-
-
-/* void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const LabelFn & callback)
-{
-    static constexpr size_t     TITLE_SIZE      = 32ULL;
-    BrowserStyle &              BStyle          = this->m_style.browser_style;
-    const float &               LABEL_W         = BStyle.ms_BROWSER_OBJ_LABEL_WIDTH;
-    const float &               WIDGET_W        = BStyle.ms_BROWSER_OBJ_WIDGET_WIDTH;
-    
-    
-    //      CASE 0 :    NO VALID SELECTION...
-    if ( m_browser_S.m_inspector_vertex_idx < 0 || m_browser_S.m_inspector_vertex_idx >= static_cast<int>(path.verts.size()) )
-    {
-        this->S.PushFont(Font::Main);
-            ImGui::TextDisabled("No vertex selected...");
-        this->S.PopFont();
-        return;
-    }
-
-                      
-    //      0.          OBTAIN POINTER TO VERTEX...
-    VertexID                    vid             = path.verts[static_cast<size_t>(m_browser_S.m_inspector_vertex_idx)];
-    Vertex *                    v               = find_vertex_mut(m_vertices, vid);
-    VertexID                    cache_id        = static_cast<VertexID>(-1);
-    static char                 title [TITLE_SIZE];     // safe head-room
-    
-    
-    //      0.1.    UPDATE TITLE IF SELECTION CHANGED...
-    if (cache_id != vid)
-    {
-        cache_id        = vid;
-        int retcode     = std::snprintf( title, TITLE_SIZE, Vertex::ms_DEF_VERTEX_TITLE_FMT_STRING, m_browser_S.m_inspector_vertex_idx, vid );
-        
-        if (retcode < 0) [[unlikely]] {//  Log a warning message if truncation takes place.
-            auto message = std::format( "snprintf truncated Vertex title.\n"
-                                        "vertex-ID: {}.  title: \"{}\".  buffer-size: {}.  return value: \"{}\".",
-                                        vid, title, TITLE_SIZE, retcode );
-            CB_LOG( LogLevel::Warning, message );
-        }
-    }
-    
-    
-    
-    //  CASE 1 :    STALE VERTEX...
-    if ( !v )           {
-        cache_id = static_cast<VertexID>(-1);
-        ImGui::TextColored( this->S.SystemColor.Red, "%s", "[ STALE VERTEX ERROR ]");
-        return;
-    }
-
-
-
-    //  1.  HEADER CONTENT...       "Vertex ID"
-    ImGui::SeparatorText(title);
-
-
-    //  2.  "DELETE" BUTTON...
-    if ( ImGui::Button("Delete Vertex##Editor_VertexBrowser_DeleteVertexButton", {120,0}) )
-    {
-        _erase_vertex_and_fix_paths(vid);
-        m_browser_S.m_inspector_vertex_idx = -1;
-        _rebuild_vertex_selection();
-    }
-    
-    
-    
-    //  3.  WIDGETS EDITS...
-    {
-        const float         grid            = m_style.GRID_STEP / m_cam.zoom_mag;
-        const float         speed           = 0.1f * grid;
-        auto                snap            = [grid](float f){ return std::round(f / grid) * grid; };
-        auto                snap2           = [grid](ImVec2 v) -> ImVec2 { return { std::round(v.x / grid) * grid,  std::round(v.y / grid) * grid }; };
-        //
-        bool                dirty           = false;
-        int                 kind_idx        = static_cast<int>( v->GetCurvatureType() );
-        //
-        ImVec2              position        = v->GetXYPosition();
-        ImVec2 &            in_handle       = v->GetInHandle();
-        ImVec2              out_handle      = v->GetOutHandle();
-
-
-
-        //      3.1.    Position:
+    //
+    //
+    //  //      3.1.    Position:
         callback("Position:");
-        dirty                              |= ImGui::DragFloat2("##Vertex_Pos", &v->x, speed, -FLT_MAX, FLT_MAX, "%.3f");
-        //
-        if ( dirty && this->want_snap() )
         {
-            dirty       = false;
-            ImVec2 s    = snap_to_grid({v->x, v->y});
-            v->x        = s.x;
-            v->y        = s.y;
+            ImGui::PushItemWidth    ( ms_HALF_WIDTH                                     );
+            {
+                v.ui_Position(WS_xmax, WS_ymax, speedx, speedy);
+            
+                //  dirty1  = s_draw_vertex_slider( "##Vertex_Position_X", pos_x, speedx, WS_xmin, WS_xmax );
+                //  ImGui::SameLine(0.0f, ms_SEP_WIDTH);
+                //  dirty2  = s_draw_vertex_slider( "##Vertex_Position_Y", pos_y, speedy, WS_ymin, WS_ymax );
+                //
+                //  //      UPDATE VALUE.
+                //  if ( dirty1 || dirty2 ) {
+                //      v.SetXYPosition( snap(pos_x, pos_y) );
+                //      dirty1 = false; dirty2 = false;
+                //  }
+            }
+            ImGui::PopItemWidth();
         }
-
-
+        
+        
         //      3.2.    Bézier Handles / Control Points
         ImGui::NewLine();
         ImGui::TextDisabled("Bezier Controls");
@@ -696,39 +614,60 @@ inline void Editor::_draw_vertex_properties_panel(Vertex & v, const LabelFn & ca
         //              3.2A    ANCHOR TYPE (corner / smooth / symmetric):
         {
             callback("Type:");
-            dirty = ImGui::Combo("##Vertex_AnchorType", &kind_idx, ms_BEZIER_CURVATURE_TYPE_NAMES.data(), static_cast<int>( BezierCurvatureType::COUNT ));          // <- int, not enum
+            dirty1 = ImGui::Combo("##Vertex_AnchorType", &kind_idx, ms_BEZIER_CURVATURE_TYPE_NAMES.data(), static_cast<int>( BezierCurvatureType::COUNT ));          // <- int, not enum
             //
-            if (dirty) {
-                v->SetCurvatureType( static_cast<BezierCurvatureType>(kind_idx) );
-                dirty               = false;
+            if (dirty1) {
+                v.SetCurvatureType( static_cast<BezierCurvatureType>(kind_idx) );
+                dirty1 = false;
             }
         }
-        //
-        //              3.2B    INWARD (from previous vertex):
-        callback("Inward:");
-        //
-        dirty              = ImGui::DragFloat2("##Vertex_InwardControl",     &v->m_bezier.in_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
-        if ( dirty && !ImGui::IsItemActive() )
+            
+            
+        //      3.2A.   In-Handle:
+        callback("In-Handle:");
         {
-            v->SetInHandle( {snap(v->m_bezier.in_handle.x), snap(v->m_bezier.in_handle.y)} );
-            mirror_handles<VertexID>(*v, false);
-            dirty                       = false;
+            ImGui::PushItemWidth( ms_HALF_WIDTH );
+            {
+                dirty1  = s_draw_vertex_slider( "##Vertex_InHandle_X", ih_x, speedx, WS_xmin, WS_xmax );
+                ImGui::SameLine(0.0f);
+                dirty2  = s_draw_vertex_slider( "##Vertex_InHandle_Y", ih_y, speedy, WS_ymin, WS_ymax );
+                
+                //      UPDATE VALUE.
+                if ( dirty1 || dirty2 ) {
+                    v.SetInHandle( snap(ih_x, ih_y) );
+                    dirty1 = false; dirty2 = false;
+                }
+            }
+            ImGui::PopItemWidth();
         }
-        //
-        //              3.2C    OUTWARD (to next vertex):
-        callback("Outward:");
-        dirty               = ImGui::DragFloat2("##Vertex_OutwardControl",    &out_handle.x,   speed,  -FLT_MAX,   FLT_MAX,    "%.3f");
-        if ( dirty && !ImGui::IsItemActive() )
+        
+        
+        //      3.2B.   Out-Handle:
+        callback("Out-Handle:");
         {
-            v->SetOutHandle( {snap(out_handle.x), snap(out_handle.y)} );
-            mirror_handles<VertexID>(*v, true);  // keep smooth/symmetric rule
-            dirty                       = false;
+            ImGui::PushItemWidth( ms_HALF_WIDTH );
+            {
+                dirty1  = s_draw_vertex_slider( "##Vertex_OutHandle_X", oh_x, speedx, WS_xmin, WS_xmax );
+                ImGui::SameLine(0.0f);
+                dirty2  = s_draw_vertex_slider( "##Vertex_OutHandle_Y", oh_y, speedy, WS_ymin, WS_ymax );
+                
+                //      UPDATE VALUE.
+                if ( dirty1 || dirty2 ) {
+                    v.SetOutHandle( snap(oh_x, oh_y) );
+                    dirty1 = false; dirty2 = false;
+                }
+            }
+            ImGui::PopItemWidth();
         }
-    }
+    //
+    //
+    //
+    ImGui::PopStyleVar();   //  ImGuiStyleVar_ItemSpacing
     
     
     return;
-}*/
+}
+*/
 
 
 

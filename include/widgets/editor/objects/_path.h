@@ -1012,67 +1012,8 @@ public:
         }
         return true;
     }
-        
-        
-        
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      UI HELPER FUNCTIONS.
-    // *************************************************************************** //
     
-    //  "ui_all"
-    inline void                         ui_all                              (void)
-    {
-        using namespace path;
-        if ( this->ui_kind() )        { /*    "kind" was changes.     */ }
-        
-        //  2.  CALL THE "PROPERTIES UI" FOR THE
-        std::visit([&](auto & pl)
-        {
-            using T = std::decay_t<decltype(pl)>;
-            //  skip monostate (has no draw_ui)
-            if constexpr (!std::is_same_v<T, std::monostate>)
-                { pl.ui_properties(); }          // every real payload implements this
-        }, payload);
-        
-        return;
-    }
-    
-    //  "ui_properties"
-    inline void                         ui_properties                       (void)
-    {
-        using namespace path;
-        
-        //  2.  CALL THE "PROPERTIES UI" FOR THE
-        std::visit([&](auto & pl)
-        {
-            using T = std::decay_t<decltype(pl)>;
-            //  skip monostate (has no draw_ui)
-            if constexpr (!std::is_same_v<T, std::monostate>)
-                { pl.ui_properties(); }          // every real payload implements this
-        }, payload);
-        
-        return;
-    }
-    
-    //  "ui_kind"
-    inline bool                         ui_kind                             (void)
-    {
-        bool    modified    = false;
-        int     kind_idx    = static_cast<int>(this->kind);
-        if (( modified = ImGui::Combo("##Path_UIInternal_Kind",             &kind_idx,
-                                      path::DEF_PATH_KIND_NAMES.data(),     static_cast<int>(PathKind::COUNT)) ))
-        {
-            this->kind          = static_cast<PathKind>(kind_idx);
-            this->payload       = make_default_payload(this->kind);     // << reset payload
-        }
-        
-        return modified;
-    }
-    
-    
+
     
     // *************************************************************************** //
     //
@@ -1375,6 +1316,65 @@ public:
         
         return;
     }*/
+        
+        
+        
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      UI HELPER FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "ui_all"
+    inline void                         ui_all                              (void)
+    {
+        using namespace path;
+        if ( this->ui_kind() )        { /*    "kind" was changes.     */ }
+        
+        //  2.  CALL THE "PROPERTIES UI" FOR THE
+        std::visit([&](auto & pl)
+        {
+            using T = std::decay_t<decltype(pl)>;
+            //  skip monostate (has no draw_ui)
+            if constexpr (!std::is_same_v<T, std::monostate>)
+                { pl.ui_properties(); }          // every real payload implements this
+        }, payload);
+        
+        return;
+    }
+    
+    //  "ui_properties"
+    inline void                         ui_properties                       (void)
+    {
+        using namespace path;
+        
+        //  2.  CALL THE "PROPERTIES UI" FOR THE
+        std::visit([&](auto & pl)
+        {
+            using T = std::decay_t<decltype(pl)>;
+            //  skip monostate (has no draw_ui)
+            if constexpr (!std::is_same_v<T, std::monostate>)
+                { pl.ui_properties(); }          // every real payload implements this
+        }, payload);
+        
+        return;
+    }
+    
+    //  "ui_kind"
+    inline bool                         ui_kind                             (void)
+    {
+        bool    modified    = false;
+        int     kind_idx    = static_cast<int>(this->kind);
+        if (( modified = ImGui::Combo("##Path_UIInternal_Kind",             &kind_idx,
+                                      path::DEF_PATH_KIND_NAMES.data(),     static_cast<int>(PathKind::COUNT)) ))
+        {
+            this->kind          = static_cast<PathKind>(kind_idx);
+            this->payload       = make_default_payload(this->kind);     // << reset payload
+        }
+        
+        return modified;
+    }
     
     
     

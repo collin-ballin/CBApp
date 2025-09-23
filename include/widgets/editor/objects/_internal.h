@@ -146,7 +146,13 @@ concept EditorCFGTraits =
 
 //  "EndpointInfo"
 template<typename PID>
-struct EndpointInfo_t { PID path_idx; bool prepend; };   // prepend==true ↔ first vertex
+struct EndpointInfo_t
+{
+//
+    PID     path_idx;
+    bool    prepend;
+//
+};   // prepend==true ↔ first vertex
 
 //
 //
