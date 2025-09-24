@@ -96,9 +96,6 @@ inline void Editor::_MECH_change_state([[maybe_unused]] const Interaction & it)
     if ( m_mode != Mode::Pen )      { this->reset_pen(); } // m_pen = {};       //  Leaving the Pen-Tool resets current path appending.
 
     
-    //  5.      INVOKE GRID SHORTCUT BEHAVIORS...
-    this->_grid_handle_shortcuts();
-    
     //  bool lmbHeld = ImGui::IsMouseDown(ImGuiMouseButton_Left);
     //  bool lmbHeldRaw = io.MouseDown[0];          // 0 == left button
     //  float heldFor   = io.MouseDownDuration[0];
@@ -350,6 +347,7 @@ void Editor::Begin(const char * /*id*/)
 
 //
 //
+//
 // *************************************************************************** //
 // *************************************************************************** //   END "MAIN API".
 
@@ -365,7 +363,6 @@ void Editor::Begin(const char * /*id*/)
 //      3.      CORE MECHANIC-HANDLERS OF THE APPLICATION...
 // *************************************************************************** //
 // *************************************************************************** //
-
 
 //  "_selbox_rebuild_view_if_needed"
 //
@@ -468,11 +465,20 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
     }
     
     
-    //      2.      SET THE INITIAL SIZE OF THE CANVAS...
+    //      2.      SET THE GRIDLINES FOR THE CANVAS...
+    this->_clamp_plot_axes();
+    
+    
+    //      3.      SET THE INITIAL SIZE OF THE CANVAS...
+    //  if ( ES.m_request_canvas_window_update )
+    //  {
+    //      ES.m_request_canvas_window_update   = false;
+    //      ImPlot::SetupAxesLimits( 0.0f, ES.m_window_size[0], 0.0f, ES.m_window_size[1], ImPlotCond_Once );
+    //  }
     ImPlot::SetupAxesLimits( ES.ms_INITIAL_CANVAS_SIZE[0], ES.ms_INITIAL_CANVAS_SIZE[1], ES.ms_INITIAL_CANVAS_SIZE[2], ES.ms_INITIAL_CANVAS_SIZE[3], ImPlotCond_Once );
     
     
-    //      3.      SETUP MIN + MAX AXIS DIMENSIONS...
+    //      4.      SETUP MIN + MAX AXIS DIMENSIONS...
     ImPlot::SetupAxisLimitsConstraints  (   ImAxis_X1,
                                             ES.m_world_size[0].Min()   - ES.m_world_slop[0].Value(),
                                             ES.m_world_size[0].Value() + ES.m_world_slop[0].Value()     );
@@ -481,12 +487,12 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
                                             ES.m_world_size[1].Value() + ES.m_world_slop[1].Value()     );
                                             
                                             
-    //      4.      SETUP MIN + MAX AXIS "ZOOM" RESOLUTION...
+    //      5.      SETUP MIN + MAX AXIS "ZOOM" RESOLUTION...
     ImPlot::SetupAxisZoomConstraints    (   ImAxis_X1,      ES.m_zoom_size[0].Min(),            ES.m_zoom_size[0].Value()       );
     ImPlot::SetupAxisZoomConstraints    (   ImAxis_Y1,      ES.m_zoom_size[1].Min(),            ES.m_zoom_size[1].Value()       );
     
     
-    //      5.      CONFIGURE THE "IMPLOT" APPEARANCE...
+    //      6.      CONFIGURE THE "IMPLOT" APPEARANCE...
     ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  5A.     Axis Names & Flags.
                       m_axes[0].flags,          m_axes[1].flags
     );
@@ -496,7 +502,8 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
     //  );
     
     
-    //      6.      PER-FRAME CACHE OPERATIONS FOR IMPLOT CANVAS...
+    
+    //      7.      PER-FRAME CACHE OPERATIONS FOR IMPLOT CANVAS...
     ES.m_window_coords          = ImPlot::GetPlotLimits();                                          //  6A.     DOMAIN + RANGE OF PLOT      [ IN (X,Y) PLOT UNITS ].
     ES.m_window_size[0]         = std::abs(ES.m_window_coords.X.Max - ES.m_window_coords.X.Min);    //  6B.     SIZE OF THE PLOT            [ IN (X,Y) PLOT UNITS ].
     ES.m_window_size[1]         = std::abs(ES.m_window_coords.Y.Max - ES.m_window_coords.Y.Min);    //
@@ -506,7 +513,6 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
     
     
     //      X.      REMAINING FUNCTIONS...
-    this->_clamp_plot_axes();
     //
     this->_update_grid_info();                                              //  3C.     Fetch Grid-Quantization Info.
 

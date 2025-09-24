@@ -329,12 +329,28 @@ void Editor::_scissor_cut(const PathHit & h)
     // NOTE: Bézier handle subdivision still “TODO”.
 }
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA MODIFIER UTILITIES".
 
 
 
 
 
-//      **OLD**     LOCAMOTION UTILITY FUNCTIONS...
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      4.      LOCAMOTION / VIEWPORT UTILITIES...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -365,10 +381,30 @@ void Editor::_update_world_extent()
 }
 
 
+//  "_utl_set_canvas_window" _utl_reset_camera
+//
+void Editor::_utl_set_canvas_window(void) noexcept
+{
+    EditorState &           ES          = this->m_editor_S;
+    //  ES.m_request_canvas_window_update   = true;
+    //
+    const float             max_x       = ES.m_world_size[0].Value() / 2.0f;
+    const float             max_y       = ES.m_world_size[1].Value() / 2.0f;
+    
+    
+    ES.m_window_size[0]                 = max_x;
+    ES.m_window_size[1]                 = max_y;
+    
+    return;
+}
+
+
+
+//
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "MISC. UTILITIES".
+// *************************************************************************** //   END "LOCAMOTION" UTILITIES.
 
 
 

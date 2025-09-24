@@ -516,31 +516,42 @@ public:
     //                  IMPLOT CANVAS INFORMATION...
     // *************************************************************************** //
     //                                  CONSTANTS:
-    static constexpr double                 ms_INITIAL_CANVAS_SIZE [4]      = { 0.0f, 256.0f, 0.0f, 256.0f };
-    static constexpr double                 ms_INPUT_DOUBLE_INCREMENTS [2]  = { 1.0f, 10.0f };                      //  Snap value of "+" and "-" BUTTONS.
+    static constexpr double                 ms_INITIAL_CANVAS_SIZE [4]          = { 0.0f, 256.0f, 0.0f, 256.0f };
+    static constexpr double                 ms_INPUT_DOUBLE_INCREMENTS [2]      = { 1.0f, 10.0f };                      //  Snap value of "+" and "-" BUTTONS.
     //
     //
     //                                  PERSISTENT STATE INFORMATION:
-    std::array< Param<double>, 2>           m_world_size                    = { {                                   //  MAXIMUM SIZE OF THE CANVAS (World Size).
-                                                                                { 512.0f,       { 10.0f,        1e4f } },
-                                                                                { 512.0f,       { 10.0f,        1e4f } }
-                                                                            } };
-    std::array< Param<double>, 2>           m_world_slop                    = { {                                   //  (Allow user to scroll a bit beyond canvas limits).
-                                                                                { 128.0f,       { 32.0f,        512.0f } },
-                                                                                { 128.0f,       { 32.0f,        512.0f } }
-                                                                            } };
-    std::array< Param<double>, 2>           m_zoom_size                     = { {                                   //  MAX + MIN "ZOOM" RESOLUTION OF THE CANVAS.
-                                                                                { 1024.0f,      { 1.0f,         2e4f } },
-                                                                                { 1024.0f,      { 1.0f,         2e4f } }
-                                                                            } };
+    std::array< Param<double>, 2>           m_world_size                        = { {                                   //  MAXIMUM SIZE OF THE CANVAS (World Size).
+                                                                                    { 512.0f,       { 10.0f,        1e4f } },
+                                                                                    { 512.0f,       { 10.0f,        1e4f } }
+                                                                                } };
+    std::array< Param<double>, 2>           m_world_slop                        = { {                                   //  (Allow user to scroll a bit beyond canvas limits).
+                                                                                    { 128.0f,       { 32.0f,        512.0f } },
+                                                                                    { 128.0f,       { 32.0f,        512.0f } }
+                                                                                } };
+    std::array< Param<double>, 2>           m_zoom_size                         = { {                                   //  MAX + MIN "ZOOM" RESOLUTION OF THE CANVAS.
+                                                                                    { 1024.0f,      { 1.0f,         2e4f } },
+                                                                                    { 1024.0f,      { 1.0f,         2e4f } }
+                                                                                } };
+    //
+    //                                  GRID INFORMATION:
+    std::array< Param<int>, 2>              m_grid_density                      = { {                                   //  TOTAL # OF GRIDLINES.
+                                                                                    { 16,           { 2,            64 } },
+                                                                                    { 16,           { 2,            64 } }
+                                                                                } };
+    std::array< std::vector<double>, 2 >    m_gridlines;                                                            //  POSITION OF THE "X" AND "Y" GRIDLINES.
+    std::array< double, 2 >                 m_grid_spacing                      = { -1.0f,      -1.0f };                //  DIST. BETWEEN EACH GRIDLINE.
+    
+    
     //
     //
     //                                  TRANSIENT STATE INFORMATION:
-    mutable ImPlotRect                      m_window_coords                 = {   };        //  DOMAIN + RANGE OF CURRENT CANVAS:   ( [X0, Xf], [Y0, Yf] ).
-    std::array< double, 2>                  m_window_size                   = {   };
+    //  mutable bool                            m_request_canvas_window_update      = true;
+    mutable ImPlotRect                      m_window_coords                     = {   };        //  DOMAIN + RANGE OF CURRENT CANVAS:   ( [X0, Xf], [Y0, Yf] ).
+    std::array< double, 2>                  m_window_size                       = {   };
     //
-    mutable ImVec2                          m_plot_px_dims                  = {   };
-    mutable ImRect                          m_plot_bbox                     = {   };
+    mutable ImVec2                          m_plot_px_dims                      = {   };
+    mutable ImRect                          m_plot_bbox                         = {   };
     
     // *************************************************************************** //
     //
@@ -549,7 +560,7 @@ public:
     //                  IMPLOT SETTINGS INFORMATION...
     // *************************************************************************** //
     //                                  PERSISTENT STATE INFORMATION:
-    Param<float>                            m_mousewheel_zoom_rate          = { 0.050f,     { 0.010f,   0.350f } };
+    Param<float>                            m_mousewheel_zoom_rate              = { 0.050f,     { 0.010f,   0.350f } };
     //
     //
     //                                  TRANSIENT STATE INFORMATION:
@@ -562,13 +573,12 @@ public:
     //                  TRANSIENT STATE INFORMATION...
     // *************************************************************************** //
     //                                  UTILITY:
-    float                                   m_bar_h                         = 0.0f;
-    ImVec2                                  m_avail                         = ImVec2(0.0f,      0.0f);
-    ImVec2                                  m_p0                            = ImVec2(0.0f,      0.0f);
-    ImVec2                                  m_p1                            = ImVec2(0.0f,      0.0f);
+    float                                   m_bar_h                             = 0.0f;
+    ImVec2                                  m_avail                             = ImVec2(0.0f,      0.0f);
+    ImVec2                                  m_p0                                = ImVec2(0.0f,      0.0f);
+    ImVec2                                  m_p1                                = ImVec2(0.0f,      0.0f);
     
     // *************************************************************************** //
-    //
     //
     //
     // *************************************************************************** //
@@ -576,24 +586,23 @@ public:
     // *************************************************************************** //
     //
     //                                  LASSO TOOL / SELECTION:
-    bool                                    m_show_sel_overlay              = false;
+    bool                                    m_show_sel_overlay                  = false;
     //
-    bool                                    m_dragging                      = false;
-    bool                                    m_lasso_active                  = false;
-    bool                                    m_pending_clear                 = false;    //  pending click selection state ---
+    bool                                    m_dragging                          = false;
+    bool                                    m_lasso_active                      = false;
+    bool                                    m_pending_clear                     = false;    //  pending click selection state ---
     //
-    ImVec2                                  m_lasso_start                   = ImVec2(0.f,       0.f);
-    ImVec2                                  m_lasso_end                     = ImVec2(0.f,       0.f);
-    VID                                     m_next_id                       = 1;
-    PID                                     m_next_pid                      = 1;        // counter for new path IDs
-    //
+    ImVec2                                  m_lasso_start                       = ImVec2(0.f,       0.f);
+    ImVec2                                  m_lasso_end                         = ImVec2(0.f,       0.f);
+    VID                                     m_next_id                           = 1;
+    PID                                     m_next_pid                          = 1;        // counter for new path IDs
     //
     //
     //                                  PEN-TOOL STATE:
-    bool                                    m_drawing                       = false;
-    bool                                    m_dragging_handle               = false;
-    bool                                    m_dragging_out                  = true;
-    VID                                     m_drag_vid                      = 0;
+    bool                                    m_drawing                           = false;
+    bool                                    m_dragging_handle                   = false;
+    bool                                    m_dragging_out                      = true;
+    VID                                     m_drag_vid                          = 0;
     
     // *************************************************************************** //
     //
@@ -608,7 +617,6 @@ public:
                                             //
 
     // *************************************************************************** //
-    //
     //
     //
     // *************************************************************************** //
@@ -652,7 +660,17 @@ public:
     //      INITIALIZATION METHODS.         |   "init.cpp" ...
     // *************************************************************************** //
     //  explicit                        MyClass                 (app::AppState & );             //  Def. Constructor.
-                                        EditorState_t           (void) noexcept                 = default;
+                                        EditorState_t           (void) noexcept
+    {
+        //      1.      ALLOCATE MEMORY FOR GRIDLINES...
+        this->m_gridlines[0].reserve( this->m_grid_density[0].Max() );      //  X-Axes.
+        this->m_gridlines[1].reserve( this->m_grid_density[1].Max() );      //  Y-Axes.
+        this->_update_grid();
+        
+        
+        return;
+    }
+                                        //  EditorState_t           (void) noexcept                 = default;
                                         ~EditorState_t          (void)                          = default;
     
     // *************************************************************************** //
@@ -669,7 +687,7 @@ public:
 // *************************************************************************** //
 // *************************************************************************** //   END "PUBLIC MEMBER FUNCS".
 
-    
+
    
 // *************************************************************************** //
 //
@@ -722,6 +740,122 @@ public:
         this->m_io_last                 = result;
         this->m_io_msg                  = std::move( message );
         
+        return;
+    }
+    
+    
+    
+    //  "UpdateCanvasSize"
+    inline void                         UpdateCanvasSize                    (void) noexcept
+    {
+        return;
+    }
+    
+    //  "SetupImPlotGrid"
+    inline void                         SetupImPlotGrid                     (void) const noexcept
+    {
+        ImPlot::SetupAxisTicks(   ImAxis_X1
+                                , this->m_gridlines[0].data()
+                                , static_cast<int>( this->m_gridlines[0].size() )
+                                , /*labels        */nullptr
+                                , /*show_default  */false );
+        ImPlot::SetupAxisTicks( ImAxis_Y1
+                                , this->m_gridlines[1].data()
+                                , static_cast<int>( this->m_gridlines[1].size() )
+                                , /*labels        */nullptr
+                                , /*show_default  */false );
+        return;
+    }
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      IMPLOT GRID MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "IncreaseGridSpacing"
+    inline void                         IncreaseGridSpacing                 (void) noexcept {
+        this->m_grid_density[0].SetValue( this->m_grid_density[0].value << 1 );
+        this->m_grid_density[1].SetValue( this->m_grid_density[1].value << 1 );
+        _update_grid();
+        return;
+    }
+    inline void                         IncreaseGridSpacingX                (void) noexcept {
+        this->m_grid_density[0].SetValue( this->m_grid_density[0].value << 1 );
+        //  _update_grid_x();
+        return;
+    }
+    inline void                         IncreaseGridSpacingY                (void) noexcept {
+        this->m_grid_density[1].SetValue( this->m_grid_density[1].value << 1 );
+        //  _update_grid_y();
+        return;
+    }
+    
+    
+    
+    //  "DecreaseGridSpacing"
+    inline void                         DecreaseGridSpacing                 (void) noexcept {
+        this->m_grid_density[0].SetValue( this->m_grid_density[0].value >> 1 );
+        this->m_grid_density[1].SetValue( this->m_grid_density[1].value >> 1 );
+        _update_grid();
+        return;
+    }
+    inline void                         DecreaseGridSpacingX                (void) noexcept {
+        this->m_grid_density[1].SetValue( this->m_grid_density[0].value >> 1 );
+        //  _update_grid_x();
+        return;
+    }
+    inline void                         DecreaseGridSpacingY                (void) noexcept {
+        this->m_grid_density[1].SetValue( this->m_grid_density[1].value >> 1 );
+        //  _update_grid_y();
+        return;
+    }
+    
+    
+    
+    
+    
+    //  "_compute_grid_spacing"
+    inline void                         _compute_grid_spacing               (void) noexcept
+    {
+        return;
+    }
+    
+    
+    
+    //  "_update_grid"
+    inline void                         _update_grid                        (void) noexcept
+    {
+        const size_t        NX      = static_cast<size_t>( this->m_grid_density[0].Value() );
+        const size_t        NY      = static_cast<size_t>( this->m_grid_density[1].Value() );
+        const double        xmax    = this->m_world_size[0].Value();
+        const double        ymax    = this->m_world_size[1].Value();
+        
+            
+        //      1.      UPDATE DIST. BETWEEN EACH GRIDLINE...
+        m_grid_spacing[0]           = xmax / static_cast<double>( NX );
+        m_grid_spacing[1]           = ymax / static_cast<double>( NY );
+        
+        
+        //      2.      RE-SIZE ARRAYS OF GRIDLINE POSITIONS...
+        this->m_gridlines[0]        .resize(NX);
+        this->m_gridlines[1]        .resize(NY);
+        
+        
+        //      3.      POPULATE ARRAYS WITH NEW VALUES...
+        //
+        //              3A.     X-AXIS.
+        for (size_t x = 0; x < NX; ++x)
+        {
+            this->m_gridlines[0][x]     = static_cast<double>( x ) * m_grid_spacing[0];
+        }
+        //              3B.     Y-AXIS.
+        for (size_t y = 0; y < NY; ++y)
+        {
+            this->m_gridlines[1][y]     = static_cast<double>( y ) * m_grid_spacing[1];
+        }
+    
         return;
     }
     

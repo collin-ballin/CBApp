@@ -70,6 +70,7 @@ void Editor::_MECH_query_shortcuts([[maybe_unused]] const Interaction & it)
 // *************************************************************************** //
 // *************************************************************************** //
 
+
 //  "_selection_no_selection_shortcuts"
 //
 inline void Editor::_selection_no_selection_shortcuts([[maybe_unused]] const Interaction & it)
@@ -78,17 +79,57 @@ inline void Editor::_selection_no_selection_shortcuts([[maybe_unused]] const Int
     EditorState &       ES      = this->m_editor_S;
 
 
+    //      1.1.    GRID SHORTCUTS.
+    this->_selection_grid_shortcuts(it);
 
-    //      1.1.    HIDE ALL OVERLAYS.      [ SHIFT + H ].
+    //      1.2.    HIDE ALL OVERLAYS.      [ SHIFT + H ].
     if ( io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_H) )       { ES.m_block_overlays = !ES.m_block_overlays; return; }   //  [SHIFT + H]       HIDE ALL OVERLAYS...
     
-    //      1.2.    PASTE.                  [ CTRL + V ].
+    //      1.3.    PASTE.                  [ CTRL + V ].
     if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_V) )        { /* this->copy_to_clipboard(); */      return;     }
 
 
 
     return;
 }
+
+//  "_grid_handle_shortcuts"
+//
+//      I think our policy should be to RETURN OUT after implementing a SINGLE hotkey.
+//      In other words, only allow ONE hotkey activation per frame.  It seems problematic to allow
+//      the user to perform both a CTRL+ AND CTRL- (inverse operations) in the same frame.
+//
+inline void Editor:: _selection_grid_shortcuts([[maybe_unused]] const Interaction & it) noexcept
+{
+    ImGuiIO &           io      = ImGui::GetIO();
+    EditorState &       ES      = this->m_editor_S;
+    
+    
+    //      1.      TOGGLE SNAP-TO-GRID.            [ SHIFT G ]
+    if ( io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_G) )
+    { m_grid.snap_on = !m_grid.snap_on; return; }
+   
+   
+    //      Exit early if CTRL key is not pressed.
+    if ( !io.KeyCtrl )      { return; }
+
+
+    //      2.      INCREASE GRID SPACING.          [ CTRL + ]
+    if ( ImGui::IsKeyPressed(ImGuiKey_Equal) )
+        { ES.IncreaseGridSpacing(); return; }
+       
+    //      3.      DECREASE GRID SPACING.          [ CTRL – ]
+    if ( ImGui::IsKeyPressed(ImGuiKey_Minus) )
+        { ES.DecreaseGridSpacing(); return; }
+       
+    //      4.      RESET VIEW OF CANVAS.           [ CTRL KEYPAD-0 ]
+    if ( ImGui::IsKeyPressed(ImGuiKey_Keypad0) )
+        { this->_utl_set_canvas_window(); return; }
+        
+        
+    return;
+}
+
 
 
 //  "_selection_read_only_shortcuts"

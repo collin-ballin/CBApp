@@ -19,52 +19,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-//  1.  HELPERS...
 // *************************************************************************** //
-// *************************************************************************** //
-
-//  "_grid_handle_shortcuts"
-//
-//      I think our policy should be to RETURN OUT after implementing a SINGLE hotkey.
-//      In other words, only allow ONE hotkey activation per frame.  It seems problematic to allow
-//      the user to perform both a CTRL+ AND CTRL- (inverse operations) in the same frame.
-//
-void Editor::_grid_handle_shortcuts(void)
-{
-    ImGuiIO &   io      = ImGui::GetIO();
-    
-    
-    //  1.  TOGGLE SNAP-TO-GRID.            [ SHIFT G ]
-    if ( io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_G) )
-    { m_grid.snap_on = !m_grid.snap_on; return; }
-   
-   
-    //  Exit early if CTRL key is not pressed.
-    if ( !io.KeyCtrl )          return;
-
-
-    //  2.  INCREASE GRID SPACING.          [ CTRL + ]
-    if ( ImGui::IsKeyPressed(ImGuiKey_Equal) )
-    { m_grid.snap_step = std::max(ms_GRID_STEP_MIN,  m_grid.snap_step * 0.5f); return; }
-       
-    //  3.  DECREASE GRID SPACING.          [ CTRL – ]
-    if ( ImGui::IsKeyPressed(ImGuiKey_Minus) )
-    { m_grid.snap_step *= 2.f; return; }
-        
-    return;
-}
-
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
 //
 //
 //      1.      RENDERING CORE MECHANICS OF THE WINDOW...

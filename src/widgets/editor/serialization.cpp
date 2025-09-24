@@ -713,15 +713,42 @@ inline void Editor::_settings_H4(SettingsData & args)
         //  ImGui::NewLine();
         ImGui::TreePop();
     }
+    
+    
+    
+    //      2.      APPLICATION OPERATIONS...
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if ( ImGui::TreeNode("Application Operations") )
+    {
+        ImGui::Indent();        args.Style.PushSettingsWidgetW(1);
+        
+        
+        //      2.1.    SAVE DIALOGUE...
+        this->S.labelf("Canvas Window Position:",       args.LABEL_W,    args.WIDGET_W);
+        if ( ImGui::Button("Reset", ms_SETTINGS_BUTTON_SIZE) )
+        {
+            
+            this->_utl_set_canvas_window();
+
+        }
+        
+        
+        ImGui::Separator();
+        ImGui::Unindent();      args.Style.PopSettingsWidgetW();
+        //
+        //
+        //
+        //  ImGui::NewLine();
+        ImGui::TreePop();
+    }
     //
     //
     ImGui::NewLine();
     
     
+    
     if ( requested_close )      { ImGui::CloseCurrentPopup(); }
     
-    
-
     return;
 }
 

@@ -790,10 +790,6 @@ protected:
     inline void                         _RENDER_top_channel                 (std::span<const size_t> , const RenderCTX & ) const noexcept;
     //
     //
-    //
-    //                              GRID:
-    void                                _grid_handle_shortcuts              (void);
-    //
     //                              PRIMARY RENDERING:
     void                                _render_paths                       (ImDrawList * dl) const;
     void                                _render_lines                       (ImDrawList *, const ImVec2 & ) const;
@@ -862,6 +858,8 @@ protected:
     // *************************************************************************** //
     //                              SUBSIDIARY SHORTCUT HANDLERRS:
     inline void                         _selection_no_selection_shortcuts   ([[maybe_unused]] const Interaction & );
+    inline void                             _selection_grid_shortcuts           ([[maybe_unused]] const Interaction & ) noexcept;   //  PREVIOUSLY: "_grid_handle_shortcuts"
+    //
     inline void                         _selection_read_only_shortcuts      ([[maybe_unused]] const Interaction & );
     inline void                         _selection_mutable_shortcuts        ([[maybe_unused]] const Interaction & );
     inline void                         _selection_advanced_shortcuts       ([[maybe_unused]] const Interaction & );
@@ -938,6 +936,10 @@ protected:
     bool                                _try_begin_handle_drag              (const Interaction & );
     void                                _scissor_cut                        (const PathHit & );
     void                                _update_world_extent                (void);
+    //
+    //                              LOCAMOTION UTILITIES:
+    void                                _utl_set_canvas_window              (void) noexcept;
+    
     
     // *************************************************************************** //
     //
@@ -1167,6 +1169,16 @@ protected:
     //  "_clamp_plot_axes"
     inline void                         _clamp_plot_axes                        (void) const
     {
+        //  const EditorState &     state   = this->m_editor_S;
+        //
+        //  // inside BeginPlot(...) and before drawing items
+        //  ImPlot::SetupAxisTicks(ImAxis_X1, xs.data(), (int)xs.size(),
+        //                          /*labels*/nullptr, /*show_default*/false);
+        //  ImPlot::SetupAxisTicks(ImAxis_Y1, ys.data(), (int)ys.size(), nullptr, false);
+
+        this->m_editor_S.SetupImPlotGrid();
+        
+    
         return;
     }
     
