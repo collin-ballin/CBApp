@@ -1101,7 +1101,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //      RENDER FUNCTIONS.
+    //      PRIMARY RENDER FUNCTIONS.
     // *************************************************************************** //
     
     //  "render_fill_area"
@@ -1166,154 +1166,155 @@ public:
     }
     
     
-    
-    
-    
-    
-    //  "_render_segment"
-    //
-    /*template<class CTX>
-    inline void	                        _render_segment                     (const V & a, const V & b, const CTX & ctx) const noexcept
-    {
-        const auto &        callbacks	    = ctx.callbacks;
-        ImDrawList *        dl			    = ctx.args.dl;
-        
-        
-        //  Curvature rule: segment is curved iff a.Out NOT linear OR b.In NOT linear
-        const bool          curved          = this->SegmentIsCurved( a, b );
-
-        if (!curved)
-        {
-            const ImVec2        A       = callbacks.ws_to_px({ a->x, a->y });
-            const ImVec2        B       = callbacks.ws_to_px({ b->x, b->y });
-            dl->AddLine(A, B, this->style.stroke_color, this->style.stroke_width);
-            return;
-        }
-
-        // Cubic Bezier: P0=a, P1=a+out, P2=b+in, P3=b — all mapped to pixels
-        const ImVec2 P0 = callbacks.ws_to_px({ a->x,                             a->y });
-        const ImVec2 P1 = callbacks.ws_to_px({ a->x + a->m_bezier.out_handle.x,  a->y + a->m_bezier.out_handle.y });
-        const ImVec2 P2 = callbacks.ws_to_px({ b->x + b->m_bezier.in_handle.x,   b->y + b->m_bezier.in_handle.y  });
-        const ImVec2 P3 = callbacks.ws_to_px({ b->x,                             b->y });
-
-        dl->AddBezierCubic( P0, P1, P2, P3,
-                            this->style.stroke_color,
-                            this->style.stroke_width,
-                            segs );
-        return;
-    }*/
-    
-    
     //  "render_stroke"
     //
     template<class CTX>
     inline void	                        render_stroke                       (const CTX & ctx) const noexcept
     {
-        const auto &        callbacks	    = ctx.callbacks;
-        ImDrawList *        dl			    = ctx.args.dl;
         const size_t        N			    = this->verts.size();
-        const int           segs	        = (ctx.args.bezier_segments > 0) ? ctx.args.bezier_segments : 0; // 0 = ImGui auto
 
-
-        // Local helper: draw one segment a -> b (straight or cubic)
-        auto                draw_seg_si     = [&](size_t si)
-        {
-            ImVec2 P0, P1, P2, P3;
-            if ( !this->segment_control_points(si, P0, P1, P2, P3, ctx) )   { return; }
-
-            // Linear iff effective control points coincide with endpoints
-            const bool linear = (P1.x == P0.x && P1.y == P0.y &&
-                                 P2.x == P3.x && P2.y == P3.y);
-
-            const ImVec2 A = ctx.callbacks.ws_to_px(P0);
-            const ImVec2 B = ctx.callbacks.ws_to_px(P3);
-
-            if (linear) {
-                dl->AddLine(A, B, this->style.stroke_color, this->style.stroke_width);
-            }
-            else {
-                const ImVec2 Q1 = ctx.callbacks.ws_to_px(P1);
-                const ImVec2 Q2 = ctx.callbacks.ws_to_px(P2);
-                dl->AddBezierCubic(A, Q1, Q2, B,
-                                   this->style.stroke_color,
-                                   this->style.stroke_width,
-                                   segs);
-            }
-        };
-
-
-        //  Open chain
-        for (size_t i = 0; i + 1 < N; ++i)
-            draw_seg_si(i);
-
-        //  Close the loop if needed
-        if (this->closed)
-            draw_seg_si(N - 1);
+        for (size_t i = 0; i + 1 < N; ++i)  { this->_draw_segment(i, ctx);      }   //  Open chain.
+        if ( this->closed )                 { this->_draw_segment(N - 1, ctx);  }   //  Close the loop if needed.
         
         return;
     }
     
     
     
-    /*template<class CTX>
-    inline void	                        render_stroke                       (const CTX & ctx) const noexcept
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SUBSIDIARY RENDER FUNCTIONS.
+    // *************************************************************************** //
+    
+    
+    //  "_draw_segment"
+    //      Local helper: draw one segment a -> b (straight or cubic)
+    //
+    template<class CTX>
+    inline void	                        _draw_segment                       (const size_t si, const CTX & ctx) const noexcept
     {
-        const auto &        callbacks	    = ctx.callbacks;
-        ImDrawList *        dl			    = ctx.args.dl;
-        const size_t        N			    = this->verts.size();
+        ImDrawList * dl = ctx.args.dl;
 
-        const int           segs	        = (ctx.args.bezier_segments > 0) ? ctx.args.bezier_segments : 0; // 0 = ImGui auto
+        // WORLD-space cubic control points via your existing helper
+        ImVec2 P0, P1, P2, P3;
+        if (!this->segment_control_points(si, P0, P1, P2, P3, ctx))
+            return;
 
+        // Linear iff effective control points coincide with endpoints
+        const bool linear = (P1.x == P0.x && P1.y == P0.y &&
+                             P2.x == P3.x && P2.y == P3.y);
 
-        // Local helper: draw one segment a -> b (straight or cubic)
-        auto draw_seg = [&](const V *a, const V *b)
+        // Endpoints in WORLD space
+        const ImVec2 A_ws = P0;
+        const ImVec2 B_ws = P3;
+
+        // Pixels for endpoints
+        const ImVec2 A = ctx.callbacks.ws_to_px(A_ws);
+        const ImVec2 B = ctx.callbacks.ws_to_px(B_ws);
+
+        if (linear)
         {
-            if ( !a || !b )     { return; }
-
-            // Curvature rule: segment is curved iff a.Out NOT linear OR b.In NOT linear
-            const bool curved = !( a->IsOutLinear() && b->IsInLinear() );
-
-            if (!curved)
-            {
-                const ImVec2        A       = callbacks.ws_to_px({ a->x, a->y });
-                const ImVec2        B       = callbacks.ws_to_px({ b->x, b->y });
-                dl->AddLine(A, B, this->style.stroke_color, this->style.stroke_width);
-                return;
-            }
-
-            // Cubic Bezier: P0=a, P1=a+out, P2=b+in, P3=b — all mapped to pixels
-            const ImVec2 P0 = callbacks.ws_to_px({ a->x,                             a->y });
-            const ImVec2 P1 = callbacks.ws_to_px({ a->x + a->m_bezier.out_handle.x,  a->y + a->m_bezier.out_handle.y });
-            const ImVec2 P2 = callbacks.ws_to_px({ b->x + b->m_bezier.in_handle.x,   b->y + b->m_bezier.in_handle.y  });
-            const ImVec2 P3 = callbacks.ws_to_px({ b->x,                             b->y });
-
-            dl->AddBezierCubic( P0, P1, P2, P3,
-                                this->style.stroke_color,
-                                this->style.stroke_width,
-                                segs );
-        };
-
-
-        //  Open chain
-        for (size_t i = 0; i + 1 < N; ++i)
-        {
-            const V *   a   = callbacks.get_vertex( callbacks.vertices, static_cast<vertex_id>( this->verts[i])      );
-            const V *   b   = callbacks.get_vertex( callbacks.vertices, static_cast<vertex_id>( this->verts[i + 1])  );
-            IM_ASSERT( (a != nullptr) && (b != nullptr)  && "Cannot have NULL Vertices" );
-            //  this->_render_segment( *a, *b );
-            draw_seg(a, b);
+            dl->AddLine(A, B,
+                        this->style.stroke_color,
+                        this->style.stroke_width);
+            return;
         }
 
-        //  Close the loop if needed
-        if (this->closed)
+        // Detect "Quadratic" segment by endpoint curvature type.
+        // Per your rule: when a segment is Quadratic, we use ONLY the
+        // start vertex's out_handle as THE single control point.
         {
-            const V *   a   = callbacks.get_vertex( callbacks.vertices, static_cast<vertex_id>( this->verts[N - 1])  );
-            const V *   b   = callbacks.get_vertex( callbacks.vertices, static_cast<vertex_id>( this->verts[0])      );
-            IM_ASSERT( (a != nullptr) && (b != nullptr)  && "Cannot have NULL Vertices" );
-            //  this->_render_segment( *a, *b );
-            draw_seg(a, b);
+            const size_t N     = this->verts.size();
+            const auto   vid_a = this->verts[si];
+            const auto   vid_b = this->verts[(si + 1) % N];
+
+            const auto * va = ctx.callbacks.get_vertex(ctx.callbacks.vertices, vid_a);
+            const auto * vb = ctx.callbacks.get_vertex(ctx.callbacks.vertices, vid_b);
+
+            if (va  &&  vb)
+            {
+                using CT = decltype(va->m_bezier.kind); // CurvatureType enum
+                const bool is_quadratic = va->IsQuadratic();
+
+                if (is_quadratic)
+                {
+                    // Single WORLD-space control point from A’s out_handle
+                    const ImVec2 C_ws {
+                        va->x + va->m_bezier.out_handle.x,
+                        va->y + va->m_bezier.out_handle.y
+                    };
+                    const ImVec2 C = ctx.callbacks.ws_to_px(C_ws);
+
+                    const int segs = (ctx.args.bezier_segments > 0)
+                        ? ctx.args.bezier_segments
+                        : 0; // 0 = ImGui auto
+
+                    // Direct Quadratic call (3 control points: A, C, B)
+                    dl->AddBezierQuadratic(
+                        A, C, B,
+                        this->style.stroke_color,
+                        this->style.stroke_width,
+                        segs
+                    );
+                    return;
+                }
+            }
+        }
+
+        // Default: Cubic (existing behavior with P1/P2)
+        {
+            const ImVec2 Q1 = ctx.callbacks.ws_to_px(P1);
+            const ImVec2 Q2 = ctx.callbacks.ws_to_px(P2);
+            const int    segs = (ctx.args.bezier_segments > 0)
+                ? ctx.args.bezier_segments
+                : 0; // 0 = ImGui auto
+
+            dl->AddBezierCubic(
+                A, Q1, Q2, B,
+                this->style.stroke_color,
+                this->style.stroke_width,
+                segs
+            );
         }
         
+        return;
+    }
+
+    /*{
+        ImDrawList * dl = ctx.args.dl;
+
+        // Compute control points in WORLD space via your existing helper
+        ImVec2 P0, P1, P2, P3;
+        if (!this->segment_control_points(si, P0, P1, P2, P3, ctx))
+            return;
+
+        // Linear iff effective control points coincide with endpoints
+        const bool linear = (P1.x == P0.x && P1.y == P0.y &&
+                             P2.x == P3.x && P2.y == P3.y);
+
+        const ImVec2 A = ctx.callbacks.ws_to_px(P0);
+        const ImVec2 B = ctx.callbacks.ws_to_px(P3);
+
+        if (linear)
+        {
+            dl->AddLine(A, B,
+                        this->style.stroke_color,
+                        this->style.stroke_width);
+            return;
+        }
+
+        // Non-linear → draw cubic (Quadratic can be emitted as cubic-equivalent here later)
+        const ImVec2 Q1  = ctx.callbacks.ws_to_px(P1);
+        const ImVec2 Q2  = ctx.callbacks.ws_to_px(P2);
+        const int    segs = (ctx.args.bezier_segments > 0) ? ctx.args.bezier_segments : 0; // 0 = ImGui auto
+
+        dl->AddBezierCubic(A, Q1, Q2, B,
+                           this->style.stroke_color,
+                           this->style.stroke_width,
+                           segs);
+    
         return;
     }*/
         

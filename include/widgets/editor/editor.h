@@ -940,7 +940,6 @@ protected:
     //                              LOCAMOTION UTILITIES:
     void                                _utl_set_canvas_window              (void) noexcept;
     
-    
     // *************************************************************************** //
     //
     //
@@ -1125,13 +1124,24 @@ protected:
     {
         if ( this->want_snap() ) {
             float s = m_grid.snap_step;
-            if (s <= 0.0f) return ws;                     // safety
+            if ( s <= 0.0f )    { return ws; }                    // safety
             const float inv = 1.0f / s;
             ws.x = std::round(ws.x * inv) * s;
             ws.y = std::round(ws.y * inv) * s;
         }
         return ws;
     }
+    /*{
+        if ( this->want_snap() ) {
+            float s = m_grid.snap_step;
+            if (s <= 0.0f) return ws;                     // safety
+            const float inv = 1.0f / s;
+            ws.x = std::round(ws.x * inv) * s;
+            ws.y = std::round(ws.y * inv) * s;
+        }
+        return ws;
+    }*/
+    
     
     //  "want_snap"
     inline bool                         want_snap                               (void) const
@@ -1197,7 +1207,7 @@ protected:
     //
     inline bool _ensure_paths_sorted_by_z_desc(void)
     {
-        const int               n               = static_cast<int>(m_paths.size());
+        const int               n               = static_cast<int>( m_paths.size() );
         
         if ( n <= 1 )           { return false; }
 
@@ -1209,9 +1219,10 @@ protected:
         for (int i = 0; i < n; ++i)             { order[i] = i; }
 
         auto is_desc_sorted = [&]() -> bool {
-            for (int i = 1; i < n; ++i)
+            for (int i = 1; i < n; ++i) {
                 if (m_paths[i-1].z_index < m_paths[i].z_index)   // should be non-increasing
                     return false;
+            }
             return true;
         };
         if ( is_desc_sorted() )                 { return false; }
@@ -1237,8 +1248,9 @@ protected:
 
 
         //  Reassign sequential z so top row = greatest z
-        for (int i = 0; i < n; ++i)
+        for (int i = 0; i < n; ++i) {
             m_paths[i].z_index = Z_FLOOR_USER + (n - 1 - i);
+        }
 
 
         //  Remap selection indices
@@ -1305,7 +1317,8 @@ protected:
 
         //      4.      REMAP PATH-SELECTION SET.
         std::unordered_set<size_t> new_sel;
-        for (size_t old_idx : m_sel.paths) {
+        for (size_t old_idx : m_sel.paths)
+        {
             int idx = static_cast<int>(old_idx);
             remap(idx);
             new_sel.insert(static_cast<size_t>(idx));

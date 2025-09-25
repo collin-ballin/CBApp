@@ -278,6 +278,198 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction & it) const
     constexpr float         PAD                     = 4.0f;
     const float             HALF                    = m_style.HANDLE_BOX_SIZE * 0.5f + PAD;
     const ImVec2            ms                      = ImGui::GetIO().MousePos;          // mouse in pixels
+
+    //  "parent_path_of_vertex"
+    //      Helper: map vertex-id → parent Path*, or nullptr if none.
+    auto                    parent_path_of_vertex   = [&](VertexID vid) -> const Path * {
+        for (const Path & p : m_paths) {
+            for (VertexID v : p.verts) {
+                if (v == vid) { return &p; }
+            }
+        }
+        return nullptr;
+    };
+
+    //  "overlap"  (px AABB hit for handle glyphs)
+    auto                    overlap                 = [&](ImVec2 scr) {
+        return fabsf(ms.x - scr.x) <= HALF && fabsf(ms.y - scr.y) <= HALF;
+    };
+
+    // ───────────────────────────────────────────── 1. Bézier handles
+    for (const Vertex & v : m_vertices)
+    {
+        if (!m_sel.vertices.count(v.id))               { continue; }  // handles only for selected verts
+        const Path * pp = parent_path_of_vertex(v.id);
+        if (!pp || pp->locked || !pp->visible)         { continue; }
+
+        if (v.m_bezier.out_handle.x || v.m_bezier.out_handle.y)
+        {
+            ImVec2 scr = world_to_pixels({ v.x + v.m_bezier.out_handle.x,
+                                           v.y + v.m_bezier.out_handle.y });
+            if (overlap(scr))
+                return Hit{ HitType::Handle, static_cast<size_t>(v.id), true };
+        }
+        if (v.m_bezier.in_handle.x || v.m_bezier.in_handle.y)
+        {
+            ImVec2 scr = world_to_pixels({ v.x + v.m_bezier.in_handle.x,
+                                           v.y + v.m_bezier.in_handle.y });
+            if (overlap(scr))
+                return Hit{ HitType::Handle, static_cast<size_t>(v.id), false };
+        }
+    }
+
+    // ───────────────────────────────────────────── 2. point glyphs
+    int pi = _hit_point(it);
+    if (pi >= 0 && static_cast<size_t>(pi) < m_points.size())
+    {
+        uint32_t        vid = m_points[pi].v;
+        const Path *    pp  = parent_path_of_vertex(vid);
+        if (pp && !pp->locked && pp->visible)
+            return Hit{ HitType::Vertex, static_cast<size_t>(pi) };
+    }
+
+    // ───────────────────────────────────────────── 3. paths
+    // Build vector of unlocked+visible paths, sort by z (low→high), iterate reverse
+    std::vector<const Path*> vec;
+    vec.reserve(m_paths.size());
+    for (const Path& p : m_paths)
+        if (!p.locked && p.visible) vec.push_back(&p);
+
+    std::stable_sort(vec.begin(), vec.end(),
+        [](const Path* a, const Path* b){ return a->z_index < b->z_index; });
+
+    for (auto rit = vec.rbegin(); rit != vec.rend(); ++rit)
+    {
+        const Path &  p     = **rit;
+        const size_t  N     = p.verts.size();
+        const size_t  index = &p - m_paths.data();          // back to array idx
+        if (N < 2) continue;
+
+        // ── EDGE proximity test (topmost-first)
+        for (size_t si = 0; si < N - 1 + (p.closed ? 1u : 0u); ++si)
+        {
+            const Vertex * a = find_vertex(m_vertices, p.verts[si]);
+            const Vertex * b = find_vertex(m_vertices, p.verts[(si + 1) % N]);
+            if (!a || !b) continue;
+
+            // 1. Straight edge
+            if (!is_curved<VertexID>(a, b))
+            {
+                ImVec2 A = world_to_pixels({ a->x, a->y });
+                ImVec2 B = world_to_pixels({ b->x, b->y });
+
+                ImVec2 AB{ B.x - A.x, B.y - A.y };
+                ImVec2 AP{ ms.x - A.x, ms.y - A.y };
+                float  len_sq = AB.x*AB.x + AB.y*AB.y;
+                float  t      = (len_sq > 0.f) ? (AP.x*AB.x + AP.y*AB.y) / len_sq : 0.f;
+                t             = std::clamp(t, 0.f, 1.f);
+
+                ImVec2 C{ A.x + AB.x*t, A.y + AB.y*t };
+                float  dx = ms.x - C.x, dy = ms.y - C.y;
+                if (dx*dx + dy*dy <= m_style.HIT_THRESH_SQ)
+                    return Hit{ HitType::Edge, index };
+            }
+            // 2. Quadratic edge: sample chords and project in pixel space
+            else if (a->IsQuadratic())
+            {
+                // World control points (A, C, B) with single control from A.out_handle
+                ImVec2 A_ws{ a->x, a->y };
+                ImVec2 C_ws{ a->x + a->m_bezier.out_handle.x, a->y + a->m_bezier.out_handle.y };
+                ImVec2 B_ws{ b->x, b->y };
+
+                ImVec2 prev_px = world_to_pixels(A_ws);
+
+                for (int k = 1; k <= m_style.ms_BEZIER_HIT_STEPS; ++k)
+                {
+                    float  tk     = static_cast<float>(k) / static_cast<float>(m_style.ms_BEZIER_HIT_STEPS);
+                    // Evaluate quadratic in world, then to pixels
+                    float  u1     = 1.0f - tk;
+                    ImVec2 cur_ws { u1*u1*A_ws.x + 2*u1*tk*C_ws.x + tk*tk*B_ws.x,
+                                    u1*u1*A_ws.y + 2*u1*tk*C_ws.y + tk*tk*B_ws.y };
+                    ImVec2 cur_px = world_to_pixels(cur_ws);
+
+                    ImVec2 seg{ cur_px.x - prev_px.x, cur_px.y - prev_px.y };
+                    ImVec2 to_pt{ ms.x - prev_px.x,   ms.y - prev_px.y   };
+                    float  len_sq = seg.x*seg.x + seg.y*seg.y;
+                    float  u      = (len_sq > 0.f) ? (to_pt.x*seg.x + to_pt.y*seg.y) / len_sq : 0.f;
+                    u             = std::clamp(u, 0.f, 1.f);
+                    ImVec2 C{ prev_px.x + seg.x*u, prev_px.y + seg.y*u };
+                    float  dx = ms.x - C.x, dy = ms.y - C.y;
+
+                    if (dx*dx + dy*dy <= m_style.HIT_THRESH_SQ)
+                        return Hit{ HitType::Edge, index };
+
+                    prev_px = cur_px;
+                }
+            }
+            // 3. Cubic edge: existing sampling & projection
+            else
+            {
+                ImVec2 prev_px = world_to_pixels({ a->x, a->y });
+
+                for (int k = 1; k <= m_style.ms_BEZIER_HIT_STEPS; ++k)
+                {
+                    float  t      = static_cast<float>(k) / m_style.ms_BEZIER_HIT_STEPS;
+                    ImVec2 wpt    = cubic_eval<VertexID>(a, b, t);
+                    ImVec2 cur_px = world_to_pixels(wpt);
+
+                    ImVec2 seg{ cur_px.x - prev_px.x, cur_px.y - prev_px.y };
+                    ImVec2 to_pt{ ms.x - prev_px.x,   ms.y - prev_px.y   };
+                    float  len_sq = seg.x*seg.x + seg.y*seg.y;
+                    float  u      = (len_sq > 0.f) ? (to_pt.x*seg.x + to_pt.y*seg.y) / len_sq : 0.f;
+                    u             = std::clamp(u, 0.f, 1.f);
+                    ImVec2 C{ prev_px.x + seg.x*u, prev_px.y + seg.y*u };
+                    float  dx = ms.x - C.x, dy = ms.y - C.y;
+
+                    if (dx*dx + dy*dy <= m_style.HIT_THRESH_SQ)
+                        return Hit{ HitType::Edge, index };
+
+                    prev_px = cur_px;
+                }
+            }
+        }
+
+        // ── interior point-in-polygon
+        if (p.closed)
+        {
+            std::vector<ImVec2> poly;
+            poly.reserve(N * 4);
+
+            for (size_t vi = 0; vi < N; ++vi)
+            {
+                const Vertex * a = find_vertex(m_vertices, p.verts[vi]);
+                const Vertex * b = find_vertex(m_vertices, p.verts[(vi + 1) % N]);
+                if (!a || !b) continue;
+
+                if (!is_curved<VertexID>(a, b))
+                {
+                    poly.push_back(world_to_pixels({ a->x, a->y }));
+                }
+                else
+                {
+                    for (int k = 0; k <= m_style.ms_BEZIER_HIT_STEPS; ++k) {
+                        float  t   = static_cast<float>(k) / m_style.ms_BEZIER_HIT_STEPS;
+                        ImVec2 wpt = cubic_eval<VertexID>(a, b, t);
+                        poly.push_back(world_to_pixels(wpt));
+                    }
+                }
+            }
+
+            if (!poly.empty() && point_in_polygon(poly, ms))
+                return Hit{ HitType::Surface, index };
+        }
+    }
+
+    return std::nullopt;   // nothing hit
+}
+
+/*
+{
+    // ─── utilities ───────────────────────────────────────────────────────
+    using                   HitType                 = Hit::Type;
+    constexpr float         PAD                     = 4.0f;
+    const float             HALF                    = m_style.HANDLE_BOX_SIZE * 0.5f + PAD;
+    const ImVec2            ms                      = ImGui::GetIO().MousePos;          // mouse in pixels
     auto                    ws2px                   = [&](const ImVec2& w){ return world_to_pixels(w); };
 
     //  "parent_path_of_vertex"
@@ -458,7 +650,7 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction & it) const
     }
 
     return std::nullopt;   // nothing hit
-}
+}*/
 
 
 //  "_hit_path_segment"
@@ -467,6 +659,171 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction & it) const
 //      Returns nearest segment within a 6-px pick radius (early-out on miss).
 //
 std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*it*/) const
+{
+    namespace bez   = cblib::math::bezier;
+    namespace bezpx = cblib::math::bezier::px;
+
+    // Zoom-invariant pick thresholds (pixels)
+    constexpr float PICK_PX          = 6.0f;   // edge pick radius
+    constexpr float ENDPOINT_EPS_PX  = 3.0f;   // reject near-vertex "cuts"
+    constexpr float HANDLE_EPS2      = 1e-12f; // linear-handle epsilon^2 (world units)
+    const float     thresh_sq        = PICK_PX * PICK_PX;
+    const float     endpoint_eps_sq  = ENDPOINT_EPS_PX * ENDPOINT_EPS_PX;
+
+    // Mouse in pixel space
+    const ImVec2 ms = ImGui::GetIO().MousePos;
+
+    // World→pixel
+    auto ws2px = [this](const ImVec2& w){ return world_to_pixels(w); };
+
+    // Build Z-sorted list of eligible paths (visible & unlocked)
+    std::vector<size_t> order;
+    order.reserve(m_paths.size());
+    for (size_t pi = 0; pi < m_paths.size(); ++pi) {
+        const Path& p = m_paths[pi];
+        if (!p.visible || p.locked) continue;
+        order.push_back(pi);
+    }
+    std::stable_sort(order.begin(), order.end(),
+        [&](size_t a, size_t b){ return m_paths[a].z_index < m_paths[b].z_index; });
+
+    // Walk from topmost down; return as soon as the topmost eligible path yields a valid hit
+    for (auto rit = order.rbegin(); rit != order.rend(); ++rit)
+    {
+        const size_t  pi = *rit;
+        const Path&   p  = m_paths[pi];
+        const size_t  N  = p.verts.size();
+        if (N < 2) continue;
+
+        const bool   closed    = p.closed;
+        const size_t seg_count = N - (closed ? 0 : 1);
+
+        std::optional<PathHit> best_for_path;
+        float                  best_d2 = thresh_sq;
+
+        for (size_t si = 0; si < seg_count; ++si)
+        {
+            const Vertex* a = find_vertex(m_vertices, p.verts[si]);
+            const Vertex* b = find_vertex(m_vertices, p.verts[(si + 1) % N]);
+            if (!a || !b) continue;
+
+            // Linear test (epsilon on handle magnitudes)
+            const float a_out_len2 = a->m_bezier.out_handle.x * a->m_bezier.out_handle.x
+                                   + a->m_bezier.out_handle.y * a->m_bezier.out_handle.y;
+            const float b_in_len2  = b->m_bezier.in_handle.x  * b->m_bezier.in_handle.x
+                                   + b->m_bezier.in_handle.y  * b->m_bezier.in_handle.y;
+            const bool  linear     = (a_out_len2 <= HANDLE_EPS2) && (b_in_len2 <= HANDLE_EPS2);
+
+            if (linear)
+            {
+                // Straight segment (pixel space projection)
+                const ImVec2 A = ws2px(ImVec2{ a->x, a->y });
+                const ImVec2 B = ws2px(ImVec2{ b->x, b->y });
+
+                // Reject near endpoints
+                if (bezpx::dist2(A, ms) <= endpoint_eps_sq) continue;
+                if (bezpx::dist2(B, ms) <= endpoint_eps_sq) continue;
+
+                const float  u  = bezpx::project_param_on_segment(A, B, ms);
+                const ImVec2 C  = bezpx::lerp(A, B, u);
+                const float  d2 = bezpx::dist2(ms, C);
+
+                if (d2 < best_d2) {
+                    best_d2 = d2;
+                    // World-space closest point on straight chord
+                    const ImVec2 pos_ws {
+                        a->x + (b->x - a->x) * u,
+                        a->y + (b->y - a->y) * u
+                    };
+                    best_for_path = PathHit{ pi, si, u /* t on straight */, pos_ws };
+                }
+            }
+            else if (a->IsQuadratic())
+            {
+                // Quadratic: use start vertex's out_handle as single control point
+                const ImVec2 A_ws{ a->x, a->y };
+                const ImVec2 C_ws{ a->x + a->m_bezier.out_handle.x, a->y + a->m_bezier.out_handle.y };
+                const ImVec2 B_ws{ b->x, b->y };
+
+                ImVec2 prev_ws = A_ws;
+                ImVec2 prev_px = ws2px(prev_ws);
+
+                const int STEPS = m_style.ms_BEZIER_HIT_STEPS;
+                for (int k = 1; k <= STEPS; ++k)
+                {
+                    const float tk     = static_cast<float>(k) / static_cast<float>(STEPS);
+                    const ImVec2 cur_ws = bez::eval_quadratic<ImVec2,float>(A_ws, C_ws, B_ws, tk);
+                    const ImVec2 cur_px = ws2px(cur_ws);
+
+                    // Reject near endpoints of sub-segment
+                    if (bezpx::dist2(prev_px, ms) <= endpoint_eps_sq) { prev_px = cur_px; prev_ws = cur_ws; continue; }
+                    if (bezpx::dist2(cur_px,  ms) <= endpoint_eps_sq) { prev_px = cur_px; prev_ws = cur_ws; continue; }
+
+                    const float  u   = bezpx::project_param_on_segment(prev_px, cur_px, ms);
+                    const ImVec2 Cpx = bezpx::lerp(prev_px, cur_px, u);
+                    const float  d2  = bezpx::dist2(ms, Cpx);
+
+                    if (d2 < best_d2) {
+                        best_d2 = d2;
+                        // Continuous parameter along the whole curve
+                        const float t_global = (static_cast<float>(k - 1) + u) / static_cast<float>(STEPS);
+                        // World-space closest point (chord interpolation)
+                        const ImVec2 pos_ws{
+                            prev_ws.x + (cur_ws.x - prev_ws.x) * u,
+                            prev_ws.y + (cur_ws.y - prev_ws.y) * u
+                        };
+                        best_for_path = PathHit{ pi, si, t_global, pos_ws };
+                    }
+
+                    prev_px = cur_px;
+                    prev_ws = cur_ws;
+                }
+            }
+            else
+            {
+                // Cubic: uniform sampling & pixel-space projection
+                ImVec2 prev_ws{ a->x, a->y };
+                ImVec2 prev_px = ws2px(prev_ws);
+
+                const int STEPS = m_style.ms_BEZIER_HIT_STEPS;
+                for (int k = 1; k <= STEPS; ++k)
+                {
+                    const float  tk     = static_cast<float>(k) / static_cast<float>(STEPS);
+                    const ImVec2 cur_ws = cubic_eval<VertexID>(a, b, tk);
+                    const ImVec2 cur_px = ws2px(cur_ws);
+
+                    // Reject near endpoints of sub-segment
+                    if (bezpx::dist2(prev_px, ms) <= endpoint_eps_sq) { prev_px = cur_px; prev_ws = cur_ws; continue; }
+                    if (bezpx::dist2(cur_px,  ms) <= endpoint_eps_sq) { prev_px = cur_px; prev_ws = cur_ws; continue; }
+
+                    const float  u   = bezpx::project_param_on_segment(prev_px, cur_px, ms);
+                    const ImVec2 Cpx = bezpx::lerp(prev_px, cur_px, u);
+                    const float  d2  = bezpx::dist2(ms, Cpx);
+
+                    if (d2 < best_d2) {
+                        best_d2 = d2;
+                        const float t_global = (static_cast<float>(k - 1) + u) / static_cast<float>(STEPS);
+                        const ImVec2 pos_ws{
+                            prev_ws.x + (cur_ws.x - prev_ws.x) * u,
+                            prev_ws.y + (cur_ws.y - prev_ws.y) * u
+                        };
+                        best_for_path = PathHit{ pi, si, t_global, pos_ws };
+                    }
+
+                    prev_px = cur_px;
+                    prev_ws = cur_ws;
+                }
+            }
+        }
+
+        if (best_for_path) return best_for_path; // topmost-path winner
+    }
+
+    return std::nullopt;
+}
+
+
+/*
 {
     // Zoom-invariant pick thresholds (px)
     constexpr float     PICK_PX             = 6.0f;   // same radius you used before
@@ -605,107 +962,6 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
     }
 
     return std::nullopt;   // nothing within PICK_PX on any eligible path
-}
-
-/*{
-    constexpr float PICK_PX   = 6.0f;
-    const float     thresh_sq = PICK_PX * PICK_PX;
-
-    // mouse position in pixel space
-    ImVec2                  ms              = ImGui::GetIO().MousePos;
-
-    std::optional<PathHit>  best;
-    float                   best_d2         = thresh_sq;
-
-    auto    ws2px          = [this](ImVec2 w){ return world_to_pixels(w); };
-    auto    lerp           = [](float a, float b, float t){ return a + (b - a) * t; };
-    auto    is_zero        = [](const ImVec2& v){ return v.x == 0.f && v.y == 0.f; };
-
-    for (size_t pi = 0; pi < m_paths.size(); ++pi)
-    {
-        const Path&  p = m_paths[pi];
-        const size_t N = p.verts.size();
-        if (N < 2) continue;
-
-        const bool   closed     = p.closed;
-        const size_t seg_count  = N - (closed ? 0 : 1);
-
-        for (size_t si = 0; si < seg_count; ++si)
-        {
-            const Vertex* a = find_vertex(m_vertices, p.verts[si]);
-            const Vertex* b = find_vertex(m_vertices, p.verts[(si + 1) % N]);
-            if (!a || !b) continue;
-
-            bool curved = !is_zero(a->m_bezier.out_handle) || !is_zero(b->m_bezier.in_handle);
-
-            if (!curved)
-            {
-                // ---- straight line in pixel space ----
-                ImVec2 A = ws2px({ a->x, a->y });
-                ImVec2 B = ws2px({ b->x, b->y });
-
-                ImVec2 AB{ B.x - A.x, B.y - A.y };
-                ImVec2 AM{ ms.x - A.x, ms.y - A.y };
-
-                float len_sq = AB.x*AB.x + AB.y*AB.y;
-                if (len_sq == 0.f) continue;
-
-                float t = std::clamp((AM.x*AB.x + AM.y*AB.y) / len_sq, 0.f, 1.f);
-                ImVec2 C{ A.x + AB.x*t, A.y + AB.y*t };
-
-                float dx = ms.x - C.x, dy = ms.y - C.y;
-                float d2 = dx*dx + dy*dy;
-
-                if (d2 < best_d2) {
-                    best_d2 = d2;
-
-                    float cx_ws = lerp(a->x, b->x, t);
-                    float cy_ws = lerp(a->y, b->y, t);
-
-                    best = PathHit{ pi, si, t, ImVec2(cx_ws, cy_ws) };
-                }
-            }
-            else
-            {
-                // ---- cubic Bézier: sample STEPS sub‑segments ----
-                const int   STEPS       = m_style.ms_BEZIER_HIT_STEPS;
-                ImVec2      prev_px     = ws2px({ a->x, a->y });
-                ImVec2      prev_ws     { a->x, a->y };
-
-                for (int k = 1; k <= STEPS; ++k)
-                {
-                    float  t  = static_cast<float>(k) / STEPS;
-                    ImVec2 cur_ws = cubic_eval<VertexID>(a, b, t);
-                    ImVec2 cur_px = ws2px(cur_ws);
-
-                    // distance mouse → segment [prev,cur]
-                    ImVec2 AB{ cur_px.x - prev_px.x, cur_px.y - prev_px.y };
-                    ImVec2 AM{ ms.x - prev_px.x,     ms.y - prev_px.y     };
-
-                    float len_sq = AB.x*AB.x + AB.y*AB.y;
-                    float u = (len_sq > 0.f) ? (AM.x*AB.x + AM.y*AB.y) / len_sq : 0.f;
-                    u = std::clamp(u, 0.f, 1.f);
-
-                    ImVec2 C{ prev_px.x + AB.x*u, prev_px.y + AB.y*u };
-                    float dx = ms.x - C.x, dy = ms.y - C.y;
-                    float d2 = dx*dx + dy*dy;
-
-                    if (d2 < best_d2) {
-                        best_d2 = d2;
-
-                        ImVec2 pos_ws{
-                            prev_ws.x + (cur_ws.x - prev_ws.x) * u,
-                            prev_ws.y + (cur_ws.y - prev_ws.y) * u
-                        };
-                        best = PathHit{ pi, si, t, pos_ws };
-                    }
-                    prev_px = cur_px;
-                    prev_ws = cur_ws;
-                }
-            }
-        }
-    }
-    return best;   // std::nullopt if nothing within PICK_PX
 }*/
 
 

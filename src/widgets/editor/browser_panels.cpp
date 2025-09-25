@@ -482,16 +482,17 @@ inline void Editor::_draw_vertex_properties_panel(Vertex & v, const LabelFn & ca
     const float                     ms_HALF_WIDTH       = 0.5 * ( ms_WIDGET_WIDTH - ms_SEP_WIDTH.x );
     constexpr float                 SPEED_SCALE         = 0.001f;
     [[maybe_unused]] const float    grid                = m_style.GRID_STEP / m_cam.zoom_mag;
-    auto                            snap                = [/*grid*/](const double & x_, const double & y_) -> ImVec2 {
-        float   x     = x_;//  std::round(x_ / grid) * grid;
-        float   y     = y_;//  std::round(y_ / grid) * grid;
-        return ImVec2{ x, y };
-    };
+    //  auto                            snap                = [/*grid*/](const double & x_, const double & y_) -> ImVec2 {
+    //      float   x     = x_;//  std::round(x_ / grid) * grid;
+    //      float   y     = y_;//  std::round(y_ / grid) * grid;
+    //      return ImVec2{ x, y };
+    //  };
     
     const float                     speedx              = SPEED_SCALE * ES.m_window_size[0];
     const float                     speedy              = SPEED_SCALE * ES.m_window_size[1];
     const double &                  WS_xmax             = ES.m_world_size[0].value;
     const double &                  WS_ymax             = ES.m_world_size[1].value;
+    const bool                      quadratic           = ( v.IsQuadratic() );
 
 
 
@@ -501,9 +502,8 @@ inline void Editor::_draw_vertex_properties_panel(Vertex & v, const LabelFn & ca
     //
     //
     //  //      3.1.    Position:
-        callback("Position:");
         ImGui::PushItemWidth( ms_HALF_WIDTH );
-            v.ui_Position(WS_xmax, WS_ymax, speedx, speedy);
+            v.ui_Position       (WS_xmax, WS_ymax, speedx, speedy);
         ImGui::PopItemWidth();
         
         
@@ -518,18 +518,28 @@ inline void Editor::_draw_vertex_properties_panel(Vertex & v, const LabelFn & ca
         }
             
             
-        //      3.2A.   In-Handle:
-        callback("In-Handle:");
-        ImGui::PushItemWidth( ms_HALF_WIDTH );
-            v.ui_InHandle(WS_xmax, WS_ymax, speedx, speedy);
-        ImGui::PopItemWidth();
-        
-        
-        //      3.2B.   Out-Handle:
-        callback("Out-Handle:");
-        ImGui::PushItemWidth( ms_HALF_WIDTH );
-            v.ui_OutHandle(WS_xmax, WS_ymax, speedx, speedy);
-        ImGui::PopItemWidth();
+        //              3.2B.   In-Handle:
+        if ( !quadratic ) {
+            callback("In-Handle:");
+            ImGui::PushItemWidth( ms_HALF_WIDTH );
+                v.ui_InHandle       (WS_xmax, WS_ymax, speedx, speedy);
+            ImGui::PopItemWidth();
+        }
+        //              3.2C.   Out-Handle:
+        //                      (A)     QUADRATIC BEZIER CURVE.
+        if ( quadratic ) {
+            callback("Control:");
+            ImGui::PushItemWidth( ms_HALF_WIDTH );
+                v.ui_OutHandle      (WS_xmax, WS_ymax, speedx, speedy);
+            ImGui::PopItemWidth();
+        }
+        //                      (B)     CUBIC BEZIER CURVE.
+        else {
+            callback("Out-Handle:");
+            ImGui::PushItemWidth( ms_HALF_WIDTH );
+                v.ui_OutHandle      (WS_xmax, WS_ymax, speedx, speedy);
+            ImGui::PopItemWidth();
+        }
     //
     //
     //

@@ -52,7 +52,7 @@ std::optional<Editor::EndpointInfo> Editor::_endpoint_if_open(VertexID vid) cons
         
         
         //  CASE 1 :    SKIP THIS PATH...
-        if ( path.IsArea()  ||  (M < 2) ) {
+        if ( !path.IsMutable()  ||  path.IsArea()  ||  (M < 2) ) {
             continue;
         }
         

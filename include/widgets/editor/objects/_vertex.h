@@ -418,13 +418,26 @@ struct BezierControl
     //
     //
     // *************************************************************************** //
-    //      SETTER / GETTER FUNCTIONS.
+    //      QUERY FUNCTIONS.
     // *************************************************************************** //
     
     //  "_is_linear"
     [[nodiscard]] inline bool           _is_linear                      (void) const noexcept           { return ( m_curvature_state == CurvatureState::None );     }
-    [[nodiscard]] inline bool           _is_in_linear                   (void) const noexcept           { return ( m_curvature_state != CurvatureState::In  &&  m_curvature_state != CurvatureState::All );     }
-    [[nodiscard]] inline bool           _is_out_linear                  (void) const noexcept           { return ( m_curvature_state != CurvatureState::Out  &&  m_curvature_state != CurvatureState::All );     }
+    [[nodiscard]] inline bool           _is_in_linear                   (void) const noexcept           { return ( m_curvature_state != CurvatureState::In  &&  m_curvature_state != CurvatureState::All  );    }
+    [[nodiscard]] inline bool           _is_out_linear                  (void) const noexcept           { return ( m_curvature_state != CurvatureState::Out  &&  m_curvature_state != CurvatureState::All );    }
+    
+    //  "_is_quadratic"
+    [[nodiscard]] inline bool           _is_quadratic                   (void) const noexcept           { return ( kind == CurvatureType::Quadratic );  }
+    [[nodiscard]] inline bool           _is_cubic                       (void) const noexcept           { return ( kind != CurvatureType::Quadratic );  }
+
+
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SETTER / GETTER FUNCTIONS.
+    // *************************************************************************** //
     
     //  "_set_curvature_type"
     inline void                         _set_curvature_type             (CurvatureType kind_) noexcept
@@ -549,7 +562,7 @@ struct BezierControl
     //
     //
     // *************************************************************************** //
-    //      RENDERING FUNCTIONS.
+    //      MAIN RENDERING FUNCTIONS.
     // *************************************************************************** //
     
     //  "render"
@@ -563,32 +576,96 @@ struct BezierControl
         this->_update_curvature_state();
         
         
-        
-        switch (style.data->hovered)
+        switch (this->kind)
         {
-            //      CASE 1 :    EITHER "IN" / "OUT" HANDLE IS HOVERED.
-            case HoverState::InHandle  :
-            case HoverState::OutHandle :
+            //      1.      QUADRATIC BEZIER...
+            case CurvatureType::Quadratic :
             {
-                this->_render_hovered_IMPL      (origin, h_in, h_out, style);
+                this->_render_QUADRATIC_IMPL                (pos, h_out, style);    //  USE "OUT" HANDLE AS THE CONTROL POINT FOR QUADRATIC BÉZIER...
                 break;
             }
             //
-            //      CASE 2 :    NONE OF THE THREE ITEMS ARE HOVERED...
+            //
+            //      X.      DEFAULT :   CUBIC BEZIER...
             default :
             {
-                this->_render_IMPL              (pos, h_in, h_out, style);
+                switch (style.data->hovered)
+                {
+                    //      CASE 1 :    EITHER "IN" / "OUT" HANDLE IS HOVERED.
+                    case HoverState::InHandle  :
+                    case HoverState::OutHandle :
+                    {
+                        this->_render_CUBIC_hovered_IMPL    (origin, h_in, h_out, style);
+                        break;
+                    }
+                    //
+                    //      CASE 2 :    NONE OF THE THREE ITEMS ARE HOVERED...
+                    default :
+                    {
+                        this->_render_CUBIC_IMPL            (pos, h_in, h_out, style);
+                        break;
+                    }
+                }
                 break;
             }
         }
         
         return;
     }
+
+
     
-    //  "_render_IMPL"
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      QUADRATIC RENDERING FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "_render_QUADRATIC_IMPL"
+    template <typename VStyle>
+    inline void                         _render_QUADRATIC_IMPL              (const ImVec2 & pos, const ImVec2 & ctrl, VStyle & style) const noexcept
+    {
+        const StyleData &           data            = *style.data;
+        
+        
+        //      DISPATCH ACTION BASED ON BEZIER CURVATURE...
+        switch (this->m_curvature_state)
+        {
+            default :
+            {
+                //  Draw guide line (anchor → control)
+                style.dl->AddLine(pos, ctrl, data.line_color, data.line_width);
+
+                //  Draw the unified handle box at the control point
+                style.dl->AddRect(
+                    ImVec2{ ctrl.x - data.handle_size, ctrl.y - data.handle_size },
+                    ImVec2{ ctrl.x + data.handle_size, ctrl.y + data.handle_size },
+                    data.handle_color,
+                    data.handle_rounding,
+                    data.ms_HANDLE_FLAGS,
+                    data.handle_thickness
+                );
+                break;
+            }
+        }
+        
+        return;
+    }
+
+
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      CUBIC RENDERING FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "_render_CUBIC_IMPL"
     //
     template <typename VStyle>
-    inline void                         _render_IMPL                        (const ImVec2 & pos, const ImVec2 & h_in, const ImVec2 & h_out, VStyle & style) const noexcept
+    inline void                         _render_CUBIC_IMPL                  (const ImVec2 & pos, const ImVec2 & h_in, const ImVec2 & h_out, VStyle & style) const noexcept
     {
         const StyleData &           data            = *style.data;
         
@@ -649,12 +726,12 @@ struct BezierControl
     
     
     
-    //  "_render_hovered_IMPL"
+    //  "_render_CUBIC_hovered_IMPL"
     //      Special case for one of three items being hovered.
     //      This is implemented as a second function to avoid the CONDITIONAL/TERNARY operations which will be unnessesary for overwhelming majority of the verticies.
     //
     template <typename VStyle>
-    inline void                         _render_hovered_IMPL                (const ImVec2 & pos, const ImVec2 & h_in, const ImVec2 & h_out, VStyle & style) const noexcept
+    inline void                         _render_CUBIC_hovered_IMPL          (const ImVec2 & pos, const ImVec2 & h_in, const ImVec2 & h_out, VStyle & style) const noexcept
     {
         const StyleData &           data            = *style.data;
         const bool                  ih_hovered      = ( data.hovered == HoverState::InHandle    );
@@ -723,11 +800,14 @@ struct BezierControl
     
     
 //
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //   END "INLINE" FUNCTIONS.
 
 
 
+//
 //
 //
 // *************************************************************************** //
@@ -888,13 +968,26 @@ struct Vertex_t
     //
     //
     // *************************************************************************** //
-    //      SETTER / GETTER FUNCTIONS.
+    //      QUERY FUNCTIONS.
     // *************************************************************************** //
     
     //  "IsLinear"
     [[nodiscard]] inline bool           IsLinear                        (void) const noexcept               { return m_bezier._is_linear();                 }
     [[nodiscard]] inline bool           IsInLinear                      (void) const noexcept               { return m_bezier._is_in_linear();              }
     [[nodiscard]] inline bool           IsOutLinear                     (void) const noexcept               { return m_bezier._is_out_linear();             }
+    
+    //  "IsQuadratic"
+    [[nodiscard]] inline bool           IsQuadratic                     (void) const noexcept               { return m_bezier._is_quadratic();              }
+    [[nodiscard]] inline bool           IsCubic                         (void) const noexcept               { return m_bezier._is_cubic();                  }
+    
+    
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SETTER / GETTER FUNCTIONS.
+    // *************************************************************************** //
     
     //  "SetCurvatureType"
     inline void                         SetCurvatureType                (CurvatureType kind_) noexcept      { return m_bezier._set_curvature_type(kind_);   }
@@ -1065,15 +1158,6 @@ struct Vertex_t
     };
     
     
-    
-    //  "ui_all"
-    inline void                         ui_all                              (void)
-    {
-        
-        return;
-    }
-    
-    
     //  "ui_Position"
     inline bool                         ui_Position                         ( const double xmax, const double ymax, const double speedx, const double speedy ) noexcept
     {
@@ -1117,11 +1201,17 @@ struct Vertex_t
         double          ih_x            = static_cast<double>( in_handle.x      );
         double          ih_y            = static_cast<double>( in_handle.y      );
     
-        const bool      dirty1          = this->_s_draw_vertex_slider( "##Vertex_InHandle_X", ih_x, speedx, -xmax, xmax );
-        ImGui::SameLine();
-        const bool      dirty2          = this->_s_draw_vertex_slider( "##Vertex_InHandle_Y", ih_y, speedy, -ymax, ymax );
+    
+        ImGui::BeginDisabled( this->m_bezier.kind == CurvatureType::Quadratic );
+        //
+            const bool      dirty1          = this->_s_draw_vertex_slider( "##Vertex_InHandle_X", ih_x, speedx, -xmax, xmax );
+            ImGui::SameLine();
+            const bool      dirty2          = this->_s_draw_vertex_slider( "##Vertex_InHandle_Y", ih_y, speedy, -ymax, ymax );
+        //
+        ImGui::EndDisabled();
         
         if ( dirty1 || dirty2 )         { this->SetInHandle( ih_x, ih_y ); }    //      UPDATE VALUE.
+        
         
         return (dirty1 || dirty2);
     }
@@ -1135,17 +1225,12 @@ struct Vertex_t
         double          oh_y            = static_cast<double>( out_handle.y      );
     
     
-        ImGui::BeginDisabled( this->m_bezier.kind != CurvatureType::Cubic );
-        //
-            const bool      dirty1          = this->_s_draw_vertex_slider( "##Vertex_OutHandle_X", oh_x, speedx, -xmax, xmax );
-            ImGui::SameLine();
-            const bool      dirty2          = this->_s_draw_vertex_slider( "##Vertex_OutHandle_Y", oh_y, speedy, -ymax, ymax );
-        //
-        ImGui::EndDisabled();
+        const bool      dirty1          = this->_s_draw_vertex_slider( "##Vertex_OutHandle_X", oh_x, speedx, -xmax, xmax );
+        ImGui::SameLine();
+        const bool      dirty2          = this->_s_draw_vertex_slider( "##Vertex_OutHandle_Y", oh_y, speedy, -ymax, ymax );
         
         
         if ( dirty1 || dirty2 )         { this->SetOutHandle( oh_x, oh_y ); }    //      UPDATE VALUE.
-        
         
         return (dirty1 || dirty2);
     }
