@@ -796,6 +796,15 @@ public:
     //  "insert_vertex_between"
     //  inline iterator                     insert_vertex_between               (size_t seg_idx, vertex_id new_vid)
     //  { return verts.insert(verts.begin() + seg_idx + 1, new_vid); }
+    
+        
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      ANALYTICAL GEOMETRY FUNCTIONS.
+    // *************************************************************************** //
         
         
     //  "_bezier_eval_ws"
@@ -894,51 +903,6 @@ public:
         
         return;
     }
-    /*
-    static inline void _aabb_cubic_tight(const ImVec2 & P0, const ImVec2 & P1,
-                                         const ImVec2 & P2, const ImVec2 & P3,
-                                         ImVec2 & tl_ws, ImVec2 & br_ws, bool & first) noexcept
-    {
-        auto add = [&](const ImVec2 & q)
-        {
-            if (first) { tl_ws = br_ws = q; first = false; }
-            else
-            {
-                tl_ws.x = std::min(tl_ws.x, q.x);  tl_ws.y = std::min(tl_ws.y, q.y);
-                br_ws.x = std::max(br_ws.x, q.x);  br_ws.y = std::max(br_ws.y, q.y);
-            }
-        };
-
-        //  Endpoints...
-        add(P0); add(P3);
-
-        //  Derivative coefficients per component:
-        //
-        //      B'(t)   = 3 * ( a t^2 + b t + c ) ; with,
-        //            a = -P0 + 3P1 - 3P2 + P3
-        //            b = 2*( P0 - 2P1 + P2 )
-        //            c = -P0 + P1
-        //
-        const auto deriv_coeffs = [](float P0, float P1, float P2, float P3, float & a, float & b, float & c) {
-            a = (-P0 + 3.0f*P1 - 3.0f*P2 + P3);
-            b = 2.0f*( P0 - 2.0f*P1 + P2 );
-            c = (-P0 + P1);
-        };
-
-        float ax, bx, cx, ay, by, cy;
-        deriv_coeffs( P0.x, P1.x, P2.x, P3.x, ax, bx, cx );
-        deriv_coeffs( P0.y, P1.y, P2.y, P3.y, ay, by, cy );
-
-        // Roots in (0,1) where x'(t)=0 and y'(t)=0
-        float tx[2]; int nx = 0; _quad_unit_roots(ax, bx, cx, tx, nx);
-        float ty[2]; int ny = 0; _quad_unit_roots(ay, by, cy, ty, ny);
-
-        // Evaluate candidates
-        for (int i = 0; i < nx; ++i)    { add( _bezier_eval_ws(P0, P1, P2, P3, tx[i]) ); }
-        for (int i = 0; i < ny; ++i)    { add( _bezier_eval_ws(P0, P1, P2, P3, ty[i]) ); }
-        
-        return;
-    }*/
     
     
     //  "aabb_geometry_tight"
@@ -1013,48 +977,6 @@ public:
         return true;
     }
     
-
-    
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      UTILITY FUNCTIONS.
-    // *************************************************************************** //
-    
-    //  "_truncate_label"
-    inline void                         _truncate_label                     (void)
-    { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
-    
-    
-    //  inline void                         _segment_is_curved                  (const V * a, const V * b) noexcept
-    //  {
-    //      constexpr float eps2 = 1e-8f; // or your ms_BEZIER_NUMERICAL_EPSILON_SQ
-    //      const float o2 = a->m_bezier.out_handle.x * a->m_bezier.out_handle.x
-    //                     + a->m_bezier.out_handle.y * a->m_bezier.out_handle.y;
-    //      const float i2 = b->m_bezier.in_handle.x  * b->m_bezier.in_handle.x
-    //                     + b->m_bezier.in_handle.y  * b->m_bezier.in_handle.y;
-    //      return (o2 > eps2) || (i2 > eps2);
-    //  };
-    
-    
-    //  "make_default_payload"
-    static inline Payload               make_default_payload                (const PathKind k)
-    {
-        switch (k)
-        {
-            case PathKind::Generic :        { return path::GenericPayload       {   };          }   //  default-constructed
-            //
-            case PathKind::Boundary :       { return path::BoundaryPayload      {   };          }
-            case PathKind::Source :         { return path::SourcePayload        {   };          }
-            case PathKind::Dielectric :     { return path::DielectricPayload    {   };          }
-            default:                        { break;                                            }   //  PathKind::None or unknown
-        }
-        
-        return ( std::monostate{   } );     //     no extra data
-    }
-    
-    
     //  "aabb_control_hull"
     template <class CTX>
     inline bool                         aabb_control_hull                   (ImVec2 & tl_ws, ImVec2 & br_ws, const CTX & ctx) const noexcept
@@ -1093,6 +1015,56 @@ public:
             add_pt(P0); add_pt(P1); add_pt(P2); add_pt(P3);
         }
         return !first;
+    }
+    
+
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      UTILITY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "SegmentIsCurved"
+    [[nodiscard]] static inline bool    SegmentIsCurved                     (const Vertex & p0, const Vertex & p1) noexcept
+        { return  ( !p0.IsOutLinear()  &&  !p1.IsInLinear() ); }
+    
+    //  "SegmentIsLinear"
+    [[nodiscard]] static inline bool    SegmentIsLinear                     (const Vertex & p0, const Vertex & p1) noexcept
+        { return  ( p0.IsOutLinear()  &&  p1.IsInLinear() ); }
+    
+    
+    //  "_truncate_label"
+    inline void                         _truncate_label                     (void)
+    { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
+    
+    
+    //  inline void                         _segment_is_curved                  (const V * a, const V * b) noexcept
+    //  {
+    //      constexpr float eps2 = 1e-8f; // or your ms_BEZIER_NUMERICAL_EPSILON_SQ
+    //      const float o2 = a->m_bezier.out_handle.x * a->m_bezier.out_handle.x
+    //                     + a->m_bezier.out_handle.y * a->m_bezier.out_handle.y;
+    //      const float i2 = b->m_bezier.in_handle.x  * b->m_bezier.in_handle.x
+    //                     + b->m_bezier.in_handle.y  * b->m_bezier.in_handle.y;
+    //      return (o2 > eps2) || (i2 > eps2);
+    //  };
+    
+    
+    //  "make_default_payload"
+    static inline Payload               make_default_payload                (const PathKind k)
+    {
+        switch (k)
+        {
+            case PathKind::Generic :        { return path::GenericPayload       {   };          }   //  default-constructed
+            //
+            case PathKind::Boundary :       { return path::BoundaryPayload      {   };          }
+            case PathKind::Source :         { return path::SourcePayload        {   };          }
+            case PathKind::Dielectric :     { return path::DielectricPayload    {   };          }
+            default:                        { break;                                            }   //  PathKind::None or unknown
+        }
+        
+        return ( std::monostate{   } );     //     no extra data
     }
     
     
@@ -1226,16 +1198,16 @@ public:
         // Per your rule: when a segment is Quadratic, we use ONLY the
         // start vertex's out_handle as THE single control point.
         {
-            const size_t N     = this->verts.size();
-            const auto   vid_a = this->verts[si];
-            const auto   vid_b = this->verts[(si + 1) % N];
+            const size_t    N       = this->verts.size();
+            const auto      vid_a   = this->verts[si];
+            const auto      vid_b   = this->verts[(si + 1) % N];
 
-            const auto * va = ctx.callbacks.get_vertex(ctx.callbacks.vertices, vid_a);
-            const auto * vb = ctx.callbacks.get_vertex(ctx.callbacks.vertices, vid_b);
+            const auto *    va      = ctx.callbacks.get_vertex(ctx.callbacks.vertices, vid_a);
+            const auto *    vb      = ctx.callbacks.get_vertex(ctx.callbacks.vertices, vid_b);
 
             if (va  &&  vb)
             {
-                using CT = decltype(va->m_bezier.kind); // CurvatureType enum
+                //  using CT = decltype(va->m_bezier.kind); // CurvatureType enum
                 const bool is_quadratic = va->IsQuadratic();
 
                 if (is_quadratic)

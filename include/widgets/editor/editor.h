@@ -155,8 +155,10 @@ public:
     // *************************************************************************** //
     //                              ARRAYS:
     static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;
+    static constexpr auto &             ms_EDITOR_STATE_HOTKEY_NAMES    = DEF_EDITOR_STATE_HOTKEY_NAMES;
     static constexpr auto &             ms_EDITOR_STATE_ICONS           = DEF_EDITOR_STATE_ICONS;
     static constexpr auto &             ms_MODE_CAPABILITIES            = DEF_MODE_CAPABILITIES;
+    //
     static constexpr auto &             ms_HIT_TYPE_NAMES               = DEF_HIT_TYPE_NAMES;
     static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES;
     //
@@ -797,12 +799,14 @@ protected:
     //
     //
     //                              SELECTION RENDERING:
-    void                                _render_selection_highlight         (ImDrawList *) const;
-    inline void                             _render_selected_handles        (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
-    inline void                             _render_selection_bbox          (ImDrawList *) const;   //  Helper for "_render_selection_highlight"
-    inline void                             _render_auxiliary_highlights    (ImDrawList *) const;
-    inline void                             _auxiliary_highlight_object     (const Path & , ImDrawList *) const;
-    inline void                             _auxiliary_highlight_handle     (const Vertex & , ImDrawList *) const;
+    void                                render_selection_highlight          (ImDrawList *) const noexcept;
+    inline void                             _render_selection_objects       (ImDrawList *) const noexcept;  //  Helper for "render_selection_highlight"
+    inline void                             _render_selected_handles        (ImDrawList *) const noexcept;  //  Helper for "render_selection_highlight"
+    inline void                             _render_selection_bbox          (ImDrawList *) const noexcept;  //  Helper for "render_selection_highlight"
+    //
+    inline void                         _render_auxiliary_highlights        (ImDrawList *) const noexcept;   //  Helper for "render_selection_highlight"
+    inline void                             _auxiliary_highlight_object     (const Path & , ImDrawList *) const noexcept;
+    inline void                             _auxiliary_highlight_handle     (const Vertex & , ImDrawList *) const noexcept;
     
     // *************************************************************************** //
     //

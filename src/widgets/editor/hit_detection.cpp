@@ -298,24 +298,26 @@ std::optional<Editor::Hit> Editor::_hit_any(const Interaction & it) const
     // ───────────────────────────────────────────── 1. Bézier handles
     for (const Vertex & v : m_vertices)
     {
-        if (!m_sel.vertices.count(v.id))               { continue; }  // handles only for selected verts
+        if ( !m_sel.vertices.count(v.id) )                  { continue; }  // handles only for selected verts
         const Path * pp = parent_path_of_vertex(v.id);
-        if (!pp || pp->locked || !pp->visible)         { continue; }
+        if ( !pp  ||  pp->locked  ||  !pp->visible )        { continue; }
 
-        if (v.m_bezier.out_handle.x || v.m_bezier.out_handle.y)
+
+        if ( v.m_bezier.out_handle.x  ||  v.m_bezier.out_handle.y )
         {
             ImVec2 scr = world_to_pixels({ v.x + v.m_bezier.out_handle.x,
                                            v.y + v.m_bezier.out_handle.y });
             if (overlap(scr))
                 return Hit{ HitType::Handle, static_cast<size_t>(v.id), true };
         }
-        if (v.m_bezier.in_handle.x || v.m_bezier.in_handle.y)
+        if ( v.m_bezier.in_handle.x  ||  v.m_bezier.in_handle.y )
         {
             ImVec2 scr = world_to_pixels({ v.x + v.m_bezier.in_handle.x,
                                            v.y + v.m_bezier.in_handle.y });
             if (overlap(scr))
                 return Hit{ HitType::Handle, static_cast<size_t>(v.id), false };
         }
+        
     }
 
     // ───────────────────────────────────────────── 2. point glyphs

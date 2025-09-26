@@ -347,42 +347,50 @@ inline void Editor::_selection_context_multi([[maybe_unused]] const Interaction 
 //
 bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
 {
-    using                           IconAnchor          = utl::icon_button::Anchor;
-    using                           Padding             = utl::icon_button::PaddingPolicy;
-    constexpr ImGuiTableFlags       FLAGS               = ImGuiTableFlags_SizingFixedFit; //    ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable;
-    constexpr ImGuiSelectableFlags  SELECTABLE_FLAGS    = ImGuiSelectableFlags_SpanAllColumns; //    ImGuiSelectableFlags_SpanAllColumns; ImGuiSelectableFlags_None
+    using                               IconStyle           = utl::icon_widgets::Style;
+    using                               IconAnchor          = utl::icon_widgets::Anchor;
+    using                               Padding             = utl::icon_widgets::PaddingPolicy;
+    //
+    constexpr ImGuiTableFlags           FLAGS               = ImGuiTableFlags_SizingFixedFit; //    ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable;
+    constexpr ImGuiSelectableFlags      SELECTABLE_FLAGS    = ImGuiSelectableFlags_SpanAllColumns; //    ImGuiSelectableFlags_SpanAllColumns; ImGuiSelectableFlags_None
+    constexpr const char *              HOTKEY_FMT          = "[ %s ]";
     //
     //
-    EditorStyle &                   Style               = this->m_style;
-    constexpr size_t                N                   = static_cast<size_t>( Mode::COUNT );
+    EditorStyle &                       Style               = this->m_style;
+    constexpr size_t                    N                   = static_cast<size_t>( Mode::COUNT );
     //
     //
-    static ImVec2                   rect_size           = {-1, -1};
-    static float                    label_width         = -1;
+    static ImVec2                       rect_size           = {-1, -1};
+    static float                        col1_width          = -1;
+    static float                        col2_width          = -1;
     //
-    Mode                            idx                 = static_cast<Mode>( 0 );
-    bool                            close               = false;
-    const ImVec2                    table_dims          = { label_width + rect_size.x,  -1 };
+    Mode                                idx                 = static_cast<Mode>( 0 );
+    bool                                close               = false;
+    const ImVec2                        table_dims          = { col1_width + col2_width + rect_size.x,  -1 };
 
     
     //      1.      CACHE THE WIDTH OF THE LARGEST ITEM IN THE LIST-OF-NAMES...
     if ( ImGui::IsWindowAppearing() )
     {
-        auto    width_of    = [](const char * s) -> float   {  return ImGui::CalcTextSize(s ? s : "", nullptr, true).x;    };
-        auto    v           = this->ms_EDITOR_STATE_NAMES | std::views::transform(width_of);
-        label_width         = 1.60f * ( *std::ranges::max_element(v) );
+        auto    width_of        = [](const char * s) -> float   {  return ImGui::CalcTextSize(s ? s : "", nullptr, true).x;    };
+        auto    tool_name       = this->ms_EDITOR_STATE_NAMES        | std::views::transform(width_of);     //  Find  "const char *"  with longest length.
+        auto    hotkey_name     = this->ms_EDITOR_STATE_HOTKEY_NAMES | std::views::transform(width_of);
+        //
+        col1_width              = 1.60f * ( *std::ranges::max_element(tool_name) );
+        col2_width              = 1.60f * ( *std::ranges::max_element(hotkey_name) );
     }
 
 
 
     //      CASE 0 :    IF NO TABLE, EXIT EARLY...
-    if ( !ImGui::BeginTable("ToolSelectionTable", 2, FLAGS, table_dims) )    { return false; }
+    if ( !ImGui::BeginTable("ToolSelectionTable", 3, FLAGS, table_dims) )    { return false; }
     
     
     //  BEGIN THE TABLE...
     {
-        ImGui::TableSetupColumn("##ToolIconColumn"      , ImGuiTableColumnFlags_WidthFixed                      );
-        ImGui::TableSetupColumn("##ToolLabelColumn"     , ImGuiTableColumnFlags_WidthStretch        , 1         );
+        ImGui::TableSetupColumn("##ToolIconColumn"      , ImGuiTableColumnFlags_WidthFixed                  );
+        ImGui::TableSetupColumn("##ToolLabelColumn"     , ImGuiTableColumnFlags_WidthStretch        , 1     );
+        ImGui::TableSetupColumn("##ToolIconHotkey"      , ImGuiTableColumnFlags_WidthStretch        , 1     );
         //  ImGui::TableHeadersRow();
     
     
@@ -391,7 +399,7 @@ bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
         for (size_t i = 0; (!close) && (i < N);  ++i, idx = static_cast<Mode>( i ))
         {
             ImGui::TableNextRow(ImGuiTableRowFlags_None, rect_size.y );
-            const bool      selected    = (current_tool == idx);
+            bool      selected    = (current_tool == idx);
             
             
             //          1.1.    DRAW ICON (SELECTABLE) FOR THE TOOL...
@@ -403,7 +411,7 @@ bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
                                                            , this->ms_EDITOR_STATE_ICONS[ idx ]
                                                            , Style.ms_TOOLBAR_ICON_SCALE
                                                            , IconAnchor::TextBaseline    // TextBaseline    South   Center
-                                                           , Padding::ImGuiStyle );
+                                                           , Padding::Default );
             rect_size                   = ImGui::GetItemRectSize();
             ImGui::PopID();
             
@@ -412,6 +420,34 @@ bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
             //          1.2.    DRAW "LABEL" FOR THE TOOL...
             ImGui::TableSetColumnIndex(1);
             const bool      dirty2      = ImGui::Selectable( this->ms_EDITOR_STATE_NAMES[ idx ], selected, SELECTABLE_FLAGS, {0.0f, rect_size.x} );
+            
+            
+            //
+            //
+            //  const bool dirty1 = false;
+            //  ImGui::PushID( static_cast<int>(i) );
+            //  //
+            //  const bool      dirty2      = utl::IconSelectable(   "##ToolSelectable"
+            //                                                     , selected
+            //                                                     , SELECTABLE_FLAGS
+            //                                                     , (selected)
+            //                                                          ? this->S.SystemColor.Blue      : this->S.SystemColor.White
+            //                                                     , this->ms_EDITOR_STATE_ICONS[ idx ]
+            //                                                     , IconStyle(
+            //                                                            Style.ms_TOOLBAR_ICON_SCALE
+            //                                                          , IconAnchor::West
+            //                                                          , Padding::Default
+            //                                                      )
+            //                              );
+            //  rect_size                   = ImGui::GetItemRectSize();
+            //  ImGui::PopID();
+            
+            
+        
+            //          1.3.    ADD A "LABEL" TO DISPLAY TOOL'S HOTKEY...
+            ImGui::TableSetColumnIndex(2);
+            ImGui::Text(HOTKEY_FMT, this->ms_EDITOR_STATE_HOTKEY_NAMES[ idx ]);
+            //
             close                       = (dirty1 || dirty2);
         
         
@@ -468,7 +504,7 @@ bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
     
     
     
-    return close;
+    return !close;  //  Return TRUE if window should CLOSE...
 }
 
 

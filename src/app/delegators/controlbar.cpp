@@ -328,7 +328,7 @@ void ControlBar::Begin( [[maybe_unused]] const char *           uuid,
 //
 void ControlBar::draw_all(void)
 {
-    using                                   IconAnchor                  = utl::icon_button::Anchor;
+    using                                   IconAnchor                  = utl::icon_widgets::Anchor;
     //
     static constexpr float                  ms_CONTROLBAR_ICON_SCALE    = 1.50f;
     static constexpr ImGuiHoveredFlags      HOVER_FLAGS                 = ImGuiHoveredFlags_DelayNormal;

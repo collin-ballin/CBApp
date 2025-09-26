@@ -113,6 +113,20 @@ DEF_EDITOR_STATE_NAMES  = { {
 } };
 //
 //
+//  "DEF_EDITOR_STATE_HOTKEY_NAMES"
+static constexpr cblib::EnumArray< Mode, const char * >
+DEF_EDITOR_STATE_HOTKEY_NAMES  = { {
+      "V"
+    , "H"
+    , "P"
+    , "C"
+    , "S"
+    , "+"
+    , "-"
+    , "SHIFT C"
+} };
+//
+//
 //  "DEF_EDITOR_STATE_ICONS"
 static constexpr cblib::EnumArray< Mode, const char * >
 DEF_EDITOR_STATE_ICONS  = { {

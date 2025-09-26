@@ -68,8 +68,8 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
         //      3.      RENDER "Highlights" ELEMENTS...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Highlights       );
-            this->_render_selection_highlight       ( it.dl                                 );
-            this->_RENDER_highlights_channel        ( z_view,       this->m_render_ctx      );
+            this->render_selection_highlight        ( it.dl                                 );
+            //  this->_RENDER_highlights_channel        ( z_view,       this->m_render_ctx      );
         }
         
         
@@ -484,13 +484,39 @@ void Editor::_render_points(ImDrawList * dl) const
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_render_selection_highlight"
+//  "render_selection_highlight"
 //      Draw outlines for selected primitives plus bbox/handles.
 //
-void Editor::_render_selection_highlight(ImDrawList * dl) const
+void Editor::render_selection_highlight(ImDrawList * dl) const noexcept
 {
     const ImU32 &               col         = m_style.COL_SELECTION_OUT;
     const BrowserState &        BS          = this->m_browser_S;
+
+
+
+    this->_render_selection_objects     (dl);
+    this->_render_selection_bbox        (dl);
+    this->_render_selected_handles      (dl);
+    //  this->_render_selected_handles    (dl);
+    
+    if ( BS.HasAuxiliarySelection() )
+    {
+        _render_auxiliary_highlights(dl);
+    }
+    
+    
+    
+    return;
+}
+
+
+
+
+//  "_render_selected_objects"
+//
+inline void Editor::_render_selection_objects(ImDrawList * dl) const noexcept
+{
+    const ImU32 &               col         = m_style.COL_SELECTION_OUT;
 
 
     // ───── Highlight selected points
@@ -550,25 +576,15 @@ void Editor::_render_selection_highlight(ImDrawList * dl) const
         }
     }
 
-
-
-    this->_render_selection_bbox      (dl);
-    this->_render_selected_handles    (dl);
-    //  this->_render_selected_handles    (dl);
-    
-    if ( BS.HasAuxiliarySelection() )
-    {
-        _render_auxiliary_highlights(dl);
-    }
-    
-    
-
     return;
 }
 
+
+
+
 //  "_render_selected_handles"
 //
-inline void Editor::_render_selected_handles(ImDrawList * /* dl */) const
+inline void Editor::_render_selected_handles(ImDrawList * /* dl */) const noexcept
 {
     for (const Vertex & v : m_vertices)
     {
@@ -610,7 +626,7 @@ inline void Editor::_render_selected_handles(ImDrawList * /* dl */) const
 
 //  "_render_selection_bbox"
 //
-inline void Editor::_render_selection_bbox(ImDrawList * dl) const
+inline void Editor::_render_selection_bbox(ImDrawList * dl) const noexcept
 {
     const auto &        V       = m_boxdrag.view;
     if ( !V.visible )           { return; }                       // nothing to draw
@@ -746,7 +762,7 @@ inline void Editor::_render_selection_bbox(ImDrawList * dl) const
 
 //  "_render_auxiliary_highlights"
 //
-inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const
+inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const noexcept
 {
     const BrowserState &            BS              = this->m_browser_S;
     const int &                     pidx            = BS.m_hovered_obj;
@@ -786,7 +802,7 @@ inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const
 
 //  "_auxiliary_highlight_object"
 //
-inline void Editor::_auxiliary_highlight_object(const Path & p, ImDrawList * dl) const
+inline void Editor::_auxiliary_highlight_object(const Path & p, ImDrawList * dl) const noexcept
 {
     const ImU32 &               col             = ImGui::GetColorU32(ImGuiCol_FrameBgHovered); //  .AUX_HIGHLIGHT_COLOR;
     const float &               w               = this->m_style.AUX_HIGHLIGHT_WIDTH;
@@ -844,7 +860,7 @@ inline void Editor::_auxiliary_highlight_object(const Path & p, ImDrawList * dl)
 
 //  "_auxiliary_highlight_handle"
 //
-inline void Editor::_auxiliary_highlight_handle(const Vertex & v, ImDrawList * /*dl*/) const
+inline void Editor::_auxiliary_highlight_handle(const Vertex & v, ImDrawList * /*dl*/) const noexcept
 {
     //  const ImU32 &               col             = ImGui::GetColorU32(ImGuiCol_FrameBgHovered);  //  m_style.AUX_HIGHLIGHT_COLOR;
     //  const float &               w               = this->m_style.AUX_HIGHLIGHT_WIDTH;            //  p.style.stroke_width + 2.0f;

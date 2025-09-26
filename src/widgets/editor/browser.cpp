@@ -177,8 +177,8 @@ void Editor::DrawBrowser(void)
 //
 void Editor::_MECH_draw_controls(void)
 {
-    using                                   IconAnchor          = utl::icon_button::Anchor;
-    using                                   Padding             = utl::icon_button::PaddingPolicy;
+    using                                   IconAnchor          = utl::icon_widgets::Anchor;
+    using                                   Padding             = utl::icon_widgets::PaddingPolicy;
     static constexpr const char *           uuid                = "##Editor_Controls_Columns";
     static constexpr int                    ms_NC               = 7;
     static constexpr int                    ms_NE               = 2;
@@ -227,7 +227,7 @@ void Editor::_MECH_draw_controls(void)
             const bool  tool_menu_open  = ImGui::BeginPopupContextItem(GetMenuID(PopupHandle::ToolSelection), ImGuiPopupFlags_MouseButtonLeft);
             if (tool_menu_open)
             {
-                if ( this->_show_tool_selection_menu(this->m_mode) )
+                if ( !this->_show_tool_selection_menu(this->m_mode) )
                     { ImGui::CloseCurrentPopup(); }
                 //
                 ImGui::EndPopup();
@@ -241,12 +241,6 @@ void Editor::_MECH_draw_controls(void)
         ImGui::SameLine(0.0f, 0.0f);
         ImGui::SetNextItemWidth( WIDGET_SIZE.x );
         ImGui::TextColored( this->S.SystemColor.White, "%s", this->ms_EDITOR_STATE_NAMES[ this->m_mode ] );
-        
-        
-        
-        //  if ( ImGui::Combo("##Editor_Controls_EditorState",      &mode_i,
-        //                    ms_EDITOR_STATE_NAMES.data(),         static_cast<int>(Mode::COUNT)) )
-        //  { m_mode = static_cast<Mode>(mode_i); }
         
         
         

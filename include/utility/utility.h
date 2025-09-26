@@ -229,10 +229,13 @@ inline void TopLabel(const char * text, const float l_width=150.0f, const float 
 //              CUSTOM "ICON" BUTTONS...
 // *************************************************************************** //
 
-namespace icon_button { //     BEGINNING NAMESPACE "cb::utl" :: "icon_button"...
+namespace icon_widgets { //     BEGINNING NAMESPACE "cb::utl" :: "icon_widgets"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+
+
+//  "IconAlignment"
 enum class IconAlignment : uint8_t {
     Center = 0,
     North, South,   West,  East,
@@ -242,12 +245,78 @@ enum class IconAlignment : uint8_t {
     COUNT
 };
 
-enum class PaddingPolicy : uint8_t { Tight = 0, ImGuiStyle, COUNT };
+
+//  "PaddingPolicy"
+enum class PaddingPolicy : uint8_t { Tight = 0, Default, COUNT };
+
+
+//  "IconStyle"
+//
+struct IconStyle
+{
+    using               Anchor              = IconAlignment                 ;
+    using               Pad                 = PaddingPolicy                 ;
+//
+//
+//
+    inline              IconStyle           (void) noexcept     = default   ;
+//
+//
+//
+    explicit inline     IconStyle           (const float scale_) noexcept
+        : scale(scale_)
+    {   }
+        
+    explicit inline     IconStyle           (const float scale_, const Anchor anchor_) noexcept
+        : scale(scale_) , anchor(anchor_)
+    {   }
+        
+    explicit inline     IconStyle           (const float scale_, const Anchor anchor_, const Pad pad_) noexcept
+        : scale(scale_) , anchor(anchor_) , pad(pad_)
+    {   }
+        
+    explicit inline     IconStyle           (const float scale_, const Anchor anchor_, const Pad pad_, const ImVec2 & nudge_) noexcept
+        : scale(scale_) , anchor(anchor_) , pad(pad_) , nudge(nudge_)
+    {   }
+//
+//
+//
+    float               scale               = 1.0f                          ;
+    //
+    Anchor              anchor              = Anchor::North                 ;
+    PaddingPolicy       pad                 = Pad::Tight                    ;
+    ImVec2              nudge               = ImVec2( 0.0f,     0.0f )      ;
+};
 
 
 
-using Anchor            = IconAlignment;
-using PaddingPolicy     = PaddingPolicy;
+
+
+
+// *************************************************************************** //
+//      PUBLIC ALIASES AND CONSTANTS...
+// *************************************************************************** //
+
+//                      TYPENAME ALIASES...
+using                       Anchor                  = IconAlignment     ;
+using                       PaddingPolicy           = PaddingPolicy     ;
+using                       Style                   = IconStyle         ;
+//
+//  template <typename T>
+//  using                       Style                   = IconStyle<T>      ;
+
+
+//                      CONSTANT VALUES...
+constexpr float             kShade                  = 0.250f            ;
+constexpr float             kActiveMul              = -0.07f            ;
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
 
 
 
@@ -266,7 +335,7 @@ static inline ImVec2 align_in_rect(   const ImVec2 &            pmin
     ImVec2          pos         { pmin.x + (rect.x - sz.x) * 0.5f,  pmin.y + (rect.y - sz.y) * 0.5f };
     ImVec2          padxy       { 0, 0 };
     
-    if ( pad == PaddingPolicy::ImGuiStyle )
+    if ( pad == PaddingPolicy::Default )
     {
         const ImGuiStyle &      s   = ImGui::GetStyle();
         padxy                       = ImVec2(s.FramePadding.x, s.FramePadding.y);
@@ -349,9 +418,7 @@ static inline bool IconButton_IMPL(   const char *          id
                                     , const ImVec2 &        nudge
                                     , const ImVec2 &        size ) noexcept
 {
-    constexpr float     kShade          = 0.250f;
-    constexpr float     kActiveMul      = -0.07f;
-    
+    namespace           cc              = cblib::utl;
     
     //      1.      HIT-TEST (Invisible Button)...
     ImGui::PushID(id);
@@ -365,11 +432,18 @@ static inline bool IconButton_IMPL(   const char *          id
     //                      normal  -> slightly shaded
     //                      hovered -> base color
     //                      active  -> a bit darker than base
-    const ImVec4        col_normal      = cblib::utl::compute_shade(color, kShade);
-    const ImVec4        col_hover       = color;
-    const ImVec4        col_active      = cblib::utl::compute_shade(color, kActiveMul);
-    const ImU32         draw_col        = ImGui::GetColorU32( active ? col_active
-                                            : (hovered ? col_hover : col_normal) );
+    //
+    //      Normalize caller color T → ImVec4 once
+    const ImVec4        base            = cc::ImGuiColorCast<ImVec4>( color) ;
+
+    //      Shade in ImVec4
+    const ImVec4        col_normal      = cc::compute_shade(base, kShade);
+    const ImVec4        col_hover       = base;
+    const ImVec4        col_active      = cc::compute_shade(base, kActiveMul);
+
+    //      Choose and cast ImVec4 → ImU32 exactly once
+    const ImVec4        chosen_v4       = active ? col_active : (hovered ? col_hover : col_normal);
+    const ImU32         draw_col        = cc::ImGuiColorCast<ImU32>(chosen_v4);
 
 
     //      3.      DRAW THE ICON (Center the glyph inside the hit-rect)...
@@ -382,27 +456,87 @@ static inline bool IconButton_IMPL(   const char *          id
 
 
 
-// *************************************************************************** //
+//  IMGUI_API bool          Selectable(const char* label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = ImVec2(0, 0)); // "bool selected" carry the selection state (read-only). Selectable() is clicked is returns true so you can modify your selection state. size.x==0.0: use remaining width, size.x>0.0: specify width. size.y==0.0: use label height, size.y>0.0: specify height
+//  IMGUI_API bool          Selectable(const char* label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = ImVec2(0, 0));      // "bool* p_selected" point to the selection state (read-write), as a convenient helper.
+    
+//  "IconSelectable_IMPL"
+//      explicit size
 //
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-} //   END OF "icon_button" NAMESPACE.
+template <typename T>
+static inline bool IconSelectable_IMPL(   const char *          id
+                                        , bool &                selected
+                                        , ImGuiSelectableFlags  flags
+                                        , const T &             color
+                                        , const char *          icon_utf8
+                                        , const float           scale
+                                        , const Anchor          anchor
+                                        , const PaddingPolicy   pad
+                                        , const ImVec2 &        nudge
+                                        , const ImVec2 &        size ) noexcept
+{
+    namespace           cc              = cblib::utl;
+    
+    ImGui::PushID(id);
+    const bool          activated       = ImGui::Selectable("##icon_selectable", selected, flags, size);
 
+    const bool          hovered         = ImGui::IsItemHovered();
+    const bool          active          = ImGui::IsItemActive();
+
+    const ImVec4        base            = cc::ImGuiColorCast<ImVec4>( color );
+    const ImVec4        col_normal      = cc::compute_shade(base, kShade);
+    const ImVec4        col_hover       = base;
+    const ImVec4        col_active      = cc::compute_shade(base, kActiveMul);
+
+    const ImVec4        chosen_v4       = (active)  ? col_active     : ( (hovered) ? col_hover : col_normal );
+    const ImU32         draw_col        = cc::ImGuiColorCast<ImU32>( chosen_v4 );
+
+
+    draw_icon_aligned(icon_utf8, draw_col, scale, anchor, pad, nudge);
+
+    ImGui::PopID();
+    return activated;
+}
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+} //   END OF "icon_widgets" NAMESPACE.
+
+
+
+// *************************************************************************** //
+//      ICON-WIDGET WRAPPER FUNCTIONS.
+// *************************************************************************** //
 
 //  "IconButton"
 //
 template <typename T>
 static inline bool IconButton(   const char *                       id
                                , const T &                          color
-                               , const char *                       icon_utf8
+                               , const char *                       icon_utf8   = ICON_FA_QUESTION
+                               , std::optional<ImVec2>              size        = std::nullopt
+                               , const icon_widgets::Style &        style       = {  } ) noexcept
+{
+    using namespace icon_widgets;
+    return IconButton_IMPL( id, color, icon_utf8, style.scale, style.anchor, style.pad, style.nudge, size.value_or( _icon_square_size(style.scale) ) );
+}
+//
+//
+//
+template <typename T>
+static inline bool IconButton(   const char *                       id
+                               , const T &                          color
+                               , const char *                       icon_utf8   = ICON_FA_QUESTION
                                , const float                        scale       = 1.0f
-                               , const icon_button::Anchor          anchor      = icon_button::Anchor::North
-                               , const icon_button::PaddingPolicy   pad         = icon_button::PaddingPolicy::Tight
+                               , const icon_widgets::Anchor         anchor      = icon_widgets::Anchor::North
+                               , const icon_widgets::PaddingPolicy  pad         = icon_widgets::PaddingPolicy::Tight
                                , const ImVec2 &                     nudge       = ImVec2(0.0f, 0.0f) ) noexcept
 {
-    using namespace icon_button;
+    using namespace icon_widgets;
     return IconButton_IMPL( id, color, icon_utf8, scale, anchor, pad, nudge, _icon_square_size(scale) );
 }
 //
@@ -411,14 +545,81 @@ static inline bool IconButton(   const char *                       id
                                , const T &                          color
                                , const char *                       icon_utf8
                                , const float                        scale
-                               , const icon_button::Anchor          anchor
+                               , const icon_widgets::Anchor         anchor
                                , const ImVec2 &                     size
-                               , const icon_button::PaddingPolicy   pad         = icon_button::PaddingPolicy::Tight
+                               , const icon_widgets::PaddingPolicy  pad         = icon_widgets::PaddingPolicy::Tight
                                , const ImVec2 &                     nudge       = ImVec2(0.0f, 0.0f) ) noexcept
 {
-    using namespace icon_button;
+    using namespace icon_widgets;
     return IconButton_IMPL( id, color, icon_utf8, scale, anchor, pad, nudge, size );
 }
+
+
+
+
+//  "IconSelectable"
+//
+template <typename T>
+static inline bool IconSelectable(   const char *                       id
+                                   , bool &                             selected
+                                   , ImGuiSelectableFlags               flags
+                                   , const T &                          color
+                                   , const char *                       icon_utf8   = ICON_FA_QUESTION
+                                   , const icon_widgets::Style &        style       = icon_widgets::Style(
+                                                                                        /* scale    */    1.0f
+                                                                                        /* anchor   */  , icon_widgets::Anchor::West
+                                                                                        /* pad      */  , icon_widgets::PaddingPolicy::Tight
+                                                                                        /* nudge    */  , ImVec2( 0.0f,     0.0f )
+                                                                                    )
+                                ) noexcept
+{
+    using namespace icon_widgets;
+    return IconSelectable_IMPL(   id, selected, flags, color, icon_utf8       //  Pass (0,0) so Selectable uses its native sizing behavior
+                                , style.scale
+                                , style.anchor
+                                , style.pad
+                                , style.nudge
+                                , ImVec2(0.0f, 0.0f) );
+}
+
+
+//  "IconSelectable"
+//      Explicit size overload.
+//
+template <typename T>
+static inline bool IconSelectable(   const char *                       id
+                                   , bool &                             selected
+                                   , ImGuiSelectableFlags               flags
+                                   , const T &                          color
+                                   , const char *                       icon_utf8   = ICON_FA_QUESTION
+                                   , std::optional<ImVec2>              size        = std::nullopt
+                                   , const icon_widgets::Style &        style       = icon_widgets::Style(
+                                                                                        /* scale    */    1.0f
+                                                                                        /* anchor   */  , icon_widgets::Anchor::West
+                                                                                        /* pad      */  , icon_widgets::PaddingPolicy::Tight
+                                                                                        /* nudge    */  , ImVec2( 0.0f,     0.0f )
+                                                                                    )
+                                ) noexcept
+{
+    using namespace icon_widgets;
+    return IconSelectable_IMPL(   id, selected, flags, color, icon_utf8       //  Pass (0,0) so Selectable uses its native sizing behavior
+                                , style.scale
+                                , style.anchor
+                                , style.pad
+                                , style.nudge
+                                , size.value_or(ImVec2(0.0f, 0.0f)) );
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "ICON WIDGET" ABSTRACTIONS.
+
+
+
 
 
 

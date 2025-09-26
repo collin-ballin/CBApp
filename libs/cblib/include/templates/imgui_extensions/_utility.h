@@ -47,7 +47,7 @@
 
 
 
-namespace cblib { namespace utl {   //     BEGINNING NAMESPACE "cblib" :: "math"...
+namespace cblib { namespace utl {   //     BEGINNING NAMESPACE "cblib" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -61,9 +61,14 @@ namespace cblib { namespace utl {   //     BEGINNING NAMESPACE "cblib" :: "math"
 // *************************************************************************** //
 // *************************************************************************** //
 
+
+
+// *************************************************************************** //
+//              1.1.    UTILITY FUNCTIONS.
+// *************************************************************************** //
+
 //  "to_u8"
-[[nodiscard]]
-inline constexpr ImU32 to_u8(float f) {
+[[nodiscard]] inline constexpr ImU32 to_u8(float f) {
     return static_cast<ImU32>(
                 (f <= 0.0f)
                     ? 0u
@@ -72,6 +77,32 @@ inline constexpr ImU32 to_u8(float f) {
                         : f * 255.0f + 0.5f);          // round-to-nearest
 }
 
+
+//  "_absf_"
+//      constexpr helpers (local, minimal)
+//
+inline constexpr float _absf_(float x) noexcept { return x >= 0.0f ? x : -x; }
+
+
+//  "_wrap01_"
+//      Wrap a float into [0,1). Matches fmod(x,1) for typical hue ranges.
+//      Note: relies on truncation; very large |x| could overflow the int cast.
+//
+inline constexpr float _wrap01_(float x) noexcept
+{
+    const int   n = static_cast<int>(x);          // trunc toward 0
+    const float f = x - static_cast<float>(n);
+    return (f < 0.0f) ? (f + 1.0f) : f;
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//              1.2.    MAIN COLOR CONVERTERS.
+// *************************************************************************** //
 
 //  "ColorConvertU32ToFloat4_constexpr"
 //
@@ -102,6 +133,54 @@ inline constexpr ImU32 ColorConvertFloat4ToU32_constexpr(const ImVec4 & col) noe
 }
 
 
+//  "ColorConvertRGBtoHSV_constexpr"
+//      constexpr equivalent of ImGui::ColorConvertRGBtoHSV(...)
+//
+inline constexpr void ColorConvertRGBtoHSV_constexpr(float r, float g, float b,
+                                                     float& out_h, float& out_s, float& out_v) noexcept
+{
+    float K = 0.0f;
+    if (g < b) { const float t = g; g = b; b = t; K = -1.0f; }
+    if (r < g) { const float t = r; r = g; g = t; K = -2.0f / 6.0f - K; }
+
+    const float mn      = (g < b ? g : b);
+    const float chroma  = r - mn;
+    const float denom_h = 6.0f * chroma + 1e-20f;
+
+    out_h = _absf_(K + (g - b) / denom_h);
+    out_s = chroma / (r + 1e-20f);
+    out_v = r;
+}
+
+
+//  "ColorConvertHSVtoRGB_constexpr"
+//      constexpr equivalent of ImGui::ColorConvertHSVtoRGB(...)
+//
+inline constexpr void ColorConvertHSVtoRGB_constexpr(float h, float s, float v,
+                                                     float& out_r, float& out_g, float& out_b) noexcept
+{
+    if (s == 0.0f) { out_r = v; out_g = v; out_b = v; return; }  // gray
+
+    const float h6 = _wrap01_(h) * 6.0f;          // fmod(h,1) * 6
+    const int   i  = static_cast<int>(h6);        // 0..5
+    const float f  = h6 - static_cast<float>(i);
+
+    const float p = v * (1.0f - s);
+    const float q = v * (1.0f - s * f);
+    const float t = v * (1.0f - s * (1.0f - f));
+
+    switch (i)
+    {
+        case 0:  out_r = v; out_g = t; out_b = p; break;
+        case 1:  out_r = q; out_g = v; out_b = p; break;
+        case 2:  out_r = p; out_g = v; out_b = t; break;
+        case 3:  out_r = p; out_g = q; out_b = v; break;
+        case 4:  out_r = t; out_g = p; out_b = v; break;
+        default: out_r = v; out_g = p; out_b = q; break; // i==5
+    }
+}
+
+
 //  "SetAlpha"
 //      Uses BIT-WISE Operations to ASSIGN the alpha-value of an IMU32 color.
 //
@@ -110,6 +189,44 @@ inline constexpr ImU32 SetAlpha(const ImU32 col, const ImU32 a) noexcept
     { return (col & ~IM_COL32_A_MASK) | (((a & 0xFFu) << IM_COL32_A_SHIFT)); }
 
 
+
+
+
+
+// *************************************************************************** //
+//              1.3.    NEW TEMPLATED COLOR FUNCTIONS.
+// *************************************************************************** //
+
+template <typename...>
+inline constexpr bool dependent_false = false;
+
+
+//  "ImGuiColorCast"
+//      Cast ImGui color type T to U (ImVec4 <-> ImU32), constexpr-capable.
+//
+//     Usage:
+//         ImU32    u   = ImGuiColorCast<ImU32>     ( ImVec4{1,0,0,1}   );
+//         ImVec4   v   = ImGuiColorCast<ImVec4>    ( 0xFF0000FFu       );
+//
+template <class U, class T>
+[[nodiscard]] inline constexpr U ImGuiColorCast(const T & c) noexcept
+{
+    //  CASE 0 :    Identity cast (ImVec4->ImVec4, ImU32->ImU32)
+    if constexpr ( std::is_same_v<U, T> )
+        { return c; }
+    //
+    //  CASE 1 :    Float4 -> U32
+    else if constexpr ( std::is_same_v<U, ImU32> && std::is_same_v<T, ImVec4> )
+        { return ColorConvertFloat4ToU32_constexpr(c); }
+    //
+    //  CASE 2 :    U32 -> Float4
+    else if constexpr ( std::is_same_v<U, ImVec4> && std::is_same_v<T, ImU32> )
+        { return ColorConvertU32ToFloat4_constexpr(c); }
+    //
+    //  DEFAULT :   ASSERTION FAILURE.
+    else
+        { static_assert(dependent_false<U, T>, "\"ImGuiColorCast\": unsupported color type conversion"); }
+}
 
 
 
