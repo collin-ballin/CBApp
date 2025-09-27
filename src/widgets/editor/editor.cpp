@@ -138,6 +138,11 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     //  BrowserState &          BS                      = this->m_browser_S;
     Interaction &           it                      = *m_it;
     EditorInteraction &     eit                     = it.obj;
+    //
+    static cblib::EnumArray< Action, bool >
+                            s_conditions            = { false };
+    
+    
     
     //      1.1.    IMPLOT STATE...
     const bool              space                   = ImGui::IsKeyDown(ImGuiKey_Space);
@@ -201,8 +206,34 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     //  //  eit.single_obj_selection        = static_cast<bool>( this->m_sel.paths.size() == 1 );
     
     
+    //      5.      UPDATE THE EDITOR'S CURRENT TASK...
+    {
+        static constexpr size_t     N                   = static_cast<size_t>( Action::COUNT ) - 1;
+        Action                      handle              = static_cast<Action>( N );
+        s_conditions                .fill               (false);
+        //
+        s_conditions[ Action::PenDraw    ]              = (this->m_mode == Mode::Pen  &&  this->m_pen.active    );                      //  Drawing a Path.
+        s_conditions[ Action::BBoxMove   ]              = (this->m_movedrag.active                              );                      //  SCALING content within BBox.
+        s_conditions[ Action::BBoxScale  ]              = ( this->m_boxdrag.active  &&  this->m_boxdrag.view.hover_idx.has_value() );   //  MOVE-DRAGGING content within BBox.
+        s_conditions[ Action::LassoDrag  ]              = (this->m_boxdrag.active   );                                                  //  Using the Lasso Tool.
+        //
+        const bool                  invalid             = ( static_cast<std::size_t>(std::ranges::count(s_conditions, true)) > 1 );
+        s_conditions[ Action::INVALID    ]              = invalid;
+        //
+        for ( size_t i = N; i > 0; handle = static_cast<Action>(--i) )
+        {
+            if ( s_conditions[handle] )     { this->m_action = handle; break; }
+        }
+        //
+        //
+        //
+    }
+
+
+
+
     
-    //      5.      OTHER PER-FRAME CACHE...
+    //      6.      OTHER PER-FRAME CACHE...
     //      ES.m_plot_limits                = ImPlot::GetPlotLimits();          //     current X/Y axes
     
     
@@ -368,64 +399,74 @@ void Editor::Begin(const char * /*id*/)
 //
 void Editor::_selbox_rebuild_view_if_needed([[maybe_unused]] const Interaction & it)
 {
-    //  EditorState &           ES      = this->m_editor_S;
-    EditorStyle &           Style       = this->m_style;
-    BoxDrag::ViewCache &    V           = m_boxdrag.view;
+    using                           AnchorType          = BoxDrag::Anchor;
+    static constexpr int            N                   = static_cast<int>( AnchorType::COUNT );
+    static std::array<ImVec2, N>    ws                  = {   };
+    const float &                   r                   = m_style.HANDLE_BOX_SIZE;        // half-size in pixels
+    //
+    EditorStyle &                   Style               = this->m_style;
+    BoxDrag::ViewCache &            view                = m_boxdrag.view;
+    AnchorType                      handle              = static_cast<AnchorType>( 0 );
 
     // Decide visibility: hide for single-vertex-only selection (matches your renderer)
-    const bool has_paths_or_lines = !m_sel.paths.empty();
-    const bool single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
-
-    ImVec2 tl_tight{}, br_tight{};
-    if ( single_vertex_only || !_selection_bounds(tl_tight, br_tight, this->m_render_ctx) ) {
-        V.visible   = false;
-        V.valid     = true;
-        V.hover_idx = -1;
-        V.sel_seen   = m_rev_sel;
-        V.geom_seen  = m_rev_geom;
-        V.cam_seen   = m_rev_cam;
-        V.style_seen = m_rev_style;
+    const bool                      has_objects         = !m_sel.paths.empty();
+    const bool                      single_vertex       = ( (m_sel.vertices.size() <= 1)  &&  !has_objects );
+    ImVec2                          tl_tight            {   };
+    ImVec2                          br_tight            {   };
+    
+    
+    if ( single_vertex  ||  !_selection_bounds(tl_tight, br_tight, this->m_render_ctx) )
+    {
+        view.visible       = false;
+        view.valid         = true;
+        view.hover_idx     .reset();
+        view.sel_seen      = m_rev_sel;
+        view.geom_seen     = m_rev_geom;
+        view.cam_seen      = m_rev_cam;
+        view.style_seen    = m_rev_style;
         return;
     }
+    
 
-    // Expand by pixel margin (so handles sit outside geometry)
-    const auto [tl_ws, br_ws] = _expand_bbox_by_pixels(tl_tight, br_tight, Style.SELECTION_BBOX_MARGIN_PX);
+    //  Expand by pixel margin (so handles sit outside geometry)
+    const auto      [tl_ws, br_ws]  = _expand_bbox_by_pixels(tl_tight, br_tight, Style.SELECTION_BBOX_MARGIN_PX);
+    view.visible                    = true;
+    view.tl_ws                      = tl_ws;
+    view.br_ws                      = br_ws;
+    view.tl_px                      = world_to_pixels(tl_ws);
+    view.br_px                      = world_to_pixels(br_ws);
 
-    V.visible = true;
-    V.tl_ws   = tl_ws;
-    V.br_ws   = br_ws;
-    V.tl_px   = world_to_pixels(tl_ws);
-    V.br_px   = world_to_pixels(br_ws);
 
-    // Compute 8 handle anchors (WS → PX) and their pixel hit-rects
-    const ImVec2 c_ws{ (tl_ws.x + br_ws.x) * 0.5f, (tl_ws.y + br_ws.y) * 0.5f };
-    const ImVec2 ws[8] = {
-        tl_ws,
-        { c_ws.x, tl_ws.y },
-        { br_ws.x, tl_ws.y },
-        { br_ws.x, c_ws.y },
-        br_ws,
-        { c_ws.x, br_ws.y },
-        { tl_ws.x, br_ws.y },
-        { tl_ws.x, c_ws.y }
+    //  Compute 8 handle anchors (WS → PX) and their pixel hit-rects
+    const ImVec2        c_ws        { (tl_ws.x + br_ws.x) * 0.5f, (tl_ws.y + br_ws.y) * 0.5f };
+    ws = {
+          tl_ws
+        , { c_ws.x        , tl_ws.y     }
+        , { br_ws.x       , tl_ws.y     }
+        , { br_ws.x       , c_ws.y      }
+        , br_ws
+        , { c_ws.x        , br_ws.y     }
+        , { tl_ws.x       , br_ws.y     }
+        , { tl_ws.x       , c_ws.y      }
     };
 
-    const float r = m_style.HANDLE_BOX_SIZE;        // half-size in pixels
-    for (int i = 0; i < 8; ++i) {
-        V.handle_ws[i] = ws[i];
-        const ImVec2 p = world_to_pixels(ws[i]);
-        V.handle_px[i]      = p;
-        V.handle_rect_px[i] = ImRect(ImVec2(p.x - r, p.y - r), ImVec2(p.x + r, p.y + r));
+    for (int i = 0; i < N; ++i, handle = static_cast<AnchorType>( i ))
+    {
+        const ImVec2    p               = world_to_pixels(ws[i]);
+        view.handle_ws[handle]          = ws[i];
+        view.handle_px[handle]          = p;
+        view.handle_rect_px[handle]     = ImRect( ImVec2(p.x - r, p.y - r), ImVec2(p.x + r, p.y + r) );
     }
+    view.hover_idx          = std::nullopt;           // filled by hint stage next step
+    view.valid              = true;
 
-    V.hover_idx  = -1;           // filled by hint stage next step
-    V.valid      = true;
 
-    // Stamp revs (we’ll start honoring these later if we want to skip recompute)
-    V.sel_seen   = m_rev_sel;
-    V.geom_seen  = m_rev_geom;
-    V.cam_seen   = m_rev_cam;
-    V.style_seen = m_rev_style;
+    //  Stamp revs (we’ll start honoring these later if we want to skip recompute)
+    view.sel_seen           = m_rev_sel;
+    view.geom_seen          = m_rev_geom;
+    view.cam_seen           = m_rev_cam;
+    view.style_seen         = m_rev_style;
+    
     return;
 }
 
@@ -764,44 +805,56 @@ inline void Editor::_handle_default(const Interaction & it)
 
 
     //      1.      EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
-    if ( !m_boxdrag.active
-         && _mode_has(CBCapabilityFlags_Select)
-         && m_boxdrag.view.visible
-         && m_boxdrag.view.hover_idx >= 0
-         && ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
+    if ( !m_boxdrag.active                              &&
+         _mode_has(CBCapabilityFlags_Select)            &&
+         m_boxdrag.view.visible                         &&
+         m_boxdrag.view.hover_idx.has_value()           &&
+         ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
     {
         // NOTE: view.tl_ws/br_ws are already the expanded bbox corners.
         // Ensure _start_bbox_drag treats these as final (i.e., does NOT re-expand).
-        _start_bbox_drag(static_cast<uint8_t>(m_boxdrag.view.hover_idx),
-                         m_boxdrag.view.tl_ws, m_boxdrag.view.br_ws);
-        return;                                      // consume click; no lasso this frame
+        _start_bbox_drag( *m_boxdrag.view.hover_idx, m_boxdrag.view.tl_ws, m_boxdrag.view.br_ws);
+        return;                                      //     consume click; no lasso this frame
     }
 
 
-    //      2.      Active BBox drag — update and exit early
+    //      2.      BEGIN BOUNDING-BOX DRAG  [ Update BBox and Exit-Early ]...
     if ( m_boxdrag.active ) {
         _update_bbox();
-        return;                                      // while dragging, ignore other inputs
+        return;                                      //     while dragging, ignore other inputs
     }
 
 
     //      3.      Ignore input while Space (camera pan) is held
+#ifndef _EDITOR_USE_HITANY_CACHE
     if ( it.space )     { return; }
+#endif  //  _EDITOR_USE_HITANY_CACHE  //
 
 
-    //      4.      Lasso start (selection engine) — only when not over a handle or other hit
-    if ( _mode_has(CBCapabilityFlags_Select )
-        && !m_lasso_active
-        && it.hovered
-        && ImGui::IsMouseClicked(ImGuiMouseButton_Left)
-        && m_boxdrag.view.hover_idx < 0            // NEW: don't lasso from over BBox handle
-        && !_hit_any(it))                          // keep existing pick test
+
+    //      4.      START LASSO TOOL (ONLY IF WE ARE NOT HOVERING OVER A HANDLE OR ANOTHER HIT)...
+#ifdef _EDITOR_USE_HITANY_CACHE
+    if ( _mode_has(CBCapabilityFlags_Select)            &&
+         !m_lasso_active                                &&
+         it.hovered                                     &&
+         ImGui::IsMouseClicked(ImGuiMouseButton_Left)   &&
+         !m_boxdrag.view.hover_idx.has_value()          &&      //  NEW: don't lasso from over BBox handle
+         !this->m_sel.hovered.has_value() )                     //  keep existing pick test
+#else
+    if ( _mode_has(CBCapabilityFlags_Select)            &&
+         !m_lasso_active                                &&
+         it.hovered                                     &&
+         ImGui::IsMouseClicked(ImGuiMouseButton_Left)   &&
+         !m_boxdrag.view.hover_idx.has_value()          &&      //  NEW: don't lasso from over BBox handle
+         !_hit_any(it) )                                        //  keep existing pick test
+#endif  //  _EDITOR_USE_HITANY_CACHE  //
     {
         _start_lasso_tool();
     }
 
 
-    //      5.      Lasso update — unchanged
+
+    //      5.      UPDATE THE LASSO TOOL...
     if (m_lasso_active)
     {
         _update_lasso(it);

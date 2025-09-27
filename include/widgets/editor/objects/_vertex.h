@@ -913,13 +913,14 @@ inline void from_json(const nlohmann::json & j, BezierControl & obj)
 //      straight. Handles live in world‑space units.
 //
 //  template<typename VID>
-template<EditorCFGTraits CFG>
+template<ObjectCFGTraits CFG>
 struct Vertex_t
 {
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    _EDITOR_CFG_PRIMATIVES_ALIASES
+    //  USE_OBJECT_CFG_ALIASES(CFG);
+    _USE_OBJECT_CFG_ALIASES
     //
     //                              LOCAL TYPES:
     using                               id_type                                 = vertex_id                         ;

@@ -290,15 +290,15 @@ void OverlayManager_t<OID, MapFn>::_draw_context_menu(Overlay & ov)
         //      2.      SOURCE ANCHOR...
         if ( ImGui::BeginMenu("Source Anchor") )
         {
-            emit_anchor("Center",               Anchor::Center);
-            emit_anchor("North",                Anchor::North);
-            emit_anchor("North-East",           Anchor::NorthEast);
-            emit_anchor("East",                 Anchor::East);
-            emit_anchor("South-East",           Anchor::SouthEast);
-            emit_anchor("South",                Anchor::South);
-            emit_anchor("South-West",           Anchor::SouthWest);
-            emit_anchor("West",                 Anchor::West);
-            emit_anchor("North-West",           Anchor::NorthWest);
+            emit_anchor("Center",               Anchor::Center      );
+            emit_anchor("North",                Anchor::North       );
+            emit_anchor("North-East",           Anchor::NorthEast   );
+            emit_anchor("East",                 Anchor::East        );
+            emit_anchor("South-East",           Anchor::SouthEast   );
+            emit_anchor("South",                Anchor::South       );
+            emit_anchor("South-West",           Anchor::SouthWest   );
+            emit_anchor("West",                 Anchor::West        );
+            emit_anchor("North-West",           Anchor::NorthWest   );
             ImGui::EndMenu();
         }
         

@@ -490,6 +490,15 @@ public:                                                                         
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "_EDITOR_USE_HITANY_CACHE"
+//      A Compile-Time option to begin reducing the calls to "_hit_any()".
+//      This is an EXPENSIVE function and what we want is to only call it ONCE-PER-FRAME
+//      store its return value inside a Cache Value...
+//
+#define                 _EDITOR_USE_HITANY_CACHE        1
+
+
+
 //  1.  "_EDITOR_APP_GENERIC_API"                       |   ** INTERNAL **
 //
 //          ** ID-VALUE TEMPLATE CONVENTIONS **
@@ -531,32 +540,31 @@ public:                                                                         
     /*      3.      ID/INDEX TYPES...                                                                                                   */      \
     template<typename T, typename Tag>                                                                                                  \
     using                           ID                          = cblib::utl::IDType<T, Tag>                                            ;       \
-    using                           VertexID                    = uint32_t                                                              ;       \
-    using                           HandleID                    = uint8_t                                                               ;       \
-    using                           PointID                     = uint32_t                                                              ;       \
-    using                           LineID                      = uint32_t                                                              ;       \
-    using                           PathID                      = uint32_t                                                              ;       \
-    using                           ZID                         = uint32_t                                                              ;       \
-    using                           OverlayID                   = uint8_t                                                               ;       \
-    using                           HitID                       = uint32_t                                                              ;       \
+    using       /* handle_id */     HandleID                    = uint8_t                                                               ;       \
+    using       /* vertex_id */     VertexID                    = uint32_t                                                              ;       \
+    using       /* point_id  */     PointID                     = uint32_t                                                              ;       \
+    using       /* line_id   */     LineID                      = uint32_t                                                              ;       \
+    using       /* path_id   */     PathID                      = uint32_t                                                              ;       \
+    using       /* z_id      */     ZID                         = uint32_t                                                              ;       \
+    using       /* hit_id    */     HitID                       = uint32_t                                                              ;       \
+    using       /* point_id  */     OverlayID                   = uint8_t                                                               ;       \
                                                                                                                                         \
-    using                           EditorCFG                   = EditorCFG_t       <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
+    using                           ObjectCFG                   = ObjectCFG_t       <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
                                                                                                                                         \
     /*                                                                                                                                  */      \
     /*      4.      CAD/CANVAS OBJECTS...                                                                                               */      \
-    using                           Vertex                      = Vertex_t          <EditorCFG>                                         ;       \
-/*  using                           Vertex                      = Vertex_t          <VertexID>;                                         */      \
-/*  using                           Handle                      = Handle_t          <HandleID>;                                         */      \
+    using                           Vertex                      = Vertex_t          <ObjectCFG>                                         ;       \
     using                           Point                       = Point_t           <PointID>                                           ;       \
     using                           Line                        = Line_t            <LineID, ZID>                                       ;       \
-    using                           Path                        = Path_t            <EditorCFG, Vertex>                                 ;       \
-/*  using                           Path                        = Path_t            <PathID, VertexID, ZID> ;                           */      \
+    using                           Path                        = Path_t            <ObjectCFG, Vertex>                                 ;       \
     using                           PathKind                    = Path::PathKind                                                        ;       \
     using                           Payload                     = Path::Payload                                                         ;       \
     using                           Overlay                     = Overlay_t         <OverlayID>                                         ;       \
     using                           Hit                         = Hit_t             <HitID>                                             ;       \
     using                           PathHit                     = PathHit_t         <PathID, VertexID>                                  ;       \
-    using                           EndpointInfo                = EndpointInfo_t    <PathID>                                            ;
+    using                           EndpointInfo                = EndpointInfo_t    <PathID>                                            ;       \
+                                                                                                                                        \
+    /*using                           EditorCFG                   = EditorCFG_t       <Vertex>                                            ; */      \
 //
 // *************************************************************************** //   _EDITOR_APP_CANVAS_OBJECTS_API
 
@@ -568,15 +576,16 @@ public:                                                                         
 // *************************************************************************** //
 #define                 _EDITOR_APP_OBJECTS_API                                                                                         \
     /*                                                                                                                                  */      \
-    /*      5.      PRIMARY STATE OBJECTS...                                                                                            */      \
+    /*      5.      PRIMARY STATE-STYLE OBJECTS...                                                                                      */      \
     using                           EditorRuntime               = EditorRuntime_t   <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     using                           EditorState                 = EditorState_t     <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
-    using                           BrowserState                = BrowserState_t    <EditorCFG>                                         ;       \
+    using                           BrowserState                = BrowserState_t    <ObjectCFG>                                         ;       \
     using                           IndexState                  = IndexState_t      <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     /*                                                                                                                                  */      \
-    /*      6.      SUBSIDIARY STATE OBJECTS...                                                                                         */      \
+    /*      6.      AUXILIARY STATE OBJECTS...                                                                                          */      \
+    using                           BoxDrag                     = BoxDrag_t         <ObjectCFG, Vertex>                                 ;       \
+    using                           MoveDrag                    = MoveDrag_t        <ObjectCFG, Vertex>                                 ;       \
     using                           Clipboard                   = Clipboard_t       <Vertex, Point, Line, Path>                         ;       \
-    using                           Cursor                      = Cursor_t          <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     using                           Selection                   = Selection_t       <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     /*                                                                                                                                  */      \
     /*      7.      TOOL STATE OBJECTS...                                                                                               */      \
@@ -648,10 +657,10 @@ public:                                                                         
 
 
 
-//      "_EDITOR_CFG_PRIMATIVES_ALIASES"                |   ** INTERNAL **
+//      "_USE_OBJECT_CFG_ALIASES"                       |   ** INTERNAL **
 //
 // *************************************************************************** //
-#define                 _EDITOR_CFG_PRIMATIVES_ALIASES                                                                                  \
+#define                 _USE_OBJECT_CFG_ALIASES                                                                                         \
     using                           vertex_id                   = CFG::vertex_id                                                        ;       \
     using                           point_id                    = CFG::point_id                                                         ;       \
     using                           line_id                     = CFG::line_id                                                          ;       \
@@ -659,7 +668,19 @@ public:                                                                         
     using                           z_id                        = CFG::z_id                                                             ;       \
     using                           hit_id                      = CFG::hit_id                                                           ;
 //
-// *************************************************************************** //   _EDITOR_CFG_PRIMATIVES_ALIASES
+// *************************************************************************** //   _USE_OBJECT_CFG_ALIASES
+
+
+#define                 USE_OBJECT_CFG_ALIASES(CFG_)                                                                                    \
+    using                           vertex_id                   = typename CFG_::vertex_id                                              ;       \
+    using                           point_id                    = typename CFG_::point_id                                               ;       \
+    using                           line_id                     = typename CFG_::line_id                                                ;       \
+    using                           path_id                     = typename CFG_::path_id                                                ;       \
+    using                           z_id                        = typename CFG_::z_id                                                   ;       \
+    using                           hit_id                      = typename CFG_::hit_id
+
+
+
 
 
 

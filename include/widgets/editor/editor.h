@@ -490,7 +490,7 @@ protected:
     PathID                              m_next_pid                      = 1;                    // counter for new path IDs
     //
     //                              BBOX SCALING:
-    mutable int                         m_hover_handle                  = -1;
+    mutable std::optional<BoxDrag::Anchor>  m_hover_handle              = std::nullopt;
     mutable ImVec2                      m_origin_scr                    = {0.0f,    0.0f};      // screen-space canvas origin                       //  -1 = none, 0-7 otherwise (corners+edges)
     //
     //                              UTILITY:
@@ -847,7 +847,7 @@ protected:
     bool                                _selection_bounds                   (ImVec2 & tl, ImVec2 & br, const RenderCTX & ) const;
     //
     //                              BOUNDING BOX MECHANICS:
-    void                                _start_bbox_drag                    (uint8_t handle_idx, const ImVec2 tl, const ImVec2 br);
+    void                                _start_bbox_drag                    (const BoxDrag::Anchor , const ImVec2 , const ImVec2 );
     void                                _update_bbox                        (void);
     //
     //                              LASSO TOOL MECHANICS:
@@ -1047,50 +1047,6 @@ protected:
         return { tl_ws_out, br_ws_out };
     }*/
     
-    //  "_cursor_for_bbox_handle"
-    static inline ImGuiMouseCursor      _cursor_for_bbox_handle                 (int h) {
-    switch (h) {
-        case 0: case 4: return ImGuiMouseCursor_ResizeNWSE; // NW, SE
-        case 2: case 6: return ImGuiMouseCursor_ResizeNESW; // NE, SW
-        case 1: case 5: return ImGuiMouseCursor_ResizeNS;   // N, S
-        case 3: case 7: return ImGuiMouseCursor_ResizeEW;   // E, W
-        default:        return ImGuiMouseCursor_Arrow;
-    }
-}
-
-    //  "_bbox_handle_pos_ws"
-    static inline ImVec2                _bbox_handle_pos_ws                     (uint8_t i, const ImVec2 & tl, const ImVec2 & br) {
-        const ImVec2    c   { (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
-        switch (i) {
-            case 0  :   { return { tl.x    , tl.y }; }      // NW
-            case 1  :   { return { c.x     , tl.y }; }      // N
-            case 2  :   { return { br.x    , tl.y }; }      // NE
-            case 3  :   { return { br.x    , c.y  }; }      // E
-            case 4  :   { return { br.x    , br.y }; }      // SE
-            case 5  :   { return { c.x     , br.y }; }      // S
-            case 6  :   { return { tl.x    , br.y }; }      // SW
-            default :   { return { tl.x    , c.y  }; }      // W (7)
-        }
-    }
-    
-    //  "_bbox_pivot_opposite"
-    static inline ImVec2                _bbox_pivot_opposite                    (uint8_t i, const ImVec2 & tl, const ImVec2 & br) {
-        const ImVec2 c{ (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
-        switch (i) {
-            case 0  :   { return { br.x   , br.y };    }   // NW → pivot SE
-            case 1  :   { return { c.x    , br.y };    }   // N  → pivot S-mid
-            case 2  :   { return { tl.x   , br.y };    }   // NE → pivot SW
-            case 3  :   { return { tl.x   , c.y  };    }   // E  → pivot W-mid
-            case 4  :   { return { tl.x   , tl.y };    }   // SE → pivot NW
-            case 5  :   { return { c.x    , tl.y };    }   // S  → pivot N-mid
-            case 6  :   { return { br.x   , tl.y };    }   // SW → pivot NE
-            default :   { return { br.x   , c.y  };    }   // W  → pivot E-mid
-        }
-    }
-    
-    //  "_safe_div"
-    static inline float                 _safe_div                               (float num, float den)
-    { constexpr float eps = 1e-6f;  return (std::fabs(den) > eps) ? (num / den) : 1.0f; }
 
     // *************************************************************************** //
     

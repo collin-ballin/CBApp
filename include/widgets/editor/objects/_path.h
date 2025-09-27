@@ -561,7 +561,7 @@ struct PathStyle {
 
 //  "to_json"
 //
-inline void to_json(nlohmann::json& j, const PathStyle& s)
+inline void to_json(nlohmann::json & j, const PathStyle & s)
 {
     j = nlohmann::json{
         { "stroke_color"        , s.stroke_color    },
@@ -592,7 +592,7 @@ inline void from_json(const nlohmann::json & j, PathStyle & s)
 //      back to the first. Vertices carry their own Bézier handles; this struct
 //      only stores ordering and style.
 //
-template< EditorCFGTraits CFG, typename V >
+template< ObjectCFGTraits CFG, typename V >
 struct Path_t
 {
 //      0.          CONSTANTS AND ALIASES...
@@ -603,7 +603,8 @@ public:
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    _EDITOR_CFG_PRIMATIVES_ALIASES
+    //  USE_OBJECT_CFG_ALIASES(CFG);
+    _USE_OBJECT_CFG_ALIASES
     //
     //                              LOCAL TYPES:
     using                               id_type                                 = path_id;
@@ -762,7 +763,7 @@ public:
     //  "set_label"
     inline void                         set_label                       (const char * src) noexcept     { this->label = std::string(src); this->_truncate_label(); }
     //  "set_default_label"
-    inline void                         set_default_label               (const path_id id_) noexcept        { this->id = id_;   this->label = std::format("Path {:03}", id_);   this->_truncate_label(); }
+    inline void                         set_default_label               (const path_id id_) noexcept    { this->id = id_;   this->label = std::format("Path {:03}", id_);   this->_truncate_label(); }
 
 
     // *************************************************************************** //
@@ -1405,7 +1406,7 @@ public:
 
 //  "to_json"           | For Path_t...
 //
-template< EditorCFGTraits CFG, typename V >
+template< ObjectCFGTraits CFG, typename V >
 inline void to_json(nlohmann::json & j, const Path_t<CFG, V> & p)
 {
     j={
@@ -1440,7 +1441,7 @@ inline void to_json(nlohmann::json & j, const Path_t<CFG, V> & p)
 
 //  "from_json"         | For Path_t...
 //
-template< EditorCFGTraits CFG, typename V >
+template< ObjectCFGTraits CFG, typename V >
 inline void from_json(const nlohmann::json & j, Path_t<CFG, V> & p)
 {
     using   namespace       path;

@@ -129,224 +129,429 @@ struct Camera {
 
 
 
-// *************************************************************************** //
-//
-//
-//
-//      2.      DEBUGGER STATE STUFF...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "DebuggerState_t"
-//
-template< typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HID >
-struct DebuggerState_t
-{
-// *************************************************************************** //
-//      0.      CONSTEXPR CONSTANTS...
-// *************************************************************************** //
-        static constexpr ImGuiChildFlags        ms_FLAGS        = ImGuiChildFlags_Borders;// | ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY;
-
 
 
 // *************************************************************************** //
 //
 //
-//      1.          CLASS DATA-MEMBERS...
+//
+//      3.      OTHER...
 // *************************************************************************** //
 // *************************************************************************** //
 
-    // *************************************************************************** //
-    //      IMPORTANT DATA-MEMBERS.
-    // *************************************************************************** //
-    struct DebugItem {
-        std::string                 uuid;
-        bool                        open;
-        ImGuiChildFlags             flags               = ms_FLAGS;
-        std::function<void()>       render_fn           {   };
+//  "ZOrderCFG_t"
+//
+template<typename ZID>
+struct ZOrderCFG_t {
+    ZID         Z_EDITOR_BACK               = 1;                        //  Grid / background
+    ZID         Z_FLOOR_USER                = 255;                      //  First user layer
+    ZID         Z_EDITOR_FRONT              = UINT32_MAX - 2;           //  Overlays, guides
+    ZID         Z_CEIL_USER                 = Z_EDITOR_FRONT - 1;       //  Max allowed for user items
+    ZID         RENORM_THRESHOLD            = 10'000;                   //  Span triggering re-pack
+};
+
+
+//  "to_json"
+//
+template <typename ZID>
+inline void to_json(nlohmann::json & j, const ZOrderCFG_t<ZID> & obj) {
+    j = {
+        { "Z_EDITOR_BACK",          obj.Z_EDITOR_BACK       },
+        { "Z_FLOOR_USER",           obj.Z_FLOOR_USER        },
+        { "Z_EDITOR_FRONT",         obj.Z_EDITOR_FRONT      },
+        { "Z_CEIL_USER",            obj.Z_CEIL_USER         },
+        { "RENORM_THRESHOLD",       obj.RENORM_THRESHOLD    }
     };
     
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      GENERIC DATA.
-    // *************************************************************************** //
-    bool                            show_more_info      = false;
-    std::vector<DebugItem>          windows             = {   };
-    
+    return;
+}
+
+
+//  "from_json"
 //
-// *************************************************************************** //
-// *************************************************************************** //   END "CLASS DATA-MEMBERS".
-
-    
-   
-// *************************************************************************** //
-//
-//
-//      2.C.        INLINE FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-    
-    
-    
-    // *************************************************************************** //
-    
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "INLINE" FUNCTIONS.
-
-
-    
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-};//	END "DebuggerState_t" INLINE CLASS DEFINITION.
-
-
-
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "DEBUGGER" STATE.
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//      3.      "RENDER" STATE STUFF...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "RenderState_t"
-//      PLAIN-OLD-DATA (POD) STRUCT.
-//
-template< typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HID >
-struct RenderState_t
+template <typename ZID>
+inline void from_json(nlohmann::json & j, ZOrderCFG_t<ZID> & obj)
 {
-    // *************************************************************************** //
-    //      NESTED TYPENAME ALIASES.
-    // *************************************************************************** //
+    j.at("Z_EDITOR_BACK")           .get_to(obj.Z_EDITOR_BACK       );
+    j.at("Z_FLOOR_USER")            .get_to(obj.Z_FLOOR_USER        );
+    j.at("Z_EDITOR_FRONT")          .get_to(obj.Z_EDITOR_FRONT      );
+    j.at("Z_CEIL_USER")             .get_to(obj.Z_CEIL_USER         );
+    j.at("RENORM_THRESHOLD")        .get_to(obj.RENORM_THRESHOLD    );
     
+    return;
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "4.  REMAINDER".
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.      "BROWSER" STATE...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//      2A. BROWSER STATES |        BROWSER---STATE.
+// *************************************************************************** //
+
+//  "BrowserState_t"
+//
+template<ObjectCFGTraits CFG>
+struct BrowserState_t
+{
+// *************************************************************************** //
+// *************************************************************************** //
+
+
     // *************************************************************************** //
+    //      1.      NESTED TYPENAME ALIASES...
+    // *************************************************************************** //
+    //  USE_OBJECT_CFG_ALIASES(CFG);
+    _USE_OBJECT_CFG_ALIASES
     //
+    using                       Vertex                                  = Vertex_t      <CFG>                               ;
+    using                       Path                                    = Path_t        <CFG, Vertex>                       ;
+
     // *************************************************************************** //
-    //      STATIC CONSTEXPR CONSTANTS.
+    //      2.      CONSTEXPR VALUES...
+    // *************************************************************************** //
+    static constexpr size_t     ms_MAX_PATH_TITLE_LENGTH                = Path::ms_MAX_PATH_LABEL_LENGTH + 64ULL;
+    //
+    static constexpr size_t     ms_MAX_VERTEX_TITLE_LENGTH              = Vertex::ms_VERTEX_NAME_BUFFER_SIZE + 32ULL;
+
+    // *************************************************************************** //
+    //      3.      MEMBER FUNCTIONS...
     // *************************************************************************** //
     
+    //  "reset"
+    inline void                 reset(void) { this->clear(); }
+    
+    //  "clear"
+    inline void                 clear(void)
+    {
+        //  Renaming "Active" State.
+        m_renaming_layer            = false;
+        m_renaming_obj              = false;
+
+
+        //  Force filter to rebuild so the clipper sees an empty list.
+        m_layer_filter              .Build();
+        m_obj_filter                .Build();
+        
+        
+        //  NEW STUFF...
+        //
+        //      (A)     LAYER.
+            //  m_layer_rows                .clear();
+            //  m_renaming_layer            = false;            //  "Dirty" Flags (to rebuild list of indices).
+            //  m_layer_rows_paths_rev      = -1;
+        //
+        //      (B)     OBJECT.
+        m_obj_rows                  .clear();
+        m_renaming_obj              = false;            //  "Dirty" Flags (to rebuild list of indices).
+        m_obj_rows_paths_rev        = -1;
+        
+        
+        
+        //  Rename Index.
+        m_layer_rename_idx          = -1;
+        m_obj_rename_idx            = -1;
+        
+        
+        
+        //  Hovered OBJECT in Browser.
+        m_hovered_obj               = -1;           //  Hovered OBJECT in Browser-Selectable.
+        m_hovered_canvas_obj        = -1;           //  Hovered OBJECT in Browser-Canvas.
+        
+        //  Hovered VERTEX in Browser.
+        m_hovered_vertex            = { -1, -1 };   //  Hovered VERTEX in Browser.
+        
+          
+          
+          
+        //  ??  Other  ??
+        m_layer_browser_anchor      = -1;
+        m_browser_anchor            = -1;
+        m_inspector_vertex_idx      = -1;
+        
+        return;
+    }
+    
+    // *************************************************************************** //
+
+    // *************************************************************************** //
+    //      3.1.    UTILITY FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "HasAuxiliarySelection"
+    [[nodiscard]] inline bool           HasAuxiliarySelection           (void) const noexcept {
+        const bool obj_1    = !(this->m_hovered_obj    < 0);
+        const bool obj_2    = ( !(this->m_hovered_vertex.first < 0)  &&  !(this->m_hovered_vertex.second < 0) );
+        
+        return ( obj_1  ||  obj_2 );
+    }
+    
+    //  "ClearAuxiliarySelection"
+    inline void                         ClearAuxiliarySelection         (void) const noexcept {
+        this->m_hovered_obj             = -1;
+        this->m_hovered_canvas_obj      = -1;
+        
+        this->m_hovered_vertex          = { -1, -1 };
+        return;
+    }
+    
+    
+    
+    // *************************************************************************** //
+
+
+    // *************************************************************************** //
+    //      3.      DATA MEMBERS...
+    // *************************************************************************** //
+    //                      MUTABLE STATE VARIABLES:
+    bool                        m_show_default_properties                   = false;
+    bool                        m_renaming_layer                            = false;    //  TRUE when user is in the middle of MODIFYING NAME.
+    bool                        m_renaming_obj                              = false;    //
+    //
+    //
+    //                      NEW STUFF:
+        //      std::vector<int>            m_layer_rows                                {  };
+        //      bool                        m_layer_filter_dirty                        = false;    //  Flag to queue Browser to RE-COMPUTE sorted items.
+        //      int                         m_layer_rows_paths_rev                      = -1;
+    //
+    std::vector<int>            m_obj_rows                                  {   };
+    bool                        m_obj_filter_dirty                          = false;    //
+    int                         m_obj_rows_paths_rev                        = -1;
+    //
+    //
+    //                      INDICES:
+    int                         m_layer_browser_anchor                      = -1;       //  ?? currently selected LAYER ??
+    //
+    //
+    int                         m_browser_anchor                            = -1;       //  ?? anchor index for Shift‑range select ??
+    //
+    mutable int                 m_hovered_obj                               = -1;
+    mutable int                 m_hovered_canvas_obj                        = -1;
+    //
+    //
+    int                         m_inspector_vertex_idx                      = -1;       //  ...
+    mutable std::pair<int,int>  m_hovered_vertex                            = {-1, -1};
+    //
+    //
+    int                         m_layer_rename_idx                          = -1;       //  LAYER that is BEING RENAMED     (–1 = none)
+    int                         m_obj_rename_idx                            = -1;       //  OBJECT that is BEING RENAMED    (–1 = none)
+    //
+    //
+    //                      CACHE AND MISC. DATA:
+    char                        m_name_buffer[ ms_MAX_PATH_TITLE_LENGTH ]   = {   };    //  scratch text
+    //
+    //
+    //
+    //                      OTHER DATA ITEMS:
+    ImGuiTextFilter             m_layer_filter;                                         //  search box for "LAYER" browser.
+    ImGuiTextFilter             m_obj_filter;                                           //  search box for "OBJECT" browser.
+    
+    
+    
+    // *************************************************************************** //
+
+// *************************************************************************** //
+// *************************************************************************** //   END "BrowserState_t".
+};
+
+
+
+
+
+
+// *************************************************************************** //
+//      2B. BROWSER STYLE |         BROWSER---STYLE.
+// *************************************************************************** //
+
+//  "BrowserStyle"
+//
+struct BrowserStyle
+{
+    CBAPP_CBLIB_TYPES_API
+    
+// *************************************************************************** //
+//                                      BROWSER WINDOW STYLE...
+// *************************************************************************** //
+    //
+    //                              BROWSER CHILD-WINDOW FLAGS:
+    ImGuiChildFlags                     DYNAMIC_CHILD_FLAGS                         = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
+    ImGuiChildFlags                     STATIC_CHILD_FLAGS                          = ImGuiChildFlags_Borders;
+    //
+    //                              BROWSER CHILD-WINDOW DIMENSIONS:
+    float                               ms_CHILD_WINDOW_SAMELINE                    = 4.0f;
+    //
+    Param<ImVec2>                       TRAIT_SELECTOR_DIMS                         = {     {120.0f,    -1.0f},     { {80.0f,       1.0f},      {220.0f,    FLT_MAX} }   };
+    //
+    Param<ImVec2>                       OBJ_SELECTOR_DIMS                           = {     {300.0f,    -1.0f},     { {250.0f,      1.0f},      {450.0f,    FLT_MAX} }   };
+    Param<ImVec2>                       OBJ_PROPERTIES_INSPECTOR_DIMS               = {     {650.0f,    -1.0f},     { {600.0f,      1.0f},      {1200.0f,   FLT_MAX} }   };
+    Param<ImVec2>                       VERTEX_SELECTOR_DIMS                        = {     {110.0f,    -1.0f},     { {90.0f,       1.0f},      {180.0f,    FLT_MAX} }   };
+    //
+    //
+    //
+    //                              BROWSER CHILD-WINDOW COLORS:
+    ImVec4                              ms_TRAIT_INSPECTOR_FRAME_BG                 = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);
+    //
+    ImVec4                              ms_VERTEX_SELECTOR_FRAME_BG                 = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);
+    ImVec4                              ms_VERTEX_INSPECTOR_FRAME_BG                = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);
+    //
+    //
+    //
+    //
+    //
+    ImVec4                              ms_CHILD_FRAME_BG1                          = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
+    ImVec4                              ms_CHILD_FRAME_BG1L                         = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
+    ImVec4                              ms_CHILD_FRAME_BG1R                         = ImVec4(0.141f,    0.141f,     0.141f,     1.000f); // ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
+    
+    ImVec4                              ms_CHILD_FRAME_BG2                          = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
+    ImVec4                              ms_CHILD_FRAME_BG2L                         = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
+    ImVec4                              ms_CHILD_FRAME_BG2R                         = ImVec4(0.129f,    0.140f,     0.168f,     0.800f); // ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
+    //
+    //                              NEW COLORS:
+    ImVec4                              ms_OBJ_INSPECTOR_FRAME_BG                   = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
+    //
+    //
+    //                              BROWSER CHILD-WINDOW STYLE:
+    float                               ms_VERTEX_SUBBROWSER_HEIGHT                 = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
+    float                               ms_CHILD_BORDER1                            = 2.0f;     //  ms_CHILD_BORDER1
+    float                               ms_CHILD_BORDER2                            = 1.0f;     //  ms_CHILD_BORDER2
+    float                               ms_CHILD_ROUND1                             = 8.0f;     //  ms_CHILD_ROUND1
+    float                               ms_CHILD_ROUND2                             = 4.0f;     //  ms_CHILD_ROUND2
+    //
+    //                              BROWSER CHILD-WINDOW DIMENSIONS:
+    float                               OBJ_PROPERTIES_REL_WIDTH                    = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
+    float                               VERTEX_SELECTOR_REL_WIDTH                   = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
+    float                               VERTEX_INSPECTOR_REL_WIDTH                  = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
+
+// *************************************************************************** //
+//
+//
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+//                                      GENERAL WIDGET STUFF...
+// *************************************************************************** //
+    //                              BROWSER **ALL** WIDGET STUFF:
+    //  float                               ms_BROWSER_BUTTON_SEP                       = 8.0f;
+    //  float                               ms_BROWSER_SELECTABLE_SEP                   = 16.0f;
+    std::pair<float,float>              ms_BROWSER_ITEM_SEPS                        = { 8.0f,   16.0f };
+    //
+    //                              BROWSER PATH WIDGET STUFF:
+    float                               ms_BROWSER_OBJ_LABEL_WIDTH                  = 55.0f;
+    float                               ms_BROWSER_OBJ_WIDGET_WIDTH                 = 256.0f;
+    //
+    //                              BROWSER VERTEX WIDGET STUFF:
+    float                               ms_BROWSER_VERTEX_LABEL_WIDTH               = 75.0f;
+    float                               ms_BROWSER_VERTEX_WIDGET_WIDTH              = 196.0f;
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+//                                      SPECIFIC WIDGET STUFF...
+// *************************************************************************** //
+    //                              DELETE BUTTON:
+    static constexpr const char *       ms_DELETE_BUTTON_HANDLE                     = "x";
+    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                      = cblib::utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
+    static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT                 = 256ULL;
+    //
+    //                              DRAG/DROP STUFF:
+    static constexpr const char *       ms_DRAG_HANDLE_ICON                         = "=";
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA MEMBERS".
+
+
+
 
 
 
 // *************************************************************************** //
 //
-//      1.          DATA-MEMBERS...
+//
+//      2.C         INLINE FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-    
-    // *************************************************************************** //
-    //      STATE VARIABLES.
-    // *************************************************************************** //
 
     // *************************************************************************** //
-    //      IMPORTANT DATA-MEMBERS.
+    //      1.      UTILITY FUNCTIONS...
     // *************************************************************************** //
-    //  std::vector<ObjectType>             m_data                          {  };
     
-    // *************************************************************************** //
-    //      GENERIC DATA.
-    // *************************************************************************** //
-    //  bool                                m_initialized                   = false;
-    //  bool                                m_first_frame                   = false;
+    //
+    //  ...
+    //
     
 //
-// *************************************************************************** //
-// *************************************************************************** //   END "DATA-MEMBERS".
-
-
-
-// *************************************************************************** //
 //
-//      2.A.        MEMBER FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-    
-    // *************************************************************************** //
-    //      INITIALIZATION METHODS.         |   "init.cpp" ...
-    // *************************************************************************** //
-    //  explicit                        RenderState_t           (app::AppState & );                 //  Def. Constructor.
-                                        RenderState_t           (void) noexcept                     = default;
-                                        ~RenderState_t          (void)                              = default;
-    
-    // *************************************************************************** //
-    //      DELETED FUNCTIONS.              |   ...
-    // *************************************************************************** //
-                                        RenderState_t           (const RenderState_t &    src)      = delete;   //  Copy. Constructor.
-                                        RenderState_t           (RenderState_t &&         src)      = delete;   //  Move Constructor.
-    RenderState_t &                     operator =              (const RenderState_t &    src)      = delete;   //  Assgn. Operator.
-    RenderState_t &                     operator =              (RenderState_t &&         src)      = delete;   //  Move-Assgn. Operator.
-    
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "MEMBER FUNCS".
-
-    
-   
-// *************************************************************************** //
-//
-//      2.B.        INLINE FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-    // *************************************************************************** //
-    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
-    // *************************************************************************** //
-    //  "_no_op"
-    inline void                         _no_op                              (void)      { return; };
-    
 //
 // *************************************************************************** //
 // *************************************************************************** //   END "INLINE" FUNCTIONS.
-
-
-
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-};//	END "RenderState_t" INLINE STRUCT DEFINITION.
-
-
-
-
-
-
-
-
-
-
-
+    
 
 
 // *************************************************************************** //
+// *************************************************************************** //   END "EditorBrowserStyle"
+};
+
+
+
 //
 //
 //
-//      99.     EDITOR SETTINGS / CONFIGS...
 // *************************************************************************** //
+// *************************************************************************** //   END "3.  BROWSER STATE".
+
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      4.      "EDITOR" STATE...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//      4A. EDITOR STATES |         EDITOR---RUNTIME.
 // *************************************************************************** //
 
 //  "EditorRuntime_t"
@@ -445,6 +650,10 @@ struct EditorRuntime_t
 
 
 
+
+// *************************************************************************** //
+//      4B. EDITOR STATES |         EDITOR---STATE.
+// *************************************************************************** //
 
 //  "EditorState_t"
 //
@@ -744,7 +953,6 @@ public:
     }
     
     
-    
     //  "UpdateCanvasSize"
     inline void                         UpdateCanvasSize                    (void) noexcept
     {
@@ -793,7 +1001,6 @@ public:
     }
     
     
-    
     //  "DecreaseGridSpacing"
     inline void                         DecreaseGridSpacing                 (void) noexcept {
         this->m_grid_density[0].SetValue( this->m_grid_density[0].value >> 1 );
@@ -813,15 +1020,11 @@ public:
     }
     
     
-    
-    
-    
     //  "_compute_grid_spacing"
     inline void                         _compute_grid_spacing               (void) noexcept
     {
         return;
     }
-    
     
     
     //  "_update_grid"
@@ -880,7 +1083,6 @@ public:
 
 
 
-
 //      EditorState     : "to_json"
 //
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
@@ -890,14 +1092,9 @@ inline void to_json(nlohmann::json & j, const EditorState_t<VID, PtID, LID, PID,
     j ["m_world_slop"]      = obj.m_world_slop;
     j ["m_zoom_size"]       = obj.m_zoom_size;
 
-
-
     //  j = {
     //      { "m_world_size",          obj.m_world_size       }
     //  };
-    
-    
-    
     
     /*
     Param<double>                           m_world_size [2]                = {                                     //  MAXIMUM SIZE OF THE CANVAS (World Size).
@@ -914,16 +1111,10 @@ inline void to_json(nlohmann::json & j, const EditorState_t<VID, PtID, LID, PID,
               */
     
     
-    
-    
-    
-    
-    
     return;
 }
-//
-//
-//
+
+
 //      EditorState     : "from_json"
 //
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
@@ -946,142 +1137,9 @@ inline void from_json(nlohmann::json & j, EditorState_t<VID, PtID, LID, PID, ZID
 
 
 
-//  "BrowserStyle"
-//
-struct BrowserStyle
-{
-    CBAPP_CBLIB_TYPES_API
-    
 // *************************************************************************** //
-//                                      BROWSER WINDOW STYLE...
+//      4C. EDITOR STYLE |         EDITOR---STYLE.
 // *************************************************************************** //
-    //
-    //                              BROWSER CHILD-WINDOW FLAGS:
-    ImGuiChildFlags                     DYNAMIC_CHILD_FLAGS                         = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
-    ImGuiChildFlags                     STATIC_CHILD_FLAGS                          = ImGuiChildFlags_Borders;
-    //
-    //                              BROWSER CHILD-WINDOW DIMENSIONS:
-    float                               ms_CHILD_WINDOW_SAMELINE                    = 4.0f;
-    //
-    Param<ImVec2>                       TRAIT_SELECTOR_DIMS                         = {     {120.0f,    -1.0f},     { {80.0f,       1.0f},      {220.0f,    FLT_MAX} }   };
-    //
-    Param<ImVec2>                       OBJ_SELECTOR_DIMS                           = {     {300.0f,    -1.0f},     { {250.0f,      1.0f},      {450.0f,    FLT_MAX} }   };
-    Param<ImVec2>                       OBJ_PROPERTIES_INSPECTOR_DIMS               = {     {650.0f,    -1.0f},     { {600.0f,      1.0f},      {1200.0f,   FLT_MAX} }   };
-    Param<ImVec2>                       VERTEX_SELECTOR_DIMS                        = {     {110.0f,    -1.0f},     { {90.0f,       1.0f},      {180.0f,    FLT_MAX} }   };
-    //
-    //
-    //
-    //                              BROWSER CHILD-WINDOW COLORS:
-    ImVec4                              ms_TRAIT_INSPECTOR_FRAME_BG                 = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);
-    //
-    ImVec4                              ms_VERTEX_SELECTOR_FRAME_BG                 = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);
-    ImVec4                              ms_VERTEX_INSPECTOR_FRAME_BG                = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);
-    //
-    //
-    //
-    //
-    //
-    ImVec4                              ms_CHILD_FRAME_BG1                          = ImVec4(0.205f,    0.223f,     0.268f,     1.000f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
-    ImVec4                              ms_CHILD_FRAME_BG1L                         = ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1L     //   #17191E
-    ImVec4                              ms_CHILD_FRAME_BG1R                         = ImVec4(0.141f,    0.141f,     0.141f,     1.000f); // ImVec4(0.091f,    0.099f,     0.119f,     0.800f);//      ms_CHILD_FRAME_BG1R     //   #21242B
-    
-    ImVec4                              ms_CHILD_FRAME_BG2                          = ImVec4(0.149f,    0.161f,     0.192f,     1.000f);//      ms_CHILD_FRAME_BG2      // BASE = #52596B
-    ImVec4                              ms_CHILD_FRAME_BG2L                         = ImVec4(0.188f,    0.203f,     0.242f,     0.750f);//      ms_CHILD_FRAME_BG2L     // ##353A46
-    ImVec4                              ms_CHILD_FRAME_BG2R                         = ImVec4(0.129f,    0.140f,     0.168f,     0.800f); // ImVec4(0.250f,    0.271f,     0.326f,     0.750f);//      ms_CHILD_FRAME_BG2R     // #5B6377
-    //
-    //                              NEW COLORS:
-    ImVec4                              ms_OBJ_INSPECTOR_FRAME_BG                   = ImVec4(0.129f,    0.140f,     0.168f,     0.800f);//      ms_CHILD_FRAME_BG1      //   BASE = #343944
-    //
-    //
-    //                              BROWSER CHILD-WINDOW STYLE:
-    float                               ms_VERTEX_SUBBROWSER_HEIGHT                 = 0.85f;    //  ms_VERTEX_SUBBROWSER_HEIGHT
-    float                               ms_CHILD_BORDER1                            = 2.0f;     //  ms_CHILD_BORDER1
-    float                               ms_CHILD_BORDER2                            = 1.0f;     //  ms_CHILD_BORDER2
-    float                               ms_CHILD_ROUND1                             = 8.0f;     //  ms_CHILD_ROUND1
-    float                               ms_CHILD_ROUND2                             = 4.0f;     //  ms_CHILD_ROUND2
-    //
-    //                              BROWSER CHILD-WINDOW DIMENSIONS:
-    float                               OBJ_PROPERTIES_REL_WIDTH                    = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
-    float                               VERTEX_SELECTOR_REL_WIDTH                   = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
-    float                               VERTEX_INSPECTOR_REL_WIDTH                  = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
-
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                                      GENERAL WIDGET STUFF...
-// *************************************************************************** //
-    //                              BROWSER **ALL** WIDGET STUFF:
-    //  float                               ms_BROWSER_BUTTON_SEP                       = 8.0f;
-    //  float                               ms_BROWSER_SELECTABLE_SEP                   = 16.0f;
-    std::pair<float,float>              ms_BROWSER_ITEM_SEPS                        = { 8.0f,   16.0f };
-    //
-    //                              BROWSER PATH WIDGET STUFF:
-    float                               ms_BROWSER_OBJ_LABEL_WIDTH                  = 55.0f;
-    float                               ms_BROWSER_OBJ_WIDGET_WIDTH                 = 256.0f;
-    //
-    //                              BROWSER VERTEX WIDGET STUFF:
-    float                               ms_BROWSER_VERTEX_LABEL_WIDTH               = 75.0f;
-    float                               ms_BROWSER_VERTEX_WIDGET_WIDTH              = 196.0f;
-
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                                      SPECIFIC WIDGET STUFF...
-// *************************************************************************** //
-    //                              DELETE BUTTON:
-    static constexpr const char *       ms_DELETE_BUTTON_HANDLE                     = "x";
-    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                      = cblib::utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
-    static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT                 = 256ULL;
-    //
-    //                              DRAG/DROP STUFF:
-    static constexpr const char *       ms_DRAG_HANDLE_ICON                         = "=";
-
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "DATA MEMBERS".
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//      2.C         INLINE FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-    // *************************************************************************** //
-    //      1.      UTILITY FUNCTIONS...
-    // *************************************************************************** //
-    
-    //
-    //  ...
-    //
-    
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "INLINE" FUNCTIONS.
-    
-
-
-// *************************************************************************** //
-// *************************************************************************** //   END "EditorBrowserStyle"
-};
-
-
-
-
-
 
 //  "EditorStyle"
 //
@@ -1286,41 +1344,13 @@ struct EditorStyle
 
 
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "4.  EDITOR STYLE".
 
 
-
-//  "ZOrderCFG_t"
-//
-template<typename ZID>
-struct ZOrderCFG_t {
-    ZID         Z_EDITOR_BACK               = 1;                        //  Grid / background
-    ZID         Z_FLOOR_USER                = 255;                      //  First user layer
-    ZID         Z_EDITOR_FRONT              = UINT32_MAX - 2;           //  Overlays, guides
-    ZID         Z_CEIL_USER                 = Z_EDITOR_FRONT - 1;       //  Max allowed for user items
-    ZID         RENORM_THRESHOLD            = 10'000;                   //  Span triggering re-pack
-};
-//
-//  "to_json"
-template <typename ZID>
-inline void to_json(nlohmann::json & j, const ZOrderCFG_t<ZID> & obj) {
-    j = {
-        { "Z_EDITOR_BACK",          obj.Z_EDITOR_BACK       },
-        { "Z_FLOOR_USER",           obj.Z_FLOOR_USER        },
-        { "Z_EDITOR_FRONT",         obj.Z_EDITOR_FRONT      },
-        { "Z_CEIL_USER",            obj.Z_CEIL_USER         },
-        { "RENORM_THRESHOLD",       obj.RENORM_THRESHOLD    }
-    };
-}
-//
-//  "from_json"
-template <typename ZID>
-inline void from_json(nlohmann::json & j, ZOrderCFG_t<ZID> & obj) {
-    j.at("Z_EDITOR_BACK")           .get_to(obj.Z_EDITOR_BACK);
-    j.at("Z_FLOOR_USER")            .get_to(obj.Z_FLOOR_USER);
-    j.at("Z_EDITOR_FRONT")          .get_to(obj.Z_EDITOR_FRONT);
-    j.at("Z_CEIL_USER")             .get_to(obj.Z_CEIL_USER);
-    j.at("RENORM_THRESHOLD")        .get_to(obj.RENORM_THRESHOLD);
-}
 
 
 

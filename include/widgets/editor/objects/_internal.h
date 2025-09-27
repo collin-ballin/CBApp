@@ -76,15 +76,20 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 //
 //
-//      1.      CONFIGURATIONS...
+//      1.      POLICY / CONFIGURATION TYPES...
 // *************************************************************************** //
 // *************************************************************************** //
 
 
-//  "EditorCFG_t"
+
+// *************************************************************************** //
+//              1A.     "OBJECT" POLICY  [ FIRST LAYER ].
+// *************************************************************************** //
+
+//  "ObjectCFG_t"
 //
-template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
-struct EditorCFG_t
+template < typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
+struct ObjectCFG_t
 {
     using                           vertex_id                   = VertexID                                                              ;
     using                           point_id                    = PointID                                                               ;
@@ -101,10 +106,51 @@ struct EditorCFG_t
 };
 
 
+//  "ObjectCFGTraits"
+//
+template <class CFG>
+concept ObjectCFGTraits =
+    requires
+    {
+        typename CFG::vertex_id     ;
+        typename CFG::point_id      ;
+        typename CFG::line_id       ;
+        typename CFG::path_id       ;
+        typename CFG::z_id          ;
+        typename CFG::hit_id        ;
+    }                                                               &&
+    std::unsigned_integral  < typename CFG::vertex_id       >       &&
+    std::unsigned_integral  < typename CFG::point_id        >       &&
+    std::unsigned_integral  < typename CFG::line_id         >       &&
+    std::unsigned_integral  < typename CFG::path_id         >       &&
+    std::unsigned_integral  < typename CFG::z_id            >       &&
+    std::unsigned_integral  < typename CFG::hit_id          >;
+
+
+
+// *************************************************************************** //
+//              1B.     "EDITOR" POLICY  [ SECOND LAYER ].
+// *************************************************************************** //
+
+//  "EditorCFG_t"
+//
+template < typename Vertex_, typename Point_, typename Line_, typename Path_, typename Hit_ >
+struct EditorCFG_t
+{
+    using                           Vertex                  = Vertex_                                                               ;
+    using                           Point                   = Point_                                                                ;
+    using                           Line                    = Line_                                                                 ;
+    using                           Path                    = Path_                                                                 ;
+    using                           Hit                     = Hit_                                                                  ;
+//
+//
+//
+};
+
 
 //  "EditorCFGTraits"
 //
-template<class CFG>
+template <class CFG>
 concept EditorCFGTraits =
     requires
     {

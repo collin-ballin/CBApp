@@ -641,24 +641,22 @@ bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br) const
 
 //  "_start_bbox_drag"
 //
-void Editor::_start_bbox_drag(uint8_t handle_idx, const ImVec2 tl_tight, const ImVec2 br_tight)
+void Editor::_start_bbox_drag(const Editor::BoxDrag::Anchor handle_idx, const ImVec2 tl_exp, const ImVec2 br_exp)
 {
-    ImGuiIO &       io          = ImGui::GetIO();
+    ImGuiIO& io = ImGui::GetIO();
 
-    const auto      [tl, br]    = _expand_bbox_by_pixels(tl_tight, br_tight, this->m_style.SELECTION_BBOX_MARGIN_PX);
+    m_boxdrag             = {};
+    m_boxdrag.active      = true;
+    m_boxdrag.first_frame = true;
+    m_boxdrag.handle_idx  = handle_idx;
+    m_boxdrag.bbox_tl_ws  = tl_exp;
+    m_boxdrag.bbox_br_ws  = br_exp;
+    m_boxdrag.orig_w      = br_exp.x - tl_exp.x;
+    m_boxdrag.orig_h      = br_exp.y - tl_exp.y;
 
-    m_boxdrag                   = {   };
-    m_boxdrag.active            = true;
-    m_boxdrag.first_frame       = true;
-    m_boxdrag.handle_idx        = handle_idx;
-    m_boxdrag.bbox_tl_ws        = tl;
-    m_boxdrag.bbox_br_ws        = br;
-    m_boxdrag.orig_w            = br.x - tl.x;
-    m_boxdrag.orig_h            = br.y - tl.y;
-
-    m_boxdrag.mouse_ws0         = pixels_to_world(io.MousePos);
-    m_boxdrag.handle_ws0        = _bbox_handle_pos_ws(handle_idx, tl, br);
-    m_boxdrag.anchor_ws         = _bbox_pivot_opposite(handle_idx, tl, br);
+    m_boxdrag.mouse_ws0   = pixels_to_world(io.MousePos);
+    m_boxdrag.handle_ws0  = BoxDrag::AnchorToWorldPos(handle_idx, tl_exp, br_exp);
+    m_boxdrag.anchor_ws   = BoxDrag::OppositePivot   (handle_idx, tl_exp, br_exp);
 
     m_boxdrag.v_ids             .clear();
     m_boxdrag.v_orig            .clear();
@@ -682,7 +680,8 @@ void Editor::_start_bbox_drag(uint8_t handle_idx, const ImVec2 tl_tight, const I
 //
 void Editor::_update_bbox(void)
 {
-    ImGuiIO &   io      = ImGui::GetIO();
+    using           BBAnchor    = BoxDrag::Anchor;
+    ImGuiIO &       io          = ImGui::GetIO();
     
     if ( !m_boxdrag.active )    { return; }
 
@@ -701,22 +700,24 @@ void Editor::_update_bbox(void)
     //      Allow “scale from center” while Alt is held *during* drag
     const bool      scale_from_center = alt_down();
     const ImVec2    P       = (scale_from_center)
-                                ? c0 : _bbox_pivot_opposite(m_boxdrag.handle_idx, tl0, br0);
+                                ? c0 : BoxDrag::OppositePivot(m_boxdrag.handle_idx, tl0, br0);
 
     //      Initial handle position relative to pivot (frozen at start)
-    const ImVec2    H0      = _bbox_handle_pos_ws(m_boxdrag.handle_idx, tl0, br0);
+    const ImVec2    H0              = BoxDrag::AnchorToWorldPos(m_boxdrag.handle_idx, tl0, br0);
 
 
     //      3.      Compute per-axis scale from the ratio (mouse-to-pivot) / (handle0-to-pivot)
-    float           sx = 1.0f, sy = 1.0f;
-
-    const bool      is_corner       = (m_boxdrag.handle_idx % 2 == 0);           // 0,2,4,6
-    const bool      is_side_ns      = (m_boxdrag.handle_idx == 1 || m_boxdrag.handle_idx == 5);
-    const bool      is_side_ew      = (m_boxdrag.handle_idx == 3 || m_boxdrag.handle_idx == 7);
+    float           sx              = 1.0f, sy = 1.0f;
 
 
-    if ( is_corner || is_side_ew )      { sx = _safe_div(M.x - P.x, H0.x - P.x); }      //  Corner or E/W side affect X
-    if ( is_corner || is_side_ns )      { sy = _safe_div(M.y - P.y, H0.y - P.y); }      //  Corner or N/S side affect Y
+    const bool      is_corner       = BoxDrag::IsDiagonal       (m_boxdrag.handle_idx);
+    const bool      is_side_ns      = BoxDrag::IsVertical       (m_boxdrag.handle_idx);
+    const bool      is_side_ew      = BoxDrag::IsHorizontal     (m_boxdrag.handle_idx);
+
+
+
+    if ( is_corner || is_side_ew )      { sx = BoxDrag::SafeDiv(M.x - P.x, H0.x - P.x); }      //  Corner or E/W side affect X
+    if ( is_corner || is_side_ns )      { sy = BoxDrag::SafeDiv(M.y - P.y, H0.y - P.y); }      //  Corner or N/S side affect Y
 
 
     if ( is_side_ns )   { sx = 1.0f; }  //  Constrain side handles to one axis

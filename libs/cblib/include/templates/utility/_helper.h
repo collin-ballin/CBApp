@@ -164,9 +164,9 @@ struct EnumArray
     //      STANDARD-LIBRARY COMPLIANCE FUNCTIONS.
     // *************************************************************************** //
     //                                      INFORMATION FUNCTIONS:
+    inline constexpr bool                       empty               (void) const noexcept                   { return this->m_data.empty();      }
     inline size_type                            size                (void) const noexcept                   { return this->m_data.size();       }
     inline constexpr bool                       max_size            (void) const noexcept                   { return this->m_data.max_size();   }
-    inline constexpr bool                       empty               (void) const noexcept                   { return this->m_data.empty();      }
     //
     //
     //                                      ACCESSOR FUNCTIONS:
@@ -198,7 +198,9 @@ struct EnumArray
     inline constexpr const_reverse_iterator     crend               (void) const noexcept                   { return m_data.crend();            }
     //
     //
-    //                                      RANGES FUNCTIONS:
+    //                                      HELPER FUNCTIONS:
+    inline void                                 fill               (const value_type & u)                   { std::fill_n(begin(), size(), u);  }
+    
 
 //
 //

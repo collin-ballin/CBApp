@@ -586,7 +586,7 @@ void Editor::render_selection_highlight(ImDrawList * dl) const noexcept
     this->_render_selection_objects     (dl);
     this->_render_selection_bbox        (dl);
     this->_render_selected_handles      (dl);
-    //  this->_render_selected_handles    (dl);
+    this->_render_selected_handles    (dl);
     
     if ( BS.HasAuxiliarySelection() )
     {
@@ -741,24 +741,33 @@ inline void Editor::_render_selected_handles(ImDrawList * /* dl */) const noexce
 //
 inline void Editor::_render_selection_bbox(ImDrawList * dl) const noexcept
 {
-    const auto &        V       = m_boxdrag.view;
-    if ( !V.visible )           { return; }                       // nothing to draw
+    constexpr int           N               = static_cast<int>( BoxDrag::Anchor::COUNT );
+    const auto &            view            = m_boxdrag.view;
+    BoxDrag::Anchor         handle          = static_cast<BoxDrag::Anchor>( 0 );
+    
+    
+    //  CASE 0 :    SELECTION BOX IS INACTIVE...
+    if ( !view.visible )                   { return; }
 
     //      Draw expanded bbox (from cache)
-    const ImVec2        p0      = world_to_pixels(V.tl_ws);
-    const ImVec2        p1      = world_to_pixels(V.br_ws);
-    dl->AddRect(p0, p1,
-                m_style.SELECTION_BBOX_COL, 0.0f,
-                ImDrawFlags_None, m_style.SELECTION_BBOX_TH);
+    const ImVec2            p0              = world_to_pixels(view.tl_ws);
+    const ImVec2            p1              = world_to_pixels(view.br_ws);
+    
+    
+    dl->AddRect( p0, p1,
+                 m_style.SELECTION_BBOX_COL, 0.0f,
+                 ImDrawFlags_None, m_style.SELECTION_BBOX_TH );
+
 
     //      Draw the 8 handles using cached rectangles and cached hover index
-    for (int i = 0; i < 8; ++i)
+    for ( int i = 0; i < N; handle = static_cast<BoxDrag::Anchor>(++i) )
     {
-        const bool          hovered     = (i == V.hover_idx);      // ← read, don’t compute
-        const ImRect &      r           = V.handle_rect_px[i];
-        dl->AddRectFilled(r.Min, r.Max,
-                          hovered ? m_style.ms_HANDLE_HOVER_COLOR
-                                  : m_style.ms_HANDLE_COLOR);
+        const bool          hovered     = (handle == view.hover_idx);      // ← read, don’t compute
+        const ImRect &      r           = view.handle_rect_px[handle];
+        dl->AddRectFilled( r.Min, r.Max, (hovered)
+                                ? m_style.ms_HANDLE_HOVER_COLOR
+                                : m_style.ms_HANDLE_COLOR
+        );
     }
     
     return;

@@ -103,7 +103,6 @@ void Editor::_MECH_hit_detection(const Interaction & it) const
 //
 inline void Editor::_dispatch_cursor_hint(const Hit::Type type) const noexcept
 {
-    using                       HitType         = Hit::Type;
     const BrowserState &        BS              = this->m_browser_S;
     
     
@@ -112,28 +111,28 @@ inline void Editor::_dispatch_cursor_hint(const Hit::Type type) const noexcept
     switch ( type )
     {
         //      1.  HOVERED OVER "BEZIER"-SQUARE HANDLE.
-        case HitType::Handle :
+        case Hit::Type::Handle :
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
             break;
         }
         
         //      2.  HOVERED OVER VERTEX-GLYPH.
-        case HitType::Vertex :
+        case Hit::Type::Vertex :
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
             break;
         }
         
         //      3.  HOVERED OVER AN "EDGE".
-        case HitType::Edge :
+        case Hit::Type::Edge :
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
             break;
         }
 
         //      4.  HOVERED OVER "PATH".
-        case HitType::Surface :
+        case Hit::Type::Surface :
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             BS.m_hovered_canvas_obj      = -1;
@@ -149,7 +148,7 @@ inline void Editor::_dispatch_cursor_hint(const Hit::Type type) const noexcept
     
 //  "_dispatch_cursor_icon"
 //
-inline void Editor::_dispatch_cursor_icon(const Interaction & it) const
+inline void Editor::_dispatch_cursor_icon(const Interaction & /* it */) const
 {
     return;
 }
@@ -179,21 +178,24 @@ inline void Editor::_dispatch_cursor_icon(const Interaction & it) const
 //
 [[nodiscard]] inline bool Editor::_hit_bbox_handle([[maybe_unused]] const Interaction & it) const
 {
-    //  NEW:    Selection BBox handles take precedence
-    m_boxdrag.view.hover_idx    = -1;
+    constexpr int   N           = static_cast<int>(BoxDrag::Anchor::COUNT );
+    //
+    m_boxdrag.view.hover_idx    = std::nullopt;     //  NEW:    Selection BBox handles take precedence
     const ImVec2    mp          = ImGui::GetIO().MousePos;
 
-    for (int i = 0; i < 8; ++i)
+    for (int i = 0; i < N; ++i)
     {
-        if ( m_boxdrag.view.handle_rect_px[i].Contains(mp) )
+        const BoxDrag::Anchor   handle      = static_cast<BoxDrag::Anchor>( i );
+        
+        if ( m_boxdrag.view.handle_rect_px[handle].Contains(mp) )
         {
-            m_boxdrag.view.hover_idx = i;
-            m_hover_handle           = i;                       // ← NEW: bridge for legacy checks
-            ImGui::SetMouseCursor(_cursor_for_bbox_handle(i) );
+            m_boxdrag.view.hover_idx    = handle;
+            m_hover_handle              = handle;                       // bridge for legacy checks [LEGACY]
+            ImGui::SetMouseCursor( BoxDrag::AnchorToCursor(handle) );
             return true;
         }
     }
-    m_hover_handle              = -1;                                       // ← keep in sync
+    m_hover_handle              = std::nullopt;         // ← keep in sync [LEGACY]
     
     return false;
 }
