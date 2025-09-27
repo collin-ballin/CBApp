@@ -977,6 +977,7 @@ public:
         return true;
     }
     
+    
     //  "aabb_control_hull"
     template <class CTX>
     inline bool                         aabb_control_hull                   (ImVec2 & tl_ws, ImVec2 & br_ws, const CTX & ctx) const noexcept
@@ -1037,7 +1038,7 @@ public:
     
     //  "_truncate_label"
     inline void                         _truncate_label                     (void)
-    { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
+        { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
     
     
     //  inline void                         _segment_is_curved                  (const V * a, const V * b) noexcept
@@ -1124,7 +1125,7 @@ public:
                     for (int s = 0; s <= steps; ++s)
                     {
                         const float     t       = static_cast<float>(s) / static_cast<float>(steps);
-                        const ImVec2    wp      = cubic_eval<vertex_id>(a, b, t);             //  world-space point
+                        const ImVec2    wp      = cubic_eval<vertex_id>(a, b, t);       //  world-space point
                         dl->PathLineTo( ctx.callbacks.ws_to_px(wp) );                   //  append in pixel space
                     }
                 }
@@ -1137,9 +1138,7 @@ public:
         return;
     }
     
-    
     //  "render_stroke"
-    //
     template<class CTX>
     inline void	                        render_stroke                       (const CTX & ctx) const noexcept
     {
@@ -1153,6 +1152,38 @@ public:
     
     
     
+    //  "render_vertices"
+    template<class CTX, class VStyle>
+    inline void	                        render_vertices                     (const CTX & ctx, const VStyle & style_) const noexcept
+    {
+        const auto &	    cbacks		    = ctx.callbacks;
+        for (const vertex_id vid : this->verts)
+        {
+            const V * v	= cbacks.get_vertex( cbacks.vertices, vid );
+            if ( !v )		{ continue; }
+
+            v->render(style_);
+        }
+        return;
+    }
+    
+    //  "render_vertices_all"
+    template<class CTX, class VStyle>
+    inline void	                        render_vertices_all                 (const CTX & ctx, const VStyle & style_) const noexcept
+    {
+        const auto &	    cbacks		    = ctx.callbacks;
+        for (const vertex_id vid : this->verts)
+        {
+            const V * v	= cbacks.get_vertex( cbacks.vertices, vid );
+            if ( !v )		{ continue; }
+
+            v->render_all(style_);
+        }
+        return;
+    }
+    
+    
+    
     // *************************************************************************** //
     //
     //
@@ -1160,31 +1191,30 @@ public:
     //      SUBSIDIARY RENDER FUNCTIONS.
     // *************************************************************************** //
     
-    
     //  "_draw_segment"
     //      Local helper: draw one segment a -> b (straight or cubic)
     //
     template<class CTX>
     inline void	                        _draw_segment                       (const size_t si, const CTX & ctx) const noexcept
     {
-        ImDrawList * dl = ctx.args.dl;
+        ImDrawList *    dl          = ctx.args.dl;
+        ImVec2          P0, P1, P2, P3;  // WORLD-space cubic control points via your existing helper
+        
+        if ( !this->segment_control_points(si, P0, P1, P2, P3, ctx) )   { return; }
 
-        // WORLD-space cubic control points via your existing helper
-        ImVec2 P0, P1, P2, P3;
-        if (!this->segment_control_points(si, P0, P1, P2, P3, ctx))
-            return;
 
-        // Linear iff effective control points coincide with endpoints
-        const bool linear = (P1.x == P0.x && P1.y == P0.y &&
-                             P2.x == P3.x && P2.y == P3.y);
+        //  Linear iff effective control points coincide with endpoints
+        //  const bool linear = this->SegmentIsLinear(P1, P2);
+        const bool      linear      = Vertex::SegmentIsLinear( P0, P1, P2, P3 );
+
 
         // Endpoints in WORLD space
-        const ImVec2 A_ws = P0;
-        const ImVec2 B_ws = P3;
+        const ImVec2    A_ws        = P0;
+        const ImVec2    B_ws        = P3;
 
         // Pixels for endpoints
-        const ImVec2 A = ctx.callbacks.ws_to_px(A_ws);
-        const ImVec2 B = ctx.callbacks.ws_to_px(B_ws);
+        const ImVec2    A           = ctx.callbacks.ws_to_px(A_ws);
+        const ImVec2    B           = ctx.callbacks.ws_to_px(B_ws);
 
         if (linear)
         {

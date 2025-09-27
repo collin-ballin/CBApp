@@ -24,6 +24,7 @@
 # include <concepts>
 #endif  //  C++20.  //
 
+#include <cstdint>
 #include <cmath>
 #include <cstddef>
 #include <iomanip>
@@ -112,36 +113,72 @@ inline T round_to(T v) {
 //      1.2     "is_close" Function.
 // *************************************************************************** //
 
-/// @tparam T           A floating-point type (e.g. float, double).
-/// @fn [[nodiscard]]   bool is_close(const T a,
-///                                 const T b,
-///                                 T rel_tol = static_cast<T>(1e-9),
-///                                 T abs_tol = static_cast<T>(0))
-/// @brief Determines whether two floating-point values are approximately equal.
+
+
+//  "default_rel_tol_v"
+//
+/// @decl           template<std::floating_point T> inline constexpr T default_rel_tol_v
+/// @brief          Precision-aware default relative tolerance used with \ref is_close.
+///
+/// @tparam T       A floating-point type (e.g. float, double).
+/// @var            default_rel_tol_v<T>
+///
+/// @details        Expands to yield a value that is appropriate for the precision afforded by each floating-point type parameter \p T :
+///                 - \c float          = \f$10^{-6}\f$
+///                 - \c double         = \f$10^{-9}\f$
+///                 - \c long\ double   = \f$10^{-12}\f$
+/// @note           This value is intended as the default for the \p rel_tol parameter of \ref is_close
+///                 to provide reasonable behavior across different floating-point precisions.
+/// @see            is_close
+//
+template <std::floating_point T>
+[[nodiscard]] constexpr T default_rel_tol(void) noexcept {
+    if constexpr      ( std::same_as<T, float> )            { return T(1e-6);   }   //  "float"             : 1e-6.
+    else if constexpr ( std::same_as<T, double> )           { return T(1e-9);   }   //  "double"            : 1e-9.
+    else if constexpr ( std::same_as<T, long double> )      { return T(1e-12);  }   //  "long double"       : 1e-12.
+//
+    else                                                    { return T(1e-6);   }   //  DEFAULT             : 1e-6.
+}
+
+
+//  "is_close"
+//
+/// @fn template        <std::floating_point<T>>
+///                     [[nodiscard]] inline bool
+///                     is_close(const T a,
+///                              const T b,
+///                              T rel_tol = static_cast<T>(1e-9),
+///                              T abs_tol = static_cast<T>(0))
+/// @brief              Determine if two floating-point values are approximately equal (follows the "math.isclose()" Python function).
 ///
 /// @tparam T           A floating-point type (e.g. float, double).
 /// @param a            First value to compare.
 /// @param b            Second value to compare.
-/// @param rel_tol      Relative tolerance (must be ≥ 0). Default is 1e-9.
-/// @param abs_tol      Absolute tolerance (must be ≥ 0). Default is 0.
-///
+/// @param rel_tol      Relative tolerance (must be ≥ 0).  Defaults value varies by \p T (see above)
+/// @param abs_tol      Absolute tolerance (must be ≥ 0).  Default value is 0.
 /// @return             true if \p a and \p b satisfy
 ///                     \f$|a - b| \le \max(\text{rel\_tol}\cdot\max(|a|,|b|),\,\text{abs\_tol})\f$;
 ///                     false if they differ by more than that or if either is NaN.
 ///
-/// @throw std::invalid_argument if \p rel_tol or \p abs_tol is negative.
-template<typename T>
+/// @throw              std::invalid_argument if \p rel_tol or \p abs_tol is negative.
+/// @see                cblib::default_rel_tol_v
+//
+template <std::floating_point T>
 [[nodiscard]] inline constexpr bool is_close( const T a,                            const T b,
-                                              T rel_tol = static_cast<T>(1e-9),     T abs_tol = static_cast<T>(0) )
+                                              T rel_tol = default_rel_tol<T>(),     T abs_tol = static_cast<T>(0) )
 {
-    //  CASE 0 :    ASSERTIONS / EXCEPTIONS IF INVALID USAGE...
-    static_assert(std::is_floating_point_v<T>, "\"is_close\" requires a floating-point type");
-    if ( rel_tol < T(0) || abs_tol < T(0) )     { throw std::invalid_argument("rel_tol and abs_tol must be non-negative"); }
+    //  CASE 0 :    INVALID USE OF THIS TEMPLATE...
+    if ( (rel_tol < T(0))  ||  (abs_tol < T(0)) )
+    {
+        if ( std::is_constant_evaluated() )     { return false; }       //  constexpr-safe: no exceptions in constant evaluation.
+        throw std::invalid_argument("rel_tol and abs_tol must be non-negative");
+    }
 
-    //      1.      Early Exit for EXACT Equality ( also handles +/- INF ).
+
+    //      1.      Early Exit for EXACT Equality (handles the cases of: "+0.0 vs. -0.0",  and  "+/- INF").
     if ( a == b )                               { return true; }
 
-    //      2.      HANDLE NaN ARGUMENTS.
+    //      2.      HANDLE NaN ARGUMENTS (NaNs are NEVER close).
     if ( std::isnan(a) || std::isnan(b) )       { return false; }
 
     //      3.      MIMIC BEHAVIOR OF THE PYTHON  "math.is_close(...)"  IMPLEMENTATION.
@@ -153,7 +190,6 @@ template<typename T>
     
     return (diff <= bound);
 }
-
 
 
 //  "tolerance_interval"

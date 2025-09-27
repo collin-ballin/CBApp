@@ -154,13 +154,17 @@ public:
     //      REFERENCES TO GLOBAL ARRAYS.
     // *************************************************************************** //
     //                              ARRAYS:
-    static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;
+    static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;           //  "Tool" State.
     static constexpr auto &             ms_EDITOR_STATE_HOTKEY_NAMES    = DEF_EDITOR_STATE_HOTKEY_NAMES;
     static constexpr auto &             ms_EDITOR_STATE_ICONS           = DEF_EDITOR_STATE_ICONS;
     static constexpr auto &             ms_MODE_CAPABILITIES            = DEF_MODE_CAPABILITIES;
     //
+    static constexpr auto &             ms_ACTION_STATE_NAMES           = DEF_ACTION_STATE_NAMES;           //  Action States.
+    static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES;           //  "Object Trait" Categories.
+    //
+    //
+    //
     static constexpr auto &             ms_HIT_TYPE_NAMES               = DEF_HIT_TYPE_NAMES;
-    static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES;
     //
     static constexpr auto &             ms_VERTEX_STYLES                = DEF_VERTEX_STYLES;
     //
@@ -386,9 +390,10 @@ protected:
     // *************************************************************************** //
     //                              OVERALL STATE:
     //  EditorState                     m_S                             = {   };
-    Mode                                m_mode                          = Mode::Default;
-    ObjectTrait                         m_trait_browser                 = ObjectTrait::Properties;
-    ObjectTrait                         m_trait_overlay                 = ObjectTrait::Properties;
+    Mode                                m_mode                          = Mode::Default;                //  Current Tool.
+    Action                              m_action                        = Action::None;                 //  Current Action.
+    ObjectTrait                         m_trait_browser                 = ObjectTrait::Properties;      //  Which "Object Category" is open in BIG-BROWSER.
+    ObjectTrait                         m_trait_overlay                 = ObjectTrait::Properties;      //  Which "Object Category" is open in OVERLAY-BROWSER.
     //
     //
     //                              MUTABLE / TRANSIENT STATE:

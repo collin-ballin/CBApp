@@ -51,21 +51,21 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
     this->_RENDER_update_render_cache();
     const std::span<const size_t>   z_view      ( cache.z_view.data(), cache.z_view.size() );
     //
-    //  //      1.      RENDER "Grid" ELEMENTS...
+    //  //      1.      RENDER "Grid" ELEMENTS.             [ Grid-Lines, Guides, etc ]...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Grid             );
             //  this->_RENDER_grid_channel              ( it.dl                                 );
         }
         
         
-        //      2.      RENDER "Object" ELEMENTS...
+        //      2.      RENDER "Object" ELEMENTS.           [ AREA/FILL for each OBJECT (closed-path). ]...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Objects          );
             this->_RENDER_object_channel            ( z_view,       this->m_render_ctx      );
         }
         
         
-        //      3.      RENDER "Highlights" ELEMENTS...
+        //      3.      RENDER "Highlights" ELEMENTS.       [ GLOW/HIGHLIGHT from Selection (ON-TOP of OBJ-FILL) ]...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Highlights       );
             this->render_selection_highlight        ( it.dl                                 );
@@ -73,14 +73,14 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
         }
         
         
-        //      4.      RENDER "Features" ELEMENTS...
+        //      4.      RENDER "Features" ELEMENTS.         [ STROKE/PERIMETER of each object (ON-TOP of OBJ-HIGHLIGHT) ]...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Features         );
             this->_RENDER_features_channel          ( z_view,       this->m_render_ctx      );
         }
         
         
-        //      5.      RENDER "Accents" ELEMENTS...
+        //      5.      RENDER "Accents" ELEMENTS.          [ VERTICES, POINTS, Accentuating Features (ON-TOP of PATH-STROKE) ]...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Accents          );
             //  this->_render_points                    ( z_view,       this->m_render_ctx      );
@@ -88,14 +88,14 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
         }
         
         
-        //      6.      RENDER "Glyph" ELEMENTS...
+        //      6.      RENDER "Glyph" ELEMENTS.            [ HANDLES, SELECTABLES, SNAPPING-LOCATIONS, USER-INTERACTIBLES (ON-TOP of ALL OBJECT GEOMETRY) ]...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Glyphs           );
             //  this->_RENDER_glyphs_channel            ( z_view,       this->m_render_ctx      );
         }
         
         
-        //      7.      RENDER "Top" ELEMENTS...
+        //      7.      RENDER "Top" ELEMENTS.              [ TOP-MOST LAYER (RESERVED FOR CURSORS, ETC) ]...
         {
             ChannelCTX::Scope           scope       ( CTX,      Layer::Top          );
             //  this->_RENDER_top_channel            ( z_view,       this->m_render_ctx      );
@@ -172,6 +172,7 @@ void Editor::_RENDER_update_render_cache(void) const noexcept
 // *************************************************************************** //
 
 //  "_RENDER_object_channel"
+//      [ AREA/FILL for each OBJECT (closed-path). ]...
 //
 inline void Editor::_RENDER_object_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
 {
@@ -189,13 +190,10 @@ inline void Editor::_RENDER_object_channel(std::span<const size_t> z_view, const
 
 
 //  "_RENDER_highlights_channel"
+//      [ GLOW/HIGHLIGHT from Selection (ON-TOP of OBJ-FILL) ]...
 //
 inline void Editor::_RENDER_highlights_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
 {
-
-
-
-
 /*
     const ImU32         sel_col             = m_style.COL_SELECTION_OUT;
     constexpr float     PATH_EXTRA_W        = 2.0f;   // halo added to path stroke
@@ -239,6 +237,7 @@ inline void Editor::_RENDER_highlights_channel(std::span<const size_t> z_view, c
 
 
 //  "_RENDER_features_channel"
+//      [ STROKE/PERIMETER of each object (ON-TOP of OBJ-HIGHLIGHT) ]...
 //
 inline void Editor::_RENDER_features_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
 {
@@ -247,18 +246,76 @@ inline void Editor::_RENDER_features_channel(std::span<const size_t> z_view, con
         const Path &        path                    = m_paths[idx];
         const bool          should_render           = ( path.IsVisible()  &&  path.IsPath()  &&  path.StrokeIsVisible() );
         
-        if ( should_render ) {
-            path.render_stroke(ctx);
-        }
+        if ( should_render )    { path.render_stroke(ctx); }
     }
-    
     return;
 }
         
 
 //  "_RENDER_accents_channel"
+//      [ VERTICES, POINTS, Accentuating Features (ON-TOP of PATH-STROKE) ]...
 //
-inline void Editor::_RENDER_accents_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
+inline void Editor::_RENDER_accents_channel(std::span<const size_t> /* z_view */, const RenderCTX & ctx) const noexcept
+{
+    const size_t        N_vertices          = this->m_vertices.size();
+    const auto &        hovered             = this->m_sel.hovered;
+    
+    
+    this->PushVertexStyle( VertexStyleType::Default );
+    
+    
+    //      1.      STATE-DEPENDENT VERTEX DRAWING...
+    switch (this->m_mode)
+    {
+        //      CASE 1 :    Show Vertices for ALL OBJECTS...
+        case Mode::AddAnchor    :
+        case Mode::RemoveAnchor :
+        case Mode::EditAnchor   :
+        {
+            break;
+        }
+        //
+        //      CASE 2 :    Active Pen Tool...
+        case Mode::Pen :
+        {
+            break;
+        }
+        //
+        //
+        //
+        //      DEFAULT :   ONLY Show Vertices for SELECTED OBJECTS...
+        default :
+        {
+            break;
+        }
+    }
+    
+    
+    
+    //      2.      ALWAYS DRAW VERTICES FOR HIGHLIGHTED OBJECTS...
+    for (size_t idx : this->m_sel.paths)
+    {
+        const Path &        path            = this->m_paths[idx];
+        const bool          should_render   = ( path.IsVisible()  &&  path.IsPath() );
+        if ( should_render )
+            { path.render_vertices(ctx, this->m_vertex_style); }
+    }
+    
+    
+    //      3.      DRAW VERTEX UNDER CURSOR...
+    const bool all = ( this->m_sel.hovered.has_value()  &&  (this->m_sel.hovered->type == Hit::Type::Vertex)  &&  (this->m_sel.hovered->index < N_vertices) );
+    //
+    if (all)
+    {
+        this->m_vertices[ this->m_sel.hovered->index ].render(this->m_vertex_style);
+    }
+ 
+
+    this->PopVertexStyle();
+
+    return;
+}
+/*
 {
 	const auto &    cb	                    = ctx.callbacks;
 
@@ -320,6 +377,38 @@ inline void Editor::_RENDER_accents_channel(std::span<const size_t> z_view, cons
 		}
 	}
 
+    return;
+}*/
+        
+        
+        
+        
+        
+// *************************************************************************** //
+//      NON-IMPLEMENTED YET...
+// *************************************************************************** //
+
+//  "_RENDER_grid_channel"
+//     [ Grid-Lines, Guides, etc ]...
+//
+inline void Editor::_RENDER_grid_channel(std::span<const size_t> /*z_view*/, const RenderCTX & /*ctx*/) const noexcept
+{
+    return;
+}
+
+//  "_RENDER_glyphs_channel"
+//      [ HANDLES, SELECTABLES, SNAPPING-LOCATIONS, USER-INTERACTIBLES (ON-TOP of ALL OBJECT GEOMETRY) ]...
+//
+inline void Editor::_RENDER_glyphs_channel(std::span<const size_t> /*z_view*/, const RenderCTX & /*ctx*/) const noexcept
+{
+    return;
+}
+        
+//  "_RENDER_top_channel"
+//      [ TOP-MOST LAYER (RESERVED FOR CURSORS, ETC) ]...
+//
+inline void Editor::_RENDER_top_channel(std::span<const size_t> /*z_view*/, const RenderCTX & /*ctx*/) const noexcept
+{
     return;
 }
 
@@ -516,24 +605,13 @@ void Editor::render_selection_highlight(ImDrawList * dl) const noexcept
 //
 inline void Editor::_render_selection_objects(ImDrawList * dl) const noexcept
 {
-    const ImU32 &               col         = m_style.COL_SELECTION_OUT;
+    const ImU32 &               col                         = m_style.COL_SELECTION_OUT;
+    constexpr float             ms_VERTEX_HIGHLIGHT_WIDTH   = 2.0f;
+    constexpr float             ms_PATH_HIGHLIGHT_WIDTH     = 2.0f;
 
 
-    // ───── Highlight selected points
-    for (size_t idx : m_sel.points)
-    {
-        if ( idx >= m_points.size() )       { continue; }
-        const Point &           pt  = m_points[idx];
-        if (const Vertex *      v   = find_vertex(m_vertices, pt.v))
-        {
-            ImVec2  scr     = world_to_pixels({ v->x, v->y });
-            dl->AddCircle( scr,
-                           pt.sty.radius + 2.f,        // small outset
-                           col, 0, 2.f);               // thickness 2 px
-        }
-    }
 
-    // ───── Highlight selected paths
+    //      1.      HIGHLIGHT SELECTED PATHS...
     for (size_t idx : m_sel.paths)
     {
         if ( idx >= m_paths.size() )            { continue; }
@@ -575,6 +653,41 @@ inline void Editor::_render_selection_objects(ImDrawList * dl) const noexcept
             }
         }
     }
+
+
+    //      2.      HIGHLIGHT SELECTED POINTS...
+    this->PushVertexStyle( VertexStyleType::Highlight );
+    for (size_t idx : m_sel.points)
+    {
+        if ( idx >= m_points.size() )       { continue; }       //  CASE 0 :    INVALID POINT...
+        
+        
+        //      1.      GET REFERENCE TO THE POINT.  OBTAIN THIS POINT'S VERTEX...
+        const Point &           point       = m_points[idx];
+        const Vertex *          v_ptr       = find_vertex( this->m_vertices, point.v );
+        
+        if ( !v_ptr )                       { continue; }       //  CASE 1 :    INVALID VERTEX...
+    
+        const Vertex &          vtx         = *(v_ptr);
+        vtx.render( this->m_vertex_style );
+    
+    }
+    this->PopVertexStyle();
+    
+    
+    //  for (size_t idx : m_sel.points)
+    //  {
+    //      if ( idx >= m_points.size() )       { continue; }
+    //      const Point &           pt  = m_points[idx];
+    //
+    //      if (const Vertex *      v   = find_vertex(m_vertices, pt.v))
+    //      {
+    //          ImVec2  scr     = world_to_pixels({ v->x, v->y });
+    //          dl->AddCircle( scr,
+    //                         pt.sty.radius + ms_PATH_HIGHLIGHT_WIDTH,        // small outset
+    //                         col, 0, ms_PATH_HIGHLIGHT_WIDTH  );               // thickness 2 px
+    //      }
+    //  }
 
     return;
 }
@@ -742,6 +855,7 @@ inline void Editor::_render_selection_bbox(ImDrawList * dl) const noexcept
 
 
 
+//
 //
 //
 // *************************************************************************** //

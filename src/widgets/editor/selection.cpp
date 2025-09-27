@@ -328,18 +328,17 @@ inline void Editor::update_move_drag_state(const Interaction & it)
 //
 inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction & it)
 {
-    using   HitType     = Hit::Type;
+    using       HitType     = Hit::Type;
+    ImGuiIO &   io          = ImGui::GetIO();
     
     
     if ( ImGui::IsMouseReleased(ImGuiMouseButton_Left) )
     {
-        ImGuiIO & io = ImGui::GetIO();
-
         //  If there is a pending hit, but it was on an already-selected item (no mods, no drag), do nothing.
         if ( m_pending_hit )
         {
-            const bool modifiers   = (io.KeyCtrl || io.KeyShift);
-            const bool hit_in_sel  = _hit_is_in_current_selection(*m_pending_hit);
+            const bool      modifiers   = (io.KeyCtrl || io.KeyShift);
+            const bool      hit_in_sel  = _hit_is_in_current_selection(*m_pending_hit);
             
             if ( !modifiers  &&  hit_in_sel )
             {
@@ -352,7 +351,7 @@ inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction
         //  Apply click selection semantics iff something is truly pending
         if ( m_pending_hit  ||  m_pending_clear )
         {
-            if (m_pending_clear) { this->reset_selection(); }
+            if (m_pending_clear)    { this->reset_selection(); }
 
 
             if (m_pending_hit)
@@ -365,7 +364,7 @@ inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction
                     //      CASE 1 :    HIT A POINT.
                     case HitType::Vertex :
                     {
-                        const uint32_t  vid     = m_points[idx].v;
+                        const VertexID  vid     = m_points[idx].v;
                         
                         if ( !m_sel.points.erase(idx) )     { m_sel.points.insert(idx); m_sel.vertices.insert(vid); }
                         else                                { m_sel.vertices.erase(vid); }
@@ -380,15 +379,15 @@ inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction
 
                         if ( !m_sel.paths.erase(idx) )
                         {
-                            // Add whole path
+                            //  Add whole path
                             m_sel.paths.insert(idx);
-                            for (uint32_t vid : p.verts)    { m_sel.vertices.insert(vid); }
+                            for (VertexID vid : p.verts)    { m_sel.vertices.insert(vid); }
                         }
                         else
                         {
                             //  Remove whole path
                             for (uint32_t vid : p.verts)    { m_sel.vertices.erase(vid); }
-                            // (Optional) also clear glyphs for those vids if you mirror points↔verts
+                            //  (Optional) also clear glyphs for those vids if you mirror points↔verts
                         }
                         break;
                     }
@@ -401,7 +400,7 @@ inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction
             
         }
 
-        // Clear edge state after processing
+        //  Clear edge state after processing
         m_pending_hit.reset();
         m_pending_clear = false;
     }
@@ -498,11 +497,11 @@ void Editor::add_hit_to_selection(const Hit & hit)
         //      2.          CLICKED ON "VERTEX".
         case HitType::Vertex :
         {
-            size_t    idx       = hit.index;
-            uint32_t  vid       = m_points[idx].v;
-            m_sel.points.insert(idx);
-            m_sel.vertices.insert(vid);
-            m_show_handles.insert(vid); //  NEW.
+            size_t          idx     = hit.index;
+            VertexID        vid     = this->m_points[idx].v;
+            this->m_sel.points      .insert(idx);
+            this->m_sel.vertices    .insert(vid);
+            this->m_show_handles    .insert(vid); //  NEW.
             break;
         }
         //
@@ -512,12 +511,13 @@ void Editor::add_hit_to_selection(const Hit & hit)
         {
             size_t          idx     = hit.index;
             const Path &    p       = m_paths[idx];
-            m_sel.paths.insert(idx);
+            m_sel.paths             .insert(idx);
 
-            for (uint32_t vid : p.verts)        // include every vertex + its glyph index
+            for (VertexID vid : p.verts)        // include every vertex + its glyph index
             {
                 m_sel.vertices.insert(vid);
-                for (size_t gi = 0; gi < m_points.size(); ++gi) {
+                for (size_t gi = 0; gi < m_points.size(); ++gi)
+                {
                     if (m_points[gi].v == vid)      { m_sel.points.insert(gi); }
                 }
             }
@@ -534,21 +534,21 @@ void Editor::add_hit_to_selection(const Hit & hit)
 
 //  "_rebuild_vertex_selection"
 //
-void Editor::_rebuild_vertex_selection()
+void Editor::_rebuild_vertex_selection(void)
 {
     m_sel.vertices.clear();
     for (size_t pi : m_sel.points)
     {
-        if (pi < m_points.size())
-            m_sel.vertices.insert(m_points[pi].v);
+        if ( pi < m_points.size() )     { m_sel.vertices.insert(m_points[pi].v); }
     }
     
 
     //  Include vertices from any selected paths
     for (size_t pi : m_sel.paths)
     {
-        if (pi < m_paths.size()) {
-            for (uint32_t vid : m_paths[pi].verts) {
+        if ( pi < m_paths.size() )
+        {
+            for (VertexID vid : m_paths[pi].verts) {
                 m_sel.vertices.insert(vid);
             }
         }
@@ -583,7 +583,7 @@ bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) 
     bool    have_any    = false;
     auto    add_pt      = [&](const ImVec2 & p)
     {
-        if (!have_any) { tl = br = p; have_any = true; }
+        if ( !have_any )    { tl = br = p; have_any = true; }
         else {
             tl.x = std::min(tl.x, p.x);     tl.y = std::min(tl.y, p.y);
             br.x = std::max(br.x, p.x);     br.y = std::max(br.y, p.y);
@@ -602,7 +602,7 @@ bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) 
     for (PathID pidx : m_sel.paths)
     {
         if ( pidx >= m_paths.size() )   { continue; }
-        const Path& p = m_paths[pidx];
+        const Path & p = m_paths[pidx];
 
         ImVec2 p_tl{}, p_br{};
         if ( p.aabb_control_hull(p_tl, p_br, ctx) ) {
@@ -613,6 +613,7 @@ bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) 
 
     return have_any;
 }
+
 /*
 bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br) const
 {
@@ -642,31 +643,32 @@ bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br) const
 //
 void Editor::_start_bbox_drag(uint8_t handle_idx, const ImVec2 tl_tight, const ImVec2 br_tight)
 {
-    ImGuiIO & io = ImGui::GetIO();
+    ImGuiIO &       io          = ImGui::GetIO();
 
-    const auto [tl, br] = _expand_bbox_by_pixels(tl_tight, br_tight, this->m_style.SELECTION_BBOX_MARGIN_PX);
+    const auto      [tl, br]    = _expand_bbox_by_pixels(tl_tight, br_tight, this->m_style.SELECTION_BBOX_MARGIN_PX);
 
-    m_boxdrag = {};
-    m_boxdrag.active      = true;
-    m_boxdrag.first_frame = true;
-    m_boxdrag.handle_idx  = handle_idx;
-    m_boxdrag.bbox_tl_ws  = tl;
-    m_boxdrag.bbox_br_ws  = br;
-    m_boxdrag.orig_w      = br.x - tl.x;
-    m_boxdrag.orig_h      = br.y - tl.y;
+    m_boxdrag                   = {   };
+    m_boxdrag.active            = true;
+    m_boxdrag.first_frame       = true;
+    m_boxdrag.handle_idx        = handle_idx;
+    m_boxdrag.bbox_tl_ws        = tl;
+    m_boxdrag.bbox_br_ws        = br;
+    m_boxdrag.orig_w            = br.x - tl.x;
+    m_boxdrag.orig_h            = br.y - tl.y;
 
-    m_boxdrag.mouse_ws0   = pixels_to_world(io.MousePos);
-    m_boxdrag.handle_ws0  = _bbox_handle_pos_ws(handle_idx, tl, br);
-    m_boxdrag.anchor_ws   = _bbox_pivot_opposite(handle_idx, tl, br);
+    m_boxdrag.mouse_ws0         = pixels_to_world(io.MousePos);
+    m_boxdrag.handle_ws0        = _bbox_handle_pos_ws(handle_idx, tl, br);
+    m_boxdrag.anchor_ws         = _bbox_pivot_opposite(handle_idx, tl, br);
 
-    m_boxdrag.v_ids.clear();
-    m_boxdrag.v_orig.clear();
-    m_boxdrag.v_ids.reserve(m_sel.vertices.size());
-    m_boxdrag.v_orig.reserve(m_sel.vertices.size());
+    m_boxdrag.v_ids             .clear();
+    m_boxdrag.v_orig            .clear();
+    m_boxdrag.v_ids             .reserve(m_sel.vertices.size());
+    m_boxdrag.v_orig            .reserve(m_sel.vertices.size());
     
-    for (uint32_t vid : m_sel.vertices)
+    
+    for (VertexID vid : m_sel.vertices)
     {
-        if (const Vertex* v = find_vertex(m_vertices, vid)) {
+        if ( const Vertex * v = find_vertex(m_vertices, vid) ) {
             m_boxdrag.v_ids .push_back(vid);
             m_boxdrag.v_orig.push_back(ImVec2{v->x, v->y});
         }
@@ -680,66 +682,79 @@ void Editor::_start_bbox_drag(uint8_t handle_idx, const ImVec2 tl_tight, const I
 //
 void Editor::_update_bbox(void)
 {
-    if (!m_boxdrag.active) return;
+    ImGuiIO &   io      = ImGui::GetIO();
+    
+    if ( !m_boxdrag.active )    { return; }
 
-    ImGuiIO& io = ImGui::GetIO();
 
-    // 1) Read/snaps the mouse in *world* space
+    //      1.      Read/snaps the mouse in *world* space
     ImVec2 M = pixels_to_world(io.MousePos);
-    if (want_snap()) M = snap_to_grid(M);
+    if ( want_snap() )      { M = snap_to_grid(M); }
 
-    // 2) Establish original box & the pivot for this frame
-    const ImVec2 tl0 = m_boxdrag.bbox_tl_ws;
-    const ImVec2 br0 = m_boxdrag.bbox_br_ws;
-    const ImVec2 c0  { (tl0.x + br0.x) * 0.5f, (tl0.y + br0.y) * 0.5f };
 
-    // Allow “scale from center” while Alt is held *during* drag
-    const bool   scale_from_center = alt_down();
-    const ImVec2 P = scale_from_center ? c0
-                                       : _bbox_pivot_opposite(m_boxdrag.handle_idx, tl0, br0);
+    //      2.      Establish original box & the pivot for this frame
+    const ImVec2    tl0     = m_boxdrag.bbox_tl_ws;
+    const ImVec2    br0     = m_boxdrag.bbox_br_ws;
+    const ImVec2    c0      { (tl0.x + br0.x) * 0.5f, (tl0.y + br0.y) * 0.5f };
 
-    // Initial handle position relative to pivot (frozen at start)
-    const ImVec2 H0 = _bbox_handle_pos_ws(m_boxdrag.handle_idx, tl0, br0);
 
-    // 3) Compute per-axis scale from the ratio (mouse-to-pivot) / (handle0-to-pivot)
-    float sx = 1.0f, sy = 1.0f;
+    //      Allow “scale from center” while Alt is held *during* drag
+    const bool      scale_from_center = alt_down();
+    const ImVec2    P       = (scale_from_center)
+                                ? c0 : _bbox_pivot_opposite(m_boxdrag.handle_idx, tl0, br0);
 
-    const bool is_corner   = (m_boxdrag.handle_idx % 2 == 0);           // 0,2,4,6
-    const bool is_side_ns  = (m_boxdrag.handle_idx == 1 || m_boxdrag.handle_idx == 5);
-    const bool is_side_ew  = (m_boxdrag.handle_idx == 3 || m_boxdrag.handle_idx == 7);
+    //      Initial handle position relative to pivot (frozen at start)
+    const ImVec2    H0      = _bbox_handle_pos_ws(m_boxdrag.handle_idx, tl0, br0);
 
-    // Corner or E/W side affect X
-    if (is_corner || is_side_ew) sx = _safe_div(M.x - P.x, H0.x - P.x);
-    // Corner or N/S side affect Y
-    if (is_corner || is_side_ns) sy = _safe_div(M.y - P.y, H0.y - P.y);
 
-    // Constrain side handles to one axis
-    if (is_side_ns) sx = 1.0f;
-    if (is_side_ew) sy = 1.0f;
+    //      3.      Compute per-axis scale from the ratio (mouse-to-pivot) / (handle0-to-pivot)
+    float           sx = 1.0f, sy = 1.0f;
 
-    // Optional: hold Shift → uniform scaling (match larger magnitude)
+    const bool      is_corner       = (m_boxdrag.handle_idx % 2 == 0);           // 0,2,4,6
+    const bool      is_side_ns      = (m_boxdrag.handle_idx == 1 || m_boxdrag.handle_idx == 5);
+    const bool      is_side_ew      = (m_boxdrag.handle_idx == 3 || m_boxdrag.handle_idx == 7);
+
+
+    if ( is_corner || is_side_ew )      { sx = _safe_div(M.x - P.x, H0.x - P.x); }      //  Corner or E/W side affect X
+    if ( is_corner || is_side_ns )      { sy = _safe_div(M.y - P.y, H0.y - P.y); }      //  Corner or N/S side affect Y
+
+
+    if ( is_side_ns )   { sx = 1.0f; }  //  Constrain side handles to one axis
+    if ( is_side_ew )   { sy = 1.0f; }
+
+
+    //      Optional:   hold Shift → uniform scaling (match larger magnitude)
     if (is_corner && io.KeyShift) {
         const float s = (std::fabs(sx) > std::fabs(sy)) ? sx : sy;
         sx = sy = s;
     }
 
-    // 4) Apply affine x' = P + S*(x - P) to *original* positions
+
+    //      4.      Apply affine    x' = P + S*(x - P)      to *original* positions
     const std::size_t n = m_boxdrag.v_ids.size();
     for (std::size_t i = 0; i < n; ++i)
+    {
         if (Vertex* v = find_vertex_mut(m_vertices, m_boxdrag.v_ids[i])) {
             const ImVec2 q0 { m_boxdrag.v_orig[i].x - P.x, m_boxdrag.v_orig[i].y - P.y };
             const ImVec2 q1 { q0.x * sx,                  q0.y * sy };
             v->x = P.x + q1.x;
             v->y = P.y + q1.y;
         }
+    }
 
-    // 5) End gesture
-    if (!io.MouseDown[ImGuiMouseButton_Left]) {
+
+    //      5.      End gesture
+    if ( !io.MouseDown[ImGuiMouseButton_Left] )
+    {
         m_boxdrag.active = false;
         m_boxdrag.first_frame = true;
-    } else {
+    }
+    else
+    {
         m_boxdrag.first_frame = false;
     }
+    
+    return;
 }
 
 
@@ -776,7 +791,7 @@ void Editor::_start_lasso_tool(void)
     m_lasso_start           = io.MousePos;                      // in screen coords
     m_lasso_end             = m_lasso_start;
     
-    if ( !io.KeyShift && !io.KeyCtrl )  { this->reset_selection(); } //m_sel.clear();  // fresh selection
+    if ( !io.KeyShift && !io.KeyCtrl )      { this->reset_selection(); } //m_sel.clear();  // fresh selection
 
     return;
 }
@@ -798,7 +813,7 @@ void Editor::_update_lasso(const Interaction & it)
     it.dl->AddRect      (m_lasso_start, m_lasso_end, m_style.COL_LASSO_OUT);
 
     // Finalise on mouse-up
-    if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
+    if ( !ImGui::IsMouseDown(ImGuiMouseButton_Left) )
     {
         // Screen → world conversion and rect normalisation
         ImVec2 tl_scr{ std::min(m_lasso_start.x, m_lasso_end.x),

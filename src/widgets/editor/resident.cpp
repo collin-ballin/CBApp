@@ -236,16 +236,26 @@ void Editor::_debugger_interaction(void)
     const float                     LABEL_W                 = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
     const float &                   WIDGET_W                = m_style.ms_SETTINGS_WIDGET_WIDTH;
     //
-    Interaction &                   it                      = *this->m_it;
+    Interaction &                   it                      = *(this->m_it);
+    //
+    //
+    //
+    const char *                    current_action          = this->ms_ACTION_STATE_NAMES[ this->m_action ];
+    const bool                      action_color            = ( (this->m_action != Action::None)  &&  (this->m_action != Action::INVALID) );
     //
     
     
-    //      1.      SHORTCUTS ENABLED/DISABLED...
+    //      1.      CURRENT ACTION...
+    this->S.labelf("Action:", LABEL_W, WIDGET_W);
+    S.print_TF( action_color, current_action, current_action );
+    
+    
+    //      2.      SHORTCUTS ENABLED/DISABLED...
     this->S.labelf("Shortcuts:", LABEL_W, WIDGET_W);
     S.print_TF( !it.BlockShortcuts() );
     
     
-    //      2.      INPUTS ENABLED/DISABLED...
+    //      3.      INPUTS ENABLED/DISABLED...
     this->S.labelf("Inputs:",       LABEL_W, WIDGET_W);
     S.print_TF( !it.BlockInput() );
     

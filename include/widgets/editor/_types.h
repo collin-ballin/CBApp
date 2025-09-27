@@ -142,6 +142,37 @@ DEF_EDITOR_STATE_ICONS  = { {
 
 
 
+//  "Action"
+//      - Enum type for each "ACTION" that can be undertaken by the Editor.
+//
+enum class Action : uint8_t {
+      None = 0              //  No Action (Idle).
+    , Pen                   //  Drawing with the Pen Tool.
+//
+//
+//
+    , Dragging              //  Dragging/Moving a selection.
+    , Lasso                 //  Dragging/Moving a selection.
+//
+    , INVALID               //  Placeholder enum for debugging (Set if more-than-one action at a time).
+    , COUNT
+};
+//
+//
+//  "DEF_ACTION_STATE_NAMES"
+static constexpr cblib::EnumArray< Action, const char * >
+DEF_ACTION_STATE_NAMES  = { {
+      "None"
+    , "Pen Stroke"
+//
+    , ""
+    , ""
+//
+    , "INVALID"
+} };
+
+
+
 // *************************************************************************** //
 //      EDITOR |        SELECTION BITS...
 // *************************************************************************** //
@@ -411,7 +442,8 @@ static constexpr cblib::EnumArray< IOResult, const char * >
 //  "HitType"
 //
 enum class HitType : uint8_t {
-    Handle = 0,
+    None = 0,
+    Handle,
     Vertex,      Edge,       Surface,
     COUNT
 };
@@ -419,7 +451,7 @@ enum class HitType : uint8_t {
 //  "DEF_HIT_TYPE_NAMES"
 static constexpr cblib::EnumArray< HitType, const char * >
     DEF_HIT_TYPE_NAMES  = { {
-        "Handle",       "Vertex",       "Edge",         "Surface"
+        "None",     "Handle",       "Vertex",       "Edge",         "Surface"
 } };
 
 
@@ -429,10 +461,10 @@ static constexpr cblib::EnumArray< HitType, const char * >
 template <typename HID>
 struct Hit_t
 {
-    using Type = HitType;
+    using           Type            = HitType;
 //
 //
-    Type            type            = Type::Vertex;
+    Type            type            = Type::None;
 //
     size_t          index           = 0;                //  Point/Line/Path: original meaning
     bool            out             = false;            //  valid only when type == Handle
@@ -742,9 +774,13 @@ struct Selection_t
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
 inline void to_json(nlohmann::json & j, const Selection_t<VID,PtID,LID,PID,ZID,HitID> & s)
 {
-    j = { { "vertices",  std::vector<VID>  (s.vertices.begin(), s.vertices.end()) },
-          { "points",    std::vector<PtID> (s.points  .begin(), s.points  .end()) },
-          { "paths",     std::vector<PID>  (s.paths   .begin(), s.paths   .end()) } };
+    j = {
+        { "vertices",  std::vector<VID>  (s.vertices.begin(), s.vertices.end()) },
+        { "points",    std::vector<PtID> (s.points  .begin(), s.points  .end()) },
+        { "paths",     std::vector<PID>  (s.paths   .begin(), s.paths   .end()) }
+    };
+          
+    return;
 }
 //
 //  "from_json"
@@ -758,6 +794,8 @@ inline void from_json(const nlohmann::json & j, Selection_t<VID,PtID,LID,PID,ZID
     s.vertices.clear();  s.vertices.insert(vs.begin(), vs.end());
     s.points  .clear();  s.points  .insert(ps.begin(), ps.end());
     s.paths   .clear();  s.paths   .insert(pa.begin(), pa.end());
+    
+    return;
 }
 
 

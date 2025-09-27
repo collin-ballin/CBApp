@@ -190,10 +190,12 @@ struct VertexStyleData
 //      Enum to define a HANDLE to access each PRESET STYLE of Vertex that is used by the Editor Application.
 //
 enum class VertexStyleType : uint8_t {
-    Default = 0,
-    Highlight,
-    COUNT
+      Default = 0
+    , Highlight
+    , Drag
+    , COUNT
 };
+//
 //
 static constexpr cblib::EnumArray< VertexStyleType, VertexStyleData >
 DEF_VERTEX_STYLES{
@@ -226,8 +228,23 @@ DEF_VERTEX_STYLES{
     //
         /*  line_color          */ IM_COL32(255, 215, 0, 255), //   cblib::utl::compute_shade( IM_COL32(255, 215, 0, 170), 0.15f ),
         /*  line_width          */ 2.50f,
-        /*  hovered_color       */ IM_COL32(0,       255,    0,         255),
+        /*  hovered_color       */ IM_COL32(0,       255,       0,      255),
         /*  hovered_size        */ 12.0f
+    },
+//
+    VertexStyleData     //  2.  DRAG:
+    {
+        /*  vertex_radius       */ 6.50f,
+        /*  vertex_color        */ IM_COL32(255,       0,    0,         240),
+        /*  vertex_tesselation  */ 12,
+        /*  handle_color        */ IM_COL32(215,     255,    0,         255),
+        /*  handle_size         */ 5.50f,
+        /*  handle_rounding     */ 0.00f,
+        /*  handle_thickness    */ 2.00f,
+        /*  line_color          */ IM_COL32(215,     255,    0,         170),
+        /*  line_width          */ 1.50f,
+        /*  hovered_color       */ IM_COL32(0,       0,    255,         255),
+        /*  hovered_size        */ 11.0f
     }
 //
 } };
@@ -295,9 +312,19 @@ struct VertexStyle
     inline                              VertexStyle                         (MappingFn callback, const StyleData & data_) noexcept
                                         : ws_to_px(callback)    , data( std::addressof(data_) )   {   }
     
-    //  "_no_op"
+    //  "PushDL"
     inline void                         PushDL                              (ImDrawList * & dl_) const noexcept     { this->dl = dl_;           };
     inline void                         PopDL                               (void) const noexcept                   { this->dl = nullptr;       };
+    
+    
+    //  "PushHoverState"
+    inline void                         PushHoverState                      (const HoverState hover) const noexcept {
+        IM_ASSERT( data != nullptr && "Call to \"VertexStyle.PushHoverState()\" with NULL data");
+        (*this->data).hovered = hover;
+        return;
+    };
+    inline void                         PopHoverState                       (void) const noexcept       = delete;   //  We automatically POP the hover state at the end of "Vertex_t::render()"...
+    inline void                         _PopHoverState                      (void) const noexcept       { (*this->data).hovered = HoverState::None; }
     
 //
 // *************************************************************************** //
@@ -551,8 +578,8 @@ struct BezierControl
     //  "_reset_curvature"
     inline void                         _reset_curvature                (void) noexcept       {
         this->m_curvature_state     = CurvatureState::None;
-        this->in_handle             = { };
-        this->out_handle            = { };
+        this->in_handle             = {  };
+        this->out_handle            = {  };
         return;
     }
 
@@ -567,7 +594,7 @@ struct BezierControl
     
     //  "render"
     template <typename VStyle>
-    inline void                         render                          (const ImVec2 & origin, VStyle & style) const noexcept
+    inline void                         render                          (const ImVec2 & origin, const VStyle & style) const noexcept
     {
         const ImVec2                pos             = style.ws_to_px(    {  origin.x                        , origin.y                          }   );
         const ImVec2                h_in            = style.ws_to_px(    {  origin.x + this->in_handle.x    , origin.y + this->in_handle.y      }   );
@@ -624,7 +651,7 @@ struct BezierControl
     
     //  "_render_QUADRATIC_IMPL"
     template <typename VStyle>
-    inline void                         _render_QUADRATIC_IMPL              (const ImVec2 & pos, const ImVec2 & ctrl, VStyle & style) const noexcept
+    inline void                         _render_QUADRATIC_IMPL              (const ImVec2 & pos, const ImVec2 & ctrl, const VStyle & style) const noexcept
     {
         const StyleData &           data            = *style.data;
         
@@ -665,7 +692,7 @@ struct BezierControl
     //  "_render_CUBIC_IMPL"
     //
     template <typename VStyle>
-    inline void                         _render_CUBIC_IMPL                  (const ImVec2 & pos, const ImVec2 & h_in, const ImVec2 & h_out, VStyle & style) const noexcept
+    inline void                         _render_CUBIC_IMPL                  (const ImVec2 & pos, const ImVec2 & h_in, const ImVec2 & h_out, const VStyle & style) const noexcept
     {
         const StyleData &           data            = *style.data;
         
@@ -731,7 +758,7 @@ struct BezierControl
     //      This is implemented as a second function to avoid the CONDITIONAL/TERNARY operations which will be unnessesary for overwhelming majority of the verticies.
     //
     template <typename VStyle>
-    inline void                         _render_CUBIC_hovered_IMPL          (const ImVec2 & pos, const ImVec2 & h_in, const ImVec2 & h_out, VStyle & style) const noexcept
+    inline void                         _render_CUBIC_hovered_IMPL          (const ImVec2 & pos, const ImVec2 & h_in, const ImVec2 & h_out, const VStyle & style) const noexcept
     {
         const StyleData &           data            = *style.data;
         const bool                  ih_hovered      = ( data.hovered == HoverState::InHandle    );
@@ -979,6 +1006,15 @@ struct Vertex_t
     //  "IsQuadratic"
     [[nodiscard]] inline bool           IsQuadratic                     (void) const noexcept               { return m_bezier._is_quadratic();              }
     [[nodiscard]] inline bool           IsCubic                         (void) const noexcept               { return m_bezier._is_cubic();                  }
+            
+    //  "SegmentIsLinear"
+    [[nodiscard]] static inline bool    SegmentIsLinear                 (const ImVec2 & P0, const ImVec2 & P1, const ImVec2 & P2, const ImVec2 & P3) noexcept
+    {
+        namespace                   math        = cblib::math;
+        constexpr const float &     GATE        = BezierControl::ms_BEZIER_NUMERICAL_ERROR;
+        return ( math::is_close( P1.x, P0.x, GATE)  &&  math::is_close( P1.y, P0.y, GATE)  &&
+                 math::is_close( P2.y, P3.y, GATE)  &&  math::is_close( P2.y, P3.y, GATE) );
+    }
     
     
 
@@ -1064,7 +1100,7 @@ struct Vertex_t
     
     //  "render"
     template <typename VStyle>
-    inline void                         render                          (VStyle & style) const noexcept
+    inline void                         render                          (const VStyle & style) const noexcept
     {
         const ImVec2        origin          = ImVec2({ this->x, this->y });
         switch (style.data->hovered) {
@@ -1078,13 +1114,13 @@ struct Vertex_t
             }
         }
         
-        style.data->hovered = HoverState::None;
+        style._PopHoverState();
         return;
     }
     
     //  "render_all"
     template <typename VStyle>
-    inline void                         render_all                      (VStyle & style) const noexcept
+    inline void                         render_all                      (const VStyle & style) const noexcept
     {
         const ImVec2        origin          = ImVec2({ this->x, this->y });
     
@@ -1102,18 +1138,18 @@ struct Vertex_t
             }
         }
         
-        style.data->hovered = HoverState::None;
+        style._PopHoverState();
         return;
     }
     
     //  "_render_vertex"
     template <typename VStyle>
-    inline void                         _render_vertex                  (const ImVec2 & origin, VStyle & style) const noexcept
+    inline void                         _render_vertex                  (const ImVec2 & origin, const VStyle & style) const noexcept
     { style.dl->AddCircleFilled( style.ws_to_px(origin), style.data->vertex_radius, style.data->vertex_color, style.data->vertex_tesselation ); }
     
     //  "_render_vertex_IMPL"
     template <typename VStyle>
-    inline void                         _render_vertex_hovered          (const ImVec2 & origin, VStyle & style) const noexcept
+    inline void                         _render_vertex_hovered          (const ImVec2 & origin, const VStyle & style) const noexcept
     { style.dl->AddCircleFilled( style.ws_to_px(origin), style.data->vertex_radius, style.data->hovered_color, style.data->vertex_tesselation ); }
     
 

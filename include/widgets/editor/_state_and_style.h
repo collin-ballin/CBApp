@@ -1126,7 +1126,7 @@ struct EditorStyle
 // *************************************************************************** //
     ImU32                       COL_POINT_DEFAULT               = IM_COL32(0,255,0,255);        // idle green
     ImU32                       COL_POINT_HELD                  = IM_COL32(255,100,0,255);      // while dragging
-    ImU32                       COL_SELECTION_OUT               = IM_COL32(255,215,0,255);      // gold outline
+    ImU32                       COL_SELECTION_OUT               = IM_COL32(255,215,0,170);      // gold outline
     float                       DEFAULT_POINT_RADIUS            = 12.0f;                        // px
     //
     ImU32                       AUX_HIGHLIGHT_COLOR             = IM_COL32(255,215,0,255);      // gold outline
