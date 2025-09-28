@@ -328,6 +328,18 @@ public:
         ImGui::SetNextItemWidth(w_width);       ImGui::SameLine();
         return;
     };
+    //
+    inline bool                         labelf                      (const bool vis, const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
+    {
+        if (!vis)   { return false; }
+        const ImVec2        padding             = ImVec2( l_width - ImGui::CalcTextSize(text).x,  0.0f );
+        ImGui::AlignTextToFramePadding();       ImGui::SetNextItemWidth(l_width);
+        ImGui::TextUnformatted(text);           ImGui::SameLine();
+        ImGui::Dummy(padding);
+        ImGui::SetNextItemWidth(w_width);       ImGui::SameLine();
+        return vis;
+    };
+
 
 
     //  "_LeftLabel"
@@ -383,6 +395,14 @@ public:
             (value)     ? true_text                         : false_text
         );
         return;
+    }
+    
+    //  "ConditionalText"
+    inline bool                         ConditionalText             (const bool value, const char * text, const std::optional<ImVec4> & color = std::nullopt) noexcept
+    {
+        if (!value)     { return false; }
+        ImGui::TextColored( color.value_or(this->SystemColor.White), "%s", text );
+        return value;
     }
     
 

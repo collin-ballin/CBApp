@@ -568,35 +568,37 @@ void Editor::delete_selection(void)
 //
 void Editor::_clear_all(void)
 {
-    // ─── 1.  Wipe geometry containers in bulk ──────────────────────────
+    //      1.      WIPE GEOMETRY CONTAINERS IN BULK...
     m_paths         .clear();       // clears Path<…> vector
     m_points        .clear();       // glyphs
     m_vertices      .clear();       // anchors
 
 
-    // ─── 2.  Reset selection & per-tool state ─────────────────────────
+    //      2.      RESET SELECTION AND TOOL STATES...
     this->reset_selection();   // m_sel.clear() + related resets
     this->reset_pen();         // m_pen = {}      (live path state)
 
-    m_lasso_active                          = false;
-    m_dragging                              = false;
+
+    m_lasso_active                          = false;    //  2.1.    LASSO TOOL.
+    //
+    m_dragging                              = false;    //  2.2.    DRAGGING SELECTION.
+    this->m_movedrag.active                 = false;
+    //
     m_drawing                               = false;
+    //
+    //
+    m_next_id                               = 1;        //  RESET "NEXT-ID" COUNTERS (So new vertices/path IDs start fresh)...
 
 
-    //  Next ID counter back to 1 so new vertices/path IDs start fresh
-    m_next_id                               = 1;
-
-
-    // ─── 3.  Browser & filter housekeeping ────────────────────────────
-    //  Force filter to rebuild so the clipper sees an empty list.
+    //      3.      BROWSER AND FILTER HOUSEKEEPING  [ Force filter to rebuild so the clipper sees an empty list ]...
     this->m_browser_S.clear();
 
 
-    // ─── 4.  Inspector / overlay clean-up (if any live) ───────────────
+    //      4.      CLEAN-UP BROWSER / OVERLAY  [ if any live ]...
     m_browser_S.m_inspector_vertex_idx      = -1;        // no vertex selected in inspector
     
     
-    _prune_selection_mutability();      // ensures nothing stale lingers
+    _prune_selection_mutability();      //  ensures nothing stale lingers
 
     //  Resident overlays such as selection HUD will auto-hide
     //  because `m_sel` is now empty.  No explicit overlay mutation needed.

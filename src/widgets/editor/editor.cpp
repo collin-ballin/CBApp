@@ -138,9 +138,6 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     //  BrowserState &          BS                      = this->m_browser_S;
     Interaction &           it                      = *m_it;
     EditorInteraction &     eit                     = it.obj;
-    //
-    static cblib::EnumArray< Action, bool >
-                            s_conditions            = { false };
     
     
     
@@ -207,27 +204,7 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     
     
     //      5.      UPDATE THE EDITOR'S CURRENT TASK...
-    {
-        static constexpr size_t     N                   = static_cast<size_t>( Action::COUNT ) - 1;
-        Action                      handle              = static_cast<Action>( N );
-        s_conditions                .fill               (false);
-        //
-        s_conditions[ Action::PenDraw    ]              = (this->m_mode == Mode::Pen  &&  this->m_pen.active    );                      //  Drawing a Path.
-        s_conditions[ Action::BBoxMove   ]              = (this->m_movedrag.active                              );                      //  SCALING content within BBox.
-        s_conditions[ Action::BBoxScale  ]              = ( this->m_boxdrag.active  &&  this->m_boxdrag.view.hover_idx.has_value() );   //  MOVE-DRAGGING content within BBox.
-        s_conditions[ Action::LassoDrag  ]              = (this->m_boxdrag.active   );                                                  //  Using the Lasso Tool.
-        //
-        const bool                  invalid             = ( static_cast<std::size_t>(std::ranges::count(s_conditions, true)) > 1 );
-        s_conditions[ Action::INVALID    ]              = invalid;
-        //
-        for ( size_t i = N; i > 0; handle = static_cast<Action>(--i) )
-        {
-            if ( s_conditions[handle] )     { this->m_action = handle; break; }
-        }
-        //
-        //
-        //
-    }
+    this->_update_action( it );
 
 
 
@@ -239,6 +216,112 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     
     return;
 }
+
+
+
+//  "_update_action"
+//
+inline void Editor::_update_action(const Interaction & /* it */) noexcept
+{
+    static constexpr size_t     N               = static_cast<size_t>( Action::COUNT ) - 1;
+    Action                      value           = static_cast<Action>( N );
+    uint8_t                     action_counter  = 0;
+    
+
+    //  bool                                m_dragging                      = false;
+    //  bool                                m_lasso_active                  = false;
+    //  bool                                m_pending_clear                 = false;    //  pending click selection state ---
+    //  //
+    //  //                              PEN-TOOL STATE:
+    //  bool                                m_dragging_handle               = false;
+    //  bool                                m_dragging_out                  = true;
+    //  VertexID                            m_drag_vid                      = 0;
+    
+    
+    //      1.      EXAMINE CONDITION FOR EACH ACTION...
+    for ( size_t i = N; i > 0; value = static_cast<Action>(--i) )
+    {
+        bool    switch_action   = false;
+    
+        switch (value)
+        {
+            //      ACTION #1.1 :       TOOL        | PEN---TOOL DRAWING.
+            case Action::PenDraw : {
+                //  bool                                m_drawing                       = false;
+                //  switch_action   = ( this->m_mode == Mode::Pen  &&  this->m_pen.active );
+                switch_action   = this->IsDrawingPen();
+                break;
+            }
+            //      ACTION #1.2 :       TOOL        | SHAPE---TOOL DRAWING.
+            case Action::ShapeDraw : {
+                //  switch_action   = ( this->m_mode == Mode::Shape  &&  this->m_shape.dragging );
+                switch_action   = this->IsDrawingShape();
+                break;
+            }
+            //
+            //
+            //
+            //      ACTION #2.1 :       GENERAL     | MAKING LASSO SELECTION.
+            case Action::LassoDrag : {
+                //  switch_action   = m_lasso_active;
+                switch_action   = this->IsDraggingLasso();
+                break;
+            }
+            //      ACTION #2.2 :       GENERAL     | DRAGGING A HANDLE.
+            case Action::HandleDrag : {
+                //  switch_action   = this->m_dragging_handle;
+                switch_action   = this->IsDraggingHandle();
+                break;
+            }
+            //      ACTION #2.3 :       GENERAL     | DRAGGING A VERTEX.
+            case Action::VertexDrag : {
+                //  VertexID                            m_drag_vid                      = 0;
+                //  switch_action   = (this->m_drag_vid > 0);
+                switch_action   = this->IsDraggingVertex();
+                break;
+            }
+            //
+            //
+            //
+            //      ACTION #3.1 :       GROUP       | DRAGGING A SELECTION.
+            case Action::BBoxDrag : {
+                //  switch_action   = ( this->m_movedrag.active );
+                //  switch_action   = ( this->m_dragging );
+                switch_action   = this->IsDraggingSelection();
+                break;
+            }
+            //      ACTION #3.2 :       GROUP       | SCALING A SELECTION.
+            case Action::BBoxScale : {
+                //  switch_action   = ( this->m_boxdrag.active  &&  this->m_boxdrag.view.hover_idx.has_value() );
+                switch_action   = this->IsScalingSelection();
+                break;
+            }
+            //
+            //
+            //
+            //      DEFAULT.
+            default : {
+                break;
+            }
+        }
+        
+        if ( switch_action )    { this->m_action = value; ++action_counter; }
+        
+    }
+    
+    //      2.      SET  NONE / INVALID  ACTION...
+    switch (action_counter)
+    {
+        case 0 :    { this->m_action = Action::None;        break;      }
+        case 1 :    { break;                                            }
+        default :   { this->m_action = Action::Invalid;     break;      }
+    }
+    
+    
+    
+    return;
+}
+
 
 
 
@@ -328,32 +411,43 @@ void Editor::Begin(const char * /*id*/)
         //  if ( space  &&  it.hovered  &&  _mode_has(CBCapabilityFlags_Pan) )
         if ( space  &&  !block_shortcuts  &&  _mode_has(CBCapabilityFlags_Pan) )
             { ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); }
-        //
-        else if ( !space  &&  it.hovered  &&  !(m_dragging || m_boxdrag.active) )    //  ignore while dragging selection.
-            { this->_MECH_hit_detection(it); }
-        //
-        //  else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
-        //      { this->_MECH_hit_detection(it); }
-
-
-
-        //          3.5.    SELECTION BEHAVIOR...
-        if  ( !space  &&  _mode_has(CBCapabilityFlags_Select) )
-            { _MECH_process_selection(it); }
-
-
-
-        //          3.6.    SELECTION BEHAVIOR...
-        if  ( !space  &&  !block_input )
-            { _MECH_query_shortcuts(it); }
         
-    
-        //          3.6.    MODE/STATE/TOOL DISPATCHER...
-        this->_MECH_dispatch_tool_handler(it);
+        
+        //          3.5.    MAIN BEHAVIORS  [ BLOCKED BY (SPACE) *OR* (NOT-HOVERING) ]...
+        if ( !space )       /* if ( !space  &&  it.hovered ) */
+        {
+        
+            //              3.5A.       PERFORM HIT-DETECTION.
+            if ( it.hovered  &&  !(m_dragging || m_boxdrag.active) )    //  ignore while dragging selection.
+                { this->_MECH_hit_detection(it); }
+            //
+            //  else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
+            //      { this->_MECH_hit_detection(it); }
 
 
-        //          3.7.    RENDERING LOOP...
+            //              3.5B.       SELECTION BEHAVIOR.
+            if  ( _mode_has(CBCapabilityFlags_Select) )
+                { _MECH_process_selection(it); }
+
+
+            //          3.6.    SELECTION BEHAVIOR...
+            if  ( !block_input )
+                { _MECH_query_shortcuts(it); }
+            
+        
+            //          3.6.    MODE/STATE/TOOL DISPATCHER...
+            this->_MECH_dispatch_tool_handler(it);
+        
+        }
+        
+
+
+        //          3.6.    RENDERING THE CANVAS...
         this->_MECH_render_frame(it);
+        
+        
+        
+    //
     //
     //
     }// END "IMPLOT".
@@ -363,14 +457,6 @@ void Editor::Begin(const char * /*id*/)
     ImPlot::EndPlot();
     ImPlot::GetInputMap() = backup;   // restore map
     
-    
-    
-    //  this->_draw_io_overlay();
-    //
-    //
-    //  show_icon_preview_window();
-    //
-    //
     
     
     return;

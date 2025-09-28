@@ -153,15 +153,18 @@ DEF_EDITOR_STATE_ICONS  = { {
 //
 enum class Action : uint8_t {
       None = 0              //  No Action (Idle).
-    , PenDraw               //  Drawing with the Pen Tool.
+    , PenDraw               //  Drawing with the PEN Tool.
+    , ShapeDraw             //  Drawing with the SHAPE Tool.
 //
 //
+    , LassoDrag             //  Dragging/Moving a LASSO SELECTION.
+    , HandleDrag            //  Dragging/Moving a SINGLE VERTEX.
+    , VertexDrag            //  Dragging/Moving a SINGLE VERTEX.
 //
-    , BBoxMove              //  Moving Selection BBox.
+    , BBoxDrag              //  Moving an ENTIRE SELECTION BBOX.
     , BBoxScale             //  Scaling Selection BBox.
-    , LassoDrag             //  Dragging/Moving a selection.
 //
-    , INVALID               //  Placeholder enum for debugging (Set if more-than-one action at a time).
+    , Invalid               //  Placeholder enum for debugging (Set if more-than-one action at a time).
     , COUNT
 };
 //
@@ -171,11 +174,16 @@ static constexpr cblib::EnumArray< Action, const char * >
 DEF_ACTION_STATE_NAMES  = { {
     /*  None        */      "None"
     /*  PenDraw     */    , "Drawing Path"
-    /*              *///
-    /*  BBoxMove    */    , "Moving Selection"
+    /*  ShapeDraw   */    , "Drawing Shape"
+//
+    /*  LassoDrag   */    , "Winding Lasso"
+    /*  HandleDrag  */    , "Dragging Handle"
+    /*  VertexDrag  */    , "Dragging Vertex"
+//
+    /*  BBoxDrag    */    , "Moving Selection"
     /*  BBoxScale   */    , "Scaling Selection"
-    /*  LassoDrag   */    , "Dragging Lasso"
-    /*              */
+//
+//
     /*              */    , "INVALID"
 } };
 
@@ -1057,10 +1065,11 @@ struct BoxDrag_t
 // *************************************************************************** //
 
     // *************************************************************************** //
-    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    //      QUERY FUNCTIONS.
     // *************************************************************************** //
-    //  "_no_op"
-    //  inline void                         _no_op                              (void)      { return; };
+    
+    //  "IsScaling"
+    [[nodiscard]] inline bool           IsScaling                           (void) const noexcept   { return ( this->active  &&  this->view.hover_idx.has_value() ); }
 
     // *************************************************************************** //
     //
@@ -1123,8 +1132,24 @@ struct BoxDrag_t
             default                :        { return {   };                 }   //  DEFAULT.
         }
     }
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SETTER / GETTER FUNCTIONS...
+    // *************************************************************************** //
     
-    
+    //  "SafeDiv"
+    //  static inline T                     SafeDiv                             (T num, T den) noexcept
+    //      { constexpr T eps = cblib::math::default_rel_tol<T>();;  return (std::fabs(den) > eps) ? (num / den) : T(1); }
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC INLINE HELPER FUNCTIONS.
+    // *************************************************************************** //
     
     //  "SafeDiv"
     template <typename T> requires std::floating_point<T>

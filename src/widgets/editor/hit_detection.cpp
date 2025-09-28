@@ -36,21 +36,13 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::_MECH_hit_detection(const Interaction & it) const
 {
-    if ( m_dragging || m_boxdrag.active )   { return; }         //  ignore while dragging
-    
-    
-    
-    
     //      1.      DISPATCH CURSOR  *ICONS*  IF MODE  *DOES NOT*  HAVE CURSOR-HINTS...
     if ( !_mode_has(CBCapabilityFlags_CursorHint) )
     {
         this->_dispatch_cursor_icon(it);
     }
     
-    
-    
-    
-    
+
     //      2.      CHECK IF CURSOR IS ABOVE SELECTION-BBOX HANDLE...
     if ( m_boxdrag.view.visible  &&  this->_hit_bbox_handle(it) )
     {

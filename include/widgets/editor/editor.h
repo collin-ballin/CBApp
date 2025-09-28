@@ -596,6 +596,7 @@ protected:
     //
     inline void                         _per_frame_cache_begin              (void) noexcept;
     inline void                         _per_frame_cache_end                (void) noexcept;
+    inline void                             _update_action                  ([[maybe_unused]] const Interaction & ) noexcept;
     //
     //
     //                              PRIMARY MECHANIC HANDLERS:
@@ -752,9 +753,17 @@ protected:
     //                              DEBUGGER RESIDENT:
     void                                _draw_debugger_resident             (void);
     void                                _debugger_draw_controlbar           (void);
+    void                                    _DEBUGGER_state                 (void) const noexcept;
+    void                                    _DEBUGGER_canvas                (void) const noexcept;
+    void                                    _DEBUGGER_misc                  (void) const noexcept;
+    //
     void                                    _debugger_hit_detection             (void);
     void                                    _debugger_interaction               (void);
     void                                    _debugger_more_info                 (void);
+    //
+    //                              DEBUGGER UTILITIES:
+    inline bool                             GetOpenMenuNames                (std::string & ) const noexcept;
+    //
     //
     //                              SELECTION RESIDENT:
     void                                _draw_selection_resident            (void);
@@ -1049,6 +1058,44 @@ protected:
     
 
     // *************************************************************************** //
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      QUERY FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "IsDragging"
+    //
+    [[nodiscard]] inline bool           IsDragging                              (void) const noexcept {
+        return ( this->IsDraggingSelection() || this->IsScalingSelection() || this->IsDraggingVertex() ||
+                 this->IsDraggingHandle()    || this->IsDraggingLasso() );
+    }
+    //
+    //  "IsDraggingSelection"
+    [[nodiscard]] inline bool           IsDraggingSelection                     (void) const noexcept   { return ( this->m_boxdrag.IsScaling()      );          }
+    [[nodiscard]] inline bool           IsScalingSelection                      (void) const noexcept   { return ( this->m_dragging                 );          }
+    //
+    [[nodiscard]] inline bool           IsDraggingVertex                        (void) const noexcept   { return static_cast<bool>( this->m_drag_vid > 0 );     }
+    [[nodiscard]] inline bool           IsDraggingHandle                        (void) const noexcept   { return ( this->m_dragging_handle          );          }
+    [[nodiscard]] inline bool           IsDraggingLasso                         (void) const noexcept   { return ( this->m_lasso_active             );          }
+    
+    
+    
+    //  "IsDrawing"
+    //
+    [[nodiscard]] inline bool           IsDrawing                               (void) const noexcept {
+        return ( this->IsDrawingPen() || this->IsDrawingShape() );
+    }
+    //
+    //  "IsDrawingPen"
+    [[nodiscard]] inline bool           IsDrawingPen                            (void) const noexcept   { return ( /*this->m_mode == Mode::Pen  &&    */ this->m_pen.active     );  }
+    [[nodiscard]] inline bool           IsDrawingShape                          (void) const noexcept   { return ( /*this->m_mode == Mode::Shape  &&  */ this->m_shape.active   );  }
+    
+    
     
     
     

@@ -54,53 +54,38 @@ void Editor::_draw_debugger_resident(void)
     
     
     
-    //      1.      HEADER CONTENT...
-    //  S.PushFont(Font::Small);
-    //
-    //
-    //  //          1.A.        RESIDENT TITLE.
-        //  ImGui::BeginDisabled(true);
-        //      ImGui::SeparatorText("Debugger Resident");
-        //  ImGui::EndDisabled();
-    //
-    //
-    //  S.PopFont();//  END "HEADER".
-    
-    
-    
-    
-    //      2.      BODY ENTRIES...
-    S.PushFont(Font::FootNote);
+    //      1.      BODY ENTRIES...
+    S.PushFont(Font::Small);
     {
-        //          2A.     COUNT NUM. VISIBLE WINDOWS.
+        //          1A.     COUNT NUM. VISIBLE WINDOWS.
         for (const DebugItem & item : debug.windows) {
             Nopen   += static_cast<int>( (item.open == true) );
         }
     
     
-        //          2B.     DISPLAY EACH WINDOW.
+        //          1B.     DISPLAY EACH WINDOW.
         for (size_t i = 0; i < N; ++i)
         {
             DebugItem &     item        = debug.windows.at(i);
-            const bool      same_line   = (  (1 < Nopen) && (i != 0)  );
+            const bool      same_line   = ( (1 < Nopen)  &&  (i != 0) );
             
-            //      2B-1.       SAME-LINE AS NEXT WINDOW (IF MORE WINDOWS EXIST).
+            //      1B-1.       SAME-LINE AS NEXT WINDOW (IF MORE WINDOWS EXIST).
             if (same_line) {
                 //  ImGui::SameLine();
             }
             
-            //      2B-2.       DISPLAY WINDOW.
+            //      1B-2.       DISPLAY WINDOW.
             if ( item.open ) {
                 ImGui::SetNextWindowBgAlpha(0.5f);
                 item.render_fn();
             }
-            
         }
+    //
     }//  END "BODY".
         
     
     
-    //      3.      CONTROL BAR...
+    //      2.      CONTROL BAR...
     {
     //
         ImGui::NewLine();
@@ -178,6 +163,189 @@ void Editor::_debugger_draw_controlbar(void)
 //      HELPERS...
 // *************************************************************************** //
 
+//  "_DEBUGGER_state"
+//
+void Editor::_DEBUGGER_state(void) const noexcept
+{
+    const float                 LABEL_W             = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
+    const float &               WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    //  const EditorState &         ES                  = this->m_editor_S;
+    const Interaction &         it                  = *this->m_it;
+    //
+    static std::string          menu_names          = { };
+    //
+    //
+    //
+    const char *                current_action      = this->ms_ACTION_STATE_NAMES[ this->m_action ];
+    const bool                  action_color        = ( (this->m_action != Action::None)  &&  (this->m_action != Action::Invalid) );
+    const bool                  menus_open          = this->GetOpenMenuNames(menu_names);
+    //
+    const bool                  no_shortcuts            = it.BlockShortcuts();
+    const bool                  no_inputs               = it.BlockInput();
+    const bool                  show_interactions       = ( no_shortcuts  ||  no_inputs );
+
+
+
+    //      1.      MAIN ITEMS...
+    this->S.PushFont(Font::Main);
+    {
+    
+        //          1.1.    CURRENT ACTION.
+        this->S.labelf("Action:", LABEL_W, WIDGET_W);
+        S.print_TF( (action_color), current_action, current_action );
+        //
+        //  if ( this->m_action != Action::None ) {
+        //      this->S.labelf("Action:", LABEL_W, WIDGET_W);
+        //      S.print_TF( (this->m_action != Action::Invalid), current_action, current_action );
+        //  }
+        
+        //          1.2.    HOVERED ITEM.
+        if ( this->m_sel.hovered.has_value() ) {
+            this->S.labelf("Hovered:", LABEL_W, WIDGET_W);
+            ImGui::TextColored( this->S.SystemColor.Green, "%s", this->ms_HIT_TYPE_NAMES[ (*m_sel.hovered).type ] );
+        };
+        
+    }
+    this->S.PopFont();
+    
+    
+    
+    //      3.      GENERAL INTERACTIONS...
+    if (show_interactions)
+    {
+        this->S.labelf("Disabled Interactions:", LABEL_W, WIDGET_W);
+        //
+        //          3.1.    SHORTCUTS ENABLED/DISABLED...
+        S.ConditionalText( no_shortcuts,    "Shortcuts",        this->S.SystemColor.Red );
+        //
+        if ( no_inputs )   { ImGui::SameLine(); }
+        //
+        //          3.2.    INPUTS ENABLED/DISABLED...
+        S.ConditionalText( no_inputs,       "Inputs",           this->S.SystemColor.Red );
+    }
+    
+    
+    //      4.      OPEN MENUS...
+    if (menus_open)
+    {
+        this->S.labelf("Open Menus:", LABEL_W, WIDGET_W);
+        S.ConditionalText( menus_open,    menu_names.c_str(),        this->S.SystemColor.Green );
+    }
+    
+    
+
+
+
+
+
+    return;
+}
+
+
+
+//  "_DEBUGGER_canvas"
+//
+void Editor::_DEBUGGER_canvas(void) const noexcept
+{
+    static float                LABEL_W                 = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
+    static const float &        WIDGET_W                = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    const EditorState &         ES                      = this->m_editor_S;
+    //  const Interaction &         it                      = *this->m_it;
+    
+    
+    
+    //      1.      GRID...
+    //
+    //              1.1.      CURRENT CANVAS WINDOW DIMENSIONS...
+    this->S.labelf("Window:", LABEL_W, WIDGET_W);
+    ImGui::Text(
+          "X: (%.0f, %.0f), Y: (%.0f, %.0f).    [ %.0f, %.0f ]."
+        , ES.m_window_coords.X.Min           , ES.m_window_coords.X.Max
+        , ES.m_window_coords.Y.Min           , ES.m_window_coords.Y.Max
+        , ES.m_window_size[0]                , ES.m_window_size[1]
+    );
+    //
+    //              1.2.      CURRENT "ZOOM" DIMENSIONS...
+    this->S.labelf("Zoom:", LABEL_W, WIDGET_W);
+    ImGui::Text(
+          "X: (%.0f, %.0f).     Y: (%.0f, %.0f)"
+        , ES.m_window_coords.X.Min           , ES.m_window_coords.X.Max
+        , ES.m_window_coords.Y.Min           , ES.m_window_coords.Y.Max
+    );
+    
+
+    return;
+}
+
+
+
+//  "GetOpenMenuNames"
+//
+inline bool Editor::GetOpenMenuNames(std::string & menu_buffer) const noexcept
+{
+    constexpr size_t                N_POPUPS                = ms_POPUP_INFOS.size();
+    //
+    Interaction &                   it                      = *this->m_it;
+    static CBEditorPopupFlags       open_menus_cache        = it.obj.open_menus;
+    //
+    const CBEditorPopupFlags &      open_menus              = it.obj.open_menus;
+    const bool                      no_menus_open           = (open_menus == CBEditorPopupFlags_None);
+    const bool                      update_cache            = (open_menus_cache != open_menus);
+    
+    
+    //  CASE 0 :    EARLY EXIT IF NO CACHE UPDATE...
+    if ( !update_cache )            { return (open_menus != CBEditorPopupFlags_None); } //  UPDATE CACHE...
+    
+    
+    open_menus_cache            = open_menus;   //      2.      ANY POP-UP MENUS OPEN?...
+    
+    //          2A.     NO MENUS OPEN...
+    if ( no_menus_open ) {
+        menu_buffer.clear();
+    }
+    //
+    //          2B.     ADD THE NAME OF EACH OPEN-WINDOW INTO A SINGLE STRING (CSV)...
+    else
+    {
+        for (size_t i = 0, n = N_POPUPS; i < n; ++i)
+        {
+            if ( (static_cast<CBEditorPopupFlags>(open_menus) >> i) & 1u )
+            {
+                const PopupInfo & info = ms_POPUP_INFOS[i];
+                
+                /*      Append each "info.name" into a char [512] BUFFER in a COMMA-SEPARATED FORMAT        */
+                if ( info.name /* info.uuid*/ )
+                {
+                    menu_buffer += info.name;
+                    if ( (i != 0) && (i != (n-1)) )     { menu_buffer += ", ";  }
+                }
+            }
+        }
+    }
+    
+    
+    return (open_menus != CBEditorPopupFlags_None);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
 //  "_debugger_hit_detection"
 //
 void Editor::_debugger_hit_detection(void)
@@ -188,7 +356,7 @@ void Editor::_debugger_hit_detection(void)
     [[maybe_unused]] Interaction &      it                  = *this->m_it;
     //
     //
-    S.PushFont(Font::Small);
+    //  S.PushFont(Font::Small);
     
     
     //      1.      CURRENT CANVAS WINDOW DIMENSIONS...
@@ -224,7 +392,7 @@ void Editor::_debugger_hit_detection(void)
 
 
 
-    S.PopFont();
+    //  S.PopFont();
     return;
 }
 
@@ -241,7 +409,7 @@ void Editor::_debugger_interaction(void)
     //
     //
     const char *                    current_action          = this->ms_ACTION_STATE_NAMES[ this->m_action ];
-    const bool                      action_color            = ( (this->m_action != Action::None)  &&  (this->m_action != Action::INVALID) );
+    const bool                      action_color            = ( (this->m_action != Action::None)  &&  (this->m_action != Action::Invalid) );
     //
     
     
