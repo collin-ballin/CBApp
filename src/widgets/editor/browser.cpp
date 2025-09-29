@@ -425,7 +425,7 @@ void Editor::_MECH_draw_controls(void)
                                    "This action will erase all data in the current session.\n\nDo you wish to proceed?",
                                    [this]{ _clear_all(); } );
             }
-            this->m_tooltip.UpdateTooltip( TooltipKey::GridDensityValue );
+            this->m_tooltip.UpdateTooltip( TooltipKey::ClearData );
         }
         this->S.PopFont();
         ImGui::PopItemWidth();
@@ -565,6 +565,7 @@ void Editor::_dispatch_obj_inspector_column(ObjectTrait & which_menu)
 void Editor::_draw_obj_selector_table(void)
 {
     using                                   namespace           icon;
+    using                                   IconAnchor          = utl::icon_widgets::Anchor;
     constexpr ImGuiTableFlags               TABLE_FLAGS         = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY; // | ImGuiTableFlags_RowBg;
     constexpr ImGuiTableColumnFlags         C_EYE               = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
     constexpr ImGuiTableColumnFlags         C_LOCK              = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
@@ -572,25 +573,33 @@ void Editor::_draw_obj_selector_table(void)
     constexpr ImGuiTableColumnFlags         C_DEL               = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
     //
     //
-    constexpr const float                   SHADE               = 0.20f;
-    static const ImU32                      col_text            = ImGui::GetColorU32(ImGuiCol_Text);
-    static const ImU32                      col_text_uh         = cblib::utl::compute_shade(col_text, SHADE);    //  "_uh"   == "un-hovered".
-    static const ImU32                      col_dim             = ImGui::GetColorU32(ImGuiCol_TextDisabled);
-    static const ImU32                      col_dim_uh          = cblib::utl::compute_shade(col_dim, SHADE);    //  "_uh"   == "un-hovered".
     //
-    //
-    BrowserStyle &                          BStyle              = m_style.browser_style;
+    //  BrowserStyle &                          BStyle              = m_style.browser_style;
     BrowserState &                          BS                  = m_browser_S;
-    ImDrawList *                            dl                  = ImGui::GetWindowDrawList();
+    //  ImDrawList *                            dl                  = ImGui::GetWindowDrawList();
     ImGuiListClipper                        clipper;
 
 
     //      1.      SEARCH-QUERY BOX...
     S.PushFont(Font::Main);
     ImGui::BeginDisabled(true);
+    {
+        //  static float    button_rect     = 10.0f;
+        //  const float     query_width     = BStyle.OBJ_SELECTOR_DIMS.value.x - button_rect;
     //
+    //
+    //
+        if ( utl::IconButton(   "##Editor_ObjSelector_FilterMenu"
+                              , this->S.SystemColor.Blue
+                              , ICON_FA_FILTER
+                              , 1.0f ) )
+        {
+            //  ui::open_preferences_popup( GetMenuID(PopupHandle::Settings), [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
+        }
+        //
+        ImGui::SameLine();
         ImGui::SetNextItemWidth(-FLT_MIN);
-        if ( ImGui::InputTextWithHint( "##Editor_ObjSelector_ObjFilter",
+        if ( ImGui::InputTextWithHint( "##Editor_ObjSelector_ObjFilterQuery",
                                        "filter",
                                        BS.m_obj_filter.InputBuf,
                                        IM_ARRAYSIZE( BS.m_obj_filter.InputBuf ) ) )
@@ -599,8 +608,10 @@ void Editor::_draw_obj_selector_table(void)
             BS.m_obj_filter_dirty   = true;
         }
     //
+    //
+    //
+    }
     ImGui::EndDisabled();
-        
     S.PopFont();
     ImGui::Separator();
 
@@ -660,19 +671,14 @@ void Editor::_draw_obj_selector_table(void)
                 //  //      4.1.        "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY).
                     ImGui::TableSetColumnIndex(0);
                     {
-                        ImGui::InvisibleButton("##Editor_Browser_ObjVisibilityButton", {CELL_SZ, CELL_SZ});
-                        if ( ImGui::IsItemClicked() )   { path.visible = !path.visible; _prune_selection_mutability(); }
-                        //
-                        const bool hovered = ImGui::IsItemHovered();
-                        //
-                        ( (path.visible) ? draw_eye_icon : draw_eye_off_icon )
-                            ( dl,
-                              ImGui::GetItemRectMin(),
-                              { CELL_SZ, CELL_SZ },
-                              ( path.visible )
-                                ? ( (hovered)   ? col_text  : col_text_uh       )
-                                : ( (hovered)   ? col_dim   : col_dim_uh        )
-                        );
+                        if (   utl::IconButton(   "##Editor_Browser_ObjVisibilityButton"
+                             , (path.visible)
+                                    ? this->S.SystemColor.White     : this->S.SystemColor.Gray
+                             , (path.visible)
+                                    ? ICON_FA_EYE                   : ICON_FA_EYE_SLASH
+                             , 1.0f
+                             , { CELL_SZ, CELL_SZ } ))
+                        {  path.visible = !path.visible; _prune_selection_mutability();  }
                     }
                     //
                     //
@@ -680,20 +686,31 @@ void Editor::_draw_obj_selector_table(void)
                     //      4.2.        "LOCK" BUTTON (TO TOGGLE OBJECT'S LOCKED-STATE).
                     ImGui::TableSetColumnIndex(1);
                     {
-                        ImGui::InvisibleButton("##Editor_Browser_ObjLockButton", {CELL_SZ, CELL_SZ});
-                        if ( ImGui::IsItemClicked() )   { path.locked = !path.locked; _prune_selection_mutability(); }
-                        //
-                        const bool hovered = ImGui::IsItemHovered();
-                        //
-                        ( (path.locked) ? draw_lock_icon : draw_unlock_icon )
-                            ( dl,
-                              ImGui::GetItemRectMin(),
-                              { CELL_SZ, CELL_SZ },
-                              ( path.locked )
-                                ? ( (hovered)   ? col_text  : col_text_uh       )
-                                : ( (hovered)   ? col_dim   : col_dim_uh        )
-                        );
+                        if (   utl::IconButton(   "##Editor_Browser_ObjLockButton"
+                             , (path.locked)
+                                    ? this->S.SystemColor.White     : this->S.SystemColor.Gray
+                             , (path.locked)
+                                    ? ICON_FA_LOCK                   : ICON_FA_LOCK_OPEN
+                             , 1.0f
+                             , { CELL_SZ, CELL_SZ } ))
+                        {  path.locked = !path.locked; _prune_selection_mutability();  }
                     }
+                    //
+                    //  {
+                    //      ImGui::InvisibleButton("##Editor_Browser_ObjLockButton", {CELL_SZ, CELL_SZ});
+                    //      if ( ImGui::IsItemClicked() )   { path.locked = !path.locked; _prune_selection_mutability(); }
+                    //      //
+                    //      const bool hovered = ImGui::IsItemHovered();
+                    //      //
+                    //      ( (path.locked) ? draw_lock_icon : draw_unlock_icon )
+                    //          ( dl,
+                    //            ImGui::GetItemRectMin(),
+                    //            { CELL_SZ, CELL_SZ },
+                    //            ( path.locked )
+                    //              ? ( (hovered)   ? col_text  : col_text_uh       )
+                    //              : ( (hovered)   ? col_dim   : col_dim_uh        )
+                    //      );
+                    //  }
                     //
                     //
                     //
@@ -742,25 +759,13 @@ void Editor::_draw_obj_selector_table(void)
                     ImGui::TableSetColumnIndex(3);
                     if ( !path.locked && selected )
                     {
-                        //  utl::SmallCButton( BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR );
-                        //  utl::CButton( BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR, {CELL_SZ, CELL_SZ} );
-                        //
-                        //
-                        //
-                        ImGui::InvisibleButton("##Editor_Browser_ObjDeleteButton", {CELL_SZ, CELL_SZ});
-                        const bool hovered = ImGui::IsItemHovered();
-                        draw_icon_background(
-                            dl,
-                            ImGui::GetItemRectMin(),
-                            {CELL_SZ, CELL_SZ},
-                            ( hovered )
-                                ? (BStyle.ms_DELETE_BUTTON_COLOR | 0xFF000000u) : BStyle.ms_DELETE_BUTTON_COLOR,
-                            8.0f * icon::BG_ROUNDING
-                        );
-                        //
-                        //
-                        if ( ImGui::IsItemClicked() )
-                        {
+                        if ( utl::IconButton(   "##Editor_Browser_ObjDeleteButton"
+                                              , this->S.SystemColor.Red
+                                              , ICON_FA_DELETE_LEFT   //  ICON_FA_DELETE_LEFT     // ICON_FA_SQUARE_MINUS      //  ICON_FA_CIRCLE_MINUS
+                                              , 1.0f
+                                              , IconAnchor::TextBaseline // IconAnchor::TextBaseline
+                                              , {CELL_SZ, CELL_SZ} )
+                        ) {
                             _erase_path_and_orphans(static_cast<PathID>(i));
                             reset_selection();
                             BS.m_inspector_vertex_idx = -1;
@@ -772,6 +777,40 @@ void Editor::_draw_obj_selector_table(void)
                             return;
                         }
                     }
+                    //
+                    //
+                    //  if ( !path.locked && selected )
+                    //  {
+                    //      //  utl::SmallCButton( BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR );
+                    //      //  utl::CButton( BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR, {CELL_SZ, CELL_SZ} );
+                    //      //
+                    //      //
+                    //      //
+                    //      ImGui::InvisibleButton("##Editor_Browser_ObjDeleteButton", {CELL_SZ, CELL_SZ});
+                    //      const bool hovered = ImGui::IsItemHovered();
+                    //      draw_icon_background(
+                    //          dl,
+                    //          ImGui::GetItemRectMin(),
+                    //          {CELL_SZ, CELL_SZ},
+                    //          ( hovered )
+                    //              ? (BStyle.ms_DELETE_BUTTON_COLOR | 0xFF000000u) : BStyle.ms_DELETE_BUTTON_COLOR,
+                    //          8.0f * icon::BG_ROUNDING
+                    //      );
+                    //      //
+                    //      //
+                    //      if ( ImGui::IsItemClicked() )
+                    //      {
+                    //          _erase_path_and_orphans(static_cast<PathID>(i));
+                    //          reset_selection();
+                    //          BS.m_inspector_vertex_idx = -1;
+                    //          _prune_selection_mutability();
+
+                    //          ImGui::PopID();
+                    //          clipper.End();
+                    //          ImGui::EndTable();
+                    //          return;
+                    //      }
+                    //  }
                 //
                 //
                 //  END OF ROW.

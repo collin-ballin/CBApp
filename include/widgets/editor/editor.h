@@ -428,7 +428,7 @@ protected:
     mutable BoxDrag                     m_boxdrag               ;
     MoveDrag                            m_movedrag              ;
     Clipboard                           m_clipboard             ;
-    TooltipState<TooltipKey>            m_tooltip                       { DEF_TOOLTIP_INFOS };
+    mutable TooltipState<TooltipKey>    m_tooltip                       { DEF_TOOLTIP_INFOS };
     //
     //                              TOOL STATES:
     PenState                            m_pen                   ;

@@ -553,6 +553,20 @@ static inline bool IconButton(   const char *                       id
     using namespace icon_widgets;
     return IconButton_IMPL( id, color, icon_utf8, scale, anchor, pad, nudge, size );
 }
+//
+template <typename T>
+static inline bool IconButton(   const char *                       id
+                               , const T &                          color
+                               , const char *                       icon_utf8
+                               , const float                        scale
+                               , const ImVec2 &                     size
+                               , const icon_widgets::Anchor         anchor      = icon_widgets::Anchor::Center
+                               , const icon_widgets::PaddingPolicy  pad         = icon_widgets::PaddingPolicy::Tight
+                               , const ImVec2 &                     nudge       = ImVec2(0.0f, 0.0f) ) noexcept
+{
+    using namespace icon_widgets;
+    return IconButton_IMPL( id, color, icon_utf8, scale, anchor, pad, nudge, size );
+}
 
 
 

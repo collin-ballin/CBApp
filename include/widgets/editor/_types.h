@@ -535,29 +535,76 @@ enum class EditorTooltipKey : uint16_t
 //
 static constexpr cblib::EnumArray< EditorTooltipKey, const char * >
 DEF_TOOLTIP_INFOS  = { {
+    /*  None                */        ""
 //
 //      1.      MAIN CONTROLS.
-    /*  ToolSelection       */        ""
-    /*  ClearData           */      , ""
-    /*  OpenSettings        */      , ""
+    /*  ToolSelection       */      , "Tool selection menu"
+    /*  ClearData           */      , "Clear all data from the canvas"
+    /*  OpenSettings        */      , "Open \"Editor\" system preferences menu  [CTRL ,]"
 //
 //      2.      SELECTION STATE.
-    /*  SelectionSurface    */      , ""
-    /*  SelectionEdge       */      , ""
-    /*  SelectionVertex     */      , ""
+    /*  SelectionSurface    */      , "Toggle ability to select SURFACES"
+    /*  SelectionEdge       */      , "Toggle ability to select EDGES"
+    /*  SelectionVertex     */      , "Toggle ability to select VERTICES"
 //
 //      3.      GRID CONTROLS.
-    /*  GridSnap            */      , ""
-    /*  GridShow            */      , ""
-    /*  GridDecrease        */      , ""
-    /*  GridIncrease        */      , ""
-    /*  GridDensityValue    */      , ""
+    /*  GridSnap            */      , "Toggle Snap-To-Grid  [SHIFT G]"
+    /*  GridShow            */      , "Toggle visibility of the grid"
+    /*  GridDecrease        */      , "Halve the grid resolution  [CTRL -]"
+    /*  GridIncrease        */      , "Double the grid resolution  [CTRL +]"
+    /*  GridDensityValue    */      , "Grid resolution (quantization value)"
 //
 //
 //
 } };
 
 
+
+
+
+
+
+
+
+
+    //      //  "DisplayIOStatus"
+    //      inline void                         DisplayIOStatus                     (void) noexcept
+    //      {
+    //          ImGuiIO &           io                  = ImGui::GetIO();
+    //          this->m_io_message_timer               -= io.DeltaTime;
+    //
+    //
+    //          //      1.      DECREMENT TIMER...
+    //          if ( this->m_io_message_timer <= 0.0f ) {
+    //              this->m_io_message_timer = -1.0f;
+    //              this->m_show_io_message.store(false, std::memory_order_release);
+    //              return;
+    //          }
+    //          //
+    //          //      2.      DISPLAY TOOL-TIP I/O MESSAGING...
+    //          //  ImGui::SetNextWindowBgAlpha(0.75f); // optional: semi-transparent
+    //          ImGui::BeginTooltip();
+    //              ImGui::TextUnformatted( this->m_io_msg.c_str() );
+    //          ImGui::EndTooltip();
+    //
+    //          return;
+    //      }
+    //      //  "SetLastIOStatus"
+    //      inline void                         SetLastIOStatus                     (const IOResult result, std::string & message) noexcept
+    //      {
+    //          this->m_io_busy                 .store( false,   std::memory_order_release   );
+    //          this->m_show_io_message         .store( true,    std::memory_order_release   );
+    //          this->m_io_message_timer        = ms_IO_MESSAGE_DURATION;
+    //          //
+    //          this->m_io_last                 = result;
+    //          this->m_io_msg                  = std::move( message );
+    //
+    //          return;
+    //      }
+    
+    
+    
+    
 
 //  "TooltipState"
 //
@@ -568,7 +615,8 @@ struct TooltipState
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr ImGuiHoveredFlags  ms_TOOLTIP_HOVER_FLAGS          = ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayNone;
+    static constexpr ImGuiHoveredFlags  ms_TOOLTIP_HOVER_FLAGS          = ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayNormal;
+    static constexpr float              ms_TOOLTIP_RELEASE_TIME         = 0.250f;
     
 //
 // *************************************************************************** //
@@ -581,8 +629,13 @@ struct TooltipState
 //      1.          DATA-MEMBERS...
 // *************************************************************************** //
 // *************************************************************************** //
-    mutable Key                         key                             = Key::None;
     const Data &                        word_bank;
+    //
+    mutable Key                         key                             = Key::None;
+    ImGuiID                             key_id                          = 0;
+    //
+    std::atomic<bool>                   active                          { false };
+    float                               timer                           = -1.0f;
     
 //
 // *************************************************************************** //
@@ -610,15 +663,58 @@ struct TooltipState
     // *************************************************************************** //
     
     //  "UpdateTooltip"
-    inline void                         UpdateTooltip                   (const Key key_) const noexcept
-        {  if (ImGui::IsItemHovered(ms_TOOLTIP_HOVER_FLAGS)) { this->key = key_; }  }
+    inline void                         UpdateTooltip                   (const Key key_) noexcept
+    {
+        //      CASE 0 :    IF STATUS IS ALREADY "ACTIVE", IGNORE INPUT...
+        if ( this->active.load() )     { return; }
+    
+    
+        //      CASE 1 :    STORE THE HOVERED ITEM.  SET STATUS TO "ACTIVE"...
+        if ( ImGui::IsItemHovered(ms_TOOLTIP_HOVER_FLAGS) )
+        {
+            this->active    .store( true,    std::memory_order_release   );
+            this->key       = key_;
+            this->key_id    = ImGui::GetHoveredID();
+            this->timer     = ImGui::GetHoveredID();
+        }
+        
+        return;
+    }
         
     //  "ShowTooltip"
-    inline void                         ShowTooltip                     (void) const noexcept
+    inline void                         ShowTooltip                     (void) noexcept
     {
+        ImGuiIO &           io              = ImGui::GetIO();
+        const ImGuiID       object_id       = ImGui::GetHoveredID();
+        
+        //      CASE 0 :    TOOL-TIP IS INACTIVE...
+        if ( this->IsInactive() )       { return; }
+        
+        
+        
+        //      1A.     CURSOR REMAINS ON THE ORIGINAL WIDGET  [ RE-SET THE TIMER ]...
+        if ( object_id == this->key_id )    {  this->_reset_timer();  }
+        //      1B.     CURSOR HAS MOVED *OFF* THE ORIGINAL WIDGET  [ DECREMENT THE TIMER ]...
+        else                                {  this->timer -= io.DeltaTime;  }
+        
+        
+        //      2.      DRAW THE TOOLTIP...
         ImGui::BeginTooltip();
-            ImGui::Text( "%s", this->word_bank[ this->key ] );
+        //
+            ImGui::Text             ( "%s",              this->word_bank[ this->key ]    );
+            ImGui::SameLine();
+            ImGui::TextDisabled     ( "Object ID: %d",   object_id                       );
+        //
         ImGui::EndTooltip();
+        
+        
+        
+        //      3.      LASTLY, UPDATE "ACTIVE" STATUS...
+        if ( this->timer < 0.0f )
+        {
+            this->_set_inactive();
+        }
+        
         return;
     }
 
@@ -630,7 +726,38 @@ struct TooltipState
     // *************************************************************************** //
     
     //  "HasTooltip"
-    [[nodiscard]] inline bool           HasTooltip                      (void) const noexcept   { return (this->key != Key::None); }
+    //[[nodiscard]] inline bool           HasTooltip                      (void) const noexcept   { return ( (this->key != Key::None)  &&  () );  }
+    [[nodiscard]] inline bool           HasTooltip                      (void) const noexcept   { return ( (this->key != Key::None) );  }
+    
+    //  "IsActive"
+    [[nodiscard]] inline bool           IsActive                        (void) const noexcept   { return ( this->active.load  (std::memory_order_release)  );   }
+    [[nodiscard]] inline bool           IsInactive                      (void) const noexcept   { return ( !this->active.load (std::memory_order_release)  );   }
+    
+    
+    //  "_reset_timer"
+    inline void                         _reset_timer                    (void) noexcept         { this->timer = this->ms_TOOLTIP_RELEASE_TIME;  }
+    
+    
+    //  "_set_active"
+    inline void                         _set_active                     (const Key key_, const ImGuiID key_id_) noexcept
+    {
+        this->active    .store( true,    std::memory_order_release   );
+        this->key       = key_;
+        this->key_id    = key_id_;
+        this->_reset_timer();
+        return;
+    }
+    
+    
+    //  "_set_inactive"
+    inline void                         _set_inactive                   (void) noexcept
+    {
+        this->active    .store( false,    std::memory_order_release   );
+        this->key       = Key::None;
+        this->key_id    = 0;
+        this->timer     = -1.0f;
+        return;
+    }
 
 
 

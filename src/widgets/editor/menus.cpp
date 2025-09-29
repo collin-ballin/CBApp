@@ -347,7 +347,7 @@ inline void Editor::_selection_context_multi([[maybe_unused]] const Interaction 
 //
 bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
 {
-    using                               IconStyle           = utl::icon_widgets::Style;
+    //  using                               IconStyle           = utl::icon_widgets::Style;
     using                               IconAnchor          = utl::icon_widgets::Anchor;
     using                               Padding             = utl::icon_widgets::PaddingPolicy;
     //

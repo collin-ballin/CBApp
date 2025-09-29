@@ -451,7 +451,6 @@ void Editor::Begin(const char * /*id*/)
         }
         
 
-
         //          3.6.    RENDERING THE CANVAS...
         this->_MECH_render_frame(it);
         

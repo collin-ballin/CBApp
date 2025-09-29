@@ -1118,7 +1118,7 @@ inline void to_json(nlohmann::json & j, const EditorState_t<VID, PtID, LID, PID,
 //      EditorState     : "from_json"
 //
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
-inline void from_json(nlohmann::json & j, EditorState_t<VID, PtID, LID, PID, ZID, HitID> & obj)
+inline void from_json([[maybe_unused]] nlohmann::json & j, [[maybe_unused]] EditorState_t<VID, PtID, LID, PID, ZID, HitID> & obj)
 {
 
     //  j.at("")        .get_to(obj.m_plot_limits);
