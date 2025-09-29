@@ -118,40 +118,36 @@ void Editor::_debugger_draw_controlbar(void)
     using                           DebugItem               = DebuggerState::DebugItem;
     static DebuggerState &          debug                   = this->m_debugger;
     const int                       NC                      = static_cast<int>( debug.windows.size() );
-    const int                       NE                      = 0;
+    const int                       NE                      = 1;
     const int                       N                       = NC + NE;
     
 
 
     //      1.      BEGIN COLUMNS...
-    ImGui::PushItemWidth( BUTTON_SIZE.x );
     ImGui::Columns(N, uuid, COLUMN_FLAGS);
     //
     //
         //      DRAW A TOGGLE-SWITCH FOR EACH DEBUGGER SECTION...
+        ImGui:: PushItemWidth( BUTTON_SIZE.x );
         for (int i = 0; i < NC; ++i)
         {
             DebugItem &     item    = debug.windows.at(i);
             
-            if ( i != 0 ) {
-                ImGui::NextColumn();
-            }
+            if ( i != 0 )   { ImGui::NextColumn(); }
             this->S.column_label( item.uuid.c_str() );
             
             ImGui::PushID(i);
                 ImGui::Checkbox("##DebugSectionToggle",     &item.open);
             ImGui::PopID();
         }
+        ImGui::PopItemWidth();
         //
         //
         //      ?.      EMPTY SPACES FOR LATER...
-        for (int i = ImGui::GetColumnIndex(); i < N; ++i) {
-            ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
-        }
+        for (int i = ImGui::GetColumnIndex(); i < N; ++i)       { ImGui::Dummy( ImVec2(0,0) );  ImGui::NextColumn(); }
     //
     //
     ImGui::Columns(1);      //  END COLUMNS...
-    ImGui::PopItemWidth();
     
     
     return;
@@ -170,7 +166,7 @@ void Editor::_DEBUGGER_state(void) const noexcept
     const float                 LABEL_W             = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
     const float &               WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
     //  const EditorState &         ES                  = this->m_editor_S;
-    const Interaction &         it                  = *this->m_it;
+    const Interaction &         it                  = *(this->m_it);
     //
     static std::string          menu_names          = { };
     //
@@ -180,9 +176,9 @@ void Editor::_DEBUGGER_state(void) const noexcept
     const bool                  action_color        = ( (this->m_action != Action::None)  &&  (this->m_action != Action::Invalid) );
     const bool                  menus_open          = this->GetOpenMenuNames(menu_names);
     //
-    const bool                  no_shortcuts            = it.BlockShortcuts();
-    const bool                  no_inputs               = it.BlockInput();
-    const bool                  show_interactions       = ( no_shortcuts  ||  no_inputs );
+    const bool                  no_shortcuts        = it.BlockShortcuts();
+    const bool                  no_inputs           = it.BlockInput();
+    const bool                  show_interactions   = ( no_shortcuts  ||  no_inputs );
 
 
 

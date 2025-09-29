@@ -51,6 +51,17 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "_MECH_show_tooltip_info"
+//
+inline void Editor::_MECH_show_tooltip_info(void) const noexcept
+{
+    this->S.PushFont(Font::Small);
+        this->m_tooltip.ShowTooltip( );
+    this->S.PopFont();
+    return;
+}
+
+
 //  "_MECH_change_state"            formerly named:     "_mode_switch_hotkeys".
 //
 inline void Editor::_MECH_change_state([[maybe_unused]] const Interaction & it)
@@ -430,20 +441,23 @@ void Editor::Begin(const char * /*id*/)
                 { _MECH_process_selection(it); }
 
 
-            //          3.6.    SELECTION BEHAVIOR...
+            //              3.5C.       SELECTION BEHAVIOR...
             if  ( !block_input )
                 { _MECH_query_shortcuts(it); }
             
         
-            //          3.6.    MODE/STATE/TOOL DISPATCHER...
+            //              3.5D.       MODE/STATE/TOOL DISPATCHER...
             this->_MECH_dispatch_tool_handler(it);
-        
         }
         
 
 
         //          3.6.    RENDERING THE CANVAS...
         this->_MECH_render_frame(it);
+        
+        
+        //          3.7.    SHOW TOOLTIP...
+        if ( this->m_tooltip.HasTooltip() )     { this->_MECH_show_tooltip_info(); }
         
         
         

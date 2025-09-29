@@ -40,7 +40,7 @@ set(    CBAPP_MIN_MACOS_VERSION         13.3)
 
 #           2.1.        IMPORTANT ITEMS:
 set(    CBAPP_NAME                      "CBApp"                                 CACHE INTERNAL "")
-set(    CBAPP_VERSION                   "0.4.5"                                 CACHE INTERNAL "")
+set(    CBAPP_VERSION                   "0.4.6"                                 CACHE INTERNAL "")
 #
 #
 #           2.2.        DETAILS / ADDITIONAL INFO:

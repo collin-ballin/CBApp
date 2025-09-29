@@ -185,6 +185,122 @@ namespace about { //     BEGINNING NAMESPACE "about"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+
+// *************************************************************************** //
+//
+//          0.      TEMPORARY...
+// *************************************************************************** //
+// *************************************************************************** //
+
+struct AboutStyle {
+    ImVec2      WindowPadding           = ImVec2( 20.0f, 20.0f );
+    float       WindowRounding          = 12.5f;    //    7.0f;
+    float       WindowBordersSize       = 1.65f;    //    1.5f;
+    //
+    float       ChildRounding           = 1.0f;
+    float       ChildBorderSize         = 1.0f;
+    //
+    ImVec2      FramePadding            = ImVec2( 10.0f, 10.0f );
+    float       FrameRounding           = 27.5f;
+    float       FrameBorderSize         = 1.0f;
+//
+    ImVec2      WindowMinSize           = ImVec2( 500.0f, 200.0f );
+};
+
+
+static AboutStyle     s_Style             = {   };
+    
+    
+
+//  "PushFrameStyle"
+static inline void PushFrameStyle(void)
+{
+    ImGui::PushStyleVar (ImGuiStyleVar_FramePadding           , s_Style.FramePadding           );
+    ImGui::PushStyleVar (ImGuiStyleVar_FrameRounding          , s_Style.FrameRounding          );
+    ImGui::PushStyleVar (ImGuiStyleVar_FrameBorderSize        , s_Style.FrameBorderSize        );
+
+    return;
+}
+
+
+//  "PushWindowStyle"
+static inline void PushWindowStyle(void)
+{
+    ImGui::PushStyleVar (ImGuiStyleVar_WindowPadding          , s_Style.WindowPadding          );
+    ImGui::PushStyleVar (ImGuiStyleVar_WindowRounding         , s_Style.WindowRounding         );
+    ImGui::PushStyleVar (ImGuiStyleVar_WindowBorderSize       , s_Style.WindowBordersSize      );
+    //
+    ImGui::PushStyleVar (ImGuiStyleVar_ChildRounding          , s_Style.ChildRounding          );
+    ImGui::PushStyleVar (ImGuiStyleVar_ChildBorderSize        , s_Style.ChildBorderSize        );
+    //
+    // MinWindowDims
+    //
+    PushFrameStyle();
+
+    return;
+}
+
+
+//  "PopFrameStyle"
+static inline void PopFrameStyle(void)
+{
+    ImGui::PopStyleVar(3);
+    //  ImGuiStyleVar_FramePadding      , ImGuiStyleVar_FrameRounding       , ImGuiStyleVar_FrameBorderSize
+    return;
+}
+
+
+//  "PopWindowStyle"
+static inline void PopWindowStyle(void)
+{
+    ImGui::PopStyleVar(5);
+    PopFrameStyle();
+    //  ImGuiStyleVar_WindowPadding     , ImGuiStyleVar_WindowRounding      , ImGuiStyleVar_WindowBorderSize
+    //  ImGuiStyleVar_ChildRounding     , ImGuiStyleVar_ChildBorderSize
+    return;
+}
+
+
+//  "EditWindowStyle"
+[[maybe_unused]] static inline void EditWindowStyle(void) noexcept
+{
+    constexpr float     MIN_PADDING         = 0.0f;
+    constexpr float     MAX_PADDING         = 80.0f;
+    constexpr float     MIN_ROUNDING        = 0.0f;
+    constexpr float     MIN_WIN_SIZE        = 100.0f;
+    constexpr float     MAX_WIN_SIZE        = 1000.0f;
+    //
+    constexpr float     MAX_ROUNDING        = 70.0f;
+    constexpr float     MIN_BORDER_SIZE     = 0.0f;
+    constexpr float     MAX_BORDER_SIZE     = 20.0f;
+
+
+    if ( ImGui::Begin("Edit Window Style", nullptr, ImGuiWindowFlags_AlwaysAutoResize) )
+    {
+        ImGui::TextUnformatted  ("Window:");
+        ImGui::SliderFloat2     ("Padding",             &s_Style.WindowPadding.x,   MIN_PADDING,        MAX_PADDING,        "%.1f"      );
+        ImGui::SliderFloat      ("Rounding",            &s_Style.WindowRounding,    MIN_ROUNDING,       MAX_ROUNDING,       "%.1f"      );
+        ImGui::SliderFloat      ("Border Size",         &s_Style.WindowBordersSize, MIN_BORDER_SIZE,    MAX_BORDER_SIZE,    "%.2f"      );
+        ImGui::SliderFloat2     ("Min Window Size",     &s_Style.WindowMinSize.x,   MIN_WIN_SIZE,       MAX_WIN_SIZE,       "%.1f"      );
+
+        ImGui::Separator();
+        ImGui::TextUnformatted  ("Child:");
+        ImGui::SliderFloat      ("Child Rounding",      &s_Style.ChildRounding,     MIN_ROUNDING,       MAX_ROUNDING,       "%.1f"      );
+        ImGui::SliderFloat      ("Child Border",        &s_Style.ChildBorderSize,   MIN_BORDER_SIZE,    MAX_BORDER_SIZE,    "%.1f"      );
+
+        ImGui::Separator();
+        ImGui::TextUnformatted  ("Frame:");
+        ImGui::SliderFloat2     ("Frame Padding",       &s_Style.FramePadding.x,    MIN_PADDING,        MAX_PADDING,        "%.1f"      );
+        ImGui::SliderFloat      ("Frame Rounding",      &s_Style.FrameRounding,     MIN_ROUNDING,       MAX_ROUNDING,       "%.1f"      );
+        ImGui::SliderFloat      ("Frame Border Size",   &s_Style.FrameBorderSize,   MIN_BORDER_SIZE,    MAX_BORDER_SIZE,    "%.1f"      );
+    }
+    ImGui::End();
+    
+    return;
+}
+
+
+
 // *************************************************************************** //
 //
 //          1.      ENUMS, TYPES, STATIC CONSTEXPR...
@@ -364,32 +480,40 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
     
     
     
-    //  OPEN THE MAIN POP-UP "About" WINDOW...
+    //      1.      OPEN THE MAIN POP-UP "About" WINDOW...
     ImGui::OpenPopup(uuid);
-    
-    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2( 0.5f, 0.5f ));
+    //
+    ImGui::SetNextWindowSizeConstraints( about::s_Style.WindowMinSize, {-1, -1} );
+    ImGui::SetNextWindowPos( center, ImGuiCond_Always, ImVec2( 0.5f, 0.5f ) );
+    about::PushWindowStyle();
+
+
+    //      2.      DRAWING THE WINDOW CONTENTS...
     if ( ImGui::BeginPopupModal(uuid, p_open, ImGuiWindowFlags_AlwaysAutoResize) )
     {
-    
         //      0A.     COMPUTE CACHED INFO ON FIRST-FRAME...
         if (first_frame) [[unlikely]]                                       { about::first_frame_cache(); }
     
+        //  about::EditWindowStyle();
 
         //      0B.     If [ESC], CLOSE WINDOW...
         if ( !first_frame && ImGui::IsKeyPressed( ImGuiKey_Escape ) )
         {
             about::info_selection               = InfoType::None;
             *p_open                             = false;
+            //
             ImGui::EndPopup();
+            about::PopWindowStyle();
             return;
         }
         
         
-        
         //      2.      "AUTHOR / HEADER"...
-        ImGui::Text                     ("CBApp %s (Build %s, WIP)", __CBAPP_VERSION__, __CBAPP_BUILD__);
-        ImGui::TextUnformatted          ("Developed by Collin Andrew Bond  (c)  2024-2025");
-
+        ImGui::Text                     ( "CBApp %s (Build %s, WIP)", __CBAPP_VERSION__, __CBAPP_BUILD__                    );
+        ImGui::Text                     ( "%s  %s  %s", "Developed by Collin Andrew Bond", ICON_FA_COPYRIGHT, "2024-2025."   );
+        //
+        ImGui::PushTextWrapPos          ( ImGui::GetContentRegionAvail().x                                                  );
+        
         
         //      3.      "CONTACT ME"...
         if ( about::info_selection == InfoType::None )
@@ -487,15 +611,15 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
              default :   { break; }                     //  0.  NONE.
         }
 
-
-
+        ImGui::PopTextWrapPos();
         ImGui::EndPopup();
     }// END POP-UP.
     
     
-    
     if (first_frame) [[unlikely]]       { first_frame = false; }
     
+    
+    about::PopWindowStyle();
     return;
 }
 
@@ -504,7 +628,6 @@ void App::ShowAboutWindow([[maybe_unused]]   const char *        uuid,
 // *************************************************************************** //
 // *************************************************************************** //
 
-
 //  "_about_verbose_info"
 //
 void App::_about_verbose_info(void) const noexcept
@@ -512,6 +635,7 @@ void App::_about_verbose_info(void) const noexcept
     using           CopyFormatType          = about::CopyFormatType;
     using           InfoType                = about::InfoType;
     int             copy_format_int         = static_cast<int>(about::copy_format);
+    about::PopFrameStyle();
     
 
     
@@ -520,38 +644,49 @@ void App::_about_verbose_info(void) const noexcept
     {
         ImGui::Indent();
         
-            ImGui::Checkbox("Show CBApp Information",           &about::show_cbapp_info);
-            ImGui::Checkbox("Show Build Information",           &about::show_build_info);
-            ImGui::Checkbox("Show Configuration Information",   &about::show_config_info);
+            ImGui::Checkbox("CBApp Information",                &about::show_cbapp_info     );
+            ImGui::Checkbox("Build Information",                &about::show_build_info     );
+            ImGui::Checkbox("Configuration Information",        &about::show_config_info    );
             //
-            if ( ImGui::Checkbox("Show Default ImGui Information",   &about::show_imgui_info) )
+            if ( ImGui::Checkbox("Default ImGui Information",   &about::show_imgui_info) )
             {
                 about::show_cbapp_info = false;     about::show_build_info = false;     about::show_config_info = false;
             }
             if ( ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) )
-            { ImGui::SetTooltip("Use this option when posting a feature request, bug report, etc, to the Dear ImGui GitHub page."); }
+                { ImGui::SetTooltip("Use this option when posting a feature request, bug report, etc, to the Dear ImGui GitHub page."); }
             
             
         ImGui::Unindent();
-    
         this->show_about_info();
     }
         
         
-        
-        
-        
-
-
+    
     if ( about::info_selection == InfoType::Verbose )
     {
+        //  using                               IconAnchor          = utl::icon_widgets::Anchor;
+        //  using                               Padding             = utl::icon_widgets::PaddingPolicy;
+        
+        
+        //  about::PopFrameStyle();
         ImGui::BeginDisabled(true);
+        //
+            //  about::copy_to_clipboard    = false;
+            //  const bool      dirty       = utl::IconButton(   "##ToolIcon"
+            //                                                 , this->S.SystemColor.Blue
+            //                                                 , ICON_FA_COPY
+            //                                                 , about::s_ICON_SCALE
+            //                                                 , IconAnchor::Center    // TextBaseline    South   Center
+            //                                                 , Padding::Tight );
+        
             about::copy_to_clipboard    = false;
             if ( ImGui::Button("Copy-To-Clipboard") ) {
                 about::copy_to_clipboard    = true;
             }
-        ImGui::EndDisabled();//  TO-DO:     Copy-To-Clipboard FAILS.
-                             //             The copy acts correctly, but when the user PASTES the data somewhere else, it crashes the application.
+        //
+        ImGui::EndDisabled();           //  TO-DO:     Copy-To-Clipboard FAILS.
+        //  about::PushFrameStyle();    //             The copy acts correctly, but when the user PASTES the data somewhere else, it crashes the application.
+    
     
     
         ImGui::SameLine(0, 25);
@@ -563,6 +698,7 @@ void App::_about_verbose_info(void) const noexcept
         { about::copy_format  = static_cast<CopyFormatType>(about::copy_format); }
     }
 
+    about::PushFrameStyle();
     return;
 }
 
@@ -1109,17 +1245,33 @@ void App::get_imgui_info(void) const
 //
 void App::_about_acknowledgements_info(void) const noexcept
 {
-    ImGui::TextUnformatted("A special thank you to the following individuals...");
-    ImGui::NewLine();
+    ImGui::TextUnformatted("A special thanks goes out to the following individuals for their guidance and inspiration...");
+    //
+    ImGui::Dummy( { 0.5f * (about::Avail.x - about::BUTTON_SIZE.x), 0 } );
+    //  ImGui::NewLine();
     
-    ImGui::BulletText("Dr. Erik J. Sánchez, PSU");
-    ImGui::BulletText("Dr. Andres H. La Rosa, PSU");
-    ImGui::BulletText("John B. Schneider, WSU");
+    
+    
+    ImGui::BulletText           ("Dr. Erik J. Sánchez, PSU"                             );
+    //
+    //
+    ImGui::BulletText           ("Dr. Andres H. La Rosa, PSU"                           );
+    //
+    //
+    ImGui::BulletText           ("Prof. John B. Schneider, WSU, "                       );
+    ImGui::SameLine             (0.0, 0.0);
+    ImGui::TextLinkOpenURL      ("Understanding the FDTD Textbook",     "https://eecs.wsu.edu/~schneidj/ufdtd/"         );
+    //
+    //
+    ImGui::BulletText           ("Dr. Jeroen Vleggaar, "                                );
+    ImGui::SameLine             (0.0, 0.0);
+    ImGui::TextLinkOpenURL      ("\"@HuygensOptics\" on YouTube",       "https://www.huygensoptics.com/index.html"      );
+
+
 
 
 
     ImGui::NewLine();
-    
     return;
 }
 
@@ -1128,13 +1280,34 @@ void App::_about_acknowledgements_info(void) const noexcept
 //
 void App::_about_license_info(void) const noexcept
 {
+    ImGui::TextUnformatted("License");
+    //
+    ImGui::Dummy( { 0.5f * (about::Avail.x - about::BUTTON_SIZE.x), 0 } );
+    
+    
+        ImGui::BulletText           ( "%s  ",                   "This software is provided under "     );
+        ImGui::SameLine             (0.0, 0.0);
+        ImGui::TextLinkOpenURL      ( "The MIT License",        "https://opensource.org/license/MIT"    );
+        //  ImGui::TextLinkOpenURL      (ICON_FA_UP_RIGHT_FROM_SQUARE,                  "https://opensource.org/license/MIT");
 
-
+    
+    
+    //  ImGui::Indent();
+    //
+    //
+        ImGui::Dummy( { 0.5f * (about::Avail.x - about::BUTTON_SIZE.x), 0 } );
+    
+        ImGui::TextUnformatted   (
+            "This software is a work-in-progress that I am pursuing independently.  "
+            "The project is entirely open-source and can be accessed from my GitHub Repository."
+        );
+    //
+    //
+    //  ImGui::Unindent();
 
 
 
     ImGui::NewLine();
-    
     return;
 }
 

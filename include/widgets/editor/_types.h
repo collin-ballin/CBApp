@@ -284,7 +284,6 @@ enum class ObjectTrait : int {
 };
 //
 //  "DEF_OBJECT_TRAIT_NAMES"
-//static constexpr std::array<const char *, static_cast<size_t>(ObjectTrait::COUNT)>
 static constexpr cblib::EnumArray< ObjectTrait, const char * >
     DEF_OBJECT_TRAIT_NAMES  = { {
         "Properties",       "Vertices",         "Payload"
@@ -500,6 +499,155 @@ static inline const char * popup_name_from_flag(CBEditorPopupFlags_ single)
 //  "GetMenuID"
 static inline const char * GetMenuID(const EditorPopupBits & handle)
     { return DEF_EDITOR_POPUP_INFOS[ static_cast<size_t>( handle ) ].uuid; }
+
+
+
+
+
+
+// *************************************************************************** //
+//      0G. EDITOR |        EDITOR WIDGET IDs / TOOL-TIP NAMES.
+// *************************************************************************** //
+
+//  "EditorTooltipKey"
+//
+enum class EditorTooltipKey : uint16_t
+{
+      None = 0
+//
+//
+//      1.      MAIN CONTROLS.
+    , ToolSelection             , ClearData                 , OpenSettings
+//
+//      2.      SELECTION STATE.
+    , SSelectionSurface         , SelectionEdge             , SelectionVertex
+//
+//      3.      GRID CONTROLS.
+    , GridSnap                  , GridShow                  , GridDecrease              , GridIncrease          , GridDensityValue
+//
+//
+//
+    , COUNT
+};
+  
+  
+//  "DEF_TOOLTIP_INFOS"
+//
+static constexpr cblib::EnumArray< EditorTooltipKey, const char * >
+DEF_TOOLTIP_INFOS  = { {
+//
+//      1.      MAIN CONTROLS.
+    /*  ToolSelection       */        ""
+    /*  ClearData           */      , ""
+    /*  OpenSettings        */      , ""
+//
+//      2.      SELECTION STATE.
+    /*  SelectionSurface    */      , ""
+    /*  SelectionEdge       */      , ""
+    /*  SelectionVertex     */      , ""
+//
+//      3.      GRID CONTROLS.
+    /*  GridSnap            */      , ""
+    /*  GridShow            */      , ""
+    /*  GridDecrease        */      , ""
+    /*  GridIncrease        */      , ""
+    /*  GridDensityValue    */      , ""
+//
+//
+//
+} };
+
+
+
+//  "TooltipState"
+//
+template <typename Key, typename Value = const char *, typename Data = cblib::EnumArray<Key, Value> >
+struct TooltipState
+{
+
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr ImGuiHoveredFlags  ms_TOOLTIP_HOVER_FLAGS          = ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayNone;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    mutable Key                         key                             = Key::None;
+    const Data &                        word_bank;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      INITIALIZATION FUNCTIONS.
+    // *************************************************************************** //
+    //  Default Constructor.
+    explicit                            TooltipState                    (const Data & bank) noexcept : word_bank(bank)      {   }
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      MAIN FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "UpdateTooltip"
+    inline void                         UpdateTooltip                   (const Key key_) const noexcept
+        {  if (ImGui::IsItemHovered(ms_TOOLTIP_HOVER_FLAGS)) { this->key = key_; }  }
+        
+    //  "ShowTooltip"
+    inline void                         ShowTooltip                     (void) const noexcept
+    {
+        ImGui::BeginTooltip();
+            ImGui::Text( "%s", this->word_bank[ this->key ] );
+        ImGui::EndTooltip();
+        return;
+    }
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      UTILITY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "HasTooltip"
+    [[nodiscard]] inline bool           HasTooltip                      (void) const noexcept   { return (this->key != Key::None); }
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "TooltipState" INLINE STRUCT DEFINITION.
+
+
+
+
+
+
+
+
+
 
 
 

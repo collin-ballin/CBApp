@@ -214,7 +214,7 @@ protected:
     //
     //                              File:
     void                                FileMenubar                         (void);     //  MenuBar...
-    void                                    file_imgui_submenu                  (void);         //  Sub-MenuBar...
+    inline void                             file_imgui_submenu              (void);         //  Sub-MenuBar...
     //
     //                              Edit:
     void                                EditMenubar                         (void);
@@ -224,7 +224,7 @@ protected:
     //
     //                              Window:
     void                                WindowMenubar                       (void);
-    void                                    window_show_windows                 (void);     // disp_show_windows_menubar
+    inline void                             window_show_windows             (void);     // disp_show_windows_menubar
     //
     //                              Tools:
     void                                ToolsMenubar                        (void);

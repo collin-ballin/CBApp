@@ -79,17 +79,22 @@ void Browser::Begin([[maybe_unused]] const char *       uuid,
 {
     [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+    this->S.PushFont(Font::Small);
     
     
-    //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
+    
+    //      1.      PUSH THE STYLE ITEMS FOR THIS WINDOW...
     ImGui::PushStyleColor(ImGuiCol_WindowBg, S.m_browser_bg);   // Push before ImGui::Begin()
-    ImGui::SetNextWindowClass(&this->m_window_class);
-    
+    ImGui::SetNextWindowClass( &this->m_window_class );
+    //
+    //
+    //      2.      BEGIN "BROWSER" WINDOW...
     ImGui::Begin(uuid, p_open, flags);
         ImGui::PopStyleColor();
-        
-
-        //  3.  DETERMINE WINDOW COLLAPSE...
+    //
+    //
+    //
+    //  //          2.1.    DETERMINE WINDOW COLLAPSE.
         if (this->S.m_show_browser_window)
         {
             if (this->S.m_show_system_preferences) {
@@ -103,12 +108,14 @@ void Browser::Begin([[maybe_unused]] const char *       uuid,
         {
             //  ...
         }
-        
-        
+    //
+    //
+    //
+    ImGui::End();   //  END WINDOW...
     
- 
-    ImGui::End();
     
+    
+    this->S.PopFont();
     return;
 }
 

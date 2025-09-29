@@ -524,7 +524,8 @@ public:                                                                         
                                                                                                                                         \
     using                           PopupHandle                 = EditorPopupBits                                                       ;       \
     using                           CBEditorPopupFlags          = CBEditorPopupFlags_                                                   ;       \
-    using                           PopupInfo                   = EditorPopupInfo                                                       ;
+    using                           PopupInfo                   = EditorPopupInfo                                                       ;       \
+    using                           TooltipKey                  = EditorTooltipKey                                                      ;
     
 //
 // *************************************************************************** //   _EDITOR_APP_GENERIC_API

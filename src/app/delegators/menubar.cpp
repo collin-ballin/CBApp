@@ -345,7 +345,7 @@ void MenuBar::FileMenubar(void)
 
 //  "file_imgui_submenu"
 //
-void MenuBar::file_imgui_submenu(void)
+inline void MenuBar::file_imgui_submenu(void)
 {
 #ifdef CBAPP_DISABLE_INI
     ImGui::TextDisabled("Disabled at compile-time (#ifdef CBAPP_DISABLE_INI)");
@@ -674,23 +674,9 @@ void MenuBar::WindowMenubar(void)
 
 //  "window_show_windows"
 //
-void MenuBar::window_show_windows(void)
+inline void MenuBar::window_show_windows(void)
 {
     static size_t                   idx                 = static_cast<size_t>(0);
-    
-    
-    //      0.      DISPLAY "About This App" AT THE TOP...
-    if ( ImGui::MenuItem( this->S.m_windows[ Window::AboutMyApp ].uuid.c_str(),
-                          nullptr,
-                          &this->S.m_windows[ Window::AboutMyApp ].open ) ) {  }
-                     
-    ImGui::Separator();
-    //
-    ImGui::NewLine();
-    //
-    ImGui::Separator();
-                         
-    
     
     //      1.      DRAW EACH VISIBILITY STATE IN "Core Windows" WINDOWS...                 | SUB-MENU.
 #ifdef __CBAPP_DEBUG__
@@ -955,15 +941,20 @@ void MenuBar::ToolsMenubar(void)
 //
 void MenuBar::HelpMenubar(void)
 {
-
+    //      0.      DISPLAY "About This App" AT THE TOP...
+    if ( ImGui::MenuItem( this->S.m_windows[ Window::AboutMyApp ].uuid.c_str(),
+                          nullptr,
+                          &this->S.m_windows[ Window::AboutMyApp ].open ) ) {  }
+    //
+    ImGui::Separator();
+    ImGui::NewLine();
+    ImGui::Separator();
     
     
     
     //      SECTION #1.     HELP AND STUFF...
-    ImGui::Separator();
     ImGui::BeginDisabled(true);
-    //
-    //
+    {
     
         //      1.1.    USER GUIDE...
         if ( ImGui::MenuItem("User Guide", nullptr, false) )
@@ -976,12 +967,9 @@ void MenuBar::HelpMenubar(void)
         {
             //  ...
         }
-    //
-    //
+    
+    }
     ImGui::EndDisabled();
-    
-    
-    
     
     
     

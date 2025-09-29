@@ -141,6 +141,9 @@ public:
     static constexpr const char *       ms_NO_ASSIGNED_FILE_STRING      = "UNASSIGNED";      // Used when there is no "File > Save As..." assigned to app...
     static constexpr ImVec2             ms_SETTINGS_BUTTON_SIZE         = ImVec2( 125,   25 );
     //
+    //                              OTHER:
+    static constexpr ImGuiHoveredFlags  ms_TOOLTIP_HOVER_FLAGS          = ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayNone;
+    //
     //
     //  static constexpr const char *       ms_SELECTION_CONTEXT_MENU_ID    = "Editor_Selection_ContextMenu";       //  selection_popup_id
     //  static constexpr const char *       ms_CANVAS_CONTEXT_MENU_ID       = "Editor_Canvas_ContextMenu";          //  canvas_popup_id
@@ -154,26 +157,27 @@ public:
     //      REFERENCES TO GLOBAL ARRAYS.
     // *************************************************************************** //
     //                              ARRAYS:
-    static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES;           //  "Tool" State.
-    static constexpr auto &             ms_EDITOR_STATE_HOTKEY_NAMES    = DEF_EDITOR_STATE_HOTKEY_NAMES;
-    static constexpr auto &             ms_EDITOR_STATE_ICONS           = DEF_EDITOR_STATE_ICONS;
-    static constexpr auto &             ms_MODE_CAPABILITIES            = DEF_MODE_CAPABILITIES;
+    static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES            ;   //  "Tool" State.
+    static constexpr auto &             ms_EDITOR_STATE_HOTKEY_NAMES    = DEF_EDITOR_STATE_HOTKEY_NAMES     ;
+    static constexpr auto &             ms_EDITOR_STATE_ICONS           = DEF_EDITOR_STATE_ICONS            ;
+    static constexpr auto &             ms_MODE_CAPABILITIES            = DEF_MODE_CAPABILITIES             ;
+    static constexpr auto &             ms_TOOLTIP_INFOS                = DEF_TOOLTIP_INFOS                 ;
     //
-    static constexpr auto &             ms_ACTION_STATE_NAMES           = DEF_ACTION_STATE_NAMES;           //  Action States.
-    static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES;           //  "Object Trait" Categories.
+    static constexpr auto &             ms_ACTION_STATE_NAMES           = DEF_ACTION_STATE_NAMES            ;   //  Action States.
+    static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES            ;   //  "Object Trait" Categories.
     //
     //
     //
-    static constexpr auto &             ms_HIT_TYPE_NAMES               = DEF_HIT_TYPE_NAMES;
+    static constexpr auto &             ms_HIT_TYPE_NAMES               = DEF_HIT_TYPE_NAMES                ;
     //
-    static constexpr auto &             ms_VERTEX_STYLES                = DEF_VERTEX_STYLES;
+    static constexpr auto &             ms_VERTEX_STYLES                = DEF_VERTEX_STYLES                 ;
     //
-    static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES;
-    static constexpr auto &             ms_BEZIER_CURVATURE_TYPE_NAMES  = DEF_BEZIER_CURVATURE_TYPE_NAMES;
-    static constexpr auto &             ms_PATH_KIND_NAMES              = path::DEF_PATH_KIND_NAMES;
+    static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES            ;
+    static constexpr auto &             ms_BEZIER_CURVATURE_TYPE_NAMES  = DEF_BEZIER_CURVATURE_TYPE_NAMES   ;
+    static constexpr auto &             ms_PATH_KIND_NAMES              = path::DEF_PATH_KIND_NAMES         ;
     //
-    static constexpr auto &             ms_IORESULT_NAMES               = DEF_IORESULT_NAMES;
-    static constexpr auto &             ms_POPUP_INFOS                  = DEF_EDITOR_POPUP_INFOS;
+    static constexpr auto &             ms_IORESULT_NAMES               = DEF_IORESULT_NAMES                ;
+    static constexpr auto &             ms_POPUP_INFOS                  = DEF_EDITOR_POPUP_INFOS            ;
     
 //
 //
@@ -420,15 +424,16 @@ protected:
     mutable RenderCTX                   m_render_ctx;
     BrowserState                        m_browser_S                     {   };
     //
-    Selection                           m_sel;
-    mutable BoxDrag                     m_boxdrag;
-    MoveDrag                            m_movedrag;
-    Clipboard                           m_clipboard;
+    Selection                           m_sel                   ;
+    mutable BoxDrag                     m_boxdrag               ;
+    MoveDrag                            m_movedrag              ;
+    Clipboard                           m_clipboard             ;
+    TooltipState<TooltipKey>            m_tooltip                       { DEF_TOOLTIP_INFOS };
     //
     //                              TOOL STATES:
-    PenState                            m_pen;
-    ShapeState                          m_shape;
-    DebuggerState                       m_debugger;
+    PenState                            m_pen                   ;
+    ShapeState                          m_shape                 ;
+    DebuggerState                       m_debugger              ;
     
     // *************************************************************************** //
     //
@@ -591,6 +596,7 @@ protected:
     // *************************************************************************** //
     //
     //                              SMALLER HELPERS / UTILITIES:
+    inline void                         _MECH_show_tooltip_info             (void) const noexcept;
     inline void                         _MECH_change_state                  ([[maybe_unused]] const Interaction & );    //  formerly "_mode_switch_hotkeys"
     inline void                         _MECH_dispatch_tool_handler         ([[maybe_unused]] const Interaction & );    //  formerly "_dispatch_mode_handler"
     //
@@ -648,6 +654,11 @@ protected:
     void                                _dispatch_trait_inspector               (ObjectTrait &, const LabelFn & );
         inline void                         _dispatch_trait_inspector_single        (ObjectTrait &, const LabelFn & );
         inline void                         _dispatch_trait_inspector_multi         (ObjectTrait &, const LabelFn & );
+    //
+    //
+    //                              UTILITY:
+    inline void                         _draw_control_tooltips                  (const TooltipKey , const bool state) const noexcept;
+    //
     //
     //
     //                              TEMPORARY:
