@@ -157,27 +157,32 @@ public:
     //      REFERENCES TO GLOBAL ARRAYS.
     // *************************************************************************** //
     //                              ARRAYS:
-    static constexpr auto &             ms_EDITOR_STATE_NAMES           = DEF_EDITOR_STATE_NAMES            ;   //  "Tool" State.
-    static constexpr auto &             ms_EDITOR_STATE_HOTKEY_NAMES    = DEF_EDITOR_STATE_HOTKEY_NAMES     ;
-    static constexpr auto &             ms_EDITOR_STATE_ICONS           = DEF_EDITOR_STATE_ICONS            ;
-    static constexpr auto &             ms_MODE_CAPABILITIES            = DEF_MODE_CAPABILITIES             ;
-    static constexpr auto &             ms_TOOLTIP_INFOS                = DEF_TOOLTIP_INFOS                 ;
+    static constexpr auto &             ms_EDITOR_STATE_NAMES               = DEF_EDITOR_STATE_NAMES            ;   //  "Tool" State.
+    static constexpr auto &             ms_EDITOR_STATE_HOTKEY_NAMES        = DEF_EDITOR_STATE_HOTKEY_NAMES     ;
+    static constexpr auto &             ms_EDITOR_STATE_ICONS               = DEF_EDITOR_STATE_ICONS            ;
+    static constexpr auto &             ms_MODE_CAPABILITIES                = DEF_MODE_CAPABILITIES             ;
+    static constexpr auto &             ms_TOOLTIP_INFOS                    = DEF_TOOLTIP_INFOS                 ;
     //
-    static constexpr auto &             ms_ACTION_STATE_NAMES           = DEF_ACTION_STATE_NAMES            ;   //  Action States.
-    static constexpr auto &             ms_OBJECT_TRAIT_NAMES           = DEF_OBJECT_TRAIT_NAMES            ;   //  "Object Trait" Categories.
+    static constexpr auto &             ms_ACTION_STATE_NAMES               = DEF_ACTION_STATE_NAMES            ;   //  Action States.
+    static constexpr auto &             ms_OBJECT_TRAIT_NAMES               = DEF_OBJECT_TRAIT_NAMES            ;   //  "Object Trait" Categories.
     //
     //
     //
-    static constexpr auto &             ms_HIT_TYPE_NAMES               = DEF_HIT_TYPE_NAMES                ;
+    //                              VERTEX_T  AND  PATH_T  ARRAYS:
+    static constexpr auto &             ms_BEZIER_CURVATURE_TYPE_NAMES      = DEF_BEZIER_CURVATURE_TYPE_NAMES   ;   //  For "Vertex_t"...
+    static constexpr auto &             ms_PATH_STATE_NAMES                 = path::DEF_PATH_STATE_NAMES        ;   //  For "Path_t"...
+    static constexpr auto &             ms_PATH_PAYLOAD_NAMES               = path::DEF_PATH_PAYLOAD_NAMES      ;
+    static constexpr auto &             ms_HIT_TYPE_NAMES                   = DEF_HIT_TYPE_NAMES                ;
     //
-    static constexpr auto &             ms_VERTEX_STYLES                = DEF_VERTEX_STYLES                 ;
+    static constexpr auto &             ms_VERTEX_STYLES                    = DEF_VERTEX_STYLES                 ;
     //
-    static constexpr auto &             ms_SHAPE_NAMES                  = DEF_EDITOR_SHAPE_NAMES            ;
-    static constexpr auto &             ms_BEZIER_CURVATURE_TYPE_NAMES  = DEF_BEZIER_CURVATURE_TYPE_NAMES   ;
-    static constexpr auto &             ms_PATH_KIND_NAMES              = path::DEF_PATH_KIND_NAMES         ;
     //
-    static constexpr auto &             ms_IORESULT_NAMES               = DEF_IORESULT_NAMES                ;
-    static constexpr auto &             ms_POPUP_INFOS                  = DEF_EDITOR_POPUP_INFOS            ;
+    //
+    //                              MISC.:
+    static constexpr auto &             ms_SHAPE_NAMES                      = DEF_EDITOR_SHAPE_NAMES            ;
+    //
+    static constexpr auto &             ms_IORESULT_NAMES                   = DEF_IORESULT_NAMES                ;
+    static constexpr auto &             ms_POPUP_INFOS                      = DEF_EDITOR_POPUP_INFOS            ;
     
 //
 //
@@ -597,8 +602,8 @@ protected:
     //
     //                              SMALLER HELPERS / UTILITIES:
     inline void                         _MECH_show_tooltip_info             (void) const noexcept;
-    inline void                         _MECH_change_state                  ([[maybe_unused]] const Interaction & );    //  formerly "_mode_switch_hotkeys"
-    inline void                         _MECH_dispatch_tool_handler         ([[maybe_unused]] const Interaction & );    //  formerly "_dispatch_mode_handler"
+    inline void                         _MECH_change_state                  ([[maybe_unused]] const Interaction & );            //  formerly "_mode_switch_hotkeys"
+    inline void                         _MECH_dispatch_tool_handler         ([[maybe_unused]] const Interaction & );            //  formerly "_dispatch_mode_handler"
     //
     inline void                         _per_frame_cache_begin              (void) noexcept;
     inline void                         _per_frame_cache_end                (void) noexcept;
@@ -606,11 +611,12 @@ protected:
     //
     //
     //                              PRIMARY MECHANIC HANDLERS:
-    void                                _MECH_hit_detection                 (const Interaction & ) const;               //  formerly "update_cursor_select"
-    inline void                         _MECH_update_canvas                 ([[maybe_unused]] const Interaction & );    //  * NEW  _MECH  FUNCTION *
+    void                                _MECH_hit_detection                 (const Interaction & ) const;                       //  formerly "update_cursor_select"
+    inline void                         _MECH_update_canvas                 ([[maybe_unused]] const Interaction & );            //  * NEW  _MECH  FUNCTION *
     //
-    inline void                         _MECH_draw_ui                       ([[maybe_unused]] const Interaction & );    //  formerly "_handle_overlays()"
-    inline void                         _MECH_drive_io                      (void);                                     //  formerly "_handle_io()"
+    inline void                         _MECH_draw_ui                       ([[maybe_unused]] const Interaction & );            //  formerly "_handle_overlays()"
+    inline void                         _MECH_dispatch_action               ([[maybe_unused]] const Interaction & ) noexcept;   //  * NEW  _MECH  FUNCTION *
+    inline void                         _MECH_drive_io                      (void);                                             //  formerly "_handle_io()"
     //
     //
     //                              LOCATED ELSEWHERE:
@@ -765,8 +771,11 @@ protected:
     void                                _draw_debugger_resident             (void);
     void                                _debugger_draw_controlbar           (void);
     void                                    _DEBUGGER_state                 (void) const noexcept;
+    inline void                                 _DEBUGGER_state_dragging    (const float , const float ) const noexcept;
     void                                    _DEBUGGER_canvas                (void) const noexcept;
     void                                    _DEBUGGER_misc                  (void) const noexcept;
+    inline void                                 _DEBUGGER_misc_1            (const float , const float ) const noexcept;
+    inline void                                 _DEBUGGER_misc_2            (const float , const float ) const noexcept;
     //
     void                                    _debugger_hit_detection             (void);
     void                                    _debugger_interaction               (void);
@@ -813,6 +822,11 @@ protected:
     inline void                         _RENDER_highlights_channel          (std::span<const size_t> , const RenderCTX & ) const noexcept;
     inline void                         _RENDER_features_channel            (std::span<const size_t> , const RenderCTX & ) const noexcept;
     inline void                         _RENDER_accents_channel             (std::span<const size_t> , const RenderCTX & ) const noexcept;
+    inline void                             _ACCENTS_default                (std::span<const size_t> , const RenderCTX & ) const noexcept;
+    inline void                             _ACCENTS_geometry               (std::span<const size_t> , const RenderCTX & ) const noexcept;
+    inline void                             _ACCENTS_all_objects            (std::span<const size_t> , const RenderCTX & ) const noexcept;
+    inline void                             _ACCENTS_all_handles            (std::span<const size_t> , const RenderCTX & ) const noexcept;
+    //
     inline void                         _RENDER_glyphs_channel              (std::span<const size_t> , const RenderCTX & ) const noexcept;
     inline void                         _RENDER_top_channel                 (std::span<const size_t> , const RenderCTX & ) const noexcept;
     //
@@ -824,8 +838,8 @@ protected:
     //
     //
     //                              SELECTION RENDERING:
-    void                                render_selection_highlight          (ImDrawList *) const noexcept;
-    inline void                             _render_selection_objects       (ImDrawList *) const noexcept;  //  Helper for "render_selection_highlight"
+    void                                render_selection_highlight          (ImDrawList * , const RenderCTX & ) const noexcept;
+    inline void                             _render_selection_objects       (const RenderCTX & ) const noexcept;  //  Helper for "render_selection_highlight"
     inline void                             _render_selected_handles        (ImDrawList *) const noexcept;  //  Helper for "render_selection_highlight"
     inline void                             _render_selection_bbox          (ImDrawList *) const noexcept;  //  Helper for "render_selection_highlight"
     //
@@ -1087,10 +1101,11 @@ protected:
     }
     //
     //  "IsDraggingSelection"
-    [[nodiscard]] inline bool           IsDraggingSelection                     (void) const noexcept   { return ( this->m_boxdrag.IsScaling()      );          }
-    [[nodiscard]] inline bool           IsScalingSelection                      (void) const noexcept   { return ( this->m_dragging                 );          }
+    [[nodiscard]] inline bool           IsDraggingSelection                     (void) const noexcept   { return ( this->m_dragging                 );          }
+    [[nodiscard]] inline bool           IsScalingSelection                      (void) const noexcept   { return ( this->m_boxdrag.IsScaling()      );          }
     //
-    [[nodiscard]] inline bool           IsDraggingVertex                        (void) const noexcept   { return static_cast<bool>( this->m_drag_vid > 0 );     }
+    //  [[nodiscard]] inline bool           IsDraggingVertex                        (void) const noexcept   { return static_cast<bool>( this->m_drag_vid > 0 );     }
+    [[nodiscard]] inline bool           IsDraggingVertex                        (void) const noexcept   { return ( this->m_dragging                 );          }
     [[nodiscard]] inline bool           IsDraggingHandle                        (void) const noexcept   { return ( this->m_dragging_handle          );          }
     [[nodiscard]] inline bool           IsDraggingLasso                         (void) const noexcept   { return ( this->m_lasso_active             );          }
     
@@ -1107,6 +1122,9 @@ protected:
     [[nodiscard]] inline bool           IsDrawingShape                          (void) const noexcept   { return ( /*this->m_mode == Mode::Shape  &&  */ this->m_shape.active   );  }
     
     
+    
+    //  "NoMenusOpen"
+    [[nodiscard]] inline bool           NoMenusOpen                             (void) const noexcept   { return (*this->m_it).NoMenusOpen(); }
     
     
     
@@ -1492,9 +1510,9 @@ protected:
     
     //  "reset_pen"
     inline void                         reset_pen                           (void) {
-        this->m_show_handles.erase( m_pen.handle_vid );
-        this->m_sel.vertices.erase( m_pen.last_vid );
-        m_pen = {};
+        this->m_show_handles    .erase( m_pen.handle_vid );
+        this->m_sel.vertices    .erase( m_pen.last_vid );
+        this->m_pen             .reset();   //  m_pen = {};
         return;
     }
     

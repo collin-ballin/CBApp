@@ -191,12 +191,14 @@ inline bool Editor::_pen_click_hits_first_vertex(const Interaction& it,
 
 //  "_pen_append_or_close_live_path"
 //
-void Editor::_pen_append_or_close_live_path(const Interaction& it)
+void Editor::_pen_append_or_close_live_path(const Interaction & it)
 {
-    Path &          p           = m_paths[m_pen.path_index];
+    IM_ASSERT( m_pen.path_index.has_value()  &&  "\"_pen_append_or_close_live_path\" INVOKED WITHOUT CURRENT PATH INDEX VALUE");
+    
+    Path &          p           = m_paths[ (*m_pen.path_index) ];
 
 
-    //  1.  Click on first vertex closes path
+    //      1.      Click on first vertex closes path
     if ( _pen_click_hits_first_vertex(it, p) )
     {
         p.closed = true;
@@ -212,7 +214,7 @@ void Editor::_pen_append_or_close_live_path(const Interaction& it)
     }
 
 
-    //  2.  Fallback: pixel‑distance to first vertex.
+    //      2.      Fallback: pixel‑distance to first vertex.
     ImVec2          ms          = ImGui::GetIO().MousePos;
     if ( !p.verts.empty() )
     {
@@ -233,7 +235,7 @@ void Editor::_pen_append_or_close_live_path(const Interaction& it)
         }
     }
 
-    //  3.  Add a new vertex at mouse position.
+    //      3.      Add a new vertex at mouse position.
     ImVec2          ws          = pixels_to_world(ms);           // NEW
     VertexID        new_vid     = _add_vertex(ws);
     _add_point_glyph(new_vid);

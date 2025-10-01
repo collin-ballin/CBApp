@@ -84,31 +84,30 @@ void Editor::dispatch_selection_context_menus([[maybe_unused]] const Interaction
 //
 inline void Editor::_show_canvas_context_menu([[maybe_unused]] const Interaction & it, const char * popup_id)
 {
-    const bool              can_paste       = !m_clipboard.empty();
+    static constexpr auto   s_paste_label       = cblib::utl::strcat_literals_cx( ICON_FA_PASTE,                "  ", "Paste"       );
+    const bool              can_paste           = !m_clipboard.empty();
         
         
-    //  Jump-out early if NO POPUP WINDOW...
-    if ( !ImGui::BeginPopup(popup_id) ) return;
-    
-        //  0.  TEMPORARY LABEL...
-        ImGui::TextDisabled("Canvas Context Menu");
+    //      CASE 0 :    Jump-out early if NO POPUP WINDOW...
+    if ( !ImGui::BeginPopup(popup_id) )     { return; }
+    //
+    //
+        //      0.      TEMPORARY LABEL...
+        ImGui::TextColored(this->S.SystemColor.Gray, "Canvas Context Menu");
         ImGui::Separator();
-        
     
-        //  1.  PASTE BUTTON...
+        //      1.      PASTE BUTTON...
         ImGui::BeginDisabled( !can_paste );
         //
-            if ( ImGui::MenuItem("Paste", nullptr, false, can_paste) )
-            { paste_from_clipboard( pixels_to_world(ImGui::GetIO().MousePos) ); }
+            if ( ImGui::MenuItem(s_paste_label.data(), nullptr, false, can_paste) )
+                { paste_from_clipboard( pixels_to_world(ImGui::GetIO().MousePos) ); }
         //
         ImGui::EndDisabled();
     
-    
         //if ( ImGui::MenuItem("Paste", nullptr, false, can_paste) )
         //{ paste_from_clipboard(pixels_to_world(ImGui::GetIO().MousePos)); }
-
-
-
+    //
+    //
     ImGui::EndPopup();
     return;
 }
@@ -150,13 +149,13 @@ inline void Editor::_show_selection_context_menu([[maybe_unused]] const Interact
     //  1.  CONTEXT MENU FOR SPECIALIZED SELECTIONS (Single vs. Multi.)...
     if (total_items == 1) {
 #ifdef __CBAPP_DEBUG__
-        ImGui::TextDisabled("Single");
+        ImGui::TextColored(this->S.SystemColor.Gray, "Single");
 #endif  //  __CBAPP_DEBUG__  //
         _selection_context_single(it);
     }
     else {
 #ifdef __CBAPP_DEBUG__
-        ImGui::TextDisabled("Multi.");
+        ImGui::TextColored(this->S.SystemColor.Gray, "Multi.");
 #endif  //  __CBAPP_DEBUG__  //
         _selection_context_multi(it);
     }
@@ -165,7 +164,7 @@ inline void Editor::_show_selection_context_menu([[maybe_unused]] const Interact
     //  2.  DEFAULT FUNCTIONS ENABLED FOR *ALL* SELECTIONS...
     ImGui::Separator();
 #ifdef __CBAPP_DEBUG__
-    ImGui::TextDisabled("Primative");
+        ImGui::TextColored(this->S.SystemColor.Gray, "Primative");
 #endif  //  __CBAPP_DEBUG__  //
     _selection_context_primative(it);
 
@@ -187,9 +186,16 @@ inline void Editor::_show_selection_context_menu([[maybe_unused]] const Interact
 //
 inline void Editor::_selection_context_primative([[maybe_unused]] const Interaction & it)
 {
+    static constexpr auto       s_arrange_label         = cblib::utl::strcat_literals_cx( ICON_FA_LAYER_GROUP,          "  ", "Arrange"     ); //  ICON_FA_SQUARE_BINARY
+    static constexpr auto       s_cut_label             = cblib::utl::strcat_literals_cx( ICON_FA_CLIPBOARD_CHECK,      "  ", "Cut"         );
+    static constexpr auto       s_copy_label            = cblib::utl::strcat_literals_cx( ICON_FA_COPY,                 "  ", "Copy"        );
+    static constexpr auto       s_paste_label           = cblib::utl::strcat_literals_cx( ICON_FA_PASTE,                "  ", "Paste"       );
+    static constexpr auto       s_delete_label          = cblib::utl::strcat_literals_cx( ICON_FA_XMARK,                "  ", "Delete"      );
     
-    //  1.  REORDER Z-ORDER OF OBJECTS ON CANVAS...
-    if ( ImGui::BeginMenu("Arrange") ) {
+    
+    
+    //      1.      REORDER Z-ORDER OF OBJECTS ON CANVAS...
+    if ( ImGui::BeginMenu(s_arrange_label.data()) ) {
         //
         if ( ImGui::MenuItem("Bring to Front")  )       { this->bring_selection_to_front();     }
         if ( ImGui::MenuItem("Bring Forward")   )       { this->bring_selection_forward();      }
@@ -199,26 +205,19 @@ inline void Editor::_selection_context_primative([[maybe_unused]] const Interact
         //
         ImGui::EndMenu();
     }
-    
-    
-    
-    
     ImGui::Separator();
     
-    
-    
 
-
-    //  2.  COPY SELECTION...
-    if ( ImGui::MenuItem("Cut") )
+    //      2.      CUT SELECTION...
+    if ( ImGui::MenuItem(s_cut_label.data()) )
     {
         // TODO: implement copy/duplicate behaviour
         this->copy_to_clipboard();
     }
 
 
-    //  3.  COPY SELECTION...
-    const bool          copy_menu       = ImGui::BeginMenu("Copy");
+    //      3.      COPY SELECTION...
+    const bool          copy_menu       = ImGui::BeginMenu(s_copy_label.data());
     const bool          copy_clicked    = ImGui::IsItemClicked(ImGuiMouseButton_Left);
     if ( copy_menu )
     {
@@ -238,11 +237,29 @@ inline void Editor::_selection_context_primative([[maybe_unused]] const Interact
     }
 
 
-    //  4.  DELETE SELECTION...
-    if ( ImGui::MenuItem("Delete") )        { this->delete_selection(); }
-
-
+    //      4.      PASTE SELECTION...
+    ImGui::BeginDisabled(true);
+    const bool          paste_menu       = ImGui::BeginMenu(s_paste_label.data());
+    if ( paste_menu )
+    {
+        ImGui::Separator();
+        ImGui::BeginDisabled(true);
+        //
+            if ( ImGui::MenuItem("Paste Properties")     )       { /* this->paste_from_clipboard(); */ }
+            if ( ImGui::MenuItem("Paste Payload")        )       { /* this->paste_from_clipboard(); */ }
+        //
+        ImGui::EndDisabled();
+        ImGui::EndMenu();
+    }
+    ImGui::EndDisabled();
     
+
+    //      5.      DELETE SELECTION...
+    ImGui::Separator();
+    if ( ImGui::MenuItem(s_delete_label.data()) )       { this->delete_selection(); }
+    
+    
+ 
     return;
 }
 
@@ -252,46 +269,54 @@ inline void Editor::_selection_context_primative([[maybe_unused]] const Interact
 //
 inline void Editor::_selection_context_single([[maybe_unused]] const Interaction & it)
 {
-    const size_t                    sel_idx             = *m_sel.paths.begin();   // only element
-    Path &                          path                = m_paths[sel_idx];
+    static constexpr auto       s_payload_label     = cblib::utl::strcat_literals_cx( ICON_FA_CART_FLATBED_SUITCASE,        "  ", "Payload"     ); //  ICON_FA_SQUARE_BINARY
+    static constexpr auto       s_transform_label   = cblib::utl::strcat_literals_cx( ICON_FA_TEXT_WIDTH,                   "  ", "Transform"   );
+    //
+    static constexpr auto       s_move_label        = cblib::utl::strcat_literals_cx( ICON_FA_ARROWS_UP_DOWN_LEFT_RIGHT,    "  ", "Move"        );
+    static constexpr auto       s_scale_label       = cblib::utl::strcat_literals_cx( ICON_FA_EXPAND,                       "  ", "Scale"       );
+    static constexpr auto       s_rotate_label      = cblib::utl::strcat_literals_cx( ICON_FA_ROTATE_LEFT,                  "  ", "Rotate"      );
+    static constexpr auto       s_reflect_label     = cblib::utl::strcat_literals_cx( ICON_FA_ARROWS_LEFT_RIGHT_TO_LINE,    "  ", "Reflect"     );
+    //
+    static constexpr auto       s_quantize_label    = cblib::utl::strcat_literals_cx( ICON_FA_STAIRS,                       "  ", "Quantize"    );
+    static constexpr auto       s_smooth_label      = cblib::utl::strcat_literals_cx( ICON_FA_MOUND,                        "  ", "Smooth"      );
+    //
+    const size_t                sel_idx             = *m_sel.paths.begin();   // only element
+    Path &                      path                = m_paths[sel_idx];
     
     
-    //  1.  PROPERTIES...
-    if ( ImGui::BeginMenu("Payload") ) {
+    
+    
+    
+    
+    //      1.      PROPERTIES...
+    if ( ImGui::BeginMenu(s_payload_label.data()) ) {
         //
-        if ( path.ui_kind() )                   { /*    changed the path kind.      */ }
+        if ( path.ui_payload_type() )           { /*    changed the path kind.      */ }
         path.ui_properties();
         //
         ImGui::EndMenu();
     }
     
     
-    
-
-    //  2.  TRANSFORM...
-    if ( ImGui::BeginMenu("Transform") )
+    //      2.      TRANSFORM...
+    ImGui::BeginDisabled(true);
+    if ( ImGui::BeginMenu(s_transform_label.data()) )
     {
         ImGui::BeginDisabled(true);
         //
-            if ( ImGui::MenuItem("Move")            )       { /*  TODO:  */     }
-            if ( ImGui::MenuItem("Scale")           )       { /*  TODO:  */     }
-            if ( ImGui::MenuItem("Rotate")          )       { /*  TODO:  */     }
-            if ( ImGui::MenuItem("Reflect")         )       { /*  TODO:  */     }
+            if ( ImGui::MenuItem(s_move_label     .data() )   )     { /*  TODO:  */     }
+            if ( ImGui::MenuItem(s_scale_label    .data() )   )     { /*  TODO:  */     }
+            if ( ImGui::MenuItem(s_rotate_label   .data() )   )     { /*  TODO:  */     }
+            if ( ImGui::MenuItem(s_reflect_label  .data() )   )     { /*  TODO:  */     }
             //
             ImGui::Separator();
-            if ( ImGui::MenuItem("Quantize")        )       { /*  TODO:  */     }
-            if ( ImGui::MenuItem("Smooth")          )       { /*  TODO:  */     }
+            if ( ImGui::MenuItem(s_quantize_label .data() )   )     { /*  TODO:  */     }
+            if ( ImGui::MenuItem(s_smooth_label   .data() )   )     { /*  TODO:  */     }
         //
         ImGui::EndDisabled();
         ImGui::EndMenu();
     }
-    
-    
-    //  Example: Rename path, convert to outline, etc.
-    //      if (ImGui::MenuItem("Reverse Path Direction"))
-    //      {
-    //          // TODO: implement
-    //      }
+    ImGui::EndDisabled();
     
     
     
@@ -304,20 +329,23 @@ inline void Editor::_selection_context_single([[maybe_unused]] const Interaction
 //
 inline void Editor::_selection_context_multi([[maybe_unused]] const Interaction & it)
 {
+    static constexpr auto       s_group_label       = cblib::utl::strcat_literals_cx( ICON_FA_OBJECT_GROUP,                 "  ", "Create Group"    );
+
     ImGui::BeginDisabled(true);
-    
-    
-    if ( ImGui::MenuItem("Create Group") )
-    {
-        // TODO: implement grouping
-    }
-    //  if (ImGui::MenuItem("Align Vertices"))
-    //  {
-    //      // TODO: implement alignment helpers
-    //  }
-    
-    
+    //
+    //
+        if ( ImGui::MenuItem(s_group_label.data()) )
+        {
+            // TODO: implement grouping
+        }
+        //  if (ImGui::MenuItem("Align Vertices"))
+        //  {
+        //      // TODO: implement alignment helpers
+        //  }
+    //
+    //
     ImGui::EndDisabled();
+    
     return;
 }
 

@@ -496,6 +496,8 @@ public:                                                                         
 //      store its return value inside a Cache Value...
 //
 #define                 _EDITOR_USE_HITANY_CACHE        1
+#define                 _EDITOR_DELETE_POINTS           1
+#define                 _EDITOR_DELETE_LINES            1
 
 
 
@@ -558,7 +560,7 @@ public:                                                                         
     using                           Point                       = Point_t           <PointID>                                           ;       \
     using                           Line                        = Line_t            <LineID, ZID>                                       ;       \
     using                           Path                        = Path_t            <ObjectCFG, Vertex>                                 ;       \
-    using                           PathKind                    = Path::PathKind                                                        ;       \
+    using                           PayloadType                 = Path::PayloadType                                                     ;       \
     using                           Payload                     = Path::Payload                                                         ;       \
     using                           Overlay                     = Overlay_t         <OverlayID>                                         ;       \
     using                           Hit                         = Hit_t             <HitID>                                             ;       \

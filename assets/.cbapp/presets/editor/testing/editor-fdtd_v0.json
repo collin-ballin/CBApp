@@ -4,7 +4,6 @@
       {
         "closed": true,
         "id": 13,
-        "kind": 1,
         "label": "GP | Rectangle",
         "locked": false,
         "payload": {
@@ -13,6 +12,7 @@
           "x": 3.141,
           "y": 2.718
         },
+        "payload_type": 1,
         "style": {
           "fill_color": 754974975,
           "stroke_color": 4278255615,
@@ -34,9 +34,9 @@
       {
         "closed": true,
         "id": 10,
-        "kind": 0,
         "label": "GP | Circle",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 754974975,
           "stroke_color": 4278255615,
@@ -54,7 +54,6 @@
       {
         "closed": true,
         "id": 7,
-        "kind": 1,
         "label": "Generic Payload | Square",
         "locked": false,
         "payload": {
@@ -63,6 +62,7 @@
           "x": 3.14159,
           "y": 2.718
         },
+        "payload_type": 1,
         "style": {
           "fill_color": 754974975,
           "stroke_color": 4278255615,
@@ -80,9 +80,9 @@
       {
         "closed": true,
         "id": 8,
-        "kind": 0,
         "label": "Square 2",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4278255615,
@@ -100,9 +100,9 @@
       {
         "closed": true,
         "id": 6,
-        "kind": 0,
         "label": "Square 1",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4278255615,

@@ -3,10 +3,30 @@
     "paths": [
       {
         "closed": true,
+        "id": 144,
+        "label": "Path 144",
+        "locked": false,
+        "payload_type": 0,
+        "style": {
+          "fill_color": 771714560,
+          "stroke_color": 4294967295,
+          "stroke_width": 0.5
+        },
+        "verts": [
+          571,
+          572,
+          573,
+          574
+        ],
+        "visible": true,
+        "z_index": 343
+      },
+      {
+        "closed": true,
         "id": 80,
-        "kind": 0,
         "label": "Path 080",
         "locked": true,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -24,7 +44,6 @@
       {
         "closed": true,
         "id": 13,
-        "kind": 1,
         "label": "GP | Rectangle",
         "locked": false,
         "payload": {
@@ -33,6 +52,7 @@
           "x": 3.141,
           "y": 2.718
         },
+        "payload_type": 1,
         "style": {
           "fill_color": 754974975,
           "stroke_color": 4278255615,
@@ -54,9 +74,9 @@
       {
         "closed": true,
         "id": 10,
-        "kind": 0,
         "label": "GP | Circle",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 754974975,
           "stroke_color": 4278255615,
@@ -74,7 +94,6 @@
       {
         "closed": true,
         "id": 7,
-        "kind": 1,
         "label": "Generic Payload | Square",
         "locked": false,
         "payload": {
@@ -83,6 +102,7 @@
           "x": 3.14159,
           "y": 2.718
         },
+        "payload_type": 1,
         "style": {
           "fill_color": 754974975,
           "stroke_color": 4278255615,
@@ -100,9 +120,9 @@
       {
         "closed": true,
         "id": 8,
-        "kind": 0,
         "label": "Square 2",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4278255615,
@@ -120,9 +140,9 @@
       {
         "closed": true,
         "id": 6,
-        "kind": 0,
         "label": "Square 1",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4278255615,
@@ -140,9 +160,9 @@
       {
         "closed": true,
         "id": 71,
-        "kind": 0,
         "label": "---",
         "locked": true,
+        "payload_type": 0,
         "style": {
           "fill_color": 16739328,
           "stroke_color": 4278255615,
@@ -160,9 +180,9 @@
       {
         "closed": true,
         "id": 23,
-        "kind": 0,
         "label": "BIG SQUARE",
         "locked": true,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -180,9 +200,9 @@
       {
         "closed": true,
         "id": 22,
-        "kind": 0,
         "label": "C(1) | 8",
         "locked": true,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -200,9 +220,9 @@
       {
         "closed": true,
         "id": 21,
-        "kind": 0,
         "label": "C(1) | 7",
         "locked": true,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -220,9 +240,9 @@
       {
         "closed": true,
         "id": 20,
-        "kind": 0,
         "label": "C(1) | 6",
         "locked": true,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -240,9 +260,9 @@
       {
         "closed": true,
         "id": 19,
-        "kind": 0,
         "label": "C(1) | 5",
         "locked": true,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -260,9 +280,9 @@
       {
         "closed": true,
         "id": 18,
-        "kind": 0,
         "label": "C(1) | 4",
         "locked": true,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -280,9 +300,9 @@
       {
         "closed": true,
         "id": 17,
-        "kind": 0,
         "label": "C(1) | 3",
         "locked": true,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -300,9 +320,9 @@
       {
         "closed": true,
         "id": 16,
-        "kind": 0,
         "label": "C(1) | 2",
         "locked": true,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -320,9 +340,9 @@
       {
         "closed": true,
         "id": 15,
-        "kind": 0,
         "label": "C(1) | 1",
         "locked": true,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -340,9 +360,9 @@
       {
         "closed": true,
         "id": 143,
-        "kind": 0,
         "label": "Path 143",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -360,9 +380,9 @@
       {
         "closed": true,
         "id": 142,
-        "kind": 0,
         "label": "Path 142",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -380,9 +400,9 @@
       {
         "closed": true,
         "id": 141,
-        "kind": 0,
         "label": "Path 141",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -400,9 +420,9 @@
       {
         "closed": true,
         "id": 140,
-        "kind": 0,
         "label": "Path 140",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -420,9 +440,9 @@
       {
         "closed": true,
         "id": 138,
-        "kind": 0,
         "label": "Path 138",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -440,9 +460,9 @@
       {
         "closed": true,
         "id": 137,
-        "kind": 0,
         "label": "Path 137",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -460,9 +480,9 @@
       {
         "closed": true,
         "id": 136,
-        "kind": 0,
         "label": "Path 136",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -480,9 +500,9 @@
       {
         "closed": true,
         "id": 135,
-        "kind": 0,
         "label": "Path 135",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -500,9 +520,9 @@
       {
         "closed": true,
         "id": 134,
-        "kind": 0,
         "label": "Path 134",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -520,9 +540,9 @@
       {
         "closed": true,
         "id": 133,
-        "kind": 0,
         "label": "Path 133",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -540,9 +560,9 @@
       {
         "closed": true,
         "id": 132,
-        "kind": 0,
         "label": "Path 132",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -560,9 +580,9 @@
       {
         "closed": true,
         "id": 131,
-        "kind": 0,
         "label": "Path 131",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -580,9 +600,9 @@
       {
         "closed": true,
         "id": 129,
-        "kind": 0,
         "label": "Path 129",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -600,9 +620,9 @@
       {
         "closed": true,
         "id": 128,
-        "kind": 0,
         "label": "Path 128",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -620,9 +640,9 @@
       {
         "closed": true,
         "id": 127,
-        "kind": 0,
         "label": "Path 127",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -640,9 +660,9 @@
       {
         "closed": true,
         "id": 126,
-        "kind": 0,
         "label": "Path 126",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -660,9 +680,9 @@
       {
         "closed": true,
         "id": 125,
-        "kind": 0,
         "label": "Path 125",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -680,9 +700,9 @@
       {
         "closed": true,
         "id": 124,
-        "kind": 0,
         "label": "Path 124",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -700,9 +720,9 @@
       {
         "closed": true,
         "id": 123,
-        "kind": 0,
         "label": "Path 123",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -720,9 +740,9 @@
       {
         "closed": true,
         "id": 122,
-        "kind": 0,
         "label": "Path 122",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -740,9 +760,9 @@
       {
         "closed": true,
         "id": 120,
-        "kind": 0,
         "label": "Path 120",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -760,9 +780,9 @@
       {
         "closed": true,
         "id": 119,
-        "kind": 0,
         "label": "Path 119",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -780,9 +800,9 @@
       {
         "closed": true,
         "id": 118,
-        "kind": 0,
         "label": "Path 118",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -800,9 +820,9 @@
       {
         "closed": true,
         "id": 117,
-        "kind": 0,
         "label": "Path 117",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -820,9 +840,9 @@
       {
         "closed": true,
         "id": 116,
-        "kind": 0,
         "label": "Path 116",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -840,9 +860,9 @@
       {
         "closed": true,
         "id": 115,
-        "kind": 0,
         "label": "Path 115",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -860,9 +880,9 @@
       {
         "closed": true,
         "id": 114,
-        "kind": 0,
         "label": "Path 114",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -880,9 +900,9 @@
       {
         "closed": true,
         "id": 113,
-        "kind": 0,
         "label": "Path 113",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -900,9 +920,9 @@
       {
         "closed": true,
         "id": 111,
-        "kind": 0,
         "label": "Path 111",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -920,9 +940,9 @@
       {
         "closed": true,
         "id": 110,
-        "kind": 0,
         "label": "Path 110",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -940,9 +960,9 @@
       {
         "closed": true,
         "id": 109,
-        "kind": 0,
         "label": "Path 109",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -960,9 +980,9 @@
       {
         "closed": true,
         "id": 108,
-        "kind": 0,
         "label": "Path 108",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -980,9 +1000,9 @@
       {
         "closed": true,
         "id": 107,
-        "kind": 0,
         "label": "Path 107",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1000,9 +1020,9 @@
       {
         "closed": true,
         "id": 106,
-        "kind": 0,
         "label": "Path 106",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1020,9 +1040,9 @@
       {
         "closed": true,
         "id": 105,
-        "kind": 0,
         "label": "Path 105",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1040,9 +1060,9 @@
       {
         "closed": true,
         "id": 104,
-        "kind": 0,
         "label": "Path 104",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1060,9 +1080,9 @@
       {
         "closed": true,
         "id": 102,
-        "kind": 0,
         "label": "Path 102",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1080,9 +1100,9 @@
       {
         "closed": true,
         "id": 101,
-        "kind": 0,
         "label": "Path 101",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1100,9 +1120,9 @@
       {
         "closed": true,
         "id": 100,
-        "kind": 0,
         "label": "Path 100",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1120,9 +1140,9 @@
       {
         "closed": true,
         "id": 99,
-        "kind": 0,
         "label": "Path 099",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1140,9 +1160,9 @@
       {
         "closed": true,
         "id": 98,
-        "kind": 0,
         "label": "Path 098",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1160,9 +1180,9 @@
       {
         "closed": true,
         "id": 97,
-        "kind": 0,
         "label": "Path 097",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1180,9 +1200,9 @@
       {
         "closed": true,
         "id": 96,
-        "kind": 0,
         "label": "Path 096",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1200,9 +1220,9 @@
       {
         "closed": true,
         "id": 95,
-        "kind": 0,
         "label": "Path 095",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1220,9 +1240,9 @@
       {
         "closed": true,
         "id": 93,
-        "kind": 0,
         "label": "Path 093",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1240,9 +1260,9 @@
       {
         "closed": true,
         "id": 92,
-        "kind": 0,
         "label": "Path 092",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1260,9 +1280,9 @@
       {
         "closed": true,
         "id": 91,
-        "kind": 0,
         "label": "Path 091",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1280,9 +1300,9 @@
       {
         "closed": true,
         "id": 90,
-        "kind": 0,
         "label": "Path 090",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1300,9 +1320,9 @@
       {
         "closed": true,
         "id": 89,
-        "kind": 0,
         "label": "Path 089",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1320,9 +1340,9 @@
       {
         "closed": true,
         "id": 88,
-        "kind": 0,
         "label": "Path 088",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1340,9 +1360,9 @@
       {
         "closed": true,
         "id": 87,
-        "kind": 0,
         "label": "Path 087",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1360,9 +1380,9 @@
       {
         "closed": true,
         "id": 86,
-        "kind": 0,
         "label": "Path 086",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1380,9 +1400,9 @@
       {
         "closed": true,
         "id": 84,
-        "kind": 0,
         "label": "Path 084",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1400,9 +1420,9 @@
       {
         "closed": true,
         "id": 83,
-        "kind": 0,
         "label": "Path 083",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1420,9 +1440,9 @@
       {
         "closed": true,
         "id": 82,
-        "kind": 0,
         "label": "Path 082",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1440,9 +1460,9 @@
       {
         "closed": true,
         "id": 81,
-        "kind": 0,
         "label": "Path 081",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1460,9 +1480,9 @@
       {
         "closed": true,
         "id": 79,
-        "kind": 0,
         "label": "Path 079",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1480,9 +1500,9 @@
       {
         "closed": true,
         "id": 78,
-        "kind": 0,
         "label": "Path 078",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1500,9 +1520,9 @@
       {
         "closed": true,
         "id": 77,
-        "kind": 0,
         "label": "Path 077",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1520,9 +1540,9 @@
       {
         "closed": true,
         "id": 75,
-        "kind": 0,
         "label": "Path 075",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1540,9 +1560,9 @@
       {
         "closed": true,
         "id": 74,
-        "kind": 0,
         "label": "Path 074",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1560,9 +1580,9 @@
       {
         "closed": true,
         "id": 73,
-        "kind": 0,
         "label": "Path 073",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1580,9 +1600,9 @@
       {
         "closed": true,
         "id": 72,
-        "kind": 0,
         "label": "Path 072",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1600,9 +1620,9 @@
       {
         "closed": true,
         "id": 68,
-        "kind": 0,
         "label": "L 11",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1620,9 +1640,9 @@
       {
         "closed": true,
         "id": 69,
-        "kind": 0,
         "label": "L 12",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1640,9 +1660,9 @@
       {
         "closed": true,
         "id": 70,
-        "kind": 0,
         "label": "L 13",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1660,9 +1680,9 @@
       {
         "closed": true,
         "id": 65,
-        "kind": 0,
         "label": "L 21",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1680,9 +1700,9 @@
       {
         "closed": true,
         "id": 66,
-        "kind": 0,
         "label": "L22",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1700,9 +1720,9 @@
       {
         "closed": true,
         "id": 67,
-        "kind": 0,
         "label": "L 23",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1720,9 +1740,9 @@
       {
         "closed": true,
         "id": 62,
-        "kind": 0,
         "label": "L 31",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1740,9 +1760,9 @@
       {
         "closed": true,
         "id": 63,
-        "kind": 0,
         "label": "L 32",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -1760,9 +1780,9 @@
       {
         "closed": true,
         "id": 64,
-        "kind": 0,
         "label": "L 33",
         "locked": false,
+        "payload_type": 0,
         "style": {
           "fill_color": 771714560,
           "stroke_color": 4294967295,
@@ -2557,16 +2577,9 @@
       }
     ],
     "selection": {
-      "paths": [
-        4
-      ],
+      "paths": [],
       "points": [],
-      "vertices": [
-        16,
-        15,
-        14,
-        13
-      ]
+      "vertices": []
     },
     "vertices": [
       {
@@ -6903,8 +6916,8 @@
           ]
         },
         "id": 439,
-        "x": 433.3403625488281,
-        "y": 246.66000366210938,
+        "x": 437.9072265625,
+        "y": 322.0504455566406,
         "z": 0.0
       },
       {
@@ -6921,8 +6934,8 @@
           ]
         },
         "id": 440,
-        "x": 433.3403625488281,
-        "y": 253.3199920654297,
+        "x": 437.9072265625,
+        "y": 328.7104187011719,
         "z": 0.0
       },
       {
@@ -6939,8 +6952,8 @@
           ]
         },
         "id": 441,
-        "x": 440.0133361816406,
-        "y": 253.3199920654297,
+        "x": 444.5802001953125,
+        "y": 328.7104187011719,
         "z": 0.0
       },
       {
@@ -6957,8 +6970,8 @@
           ]
         },
         "id": 442,
-        "x": 440.0133361816406,
-        "y": 246.66000366210938,
+        "x": 512.3876342773438,
+        "y": 269.25177001953125,
         "z": 0.0
       },
       {
@@ -8975,6 +8988,78 @@
         "id": 570,
         "x": 426.66998291015625,
         "y": 213.3199920654297,
+        "z": 0.0
+      },
+      {
+        "bezier": {
+          "curvature_state": 0,
+          "in_handle": [
+            0.0,
+            0.0
+          ],
+          "kind": 0,
+          "out_handle": [
+            0.0,
+            0.0
+          ]
+        },
+        "id": 571,
+        "x": 433.3399963378906,
+        "y": 246.6599884033203,
+        "z": 0.0
+      },
+      {
+        "bezier": {
+          "curvature_state": 0,
+          "in_handle": [
+            0.0,
+            0.0
+          ],
+          "kind": 0,
+          "out_handle": [
+            0.0,
+            0.0
+          ]
+        },
+        "id": 572,
+        "x": 433.3399963378906,
+        "y": 253.32005310058594,
+        "z": 0.0
+      },
+      {
+        "bezier": {
+          "curvature_state": 0,
+          "in_handle": [
+            0.0,
+            0.0
+          ],
+          "kind": 0,
+          "out_handle": [
+            0.0,
+            0.0
+          ]
+        },
+        "id": 573,
+        "x": 440.0129699707031,
+        "y": 253.32005310058594,
+        "z": 0.0
+      },
+      {
+        "bezier": {
+          "curvature_state": 0,
+          "in_handle": [
+            0.0,
+            0.0
+          ],
+          "kind": 0,
+          "out_handle": [
+            0.0,
+            0.0
+          ]
+        },
+        "id": 574,
+        "x": 440.0129699707031,
+        "y": 246.6599884033203,
         "z": 0.0
       }
     ]

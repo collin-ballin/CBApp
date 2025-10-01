@@ -261,7 +261,7 @@ DEF_MODE_CAPABILITIES       = {
 /*  Shape               */      CBCapabilityFlags_Plain,
 /*  Add Anchor          */      CBCapabilityFlags_Plain,
 /*  Remove Anchor       */      CBCapabilityFlags_Plain,
-/*  Edit Anchor         */      CBCapabilityFlags_None
+/*  Edit Anchor         */      CBCapabilityFlags_Plain
 };
 
 
@@ -615,7 +615,7 @@ struct TooltipState
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr ImGuiHoveredFlags  ms_TOOLTIP_HOVER_FLAGS          = ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayNormal;
+    static constexpr ImGuiHoveredFlags  ms_TOOLTIP_HOVER_FLAGS          = ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayShort; // ImGuiHoveredFlags_DelayNormal;
     static constexpr float              ms_TOOLTIP_RELEASE_TIME         = 0.250f;
     
 //
@@ -892,19 +892,31 @@ struct GridSettings {
 //
 struct EditorInteraction
 {
+    // *************************************************************************** //
+    //      TYPENAME ALIASES AND CONSTANTS.
+    // *************************************************************************** //
     using                           CBEditorPopupFlags              = CBEditorPopupFlags_;
-    //
-    //
-//                              IMPLOT STATE:
-                                    //  ...
-//
-//                              EDITOR STATE:
+    
+    
+    // *************************************************************************** //
+    //      DATA MEMBERS.
+    // *************************************************************************** //
+    //                          EDITOR STATE:
     //  bool                            empty_selection                 = false;
     //  bool                            single_obj_selection            = false;
-//
-//                              MENU STATE:
+    //
+    //                          MENU STATE:
     CBEditorPopupFlags_             open_menus                      = CBEditorPopupFlags_None;
     bool                            other_windows_open              = false;
+
+
+    // *************************************************************************** //
+    //      INLINE FUNCTIONS...
+    // *************************************************************************** //
+    //  inline void                         NoMenusOpen                         (void)      { return; };
+    //  inline void                         _no_op                              (void)      { return; };
+
+
 
 //
 // *************************************************************************** //
@@ -919,7 +931,7 @@ struct EditorInteraction
 struct Interaction
 {
 // *************************************************************************** //
-//                                  PREVIOUS DATA...
+//          PREVIOUS DATA...
 // *************************************************************************** //
     bool                            hovered                 {   };
     bool                            active                  {   };
@@ -945,30 +957,30 @@ struct Interaction
 //
 //
 // *************************************************************************** //
-//                                  MAIN INLINE FUNCTIONS...
+//          MAIN INLINE FUNCTIONS...
 // *************************************************************************** //
 
     //  "BlockShortcuts"
-    [[nodiscard]]
-    inline bool                     BlockShortcuts              (void) const noexcept
+    [[nodiscard]] inline bool           BlockShortcuts              (void) const noexcept
     //  { return ( !hovered ); }
     { return ( (!hovered) || (obj.open_menus) ); }
 
     //  "BlockInput"
-    [[nodiscard]]
-    inline bool                     BlockInput                  (void) const noexcept
+    [[nodiscard]] inline bool           BlockInput                  (void) const noexcept
     { return ( !hovered  &&  !obj.other_windows_open  &&  !ImGui::IsMouseDown(ImGuiMouseButton_Left) ); }   //  IsMouseDragging( ... )      IsMouseDragPastThreshold( ... )
 //
 //
 //
 // *************************************************************************** //
-//                                  UTILITY FUNCTIONS...
+//          UTILITY FUNCTIONS...
 // *************************************************************************** //
 
     //  "OtherWindowsOpen"
-    [[nodiscard]]
-    inline bool                     OtherWindowsOpen            (void) const noexcept
+    [[nodiscard]] inline bool           OtherWindowsOpen            (void) const noexcept
     { return (  ( obj.open_menus >> static_cast<CBEditorPopupFlags_>( EditorPopupBits::Other ) & 1u) != CBEditorPopupFlags_None  ); }
+    
+    //  "NoMenusOpen"
+    [[nodiscard]] inline bool           NoMenusOpen                 (void) const noexcept   { return (this->obj.open_menus == CBEditorPopupFlags_None); }
 
 
 
@@ -1085,22 +1097,92 @@ inline void from_json(const nlohmann::json & j, Selection_t<VID,PtID,LID,PID,ZID
 //  "PenState_t"
 //
 template<typename VID>
-struct PenState_t {
-    bool            active                  = false;
+struct PenState_t
+{
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    //  using                               State                           = cb::MyAppState;
+    //  static constexpr float              ms_MY_CONSTEXPR_VALUE           = 240.0f;
+    
 //
-    size_t          path_index              = static_cast<size_t>(-1);
-    VID             last_vid                = 0;
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
 
-    bool            dragging_handle         = false;
-    bool            dragging_out            = true;     // NEW: true → out_handle, false → in_handle
-    VID             handle_vid              = 0;
 
-    bool            prepend                 = false;
-    bool            pending_handle          = false;        // waiting to see if user drags
-    VID             pending_vid             = 0;            // vertex that may get a handle
-    float           pending_time            = 0.0f;
-    //int         pending_frames  = 0;        // NEW – counts frames since click
-};
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      STATE VARIABLES.
+    // *************************************************************************** //
+    bool                                active                          = false;
+    //
+    bool                                prepend                         = false;
+    bool                                pending_handle                  = false;        // waiting to see if user drags
+    bool                                dragging_handle                 = false;
+    bool                                dragging_out                    = true;         //  NEW: true → out_handle, false → in_handle
+
+    // *************************************************************************** //
+    //      IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    std::optional<size_t>               path_index                      = std::nullopt;     //  ID of the current path.
+    VID                                 last_vid                        = 0;
+    VID                                 handle_vid                      = 0;
+
+    // *************************************************************************** //
+    //      GENERIC DATA.
+    // *************************************************************************** //
+    VID                                 pending_vid                     = 0;            // vertex that may get a handle
+    float                               pending_time                    = 0.0f;
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "reset"
+    inline void                         reset                               (void) noexcept
+    {
+        //      1.      STATE VARIABLES...
+        active                  = false;
+        prepend                 = false;
+        pending_handle          = false;        // waiting to see if user drags
+        dragging_handle         = false;
+        dragging_out            = true;         //  NEW: true → out_handle, false → in_handle
+    
+        //      2.      DATA-MEMBERS...
+        path_index              = std::nullopt;     //  ID of the current path.
+        last_vid                = 0;
+        handle_vid              = 0;
+    
+        //      3.      GENERIC DATA...
+        pending_vid             = 0;            // vertex that may get a handle
+        pending_time            = 0.0f;
+        return;
+    };
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "PenState_t" INLINE STRUCT DEFINITION.
 
 
 

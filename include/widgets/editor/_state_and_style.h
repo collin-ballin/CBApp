@@ -1187,8 +1187,12 @@ struct EditorStyle
     ImU32                       COL_SELECTION_OUT               = IM_COL32(255,215,0,170);      // gold outline
     float                       DEFAULT_POINT_RADIUS            = 12.0f;                        // px
     //
-    ImU32                       AUX_HIGHLIGHT_COLOR             = IM_COL32(255,215,0,255);      // gold outline
-    float                       AUX_HIGHLIGHT_WIDTH             = 6.0f;
+    //
+    ImU32                       HIGHLIGHT_COLOR                 = IM_COL32(255,215,0,170);      // gold outline
+    float                       HIGHLIGHT_WIDTH                 = 6.0f;
+    //
+    //  ImU32                       AUX_HIGHLIGHT_COLOR             = IM_COL32(255,215,0,255);      // gold outline
+    //  float                       AUX_HIGHLIGHT_WIDTH             = 6.0f;
     
 // *************************************************************************** //
 //

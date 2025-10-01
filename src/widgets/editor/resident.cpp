@@ -185,7 +185,6 @@ void Editor::_DEBUGGER_state(void) const noexcept
     //      1.      MAIN ITEMS...
     this->S.PushFont(Font::Main);
     {
-    
         //          1.1.    CURRENT ACTION.
         this->S.labelf("Action:", LABEL_W, WIDGET_W);
         S.print_TF( (action_color), current_action, current_action );
@@ -195,6 +194,7 @@ void Editor::_DEBUGGER_state(void) const noexcept
         //      S.print_TF( (this->m_action != Action::Invalid), current_action, current_action );
         //  }
         
+        
         //          1.2.    HOVERED ITEM.
         if ( this->m_sel.hovered.has_value() ) {
             this->S.labelf("Hovered:", LABEL_W, WIDGET_W);
@@ -203,7 +203,6 @@ void Editor::_DEBUGGER_state(void) const noexcept
         
     }
     this->S.PopFont();
-    
     
     
     //      3.      GENERAL INTERACTIONS...
@@ -221,23 +220,92 @@ void Editor::_DEBUGGER_state(void) const noexcept
     }
     
     
-    //      4.      OPEN MENUS...
+    //      4.      DRAGGING STATES...
+    this->_DEBUGGER_state_dragging( LABEL_W, WIDGET_W );
+ 
+        
+    //      5.      OPEN MENUS...
     if (menus_open)
     {
         this->S.labelf("Open Menus:", LABEL_W, WIDGET_W);
         S.ConditionalText( menus_open,    menu_names.c_str(),        this->S.SystemColor.Green );
     }
     
-    
-
-
-
-
-
     return;
 }
 
 
+//  "_DEBUGGER_state_dragging"
+//
+inline void Editor::_DEBUGGER_state_dragging(const float LABEL_W, const float WIDGET_W) const noexcept
+{
+    static constexpr const char *                       uuid            = "##Debugger_State_DraggingColumns";
+    static ImGuiOldColumnFlags                          COLUMN_FLAGS    = ImGuiOldColumnFlags_None;
+    //
+    constexpr int                                       N               = 3;
+    constexpr int                                       M               = 1;
+    static std::array< bool , N >                       s_bools         = { false };
+    static constexpr std::array< const char * , N >     s_labels        = {
+          "m_dragging"
+        , "m_dragging_handle"
+        , "m_drawing"
+    };
+    
+    
+    
+    s_bools[0]          = this->m_dragging;
+    s_bools[1]          = this->m_dragging_handle;
+    s_bools[2]          = this->m_drawing;
+    //
+    uint8_t     count   = 0;
+    size_t      idx     = 0;
+    
+    
+    {
+        this->S.labelf("Dragging State:", LABEL_W, WIDGET_W);
+
+        //      1.      BEGIN COLUMNS...
+        ImGui::NewLine();
+        ImGui::Columns(M, uuid, COLUMN_FLAGS);
+        //
+        //
+        for (int i = 0; i < N; ++i, idx = static_cast<size_t>(i) )
+        {
+            const bool      enabled     = s_bools[idx];
+            
+            if ( enabled )
+            {
+                if ( count > 0 )    { ImGui::NextColumn(); }
+                ImGui::TextColored( (enabled) ? S.SystemColor.Green : S.SystemColor.Red,  "%s", s_labels[idx] );
+                ++count;
+            }
+        }
+              
+        //
+        //
+        ImGui::Columns(1);      //  END COLUMNS...
+    }
+    
+    
+        
+/*
+                                    m_dragging                      = false;
+    bool                                m_lasso_active                  = false;
+    bool                                m_pending_clear                 = false;    //  pending click selection state ---
+    //
+    //                              PEN-TOOL STATE:
+    bool                                m_drawing                       = false;
+    bool                                m_dragging_handle               = false;
+    bool                                m_dragging_out                  = true;
+    VertexID                            m_drag_vid                      = 0;
+*/
+   
+   
+   
+    return;
+}
+    
+    
 
 //  "_DEBUGGER_canvas"
 //
@@ -272,7 +340,6 @@ void Editor::_DEBUGGER_canvas(void) const noexcept
 
     return;
 }
-
 
 
 //  "GetOpenMenuNames"
@@ -325,6 +392,152 @@ inline bool Editor::GetOpenMenuNames(std::string & menu_buffer) const noexcept
 
 
 
+// *************************************************************************** //
+//      MISC DEBUGGER...
+// *************************************************************************** //
+
+//  "_DEBUGGER_misc"
+//
+void Editor::_DEBUGGER_misc(void) const noexcept
+{
+    static float                LABEL_W                 = 0.85f * m_style.ms_SETTINGS_LABEL_WIDTH;
+    static const float &        WIDGET_W                = m_style.ms_SETTINGS_WIDGET_WIDTH;
+    static bool                 misc_1                  = false;
+    static bool                 misc_2                  = true;
+    
+    
+    
+    
+    ImGui::Checkbox("Misc 1##Debugger_Misc_ShowMisc1",     &misc_1);
+    ImGui::SameLine();
+    ImGui::Checkbox("Misc 2##Debugger_Misc_ShowMisc1",     &misc_2);
+    
+    ImGui::Separator();
+                
+                
+    //  const bool      drag_vid    = ( this->m_drag_vid > 0 );
+    //  if (drag_vid) {
+    //      this->S.labelf("drag_vid:", LABEL_W, WIDGET_W);             //  1.1A.   this->m_dragging.
+    //      ImGui::Text("%u", this->m_drag_vid );
+    //  }
+                
+                
+                
+                
+    if (misc_1)     { this->_DEBUGGER_misc_1      (LABEL_W, WIDGET_W); }
+    if (misc_2)     { this->_DEBUGGER_misc_2      (LABEL_W, WIDGET_W); }
+    
+
+    return;
+}
+
+
+// *************************************************************************** //
+//      MISC UTILITIES...
+// *************************************************************************** //
+
+inline void Editor::_DEBUGGER_misc_1(const float LABEL_W, const float WIDGET_W) const noexcept
+{
+    //      1.      QUERY...
+    //
+    //              1.1.      "this"...
+    ImGui::TextDisabled("this");
+    //
+    this->S.labelf("this->m_dragging:", LABEL_W, WIDGET_W);             //  1.1A.   this->m_dragging.
+    S.print_TF( this->m_dragging );
+    //
+    this->S.labelf("this->m_drag_vid > 0:", LABEL_W, WIDGET_W);         //  1.1B.   this->m_drag_vid > 0.
+    S.print_TF( (this->m_drag_vid > 0) );
+    //
+    this->S.labelf("this->m_dragging_handle:", LABEL_W, WIDGET_W);      //  1.1C.   this->m_dragging_handle.
+    S.print_TF( this->m_dragging_handle );
+    
+    
+    
+    //              1.3.      "m_boxdrag" OBJECT...
+    ImGui::TextDisabled("m_movedrag");
+    //
+    this->S.labelf(".active:", LABEL_W, WIDGET_W);
+    S.print_TF( this->m_movedrag.active );
+    
+    
+    
+    //              1.4.      "m_boxdrag" OBJECT...
+    ImGui::TextDisabled("m_boxdrag");
+    //
+    this->S.labelf(".view.hover_idx.has_value():", LABEL_W, WIDGET_W);
+    S.print_TF( this->m_boxdrag.view.hover_idx.has_value() );
+    
+    
+
+    return;
+}
+
+
+//  "_DEBUGGER_misc_2"
+//
+inline void Editor::_DEBUGGER_misc_2(const float LABEL_W, const float WIDGET_W) const noexcept
+{
+
+    //      1.      PEN-TOOL STATE...
+    ImGui::TextDisabled("PenState");
+    //
+    this->S.labelf("active:",               LABEL_W, WIDGET_W);         //  1.1.      active.
+    S.print_TF( this->m_pen.active );
+    //
+    this->S.labelf("dragging_handle:",      LABEL_W, WIDGET_W);         //  1.2.      dragging_handle.
+    S.print_TF( this->m_pen.dragging_handle );
+    //
+    
+    
+    this->S.labelf("path_index:",           LABEL_W, WIDGET_W);         //  1.2.      path_index.
+    ImGui::Text( "%zu", this->m_pen.path_index );
+    //
+    this->S.labelf("last_vid:",             LABEL_W, WIDGET_W);         //  1.3.      last_vid.
+    ImGui::Text( "%zu", this->m_pen.last_vid );
+    
+    
+    //ImGui::NewLine();
+    
+    
+    //this->S.labelf("pending_vid:",      LABEL_W, WIDGET_W);             //  2.1.      pending_vid.
+    //S.print_TF( this->m_pen.pending_vid );
+    
+    
+    
+    
+    
+/*
+
+struct PenState_t {
+    bool            active                  = false;
+//
+    size_t          path_index              = static_cast<size_t>(-1);
+    VID             last_vid                = 0;
+
+    bool            dragging_handle         = false;
+    bool            dragging_out            = true;     // NEW: true → out_handle, false → in_handle
+    VID             handle_vid              = 0;
+
+    bool            prepend                 = false;
+    bool            pending_handle          = false;        // waiting to see if user drags
+    VID             pending_vid             = 0;            // vertex that may get a handle
+    float           pending_time            = 0.0f;
+};
+
+
+*/
+
+    return;
+}
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "NEW DEBUGGER".
 
 
 
@@ -338,9 +551,11 @@ inline bool Editor::GetOpenMenuNames(std::string & menu_buffer) const noexcept
 
 
 // *************************************************************************** //
+//
+//
+//      OLD DEBUGGER STUFF...
 // *************************************************************************** //
-
-
+// *************************************************************************** //
 
 //  "_debugger_hit_detection"
 //
@@ -516,37 +731,47 @@ void Editor::_debugger_more_info(void)
 //
 void Editor::_draw_selection_resident(void)
 {
-    const size_t        N_vertices      = m_sel.vertices.size();
-    const size_t        N_points        = m_sel.points.size();
-    const size_t        N_paths         = m_sel.paths.size();
+    const size_t        N_paths         = m_sel.paths       .size();
+    const size_t        N_vertices      = m_sel.vertices    .size();
+    const size_t        N_points        = m_sel.points      .size();
+    //
+    const bool          has_paths       = ( N_paths > 0     );
+    const bool          has_vertices    = ( N_vertices > 0  );
+    const bool          has_points      = ( N_points > 0    );
+    const uint8_t       total_count     = ( static_cast<uint8_t>(has_paths + has_vertices + has_points) );
+    
+    S.PushFont(Font::Small);
+    
     
     
     //      1.      HEADER CONTENT...
-    S.PushFont(Font::FootNote);
+    ImGui::TextColored( this->S.SystemColor.Blue, ICON_FA_OBJECT_GROUP );
+    ImGui::SameLine(0.0f, 12.0f);
+    
+    
+    
+    //      2.      SELECTION INFO CONTENT...
+    //                  CASE 1 :    PATHS...
+    if ( has_paths ) {
+        ImGui::Text("%zu %s", N_paths,      (N_paths == 1)      ? "Path"    : "Paths"       );
+        if ( total_count > 1 )      { ImGui::SameLine(); }
+    }
     //
+    //                  CASE 2 :    VERTICES...
+    if ( has_paths ) {
+        ImGui::Text("%zu %s", N_vertices,   (N_vertices == 1)   ? "Vertex"  : "Vertices"    );
+        if ( has_points )           { ImGui::SameLine(); }
+    }
     //
-        ImGui::TextDisabled("Selection:");
-        //
-        ImGui::SameLine(0.0f, 8.0f);
-        //
-        ImGui::Text("Paths: %zu.  Points: %zu.  Vertices: %zu.", N_paths, N_points, N_vertices);
-    //
-    //
-    S.PopFont();
+    //                  CASE 3 :    POINTS...
+    if ( has_points ) {
+        ImGui::Text("%zu %s", N_points,     (N_points == 1)     ? "Point"   : "Points"      );
+    }
     
     
     
 
-    //      2.      BODY CONTENT...
-    ImGui::Separator();
-    S.PushFont(Font::Small);
-    //
-        //
-        //              ...
-        //
-    //
     S.PopFont();
-    
     
     return;
 }

@@ -151,24 +151,28 @@ void Editor::_add_point(ImVec2 w)
 //
 void Editor::_erase_vertex_and_fix_paths(VertexID vid)
 {
-    //  1.  Remove vertex record.
+    //      1.      Remove vertex record.
     m_vertices.erase(std::remove_if(m_vertices.begin(), m_vertices.end(),
                     [vid](const Vertex& v){ return v.id == vid; }),
                     m_vertices.end());
 
-    //  2.  Update every path using the new member helper.
+
+    //      2.      Update every path using the new member helper.
     for (size_t i = 0; i < m_paths.size(); /* ++i inside */)
     {
-        if (!m_paths[i].remove_vertex(vid))
+        if ( !m_paths[i].remove_vertex(vid) )
             m_paths.erase(m_paths.begin() + static_cast<long>(i)); // drop path
-        else
-            ++i;
+        else    { ++i; }
     }
 
-    //  3.  Drop glyphs referencing the vertex.
+
+    //      3.      Drop glyphs referencing the vertex.
+#ifndef _EDITOR_DELETE_POINTS
     m_points.erase(std::remove_if(m_points.begin(), m_points.end(),
                    [vid](const Point& pt){ return pt.v == vid; }),
                    m_points.end());
+#endif  //  _EDITOR_DELETE_POINTS  //
+
     return;
 }
 

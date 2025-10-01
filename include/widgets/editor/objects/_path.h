@@ -93,9 +93,30 @@ namespace path { //     BEGINNING NAMESPACE "cb"...
 //      1.      DEFINE EACH "KIND" OF PATH...
 // *************************************************************************** //
 
-//  "PathKind"
+//  "PathState"
 //
-enum class PathKind : uint8_t {
+enum class PathState : uint8_t {
+      None = 0
+//
+    , Edge
+    , Surface
+    , Object    //  "All"  [ OBJECT = "EDGE" + "SURFACE" ].
+//
+    , COUNT
+};
+
+//  "DEF_PATH_STATE_NAMES"
+static constexpr cblib::EnumArray< PathState, const char * >
+DEF_PATH_STATE_NAMES     = {
+      "None"
+    , "Edge"    , "Surface"     , "Object"
+};
+
+
+
+//  "PayloadType"
+//
+enum class PayloadType : uint8_t {
     None = 0,
     Generic,
 //
@@ -105,17 +126,14 @@ enum class PathKind : uint8_t {
 //
     COUNT
 };
-
-//  "PATH_KIND_NAMES"
 //
-static constexpr std::array<const char *, static_cast<size_t>(PathKind::COUNT)>
-DEF_PATH_KIND_NAMES                     = {
-    "None",
-    "Generic",
-    "Source", "Boundary Condition", "Dielectric"
+//  "DEF_PATH_PAYLOAD_NAMES"
+static constexpr cblib::EnumArray< PayloadType, const char * >
+DEF_PATH_PAYLOAD_NAMES      = {
+      "None"
+    , "Generic"
+    , "Source"      , "Boundary Condition"      , "Dielectric"
 };
-
-
 
 
 
@@ -592,7 +610,7 @@ inline void from_json(const nlohmann::json & j, PathStyle & s)
 //      back to the first. Vertices carry their own Bézier handles; this struct
 //      only stores ordering and style.
 //
-template< ObjectCFGTraits CFG, typename V >
+template< ObjectCFGTraits CFG, typename V_ >
 struct Path_t
 {
 //      0.          CONSTANTS AND ALIASES...
@@ -612,10 +630,14 @@ public:
     using                               size_type                               = container_type::size_type;
     using                               iterator                                = typename container_type::iterator;
     //
-    using                               Vertex                                  = V;
-    using                               Path                                    = Path_t<CFG, V>;
+    //                              OBJECT TYPES:
+    using                               Vertex                                  = V_;
+    using                               Path                                    = Path_t<CFG, Vertex>;
     using                               Payload                                 = path::Payload;
-    using                               PathKind                                = path::PathKind;
+    //
+    //                              ENUM TYPES:
+    using                               PathState                               = path::PathState;
+    using                               PayloadType                             = path::PayloadType;
     
     // *************************************************************************** //
     //
@@ -646,6 +668,8 @@ public:
     //                          CORE:
     // *************************************************************************** //
     container_type                  verts;   // ordered anchor IDs
+    //
+    //  PathState                       state                           = PathState::None;
     path_id                         id                              = 0;
     bool                            closed                          = false;
     PathStyle                       style                           = PathStyle();
@@ -667,7 +691,7 @@ public:
     // *************************************************************************** //
     //                          NEW-ER:
     // *************************************************************************** //
-    PathKind                        kind                            = PathKind::None;
+    PayloadType                     payload_type /*kind*/           = PayloadType::None;
     Payload                         payload                         {   };
     
 //
@@ -705,10 +729,10 @@ public:
     // *************************************************************************** //
 
     //  "IsSelectable"
-    [[nodiscard]] inline bool           IsSelectable                    (void) const noexcept           { return ( this->visible  &&  !this->locked ); }
+    [[nodiscard]] inline bool           IsSelectable                    (void) const noexcept           { return ( this->visible  &&  !this->locked );  }
 
     //  "IsMutable"
-    [[nodiscard]] inline bool           IsMutable                       (void) const noexcept           { return ( this->visible  &&  !this->locked ); }
+    [[nodiscard]] inline bool           IsMutable                       (void) const noexcept           { return ( this->visible  &&  !this->locked );  }
     
     
     
@@ -717,6 +741,12 @@ public:
     
     //  "IsArea"
     [[nodiscard]] inline bool           IsArea                          (void) const noexcept           { return ( (this->closed)  &&  (this->verts.size() >= 3) ); }
+    
+    
+    
+    
+    //  "IsLocked"
+    [[nodiscard]] inline bool           IsLocked                        (void) const noexcept           { return ( this->locked );                      }
     
     //  "IsVisible"
     [[nodiscard]] inline bool           IsVisible                       (void) const noexcept           { return ( (this->visible) ); }
@@ -783,9 +813,18 @@ public:
     // *************************************************************************** //
     
     //  "remove_vertex"
-    inline bool                         remove_vertex                       (vertex_id vid) noexcept {
-        verts.erase(std::remove(verts.begin(), verts.end(), vid), verts.end());
-        if ( closed && verts.size() < 3 )     { closed = false; }     // cannot stay a polygon
+    inline bool                         remove_vertex                       (vertex_id vid) noexcept
+    {
+        const size_t        N       = this->size();
+    
+        //      CASE 0 :    PREVENT DELETION OF PATH WITH ONLY 1 VERTEX...
+        if ( N <= 1 )   { return false; }
+    
+    
+        verts.erase( std::remove(verts.begin(), verts.end(), vid), verts.end() );
+        
+        if ( closed && (verts.size() < 3) )     { closed = false; }     // cannot stay a polygon
+
 
         return ( verts.size() >= 2 );
     }
@@ -1028,15 +1067,6 @@ public:
     //      UTILITY FUNCTIONS.
     // *************************************************************************** //
     
-    //  "SegmentIsCurved"
-    [[nodiscard]] static inline bool    SegmentIsCurved                     (const Vertex & p0, const Vertex & p1) noexcept
-        { return  ( !p0.IsOutLinear()  &&  !p1.IsInLinear() ); }
-    
-    //  "SegmentIsLinear"
-    [[nodiscard]] static inline bool    SegmentIsLinear                     (const Vertex & p0, const Vertex & p1) noexcept
-        { return  ( p0.IsOutLinear()  &&  p1.IsInLinear() ); }
-    
-    
     //  "_truncate_label"
     inline void                         _truncate_label                     (void)
         { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
@@ -1054,16 +1084,17 @@ public:
     
     
     //  "make_default_payload"
-    static inline Payload               make_default_payload                (const PathKind k)
+    static inline Payload               make_default_payload                (const PayloadType k)
     {
         switch (k)
         {
-            case PathKind::Generic :        { return path::GenericPayload       {   };          }   //  default-constructed
+            case PayloadType::Generic    :      { return path::GenericPayload       {   };          }   //  default-constructed
             //
-            case PathKind::Boundary :       { return path::BoundaryPayload      {   };          }
-            case PathKind::Source :         { return path::SourcePayload        {   };          }
-            case PathKind::Dielectric :     { return path::DielectricPayload    {   };          }
-            default:                        { break;                                            }   //  PathKind::None or unknown
+            case PayloadType::Boundary   :      { return path::BoundaryPayload      {   };          }
+            case PayloadType::Source     :      { return path::SourcePayload        {   };          }
+            case PayloadType::Dielectric :      { return path::DielectricPayload    {   };          }
+        //
+            default                      :      { break;                                            }   //  PayloadType::None or unknown
         }
         
         return ( std::monostate{   } );     //     no extra data
@@ -1100,8 +1131,8 @@ public:
         //  Build the pixel-space outline by walking each segment (a -> b)
         for (size_t i = 0; i < N; ++i)
         {
-            const V *       a           = callbacks.get_vertex(     callbacks.vertices,      static_cast<vertex_id>( this->verts[i]            )   );
-            const V *       b           = callbacks.get_vertex(     callbacks.vertices,      static_cast<vertex_id>( this->verts[(i + 1) % N]  )   );
+            const Vertex *      a       = callbacks.get_vertex(     callbacks.vertices,      static_cast<vertex_id>( this->verts[i]            )   );
+            const Vertex *      b       = callbacks.get_vertex(     callbacks.vertices,      static_cast<vertex_id>( this->verts[(i + 1) % N]  )   );
             if ( !a || !b )             { continue; }
 
 
@@ -1145,8 +1176,22 @@ public:
     {
         const size_t        N			    = this->verts.size();
 
-        for (size_t i = 0; i + 1 < N; ++i)  { this->_draw_segment(i, ctx);      }   //  Open chain.
-        if ( this->closed )                 { this->_draw_segment(N - 1, ctx);  }   //  Close the loop if needed.
+        for (size_t i = 0; i + 1 < N; ++i)  { this->_draw_segment   (i,         this->style,    ctx);   }   //  Open chain.
+        if ( this->closed )                 { this->_draw_segment   (N - 1,     this->style,    ctx);   }   //  Close the loop if needed.
+        
+        return;
+    }
+    
+    
+    
+    //  "render_highlight"
+    template<class CTX>
+    inline void	                        render_highlight                    (const PathStyle & style_, const CTX & ctx) const noexcept
+    {
+        const size_t        N			    = this->verts.size();
+
+        for (size_t i = 0; i + 1 < N; ++i)  { this->_draw_segment   (i,         style_,     ctx);   }   //  Open chain.
+        if ( this->closed )                 { this->_draw_segment   (N - 1,     style_,     ctx);   }   //  Close the loop if needed.
         
         return;
     }
@@ -1160,7 +1205,7 @@ public:
         const auto &	    cbacks		    = ctx.callbacks;
         for (const vertex_id vid : this->verts)
         {
-            const V * v	= cbacks.get_vertex( cbacks.vertices, vid );
+            const Vertex *  v	= cbacks.get_vertex( cbacks.vertices, vid );
             if ( !v )		{ continue; }
 
             v->render(style_);
@@ -1175,7 +1220,7 @@ public:
         const auto &	    cbacks		    = ctx.callbacks;
         for (const vertex_id vid : this->verts)
         {
-            const V * v	= cbacks.get_vertex( cbacks.vertices, vid );
+            const Vertex *  v	= cbacks.get_vertex( cbacks.vertices, vid );
             if ( !v )		{ continue; }
 
             v->render_all(style_);
@@ -1196,7 +1241,7 @@ public:
     //      Local helper: draw one segment a -> b (straight or cubic)
     //
     template<class CTX>
-    inline void	                        _draw_segment                       (const size_t si, const CTX & ctx) const noexcept
+    inline void	                        _draw_segment                       (const size_t si, const PathStyle & style_, const CTX & ctx) const noexcept
     {
         ImDrawList *    dl          = ctx.args.dl;
         ImVec2          P0, P1, P2, P3;  // WORLD-space cubic control points via your existing helper
@@ -1220,8 +1265,8 @@ public:
         if (linear)
         {
             dl->AddLine(A, B,
-                        this->style.stroke_color,
-                        this->style.stroke_width);
+                        style_.stroke_color,
+                        style_.stroke_width);
             return;
         }
 
@@ -1257,8 +1302,8 @@ public:
                     // Direct Quadratic call (3 control points: A, C, B)
                     dl->AddBezierQuadratic(
                         A, C, B,
-                        this->style.stroke_color,
-                        this->style.stroke_width,
+                        style_.stroke_color,
+                        style_.stroke_width,
                         segs
                     );
                     return;
@@ -1266,18 +1311,18 @@ public:
             }
         }
 
-        // Default: Cubic (existing behavior with P1/P2)
+        //  Default:    Cubic (existing behavior with P1/P2)
         {
-            const ImVec2 Q1 = ctx.callbacks.ws_to_px(P1);
-            const ImVec2 Q2 = ctx.callbacks.ws_to_px(P2);
-            const int    segs = (ctx.args.bezier_segments > 0)
+            const ImVec2    Q1      = ctx.callbacks.ws_to_px(P1);
+            const ImVec2    Q2      = ctx.callbacks.ws_to_px(P2);
+            const int       segs    = (ctx.args.bezier_segments > 0)
                 ? ctx.args.bezier_segments
                 : 0; // 0 = ImGui auto
 
             dl->AddBezierCubic(
                 A, Q1, Q2, B,
-                this->style.stroke_color,
-                this->style.stroke_width,
+                style_.stroke_color,
+                style_.stroke_width,
                 segs
             );
         }
@@ -1334,7 +1379,7 @@ public:
     inline void                         ui_all                              (void)
     {
         using namespace path;
-        if ( this->ui_kind() )        { /*    "kind" was changes.     */ }
+        if ( this->ui_payload_type() )        { /*    "kind" was changes.     */ }
         
         //  2.  CALL THE "PROPERTIES UI" FOR THE
         std::visit([&](auto & pl)
@@ -1365,16 +1410,16 @@ public:
         return;
     }
     
-    //  "ui_kind"
-    inline bool                         ui_kind                             (void)
+    //  "ui_payload_type"
+    inline bool                         ui_payload_type                     (void)
     {
-        bool    modified    = false;
-        int     kind_idx    = static_cast<int>(this->kind);
-        if (( modified = ImGui::Combo("##Path_UIInternal_Kind",             &kind_idx,
-                                      path::DEF_PATH_KIND_NAMES.data(),     static_cast<int>(PathKind::COUNT)) ))
+        bool    modified            = false;
+        int     payload_t_idx       = static_cast<int>(this->payload_type);
+        if (( modified = ImGui::Combo("##Path_UIInternal_PayloadType",          &payload_t_idx,
+                                      path::DEF_PATH_PAYLOAD_NAMES.data(),      static_cast<int>(PayloadType::COUNT)) ))
         {
-            this->kind          = static_cast<PathKind>(kind_idx);
-            this->payload       = make_default_payload(this->kind);     // << reset payload
+            this->payload_type  = static_cast<PayloadType>(payload_t_idx);
+            this->payload       = make_default_payload(this->payload_type);     // << reset payload
         }
         
         return modified;
@@ -1410,16 +1455,17 @@ template< ObjectCFGTraits CFG, typename V >
 inline void to_json(nlohmann::json & j, const Path_t<CFG, V> & p)
 {
     j={
-        { "verts"               , p.verts                           },
-        { "id"                  , p.id                              },
-        { "closed"              , p.closed                          },
-        { "style"               , p.style                           },
-        { "z_index"             , p.z_index                         },
-        { "locked"              , p.locked                          },
-        { "visible"             , p.visible                         },
-        { "label"               , p.label                           },
-        { "kind"                , static_cast<uint8_t>( p.kind )    }
+        { "verts"               , p.verts                                   },
+        { "id"                  , p.id                                      },
+        { "closed"              , p.closed                                  },
+        { "style"               , p.style                                   },
+        { "z_index"             , p.z_index                                 },
+        { "locked"              , p.locked                                  },
+        { "visible"             , p.visible                                 },
+        { "label"               , p.label                                   },
+        { "payload_type"        , static_cast<uint8_t>( p.payload_type )    }
     };
+    
     
     //if ( !std::holds_alternative<std::monostate>(p.payload) )   { j["payload"] = p.payload; }   // Serialises only non-empty payload.
     if ( !std::holds_alternative<std::monostate>(p.payload) ) {
@@ -1444,58 +1490,58 @@ inline void to_json(nlohmann::json & j, const Path_t<CFG, V> & p)
 template< ObjectCFGTraits CFG, typename V >
 inline void from_json(const nlohmann::json & j, Path_t<CFG, V> & p)
 {
-    using   namespace       path;
-    bool    has_kind        = j.contains("kind");
-    bool    has_payload     = j.contains("payload");
-    bool    invalid         = has_kind != has_payload;
+    using       namespace               path;
+    bool        has_payload_type        = j.contains("payload_type");
+    bool        has_payload             = j.contains("payload");
+    bool        invalid                 = has_payload_type != has_payload;
 
     //  1.      ID...
-    if ( j.contains("id") )         { j.at("id").get_to(p.id);              }
-    else                            { p.id = 0;                             }
+    if ( j.contains("id") )                 { j.at("id").get_to(p.id);              }
+    else                                    { p.id = 0;                             }
     
     //  2.      LABEL...
-    if ( j.contains("label") )      { j.at("label").get_to(p.label);        }
-    else                            { p.set_label("?");                                                 }
+    if ( j.contains("label") )              { j.at("label").get_to(p.label);        }
+    else                                    { p.set_label("?");                                                 }
     
     //  3.      Z-INDEX...
-    if ( j.contains("z_index") )    { j.at("z_index").get_to(p.z_index);                                }
-    else                            { p.z_index = Z_FLOOR_USER;                                         }
+    if ( j.contains("z_index") )            { j.at("z_index").get_to(p.z_index);                                }
+    else                                    { p.z_index = Z_FLOOR_USER;                                         }
     
     //  4.      LOCKED...
-    if ( j.contains("locked") )     { j.at("locked").get_to(p.locked);                                  }
-    else                            { p.locked = false;                                                 }
+    if ( j.contains("locked") )             { j.at("locked").get_to(p.locked);                                  }
+    else                                    { p.locked = false;                                                 }
     
     //  5.      VISIBLE...
-    if ( j.contains("visible") )    { j.at("visible").get_to(p.visible);                                }
-    else                            { p.visible = true;                                                 }
+    if ( j.contains("visible") )            { j.at("visible").get_to(p.visible);                                }
+    else                                    { p.visible = true;                                                 }
     
     
     //  6A.     INVALID FORM OF OBJECT (Must have either BOTH a kind AND payload -- OR NEITHER)...
-    if ( invalid )                  { IM_ASSERT(true && "JSON loading error for typename<Path_t>:  object must have either (1) BOTH 'kind' AND 'payload', (2) NEITHER 'kind' NOR 'payload'."); }
+    if ( invalid )                          { IM_ASSERT(true && "JSON loading error for typename<Path_t>:  object must have either (1) BOTH 'kind' AND 'payload', (2) NEITHER 'kind' NOR 'payload'."); }
     //
-    //  6B.     GET "kind"...
-    if ( has_kind && !invalid)      { p.kind = static_cast<PathKind>( j.at("kind").get<uint8_t>() );    }
-    else                            { p.kind = PathKind::None;                                          }
+    //  6B.     GET "payload_type"...
+    if ( has_payload_type && !invalid)      { p.payload_type = static_cast<PayloadType>( j.at("payload_type").get<uint8_t>() );    }
+    else                                    { p.payload_type = PayloadType::None;                                          }
     //
     //  6C.     GET "payload"...
     if ( has_payload  &&  !invalid )
     {
         const auto & jp = j.at("payload");
 
-        switch (p.kind) {
-            case PathKind::Generic:
+        switch (p.payload_type) {
+            case PayloadType::Generic:
                 p.payload = jp.get<GenericPayload>();
                 break;
 
-            case PathKind::Source:
+            case PayloadType::Source:
                 p.payload = jp.get<SourcePayload>();
                 break;
 
-            case PathKind::Boundary:
+            case PayloadType::Boundary:
                 p.payload = jp.get<BoundaryPayload>();
                 break;
 
-            case PathKind::Dielectric:
+            case PayloadType::Dielectric:
                 p.payload = jp.get<DielectricPayload>();
                 break;
 

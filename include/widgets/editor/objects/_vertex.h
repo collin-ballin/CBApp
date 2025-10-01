@@ -449,7 +449,9 @@ struct BezierControl
     // *************************************************************************** //
     
     //  "_is_linear"
-    [[nodiscard]] inline bool           _is_linear                      (void) const noexcept           { return ( m_curvature_state == CurvatureState::None );     }
+    [[nodiscard]] inline bool           _is_linear                      (void) const noexcept           { return ( m_curvature_state == CurvatureState::None    );  }
+    //  [[nodiscard]] inline bool           _is_in_linear                   (void) const noexcept           { return ( m_curvature_state != CurvatureState::In      );  }
+    //  [[nodiscard]] inline bool           _is_out_linear                  (void) const noexcept           { return ( m_curvature_state != CurvatureState::Out     );  }
     [[nodiscard]] inline bool           _is_in_linear                   (void) const noexcept           { return ( m_curvature_state != CurvatureState::In  &&  m_curvature_state != CurvatureState::All  );    }
     [[nodiscard]] inline bool           _is_out_linear                  (void) const noexcept           { return ( m_curvature_state != CurvatureState::Out  &&  m_curvature_state != CurvatureState::All );    }
     
@@ -484,6 +486,9 @@ struct BezierControl
     //
     inline void                         _set_in_handle                  (const ImVec2 & ih_) & noexcept
     {
+        IM_ASSERT( this->kind != CurvatureType::Quadratic  &&  "Quadratic Bézier uses the \"OUT\" handle as the ONLY parameter" );
+        
+        
         switch (this->kind)
         {
             //      DEFAULT:    None.
@@ -510,11 +515,12 @@ struct BezierControl
         {
             //      DEFAULT:    None.
             default : {
-                this->out_handle = oh_;   this->_update_curvature_state();
+                this->out_handle = oh_;
                 break;
             }
         }
         
+        this->_update_curvature_state();
         return;
     }
     
@@ -543,6 +549,7 @@ struct BezierControl
     //  "_update_curvature_type"
     inline void                         _update_curvature_type          (void) const noexcept
     {
+        this->_update_curvature_state();
         return;
     }
     
@@ -557,11 +564,25 @@ struct BezierControl
         const bool          out_is_set      = ( !math::is_close( this->out_handle.x, 0.0f, GATE)  ||  !math::is_close( this->out_handle.y, 0.0f, GATE)  );
         const bool          both            = ( in_is_set  &&  out_is_set );
     
-    
-        if      ( both )            { this->m_curvature_state = CurvatureState::All;    }
-        else if ( in_is_set )       { this->m_curvature_state = CurvatureState::In;     }
-        else if ( out_is_set )      { this->m_curvature_state = CurvatureState::Out;    }
-        else                        { this->m_curvature_state = CurvatureState::None;   }
+        switch (this->kind)
+        {
+            //  CASE 1 :    QUADRATIC BÉZIER CURVE...
+            case CurvatureType::Quadratic :
+            {
+                if      ( out_is_set )      { this->m_curvature_state = CurvatureState::All;    }
+                break;
+            }
+            //
+            //  CASE 2 :    TREAT ALL OTHER CASES AS CUBIC BÉZIER...
+            default :
+            {
+                if      ( both )            { this->m_curvature_state = CurvatureState::All;    }
+                else if ( in_is_set )       { this->m_curvature_state = CurvatureState::In;     }
+                else if ( out_is_set )      { this->m_curvature_state = CurvatureState::Out;    }
+                else                        { this->m_curvature_state = CurvatureState::None;   }
+                break;
+            }
+        }
     
         return this->m_curvature_state;
     }
@@ -928,6 +949,9 @@ struct Vertex_t
     using                               CurvatureState                          = BezierControl::CurvatureState     ;
     using                               StyleData                               = BezierControl::StyleData          ;
     using                               HoverState                              = BezierControl::HoverState         ;
+    //
+    //                              OBJECT TYPES:
+    using                               Vertex                                  = Vertex_t<CFG>;
     
     
     
@@ -976,7 +1000,7 @@ struct Vertex_t
    
 // *************************************************************************** //
 //
-//      2.B.        INLINE FUNCTIONS...
+//      2.A.        MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
     
@@ -990,7 +1014,42 @@ struct Vertex_t
     inline void                         SetInHandle                     (const ImVec2 & ) && noexcept       = delete;
     inline void                         SetOutHandle                    (const ImVec2 & ) && noexcept       = delete;
     
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MEMBER FUNCTIONS".
+
     
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      STATIC FUNCTIONS.
+    // *************************************************************************** //
+           
+    //  "SegmentIsLinear"
+    [[nodiscard]] static inline bool    SegmentIsLinear                 (const ImVec2 & P0, const ImVec2 & P1, const ImVec2 & P2, const ImVec2 & P3) noexcept
+    {
+        namespace                   math        = cblib::math;
+        constexpr const float &     GATE        = BezierControl::ms_BEZIER_NUMERICAL_ERROR;
+        return ( math::is_close( P1.x, P0.x, GATE)  &&  math::is_close( P1.y, P0.y, GATE)  &&
+                 math::is_close( P2.y, P3.y, GATE)  &&  math::is_close( P2.y, P3.y, GATE) );
+    }
+           
+    //  "SegmentIsLinear"
+    [[nodiscard]] static inline bool    SegmentIsLinear                 (const Vertex & a, const Vertex & b) noexcept
+    {
+        return ( a.IsOutLinear()  &&  b.IsInLinear() );
+    }
+           
+    //  "SegmentIsCurved"
+    [[nodiscard]] static inline bool    SegmentIsCurved                 (const Vertex & a, const Vertex & b) noexcept
+    {
+        return ( !a.IsOutLinear()  ||  !b.IsInLinear() );
+    }
 
     // *************************************************************************** //
     //
@@ -1007,18 +1066,7 @@ struct Vertex_t
     //  "IsQuadratic"
     [[nodiscard]] inline bool           IsQuadratic                     (void) const noexcept               { return m_bezier._is_quadratic();              }
     [[nodiscard]] inline bool           IsCubic                         (void) const noexcept               { return m_bezier._is_cubic();                  }
-            
-    //  "SegmentIsLinear"
-    [[nodiscard]] static inline bool    SegmentIsLinear                 (const ImVec2 & P0, const ImVec2 & P1, const ImVec2 & P2, const ImVec2 & P3) noexcept
-    {
-        namespace                   math        = cblib::math;
-        constexpr const float &     GATE        = BezierControl::ms_BEZIER_NUMERICAL_ERROR;
-        return ( math::is_close( P1.x, P0.x, GATE)  &&  math::is_close( P1.y, P0.y, GATE)  &&
-                 math::is_close( P2.y, P3.y, GATE)  &&  math::is_close( P2.y, P3.y, GATE) );
-    }
     
-    
-
     // *************************************************************************** //
     //
     //

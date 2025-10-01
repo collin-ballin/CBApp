@@ -809,52 +809,61 @@ void Editor::_update_lasso(const Interaction & it)
     ImGuiIO &   io      = ImGui::GetIO();
     m_lasso_end         = io.MousePos;
 
-    // Visual feedback rectangle
+
+    //  Visual feedback rectangle
     it.dl->AddRectFilled(m_lasso_start, m_lasso_end, m_style.COL_LASSO_FILL);
     it.dl->AddRect      (m_lasso_start, m_lasso_end, m_style.COL_LASSO_OUT);
 
-    // Finalise on mouse-up
+
+    //  Finalise on mouse-up
     if ( !ImGui::IsMouseDown(ImGuiMouseButton_Left) )
     {
         // Screen → world conversion and rect normalisation
-        ImVec2 tl_scr{ std::min(m_lasso_start.x, m_lasso_end.x),
-                       std::min(m_lasso_start.y, m_lasso_end.y) };
-        ImVec2 br_scr{ std::max(m_lasso_start.x, m_lasso_end.x),
-                       std::max(m_lasso_start.y, m_lasso_end.y) };
-        ImVec2 tl_w = pixels_to_world(tl_scr);
-        ImVec2 br_w = pixels_to_world(br_scr);
-        if (tl_w.x > br_w.x) std::swap(tl_w.x, br_w.x);
-        if (tl_w.y > br_w.y) std::swap(tl_w.y, br_w.y);
+        ImVec2  tl_scr      { std::min(m_lasso_start.x, m_lasso_end.x),    std::min(m_lasso_start.y, m_lasso_end.y) };
+        ImVec2  br_scr      { std::max(m_lasso_start.x, m_lasso_end.x),    std::max(m_lasso_start.y, m_lasso_end.y) };
+        ImVec2  tl_w        = pixels_to_world(tl_scr);
+        ImVec2  br_w        = pixels_to_world(br_scr);
+        
+        if ( tl_w.x > br_w.x )      { std::swap(tl_w.x, br_w.x); }
+        if ( tl_w.y > br_w.y )      { std::swap(tl_w.y, br_w.y); }
 
         // Selection modifiers
         bool additive = io.KeyShift || io.KeyCtrl;
-        if (!additive) m_sel.clear();
+        if ( !additive )    { m_sel.clear(); }
+
 
         // ---------- Points ----------
         for (size_t i = 0; i < m_points.size(); ++i)
         {
             const Vertex* v = find_vertex(m_vertices, m_points[i].v);
-            if (!v) continue;
+            
+            if ( !v )                           { continue; }
 
             const Path * pp = parent_path_of_vertex(m_points[i].v);
-            if ( !pp || !pp->IsMutable() ) continue;          // NEW guard
+            
+            if ( !pp || !pp->IsMutable() )      { continue; }         // NEW guard
 
             bool inside = (v->x >= tl_w.x && v->x <= br_w.x &&
                            v->y >= tl_w.y && v->y <= br_w.y);
-            if (!inside) continue;
+                           
+                           
+            if ( !inside )                      { continue; }
+
 
             if (additive) {
-                if (!m_sel.points.erase(i)) m_sel.points.insert(i);
-            } else {
+                if ( !m_sel.points.erase(i) )   { m_sel.points.insert(i); }
+            }
+            else {
                 m_sel.points.insert(i);
             }
+    
         }
 
+
         // ---------- Lines ----------
-        auto seg_rect_intersect = [](ImVec2 a, ImVec2 b,
-                                     ImVec2 tl, ImVec2 br)->bool
+        auto seg_rect_intersect = [](ImVec2 a, ImVec2 b, ImVec2 tl, ImVec2 br) -> bool
         {
-            auto inside = [&](ImVec2 p){
+            auto inside = [&](ImVec2 p) {
                 return p.x >= tl.x && p.x <= br.x &&
                        p.y >= tl.y && p.y <= br.y;
             };
@@ -878,34 +887,38 @@ void Editor::_update_lasso(const Interaction & it)
                    intersect(a,b, br,bl) || intersect(a,b, bl,tl);
         };
 
+
         // ---------- Paths ----------
         for (size_t pi = 0; pi < m_paths.size(); ++pi)
         {
-            const Path& p = m_paths[pi];
-            if ( !p.IsMutable() )   { continue; }                      // NEW guard
+            const Path &        p           = m_paths[pi];
+            const size_t        N           = p.size();
+            bool                intersects  = false;
+            
+            
+            if ( !p.IsMutable() )       { continue; }   //  NEW guard
+            if ( N < 2 )                { continue; }
 
-            const size_t N = p.verts.size();
-            if (N < 2) continue;
-
-            bool intersects = false;
             for (size_t si = 0; si < N - 1 + (p.closed ? 1u : 0u); ++si)
             {
-                const Vertex* a = find_vertex(m_vertices, p.verts[si]);
-                const Vertex* b = find_vertex(m_vertices,
-                                              p.verts[(si+1)%N]);
-                if (!a || !b) continue;
-                if (seg_rect_intersect({a->x,a->y},
-                                       {b->x,b->y}, tl_w, br_w))
-                { intersects = true; break; }
+                const Vertex *  a   = find_vertex( m_vertices,   p.verts[si]                );
+                const Vertex *  b   = find_vertex( m_vertices,   p.verts[ (si+1) % N ]      );
+                
+                if ( !a || !b )     { continue; }
+                if (seg_rect_intersect( {a->x,a->y}, {b->x,b->y}, tl_w, br_w) )
+                    { intersects = true;    break; }
             }
-            if (!intersects) continue;
+            if ( !intersects )      { continue; }
+
 
             if (additive) {
-                if (!m_sel.paths.erase(pi)) m_sel.paths.insert(pi);
-            } else {
+                if ( !m_sel.paths.erase(pi) )   { m_sel.paths.insert(pi); }
+            }
+            else {
                 m_sel.paths.insert(pi);
             }
         }
+
 
         // Sync vertices and reset lasso state
         _rebuild_vertex_selection();

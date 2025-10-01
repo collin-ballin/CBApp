@@ -304,9 +304,11 @@ void Editor::_draw_vertex_panel(Path & path, [[maybe_unused]] const size_t pidx,
 void Editor::_draw_vertex_selector_column(Path & path, const size_t path_idx)
 {
     using                                       namespace               icon;
-    static constexpr ImGuiTableFlags            TABLE_FLAGS             = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
-    static constexpr ImGuiTableColumnFlags      C1_FLAGS                = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthStretch;
-    static constexpr ImGuiSelectableFlags       SELECTABLE_FLAGS        = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick;
+    using                                       IconAnchor              = utl::icon_widgets::Anchor;
+    constexpr ImGuiTableFlags                   TABLE_FLAGS             = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
+    constexpr ImGuiTableColumnFlags             C_VERTEX                = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthStretch;
+    constexpr ImGuiTableColumnFlags             C_DEL                   = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    constexpr ImGuiSelectableFlags              SELECTABLE_FLAGS        = ImGuiSelectableFlags_AllowDoubleClick; // ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick;
     //
     //
     //
@@ -338,11 +340,25 @@ void Editor::_draw_vertex_selector_column(Path & path, const size_t path_idx)
         BS.m_inspector_vertex_idx   = -1;
     }
     
+    
+    //      2.      IF PATH IS *NOT* MUTABLE, PREVENT EDITS...
+    if ( !path.IsMutable() ) {
+        ImGui::TextDisabled(
+              "%s %s paths"
+            , "Cannot modify vertices of "
+            , (path.IsLocked())
+                ? "Locked" : "Invisible"
+        );
+        return;
+    }
+    
+    
 
-    //  2.  BEGIN THE TABLE TO PRESENT EACH OBJECT...
-    if ( ImGui::BeginTable("##Editor_VertexBrowser_SelectorTable", 1, TABLE_FLAGS, ImVec2(0, -1)) )
+    //      3.      BEGIN THE TABLE TO PRESENT EACH OBJECT...
+    if ( ImGui::BeginTable("##Editor_VertexBrowser_SelectorTable", 2, TABLE_FLAGS, ImVec2(0, -1)) )
     {
-        ImGui::TableSetupColumn ("Selectable",         C1_FLAGS);
+        ImGui::TableSetupColumn     ("Vertex",          C_VERTEX                    );
+        ImGui::TableSetupColumn     ("Del",             C_DEL,          CELL_SZ     );
 
 
         clipper.Begin( N_vertices, -1 );
@@ -353,36 +369,63 @@ void Editor::_draw_vertex_selector_column(Path & path, const size_t path_idx)
         {
             for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
             {
-                char                        buffer [Vertex::ms_MAX_VERTEX_NAME_LENGTH]          = {  };
-                const bool                  selected        = ( row == BS.m_inspector_vertex_idx );
-                
-                
+                char            buffer [Vertex::ms_MAX_VERTEX_NAME_LENGTH]  = {  };
+                const bool      selected                                    = ( row == BS.m_inspector_vertex_idx );
                 std::snprintf(buffer, Vertex::ms_MAX_VERTEX_NAME_LENGTH, Vertex::ms_DEF_VERTEX_SELECTOR_FMT_STRING, row);
                 
                 
                 
-                //  4.  BEGIN THE ROW...
-                //  ImGui::PushID(i);
+                //      4.      BEGIN THE ROW...
                 ImGui::TableNextRow();
-                
-                //      4.1.        DRAW THE SELECTABLE WIDGET FOR THE VERTEX...
-                ImGui::TableSetColumnIndex(0);
-                if ( ImGui::Selectable( buffer, selected, SELECTABLE_FLAGS, {0.0f, 1.05f * CELL_SZ}) )
                 {
-                    BS.m_inspector_vertex_idx   = ( (selected)  ? -1    : row );      //     toggle
-                }
-                const bool                  hovered         = ImGui::IsItemHovered(ImGuiHoveredFlags_None);
                 //
-                //      4.2.        CACHE THIS VERTEX AS THE HOVERED OBJECT...
-                if ( hovered )
-                {
-                    //  m_hovered_vertex
-                    BS.m_hovered_vertex = { path_idx, row };
-                }
+                //
+                //              4.1.    DRAW THE SELECTABLE WIDGET FOR THE VERTEX.
+                    ImGui::TableSetColumnIndex(0);
+                    if ( ImGui::Selectable( buffer, selected, SELECTABLE_FLAGS, {0.0f, 1.05f * CELL_SZ}) )
+                    {
+                        BS.m_inspector_vertex_idx   = ( (selected)  ? -1    : row );      //     toggle
+                    }
+                    const bool      hovered             = ImGui::IsItemHovered(ImGuiHoveredFlags_None);
+                    
+                    
+                    //          4.2.    CACHE THIS VERTEX AS THE HOVERED OBJECT.
+                    if ( hovered )
+                    {
+                        //  m_hovered_vertex
+                        BS.m_hovered_vertex = { path_idx, row };
+                    }
                 
                 
-
-                //  ImGui::PopID();
+                    //          4.3.    "DELETE" BUTTON.
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::PushID( row );
+                    const bool      delete_vertex       = utl::IconButton(
+                          "##VertexBrowser_DeleteVertexButton"
+                        , this->S.SystemColor.Red
+                        , ICON_FA_SQUARE_XMARK   //  ICON_FA_DELETE_LEFT     // ICON_FA_SQUARE_MINUS      //  ICON_FA_CIRCLE_MINUS
+                        , 1.0f
+                        , IconAnchor::Center // IconAnchor::TextBaseline
+                        , {CELL_SZ, CELL_SZ}
+                    );
+                    ImGui::PopID();
+                    //
+                    //
+                    if ( delete_vertex )
+                    {
+                        //  VertexID        vid                 = path.verts[static_cast<size_t>(m_browser_S.m_inspector_vertex_idx)];
+                        VertexID        vid                 = path.verts[static_cast<size_t>(row)];
+    
+                        _erase_vertex_and_fix_paths         (vid);
+                        m_browser_S.m_inspector_vertex_idx  = -1;
+                        _rebuild_vertex_selection();
+                    }
+                    
+                    
+                //
+                //
+                //
+                }// END THIS ROW.
                 
                 
                 
@@ -450,11 +493,11 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
     }
 
 
-    //  1.  HEADER CONTENT...       "Vertex ID"
+    //      1.      HEADER CONTENT...       "Vertex ID"
     ImGui::SeparatorText(title);
 
 
-    //  2.  "DELETE" BUTTON...
+    //      2.      "DELETE" BUTTON...
     if ( ImGui::Button("Delete Vertex##Editor_VertexBrowser_DeleteVertexButton", {120,0}) )
     {
         _erase_vertex_and_fix_paths(vid);
@@ -463,7 +506,7 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
     }
     
     
-    //  3.  INVOKE FUNCTION TO DRAW REMAINING VERTEX PROPERTIES...
+    //      3.      INVOKE FUNCTION TO DRAW REMAINING VERTEX PROPERTIES...
     this->_draw_vertex_properties_panel( *v, callback );
     
     
@@ -704,13 +747,13 @@ inline void Editor::_draw_vertex_properties_panel(Vertex & v, const LabelFn & ca
 //
 void Editor::_draw_payload_panel(Path & path, [[maybe_unused]] const size_t pidx, const LabelFn & callback)
 {
-    const bool                          has_payload                 = path.kind != PathKind::None;
+    const bool                          has_payload                 = path.payload_type != PayloadType::None;
 
 
     S.DisabledSeparatorText("Payload");
     {
         callback("Type:");
-        path.ui_kind();
+        path.ui_payload_type();
         
         
         //  CASE 1 :    NO PAYLOAD TYPE...

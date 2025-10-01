@@ -761,9 +761,9 @@ void Editor::_draw_obj_selector_table(void)
                     {
                         if ( utl::IconButton(   "##Editor_Browser_ObjDeleteButton"
                                               , this->S.SystemColor.Red
-                                              , ICON_FA_DELETE_LEFT   //  ICON_FA_DELETE_LEFT     // ICON_FA_SQUARE_MINUS      //  ICON_FA_CIRCLE_MINUS
+                                              , ICON_FA_SQUARE_XMARK   //  ICON_FA_DELETE_LEFT     // ICON_FA_SQUARE_MINUS      //  ICON_FA_CIRCLE_MINUS
                                               , 1.0f
-                                              , IconAnchor::TextBaseline // IconAnchor::TextBaseline
+                                              , IconAnchor::South // IconAnchor::TextBaseline
                                               , {CELL_SZ, CELL_SZ} )
                         ) {
                             _erase_path_and_orphans(static_cast<PathID>(i));
@@ -845,8 +845,8 @@ inline void Editor::_draw_obj_selectable( Path & path, const int idx, const bool
     using                                   namespace           icon;
     static constexpr ImGuiInputTextFlags    TEXT_FLAGS          = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
     const ImGuiSelectableFlags              SEL_FLAGS           = ( mutable_path )
-                                                                    ? ( ImGuiSelectableFlags_AllowDoubleClick       )
-                                                                    : ( ImGuiSelectableFlags_Disabled               );
+                                                                    ? ( ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_SpanAllColumns     )
+                                                                    : ( ImGuiSelectableFlags_Disabled                                                   );
     //
     const ImU32                             col_text            = ImGui::GetColorU32(ImGuiCol_Text);
     const ImU32                             col_dim             = ImGui::GetColorU32(ImGuiCol_TextDisabled);

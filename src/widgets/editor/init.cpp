@@ -72,9 +72,9 @@ Editor::Editor(app::AppState & src)
     //      3.      INITIALIZE FUNCTIONS FOR DEBUGGER OVERLAY WINDOW...
     //  using               DebugItem                   = DebuggerState::DebugItem;
     this->m_debugger.windows    = { {
-          {   "State"         , true          , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_state           (); }       }
-        , {   "Canvas"        , false         , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_canvas          (); }       }
-        , {   "Misc."         , false         , DebuggerState::ms_FLAGS       , [this]{ this->_debugger_more_info       (); }       }
+          {   "State"         , true            , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_state           (); }       }
+        , {   "Canvas"        , false           , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_canvas          (); }       }
+        , {   "Misc."         , true            , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_misc            (); }       }
     } };
     //
     //  this->m_debugger.windows    = {{

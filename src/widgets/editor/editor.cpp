@@ -303,8 +303,8 @@ inline void Editor::_update_action(const Interaction & /* it */) noexcept
             }
             //      ACTION #3.2 :       GROUP       | SCALING A SELECTION.
             case Action::BBoxScale : {
-                //  switch_action   = ( this->m_boxdrag.active  &&  this->m_boxdrag.view.hover_idx.has_value() );
-                switch_action   = this->IsScalingSelection();
+                switch_action   = ( this->m_boxdrag.active  &&  this->m_boxdrag.view.hover_idx.has_value() );
+                //  switch_action   = this->IsScalingSelection();
                 break;
             }
             //
@@ -424,10 +424,13 @@ void Editor::Begin(const char * /*id*/)
             { ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); }
         
         
-        //          3.5.    MAIN BEHAVIORS  [ BLOCKED BY (SPACE) *OR* (NOT-HOVERING) ]...
-        if ( !space )       /* if ( !space  &&  it.hovered ) */
-        {
         
+        const bool enable_main_behavior     = ( !space );       //  ( !space  &&  it.hovered )
+        
+        
+        //          3.5.    MAIN BEHAVIORS  [ BLOCKED BY (SPACE) *OR* (NOT-HOVERING) ]...
+        if ( enable_main_behavior )       /* if ( !space  &&  it.hovered ) */
+        {
             //              3.5A.       PERFORM HIT-DETECTION.
             if ( it.hovered  &&  !(m_dragging || m_boxdrag.active) )    //  ignore while dragging selection.
                 { this->_MECH_hit_detection(it); }
@@ -448,6 +451,11 @@ void Editor::Begin(const char * /*id*/)
         
             //              3.5D.       MODE/STATE/TOOL DISPATCHER...
             this->_MECH_dispatch_tool_handler(it);
+            
+        
+            //              3.5E.       ACTION-TYPE DISPATCHER...
+            this->_MECH_dispatch_action(it);
+            
         }
         
 
@@ -458,19 +466,15 @@ void Editor::Begin(const char * /*id*/)
         //          3.7.    SHOW TOOLTIP...
         if ( this->m_tooltip.HasTooltip() )     { this->_MECH_show_tooltip_info(); }
         
-        
-        
     //
     //
     //
     }// END "IMPLOT".
-    //
-    //
-    //
+    
+    
+    
     ImPlot::EndPlot();
     ImPlot::GetInputMap() = backup;   // restore map
-    
-    
     
     return;
 }
@@ -745,6 +749,42 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
         /* cursor      */ ImGui::GetIO().MousePos,
         /* full rect   */ ES.m_plot_bbox
     );
+
+    return;
+}
+
+
+//  "_MECH_dispatch_action"
+//
+inline void Editor::_MECH_dispatch_action([[maybe_unused]] const Interaction & it) noexcept
+{
+
+    //      DISPATCH APPROPRIATE ACTION FOR THE CURRENT EVENT...
+    switch (this->m_action)
+    {
+        //      1.      TOOL---ACTIONS...
+        case Action::PenDraw    :       { break; }
+        case Action::ShapeDraw  :       { break; }
+        //
+        //
+        //      2.      MISC. ACTIONS...
+        case Action::LassoDrag  :       { break; }
+        case Action::HandleDrag :       { break; }
+        case Action::VertexDrag :       { break; }
+        //
+        //
+        //      3.      SELECTION ACTIONS...
+        case Action::BBoxDrag   :       { break; }
+        case Action::BBoxScale  :       { break; }
+        //
+        //
+        //
+        case Action::None       :
+        case Action::Invalid    :
+        default                 :       { break; }
+    }
+
+
 
     return;
 }

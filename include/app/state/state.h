@@ -404,6 +404,23 @@ public:
         ImGui::TextColored( color.value_or(this->SystemColor.White), "%s", text );
         return value;
     }
+
+    
+    // *************************************************************************** //
+    //
+    //
+    //
+    // *************************************************************************** //
+    //                      STATIC UTILITY FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "ConditionalTextf"
+    static inline bool                  ConditionalTextf            (const bool value, const char * fmt, ...) noexcept {
+        if ( !value )       { return value; }
+        va_list args;
+        va_start(args, fmt);    ImGui::TextV(fmt, args);    va_end(args);
+        return value;
+    }
     
 
     
