@@ -840,12 +840,12 @@ protected:
     //                              SELECTION RENDERING:
     void                                render_selection_highlight          (ImDrawList * , const RenderCTX & ) const noexcept;
     inline void                             _render_selection_objects       (const RenderCTX & ) const noexcept;  //  Helper for "render_selection_highlight"
-    inline void                             _render_selected_handles        (ImDrawList *) const noexcept;  //  Helper for "render_selection_highlight"
-    inline void                             _render_selection_bbox          (ImDrawList *) const noexcept;  //  Helper for "render_selection_highlight"
+    inline void                             _render_selected_handles        (ImDrawList * ) const noexcept;  //  Helper for "render_selection_highlight"
+    inline void                             _render_selection_bbox          (ImDrawList * ) const noexcept;  //  Helper for "render_selection_highlight"
     //
-    inline void                         _render_auxiliary_highlights        (ImDrawList *) const noexcept;   //  Helper for "render_selection_highlight"
-    inline void                             _auxiliary_highlight_object     (const Path & , ImDrawList *) const noexcept;
-    inline void                             _auxiliary_highlight_handle     (const Vertex & , ImDrawList *) const noexcept;
+    inline void                         _render_auxiliary_highlights        (const RenderCTX & ) const noexcept;   //  Helper for "render_selection_highlight"
+    inline void                             _auxiliary_highlight_object     (const Path & ,   const RenderCTX & ) const noexcept;
+    inline void                             _auxiliary_highlight_handle     (const Vertex & ) const noexcept;
     
     // *************************************************************************** //
     //

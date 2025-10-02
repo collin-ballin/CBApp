@@ -240,7 +240,7 @@ inline void Editor::_RENDER_highlights_channel([[maybe_unused]] std::span<const 
     //      X.      RENDER AUXILIARY HIGHLIGHTS  [ FROM BROWSER ]...
     if ( BS.HasAuxiliarySelection() )
     {
-        _render_auxiliary_highlights( ctx.args.dl );
+        _render_auxiliary_highlights( ctx );
     }
 
 
@@ -683,6 +683,7 @@ void Editor::_render_points(ImDrawList * dl) const
 //
 void Editor::render_selection_highlight(ImDrawList * dl, const RenderCTX & ctx) const noexcept
 {
+/*
     //  const ImU32 &               col         = m_style.COL_SELECTION_OUT;
     const BrowserState &        BS          = this->m_browser_S;
 
@@ -696,11 +697,9 @@ void Editor::render_selection_highlight(ImDrawList * dl, const RenderCTX & ctx) 
     {
         _render_auxiliary_highlights(dl);
     }
-    
+*/
     return;
 }
-
-
 
 
 //  "_render_selected_objects"
@@ -1100,7 +1099,7 @@ inline void Editor::_render_selection_bbox(ImDrawList * dl) const noexcept
 
 //  "_render_auxiliary_highlights"
 //
-inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const noexcept
+inline void Editor::_render_auxiliary_highlights(const RenderCTX & ctx) const noexcept
 {
     const BrowserState &            BS              = this->m_browser_S;
     const int &                     pidx            = BS.m_hovered_obj;
@@ -1108,16 +1107,13 @@ inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const noexcept
     //
     const bool                      draw_object     = ( pidx >= 0 );
     const bool                      draw_handle     = ( (vidx.first >= 0)  &&  (vidx.second >= 0) );
-    //
-    this->PushVertexStyle( VertexStyleType::Highlight );
-    
     
     
     //      1.      RENDER THE OBJECT...
     if ( draw_object )
     {
         const Path & path   = this->m_paths[ static_cast<size_t>( pidx ) ];
-        _auxiliary_highlight_object(path, dl);
+        _auxiliary_highlight_object(path, ctx);
     }
     
     
@@ -1127,12 +1123,10 @@ inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const noexcept
         const Path &        v_path      = this->m_paths[ static_cast<size_t>(vidx.first) ];
         const VertexID      vid         = v_path.verts[ static_cast<size_t>(vidx.second) ];
         const Vertex *      v           = find_vertex_mut( m_vertices, vid );     IM_ASSERT( v != nullptr );
-        
-        _auxiliary_highlight_handle( *v, dl );
+        _auxiliary_highlight_handle( *v );
     }
     
     
-    this->PopVertexStyle();
     BS.ClearAuxiliarySelection();
     return;
 }
@@ -1140,8 +1134,33 @@ inline void Editor::_render_auxiliary_highlights(ImDrawList * dl) const noexcept
 
 //  "_auxiliary_highlight_object"
 //
-inline void Editor::_auxiliary_highlight_object(const Path & p, ImDrawList * dl) const noexcept
+inline void Editor::_auxiliary_highlight_object(const Path & path, const RenderCTX & ctx) const noexcept
 {
+    [[maybe_unused]] static const ImU32 &   hl_color    = this->m_style.AUX_HIGHLIGHT_COLOR;
+    static const float                      hl_width    = this->m_style.AUX_HIGHLIGHT_WIDTH;
+    static PathStyle                        hl_style    = {
+        /*  stroke_color    */        this->m_style.AUX_HIGHLIGHT_COLOR
+        /*  fill_color      */      , this->m_style.AUX_HIGHLIGHT_COLOR
+        /*  stroke_width    */      , this->m_style.AUX_HIGHLIGHT_WIDTH
+    };
+    this->PushVertexStyle( VertexStyleType::Highlight );
+    
+
+    //      1.      RENDER HIGHLIGHT FOR BROWSER-HOVERED OBJECT...
+    hl_style.stroke_width = path.style.stroke_width + hl_width;
+    //
+    path.render_highlight       (hl_style,  ctx                     );
+    path.render_vertices_all    (ctx,       this->m_vertex_style    );
+
+
+    this->PopVertexStyle();
+    return;
+}
+
+
+
+
+/*{
     const ImU32 &               col             = ImGui::GetColorU32(ImGuiCol_FrameBgHovered); //  .AUX_HIGHLIGHT_COLOR;
     const float &               w               = this->m_style.HIGHLIGHT_WIDTH;
     //  const ImU32 &               col         = m_style.AUX_HIGHLIGHT_COLOR;
@@ -1175,8 +1194,6 @@ inline void Editor::_auxiliary_highlight_object(const Path & p, ImDrawList * dl)
         }
     };
 
-
-
     for (size_t i = 0; i + 1 < N; ++i)
     {
         const Vertex *      a   = find_vertex(m_vertices, p.verts[i]);
@@ -1190,30 +1207,25 @@ inline void Editor::_auxiliary_highlight_object(const Path & p, ImDrawList * dl)
         draw_seg(a, b);
     }
     
-    
-    
     return;
-}
+}*/
+
+
+
 
 
 //  "_auxiliary_highlight_handle"
 //
-inline void Editor::_auxiliary_highlight_handle(const Vertex & v, ImDrawList * /*dl*/) const noexcept
+inline void Editor::_auxiliary_highlight_handle(const Vertex & v) const noexcept
 {
-    //  const ImU32 &               col             = ImGui::GetColorU32(ImGuiCol_FrameBgHovered);  //  m_style.AUX_HIGHLIGHT_COLOR;
-    //  const float &               w               = this->m_style.AUX_HIGHLIGHT_WIDTH;            //  p.style.stroke_width + 2.0f;
+    this->PushVertexStyle( VertexStyleType::Highlight );
     
     
     //      2.      DRAW HOVERED VERTEX...
     v.render_all( this->m_vertex_style );
     
     
-    
-    //  const ImVec2    a       = ws2px({ v.x, v.y });
-    //  draw_handle             ( v, v.out_handle, a );
-    //  draw_handle             ( v, v.in_handle,  a );
-    
-    
+    this->PopVertexStyle();
     return;
 }
 

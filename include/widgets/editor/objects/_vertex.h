@@ -192,6 +192,7 @@ struct VertexStyleData
 enum class VertexStyleType : uint8_t {
       Default = 0
     , Highlight
+    , AltHighlight
     , Drag
     , COUNT
 };
@@ -202,8 +203,8 @@ DEF_VERTEX_STYLES{
 {
     VertexStyleData     //  0.  DEFAULT:
     {
-        /*  vertex_radius       */ 6.50f,
-        /*  vertex_color        */ IM_COL32(0,       255,    0,         240),
+        /*  vertex_radius       */ 6.00f,
+        /*  vertex_color        */ IM_COL32(116,     140,    177,       255),
         /*  vertex_tesselation  */ 12,
         /*  handle_color        */ IM_COL32(215,     255,    0,         255),
         /*  handle_size         */ 5.50f,
@@ -212,16 +213,33 @@ DEF_VERTEX_STYLES{
         /*  line_color          */ IM_COL32(215,     255,    0,         170),
         /*  line_width          */ 1.50f,
         /*  hovered_color       */ IM_COL32(0,       0,    255,         255),
-        /*  hovered_size        */ 11.0f
+        /*  hovered_size        */ 10.0f
     },
 //
     VertexStyleData     //  1.  HIGHLIGHT:
+    {
+        /*  vertex_radius       */ 6.50f,
+        /*  vertex_color        */ IM_COL32(0,       255,    0,         240),
+    //
+        /*  vertex_tesselation  */ 15,
+        /*  handle_color        */ IM_COL32(255, 215, 0, 255),
+        /*  handle_size         */ 6.75f,
+        /*  handle_rounding     */ 0.00f,
+        /*  handle_thickness    */ 2.50f,
+    //
+        /*  line_color          */ IM_COL32(255, 215, 0, 255), //   cblib::utl::compute_shade( IM_COL32(255, 215, 0, 170), 0.15f ),
+        /*  line_width          */ 2.00f,
+        /*  hovered_color       */ IM_COL32(0,       255,       0,      255),
+        /*  hovered_size        */ 11.0f
+    },
+//
+    VertexStyleData     //  2.  ALTHIGHLIGHT (ALTERNATIVE HIGHLIGHT):
     {
         /*  vertex_radius       */ 8.00f,
         /*  vertex_color        */ IM_COL32(10,      255,    250,       240),
     //
         /*  vertex_tesselation  */ 15,
-        /*  handle_color        */ IM_COL32(255, 215, 0, 255), //   cblib::utl::compute_tint( IM_COL32(255, 215, 0, 255), 0.30f ),
+        /*  handle_color        */ IM_COL32(0, 0, 255, 255), //   cblib::utl::compute_tint( IM_COL32(255, 215, 0, 255), 0.30f ),
         /*  handle_size         */ 6.75f,
         /*  handle_rounding     */ 0.00f,
         /*  handle_thickness    */ 3.25f,
@@ -232,7 +250,7 @@ DEF_VERTEX_STYLES{
         /*  hovered_size        */ 12.0f
     },
 //
-    VertexStyleData     //  2.  DRAG:
+    VertexStyleData     //  3.  DRAG:
     {
         /*  vertex_radius       */ 6.50f,
         /*  vertex_color        */ IM_COL32(255,       0,    0,         240),
@@ -394,7 +412,9 @@ struct BezierControl
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr float              ms_BEZIER_NUMERICAL_ERROR               = 1e-6;
+    static constexpr float              ms_BEZIER_NUMERICAL_ERROR               = 1e-3;
+    static constexpr const char *       ms_SLIDER_FMT                           = "%.3f";
+    static constexpr ImGuiSliderFlags   ms_SLIDER_FLAGS                         = ImGuiSliderFlags_AlwaysClamp; //    ImGuiSliderFlags_None;
     
 //
 // *************************************************************************** //
@@ -438,6 +458,23 @@ struct BezierControl
     
     inline void                         _set_in_handle                  (const ImVec2 & ) && noexcept   = delete;
     inline void                         _set_out_handle                 (const ImVec2 & ) && noexcept   = delete;
+
+
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC INLINE FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "_reset_curvature"
+    //  inline void                         _reset_curvature                (void) noexcept       {
+    //      this->m_curvature_state     = CurvatureState::None;
+    //      this->in_handle             = {  };
+    //      this->out_handle            = {  };
+    //      return;
+    //  }
 
 
     
@@ -959,6 +996,7 @@ struct Vertex_t
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
     static constexpr ImPlotRect         ms_BEZIER_SLIDER_LIMITS                 = { -128.0f, 128.0f,     -128.0f, 128.0f };
+    //
     static constexpr const char *       ms_DEF_VERTEX_TITLE_FMT_STRING          = "Vertex V%03d (ID #%06u)";
     static constexpr const char *       ms_DEF_VERTEX_SELECTOR_FMT_STRING       = "V%03u";
     static constexpr size_t             ms_MAX_VERTEX_NAME_LENGTH               = 10ULL;
@@ -1219,14 +1257,20 @@ struct Vertex_t
     //
     //
     // *************************************************************************** //
-    //      UI HELPER FUNCTIONS.
+    //      STATIC---INLINE FUNCTIONS.
     // *************************************************************************** //
     
     //  "_s_draw_vertex_slider"
-    static inline bool                  _s_draw_vertex_slider               (const char *       label  , double &        value    , const float     speed,
-                                                                             const double &     min    , const double &  max      , const char *    fmt = "%.1f") noexcept
+    //
+    static inline bool                  _s_draw_vertex_slider           (   const char *                label
+                                                                          , double &                    value
+                                                                          , const float                 speed
+                                                                          , const double &              min
+                                                                          , const double &              max
+                                                                          , const char *                fmt     = BezierControl::ms_SLIDER_FMT
+                                                                          , const ImGuiSliderFlags      flags   = BezierControl::ms_SLIDER_FLAGS
+                                                                        ) noexcept
     {
-        constexpr ImGuiSliderFlags      flags               = ImGuiSliderFlags_None;
         constexpr int                   N                   = 1;
         bool                            dirty               = false;
         dirty = ImGui::DragScalarN(    label
@@ -1241,7 +1285,15 @@ struct Vertex_t
         );
         return dirty;
     };
-    
+        
+        
+        
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      UI---HELPER FUNCTIONS.
+    // *************************************************************************** //
     
     //  "ui_Position"
     inline bool                         ui_Position                         ( const double xmax, const double ymax, const double speedx, const double speedy ) noexcept

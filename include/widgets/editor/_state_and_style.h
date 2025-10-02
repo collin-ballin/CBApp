@@ -1188,8 +1188,16 @@ struct EditorStyle
     float                       DEFAULT_POINT_RADIUS            = 12.0f;                        // px
     //
     //
-    ImU32                       HIGHLIGHT_COLOR                 = IM_COL32(255,215,0,170);      // gold outline
-    float                       HIGHLIGHT_WIDTH                 = 6.0f;
+    //  SEL BLUE    = IM_COL32(0,       180,    255,    153);
+    //  GOLD        = IM_COL32(255,     215,    0,      127);
+    //  GOOD BLUE   = IM_COL32(97,      145,    224,    170);
+    //
+    //
+    ImU32                       HIGHLIGHT_COLOR                 = IM_COL32(0,       180,    255,    153);
+    float                       HIGHLIGHT_WIDTH                 = 4.0f;
+    ImU32                       AUX_HIGHLIGHT_COLOR             = IM_COL32(97,      145,    224,    170);
+    float                       AUX_HIGHLIGHT_WIDTH             = 8.0f;
+    //
     //
     //  ImU32                       AUX_HIGHLIGHT_COLOR             = IM_COL32(255,215,0,255);      // gold outline
     //  float                       AUX_HIGHLIGHT_WIDTH             = 6.0f;
@@ -1233,9 +1241,9 @@ struct EditorStyle
     ImU32                       COL_LASSO_FILL                  = IM_COL32(255,215,0,40);  // translucent fill
 //
 //                          BOUNDING BOX:
-    float                       SELECTION_BBOX_MARGIN_PX        = 12.0f;
+    float                       SELECTION_BBOX_MARGIN_PX        = 8.0f; //    12.0f;
     ImU32                       SELECTION_BBOX_COL              = IM_COL32(0, 180, 255, 153);   //  cyan-blue
-    float                       SELECTION_BBOX_TH               = 1.5f;
+    float                       SELECTION_BBOX_TH               = 2.5f;
     
 // *************************************************************************** //
 //

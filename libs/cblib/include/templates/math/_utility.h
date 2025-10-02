@@ -19,21 +19,31 @@
 
 #include <iostream>
 #include <type_traits>
-#include <algorithm>
+#include <algorithm>            //  std::max
 #if __cpp_concepts >= 201907L
-# include <concepts>
+# include <concepts>            //  std::floating_point
 #endif  //  C++20.  //
 
 #include <cstdint>
-#include <cmath>
+#include <cassert>
+
+#include <cmath>                //  std::abs, std::isnan, std::isinf, std::fpclassify, FP_ZERO
 #include <cstddef>
 #include <iomanip>
 
+
 #include <vector>
 #include <array>
+#include <stdexcept>            //  std::invalid_argument
 #if __cplusplus >= 201103L
 # include <initializer_list>
 #endif	//  C++11.  //
+	
+ 
+ 
+#ifndef _CBLIB_MATH_INTERNAL_H
+# include "templates/math/_internal.h"
+#endif	// _CBLIB_MATH_INTERNAL_H  //
 
 
 
@@ -43,7 +53,11 @@ namespace cblib { namespace math {   //     BEGINNING NAMESPACE "cblib" :: "math
 
 
 
-//  1.  GENERIC / GENERAL MATH STUFF...
+// *************************************************************************** //
+//
+//
+//
+//      1.      GENERIC / GENERAL MATH STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -53,44 +67,8 @@ namespace cblib { namespace math {   //     BEGINNING NAMESPACE "cblib" :: "math
 //      1.1     "round_to" Function.
 // *************************************************************************** //
 
-template<auto N, typename T>
-struct round_to_IMPL {
-    static T apply(T v) {
-        static_assert(std::is_floating_point_v<T>,
-                      "round_to only supports floating-point types");
-        T base = std::pow (T(10), N);
-        return std::ceil(v * base) / base;
-    }
-};
-
-//  — float specialization —
-template<auto N>
-struct round_to_IMPL<N, float> {
-    static float apply(float v) {
-        float base = std::powf(10.0f, static_cast<int>(N));
-        return std::ceilf(v * base) / base;
-    }
-};
-
-//  — double specialization —
-template<auto N>
-struct round_to_IMPL<N, double> {
-    static double apply(double v) {
-        double base = std::pow (10.0, static_cast<int>(N));
-        return std::ceil (v * base) / base;
-    }
-};
-
-//  — long double specialization —
-template<auto N>
-struct round_to_IMPL<N, long double> {
-    static long double apply(long double v) {
-        long double base = std::powl(10.0L, static_cast<long>(N));
-        return std::ceill(v * base) / base;
-    }
-};
-
-
+//  "round_to"
+//
 /// @fn [[nodiscard]] inline T round_to(const T value)
 /// @brief Rounds \p value *up* to \p N decimal places (or to the nearest power of ten if \p N is negative).
 ///
@@ -99,47 +77,33 @@ struct round_to_IMPL<N, long double> {
 /// @param value        The value to round.
 /// @return             The smallest \p T not less than \p value with \p N decimal digits, computed as  
 ///                     \f$\displaystyle\frac{\lceil\,\text{value}\times10^{N}\,\rceil}{10^{N}}\f$.
+//
 template<auto N, typename T>
-inline T round_to(T v) {
-    return round_to_IMPL<N, T>::apply(v);
+[[nodiscard]] inline T round_to(T v)
+{
+    return ::cblib::math::numerics::round_to_IMPL<N, T>::apply(v);
 }
 
 
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.1.  round_to".
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
 //
+//      1.2.    "is_close" Function.
 // *************************************************************************** //
-//      1.2     "is_close" Function.
 // *************************************************************************** //
-
-
-
-//  "default_rel_tol_v"
-//
-/// @decl           template<std::floating_point T> inline constexpr T default_rel_tol_v
-/// @brief          Precision-aware default relative tolerance used with \ref is_close.
-///
-/// @tparam T       A floating-point type (e.g. float, double).
-/// @var            default_rel_tol_v<T>
-///
-/// @details        Expands to yield a value that is appropriate for the precision afforded by each floating-point type parameter \p T :
-///                 - \c float          = \f$10^{-6}\f$
-///                 - \c double         = \f$10^{-9}\f$
-///                 - \c long\ double   = \f$10^{-12}\f$
-/// @note           This value is intended as the default for the \p rel_tol parameter of \ref is_close
-///                 to provide reasonable behavior across different floating-point precisions.
-/// @see            is_close
-//
-template <std::floating_point T>
-[[nodiscard]] constexpr T default_rel_tol(void) noexcept {
-    if constexpr      ( std::same_as<T, float> )            { return T(1e-6);   }   //  "float"             : 1e-6.
-    else if constexpr ( std::same_as<T, double> )           { return T(1e-9);   }   //  "double"            : 1e-9.
-    else if constexpr ( std::same_as<T, long double> )      { return T(1e-12);  }   //  "long double"       : 1e-12.
-//
-    else                                                    { return T(1e-6);   }   //  DEFAULT             : 1e-6.
-}
-
 
 //  "is_close"
 //
@@ -164,26 +128,40 @@ template <std::floating_point T>
 /// @see                cblib::default_rel_tol_v
 //
 template <std::floating_point T>
-[[nodiscard]] inline constexpr bool is_close( const T a,                            const T b,
-                                              T rel_tol = default_rel_tol<T>(),     T abs_tol = static_cast<T>(0) )
+[[nodiscard]] inline constexpr bool is_close(   const T     a
+                                              , const T     b
+                                              , T           rel_tol = ::cblib::math::numerics::default_rel_tol<T>()
+                                              , T           abs_tol = static_cast<T>(0) )
 {
-    //  CASE 0 :    INVALID USE OF THIS TEMPLATE...
+    const bool  a_inf   = std::isinf(a),
+                b_inf   = std::isinf(b);
+
+    //      CASE 0 :    INVALID USE OF THIS TEMPLATE...
     if ( (rel_tol < T(0))  ||  (abs_tol < T(0)) )
     {
         if ( std::is_constant_evaluated() )     { return false; }       //  constexpr-safe: no exceptions in constant evaluation.
-        throw std::invalid_argument("rel_tol and abs_tol must be non-negative");
+        throw std::invalid_argument("is_close: argument \"rel_tol\"  and  \"abs_tol\"  must be non-negative");
     }
 
 
-    //      1.      Early Exit for EXACT Equality (handles the cases of: "+0.0 vs. -0.0",  and  "+/- INF").
-    if ( a == b )                               { return true; }
 
-    //      2.      HANDLE NaN ARGUMENTS (NaNs are NEVER close).
-    if ( std::isnan(a) || std::isnan(b) )       { return false; }
-
-    //      3.      MIMIC BEHAVIOR OF THE PYTHON  "math.is_close(...)"  IMPLEMENTATION.
-    if ( std::isinf(a) || std::isinf(b) )       { return false; }
+    //      1.          NaNs ARE *NEVER* CLOSE...
+    if ( std::isnan(a)  ||  std::isnan(b) )     { return false; }
+ 
+    //      2.          EQUAL INF *ARE* CLOSE;   UNEQUAL INF *ARE NOT* CLOSE...
+    if ( a_inf  ||  b_inf ) {
+        if ( a_inf  &&  b_inf )     { return std::signbit(a) == std::signbit(b); }  //  Same sign infinities are considered equal (without FP ==).
+        return false;
+    }
     
+    //      3.          BOTH CASES OF ZERO (INCLUDING +0.0  vs  -0.0) ARE CLOSE.    USE CLASSIFICATION INSTEAD OF "FLOAT == " EQUALITY...
+    if ( (std::fpclassify(a) == FP_ZERO)  &&  (std::fpclassify(b) == FP_ZERO) )
+        { return true; }
+
+    //      4.          EXACT FINITE-BITWISE EQUALITY COMPARISON  [ AVOIDS "FLOAT == " ]...
+    if ( ::cblib::math::numerics::compare_IEEE754(a, b) )      { return true; }
+
+    //      5.          TOLERANCE EVALUATION.   MIMICS BEHAVIOR OF THE PYTHON  "math.is_close(...)"  IMPLEMENTATION...
     T       diff            = std::abs(a - b);
     T       scale           = std::max(std::abs(a), std::abs(b));
     T       bound           = std::max(rel_tol * scale, abs_tol);
@@ -229,6 +207,354 @@ tolerance_interval( const T  ref,                      // reference “b”
 
     return { low, high };
 }
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.2.  is_close".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      1.3.    "quantize" Function.
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "quantize"
+//
+//      Quantize  x  onto the lattice,  { origin + k * quantum,  where k | k ∈ ℤ }.
+//      Preconditions :     quantum > 0 (returns x unchanged if violated).
+//                          NaN / ±inf pass through unchanged.
+//
+template <std::floating_point T>
+[[nodiscard]] inline T                      quantize                (   T                       x
+                                                                      , T                       quantum
+                                                                      , T                       origin                  = T(0)
+                                                                     , ::cblib::math::numerics::RoundingMode  mode      = ::cblib::math::numerics::DEF_DEFAULT_ROUNDING_MODE ) noexcept
+{
+    using       namespace   ::cblib::math::numerics;
+
+    
+    if ( !_is_finite(x) || !_is_finite(quantum) || !_is_finite(origin) || !(quantum > T(0)) )   { return x; }
+
+
+
+    //      1.  MAP TO INDEX-SPACE (Integer Multiples);  ROUND VALUE;  MAP BACK TO VALUE-SPACE...
+    const T     n           = (x - origin) / quantum;       //  A.      n = (x - origin)/quantum
+    const T     k           = _round_integral(n, mode);     //  B.      k = round(n)
+    T           y           = origin + k * quantum;         //  C.      y = origin + k*quantum
+
+
+    //      2.  PRESERVE SIGNED-ZERO BY USING  sign_of( x - origin )...
+    if ( y == T(0) )    { y = std::copysign(T(0), x - origin); }
+
+    return y;
+}
+
+
+//  "quantize_inplace"
+//      "in-place" overload     [ returns the value via an OUT-PARAM ]...
+//
+template <std::floating_point T>
+inline void                                 quantize_inplace        (   T &                     x
+                                                                      , T                       quantum
+                                                                      , T                       origin      = T(0)
+                                                                     , ::cblib::math::numerics::RoundingMode  mode        = ::cblib::math::numerics::DEF_DEFAULT_ROUNDING_MODE ) noexcept
+{
+    x = quantize(x, quantum, origin, mode);
+}
+
+
+//  "quantize_decimals"
+//
+//      Quantize x to a given number of decimal digits.
+//      digits ≥ 0 → snap to 10^{-digits} (e.g., 3 → 0.001)
+//      digits < 0 → snap to powers of 10 (e.g., -1 → 10, -2 → 100)
+//
+template<std::floating_point T>
+[[nodiscard]] inline T                      quantize_decimals       (   T                       x
+                                                                      , int                     digits
+                                                                      , T                       origin      = T(0)
+                                                                     , ::cblib::math::numerics::RoundingMode  mode        = ::cblib::math::numerics::DEF_DEFAULT_ROUNDING_MODE ) noexcept
+{
+    using           namespace       ::cblib::math::numerics;
+    constexpr int   MAX_DEC         = 308; // ~double range; ok for float/ldbl as a soft guard
+    
+    //  Using std::pow at runtime; clamp extremes to avoid 0/inf quantum.
+    //  Note: for very large |digits|, pow may under/overflow; we guard mildly.
+    if ( digits >  MAX_DEC )        { digits =  MAX_DEC; }
+    if ( digits < -MAX_DEC )        { digits = -MAX_DEC; }
+
+    const T         q               = std::pow(T(10), T(-digits)); // works for ±digits
+    return quantize(x, q, origin, mode);
+}
+
+
+//  "quantize_decimals_inplace"
+//      "in-place" overload of "quantize"   [ returns the value via an OUT-PARAM ]...
+//
+template <std::floating_point T>
+inline void                                 quantize_decimals_inplace   ( T &                       x
+                                                                          , int                     digits
+                                                                          , T                       origin      = T(0)
+                                                                         , ::cblib::math::numerics::RoundingMode  mode        = ::cblib::math::numerics::DEF_DEFAULT_ROUNDING_MODE ) noexcept
+{
+    x = quantize_decimals(x, digits, origin, mode);
+}
+
+
+
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.3.  quantize".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MATH UTILITIES".
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      X.      SIMPLE COMPILE-TIME UNIT TESTS...
+// *************************************************************************** //
+// *************************************************************************** //
+namespace numerics_tests {//     BEGINNING NAMESPACE "numerics_tests"...
+
+
+
+// *************************************************************************** //
+//              X.0.    UTILITIES.
+// *************************************************************************** //
+
+#define     __NEVER_DEFINE_THIS__           1
+using       namespace                       ::cblib::math::numerics;
+using       Mode                            = RoundingMode;
+
+
+
+// *************************************************************************** //
+//              X.1.    "ROUND_TO" TESTS.
+// *************************************************************************** //
+
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "ROUND_TO TESTS".
+
+
+
+
+
+
+// *************************************************************************** //
+//              X.2.    "IS_CLOSE" TESTS.
+// *************************************************************************** //
+
+//  BATCH #1.   ALWAYS CONSTEXPR-SAFE, FINITE TESTS...
+/*
+static_assert(  is_close    (1.0        , 1.0                                       )   );          //  exact equality (finite)
+static_assert(  is_close    (+0.0       , -0.0                                      )   );          //  signed zeros considered equal
+static_assert(  is_close    (1000.0     , 1000.0000005      , 1e-9                  )   );          //  relative tol pass
+static_assert(  !is_close   (1000.0     , 1000.002          , 1e-9                  )   );          //  relative tol fail
+static_assert(  is_close    (1e-12      , 0.0               , 1e-9      , 1e-9      )   );          //  near zero requires abs_tol
+
+//              1.1.    symmetry.
+static_assert(  is_close    (1.2345     , 1.2345000001, 1e-9) == is_close(1.2345000001, 1.2345, 1e-9)    );
+
+//              1.2.    invalid tolerances in constant evaluation → false (by design)
+static_assert(  !is_close(1.0, 1.0, -1e-9)                                                      );  //  rel_tol < 0
+static_assert(  !is_close(1.0, 1.0, 1e-9, -1e-12)                                               );  //  abs_tol < 0
+
+//              1.3.    type coverage
+static_assert(  is_close<float>(1.0f, 1.0f)                                                     );
+static_assert(  is_close<long double>((long double)2.0, (long double)2.0)                       );
+
+
+
+//  BATCH #2A.  TESTS THAT REQUIRE "CONSTEXPR <CMATH> [C++23]"...
+#if defined(__cpp_lib_constexpr_cmath) && __cpp_lib_constexpr_cmath >= 202202L
+//
+//
+    constexpr double INF = std::numeric_limits<double>::infinity();
+    constexpr double NNF = -std::numeric_limits<double>::infinity();
+    constexpr double QN  = std::numeric_limits<double>::quiet_NaN();
+
+    //  equal infinities (same sign) → true
+    static_assert(is_close(INF, INF));
+    static_assert(is_close(NNF, NNF));
+
+    //  unequal infinities or finite vs inf → false
+    static_assert(!is_close(INF, NNF));
+    static_assert(!is_close(INF, 1e308));
+    static_assert(!is_close(-INF, -1e308));
+
+    //  any NaN → false
+    static_assert(!is_close(QN, 0.0));
+    static_assert(!is_close(0.0, QN));
+    static_assert(!is_close(QN, QN));
+//
+//
+#endif  //  defined(__cpp_lib_constexpr_cmath) && __cpp_lib_constexpr_cmath >= 202202L  //
+*/
+
+
+
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "IS_CLOSE TESTS".
+
+
+
+
+
+
+// *************************************************************************** //
+//              X.3.    "QUANTIZE" TESTS.
+// *************************************************************************** //
+
+//  BATCH #1.   CONCEPTS / SUBSTITUTION CHECKS...
+//
+//              1.1.    quantize: only floating-point T accepted
+static_assert( requires(double x)       { quantize(x, 1.0   );      }       );
+static_assert( requires(float  x)       { quantize(x, 0.25f );      }       );
+static_assert( requires(long double x)  { quantize(x, 0.1L  );      }       );
+
+//              1.2.    deduces T=int if not guided — rejected by constraint    [ THIS SHOULD *NOT* COMPILE ].
+#ifndef __NEVER_DEFINE_THIS__
+    static_assert( !requires(int x)         { quantize(x, 1.0   );      }       );
+    static_assert( !requires(double x)      { quantize(x, 1     );      }       );
+#endif //  __NEVER_DEFINE_THIS__  //
+
+//              1.3.    quantize with origin + mode
+static_assert( requires(double x) {
+    quantize(x, 0.5, 0.0, Mode::ties_to_even);
+});
+
+//              1.4.    in-place overload exists and is callable
+static_assert( requires(double & x)     { quantize_inplace(x, 0.5, 0.0, Mode::toward_neg_inf);  }   );
+
+//              1.5.    decimals interface exists
+static_assert( requires(double x)       { quantize_decimals(x, 3, 0.0, Mode::toward_pos_inf);   }   );
+static_assert( requires(float& x)       { quantize_decimals_inplace(x, -2);                     }   );
+
+
+
+//  BATCH #2.   RETURN TYPES  AND  NOEXCEPT PROPERTIES...
+//
+//              2.1.    return types are same as input T
+static_assert( std::same_as<decltype( quantize(          std::declval< double       >(),    0.5     )   ), double       >   );
+static_assert( std::same_as<decltype( quantize(          std::declval< float        >(),    0.25f   )   ), float        >   );
+static_assert( std::same_as<decltype( quantize_decimals( std::declval< long double  >(),    3       )   ), long double  >   );
+
+//              2.2.    in-place overloads return void
+static_assert( std::same_as<decltype( quantize_inplace(             std::declval< double& >(), 1.0  )   ), void>    );
+static_assert( std::same_as<decltype( quantize_decimals_inplace(    std::declval< float&  >(), 2    )   ), void>    );
+
+//              2.3.    noexcept guarantees
+static_assert( noexcept( quantize(                  std::declval< double  >(),  1.0,    0.0, Mode::ties_to_even     )  )   );
+static_assert( noexcept( quantize_inplace(          std::declval< double& >(),  1.0,    0.0, Mode::ties_to_even     )  )   );
+static_assert( noexcept( quantize_decimals(         std::declval< double  >(),  3,      0.0, Mode::ties_to_even     )  )   );
+static_assert( noexcept( quantize_decimals_inplace( std::declval< double& >(),  3,      0.0, Mode::ties_to_even     )  )   );
+
+
+
+//  BATCH #3.   OVERLOAD DISAMBIGUATION  AND  DEFAULTS...
+//
+//              3.1.    defaulted origin + mode are available
+static_assert( requires(double x)   { quantize(x, 0.25);        }   );
+static_assert( requires(double x)   { quantize_decimals(x, 4);  }   );
+
+//              3.2.    RoundingMode enum is usable in unevaluated context
+static_assert( static_cast<int>(Mode::ties_to_even)    != static_cast<int>(Mode::toward_zero)         );
+static_assert( static_cast<int>(Mode::toward_pos_inf)  != static_cast<int>(Mode::toward_neg_inf)      );
+static_assert( static_cast<int>(Mode::away_from_zero)  >= 0                                         );
+
+
+//  BATCH #4.   SFINAE SANITY FOR NON-FLOATING-POINT TYPES  [ THIS SHOULD *NOT* COMPILE ]...
+#ifndef __NEVER_DEFINE_THIS__
+    struct NotFloat {};
+    static_assert( !requires(NotFloat v)    { quantize             (v,     1.0     );  }   );
+    static_assert( !requires(NotFloat v)    { quantize_decimals    (v,     2       );  }   );
+#endif //  __NEVER_DEFINE_THIS__  //
+
+
+//  BATCH #5.   LONG DOUBLE---FLOAT MIXING (MAKE SURE IT DOES NOT ACCIDENTALLY WIDEN)...
+static_assert( std::same_as<decltype(  quantize(std::declval<float>(),          0.1f,   0.0f, Mode::toward_zero    )   ), float>           );
+static_assert( std::same_as<decltype(  quantize(std::declval<long double>(),    0.1L,   0.0L, Mode::away_from_zero )   ), long double>     );
+
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "QUANTIZE TESTS".
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}//   END OF "numerics_tests".
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "X.  COMPILE-TIME TESTS".
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

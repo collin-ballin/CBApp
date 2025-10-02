@@ -1511,7 +1511,7 @@ struct BoxDrag_t
     //  "SafeDiv"
     template <typename T> requires std::floating_point<T>
     static inline T                     SafeDiv                             (T num, T den) noexcept
-        { constexpr T eps = cblib::math::default_rel_tol<T>();;  return (std::fabs(den) > eps) ? (num / den) : T(1); }
+        { constexpr T eps = cblib::math::numerics::default_rel_tol<T>();  return (std::fabs(den) > eps) ? (num / den) : T(1); }
     
     
     
