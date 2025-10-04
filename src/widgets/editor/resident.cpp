@@ -313,7 +313,6 @@ void Editor::_DEBUGGER_canvas(void) const noexcept
 {
     static float                LABEL_W                 = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
     static const float &        WIDGET_W                = m_style.ms_SETTINGS_WIDGET_WIDTH;
-    const EditorState &         ES                      = this->m_editor_S;
     const GridState &           GS                      = this->m_grid;
     //  const Interaction &         it                      = *this->m_it;
     
@@ -492,10 +491,13 @@ inline void Editor::_DEBUGGER_misc_2(const float LABEL_W, const float WIDGET_W) 
     
     
     this->S.labelf("path_index:",           LABEL_W, WIDGET_W);         //  1.2.      path_index.
-    ImGui::Text( "%zu", this->m_pen.path_index );
+    if ( this->m_pen.path_index.has_value() ) {
+        ImGui::Text( "%zu",     *this->m_pen.path_index );
+    }
+    else    { ImGui::TextDisabled( "%s",     "None" ); }
     //
     this->S.labelf("last_vid:",             LABEL_W, WIDGET_W);         //  1.3.      last_vid.
-    ImGui::Text( "%zu", this->m_pen.last_vid );
+    ImGui::Text( "%u",      this->m_pen.last_vid );
     
     
     //ImGui::NewLine();

@@ -185,7 +185,6 @@ void Editor::_MECH_draw_controls(void)
     static ImGuiOldColumnFlags              COLUMN_FLAGS                = ImGuiOldColumnFlags_None;
     //
     EditorStyle &                           Style                       = this->m_style;
-    EditorState &                           ES                          = this->m_editor_S;
     GridState &                             GS                          = this->m_grid;
     const ImVec2                            WIDGET_SIZE                 = ImVec2( -1,               ImGui::GetFrameHeight()               );
     //

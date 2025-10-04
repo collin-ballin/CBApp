@@ -282,13 +282,6 @@ inline void Editor::_RENDER_features_channel(std::span<const size_t> z_view, con
 //
 inline void Editor::_RENDER_accents_channel(std::span<const size_t> z_view, const RenderCTX & ctx) const noexcept
 {
-    //  const size_t        N_vertices          = this->m_vertices.size();
-    //  const auto &        hovered             = this->m_sel.hovered;
-    
-    
-    
-    
-    
     //      1.      STATE-DEPENDENT VERTEX DRAWING...
     switch (this->m_mode)
     {
@@ -538,7 +531,6 @@ inline void Editor::_RENDER_top_channel(std::span<const size_t> /*z_view*/, cons
 // *************************************************************************** //
 // *************************************************************************** //
 
-
 //  "_render_paths"
 //
 void Editor::_render_paths(ImDrawList * dl) const 
@@ -678,30 +670,6 @@ void Editor::_render_points(ImDrawList * dl) const
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "render_selection_highlight"
-//      Draw outlines for selected primitives plus bbox/handles.
-//
-void Editor::render_selection_highlight(ImDrawList * dl, const RenderCTX & ctx) const noexcept
-{
-/*
-    //  const ImU32 &               col         = m_style.COL_SELECTION_OUT;
-    const BrowserState &        BS          = this->m_browser_S;
-
-
-    this->_render_selection_objects     (ctx);
-    this->_render_selection_bbox        (dl);
-    this->_render_selected_handles      (dl);
-    //  this->_render_selected_handles      (dl);
-    
-    if ( BS.HasAuxiliarySelection() )
-    {
-        _render_auxiliary_highlights(dl);
-    }
-*/
-    return;
-}
-
-
 //  "_render_selected_objects"
 //
 inline void Editor::_render_selection_objects(const RenderCTX & ctx) const noexcept
@@ -733,182 +701,6 @@ inline void Editor::_render_selection_objects(const RenderCTX & ctx) const noexc
 }
 
 
-
-
-
-/*
-{
-    const ImU32 &               col                         = m_style.COL_SELECTION_OUT;
-    //  constexpr float             ms_VERTEX_HIGHLIGHT_WIDTH   = 2.0f;
-    //  constexpr float             ms_PATH_HIGHLIGHT_WIDTH     = 2.0f;
-
-
-
-    //      1.      HIGHLIGHT SELECTED PATHS...
-    for (size_t idx : m_sel.paths)
-    {
-        if ( idx >= m_paths.size() )            { continue; }
-        const Path &        p           = m_paths[idx];
-        const size_t        N           = p.verts.size();
-        if (N < 2)                              { continue; }
-
-
-        auto                draw_seg    = [&](const Vertex & a, const Vertex & b)
-        {
-            const float w = p.style.stroke_width + 2.0f;
-            if ( Vertex::SegmentIsCurved(a, b) )    //  is_curved<VertexID>(a,b)
-            {
-                ImVec2 P0 = this->world_to_pixels({ a.x,                               a.y                                });
-                ImVec2 P1 = this->world_to_pixels({ a.x + a.m_bezier.out_handle.x,     a.y + a.m_bezier.out_handle.y      });
-                ImVec2 P2 = this->world_to_pixels({ b.x + b.m_bezier.in_handle.x,      b.y + b.m_bezier.in_handle.y       });
-                ImVec2 P3 = this->world_to_pixels({ b.x,                               b.y                                });
-                dl->AddBezierCubic(P0, P1, P2, P3, col, w, m_style.ms_BEZIER_SEGMENTS);
-            }
-            else
-            {
-                dl->AddLine( this->world_to_pixels({ a.x, a.y }), this->world_to_pixels({ b.x, b.y }), col, w );
-            }
-        };
-
-
-
-        for (size_t i = 0; i < N - 1; ++i)
-        {
-            if ( const Vertex * a = find_vertex(m_vertices, p.verts[i]) )
-            {
-                if ( const Vertex * b = find_vertex(m_vertices, p.verts[i+1]) )
-                    draw_seg(*a, *b);
-            }
-        }
-
-        if ( p.closed )
-        {
-            if ( const Vertex * a = find_vertex(m_vertices, p.verts.back()) )
-            {
-                if ( const Vertex * b = find_vertex(m_vertices, p.verts.front()) )
-                    draw_seg(*a, *b);
-            }
-        }
-    }
-
-
-    //      2.      HIGHLIGHT SELECTED POINTS...
-    this->PushVertexStyle( VertexStyleType::Highlight );
-    for (size_t idx : m_sel.points)
-    {
-        if ( idx >= m_points.size() )       { continue; }       //  CASE 0 :    INVALID POINT...
-        
-        
-        //      1.      GET REFERENCE TO THE POINT.  OBTAIN THIS POINT'S VERTEX...
-        const Point &           point       = m_points[idx];
-        const Vertex *          v_ptr       = find_vertex( this->m_vertices, point.v );
-        
-        if ( !v_ptr )                       { continue; }       //  CASE 1 :    INVALID VERTEX...
-    
-        const Vertex &          vtx         = *(v_ptr);
-        vtx.render( this->m_vertex_style );
-    
-    }
-    this->PopVertexStyle();
-
-
-
-    return;
-}*/
-
-
-/*{
-    const ImU32 &               col                         = m_style.COL_SELECTION_OUT;
-    //  constexpr float             ms_VERTEX_HIGHLIGHT_WIDTH   = 2.0f;
-    //  constexpr float             ms_PATH_HIGHLIGHT_WIDTH     = 2.0f;
-
-
-
-    //      1.      HIGHLIGHT SELECTED PATHS...
-    for (size_t idx : m_sel.paths)
-    {
-        if ( idx >= m_paths.size() )            { continue; }
-        const Path &        p           = m_paths[idx];
-        const size_t        N           = p.verts.size();
-        if (N < 2)                              { continue; }
-
-
-        auto                draw_seg    = [&](const Vertex & a, const Vertex & b)
-        {
-            const float w = p.style.stroke_width + 2.0f;
-            if ( is_curved<VertexID>(a,b)  )
-            {
-                ImVec2 P0 = this->world_to_pixels({ a.x,                               a.y                                });
-                ImVec2 P1 = this->world_to_pixels({ a.x + a.m_bezier.out_handle.x,     a.y + a.m_bezier.out_handle.y      });
-                ImVec2 P2 = this->world_to_pixels({ b.x + b.m_bezier.in_handle.x,      b.y + b.m_bezier.in_handle.y       });
-                ImVec2 P3 = this->world_to_pixels({ b.x,                               b.y                                });
-                dl->AddBezierCubic(P0, P1, P2, P3, col, w, m_style.ms_BEZIER_SEGMENTS);
-            }
-            else
-            {
-                dl->AddLine( this->world_to_pixels({ a->x, a->y }), this->world_to_pixels({ b->x, b->y }), col, w );
-            }
-        };
-
-        for (size_t i = 0; i < N - 1; ++i)
-        {
-            if ( const Vertex* a = find_vertex(m_vertices, p.verts[i]) )
-            {
-                if (const Vertex * b = find_vertex(m_vertices, p.verts[i+1]))
-                    draw_seg(a, b);
-            }
-        }
-
-        if ( p.closed ) {
-            if ( const Vertex * a = find_vertex(m_vertices, p.verts.back()) )
-            {
-                if ( const Vertex* b = find_vertex(m_vertices, p.verts.front()) )
-                    draw_seg(a, b);
-            }
-        }
-    }
-
-
-    //      2.      HIGHLIGHT SELECTED POINTS...
-    this->PushVertexStyle( VertexStyleType::Highlight );
-    for (size_t idx : m_sel.points)
-    {
-        if ( idx >= m_points.size() )       { continue; }       //  CASE 0 :    INVALID POINT...
-        
-        
-        //      1.      GET REFERENCE TO THE POINT.  OBTAIN THIS POINT'S VERTEX...
-        const Point &           point       = m_points[idx];
-        const Vertex *          v_ptr       = find_vertex( this->m_vertices, point.v );
-        
-        if ( !v_ptr )                       { continue; }       //  CASE 1 :    INVALID VERTEX...
-    
-        const Vertex &          vtx         = *(v_ptr);
-        vtx.render( this->m_vertex_style );
-    
-    }
-    this->PopVertexStyle();
-    
-    
-    //  for (size_t idx : m_sel.points)
-    //  {
-    //      if ( idx >= m_points.size() )       { continue; }
-    //      const Point &           pt  = m_points[idx];
-    //
-    //      if (const Vertex *      v   = find_vertex(m_vertices, pt.v))
-    //      {
-    //          ImVec2  scr     = world_to_pixels({ v->x, v->y });
-    //          dl->AddCircle( scr,
-    //                         pt.sty.radius + ms_PATH_HIGHLIGHT_WIDTH,        // small outset
-    //                         col, 0, ms_PATH_HIGHLIGHT_WIDTH  );               // thickness 2 px
-    //      }
-    //  }
-
-    return;
-}*/
-
-
-
-
 //  "_render_selected_handles"
 //
 inline void Editor::_render_selected_handles(ImDrawList * /* dl */) const noexcept
@@ -919,36 +711,8 @@ inline void Editor::_render_selected_handles(ImDrawList * /* dl */) const noexce
         v.render_all( this->m_vertex_style );
     }
 
-
     return;
 }
-/*
-{
-    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
-
-    for (const Vertex & v : m_vertices)
-    {
-        if ( !m_show_handles.count(v.id) )      { continue; }   // ← NEW visibility mask
-
-        ImVec2 a = ws2px({ v.x, v.y });
-
-        auto draw_handle = [&](const ImVec2 & off)
-        {
-            if ( (off.x == 0.f)  &&  (off.y == 0.f) )   { return; }
-            
-            ImVec2 h = ws2px({ v.x + off.x, v.y + off.y });
-            dl->AddLine(a, h, m_style.ms_HANDLE_COLOR, 1.0f);
-            dl->AddRectFilled({ h.x - m_style.ms_HANDLE_SIZE, h.y - m_style.ms_HANDLE_SIZE },
-                              { h.x + m_style.ms_HANDLE_SIZE, h.y + m_style.ms_HANDLE_SIZE },
-                              m_style.ms_HANDLE_COLOR);
-        };
-
-        draw_handle(v.m_bezier.out_handle);
-        draw_handle(v.m_bezier.in_handle);
-    }
-    
-    return;
-}*/
 
 
 //  "_render_selection_bbox"
@@ -986,95 +750,6 @@ inline void Editor::_render_selection_bbox(ImDrawList * dl) const noexcept
     
     return;
 }
-
-/*{
-    const bool has_paths_or_lines = !m_sel.paths.empty() || !m_sel.lines.empty();
-    const bool single_vertex_only = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
-    if (single_vertex_only) return;
-
-    ImVec2 tl_tight, br_tight;
-    if (!_selection_bounds(tl_tight, br_tight, this->m_render_ctx)) { m_hover_handle = -1; return; }
-
-    // NEW: robust expansion (pixel-space min/max)
-    const auto [tl, br] = _expand_bbox_by_pixels(tl_tight, br_tight, this->m_style.SELECTION_BBOX_MARGIN_PX);
-
-    auto ws2px = [this](ImVec2 w){ return world_to_pixels(w); };
-    ImVec2 p0 = ws2px(tl);
-    ImVec2 p1 = ws2px(br);
-
-    dl->AddRect(p0, p1, m_style.SELECTION_BBOX_COL, 0.0f,
-                ImDrawFlags_None, m_style.SELECTION_BBOX_TH);
-
-    // Handle positions from expanded WS box
-    ImVec2 hw{ (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
-    const ImVec2 ws[8] = {
-        tl, { hw.x, tl.y }, { br.x, tl.y }, { br.x, hw.y },
-        br, { hw.x, br.y }, { tl.x, br.y }, { tl.x, hw.y }
-    };
-
-    m_hover_handle = -1;
-    for (int i = 0; i < 8; ++i)
-    {
-        ImVec2 s = ws2px(ws[i]);
-        ImVec2 min{ s.x - m_style.HANDLE_BOX_SIZE, s.y - m_style.HANDLE_BOX_SIZE };
-        ImVec2 max{ s.x + m_style.HANDLE_BOX_SIZE, s.y + m_style.HANDLE_BOX_SIZE };
-
-        bool hovered = ImGui::IsMouseHoveringRect(min, max);
-        if (hovered) m_hover_handle = i;
-
-        dl->AddRectFilled(min, max, hovered ? m_style.ms_HANDLE_HOVER_COLOR
-                                            : m_style.ms_HANDLE_COLOR);
-    }
-    
-    return;
-}*/
-
-
-/*{
-    const bool      has_paths_or_lines      = !m_sel.paths.empty() || !m_sel.lines.empty();
-    const bool      single_vertex_only      = (m_sel.vertices.size() <= 1) && !has_paths_or_lines;
-    
-    if ( single_vertex_only )               { return; }
-
-    ImVec2      tl, br;
-    if ( !_selection_bounds(tl, br, this->m_render_ctx) )       { m_hover_handle = -1; return; }
-
-    auto        ws2px       = [this](ImVec2 w){ return world_to_pixels(w); };
-    ImVec2      p0          = ws2px(tl);
-    ImVec2      p1          = ws2px(br);
-
-    dl->AddRect(p0, p1, m_style.SELECTION_BBOX_COL, 0.0f,
-                ImDrawFlags_None, m_style.SELECTION_BBOX_TH);
-
-    // handle positions
-    ImVec2 hw{ (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
-    const ImVec2 ws[8] = {
-        tl,
-        { hw.x, tl.y },
-        { br.x, tl.y },
-        { br.x, hw.y },
-        br,
-        { hw.x, br.y },
-        { tl.x, br.y },
-        { tl.x, hw.y }
-    };
-
-    m_hover_handle = -1;
-    for (int i = 0; i < 8; ++i)
-    {
-        ImVec2 s = ws2px(ws[i]);
-        ImVec2 min{ s.x - m_style.HANDLE_BOX_SIZE, s.y - m_style.HANDLE_BOX_SIZE };
-        ImVec2 max{ s.x + m_style.HANDLE_BOX_SIZE, s.y + m_style.HANDLE_BOX_SIZE };
-
-        bool hovered = ImGui::IsMouseHoveringRect(min, max);
-        if (hovered) m_hover_handle = i;
-
-        dl->AddRectFilled(min, max, hovered ? m_style.ms_HANDLE_HOVER_COLOR
-                                            : m_style.ms_HANDLE_COLOR);
-    }
-    
-    return;
-}*/
 
 
 
@@ -1149,69 +824,13 @@ inline void Editor::_auxiliary_highlight_object(const Path & path, const RenderC
     //      1.      RENDER HIGHLIGHT FOR BROWSER-HOVERED OBJECT...
     hl_style.stroke_width = path.style.stroke_width + hl_width;
     //
-    path.render_highlight       (hl_style,  ctx                     );
-    path.render_vertices_all    (ctx,       this->m_vertex_style    );
+    path.render_highlight   (hl_style,  ctx                     );
+    path.render_vertices    (ctx,       this->m_vertex_style    );
 
 
     this->PopVertexStyle();
     return;
 }
-
-
-
-
-/*{
-    const ImU32 &               col             = ImGui::GetColorU32(ImGuiCol_FrameBgHovered); //  .AUX_HIGHLIGHT_COLOR;
-    const float &               w               = this->m_style.HIGHLIGHT_WIDTH;
-    //  const ImU32 &               col         = m_style.AUX_HIGHLIGHT_COLOR;
-    //  const float                 w           = p.style.stroke_width + 2.0f;
-    //
-    //
-    //
-    const size_t                N               = p.verts.size();
-    //
-    //
-    //  "ws2px"
-    auto                        ws2px           = [](ImVec2 w) {
-        ImPlotPoint pp = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));
-        return ImVec2{ static_cast<float>(pp.x), static_cast<float>(pp.y) };
-    };
-    //
-    //  "draw_seg"
-    auto                        draw_seg        = [&](const Vertex * a, const Vertex * b)
-    {
-        if ( !a || !b )         { return; }
-        if ( is_curved<VertexID>(a, b) ) {
-            ImVec2 P0 = ws2px({ a->x,                                   a->y                                });
-            ImVec2 P1 = ws2px({ a->x + a->m_bezier.out_handle.x,        a->y + a->m_bezier.out_handle.y     });
-            ImVec2 P2 = ws2px({ b->x + b->m_bezier.in_handle.x,         b->y + b->m_bezier.in_handle.y      });
-            ImVec2 P3 = ws2px({ b->x,                                   b->y                                });
-            dl->AddBezierCubic(P0, P1, P2, P3, col, w, m_style.ms_BEZIER_SEGMENTS);
-        }
-        else
-        {
-            dl->AddLine( ws2px({ a->x, a->y }), ws2px({ b->x, b->y }), col, w );
-        }
-    };
-
-    for (size_t i = 0; i + 1 < N; ++i)
-    {
-        const Vertex *      a   = find_vertex(m_vertices, p.verts[i]);
-        const Vertex *      b   = find_vertex(m_vertices, p.verts[i + 1]);
-        draw_seg(a, b);
-    }
-    if ( p.closed )
-    {
-        const Vertex *      a   = find_vertex(m_vertices, p.verts.back());
-        const Vertex *      b   = find_vertex(m_vertices, p.verts.front());
-        draw_seg(a, b);
-    }
-    
-    return;
-}*/
-
-
-
 
 
 //  "_auxiliary_highlight_handle"

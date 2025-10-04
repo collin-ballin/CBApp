@@ -669,9 +669,6 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
     // Mouse in pixel space
     const ImVec2 ms = ImGui::GetIO().MousePos;
 
-    // World→pixel
-    auto ws2px = [this](const ImVec2& w){ return world_to_pixels(w); };
-
     // Build Z-sorted list of eligible paths (visible & unlocked)
     std::vector<size_t> order;
     order.reserve(m_paths.size());
@@ -713,8 +710,8 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
             if (linear)
             {
                 // Straight segment (pixel space projection)
-                const ImVec2 A = ws2px(ImVec2{ a->x, a->y });
-                const ImVec2 B = ws2px(ImVec2{ b->x, b->y });
+                const ImVec2 A = this->world_to_pixels(ImVec2{ a->x, a->y });
+                const ImVec2 B = this->world_to_pixels(ImVec2{ b->x, b->y });
 
                 // Reject near endpoints
                 if (bezpx::dist2(A, ms) <= endpoint_eps_sq) continue;
@@ -742,14 +739,14 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
                 const ImVec2 B_ws{ b->x, b->y };
 
                 ImVec2 prev_ws = A_ws;
-                ImVec2 prev_px = ws2px(prev_ws);
+                ImVec2 prev_px = this->world_to_pixels(prev_ws);
 
                 const int STEPS = m_style.ms_BEZIER_HIT_STEPS;
                 for (int k = 1; k <= STEPS; ++k)
                 {
                     const float tk     = static_cast<float>(k) / static_cast<float>(STEPS);
                     const ImVec2 cur_ws = bez::eval_quadratic<ImVec2,float>(A_ws, C_ws, B_ws, tk);
-                    const ImVec2 cur_px = ws2px(cur_ws);
+                    const ImVec2 cur_px = this->world_to_pixels(cur_ws);
 
                     // Reject near endpoints of sub-segment
                     if (bezpx::dist2(prev_px, ms) <= endpoint_eps_sq) { prev_px = cur_px; prev_ws = cur_ws; continue; }
@@ -779,14 +776,14 @@ std::optional<Editor::PathHit> Editor::_hit_path_segment(const Interaction & /*i
             {
                 // Cubic: uniform sampling & pixel-space projection
                 ImVec2 prev_ws{ a->x, a->y };
-                ImVec2 prev_px = ws2px(prev_ws);
+                ImVec2 prev_px = this->world_to_pixels(prev_ws);
 
                 const int STEPS = m_style.ms_BEZIER_HIT_STEPS;
                 for (int k = 1; k <= STEPS; ++k)
                 {
                     const float  tk     = static_cast<float>(k) / static_cast<float>(STEPS);
                     const ImVec2 cur_ws = cubic_eval<VertexID>(a, b, tk);
-                    const ImVec2 cur_px = ws2px(cur_ws);
+                    const ImVec2 cur_px = this->world_to_pixels(cur_ws);
 
                     // Reject near endpoints of sub-segment
                     if (bezpx::dist2(prev_px, ms) <= endpoint_eps_sq) { prev_px = cur_px; prev_ws = cur_ws; continue; }

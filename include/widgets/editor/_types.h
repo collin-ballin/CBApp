@@ -730,8 +730,8 @@ struct TooltipState
     [[nodiscard]] inline bool           HasTooltip                      (void) const noexcept   { return ( (this->key != Key::None) );  }
     
     //  "IsActive"
-    [[nodiscard]] inline bool           IsActive                        (void) const noexcept   { return ( this->active.load  (std::memory_order_release)  );   }
-    [[nodiscard]] inline bool           IsInactive                      (void) const noexcept   { return ( !this->active.load (std::memory_order_release)  );   }
+    [[nodiscard]] inline bool           IsActive                        (void) const noexcept   { return ( this->active.load()  );   }
+    [[nodiscard]] inline bool           IsInactive                      (void) const noexcept   { return ( !this->active.load() );   }
     
     
     //  "_reset_timer"
@@ -1177,7 +1177,7 @@ struct GridState
 
 //      GridState     : "to_json"
 //
-inline void to_json(nlohmann::json & j, const GridState & obj)
+inline void to_json([[maybe_unused]] nlohmann::json & j, [[maybe_unused]] const GridState & obj)
 {
     //  j ["m_world_size"]      = obj.m_world_size;
     //  j ["m_world_slop"]      = obj.m_world_slop;

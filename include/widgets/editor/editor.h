@@ -1168,8 +1168,8 @@ protected:
     
     
     //  "want_snap"
-    inline bool                         want_snap                               (void) const
-    { return m_grid.snap_on || ImGui::GetIO().KeyShift; }
+    inline bool                         want_snap                               (void) const noexcept
+        { return m_grid.snap_on || ImGui::GetIO().KeyShift; }
        
        
        

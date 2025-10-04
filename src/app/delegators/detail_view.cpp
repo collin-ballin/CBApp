@@ -292,8 +292,8 @@ inline void DetailView::cache_current_window(void) noexcept
 
 
 
-    ImGuiDockNode &                     dock        = *S.GetDetViewDockNodeID();
-    const ImVector<ImGuiWindow*> &      windows     = dock.Windows;
+    ImGuiDockNode &                                     dock        = *S.GetDetViewDockNodeID();
+    [[maybe_unused]] const ImVector<ImGuiWindow*> &     windows     = dock.Windows;
     
     
     

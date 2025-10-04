@@ -588,7 +588,6 @@ void Editor::_selbox_rebuild_view_if_needed([[maybe_unused]] const Interaction &
 //
 inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
 {
-    EditorState &       ES                  = this->m_editor_S;
     GridState &         GS                  = this->m_grid;
     //
     static bool         show_grid_cache     = !m_grid.visible;
