@@ -229,36 +229,45 @@ tolerance_interval( const T  ref,                      // reference “b”
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "quantize"
+//  "quantize"      [ CORE-IMPLEMENTATION ].
 //
 //      Quantize  x  onto the lattice,  { origin + k * quantum,  where k | k ∈ ℤ }.
 //      Preconditions :     quantum > 0 (returns x unchanged if violated).
 //                          NaN / ±inf pass through unchanged.
 //
 template <std::floating_point T>
-[[nodiscard]] inline T                      quantize                (   T                       x
-                                                                      , T                       quantum
-                                                                      , T                       origin                  = T(0)
-                                                                     , ::cblib::math::numerics::RoundingMode  mode      = ::cblib::math::numerics::DEF_DEFAULT_ROUNDING_MODE ) noexcept
+[[nodiscard]] inline T                      quantize_IMPL           (T x, T quanta, T origin, numerics::RoundingMode mode) noexcept
 {
-    using       namespace   ::cblib::math::numerics;
-
-    
-    if ( !_is_finite(x) || !_is_finite(quantum) || !_is_finite(origin) || !(quantum > T(0)) )   { return x; }
-
-
+    using       namespace       ::cblib::math::numerics;
 
     //      1.  MAP TO INDEX-SPACE (Integer Multiples);  ROUND VALUE;  MAP BACK TO VALUE-SPACE...
-    const T     n           = (x - origin) / quantum;       //  A.      n = (x - origin)/quantum
-    const T     k           = _round_integral(n, mode);     //  B.      k = round(n)
-    T           y           = origin + k * quantum;         //  C.      y = origin + k*quantum
-
+    const T     n               = (x - origin) / quanta;        //  A.      n = (x - origin) / quanta
+    const T     k               = _round_integral(n, mode);     //  B.      k = round(n)
+    T           y               = origin + k * quanta;          //  C.      y = origin + k * quanta
 
     //      2.  PRESERVE SIGNED-ZERO BY USING  sign_of( x - origin )...
-    if ( y == T(0) )    { y = std::copysign(T(0), x - origin); }
+    if ( is_close(y, T(0)) )    { y = std::copysign(T(0), x - origin); }
 
     return y;
 }
+
+
+//  "quantize"      [ WRAPPER-IMPLEMENTATIONS ].
+//
+template <std::floating_point T, std::floating_point U>
+[[nodiscard]] inline T                      quantize                (   T                       x
+                                                                      , U                       quanta
+                                                                      , U                       origin  = U(0)
+                                                                      , numerics::RoundingMode  mode    = numerics::DEF_DEFAULT_ROUNDING_MODE ) noexcept
+{
+    using       namespace   ::cblib::math::numerics;
+    if ( !_is_finite(x) || !_is_finite(quanta) || !_is_finite(origin) || !(quanta > T(0)) )   { return x; }
+    return quantize_IMPL( x, static_cast<T>(quanta), static_cast<T>(origin), mode );
+}
+
+
+
+
 
 
 //  "quantize_inplace"

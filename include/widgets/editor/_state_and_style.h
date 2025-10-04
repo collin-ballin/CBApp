@@ -931,6 +931,31 @@ public:
     
         return;
     }
+    
+    
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      QUERY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "CanDecreaseGridSpacing"
+    [[nodiscard]] inline bool           CanDecreaseGridSpacing              (void) const noexcept
+    {
+        const bool  decr_x  = ( this->m_grid_density[0].CanDecrement() );
+        const bool  decr_y  = ( this->m_grid_density[1].CanDecrement() );
+        return ( decr_x  &&  decr_y);
+    }
+    
+    //  "CanIncreaseGridSpacing"
+    [[nodiscard]] inline bool           CanIncreaseGridSpacing              (void) const noexcept
+    {
+        const bool  incr_x  = ( this->m_grid_density[0].CanIncrement() );
+        const bool  incr_y  = ( this->m_grid_density[1].CanIncrement() );
+        return ( incr_x  &&  incr_y);
+    }
 
     // *************************************************************************** //
     //
@@ -983,39 +1008,47 @@ public:
     // *************************************************************************** //
     
     //  "IncreaseGridSpacing"
-    inline void                         IncreaseGridSpacing                 (void) noexcept {
-        this->m_grid_density[0].SetValue( this->m_grid_density[0].value << 1 );
-        this->m_grid_density[1].SetValue( this->m_grid_density[1].value << 1 );
+    inline bool                         IncreaseGridSpacing                 (void) noexcept {
+        if ( !this->CanIncreaseGridSpacing() )      { return false; }
+    
+        this->m_grid_density[0].SetValue            ( this->m_grid_density[0].value << 1 );
+        this->m_grid_density[1].SetValue            ( this->m_grid_density[1].value << 1 );
         _update_grid();
-        return;
+        return true;
     }
     inline void                         IncreaseGridSpacingX                (void) noexcept {
-        this->m_grid_density[0].SetValue( this->m_grid_density[0].value << 1 );
+        static_assert( true, "Not implemented" );
+        //  this->m_grid_density[0].SetValue( this->m_grid_density[0].value << 1 );
         //  _update_grid_x();
         return;
     }
     inline void                         IncreaseGridSpacingY                (void) noexcept {
-        this->m_grid_density[1].SetValue( this->m_grid_density[1].value << 1 );
-        //  _update_grid_y();
+        static_assert( true, "Not implemented" );
+        //  this->m_grid_density[1].SetValue( this->m_grid_density[1].value << 1 );
+        //  this->_update_grid_y();
         return;
     }
     
     
     //  "DecreaseGridSpacing"
-    inline void                         DecreaseGridSpacing                 (void) noexcept {
-        this->m_grid_density[0].SetValue( this->m_grid_density[0].value >> 1 );
-        this->m_grid_density[1].SetValue( this->m_grid_density[1].value >> 1 );
+    inline bool                         DecreaseGridSpacing                 (void) noexcept {
+        if ( !this->CanDecreaseGridSpacing() )      { return false; }
+        
+        this->m_grid_density[0].SetValue            ( this->m_grid_density[0].value >> 1 );
+        this->m_grid_density[1].SetValue            ( this->m_grid_density[1].value >> 1 );
         _update_grid();
-        return;
+        return true;
     }
     inline void                         DecreaseGridSpacingX                (void) noexcept {
-        this->m_grid_density[1].SetValue( this->m_grid_density[0].value >> 1 );
-        //  _update_grid_x();
+        static_assert( true, "Not implemented" );
+        //  this->m_grid_density[1].SetValue( this->m_grid_density[0].value >> 1 );
+        //  this->_update_grid_x();
         return;
     }
     inline void                         DecreaseGridSpacingY                (void) noexcept {
-        this->m_grid_density[1].SetValue( this->m_grid_density[1].value >> 1 );
-        //  _update_grid_y();
+        static_assert( true, "Not implemented" );
+        //  this->m_grid_density[1].SetValue( this->m_grid_density[1].value >> 1 );
+        //  this->_update_grid_y();
         return;
     }
     

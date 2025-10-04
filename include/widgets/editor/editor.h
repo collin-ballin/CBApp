@@ -465,7 +465,7 @@ protected:
     //
     //
     Camera                              m_cam;
-    GridSettings                        m_grid                          = { 100.0f,  true,  false };
+    GridState                           m_grid                          = { 100.0f,  true,  false };
     float                               m_ppw                           = 1.0f;
     Bounds                              m_world_bounds                  = {
         /*min_x=*/0.0f,        /*min_y=*/0.0f,
@@ -1161,21 +1161,21 @@ protected:
     }
     
     //  "snap_to_grid"
-    inline ImVec2                       snap_to_grid                            (ImVec2 ws) const
+    [[nodiscard]] inline ImVec2         snap_to_grid                            (ImVec2 ws) const
     {
-        if ( this->want_snap() ) {
-            float s = m_grid.snap_step;
-            if ( s <= 0.0f )    { return ws; }                    // safety
-            const float inv = 1.0f / s;
-            ws.x = std::round(ws.x * inv) * s;
-            ws.y = std::round(ws.y * inv) * s;
+        const EditorState & ES  = this->m_editor_S;
+        
+        if ( this->want_snap() )
+        {
+            ws.x    = cblib::math::quantize( ws.x, ES.m_grid_spacing[0] );
+            ws.y    = cblib::math::quantize( ws.y, ES.m_grid_spacing[1] );
         }
         return ws;
     }
     /*{
         if ( this->want_snap() ) {
             float s = m_grid.snap_step;
-            if (s <= 0.0f) return ws;                     // safety
+            if ( s <= 0.0f )    { return ws; }                    // safety
             const float inv = 1.0f / s;
             ws.x = std::round(ws.x * inv) * s;
             ws.y = std::round(ws.y * inv) * s;

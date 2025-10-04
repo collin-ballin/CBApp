@@ -185,12 +185,13 @@ void Editor::_MECH_draw_controls(void)
     static ImGuiOldColumnFlags              COLUMN_FLAGS                = ImGuiOldColumnFlags_None;
     //
     EditorStyle &                           Style                       = this->m_style;
+    EditorState &                           ES                          = this->m_editor_S;
     const ImVec2                            WIDGET_SIZE                 = ImVec2( -1,               ImGui::GetFrameHeight()               );
     //
     //
     //
     static ImVec2                           BUTTON_SIZE                 = ImVec2( 32,   WIDGET_SIZE.y );
-    const ImVec4 &                          s_DISABLED_COLOR            = ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);  //  ImGui::GetColorU32(ImGuiCol_Text);
+    const ImVec4 &                          s_DISABLED_COLOR            = this->S.SystemColor.Gray;     //    ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);  //  ImGui::GetColorU32(ImGuiCol_Text);
     const ImVec4 &                          s_ENABLED_COLOR             = this->S.SystemColor.Blue;
     //
     //  constexpr ImGuiButtonFlags              BUTTON_FLAGS            = ImGuiOldColumnFlags_NoPreserveWidths;
@@ -304,12 +305,6 @@ void Editor::_MECH_draw_controls(void)
     
     
     
-    
-    
-    
-    
-    
-    
         //      3.      GRID STATE...
         ImGui::NextColumn();        this->S.column_label("Grid Settings:");
         //
@@ -351,7 +346,9 @@ void Editor::_MECH_draw_controls(void)
     
     
     
-    
+
+        const bool      can_decrease    = ES.CanDecreaseGridSpacing();
+        const bool      can_increase    = ES.CanIncreaseGridSpacing();
 
         
         //      4.      GRID-LINE DENSITY...
@@ -361,35 +358,45 @@ void Editor::_MECH_draw_controls(void)
         this->S.PushFont(Font::Main);
         {
             //          4.1.    DECREASE GRID DENSITY.
-            if ( utl::IconButton(   "##Editor_Controls_GridDensityDown"
-                                  , this->S.SystemColor.White
-                                  , ICON_FA_ANGLE_DOWN    //  ICON_FA_GEARS   ICON_FA_GEAR    ICON_FA_SLIDERS
-                                  , Style.ms_TOOLBAR_ICON_SCALE 
-                                  , IconAnchor::TextBaseline ) )
-            {
-                m_grid.snap_step *= 2.0f;
-            }
+            ImGui::BeginDisabled( !can_decrease );
+                if ( utl::IconButton(   "##Editor_Controls_GridDensityDown"
+                                      , (can_decrease)
+                                            ? this->S.SystemColor.White     : s_DISABLED_COLOR
+                                      , ICON_FA_ANGLE_DOWN    //  ICON_FA_GEARS   ICON_FA_GEAR    ICON_FA_SLIDERS
+                                      , Style.ms_TOOLBAR_ICON_SCALE
+                                      , IconAnchor::TextBaseline ) )
+                {
+                    ES.DecreaseGridSpacing();
+                }
+            ImGui::EndDisabled();
             this->m_tooltip.UpdateTooltip( TooltipKey::GridDecrease );
             //
             //
             //
             //          4.2.    INCREASE GRID DENSITY.
             ImGui::SameLine(0.0f, 0.0f);
-            if ( utl::IconButton(   "##Editor_Controls_GridDensityUp"
-                                  , this->S.SystemColor.White
-                                  , ICON_FA_ANGLE_UP    //  ICON_FA_GEARS   ICON_FA_GEAR    ICON_FA_SLIDERS
-                                  , Style.ms_TOOLBAR_ICON_SCALE
-                                  , IconAnchor::TextBaseline ) )
-            {
-                m_grid.snap_step /= 2.0f;
-            }
+            ImGui::BeginDisabled( !can_increase );
+                if ( utl::IconButton(   "##Editor_Controls_GridDensityUp"
+                                      , (can_increase)
+                                            ? this->S.SystemColor.White     : s_DISABLED_COLOR
+                                      , ICON_FA_ANGLE_UP    //  ICON_FA_GEARS   ICON_FA_GEAR    ICON_FA_SLIDERS
+                                      , Style.ms_TOOLBAR_ICON_SCALE
+                                      , IconAnchor::TextBaseline ) )
+                {
+                    ES.IncreaseGridSpacing();
+                }
+            ImGui::EndDisabled();
             this->m_tooltip.UpdateTooltip( TooltipKey::GridIncrease );
             //
             //
             //
             //          4.3.    SHOW GRID-DENSITY VALUE.
             ImGui::SameLine(0.0f, 0.0f);
-            ImGui::Text("(%.1f)", m_grid.snap_step);
+            ImGui::Text(
+                  "(%.0f, %.0f)"
+                , ES.m_grid_spacing[0]
+                , ES.m_grid_spacing[1]
+            );
             this->m_tooltip.UpdateTooltip( TooltipKey::GridDensityValue );
         }
         this->S.PopFont();

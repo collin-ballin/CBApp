@@ -550,9 +550,9 @@ DEF_TOOLTIP_INFOS  = { {
 //      3.      GRID CONTROLS.
     /*  GridSnap            */      , "Toggle Snap-To-Grid  [SHIFT G]"
     /*  GridShow            */      , "Toggle visibility of the grid"
-    /*  GridDecrease        */      , "Halve the grid resolution  [CTRL -]"
-    /*  GridIncrease        */      , "Double the grid resolution  [CTRL +]"
-    /*  GridDensityValue    */      , "Grid resolution (quantization value)"
+    /*  GridDecrease        */      , "Reduce grid resolution by ONE-HALF  [SHIFT -]"
+    /*  GridIncrease        */      , "Increase grid resolution by DOUBLE  [SHIFT +]"
+    /*  GridDensityValue    */      , "(x,y) snap-to-grid resolution (quantization value)"
 //
 //
 //
@@ -873,13 +873,13 @@ struct PathHit_t {
 // *************************************************************************** //
 // *************************************************************************** //
 
-
-
-//  "GridSettings"
-struct GridSettings {
+//  "GridState"
+//
+struct GridState {
     float   snap_step       = 20.0f;   // quantize condition for grid-snapping.
     bool    visible         = true;
     bool    snap_on         = false;
+//
 };
 
 

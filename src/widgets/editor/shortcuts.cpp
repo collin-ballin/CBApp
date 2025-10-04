@@ -103,28 +103,37 @@ inline void Editor:: _selection_grid_shortcuts([[maybe_unused]] const Interactio
 {
     ImGuiIO &           io      = ImGui::GetIO();
     EditorState &       ES      = this->m_editor_S;
-    
-    
-    //      1.      TOGGLE SNAP-TO-GRID.            [ SHIFT G ]
-    if ( io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_G) )
-    { m_grid.snap_on = !m_grid.snap_on; return; }
    
    
-    //      Exit early if CTRL key is not pressed.
-    if ( !io.KeyCtrl )      { return; }
-
-
-    //      2.      INCREASE GRID SPACING.          [ CTRL + ]
-    if ( ImGui::IsKeyPressed(ImGuiKey_Equal) )
-        { ES.IncreaseGridSpacing(); return; }
+   
+    //      1.      EARLY EXIT IF [ SHIFT ] IS NOT PRESSED...
+    if ( io.KeyShift )
+    {
+        //              1.1.    TOGGLE SNAP-TO-GRID.            [ SHIFT G ]
+        if ( io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_G) )   { m_grid.snap_on = !m_grid.snap_on; return; }
+           
+        //              1.2.    DECREASE GRID SPACING.          [ SHIFT – ]
+        if ( ImGui::IsKeyPressed(ImGuiKey_Minus) )              { ES.DecreaseGridSpacing();     return; }
+        
+        //              1.3.    INCREASE GRID SPACING.          [ SHIFT + ]
+        if ( ImGui::IsKeyPressed(ImGuiKey_Equal) )              { ES.IncreaseGridSpacing();     return; }
+    }
        
-    //      3.      DECREASE GRID SPACING.          [ CTRL – ]
-    if ( ImGui::IsKeyPressed(ImGuiKey_Minus) )
-        { ES.DecreaseGridSpacing(); return; }
-       
-    //      4.      RESET VIEW OF CANVAS.           [ CTRL KEYPAD-0 ]
-    if ( ImGui::IsKeyPressed(ImGuiKey_Keypad0) )
-        { this->_utl_set_canvas_window(); return; }
+   
+   
+    //      2.      EARLY EXIT IF  [ CTRL ]  IS NOT PRESSED...
+    if ( io.KeyCtrl )
+    {
+        //              2.1.    ZOOM---OUT CANVAS.              [ CTRL – ]
+        if ( ImGui::IsKeyPressed(ImGuiKey_Minus) )              { /* ES.DecreaseWindowSize(); */    return; }
+        
+        //              2.2.    ZOOM---IN CANVAS.               [ CTRL + ]
+        if ( ImGui::IsKeyPressed(ImGuiKey_Equal) )              { /* ES.IncreaseWindowSize(); */    return; }
+        
+        //              2.3.    RESET VIEW OF CANVAS.           [ CTRL KEYPAD-0 ]
+        if ( ImGui::IsKeyPressed(ImGuiKey_Keypad0) )            { this->_utl_set_canvas_window();   return; }
+    }
+            
         
         
     return;
@@ -161,34 +170,57 @@ inline void Editor::_selection_read_only_shortcuts([[maybe_unused]] const Intera
 //
 inline void Editor::_selection_mutable_shortcuts([[maybe_unused]] const Interaction & it)
 {
-    ImGuiIO &       io      = ImGui::GetIO();
-    const float     step    = m_grid.snap_step * ( (io.KeyShift) ? 10.0f : 1.0f );         //  Always one “grid unit”.
+    ImGuiIO &               io              = ImGui::GetIO();
+    const EditorState &     ES              = this->m_editor_S;
+    
+    if ( m_sel.empty() || it.BlockShortcuts() )             { return; }     //  CASE 0 :    NO SELECTION  *OR*  HOTKEYS ARE BLOCKED...
     
     
-    if ( m_sel.empty() || it.BlockShortcuts() )             { return; }                     //  Nothing selected  OR  Not In-Focus  ===> nothing to do.
+    const bool              groupable       = ( this->m_sel.points.size() + this->m_sel.paths.size() > 1 );
+    const bool              ctrl            = io.KeyCtrl;
+    float                   step_x          = 0.0f;
+    float                   step_y          = 0.0f;
+    //
+    {
+        constexpr float         s_SHIFT_SCALER      = 2.0f;
+        const bool              shift               = io.KeyShift;
+        const bool              should_snap         = this->want_snap();
+            
+        //  CASE 1A :   If SNAP-TO-GRID is *ON* :   [ No-Shift ] = Grid-Spacing.  [ Shift ] = 2 x Grid-Spacing.
+        if ( this->m_grid.snap_on ) {
+            step_x          = ( shift )         ? s_SHIFT_SCALER * ES.m_grid_spacing[0]     : ES.m_grid_spacing[0];
+            step_y          = ( shift )         ? s_SHIFT_SCALER * ES.m_grid_spacing[1]     : ES.m_grid_spacing[1];
+        }
+        //  CASE 1B :   If SNAP-TO-GRID is *ON* :   [ No-Shift ] = Grid-Spacing.  [ Shift ] = 10 x Grid-Spacing.
+        else {
+            step_x          = ( should_snap )   ? ES.m_grid_spacing[0]                      : 1.0f;
+            step_y          = ( should_snap )   ? ES.m_grid_spacing[1]                      : 1.0f;
+        }
+    }
+    
+    
+    
 
 
 
     //      1.      ARROW KEYS.
-    if ( ImGui::IsKeyPressed(ImGuiKey_LeftArrow,  true) )    { this->move_selection(-step,  0.0f); }
-    if ( ImGui::IsKeyPressed(ImGuiKey_RightArrow, true) )    { this->move_selection( step,  0.0f); }
-    if ( ImGui::IsKeyPressed(ImGuiKey_UpArrow,    true) )    { this->move_selection( 0.0f,  step); }
-    if ( ImGui::IsKeyPressed(ImGuiKey_DownArrow,  true) )    { this->move_selection( 0.0f, -step); }
-
+    if ( ImGui::IsKeyPressed(ImGuiKey_LeftArrow   , true) )       { this->move_selection     ( -step_x     , 0.0f      );    return;   }
+    if ( ImGui::IsKeyPressed(ImGuiKey_RightArrow  , true) )       { this->move_selection     ( step_x      , 0.0f      );    return;   }
+    if ( ImGui::IsKeyPressed(ImGuiKey_UpArrow     , true) )       { this->move_selection     ( 0.0f        , step_y    );    return;   }
+    if ( ImGui::IsKeyPressed(ImGuiKey_DownArrow   , true) )       { this->move_selection     ( 0.0f        , -step_y   );    return;   }
 
 
     //      2.      DELETE KEY.
-    if ( ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace) )
-        { delete_selection(); return; }                    // selection cleared, bail
+    if ( ImGui::IsKeyPressed(ImGuiKey_Delete)  ||  ImGui::IsKeyPressed(ImGuiKey_Backspace) )
+        { delete_selection(); return; }                    // selection cleared, bail-out early
 
 
     //      3.      JOIN.                   [ CTRL + J ].
-    if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_J) )        { _join_selected_open_path();   return;     }   //  JOINING CLOSED PATHS...
+    if ( ctrl  &&  ImGui::IsKeyPressed(ImGuiKey_J) )            { _join_selected_open_path();   return;     }   //  JOINING CLOSED PATHS...
 
 
     //      X.      CREATE GROUP.           [ CTRL + G ].
-    if ( io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_G) &&
-         ( m_sel.points.size() + m_sel.paths.size() ) > 1 )
+    if ( ctrl  &&  ImGui::IsKeyPressed(ImGuiKey_G)  &&  groupable )
     {
         //
         //  TODO: group_selection();

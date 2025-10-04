@@ -524,17 +524,17 @@ struct BezierControl
     inline void                         _set_in_handle                  (const ImVec2 & ih_) & noexcept
     {
         IM_ASSERT( this->kind != CurvatureType::Quadratic  &&  "Quadratic Bézier uses the \"OUT\" handle as the ONLY parameter" );
-        
-        
         switch (this->kind)
         {
             //      DEFAULT:    None.
             default : {
-                this->in_handle = ih_;
+                this->in_handle = {
+                    cblib::math::quantize( ih_.x,   this->ms_BEZIER_NUMERICAL_ERROR ),
+                    cblib::math::quantize( ih_.y,   this->ms_BEZIER_NUMERICAL_ERROR )
+                };
                 break;
             }
         }
-        
         this->_update_curvature_state();
         return;
     }
@@ -552,11 +552,13 @@ struct BezierControl
         {
             //      DEFAULT:    None.
             default : {
-                this->out_handle = oh_;
+                this->out_handle = {
+                    cblib::math::quantize( oh_.x,   this->ms_BEZIER_NUMERICAL_ERROR ),
+                    cblib::math::quantize( oh_.y,   this->ms_BEZIER_NUMERICAL_ERROR )
+                };
                 break;
             }
         }
-        
         this->_update_curvature_state();
         return;
     }
@@ -1116,10 +1118,18 @@ struct Vertex_t
     inline void                         SetCurvatureType                (CurvatureType kind_) noexcept      { return m_bezier._set_curvature_type(kind_);   }
     
     //  "SetPosition"
-    inline void                         SetXYPosition                   (const ImVec2 & pos_) & noexcept                { this->x = pos_.x; this->y = pos_.y;   }
-    inline void                         SetXYPosition                   (const float  x_, const float  y_) noexcept     { this->x = x_; this->y = y_;           }
-    inline void                         SetXYPosition                   (const double x_, const double y_) noexcept     { this->x = static_cast<float>(x_);
-                                                                                                                          this->y = static_cast<float>(y_);     }
+    inline void                         SetXYPosition                   (const ImVec2 & pos_) & noexcept                { 
+        this->x = cblib::math::quantize(pos_.x, BezierControl::ms_BEZIER_NUMERICAL_ERROR);
+        this->y = cblib::math::quantize(pos_.y, BezierControl::ms_BEZIER_NUMERICAL_ERROR);
+    }
+    inline void                         SetXYPosition                   (const float  x_, const float  y_) noexcept     {
+        this->x = cblib::math::quantize(x_, BezierControl::ms_BEZIER_NUMERICAL_ERROR);
+        this->y = cblib::math::quantize(y_, BezierControl::ms_BEZIER_NUMERICAL_ERROR);
+    }
+    inline void                         SetXYPosition                   (const double x_, const double y_) noexcept     {
+        this->x = cblib::math::quantize(x_, BezierControl::ms_BEZIER_NUMERICAL_ERROR);
+        this->y = cblib::math::quantize(y_, BezierControl::ms_BEZIER_NUMERICAL_ERROR);
+    }
     //
     inline void                         SetYZPosition                   (const ImVec2 & pos_) & noexcept    { this->y = pos_.y; this->y = pos_.y;           }
     inline void                         SetXZPosition                   (const ImVec2 & pos_) & noexcept    { this->x = pos_.x; this->z = pos_.y;           }
