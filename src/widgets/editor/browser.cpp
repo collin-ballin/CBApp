@@ -186,6 +186,7 @@ void Editor::_MECH_draw_controls(void)
     //
     EditorStyle &                           Style                       = this->m_style;
     EditorState &                           ES                          = this->m_editor_S;
+    GridState &                             GS                          = this->m_grid;
     const ImVec2                            WIDGET_SIZE                 = ImVec2( -1,               ImGui::GetFrameHeight()               );
     //
     //
@@ -347,8 +348,8 @@ void Editor::_MECH_draw_controls(void)
     
     
 
-        const bool      can_decrease    = ES.CanDecreaseGridSpacing();
-        const bool      can_increase    = ES.CanIncreaseGridSpacing();
+        const bool      can_decrease    = GS.CanDecreaseGridSpacing();
+        const bool      can_increase    = GS.CanIncreaseGridSpacing();
 
         
         //      4.      GRID-LINE DENSITY...
@@ -366,7 +367,7 @@ void Editor::_MECH_draw_controls(void)
                                       , Style.ms_TOOLBAR_ICON_SCALE
                                       , IconAnchor::TextBaseline ) )
                 {
-                    ES.DecreaseGridSpacing();
+                    GS.DecreaseGridSpacing();
                 }
             ImGui::EndDisabled();
             this->m_tooltip.UpdateTooltip( TooltipKey::GridDecrease );
@@ -383,7 +384,7 @@ void Editor::_MECH_draw_controls(void)
                                       , Style.ms_TOOLBAR_ICON_SCALE
                                       , IconAnchor::TextBaseline ) )
                 {
-                    ES.IncreaseGridSpacing();
+                    GS.IncreaseGridSpacing();
                 }
             ImGui::EndDisabled();
             this->m_tooltip.UpdateTooltip( TooltipKey::GridIncrease );
@@ -394,8 +395,8 @@ void Editor::_MECH_draw_controls(void)
             ImGui::SameLine(0.0f, 0.0f);
             ImGui::Text(
                   "(%.0f, %.0f)"
-                , ES.m_grid_spacing[0]
-                , ES.m_grid_spacing[1]
+                , GS.m_grid_spacing[0]
+                , GS.m_grid_spacing[1]
             );
             this->m_tooltip.UpdateTooltip( TooltipKey::GridDensityValue );
         }

@@ -620,21 +620,21 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
     //      ES.m_request_canvas_window_update   = false;
     //      ImPlot::SetupAxesLimits( 0.0f, ES.m_window_size[0], 0.0f, ES.m_window_size[1], ImPlotCond_Once );
     //  }
-    ImPlot::SetupAxesLimits( ES.ms_INITIAL_CANVAS_SIZE[0], ES.ms_INITIAL_CANVAS_SIZE[1], ES.ms_INITIAL_CANVAS_SIZE[2], ES.ms_INITIAL_CANVAS_SIZE[3], ImPlotCond_Once );
+    ImPlot::SetupAxesLimits( GS.ms_INITIAL_CANVAS_SIZE[0], GS.ms_INITIAL_CANVAS_SIZE[1], GS.ms_INITIAL_CANVAS_SIZE[2], GS.ms_INITIAL_CANVAS_SIZE[3], ImPlotCond_Once );
     
     
     //      4.      SETUP MIN + MAX AXIS DIMENSIONS...
     ImPlot::SetupAxisLimitsConstraints  (   ImAxis_X1,
-                                            ES.m_world_size[0].Min()   - ES.m_world_slop[0].Value(),
-                                            ES.m_world_size[0].Value() + ES.m_world_slop[0].Value()     );
+                                            GS.m_world_size[0].Min()   - GS.m_world_slop[0].Value(),
+                                            GS.m_world_size[0].Value() + GS.m_world_slop[0].Value()     );
     ImPlot::SetupAxisLimitsConstraints  (   ImAxis_Y1,
-                                            ES.m_world_size[1].Min()   - ES.m_world_slop[1].Value(),
-                                            ES.m_world_size[1].Value() + ES.m_world_slop[1].Value()     );
+                                            GS.m_world_size[1].Min()   - GS.m_world_slop[1].Value(),
+                                            GS.m_world_size[1].Value() + GS.m_world_slop[1].Value()     );
                                             
                                             
     //      5.      SETUP MIN + MAX AXIS "ZOOM" RESOLUTION...
-    ImPlot::SetupAxisZoomConstraints    (   ImAxis_X1,      ES.m_zoom_size[0].Min(),            ES.m_zoom_size[0].Value()       );
-    ImPlot::SetupAxisZoomConstraints    (   ImAxis_Y1,      ES.m_zoom_size[1].Min(),            ES.m_zoom_size[1].Value()       );
+    ImPlot::SetupAxisZoomConstraints    (   ImAxis_X1,      GS.m_zoom_size[0].Min(),            GS.m_zoom_size[0].Value()       );
+    ImPlot::SetupAxisZoomConstraints    (   ImAxis_Y1,      GS.m_zoom_size[1].Min(),            GS.m_zoom_size[1].Value()       );
     
     
     //      6.      CONFIGURE THE "IMPLOT" APPEARANCE...
@@ -649,12 +649,12 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
     
     
     //      7.      PER-FRAME CACHE OPERATIONS FOR IMPLOT CANVAS...
-    ES.m_window_coords          = ImPlot::GetPlotLimits();                                          //  6A.     DOMAIN + RANGE OF PLOT      [ IN (X,Y) PLOT UNITS ].
-    ES.m_window_size[0]         = std::abs(ES.m_window_coords.X.Max - ES.m_window_coords.X.Min);    //  6B.     SIZE OF THE PLOT            [ IN (X,Y) PLOT UNITS ].
-    ES.m_window_size[1]         = std::abs(ES.m_window_coords.Y.Max - ES.m_window_coords.Y.Min);    //
+    GS.m_window_coords          = ImPlot::GetPlotLimits();                                          //  6A.     DOMAIN + RANGE OF PLOT      [ IN (X,Y) PLOT UNITS ].
+    GS.m_window_size[0]         = std::abs(GS.m_window_coords.X.Max - GS.m_window_coords.X.Min);    //  6B.     SIZE OF THE PLOT            [ IN (X,Y) PLOT UNITS ].
+    GS.m_window_size[1]         = std::abs(GS.m_window_coords.Y.Max - GS.m_window_coords.Y.Min);    //
     //
-    ES.m_plot_px_dims           = ImPlot::GetPlotSize();                                            //  6C.     PIXEL SIZE OF THE PLOT      [ IN PIXEL-DIMENSIONS ].
-    ES.m_plot_bbox              = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
+    GS.m_plot_px_dims           = ImPlot::GetPlotSize();                                            //  6C.     PIXEL SIZE OF THE PLOT      [ IN PIXEL-DIMENSIONS ].
+    GS.m_plot_bbox              = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
     
     
     //      X.      REMAINING FUNCTIONS...
@@ -673,6 +673,7 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
 {
     [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO();
     EditorState &                   ES                  = this->m_editor_S;
+    GridState &                     GS                  = this->m_grid;
     
     if ( ES.m_block_overlays )                          { return; }
     
@@ -748,7 +749,7 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
     //      LAST:   DRAW EACH OVERLAY WINDOW...
     m_ov_manager.Begin(
         /* cursor      */ ImGui::GetIO().MousePos,
-        /* full rect   */ ES.m_plot_bbox
+        /* full rect   */ GS.m_plot_bbox
     );
 
     return;

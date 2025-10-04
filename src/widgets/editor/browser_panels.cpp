@@ -519,16 +519,16 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
 inline void Editor::_draw_vertex_properties_panel(Vertex & v, const LabelFn & callback)
 {
     ImGuiStyle &                    style               = ImGui::GetStyle();
-    EditorState &                   ES                  = this->m_editor_S;
+    GridState &                     GS                  = this->m_grid;
     //
     static ImVec2                   ms_SEP_WIDTH        = ImVec2( 5, style.ItemSpacing.y );
     const float                     ms_HALF_WIDTH       = 0.5 * ( ms_WIDGET_WIDTH - ms_SEP_WIDTH.x );
     constexpr float                 SPEED_SCALE         = 0.001f;
     
-    const float                     speedx              = SPEED_SCALE * ES.m_window_size[0];
-    const float                     speedy              = SPEED_SCALE * ES.m_window_size[1];
-    const double &                  WS_xmax             = ES.m_world_size[0].value;
-    const double &                  WS_ymax             = ES.m_world_size[1].value;
+    const float                     speedx              = SPEED_SCALE * GS.m_window_size[0];
+    const float                     speedy              = SPEED_SCALE * GS.m_window_size[1];
+    const double &                  WS_xmax             = GS.m_world_size[0].value;
+    const double &                  WS_ymax             = GS.m_world_size[1].value;
     const bool                      quadratic           = ( v.IsQuadratic() );
 
 

@@ -102,7 +102,8 @@ inline void Editor::_selection_no_selection_shortcuts([[maybe_unused]] const Int
 inline void Editor:: _selection_grid_shortcuts([[maybe_unused]] const Interaction & it) noexcept
 {
     ImGuiIO &           io      = ImGui::GetIO();
-    EditorState &       ES      = this->m_editor_S;
+    //  EditorState &       ES      = this->m_editor_S;
+    GridState &         GS      = this->m_grid;
    
    
    
@@ -113,10 +114,10 @@ inline void Editor:: _selection_grid_shortcuts([[maybe_unused]] const Interactio
         if ( io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_G) )   { m_grid.snap_on = !m_grid.snap_on; return; }
            
         //              1.2.    DECREASE GRID SPACING.          [ SHIFT – ]
-        if ( ImGui::IsKeyPressed(ImGuiKey_Minus) )              { ES.DecreaseGridSpacing();     return; }
+        if ( ImGui::IsKeyPressed(ImGuiKey_Minus) )              { GS.DecreaseGridSpacing();     return; }
         
         //              1.3.    INCREASE GRID SPACING.          [ SHIFT + ]
-        if ( ImGui::IsKeyPressed(ImGuiKey_Equal) )              { ES.IncreaseGridSpacing();     return; }
+        if ( ImGui::IsKeyPressed(ImGuiKey_Equal) )              { GS.IncreaseGridSpacing();     return; }
     }
        
    
@@ -125,10 +126,10 @@ inline void Editor:: _selection_grid_shortcuts([[maybe_unused]] const Interactio
     if ( io.KeyCtrl )
     {
         //              2.1.    ZOOM---OUT CANVAS.              [ CTRL – ]
-        if ( ImGui::IsKeyPressed(ImGuiKey_Minus) )              { /* ES.DecreaseWindowSize(); */    return; }
+        if ( ImGui::IsKeyPressed(ImGuiKey_Minus) )              { /* GS.DecreaseWindowSize(); */    return; }
         
         //              2.2.    ZOOM---IN CANVAS.               [ CTRL + ]
-        if ( ImGui::IsKeyPressed(ImGuiKey_Equal) )              { /* ES.IncreaseWindowSize(); */    return; }
+        if ( ImGui::IsKeyPressed(ImGuiKey_Equal) )              { /* GS.IncreaseWindowSize(); */    return; }
         
         //              2.3.    RESET VIEW OF CANVAS.           [ CTRL KEYPAD-0 ]
         if ( ImGui::IsKeyPressed(ImGuiKey_Keypad0) )            { this->_utl_set_canvas_window();   return; }
@@ -172,6 +173,7 @@ inline void Editor::_selection_mutable_shortcuts([[maybe_unused]] const Interact
 {
     ImGuiIO &               io              = ImGui::GetIO();
     const EditorState &     ES              = this->m_editor_S;
+    GridState &             GS              = this->m_grid;
     
     if ( m_sel.empty() || it.BlockShortcuts() )             { return; }     //  CASE 0 :    NO SELECTION  *OR*  HOTKEYS ARE BLOCKED...
     
@@ -188,13 +190,13 @@ inline void Editor::_selection_mutable_shortcuts([[maybe_unused]] const Interact
             
         //  CASE 1A :   If SNAP-TO-GRID is *ON* :   [ No-Shift ] = Grid-Spacing.  [ Shift ] = 2 x Grid-Spacing.
         if ( this->m_grid.snap_on ) {
-            step_x          = ( shift )         ? s_SHIFT_SCALER * ES.m_grid_spacing[0]     : ES.m_grid_spacing[0];
-            step_y          = ( shift )         ? s_SHIFT_SCALER * ES.m_grid_spacing[1]     : ES.m_grid_spacing[1];
+            step_x          = ( shift )         ? s_SHIFT_SCALER * GS.m_grid_spacing[0]     : GS.m_grid_spacing[0];
+            step_y          = ( shift )         ? s_SHIFT_SCALER * GS.m_grid_spacing[1]     : GS.m_grid_spacing[1];
         }
         //  CASE 1B :   If SNAP-TO-GRID is *ON* :   [ No-Shift ] = Grid-Spacing.  [ Shift ] = 10 x Grid-Spacing.
         else {
-            step_x          = ( should_snap )   ? ES.m_grid_spacing[0]                      : 1.0f;
-            step_y          = ( should_snap )   ? ES.m_grid_spacing[1]                      : 1.0f;
+            step_x          = ( should_snap )   ? GS.m_grid_spacing[0]                      : 1.0f;
+            step_y          = ( should_snap )   ? GS.m_grid_spacing[1]                      : 1.0f;
         }
     }
     

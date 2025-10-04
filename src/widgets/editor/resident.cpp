@@ -314,6 +314,7 @@ void Editor::_DEBUGGER_canvas(void) const noexcept
     static float                LABEL_W                 = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
     static const float &        WIDGET_W                = m_style.ms_SETTINGS_WIDGET_WIDTH;
     const EditorState &         ES                      = this->m_editor_S;
+    const GridState &           GS                      = this->m_grid;
     //  const Interaction &         it                      = *this->m_it;
     
     
@@ -324,17 +325,17 @@ void Editor::_DEBUGGER_canvas(void) const noexcept
     this->S.labelf("Window:", LABEL_W, WIDGET_W);
     ImGui::Text(
           "X: (%.0f, %.0f), Y: (%.0f, %.0f).    [ %.0f, %.0f ]."
-        , ES.m_window_coords.X.Min           , ES.m_window_coords.X.Max
-        , ES.m_window_coords.Y.Min           , ES.m_window_coords.Y.Max
-        , ES.m_window_size[0]                , ES.m_window_size[1]
+        , GS.m_window_coords.X.Min           , GS.m_window_coords.X.Max
+        , GS.m_window_coords.Y.Min           , GS.m_window_coords.Y.Max
+        , GS.m_window_size[0]                , GS.m_window_size[1]
     );
     //
     //              1.2.      CURRENT "ZOOM" DIMENSIONS...
     this->S.labelf("Zoom:", LABEL_W, WIDGET_W);
     ImGui::Text(
           "X: (%.0f, %.0f).     Y: (%.0f, %.0f)"
-        , ES.m_window_coords.X.Min           , ES.m_window_coords.X.Max
-        , ES.m_window_coords.Y.Min           , ES.m_window_coords.Y.Max
+        , GS.m_window_coords.X.Min           , GS.m_window_coords.X.Max
+        , GS.m_window_coords.Y.Min           , GS.m_window_coords.Y.Max
     );
     
 
@@ -563,7 +564,7 @@ void Editor::_debugger_hit_detection(void)
 {
     const float                         LABEL_W             = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
     const float &                       WIDGET_W            = m_style.ms_SETTINGS_WIDGET_WIDTH;
-    EditorState &                       ES                  = this->m_editor_S;
+    const GridState &                   GS                  = this->m_grid;
     [[maybe_unused]] Interaction &      it                  = *this->m_it;
     //
     //
@@ -572,18 +573,18 @@ void Editor::_debugger_hit_detection(void)
     
     //      1.      CURRENT CANVAS WINDOW DIMENSIONS...
     this->S.labelf("Canvas Window:", LABEL_W, WIDGET_W);
-    ImGui::Text( "X: (%.0f, %.0f).  Y: (%.0f, %.0f)",       ES.m_window_coords.X.Min,   ES.m_window_coords.X.Max,
-                                                            ES.m_window_coords.Y.Min,   ES.m_window_coords.Y.Max    );
+    ImGui::Text( "X: (%.0f, %.0f).  Y: (%.0f, %.0f)",       GS.m_window_coords.X.Min,   GS.m_window_coords.X.Max,
+                                                            GS.m_window_coords.Y.Min,   GS.m_window_coords.Y.Max    );
     //
     this->S.labelf("Window Size:",  LABEL_W, WIDGET_W);
-    ImGui::Text( "[%.0f x %.0f]",                           ES.m_window_size[0],        ES.m_window_size[1]         );
+    ImGui::Text( "[%.0f x %.0f]",                           GS.m_window_size[0],        GS.m_window_size[1]         );
     //
     //
     //
     //      2.      CURRENT "ZOOM" DIMENSIONS...
     this->S.labelf("Canvas Zoom:", LABEL_W, WIDGET_W);
-    ImGui::Text( "X: (%.0f, %.0f).  Y: (%.0f, %.0f)",       ES.m_window_coords.X.Min,   ES.m_window_coords.X.Max,
-                                                            ES.m_window_coords.Y.Min,   ES.m_window_coords.Y.Max    );
+    ImGui::Text( "X: (%.0f, %.0f).  Y: (%.0f, %.0f)",       GS.m_window_coords.X.Min,   GS.m_window_coords.X.Max,
+                                                            GS.m_window_coords.Y.Min,   GS.m_window_coords.Y.Max    );
     
     
 

@@ -33,6 +33,7 @@ void Editor::_draw_editor_settings([[maybe_unused]] popup::Context & ctx)
 {
     [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
     EditorState &                   ES                  = this->m_editor_S;
+    GridState &                     GS                  = this->m_grid;
     EditorStyle &                   Style               = this->m_style;
     //
     [[maybe_unused]] float &        LABEL_W             = m_style.ms_SETTINGS_LABEL_WIDTH;
@@ -46,7 +47,7 @@ void Editor::_draw_editor_settings([[maybe_unused]] popup::Context & ctx)
     WIDGET_W                                            = WIDGET_AVAIL;
     //
     SettingsData                    args                = {
-        ES, Style, LABEL_W, WIDGET_W
+        ES, GS, Style, LABEL_W, WIDGET_W
     };
     
     
@@ -184,22 +185,22 @@ inline void Editor::_H1_project_data(SettingsData & args)
     ImGui::SetNextItemWidth( SLIDER_W );
     ImGui::InputScalar( "##Mechanics_World_Limits_ConstraintsX",                            //  1.2A-1.   WINDOW LIMITS X.
                         ImGuiDataType_Double,
-                        &args.ES.m_world_size[0].value,
-                        /* small step = */ &args.ES.ms_INPUT_DOUBLE_INCREMENTS[0],
-                        /* big step   = */ &args.ES.ms_INPUT_DOUBLE_INCREMENTS[1],
+                        &args.GS.m_world_size[0].value,
+                        /* small step = */ &args.GS.ms_INPUT_DOUBLE_INCREMENTS[0],
+                        /* big step   = */ &args.GS.ms_INPUT_DOUBLE_INCREMENTS[1],
                         "%.0f px",
                         INPUT_FLAGS );
-    args.ES.m_world_size[0].Clamp();
+    args.GS.m_world_size[0].Clamp();
     //
     ImGui::SameLine(0, SLIDER_SEP);         ImGui::SetNextItemWidth( SLIDER_W );
     ImGui::InputScalar( "##Mechanics_World_Limits_ConstraintsY",                            //  1.2A-2.   WINDOW LIMITS Y.
                         ImGuiDataType_Double,
-                        &args.ES.m_world_size[1].value,
-                        &args.ES.ms_INPUT_DOUBLE_INCREMENTS[0],
-                        &args.ES.ms_INPUT_DOUBLE_INCREMENTS[1],
+                        &args.GS.m_world_size[1].value,
+                        &args.GS.ms_INPUT_DOUBLE_INCREMENTS[0],
+                        &args.GS.ms_INPUT_DOUBLE_INCREMENTS[1],
                         "%.0f px",
                         INPUT_FLAGS );
-    args.ES.m_world_size[1].Clamp();
+    args.GS.m_world_size[1].Clamp();
 
 
     
@@ -210,24 +211,24 @@ inline void Editor::_H1_project_data(SettingsData & args)
     ImGui::SetNextItemWidth( SLIDER_W );
     ImGui::InputScalar( "##Mechanics_Zoom_Limits_X",
                         ImGuiDataType_Double,
-                        &args.ES.m_zoom_size[0].value,
-                        /* small step = */ &args.ES.ms_INPUT_DOUBLE_INCREMENTS[0],
-                        /* big step   = */ &args.ES.ms_INPUT_DOUBLE_INCREMENTS[1],
+                        &args.GS.m_zoom_size[0].value,
+                        /* small step = */ &args.GS.ms_INPUT_DOUBLE_INCREMENTS[0],
+                        /* big step   = */ &args.GS.ms_INPUT_DOUBLE_INCREMENTS[1],
                         "%.0f px",
                         INPUT_FLAGS );
-    args.ES.m_zoom_size[0].Clamp();
+    args.GS.m_zoom_size[0].Clamp();
     //
     //
     //
     ImGui::SameLine(0, SLIDER_SEP);         ImGui::SetNextItemWidth( SLIDER_W );
     ImGui::InputScalar( "##Mechanics_Zoom_Limits_Y",
                         ImGuiDataType_Double,
-                        &args.ES.m_zoom_size[1].value,
-                        &args.ES.ms_INPUT_DOUBLE_INCREMENTS[0],
-                        &args.ES.ms_INPUT_DOUBLE_INCREMENTS[1],
+                        &args.GS.m_zoom_size[1].value,
+                        &args.GS.ms_INPUT_DOUBLE_INCREMENTS[0],
+                        &args.GS.ms_INPUT_DOUBLE_INCREMENTS[1],
                         "%.0f px",
                         INPUT_FLAGS );
-    args.ES.m_zoom_size[1].Clamp();
+    args.GS.m_zoom_size[1].Clamp();
 
     return;
 }

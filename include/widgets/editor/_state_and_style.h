@@ -724,6 +724,7 @@ public:
     // *************************************************************************** //
     //                  IMPLOT CANVAS INFORMATION...
     // *************************************************************************** //
+#ifndef _EDITOR_REFACTOR_GRID
     //                                  CONSTANTS:
     static constexpr double                 ms_INITIAL_CANVAS_SIZE [4]          = { 0.0f, 256.0f, 0.0f, 256.0f };
     static constexpr double                 ms_INPUT_DOUBLE_INCREMENTS [2]      = { 1.0f, 10.0f };                      //  Snap value of "+" and "-" BUTTONS.
@@ -761,6 +762,8 @@ public:
     //
     mutable ImVec2                          m_plot_px_dims                      = {   };
     mutable ImRect                          m_plot_bbox                         = {   };
+#endif  //  _EDITOR_REFACTOR_GRID  //
+    
     
     // *************************************************************************** //
     //
@@ -869,6 +872,10 @@ public:
     //      INITIALIZATION METHODS.         |   "init.cpp" ...
     // *************************************************************************** //
     //  explicit                        MyClass                 (app::AppState & );             //  Def. Constructor.
+                                        EditorState_t           (void) noexcept                 = default;
+    
+    
+#ifndef _EDITOR_REFACTOR_GRID
                                         EditorState_t           (void) noexcept
     {
         //      1.      ALLOCATE MEMORY FOR GRIDLINES...
@@ -879,6 +886,8 @@ public:
         
         return;
     }
+#endif //  _EDITOR_REFACTOR_GRID  //
+
                                         //  EditorState_t           (void) noexcept                 = default;
                                         ~EditorState_t          (void)                          = default;
     
@@ -941,6 +950,7 @@ public:
     //      QUERY FUNCTIONS.
     // *************************************************************************** //
     
+#ifndef _EDITOR_REFACTOR_GRID
     //  "CanDecreaseGridSpacing"
     [[nodiscard]] inline bool           CanDecreaseGridSpacing              (void) const noexcept
     {
@@ -956,6 +966,7 @@ public:
         const bool  incr_y  = ( this->m_grid_density[1].CanIncrement() );
         return ( incr_x  &&  incr_y);
     }
+#endif //  _EDITOR_REFACTOR_GRID  //
 
     // *************************************************************************** //
     //
@@ -978,6 +989,7 @@ public:
     }
     
     
+#ifndef _EDITOR_REFACTOR_GRID
     //  "UpdateCanvasSize"
     inline void                         UpdateCanvasSize                    (void) noexcept
     {
@@ -999,6 +1011,7 @@ public:
                                 , /*show_default  */false );
         return;
     }
+#endif //  _EDITOR_REFACTOR_GRID  //
 
     // *************************************************************************** //
     //
@@ -1007,6 +1020,8 @@ public:
     //      IMPLOT GRID MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
     
+    
+#ifndef _EDITOR_REFACTOR_GRID
     //  "IncreaseGridSpacing"
     inline bool                         IncreaseGridSpacing                 (void) noexcept {
         if ( !this->CanIncreaseGridSpacing() )      { return false; }
@@ -1094,6 +1109,7 @@ public:
     
         return;
     }
+#endif //  _EDITOR_REFACTOR_GRID  //
     
     
     

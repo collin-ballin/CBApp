@@ -897,6 +897,7 @@ protected:
     // *************************************************************************** //
     struct SettingsData {
         EditorState &       ES          ;
+        GridState &         GS          ;
         EditorStyle &       Style       ;
         float &             LABEL_W     ;
         float &             WIDGET_W    ;
@@ -1145,12 +1146,12 @@ protected:
     //  "snap_to_grid"
     [[nodiscard]] inline ImVec2         snap_to_grid                            (ImVec2 ws) const
     {
-        const EditorState & ES  = this->m_editor_S;
+        const GridState &   GS      = this->m_grid;
         
         if ( this->want_snap() )
         {
-            ws.x    = cblib::math::quantize( ws.x, ES.m_grid_spacing[0] );
-            ws.y    = cblib::math::quantize( ws.y, ES.m_grid_spacing[1] );
+            ws.x    = cblib::math::quantize( ws.x, GS.m_grid_spacing[0] );
+            ws.y    = cblib::math::quantize( ws.y, GS.m_grid_spacing[1] );
         }
         return ws;
     }
@@ -1176,9 +1177,10 @@ protected:
     //  "_update_grid"
     inline void                         _update_grid_info                       (void)
     {
-        EditorState &       ES              = this->m_editor_S;
-        ImPlotRect &        lim             = ES.m_window_coords;
-        ImVec2 &            size            = ES.m_plot_px_dims;
+    #ifndef _EDITOR_REFACTOR_GRID
+        GridState &         GS              = this->m_grid;
+        ImPlotRect &        lim             = GS.m_window_coords;
+        ImVec2 &            size            = GS.m_plot_px_dims;
         //
         float               range_x         = static_cast<float>(lim.X.Max - lim.X.Min);
         float               ppw             = size.x / range_x;                         //  pixels‑per‑world‑unit
@@ -1195,6 +1197,7 @@ protected:
         else                        { mant = 1.0f; exp10 *= 10.0f; }
 
         m_grid.snap_step = mant * exp10;                        // store for the frame
+    #endif  //  _EDITOR_REFACTOR_GRID  //
         return;
     }
        
@@ -1209,7 +1212,7 @@ protected:
         //                          /*labels*/nullptr, /*show_default*/false);
         //  ImPlot::SetupAxisTicks(ImAxis_Y1, ys.data(), (int)ys.size(), nullptr, false);
 
-        this->m_editor_S.SetupImPlotGrid();
+        this->m_grid.SetupImPlotGrid();
         
     
         return;

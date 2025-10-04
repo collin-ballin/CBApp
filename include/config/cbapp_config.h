@@ -498,6 +498,7 @@ public:                                                                         
 #define                 _EDITOR_USE_HITANY_CACHE        1
 #define                 _EDITOR_DELETE_POINTS           1
 #define                 _EDITOR_DELETE_LINES            1
+#define                 _EDITOR_REFACTOR_GRID           1
 
 
 

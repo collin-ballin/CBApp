@@ -362,15 +362,15 @@ void Editor::_scissor_cut(const PathHit & h)
 //
 void Editor::_utl_set_canvas_window(void) noexcept
 {
-    EditorState &           ES          = this->m_editor_S;
+    GridState &             GS          = this->m_grid;
     //  ES.m_request_canvas_window_update   = true;
     //
-    const float             max_x       = ES.m_world_size[0].Value() / 2.0f;
-    const float             max_y       = ES.m_world_size[1].Value() / 2.0f;
+    const float             max_x       = GS.m_world_size[0].Value() / 2.0f;
+    const float             max_y       = GS.m_world_size[1].Value() / 2.0f;
     
     
-    ES.m_window_size[0]                 = max_x;
-    ES.m_window_size[1]                 = max_y;
+    GS.m_window_size[0]                 = max_x;
+    GS.m_window_size[1]                 = max_y;
     
     return;
 }
