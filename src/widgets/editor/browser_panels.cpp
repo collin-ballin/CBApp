@@ -524,12 +524,6 @@ inline void Editor::_draw_vertex_properties_panel(Vertex & v, const LabelFn & ca
     static ImVec2                   ms_SEP_WIDTH        = ImVec2( 5, style.ItemSpacing.y );
     const float                     ms_HALF_WIDTH       = 0.5 * ( ms_WIDGET_WIDTH - ms_SEP_WIDTH.x );
     constexpr float                 SPEED_SCALE         = 0.001f;
-    [[maybe_unused]] const float    grid                = m_style.GRID_STEP / m_cam.zoom_mag;
-    //  auto                            snap                = [/*grid*/](const double & x_, const double & y_) -> ImVec2 {
-    //      float   x     = x_;//  std::round(x_ / grid) * grid;
-    //      float   y     = y_;//  std::round(y_ / grid) * grid;
-    //      return ImVec2{ x, y };
-    //  };
     
     const float                     speedx              = SPEED_SCALE * ES.m_window_size[0];
     const float                     speedy              = SPEED_SCALE * ES.m_window_size[1];

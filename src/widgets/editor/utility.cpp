@@ -358,33 +358,6 @@ void Editor::_scissor_cut(const PathHit & h)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_update_world_extent"
-//
-void Editor::_update_world_extent()
-{
-    if (m_vertices.empty()) {
-        m_world_bounds = { 0,0,  0,0 };
-        return;
-    }
-
-    float   min_x   =  std::numeric_limits<float>::max();
-    float   min_y   =  std::numeric_limits<float>::max();
-    float   max_x   = -std::numeric_limits<float>::max();
-    float   max_y   = -std::numeric_limits<float>::max();
-
-    for (const Vertex & v : m_vertices) {
-        min_x   = std::min(min_x, v.x);
-        min_y   = std::min(min_y, v.y);
-        max_x   = std::max(max_x, v.x);
-        max_y   = std::max(max_y, v.y);
-    }
-
-    const float margin =  m_grid.snap_step * 4.0f;     // breathing room
-    m_world_bounds     = { min_x - margin,  min_y - margin,
-                           max_x + margin,  max_y + margin };
-}
-
-
 //  "_utl_set_canvas_window" _utl_reset_camera
 //
 void Editor::_utl_set_canvas_window(void) noexcept

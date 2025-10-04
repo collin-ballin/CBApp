@@ -295,6 +295,7 @@ inline void Editor::_settings_H2(SettingsData & args)
 //
 inline void Editor::_H2_state(SettingsData & args)
 {
+    GridState &                         GS                  = this->m_grid;
     //  BrowserState &                  BState              = this->m_browser_S;
     //
     //constexpr ImGuiSliderFlags      SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
@@ -328,18 +329,18 @@ inline void Editor::_H2_state(SettingsData & args)
                 
                 ImGui::BeginGroup();
                     this->S.labelf("Lock X&Y Dimensions:",              args.LABEL_W,               args.WIDGET_W);       //  1.3.        GRID ASPECT RATIO.
-                    ImGui::CheckboxFlags("##H2_Grid_EqualGrid",         &m_plot_flags,              ImPlotFlags_Equal );
+                    ImGui::CheckboxFlags("##H2_Grid_EqualGrid",         &this->m_grid.plot_flags,   ImPlotFlags_Equal );
                 ImGui::EndGroup();
                 //
                 ImGui::SetItemTooltip("(x, y) pairs are constrained to have the same units/pixel value.");
                 
                 
                 this->S.labelf("Show Frame:",                           args.LABEL_W,               args.WIDGET_W);       //  1.5.        HIDE FRAME.
-                ImGui::CheckboxFlags("##H2_Grid_ShowFrame",             &m_plot_flags,              ImPlotFlags_NoFrame );
+                ImGui::CheckboxFlags("##H2_Grid_ShowFrame",             &this->m_grid.plot_flags,   ImPlotFlags_NoFrame );
                 
                 
                 this->S.labelf("Hide Cursor Coordinates:",              args.LABEL_W,               args.WIDGET_W);       //  1.6.        CURSOR POSITION.
-                ImGui::CheckboxFlags("##H2_Grid_CursorCoordinates",     &m_plot_flags,              ImPlotFlags_NoMouseText );
+                ImGui::CheckboxFlags("##H2_Grid_CursorCoordinates",     &this->m_grid.plot_flags,   ImPlotFlags_NoMouseText );
                 
                 
                 
@@ -350,30 +351,30 @@ inline void Editor::_H2_state(SettingsData & args)
                 //
                 //
                 this->S.labelf("X-Axis On Top:",                        args.LABEL_W,               args.WIDGET_W);       //  2.1.        X-AXIS POSITION.
-                ImGui::CheckboxFlags( "##H2_Axes_XLocation",            &m_axes[0].flags,           ImPlotAxisFlags_Opposite );
+                ImGui::CheckboxFlags( "##H2_Axes_XLocation",            &GS.axes[0].flags,          ImPlotAxisFlags_Opposite );
                 
                 this->S.labelf("Y-Axis On Right:",                      args.LABEL_W,               args.WIDGET_W);       //  2.2.        Y-AXIS POSITION.
-                ImGui::CheckboxFlags( "##H2_Axes_YLocation",            &m_axes[1].flags,           ImPlotAxisFlags_Opposite );
+                ImGui::CheckboxFlags( "##H2_Axes_YLocation",            &GS.axes[1].flags,          ImPlotAxisFlags_Opposite );
                 
                 
                 this->S.labelf("Hide Axes Labels:",                     args.LABEL_W,               args.WIDGET_W);       //  2.3.       AXES LABELS.
-                if ( ImGui::CheckboxFlags("##H2_Axes_Labels",           &m_axes[0].flags,           ImPlotAxisFlags_NoLabel ) )
-                { m_axes[1].flags ^= ImPlotAxisFlags_NoLabel; }
+                if ( ImGui::CheckboxFlags("##H2_Axes_Labels",           &GS.axes[0].flags,          ImPlotAxisFlags_NoLabel ) )
+                    { GS.axes[1].flags ^= ImPlotAxisFlags_NoLabel; }
                 
                 
                 this->S.labelf("Hide Tick-Labels:",                     args.LABEL_W,               args.WIDGET_W);       //  2.4.        TICK LABELS.
-                if ( ImGui::CheckboxFlags("##H2_Axes_TickLabels",       &m_axes[0].flags,           ImPlotAxisFlags_NoTickLabels ) )
-                { m_axes[1].flags ^= ImPlotAxisFlags_NoTickLabels; }
+                if ( ImGui::CheckboxFlags("##H2_Axes_TickLabels",       &GS.axes[0].flags,          ImPlotAxisFlags_NoTickLabels ) )
+                    { GS.axes[1].flags ^= ImPlotAxisFlags_NoTickLabels; }
                 
                 
                 this->S.labelf("Hide Tick-Marks:",                      args.LABEL_W,               args.WIDGET_W);       //  2.5.        TICK MARKS.
-                if ( ImGui::CheckboxFlags("##H2_Axes_TickMarks",        &m_axes[0].flags,           ImPlotAxisFlags_NoTickMarks ) )
-                { m_axes[1].flags ^= ImPlotAxisFlags_NoTickMarks; }
+                if ( ImGui::CheckboxFlags("##H2_Axes_TickMarks",        &GS.axes[0].flags,          ImPlotAxisFlags_NoTickMarks ) )
+                    { GS.axes[1].flags ^= ImPlotAxisFlags_NoTickMarks; }
                 
             
                 
                 
-                //  m_axes[1].flags
+                //  GS.axes[1].flags
                 //  ImGui::Checkbox("##H2_Grid_EqualGrid",                  &m_grid.visible);
                 
                 

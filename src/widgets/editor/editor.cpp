@@ -394,7 +394,7 @@ void Editor::Begin(const char * /*id*/)
     //      3.      CREATE THE MAIN IMPLOT "GRID" / "CANVAS"...
     //
     //      CASE 3A         : FAILURE TO CREATE CANVAS.
-    if ( !ImPlot::BeginPlot("##Editor_CanvasGrid", ImVec2(ES.m_avail.x, ES.m_avail.y), m_plot_flags) )
+    if ( !ImPlot::BeginPlot("##Editor_CanvasGrid", ImVec2(ES.m_avail.x, ES.m_avail.y), this->m_grid.plot_flags) )
     {
         ImPlot::GetInputMap() = backup;
         return;
@@ -589,6 +589,7 @@ void Editor::_selbox_rebuild_view_if_needed([[maybe_unused]] const Interaction &
 inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
 {
     EditorState &       ES                  = this->m_editor_S;
+    GridState &         GS                  = this->m_grid;
     //
     static bool         show_grid_cache     = !m_grid.visible;
     
@@ -599,12 +600,12 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
         show_grid_cache = m_grid.visible;
         
         if ( show_grid_cache ) {    //  1A.     SET the flags.
-            m_axes[0].flags     &= ~ImPlotAxisFlags_NoGridLines;
-            m_axes[1].flags     &= ~ImPlotAxisFlags_NoGridLines;
+            GS.axes[0].flags    &= ~ImPlotAxisFlags_NoGridLines;
+            GS.axes[1].flags    &= ~ImPlotAxisFlags_NoGridLines;
         }
         else {                      //  1B.     REMOVE the flags.
-            m_axes[0].flags     |= ImPlotAxisFlags_NoGridLines;
-            m_axes[1].flags     |= ImPlotAxisFlags_NoGridLines;
+            GS.axes[0].flags    |= ImPlotAxisFlags_NoGridLines;
+            GS.axes[1].flags    |= ImPlotAxisFlags_NoGridLines;
         }
     }
     
@@ -637,12 +638,12 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
     
     
     //      6.      CONFIGURE THE "IMPLOT" APPEARANCE...
-    ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  5A.     Axis Names & Flags.
-                      m_axes[0].flags,          m_axes[1].flags
+    ImPlot::SetupAxes(GS.axes[0].uuid,          GS.axes[1].uuid,             //  5A.     Axis Names & Flags.
+                      GS.axes[0].flags,         GS.axes[1].flags
     );
-    //  ImPlot::SetupAxes(m_axes[0].uuid,           m_axes[1].uuid,             //  5A.     Axis Names & Flags.
-    //                    (m_grid.visible) ? m_axes[0].flags    : m_axes[0].flags | ImPlotAxisFlags_NoGridLines,
-    //                    (m_grid.visible) ? m_axes[1].flags    : m_axes[1].flags | ImPlotAxisFlags_NoGridLines
+    //  ImPlot::SetupAxes(GS.axes[0].uuid,           GS.axes[1].uuid,             //  5A.     Axis Names & Flags.
+    //                    (m_grid.visible) ? GS.axes[0].flags    : GS.axes[0].flags | ImPlotAxisFlags_NoGridLines,
+    //                    (m_grid.visible) ? GS.axes[1].flags    : GS.axes[1].flags | ImPlotAxisFlags_NoGridLines
     //  );
     
     

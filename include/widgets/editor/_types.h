@@ -873,14 +873,338 @@ struct PathHit_t {
 // *************************************************************************** //
 // *************************************************************************** //
 
+
 //  "GridState"
+//      PLAIN-OLD-DATA (POD) STRUCT.
 //
-struct GridState {
-    float   snap_step       = 20.0f;   // quantize condition for grid-snapping.
-    bool    visible         = true;
-    bool    snap_on         = false;
+struct GridState
+{
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    CBAPP_CBLIB_TYPES_API
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    //                                  CONSTANTS:
+    static constexpr double                 ms_INITIAL_CANVAS_SIZE [4]          = { 0.0f, 256.0f, 0.0f, 256.0f };
+    static constexpr double                 ms_INPUT_DOUBLE_INCREMENTS [2]      = { 1.0f, 10.0f };                      //  Snap value of "+" and "-" BUTTONS.
+    
 //
-};
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      STATE VARIABLES.
+    // *************************************************************************** //
+    float                                   snap_step                           = 20.0f;   // quantize condition for grid-snapping.
+    bool                                    visible                             = true;
+    bool                                    snap_on                             = false;
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //                  IMPLOT CANVAS INFORMATION...
+    // *************************************************************************** //
+    //                                  PERSISTENT STATE INFORMATION:
+    std::array< Param<double>, 2>           m_world_size                        = { {                                   //  MAXIMUM SIZE OF THE CANVAS (World Size).
+                                                                                    { 512.0f,       { 10.0f,        1e4f } },
+                                                                                    { 512.0f,       { 10.0f,        1e4f } }
+                                                                                } };
+    std::array< Param<double>, 2>           m_world_slop                        = { {                                   //  (Allow user to scroll a bit beyond canvas limits).
+                                                                                    { 128.0f,       { 32.0f,        512.0f } },
+                                                                                    { 128.0f,       { 32.0f,        512.0f } }
+                                                                                } };
+    std::array< Param<double>, 2>           m_zoom_size                         = { {                                   //  MAX + MIN "ZOOM" RESOLUTION OF THE CANVAS.
+                                                                                    { 1024.0f,      { 1.0f,         2e4f } },
+                                                                                    { 1024.0f,      { 1.0f,         2e4f } }
+                                                                                } };
+    //
+    //                                  GRID INFORMATION:
+    std::array< Param<int>, 2>              m_grid_density                      = { {                                   //  TOTAL # OF GRIDLINES.
+                                                                                    { 16,           { 2,            64 } },
+                                                                                    { 16,           { 2,            64 } }
+                                                                                } };
+    std::array< std::vector<double>, 2 >    m_gridlines;                                                                //  POSITION OF THE "X" AND "Y" GRIDLINES.
+    std::array< double, 2 >                 m_grid_spacing                      = { -1.0f,      -1.0f };                //  DIST. BETWEEN EACH GRIDLINE.
+    
+    
+    //
+    //
+    //                                  TRANSIENT STATE INFORMATION:
+    //  mutable bool                            m_request_canvas_window_update      = true;
+    mutable ImPlotRect                      m_window_coords                     = {   };        //  DOMAIN + RANGE OF CURRENT CANVAS:   ( [X0, Xf], [Y0, Yf] ).
+    std::array< double, 2>                  m_window_size                       = {   };
+    //
+    mutable ImVec2                          m_plot_px_dims                      = {   };
+    mutable ImRect                          m_plot_bbox                         = {   };
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      *DATA THAT I'M MOVING FROM EDITOR-CLASS INTO HERE*.
+    // *************************************************************************** //
+    
+    ImPlotFlags                             plot_flags                    = ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
+    utl::AxisCFG                            axes [2]                      = {
+        {"##x-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit | ImPlotAxisFlags_Opposite },
+        {"##y-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit  }
+    };
+    utl::LegendCFG                          legend                        = { ImPlotLocation_NorthWest, ImPlotLegendFlags_None };
+    
+    
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    //  explicit                        GridState               (app::AppState & );             //  Def. Constructor.
+                                        GridState               (void) noexcept
+    {
+        //      1.      ALLOCATE MEMORY FOR GRIDLINES...
+        this->m_gridlines[0].reserve( this->m_grid_density[0].Max() );      //  X-Axes.
+        this->m_gridlines[1].reserve( this->m_grid_density[1].Max() );      //  Y-Axes.
+        this->_update_grid();
+        
+        return;
+    }
+                                        ~GridState              (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+                                        GridState               (const GridState &    src)      = delete;   //  Copy. Constructor.
+                                        GridState               (GridState &&         src)      = delete;   //  Move Constructor.
+    GridState &                         operator =              (const GridState &    src)      = delete;   //  Assgn. Operator.
+    GridState &                         operator =              (GridState &&         src)      = delete;   //  Move-Assgn. Operator.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      QUERY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "CanDecreaseGridSpacing"
+    [[nodiscard]] inline bool           CanDecreaseGridSpacing              (void) const noexcept
+    {
+        const bool  decr_x  = ( this->m_grid_density[0].CanDecrement() );
+        const bool  decr_y  = ( this->m_grid_density[1].CanDecrement() );
+        return ( decr_x  &&  decr_y);
+    }
+    
+    //  "CanIncreaseGridSpacing"
+    [[nodiscard]] inline bool           CanIncreaseGridSpacing              (void) const noexcept
+    {
+        const bool  incr_x  = ( this->m_grid_density[0].CanIncrement() );
+        const bool  incr_y  = ( this->m_grid_density[1].CanIncrement() );
+        return ( incr_x  &&  incr_y);
+    }
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "SetupImPlotGrid"
+    inline void                         SetupImPlotGrid                     (void) const noexcept
+    {
+        ImPlot::SetupAxisTicks(   ImAxis_X1
+                                , this->m_gridlines[0].data()
+                                , static_cast<int>( this->m_gridlines[0].size() )
+                                , /*labels        */nullptr
+                                , /*show_default  */false );
+        ImPlot::SetupAxisTicks( ImAxis_Y1
+                                , this->m_gridlines[1].data()
+                                , static_cast<int>( this->m_gridlines[1].size() )
+                                , /*labels        */nullptr
+                                , /*show_default  */false );
+        return;
+    }
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      IMPLOT GRID MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "IncreaseGridSpacing"
+    inline bool                         IncreaseGridSpacing                 (void) noexcept {
+        if ( !this->CanIncreaseGridSpacing() )      { return false; }
+    
+        this->m_grid_density[0].SetValue            ( this->m_grid_density[0].value << 1 );
+        this->m_grid_density[1].SetValue            ( this->m_grid_density[1].value << 1 );
+        _update_grid();
+        return true;
+    }
+    inline void                         IncreaseGridSpacingX                (void) noexcept {
+        static_assert( true, "Not implemented" );
+        //  this->m_grid_density[0].SetValue( this->m_grid_density[0].value << 1 );
+        //  _update_grid_x();
+        return;
+    }
+    inline void                         IncreaseGridSpacingY                (void) noexcept {
+        static_assert( true, "Not implemented" );
+        //  this->m_grid_density[1].SetValue( this->m_grid_density[1].value << 1 );
+        //  this->_update_grid_y();
+        return;
+    }
+    
+    
+    //  "DecreaseGridSpacing"
+    inline bool                         DecreaseGridSpacing                 (void) noexcept {
+        if ( !this->CanDecreaseGridSpacing() )      { return false; }
+        
+        this->m_grid_density[0].SetValue            ( this->m_grid_density[0].value >> 1 );
+        this->m_grid_density[1].SetValue            ( this->m_grid_density[1].value >> 1 );
+        _update_grid();
+        return true;
+    }
+    inline void                         DecreaseGridSpacingX                (void) noexcept {
+        static_assert( true, "Not implemented" );
+        //  this->m_grid_density[1].SetValue( this->m_grid_density[0].value >> 1 );
+        //  this->_update_grid_x();
+        return;
+    }
+    inline void                         DecreaseGridSpacingY                (void) noexcept {
+        static_assert( true, "Not implemented" );
+        //  this->m_grid_density[1].SetValue( this->m_grid_density[1].value >> 1 );
+        //  this->_update_grid_y();
+        return;
+    }
+    
+    
+    //  "_compute_grid_spacing"
+    inline void                         _compute_grid_spacing               (void) noexcept
+    {
+        return;
+    }
+    
+    
+    //  "_update_grid"
+    inline void                         _update_grid                        (void) noexcept
+    {
+        const size_t        NX      = static_cast<size_t>( this->m_grid_density[0].Value() );
+        const size_t        NY      = static_cast<size_t>( this->m_grid_density[1].Value() );
+        const double        xmax    = this->m_world_size[0].Value();
+        const double        ymax    = this->m_world_size[1].Value();
+        
+            
+        //      1.      UPDATE DIST. BETWEEN EACH GRIDLINE...
+        m_grid_spacing[0]           = xmax / static_cast<double>( NX );
+        m_grid_spacing[1]           = ymax / static_cast<double>( NY );
+        
+        
+        //      2.      RE-SIZE ARRAYS OF GRIDLINE POSITIONS...
+        this->m_gridlines[0]        .resize(NX);
+        this->m_gridlines[1]        .resize(NY);
+        
+        
+        //      3.      POPULATE ARRAYS WITH NEW VALUES...
+        //
+        //              3A.     X-AXIS.
+        for (size_t x = 0; x < NX; ++x)
+        {
+            this->m_gridlines[0][x]     = static_cast<double>( x ) * m_grid_spacing[0];
+        }
+        //              3B.     Y-AXIS.
+        for (size_t y = 0; y < NY; ++y)
+        {
+            this->m_gridlines[1][y]     = static_cast<double>( y ) * m_grid_spacing[1];
+        }
+    
+        return;
+    }
+    
+    
+    
+    // *************************************************************************** //
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "GridState" INLINE STRUCT DEFINITION.
+
+
+//      GridState     : "to_json"
+//
+inline void to_json(nlohmann::json & j, const GridState & obj)
+{
+    //  j ["m_world_size"]      = obj.m_world_size;
+    //  j ["m_world_slop"]      = obj.m_world_slop;
+    //  j ["m_zoom_size"]       = obj.m_zoom_size;
+    //
+    //  j = {
+    //      { "m_world_size",          obj.m_world_size       }
+    //  };
+    return;
+}
+
+
+//      GridState     : "from_json"
+//
+inline void from_json([[maybe_unused]] nlohmann::json & j, [[maybe_unused]] GridState & obj)
+{
+    //  j.at("")        .get_to(obj.m_plot_limits);
+    //  j.at("Z_EDITOR_BACK")           .get_to(obj.Z_EDITOR_BACK);
+    //  j.at("Z_FLOOR_USER")            .get_to(obj.Z_FLOOR_USER);
+    //  j.at("Z_EDITOR_FRONT")          .get_to(obj.Z_EDITOR_FRONT);
+    //  j.at("Z_CEIL_USER")             .get_to(obj.Z_CEIL_USER);
+    //  j.at("RENORM_THRESHOLD")        .get_to(obj.RENORM_THRESHOLD);
+    return;
+}
+
+
+
 
 
 

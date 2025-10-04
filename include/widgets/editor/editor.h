@@ -455,25 +455,7 @@ protected:
     // *************************************************************************** //
     //      IMPLOT / CANVAS SYSTEM...
     // *************************************************************************** //
-    ImPlotFlags                         m_plot_flags                    = ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
-    utl::AxisCFG                        m_axes [2]                      = {
-        {"##x-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit | ImPlotAxisFlags_Opposite },
-        {"##y-axis",    ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit  }
-    };
-    utl::LegendCFG                      m_legend                        = { ImPlotLocation_NorthWest, ImPlotLegendFlags_None };
-    //
-    //
-    //
-    Camera                              m_cam;
-    GridState                           m_grid                          = { 100.0f,  true,  false };
-    float                               m_ppw                           = 1.0f;
-    Bounds                              m_world_bounds                  = {
-        /*min_x=*/0.0f,        /*min_y=*/0.0f,
-        /*max_x=*/500.0f,      /*max_y=*/500.0f
-    };
-    //
-    static constexpr float              ms_GRID_STEP_MIN                = 2.0f;   // world-units
-    static constexpr float              ms_GRID_LABEL_PAD               = 2.0f;
+    GridState                           m_grid                          = {   };
     
     // *************************************************************************** //
     //
