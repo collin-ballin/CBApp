@@ -722,53 +722,6 @@ public:
     //
     //
     // *************************************************************************** //
-    //                  IMPLOT CANVAS INFORMATION...
-    // *************************************************************************** //
-#ifndef _EDITOR_REFACTOR_GRID
-    //                                  CONSTANTS:
-    static constexpr double                 ms_INITIAL_CANVAS_SIZE [4]          = { 0.0f, 256.0f, 0.0f, 256.0f };
-    static constexpr double                 ms_INPUT_DOUBLE_INCREMENTS [2]      = { 1.0f, 10.0f };                      //  Snap value of "+" and "-" BUTTONS.
-    //
-    //
-    //                                  PERSISTENT STATE INFORMATION:
-    std::array< Param<double>, 2>           m_world_size                        = { {                                   //  MAXIMUM SIZE OF THE CANVAS (World Size).
-                                                                                    { 512.0f,       { 10.0f,        1e4f } },
-                                                                                    { 512.0f,       { 10.0f,        1e4f } }
-                                                                                } };
-    std::array< Param<double>, 2>           m_world_slop                        = { {                                   //  (Allow user to scroll a bit beyond canvas limits).
-                                                                                    { 128.0f,       { 32.0f,        512.0f } },
-                                                                                    { 128.0f,       { 32.0f,        512.0f } }
-                                                                                } };
-    std::array< Param<double>, 2>           m_zoom_size                         = { {                                   //  MAX + MIN "ZOOM" RESOLUTION OF THE CANVAS.
-                                                                                    { 1024.0f,      { 1.0f,         2e4f } },
-                                                                                    { 1024.0f,      { 1.0f,         2e4f } }
-                                                                                } };
-    //
-    //                                  GRID INFORMATION:
-    std::array< Param<int>, 2>              m_grid_density                      = { {                                   //  TOTAL # OF GRIDLINES.
-                                                                                    { 16,           { 2,            64 } },
-                                                                                    { 16,           { 2,            64 } }
-                                                                                } };
-    std::array< std::vector<double>, 2 >    m_gridlines;                                                            //  POSITION OF THE "X" AND "Y" GRIDLINES.
-    std::array< double, 2 >                 m_grid_spacing                      = { -1.0f,      -1.0f };                //  DIST. BETWEEN EACH GRIDLINE.
-    
-    
-    //
-    //
-    //                                  TRANSIENT STATE INFORMATION:
-    //  mutable bool                            m_request_canvas_window_update      = true;
-    mutable ImPlotRect                      m_window_coords                     = {   };        //  DOMAIN + RANGE OF CURRENT CANVAS:   ( [X0, Xf], [Y0, Yf] ).
-    std::array< double, 2>                  m_window_size                       = {   };
-    //
-    mutable ImVec2                          m_plot_px_dims                      = {   };
-    mutable ImRect                          m_plot_bbox                         = {   };
-#endif  //  _EDITOR_REFACTOR_GRID  //
-    
-    
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
     //                  IMPLOT SETTINGS INFORMATION...
     // *************************************************************************** //
     //                                  PERSISTENT STATE INFORMATION:
@@ -871,24 +824,7 @@ public:
     // *************************************************************************** //
     //      INITIALIZATION METHODS.         |   "init.cpp" ...
     // *************************************************************************** //
-    //  explicit                        MyClass                 (app::AppState & );             //  Def. Constructor.
                                         EditorState_t           (void) noexcept                 = default;
-    
-    
-#ifndef _EDITOR_REFACTOR_GRID
-                                        EditorState_t           (void) noexcept
-    {
-        //      1.      ALLOCATE MEMORY FOR GRIDLINES...
-        this->m_gridlines[0].reserve( this->m_grid_density[0].Max() );      //  X-Axes.
-        this->m_gridlines[1].reserve( this->m_grid_density[1].Max() );      //  Y-Axes.
-        this->_update_grid();
-        
-        
-        return;
-    }
-#endif //  _EDITOR_REFACTOR_GRID  //
-
-                                        //  EditorState_t           (void) noexcept                 = default;
                                         ~EditorState_t          (void)                          = default;
     
     // *************************************************************************** //
@@ -950,23 +886,7 @@ public:
     //      QUERY FUNCTIONS.
     // *************************************************************************** //
     
-#ifndef _EDITOR_REFACTOR_GRID
-    //  "CanDecreaseGridSpacing"
-    [[nodiscard]] inline bool           CanDecreaseGridSpacing              (void) const noexcept
-    {
-        const bool  decr_x  = ( this->m_grid_density[0].CanDecrement() );
-        const bool  decr_y  = ( this->m_grid_density[1].CanDecrement() );
-        return ( decr_x  &&  decr_y);
-    }
-    
-    //  "CanIncreaseGridSpacing"
-    [[nodiscard]] inline bool           CanIncreaseGridSpacing              (void) const noexcept
-    {
-        const bool  incr_x  = ( this->m_grid_density[0].CanIncrement() );
-        const bool  incr_y  = ( this->m_grid_density[1].CanIncrement() );
-        return ( incr_x  &&  incr_y);
-    }
-#endif //  _EDITOR_REFACTOR_GRID  //
+
 
     // *************************************************************************** //
     //
@@ -987,129 +907,6 @@ public:
         
         return;
     }
-    
-    
-#ifndef _EDITOR_REFACTOR_GRID
-    //  "UpdateCanvasSize"
-    inline void                         UpdateCanvasSize                    (void) noexcept
-    {
-        return;
-    }
-    
-    //  "SetupImPlotGrid"
-    inline void                         SetupImPlotGrid                     (void) const noexcept
-    {
-        ImPlot::SetupAxisTicks(   ImAxis_X1
-                                , this->m_gridlines[0].data()
-                                , static_cast<int>( this->m_gridlines[0].size() )
-                                , /*labels        */nullptr
-                                , /*show_default  */false );
-        ImPlot::SetupAxisTicks( ImAxis_Y1
-                                , this->m_gridlines[1].data()
-                                , static_cast<int>( this->m_gridlines[1].size() )
-                                , /*labels        */nullptr
-                                , /*show_default  */false );
-        return;
-    }
-#endif //  _EDITOR_REFACTOR_GRID  //
-
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      IMPLOT GRID MANAGEMENT FUNCTIONS.
-    // *************************************************************************** //
-    
-    
-#ifndef _EDITOR_REFACTOR_GRID
-    //  "IncreaseGridSpacing"
-    inline bool                         IncreaseGridSpacing                 (void) noexcept {
-        if ( !this->CanIncreaseGridSpacing() )      { return false; }
-    
-        this->m_grid_density[0].SetValue            ( this->m_grid_density[0].value << 1 );
-        this->m_grid_density[1].SetValue            ( this->m_grid_density[1].value << 1 );
-        _update_grid();
-        return true;
-    }
-    inline void                         IncreaseGridSpacingX                (void) noexcept {
-        static_assert( true, "Not implemented" );
-        //  this->m_grid_density[0].SetValue( this->m_grid_density[0].value << 1 );
-        //  _update_grid_x();
-        return;
-    }
-    inline void                         IncreaseGridSpacingY                (void) noexcept {
-        static_assert( true, "Not implemented" );
-        //  this->m_grid_density[1].SetValue( this->m_grid_density[1].value << 1 );
-        //  this->_update_grid_y();
-        return;
-    }
-    
-    
-    //  "DecreaseGridSpacing"
-    inline bool                         DecreaseGridSpacing                 (void) noexcept {
-        if ( !this->CanDecreaseGridSpacing() )      { return false; }
-        
-        this->m_grid_density[0].SetValue            ( this->m_grid_density[0].value >> 1 );
-        this->m_grid_density[1].SetValue            ( this->m_grid_density[1].value >> 1 );
-        _update_grid();
-        return true;
-    }
-    inline void                         DecreaseGridSpacingX                (void) noexcept {
-        static_assert( true, "Not implemented" );
-        //  this->m_grid_density[1].SetValue( this->m_grid_density[0].value >> 1 );
-        //  this->_update_grid_x();
-        return;
-    }
-    inline void                         DecreaseGridSpacingY                (void) noexcept {
-        static_assert( true, "Not implemented" );
-        //  this->m_grid_density[1].SetValue( this->m_grid_density[1].value >> 1 );
-        //  this->_update_grid_y();
-        return;
-    }
-    
-    
-    //  "_compute_grid_spacing"
-    inline void                         _compute_grid_spacing               (void) noexcept
-    {
-        return;
-    }
-    
-    
-    //  "_update_grid"
-    inline void                         _update_grid                        (void) noexcept
-    {
-        const size_t        NX      = static_cast<size_t>( this->m_grid_density[0].Value() );
-        const size_t        NY      = static_cast<size_t>( this->m_grid_density[1].Value() );
-        const double        xmax    = this->m_world_size[0].Value();
-        const double        ymax    = this->m_world_size[1].Value();
-        
-            
-        //      1.      UPDATE DIST. BETWEEN EACH GRIDLINE...
-        m_grid_spacing[0]           = xmax / static_cast<double>( NX );
-        m_grid_spacing[1]           = ymax / static_cast<double>( NY );
-        
-        
-        //      2.      RE-SIZE ARRAYS OF GRIDLINE POSITIONS...
-        this->m_gridlines[0]        .resize(NX);
-        this->m_gridlines[1]        .resize(NY);
-        
-        
-        //      3.      POPULATE ARRAYS WITH NEW VALUES...
-        //
-        //              3A.     X-AXIS.
-        for (size_t x = 0; x < NX; ++x)
-        {
-            this->m_gridlines[0][x]     = static_cast<double>( x ) * m_grid_spacing[0];
-        }
-        //              3B.     Y-AXIS.
-        for (size_t y = 0; y < NY; ++y)
-        {
-            this->m_gridlines[1][y]     = static_cast<double>( y ) * m_grid_spacing[1];
-        }
-    
-        return;
-    }
-#endif //  _EDITOR_REFACTOR_GRID  //
     
     
     
@@ -1145,21 +942,6 @@ inline void to_json(nlohmann::json & j, const EditorState_t<VID, PtID, LID, PID,
     //      { "m_world_size",          obj.m_world_size       }
     //  };
     
-    /*
-    Param<double>                           m_world_size [2]                = {                                     //  MAXIMUM SIZE OF THE CANVAS (World Size).
-                                                                                { 512.0f,       { 10.0f,        1e4f } },
-                                                                                { 512.0f,       { 10.0f,        1e4f } }
-                                                                            };
-    Param<double>                           m_world_slop [2]                = {                                     //  (Allow user to scroll a bit beyond canvas limits).
-                                                                                { 128.0f,       { 32.0f,        512.0f } },
-                                                                                { 128.0f,       { 32.0f,        512.0f } }
-                                                                            };
-    Param<double>                           m_zoom_size [2]                 = {                                     //  MAX + MIN "ZOOM" RESOLUTION OF THE CANVAS.
-                                                                                { 1024.0f,      { 1.0f,         2e4f } },
-                                                                                { 1024.0f,      { 1.0f,         2e4f } }
-              */
-    
-    
     return;
 }
 
@@ -1169,7 +951,6 @@ inline void to_json(nlohmann::json & j, const EditorState_t<VID, PtID, LID, PID,
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
 inline void from_json([[maybe_unused]] nlohmann::json & j, [[maybe_unused]] EditorState_t<VID, PtID, LID, PID, ZID, HitID> & obj)
 {
-
     //  j.at("")        .get_to(obj.m_plot_limits);
 
     //  j.at("Z_EDITOR_BACK")           .get_to(obj.Z_EDITOR_BACK);
@@ -1331,12 +1112,12 @@ struct EditorStyle
 //                              RENDERING CONSTANTS...
 // *************************************************************************** //
     //                      VERTEX RENDERING:
-    int                         ms_VERTEX_NUM_SEGMENTS          = 12;
+    int                         ms_VERTEX_NUM_SEGMENTS          = 8;    //    12;
     //
     //                      BEZIER RENDERING:
-    int                         ms_BEZIER_SEGMENTS              = 0;        //  ms_BEZIER_SEGMENTS
-    int                         ms_BEZIER_HIT_STEPS             = 20;       //  ms_BEZIER_HIT_STEPS
-    int                         ms_BEZIER_FILL_STEPS            = 24;       //  ms_BEZIER_FILL_STEPS
+    int                         ms_BEZIER_SEGMENTS              = 0;                    //  ms_BEZIER_SEGMENTS
+    int                         ms_BEZIER_HIT_STEPS             = 15;   //    20;       //  ms_BEZIER_HIT_STEPS
+    int                         ms_BEZIER_FILL_STEPS            = 15;   //    24;       //  ms_BEZIER_FILL_STEPS
     
 // *************************************************************************** //
 //

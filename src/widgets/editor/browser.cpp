@@ -263,7 +263,7 @@ void Editor::_MECH_draw_controls(void)
             //      2.1.        "SURFACE".
             const bool      dirty_surfaces      = utl::IconButton( "##SelectionState_Surface"
                                                                    , (ss_surfaces)      ? s_ENABLED_COLOR       : s_DISABLED_COLOR
-                                                                   , ICON_FA_CUBE 
+                                                                   , ICON_FA_BURST              //  ICON_FA_CUBE
                                                                    , Style.ms_TOOLBAR_ICON_SCALE );
             this->m_tooltip.UpdateTooltip( TooltipKey::SSelectionSurface );
             //
@@ -272,7 +272,7 @@ void Editor::_MECH_draw_controls(void)
             ImGui::SameLine(0.0f, 0.0f);
             const bool      dirty_edges         = utl::IconButton( "##SelectionState_Edges"
                                                                    , (ss_edges)         ? s_ENABLED_COLOR       : s_DISABLED_COLOR
-                                                                   , ICON_FA_DRAW_POLYGON 
+                                                                   , ICON_FA_DRAW_POLYGON       // ICON_FA_ROUTE       ICON_FA_DRAW_POLYGON
                                                                    , Style.ms_TOOLBAR_ICON_SCALE );
             this->m_tooltip.UpdateTooltip( TooltipKey::SelectionEdge );
             //
@@ -321,20 +321,33 @@ void Editor::_MECH_draw_controls(void)
                                   //    , (this->m_grid.snap_on)  ? ICON_FA_TABLE_CELLS_LARGE     : ICON_FA_BORDER_NONE
                                   , Style.ms_TOOLBAR_ICON_SCALE ) )
             {
-                this->m_grid.snap_on    = !this->m_grid.snap_on;
+                this->m_grid.snap_on            = !this->m_grid.snap_on;
             }
             this->m_tooltip.UpdateTooltip( TooltipKey::GridSnap );
             //
             //
             //
-            //      3.2.        "SHOW GRID".
+            //      3.2.        "PIXEL-PERFECT".
+            ImGui::SameLine(0.0f, 0.0f);
+            if ( utl::IconButton(   "##Editor_Controls_PixelPerfect"
+                                  , (this->m_grid.pixel_perfect)  ? s_ENABLED_COLOR         : s_DISABLED_COLOR
+                                  , (this->m_grid.pixel_perfect)  ? ICON_FA_Z               : ICON_FA_R     //  ICON_FA_CIRCLE_DOT     ICON_FA_SQUARE_FULL     ICON_FA_GRIP
+                                  , Style.ms_TOOLBAR_ICON_SCALE ) )
+            {
+                this->m_grid.pixel_perfect      = !this->m_grid.pixel_perfect;
+            }
+            this->m_tooltip.UpdateTooltip( TooltipKey::GridPixelPerfect );
+            //
+            //
+            //
+            //      3.3.        "SHOW GRID".
             ImGui::SameLine(0.0f, 0.0f);
             if ( utl::IconButton(   "##Editor_Controls_ShowGrid"
                                   , (this->m_grid.visible)  ? s_ENABLED_COLOR               : s_DISABLED_COLOR
                                   , (this->m_grid.visible)  ? ICON_FA_TABLE_CELLS           : ICON_FA_BORDER_TOP_LEFT
                                   , Style.ms_TOOLBAR_ICON_SCALE ) )
             {
-                this->m_grid.visible    = !this->m_grid.visible;
+                this->m_grid.visible            = !this->m_grid.visible;
             }
             this->m_tooltip.UpdateTooltip( TooltipKey::GridShow );
         //

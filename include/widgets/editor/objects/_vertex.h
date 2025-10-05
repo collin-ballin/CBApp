@@ -616,9 +616,11 @@ struct BezierControl
             default :
             {
                 if      ( both )            { this->m_curvature_state = CurvatureState::All;    }
-                else if ( in_is_set )       { this->m_curvature_state = CurvatureState::In;     }
-                else if ( out_is_set )      { this->m_curvature_state = CurvatureState::Out;    }
-                else                        { this->m_curvature_state = CurvatureState::None;   }
+                else {
+                    if      ( in_is_set  )      { this->m_curvature_state = CurvatureState::In;     }
+                    else if ( out_is_set )      { this->m_curvature_state = CurvatureState::Out;    }
+                    else                        { this->m_curvature_state = CurvatureState::None;   }
+                }
                 break;
             }
         }
@@ -1075,8 +1077,14 @@ struct Vertex_t
     {
         namespace                   math        = cblib::math;
         constexpr const float &     GATE        = BezierControl::ms_BEZIER_NUMERICAL_ERROR;
-        return ( math::is_close( P1.x, P0.x, GATE)  &&  math::is_close( P1.y, P0.y, GATE)  &&
-                 math::is_close( P2.y, P3.y, GATE)  &&  math::is_close( P2.y, P3.y, GATE) );
+        return (
+            math::is_close( P1.x, P0.x, GATE)  &&
+            math::is_close( P1.y, P0.y, GATE)  &&
+            math::is_close( P2.x, P3.x, GATE)  &&
+            math::is_close( P2.y, P3.y, GATE)
+        );
+        //  return ( math::is_close( P1.x, P0.x, GATE)  &&  math::is_close( P1.y, P0.y, GATE)  &&
+        //           math::is_close( P2.y, P3.y, GATE)  &&  math::is_close( P2.y, P3.y, GATE) );
     }
            
     //  "SegmentIsLinear"

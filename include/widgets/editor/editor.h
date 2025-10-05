@@ -734,7 +734,12 @@ protected:
     //                              SELECTION CONTEXT MENUS:
     inline void                         _show_selection_context_menu        ([[maybe_unused]] const Interaction & it, const char * );
     inline void                             _selection_context_primative        ([[maybe_unused]] const Interaction & );
-    inline void                             _selection_context_single           ([[maybe_unused]] const Interaction & );
+    //
+    //                                  Single---Selection.
+    inline void                             _selection_context_single           ([[maybe_unused]] const Interaction & ) noexcept;
+    inline void                             _selection_context_single_advanced  ([[maybe_unused]] const Interaction & , Path & ) noexcept;
+    //
+    //                                  Multi---Selection.
     inline void                             _selection_context_multi            ([[maybe_unused]] const Interaction & );
     //
     //                              MISC. CONTEXT MENUS:
@@ -814,9 +819,11 @@ protected:
     //
     //
     //                              PRIMARY RENDERING:
+#ifndef _EDITOR_REMOVE_DEPRECATED_CODE
     void                                _render_paths                       (ImDrawList * dl) const;
     void                                _render_lines                       (ImDrawList *, const ImVec2 & ) const;
     void                                _render_points                      (ImDrawList *) const;
+#endif  //  _EDITOR_REMOVE_DEPRECATED_CODE  //
     //
     //
     //                              SELECTION RENDERING:
@@ -872,7 +879,7 @@ protected:
     //
     //                              NEW HELPER FUNCTIONS:
     inline float                        _drag_threshold_px                  (void) const;
-    inline bool                         _press_inside_selection             (const ImVec2) const;
+    inline bool                         _press_inside_selection             (const ImVec2 & ) const;
     inline bool                         _hit_is_in_current_selection        (const Hit & ) const;
     
     // *************************************************************************** //
@@ -1147,12 +1154,17 @@ protected:
     [[nodiscard]] inline ImVec2         snap_to_grid                            (ImVec2 ws) const
     {
         const GridState &   GS      = this->m_grid;
+        const bool          snap    = this->want_snap();
         
-        if ( this->want_snap() )
-        {
-            ws.x    = cblib::math::quantize( ws.x, GS.m_grid_spacing[0] );
-            ws.y    = cblib::math::quantize( ws.y, GS.m_grid_spacing[1] );
+        if ( snap ) {
+            ws.x    = cblib::math::quantize( ws.x,  GS.m_grid_spacing[0] );
+            ws.y    = cblib::math::quantize( ws.y,  GS.m_grid_spacing[1] );
         }
+        else if ( GS.pixel_perfect ) {
+            ws.x    = cblib::math::quantize( ws.x,  1.0f );
+            ws.y    = cblib::math::quantize( ws.y,  1.0f );
+        }
+        
         return ws;
     }
     /*{
@@ -1170,53 +1182,6 @@ protected:
     //  "want_snap"
     inline bool                         want_snap                               (void) const noexcept
         { return m_grid.snap_on || ImGui::GetIO().KeyShift; }
-       
-       
-       
-       
-    //  "_update_grid"
-    inline void                         _update_grid_info                       (void)
-    {
-    #ifndef _EDITOR_REFACTOR_GRID
-        GridState &         GS              = this->m_grid;
-        ImPlotRect &        lim             = GS.m_window_coords;
-        ImVec2 &            size            = GS.m_plot_px_dims;
-        //
-        float               range_x         = static_cast<float>(lim.X.Max - lim.X.Min);
-        float               ppw             = size.x / range_x;                         //  pixels‑per‑world‑unit
-        float               raw_step        = m_style.TARGET_PX / ppw;                  //  world units per 20 px
-
-
-        //      QUANTIZE TO:    1·10^n, 2·10^n,     *OR*     5·10^n
-        //
-        float           exp10       = std::pow( 10.0f, std::floor(std::log10(raw_step)) );
-        float           mant        = raw_step / exp10;
-        if      ( mant < 1.5f )     { mant = 1.0f;    }
-        else if ( mant < 3.5f )     { mant = 2.0f;    }
-        else if ( mant < 7.5f )     { mant = 5.0f;    }
-        else                        { mant = 1.0f; exp10 *= 10.0f; }
-
-        m_grid.snap_step = mant * exp10;                        // store for the frame
-    #endif  //  _EDITOR_REFACTOR_GRID  //
-        return;
-    }
-       
-       
-    //  "_clamp_plot_axes"
-    inline void                         _clamp_plot_axes                        (void) const
-    {
-        //  const EditorState &     state   = this->m_editor_S;
-        //
-        //  // inside BeginPlot(...) and before drawing items
-        //  ImPlot::SetupAxisTicks(ImAxis_X1, xs.data(), (int)xs.size(),
-        //                          /*labels*/nullptr, /*show_default*/false);
-        //  ImPlot::SetupAxisTicks(ImAxis_Y1, ys.data(), (int)ys.size(), nullptr, false);
-
-        this->m_grid.SetupImPlotGrid();
-        
-    
-        return;
-    }
     
     // *************************************************************************** //
     

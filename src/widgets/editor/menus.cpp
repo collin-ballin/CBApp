@@ -142,11 +142,11 @@ inline void Editor::_show_selection_context_menu([[maybe_unused]] const Interact
 
 
     //  Jump-out early if NO POPUP WINDOW...
-    if ( !ImGui::BeginPopup(popup_id) ) return;
+    if ( !ImGui::BeginPopup(popup_id) )     { return; }
     
     
 
-    //  1.  CONTEXT MENU FOR SPECIALIZED SELECTIONS (Single vs. Multi.)...
+    //      1.      CONTEXT MENU FOR SPECIALIZED SELECTIONS (Single vs. Multi.)...
     if (total_items == 1) {
 #ifdef __CBAPP_DEBUG__
         ImGui::TextColored(this->S.SystemColor.Gray, "Single");
@@ -161,7 +161,9 @@ inline void Editor::_show_selection_context_menu([[maybe_unused]] const Interact
     }
 
 
-    //  2.  DEFAULT FUNCTIONS ENABLED FOR *ALL* SELECTIONS...
+    //      2.      DEFAULT FUNCTIONS ENABLED FOR *ALL* SELECTIONS...
+    ImGui::Separator();
+    ImGui::NewLine();
     ImGui::Separator();
 #ifdef __CBAPP_DEBUG__
         ImGui::TextColored(this->S.SystemColor.Gray, "Primative");
@@ -186,15 +188,27 @@ inline void Editor::_show_selection_context_menu([[maybe_unused]] const Interact
 //
 inline void Editor::_selection_context_primative([[maybe_unused]] const Interaction & it)
 {
-    static constexpr auto       s_arrange_label         = cblib::utl::strcat_literals_cx( ICON_FA_LAYER_GROUP,          "  ", "Arrange"     ); //  ICON_FA_SQUARE_BINARY
-    static constexpr auto       s_cut_label             = cblib::utl::strcat_literals_cx( ICON_FA_CLIPBOARD_CHECK,      "  ", "Cut"         );
-    static constexpr auto       s_copy_label            = cblib::utl::strcat_literals_cx( ICON_FA_COPY,                 "  ", "Copy"        );
-    static constexpr auto       s_paste_label           = cblib::utl::strcat_literals_cx( ICON_FA_PASTE,                "  ", "Paste"       );
-    static constexpr auto       s_delete_label          = cblib::utl::strcat_literals_cx( ICON_FA_XMARK,                "  ", "Delete"      );
+    static constexpr auto       s_bring_to_label        = cblib::utl::strcat_literals_cx( ICON_FA_ROUTE,                "  ", "Bring To New Layer"  );
+    static constexpr auto       s_arrange_label         = cblib::utl::strcat_literals_cx( ICON_FA_LAYER_GROUP,          "  ", "Arrange"             ); //  ICON_FA_SQUARE_BINARY
+    static constexpr auto       s_cut_label             = cblib::utl::strcat_literals_cx( ICON_FA_CLIPBOARD_CHECK,      "  ", "Cut"                 );
+    static constexpr auto       s_copy_label            = cblib::utl::strcat_literals_cx( ICON_FA_COPY,                 "  ", "Copy"                );
+    static constexpr auto       s_paste_label           = cblib::utl::strcat_literals_cx( ICON_FA_PASTE,                "  ", "Paste"               );
+    static constexpr auto       s_delete_label          = cblib::utl::strcat_literals_cx( ICON_FA_XMARK,                "  ", "Delete"              );
+    
+    
+    //      1.      MOVE-TO NEW LAYER...
+    ImGui::BeginDisabled(true);
+    if ( ImGui::BeginMenu(s_bring_to_label.data()) ) {
+        //
+        if ( ImGui::MenuItem("...")  )                  { /*  TO-DO...  */ }
+        //
+        ImGui::EndMenu();
+    }
+    ImGui::EndDisabled();
     
     
     
-    //      1.      REORDER Z-ORDER OF OBJECTS ON CANVAS...
+    //      2.      REORDER Z-ORDER OF OBJECTS ON CANVAS...
     if ( ImGui::BeginMenu(s_arrange_label.data()) ) {
         //
         if ( ImGui::MenuItem("Bring to Front")  )       { this->bring_selection_to_front();     }
@@ -205,10 +219,18 @@ inline void Editor::_selection_context_primative([[maybe_unused]] const Interact
         //
         ImGui::EndMenu();
     }
-    ImGui::Separator();
     
 
-    //      2.      CUT SELECTION...
+
+
+
+
+    ImGui::Separator();
+    ImGui::NewLine();
+    ImGui::Separator();
+    ImGui::TextColored(this->S.SystemColor.Gray, "Basic");
+
+    //      3.      CUT SELECTION...
     if ( ImGui::MenuItem(s_cut_label.data()) )
     {
         // TODO: implement copy/duplicate behaviour
@@ -216,7 +238,8 @@ inline void Editor::_selection_context_primative([[maybe_unused]] const Interact
     }
 
 
-    //      3.      COPY SELECTION...
+
+    //      4.      COPY SELECTION...
     const bool          copy_menu       = ImGui::BeginMenu(s_copy_label.data());
     const bool          copy_clicked    = ImGui::IsItemClicked(ImGuiMouseButton_Left);
     if ( copy_menu )
@@ -237,7 +260,7 @@ inline void Editor::_selection_context_primative([[maybe_unused]] const Interact
     }
 
 
-    //      4.      PASTE SELECTION...
+    //      5.      PASTE SELECTION...
     ImGui::BeginDisabled(true);
     const bool          paste_menu       = ImGui::BeginMenu(s_paste_label.data());
     if ( paste_menu )
@@ -254,7 +277,7 @@ inline void Editor::_selection_context_primative([[maybe_unused]] const Interact
     ImGui::EndDisabled();
     
 
-    //      5.      DELETE SELECTION...
+    //      6.      DELETE SELECTION...
     ImGui::Separator();
     if ( ImGui::MenuItem(s_delete_label.data()) )       { this->delete_selection(); }
     
@@ -267,24 +290,23 @@ inline void Editor::_selection_context_primative([[maybe_unused]] const Interact
 //  "_selection_context_single"
 //      Functions that operate ONLY ON SINGLE-ITEM SELECTIONS.
 //
-inline void Editor::_selection_context_single([[maybe_unused]] const Interaction & it)
+inline void Editor::_selection_context_single([[maybe_unused]] const Interaction & it) noexcept
 {
-    static constexpr auto       s_payload_label     = cblib::utl::strcat_literals_cx( ICON_FA_CART_FLATBED_SUITCASE,        "  ", "Payload"     ); //  ICON_FA_SQUARE_BINARY
-    static constexpr auto       s_transform_label   = cblib::utl::strcat_literals_cx( ICON_FA_TEXT_WIDTH,                   "  ", "Transform"   );
     //
-    static constexpr auto       s_move_label        = cblib::utl::strcat_literals_cx( ICON_FA_ARROWS_UP_DOWN_LEFT_RIGHT,    "  ", "Move"        );
-    static constexpr auto       s_scale_label       = cblib::utl::strcat_literals_cx( ICON_FA_EXPAND,                       "  ", "Scale"       );
-    static constexpr auto       s_rotate_label      = cblib::utl::strcat_literals_cx( ICON_FA_ROTATE_LEFT,                  "  ", "Rotate"      );
-    static constexpr auto       s_reflect_label     = cblib::utl::strcat_literals_cx( ICON_FA_ARROWS_LEFT_RIGHT_TO_LINE,    "  ", "Reflect"     );
+    static constexpr auto       s_payload_label     = cblib::utl::strcat_literals_cx( ICON_FA_CART_FLATBED_SUITCASE,        "  ", "Payload"                 ); //  ICON_FA_SQUARE_BINARY
+    static constexpr auto       s_transform_label   = cblib::utl::strcat_literals_cx( ICON_FA_TEXT_WIDTH,                   "  ", "Transform"               );
     //
-    static constexpr auto       s_quantize_label    = cblib::utl::strcat_literals_cx( ICON_FA_STAIRS,                       "  ", "Quantize"    );
-    static constexpr auto       s_smooth_label      = cblib::utl::strcat_literals_cx( ICON_FA_MOUND,                        "  ", "Smooth"      );
+    static constexpr auto       s_move_label        = cblib::utl::strcat_literals_cx( ICON_FA_ARROWS_UP_DOWN_LEFT_RIGHT,    "  ", "Move"                    );
+    static constexpr auto       s_scale_label       = cblib::utl::strcat_literals_cx( ICON_FA_MAXIMIZE,                     "  ", "Scale"                   );  //  ICON_FA_EXPAND
+    static constexpr auto       s_rotate_label      = cblib::utl::strcat_literals_cx( ICON_FA_ROTATE_LEFT,                  "  ", "Rotate"                  );
+    static constexpr auto       s_reflect_label     = cblib::utl::strcat_literals_cx( ICON_FA_ARROWS_LEFT_RIGHT_TO_LINE,    "  ", "Reflect"                 );
+    //
+    static constexpr auto       s_smooth_label      = cblib::utl::strcat_literals_cx( ICON_FA_MOUND,                        "  ", "Smooth"                  );
+    static constexpr auto       s_pixel_label       = cblib::utl::strcat_literals_cx( ICON_FA_RULER_COMBINED,               "  ", "Make Pixel-Perfect"      );
+    static constexpr auto       s_quantize_label    = cblib::utl::strcat_literals_cx( ICON_FA_STAIRS,                       "  ", "Quantize"                );
     //
     const size_t                sel_idx             = *m_sel.paths.begin();   // only element
     Path &                      path                = m_paths[sel_idx];
-    
-    
-    
     
     
     
@@ -298,23 +320,62 @@ inline void Editor::_selection_context_single([[maybe_unused]] const Interaction
     }
     
     
+    
     //      2.      TRANSFORM...
-    ImGui::BeginDisabled(true);
     if ( ImGui::BeginMenu(s_transform_label.data()) )
     {
+        //          2.1.    BASIC OPERATIONS...
         ImGui::BeginDisabled(true);
         //
-            if ( ImGui::MenuItem(s_move_label     .data() )   )     { /*  TODO:  */     }
-            if ( ImGui::MenuItem(s_scale_label    .data() )   )     { /*  TODO:  */     }
-            if ( ImGui::MenuItem(s_rotate_label   .data() )   )     { /*  TODO:  */     }
-            if ( ImGui::MenuItem(s_reflect_label  .data() )   )     { /*  TODO:  */     }
+            if ( ImGui::MenuItem(s_move_label       .data() )   )     { /*  TODO:  */     }   //  Move
+            if ( ImGui::MenuItem(s_scale_label      .data() )   )     { /*  TODO:  */     }   //  Scale
+            if ( ImGui::MenuItem(s_rotate_label     .data() )   )     { /*  TODO:  */     }   //  Rotate
+            if ( ImGui::MenuItem(s_reflect_label    .data() )   )     { /*  TODO:  */     }   //  Reflect
             //
             ImGui::Separator();
-            if ( ImGui::MenuItem(s_quantize_label .data() )   )     { /*  TODO:  */     }
-            if ( ImGui::MenuItem(s_smooth_label   .data() )   )     { /*  TODO:  */     }
+            if ( ImGui::MenuItem(s_smooth_label     .data() )   )     { /*  TODO:  */     }   //  Smooth
+            if ( ImGui::MenuItem(s_pixel_label      .data() )   )     { /*  TODO:  */     }   //  Make Pixel-Perfect
+            if ( ImGui::MenuItem(s_quantize_label   .data() )   )     { /*  TODO:  */     }   //  Quantize
         //
         ImGui::EndDisabled();
+        
+        
+        //          2.2.    ADVANCED OPERATIONS...
+        this->_selection_context_single_advanced    ( it,   path );
+        
+        
         ImGui::EndMenu();
+    }
+    
+    
+    
+    return;
+}
+
+
+//  "_selection_context_single_advanced"
+//
+inline void Editor::_selection_context_single_advanced([[maybe_unused]] const Interaction & /*it*/, Path & /*path*/) noexcept
+{
+    static constexpr auto       s_discretize_label  = cblib::utl::strcat_literals_cx( ICON_FA_STAMP                    , "  ", "Stamp To Grid"     );           //  ICON_FA_BURST
+    static constexpr auto       s_interpolate_label = cblib::utl::strcat_literals_cx( ICON_FA_FEATHER_POINTED          , "  ", "Interpolate Perimeter"  );      //  ICON_FA_CIRCLE_HALF_STROKE
+    
+    
+    //      0.      SEPARATOR...
+    ImGui::Separator();
+    ImGui::NewLine();
+    ImGui::Separator();
+    
+    
+    
+    //      1.      TRANSFORM...
+    ImGui::BeginDisabled(true);
+    {
+    
+        //  Ice-Cube Tray.      Stamp
+        if ( ImGui::MenuItem(s_discretize_label     .data() )   )     { /*  TODO:  */     }   //  Discretize To-Grid        [ "Conform" to Grid ]   [ Melt and Cure ]   [ Cast ]
+        if ( ImGui::MenuItem(s_interpolate_label    .data() )   )     { /*  TODO:  */     }   //  Interpolate               [ "Feather" Edges ]
+        
     }
     ImGui::EndDisabled();
     
@@ -322,6 +383,10 @@ inline void Editor::_selection_context_single([[maybe_unused]] const Interaction
     
     return;
 }
+
+
+
+
 
 
 //  "_selection_context_multi"

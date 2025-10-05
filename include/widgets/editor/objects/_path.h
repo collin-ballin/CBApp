@@ -980,20 +980,24 @@ public:
     }
     
     
-    //  "segment_control_points"
+    //  "_segment_control_points"
     //
     template<class CTX>
-    inline bool	segment_control_points( size_t si, ImVec2 & P0, ImVec2 & P1, ImVec2 & P2, ImVec2 & P3, const CTX & ctx ) const noexcept
+    inline bool	_segment_control_points( size_t si, ImVec2 & P0, ImVec2 & P1, ImVec2 & P2, ImVec2 & P3, const CTX & ctx ) const noexcept
     {
+        const auto &        cbacks      = ctx.callbacks;
         const size_t        N           = this->size();
-        if ( N < 2 )                    { return false; }
+        
 
-        const auto &        cb          = ctx.callbacks;
-        const vertex_id	    a_id        = static_cast<vertex_id>( this->verts[si]               );
-        const vertex_id	    b_id        = static_cast<vertex_id>( this->verts[(si + 1) % N]     );
+        const vertex_id	    a_id        = static_cast<vertex_id>( this->verts[ si           ]   );
+        const vertex_id	    b_id        = static_cast<vertex_id>( this->verts[ (si + 1) % N ]   );
+        
+        //  const vertex_id	    a_id        = static_cast<vertex_id>( this->verts[ si       ]   );
+        //  const vertex_id     b_id        = static_cast<vertex_id>( this->verts[ (si + 1) ]   );
 
-        const auto *	    a           = cb.get_vertex(cb.vertices, a_id);
-        const auto *	    b           = cb.get_vertex(cb.vertices, b_id);
+
+        const auto *	    a           = cbacks.get_vertex(cbacks.vertices, a_id);
+        const auto *	    b           = cbacks.get_vertex(cbacks.vertices, b_id);
         if ( !a  ||  !b )               { return false; }
 
 
@@ -1003,6 +1007,7 @@ public:
         // Model-aware handles: use effective_* so "None" (linear) doesn't bloat bounds.
         const ImVec2        out_eff     = a->EffectiveOutHandle();
         const ImVec2        in_eff      = b->EffectiveInHandle();
+
 
         if ( a->IsOutLinear()  &&  b->IsInLinear() )
         {
@@ -1119,11 +1124,10 @@ public:
         const size_t        N                   = this->size();
 
 
-        //  Fast-outs: visibility, topology, alpha
+        //  CASE 0 :    EARLY-EXIT FOR VISIBILITY, TOPOLOGY, TRANSPARENCY...
         const bool          dont_render         = ( !this->IsVisible()  &&  !this->IsArea()  &&  !this->FillIsVisible() );
-        
-        
         if ( dont_render )                      { return; }
+
 
         dl->PathClear();
 
@@ -1133,11 +1137,11 @@ public:
         {
             const Vertex *      a       = callbacks.get_vertex(     callbacks.vertices,      static_cast<vertex_id>( this->verts[i]            )   );
             const Vertex *      b       = callbacks.get_vertex(     callbacks.vertices,      static_cast<vertex_id>( this->verts[(i + 1) % N]  )   );
-            if ( !a || !b )             { continue; }
+            if ( !a  ||  !b )           { continue; }
 
 
             //  Segment curvature: depends on a's OUT and b's IN handles
-            const bool      curved      = !( a->IsOutLinear() && b->IsInLinear() );
+            const bool      curved      = !( a->IsOutLinear()  &&  b->IsInLinear() );
 
             if ( !curved )
             {
@@ -1146,7 +1150,7 @@ public:
             }
             else
             {
-                const int   steps   = ctx.args.bezier_fill_steps;
+                const int   steps       = ctx.args.bezier_fill_steps;
                 if ( steps <= 0 )
                 {
                     // Degenerate sampling: fall back to anchor 'a'
@@ -1174,7 +1178,9 @@ public:
     template<class CTX>
     inline void	                        render_stroke                       (const CTX & ctx) const noexcept
     {
-        const size_t        N			    = this->verts.size();
+        const size_t        N			    = this->size();
+        if ( N < 2 )        { return; }
+
 
         for (size_t i = 0; i + 1 < N; ++i)  { this->_draw_segment   (i,         this->style,    ctx);   }   //  Open chain.
         if ( this->closed )                 { this->_draw_segment   (N - 1,     this->style,    ctx);   }   //  Close the loop if needed.
@@ -1188,7 +1194,8 @@ public:
     template<class CTX>
     inline void	                        render_highlight                    (const PathStyle & style_, const CTX & ctx) const noexcept
     {
-        const size_t        N			    = this->verts.size();
+        const size_t        N			    = this->size();
+        if ( N < 2 )        { return; }
 
         for (size_t i = 0; i + 1 < N; ++i)  { this->_draw_segment   (i,         style_,     ctx);   }   //  Open chain.
         if ( this->closed )                 { this->_draw_segment   (N - 1,     style_,     ctx);   }   //  Close the loop if needed.
@@ -1246,7 +1253,7 @@ public:
         ImDrawList *    dl          = ctx.args.dl;
         ImVec2          P0, P1, P2, P3;  // WORLD-space cubic control points via your existing helper
         
-        if ( !this->segment_control_points(si, P0, P1, P2, P3, ctx) )   { return; }
+        if ( !this->_segment_control_points(si, P0, P1, P2, P3, ctx) )   { return; }
 
 
         //  Linear iff effective control points coincide with endpoints

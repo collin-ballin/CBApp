@@ -322,14 +322,18 @@ inline void Editor::_H2_state(SettingsData & args)
                 //
                 //
                 this->S.labelf("Snap-To-Grid:",                         args.LABEL_W,               args.WIDGET_W);       //  1.1.        SNAP-TO-GRID.
-                ImGui::Checkbox("##H2_Grid_SnapToGrid",                 &m_grid.snap_on);
+                ImGui::Checkbox("##H2_Grid_SnapToGrid",                 &m_grid.snap_on         );
                 
-                this->S.labelf("Show Grid:",                            args.LABEL_W,               args.WIDGET_W);       //  1.2.        SHOW GRID.
-                ImGui::Checkbox("##H2_Grid_ShowGrid",                   &m_grid.visible);
+                this->S.labelf("Show Grid:",                            args.LABEL_W,               args.WIDGET_W);       //  1.2.        PIXEL-PERFECT.
+                ImGui::Checkbox("##H2_Grid_ShowGrid",                   &m_grid.pixel_perfect   );
+                
+                this->S.labelf("Show Grid:",                            args.LABEL_W,               args.WIDGET_W);       //  1.3.        SHOW GRID.
+                ImGui::Checkbox("##H2_Grid_ShowGrid",                   &m_grid.visible         );
+                
                 
                 
                 ImGui::BeginGroup();
-                    this->S.labelf("Lock X&Y Dimensions:",              args.LABEL_W,               args.WIDGET_W);       //  1.3.        GRID ASPECT RATIO.
+                    this->S.labelf("Lock X&Y Dimensions:",              args.LABEL_W,               args.WIDGET_W);       //  1.4.        GRID ASPECT RATIO.
                     ImGui::CheckboxFlags("##H2_Grid_EqualGrid",         &this->m_grid.plot_flags,   ImPlotFlags_Equal );
                 ImGui::EndGroup();
                 //

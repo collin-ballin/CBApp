@@ -119,7 +119,7 @@ inline void Editor::_dispatch_cursor_hint(const Hit::Type type) const noexcept
         //      3.  HOVERED OVER AN "EDGE".
         case Hit::Type::Edge :
         {
-            //  ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
+            ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
             break;
         }
 

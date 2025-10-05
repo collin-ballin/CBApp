@@ -495,10 +495,12 @@ public:                                                                         
 //      This is an EXPENSIVE function and what we want is to only call it ONCE-PER-FRAME
 //      store its return value inside a Cache Value...
 //
-#define                 _EDITOR_USE_HITANY_CACHE        1
-#define                 _EDITOR_DELETE_POINTS           1
-#define                 _EDITOR_DELETE_LINES            1
-#define                 _EDITOR_REFACTOR_GRID           1
+#define                 _EDITOR_REMOVE_DEPRECATED_CODE      1
+//
+#define                 _EDITOR_USE_HITANY_CACHE            1
+#define                 _EDITOR_DELETE_POINTS               1
+#define                 _EDITOR_DELETE_LINES                1
+#define                 _EDITOR_REFACTOR_GRID               1
 
 
 

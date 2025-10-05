@@ -53,6 +53,7 @@
 #include <stdexcept>        //  <======| ...
 #include <limits.h>
 #include <math.h>
+#include <bit>
 
 //  0.3     "DEAR IMGUI" HEADERS...
 #include "json.hpp"
@@ -523,7 +524,8 @@ enum class EditorTooltipKey : uint16_t
     , SSelectionSurface         , SelectionEdge             , SelectionVertex
 //
 //      3.      GRID CONTROLS.
-    , GridSnap                  , GridShow                  , GridDecrease              , GridIncrease          , GridDensityValue
+    , GridSnap                  , GridPixelPerfect          , GridShow
+    , GridDecrease              , GridIncrease              , GridDensityValue
 //
 //
 //
@@ -549,6 +551,7 @@ DEF_TOOLTIP_INFOS  = { {
 //
 //      3.      GRID CONTROLS.
     /*  GridSnap            */      , "Toggle Snap-To-Grid  [SHIFT G]"
+    /*  GridPixelPerfect    */      , "Toggle Pixel-Perfect-Snapping (treat coordinates as integers)"
     /*  GridShow            */      , "Toggle visibility of the grid"
     /*  GridDecrease        */      , "Reduce grid resolution by ONE-HALF  [SHIFT -]"
     /*  GridIncrease        */      , "Increase grid resolution by DOUBLE  [SHIFT +]"
@@ -759,22 +762,11 @@ struct TooltipState
         return;
     }
 
-
-
 //
 //
 // *************************************************************************** //
 // *************************************************************************** //
 };//	END "TooltipState" INLINE STRUCT DEFINITION.
-
-
-
-
-
-
-
-
-
 
 
 
@@ -822,18 +814,140 @@ static constexpr cblib::EnumArray< HitType, const char * >
 
 
 
+
+
+
+
+
 //  "Hit_t"
+//      PLAIN-OLD-DATA (POD) STRUCT.
 //
 template <typename HID>
-struct Hit_t {
-    using           Type            = HitType;
+struct Hit_t
+{
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    using                               Hit                             = Hit_t<HID>;
+    using                               Type                            = HitType;
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    Type                                type                            = Type::None;
+    size_t                              index                           = 0;                //  Point/Line/Path: original meaning
+    bool                                out                             = false;            //  valid only when type == Handle
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+                                        //  Hit_t                   (void) noexcept                 = default;
+                                        //  ~Hit_t                  (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+    //                                      Hit_t                   (const Hit_t &    src)          = delete;   //  Copy. Constructor.
+    //                                      Hit_t                   (Hit_t &&         src)          = delete;   //  Move Constructor.
+    //  Hit_t &                             operator =              (const Hit_t &    src)          = delete;   //  Assgn. Operator.
+    //  Hit_t &                             operator =              (Hit_t &&         src)          = delete;   //  Move-Assgn. Operator.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      QUERY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "IsNonObjectHit"
+    //
+    //      POLICY :    I think we should consider an "empty" hover to be a NON-OBJECT.
+    //      A.K.A. :    Our policy will be to only consider WHOLISTIC OBJECTS to be an OBJECT-HOVER.  All else will be Non-Object.
+    //
+    //          --- ?? This will allow us to treat an EMPTY HIT, HANDLE-HIT, or VERTEX-HIT as a different action than an OBJECT-HIT ??
+    //
+    [[nodiscard]] inline bool           IsNonObjectHit                      (void) const noexcept
+    {
+        switch (this->type) {
+            case Type::Edge    :
+            case Type::Surface :    { return false; }
+            default :               { return true;  }
+        }
+    }
+    //  "IsObjectHit"
+    [[nodiscard]] inline bool           IsObjectHit                         (void) const noexcept
+    {
+        switch (this->type) {
+            case Type::Edge    :
+            case Type::Surface :    { return true; }
+            default :               { return false; }
+        }
+        return false;
+    }
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    //  "_no_op"
+    inline void                         _no_op                              (void)      { return; };
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
 //
 //
-    Type            type            = Type::None;
-//
-    size_t          index           = 0;                //  Point/Line/Path: original meaning
-    bool            out             = false;            //  valid only when type == Handle
-};
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "Hit_t" INLINE STRUCT DEFINITION.
+
+
+
+
 
 
 //  "PathHit_t"
@@ -893,6 +1007,8 @@ struct GridState
     static constexpr double                 ms_INITIAL_CANVAS_SIZE [4]          = { 0.0f, 256.0f, 0.0f, 256.0f };
     static constexpr double                 ms_INPUT_DOUBLE_INCREMENTS [2]      = { 1.0f, 10.0f };                      //  Snap value of "+" and "-" BUTTONS.
     
+    static constexpr std::string_view       ms_GRID_LABEL_FMT                   = "{:.0f}";
+    
 //
 // *************************************************************************** //
 // *************************************************************************** //   END "CONSTANTS AND ALIASES".
@@ -908,11 +1024,9 @@ struct GridState
     // *************************************************************************** //
     //      STATE VARIABLES.
     // *************************************************************************** //
-    float                                   snap_step                           = 20.0f;   // quantize condition for grid-snapping.
     bool                                    visible                             = true;
     bool                                    snap_on                             = false;
-    
-    
+    bool                                    pixel_perfect                       = false;
     
     // *************************************************************************** //
     //
@@ -920,38 +1034,37 @@ struct GridState
     // *************************************************************************** //
     //                  IMPLOT CANVAS INFORMATION...
     // *************************************************************************** //
-    //                                  PERSISTENT STATE INFORMATION:
-    std::array< Param<double>, 2>           m_world_size                        = { {                                   //  MAXIMUM SIZE OF THE CANVAS (World Size).
-                                                                                    { 512.0f,       { 10.0f,        1e4f } },
-                                                                                    { 512.0f,       { 10.0f,        1e4f } }
-                                                                                } };
-    std::array< Param<double>, 2>           m_world_slop                        = { {                                   //  (Allow user to scroll a bit beyond canvas limits).
-                                                                                    { 128.0f,       { 32.0f,        512.0f } },
-                                                                                    { 128.0f,       { 32.0f,        512.0f } }
-                                                                                } };
-    std::array< Param<double>, 2>           m_zoom_size                         = { {                                   //  MAX + MIN "ZOOM" RESOLUTION OF THE CANVAS.
-                                                                                    { 1024.0f,      { 1.0f,         2e4f } },
-                                                                                    { 1024.0f,      { 1.0f,         2e4f } }
-                                                                                } };
+    //                                          PERSISTENT STATE INFORMATION:
+    std::array< Param<double>, 2>                   m_world_size                        = { {                                   //  MAXIMUM SIZE OF THE CANVAS (World Size).
+                                                                                            { 512.0f,       { 10.0f,        1e4f } },
+                                                                                            { 512.0f,       { 10.0f,        1e4f } }
+                                                                                        } };
+    std::array< Param<double>, 2>                   m_world_slop                        = { {                                   //  (Allow user to scroll a bit beyond canvas limits).
+                                                                                            { 128.0f,       { 32.0f,        512.0f } },
+                                                                                            { 128.0f,       { 32.0f,        512.0f } }
+                                                                                        } };
+    std::array< Param<double>, 2>                   m_zoom_size                         = { {                                   //  MAX + MIN "ZOOM" RESOLUTION OF THE CANVAS.
+                                                                                            { 1024.0f,      { 1.0f,         2e4f } },
+                                                                                            { 1024.0f,      { 1.0f,         2e4f } }
+                                                                                        } };
     //
-    //                                  GRID INFORMATION:
-    std::array< Param<int>, 2>              m_grid_density                      = { {                                   //  TOTAL # OF GRIDLINES.
-                                                                                    { 16,           { 2,            64 } },
-                                                                                    { 16,           { 2,            64 } }
-                                                                                } };
-    std::array< std::vector<double>, 2 >    m_gridlines;                                                                //  POSITION OF THE "X" AND "Y" GRIDLINES.
-    std::array< double, 2 >                 m_grid_spacing                      = { -1.0f,      -1.0f };                //  DIST. BETWEEN EACH GRIDLINE.
-    
-    
+    //                                          GRID INFORMATION:
+    std::array< Param<int>, 2>                      m_grid_density                      = { {                                   //  TOTAL # OF GRIDLINES.
+                                                                                            { 16,           { 4,            128 } },
+                                                                                            { 16,           { 4,            128 } }
+                                                                                        } };
+    std::array< std::vector<double>, 2 >            m_gridlines;                                                                //  POSITION OF THE "X" AND "Y" GRIDLINES.
+    std::array< std::vector<std::string>, 2 >       m_grid_strings;
+    std::array< std::vector<const char *>, 2 >      m_grid_labels;
+    std::array< double, 2 >                         m_grid_spacing                      = { -1.0f,      -1.0f };                //  DIST. BETWEEN EACH GRIDLINE.
     //
     //
-    //                                  TRANSIENT STATE INFORMATION:
-    //  mutable bool                            m_request_canvas_window_update      = true;
-    mutable ImPlotRect                      m_window_coords                     = {   };        //  DOMAIN + RANGE OF CURRENT CANVAS:   ( [X0, Xf], [Y0, Yf] ).
-    std::array< double, 2>                  m_window_size                       = {   };
+    //                                          TRANSIENT STATE INFORMATION:
+    mutable ImPlotRect                              m_window_coords                     = {   };        //  DOMAIN + RANGE OF CURRENT CANVAS:   ( [X0, Xf], [Y0, Yf] ).
+    std::array< double, 2>                          m_window_size                       = {   };
     //
-    mutable ImVec2                          m_plot_px_dims                      = {   };
-    mutable ImRect                          m_plot_bbox                         = {   };
+    mutable ImVec2                                  m_plot_px_dims                      = {   };
+    mutable ImRect                                  m_plot_bbox                         = {   };
     
     
     
@@ -986,14 +1099,19 @@ struct GridState
     // *************************************************************************** //
     //      INITIALIZATION METHODS.         |   "init.cpp" ...
     // *************************************************************************** //
-    //  explicit                        GridState               (app::AppState & );             //  Def. Constructor.
                                         GridState               (void) noexcept
     {
         //      1.      ALLOCATE MEMORY FOR GRIDLINES...
-        this->m_gridlines[0].reserve( this->m_grid_density[0].Max() );      //  X-Axes.
-        this->m_gridlines[1].reserve( this->m_grid_density[1].Max() );      //  Y-Axes.
-        this->_update_grid();
+        this->m_gridlines    [0]    .reserve( this->m_grid_density[0].Max() );      //  X-Axes.
+        this->m_grid_strings [0]    .reserve( this->m_grid_density[0].Max() );
+        this->m_grid_labels  [0]    .reserve( this->m_grid_density[0].Max() );
         
+        this->m_gridlines    [1]    .reserve( this->m_grid_density[1].Max() );      //  Y-Axes.
+        this->m_grid_strings [1]    .reserve( this->m_grid_density[1].Max() );
+        this->m_grid_labels  [1]    .reserve( this->m_grid_density[1].Max() );
+        
+    
+        this->_update_grid();
         return;
     }
                                         ~GridState              (void)                          = default;
@@ -1023,20 +1141,36 @@ struct GridState
     // *************************************************************************** //
     
     //  "CanDecreaseGridSpacing"
-    [[nodiscard]] inline bool           CanDecreaseGridSpacing              (void) const noexcept
+    [[nodiscard]] inline bool               CanDecreaseGridSpacing              (void) const noexcept
     {
         const bool  decr_x  = ( this->m_grid_density[0].CanDecrement() );
         const bool  decr_y  = ( this->m_grid_density[1].CanDecrement() );
-        return ( decr_x  &&  decr_y);
+        return (decr_x  &&  decr_y);
     }
+    //
+    [[nodiscard]] inline bool               CanDecreaseGridSpacingX             (void) const noexcept
+        { return this->m_grid_density[0].CanDecrement(); }
+        
+    [[nodiscard]] inline bool               CanDecreaseGridSpacingY             (void) const noexcept
+        { return this->m_grid_density[1].CanDecrement(); }
+    
+    
     
     //  "CanIncreaseGridSpacing"
-    [[nodiscard]] inline bool           CanIncreaseGridSpacing              (void) const noexcept
-    {
-        const bool  incr_x  = ( this->m_grid_density[0].CanIncrement() );
-        const bool  incr_y  = ( this->m_grid_density[1].CanIncrement() );
-        return ( incr_x  &&  incr_y);
-    }
+    [[nodiscard]] inline bool               CanIncreaseGridSpacing              (void) const noexcept
+        { return ( this->CanIncreaseGridSpacingX()  &&  this->CanIncreaseGridSpacingY() ); }
+    //
+    //  {
+    //      return ( this->m_grid_density[0].CanIncrement()   &&  this->m_grid_density[1].CanIncrement() )  &&     //  1.  Param<T> is at MAXIMUM VALUE.
+    //             ( (this->m_grid_spacing[0] > 2.0f)         &&  (this->m_grid_spacing[1] > 2.0f) );               //  2.  DYADIC STEP-SIZE CONSTRAINTS.
+    //  }
+    //
+    [[nodiscard]] inline bool               CanIncreaseGridSpacingX              (void) const noexcept
+        { return (this->m_grid_density[0].CanIncrement()  &&  (this->m_grid_spacing[0] > 2.0f)); }
+
+    [[nodiscard]] inline bool               CanIncreaseGridSpacingY              (void) const noexcept
+        { return (this->m_grid_density[1].CanIncrement()  &&  (this->m_grid_spacing[1] > 2.0f)); }
+
 
     // *************************************************************************** //
     //
@@ -1046,18 +1180,35 @@ struct GridState
     // *************************************************************************** //
     
     //  "SetupImPlotGrid"
-    inline void                         SetupImPlotGrid                     (void) const noexcept
+    inline void                             SetupImPlotGrid                     (void) const noexcept
     {
-        ImPlot::SetupAxisTicks(   ImAxis_X1
-                                , this->m_gridlines[0].data()
-                                , static_cast<int>( this->m_gridlines[0].size() )
-                                , /*labels        */nullptr
-                                , /*show_default  */false );
-        ImPlot::SetupAxisTicks( ImAxis_Y1
-                                , this->m_gridlines[1].data()
-                                , static_cast<int>( this->m_gridlines[1].size() )
-                                , /*labels        */nullptr
-                                , /*show_default  */false );
+        ImPlot::SetupAxisTicks(
+            /* axis             */    ImAxis_X1
+            /* values           */  , this->m_gridlines    [0].data()
+            /* n_ticks          */  , this->m_grid_density [0].Value()
+            /* labels           */  , this->m_grid_labels  [0].data()
+            /* keep_default     */  , false
+        );
+        
+        ImPlot::SetupAxisTicks( 
+            /* axis             */    ImAxis_Y1
+            /* values           */  , this->m_gridlines    [1].data()
+            /* n_ticks          */  , this->m_grid_density [1].Value()
+            /* labels           */  , this->m_grid_labels  [1].data()
+            /* keep_default     */  , false
+        );
+
+
+
+        //      // Sets the format of numeric axis labels via formater specifier (default="%g"). Formated values will be double (i.e. use %f).
+        //      IMPLOT_API void SetupAxisFormat(ImAxis axis, const char* fmt);
+        //      // Sets the format of numeric axis labels via formatter callback. Given #value, write a label into #buff. Optionally pass user data.
+        //      IMPLOT_API void SetupAxisFormat(ImAxis axis, ImPlotFormatter formatter, void* data=nullptr);
+        //      // Sets an axis' ticks and optionally the labels. To keep the default ticks, set #keep_default=true.
+        //      IMPLOT_API void SetupAxisTicks(ImAxis axis, const double* values, int n_ticks, const char* const labels[]=nullptr, bool keep_default=false);
+        //      // Sets an axis' ticks and optionally the labels for the next plot. To keep the default ticks, set #keep_default=true.
+        //      IMPLOT_API void SetupAxisTicks(ImAxis axis, double v_min, double v_max, int n_ticks, const char* const labels[]=nullptr, bool keep_default=false);
+
         return;
     }
 
@@ -1069,7 +1220,7 @@ struct GridState
     // *************************************************************************** //
     
     //  "IncreaseGridSpacing"
-    inline bool                         IncreaseGridSpacing                 (void) noexcept {
+    inline bool                             IncreaseGridSpacing                 (void) noexcept {
         if ( !this->CanIncreaseGridSpacing() )      { return false; }
     
         this->m_grid_density[0].SetValue            ( this->m_grid_density[0].value << 1 );
@@ -1077,14 +1228,14 @@ struct GridState
         _update_grid();
         return true;
     }
-    inline void                         IncreaseGridSpacingX                (void) noexcept {
-        static_assert( true, "Not implemented" );
+    inline void                             IncreaseGridSpacingX                (void) noexcept {
+        static_assert( true, "not implemented" );
         //  this->m_grid_density[0].SetValue( this->m_grid_density[0].value << 1 );
         //  _update_grid_x();
         return;
     }
-    inline void                         IncreaseGridSpacingY                (void) noexcept {
-        static_assert( true, "Not implemented" );
+    inline void                             IncreaseGridSpacingY                (void) noexcept {
+        static_assert( true, "not implemented" );
         //  this->m_grid_density[1].SetValue( this->m_grid_density[1].value << 1 );
         //  this->_update_grid_y();
         return;
@@ -1092,7 +1243,7 @@ struct GridState
     
     
     //  "DecreaseGridSpacing"
-    inline bool                         DecreaseGridSpacing                 (void) noexcept {
+    inline bool                             DecreaseGridSpacing                 (void) noexcept {
         if ( !this->CanDecreaseGridSpacing() )      { return false; }
         
         this->m_grid_density[0].SetValue            ( this->m_grid_density[0].value >> 1 );
@@ -1100,14 +1251,14 @@ struct GridState
         _update_grid();
         return true;
     }
-    inline void                         DecreaseGridSpacingX                (void) noexcept {
-        static_assert( true, "Not implemented" );
+    inline void                             DecreaseGridSpacingX                (void) noexcept {
+        static_assert( true, "not implemented" );
         //  this->m_grid_density[1].SetValue( this->m_grid_density[0].value >> 1 );
         //  this->_update_grid_x();
         return;
     }
-    inline void                         DecreaseGridSpacingY                (void) noexcept {
-        static_assert( true, "Not implemented" );
+    inline void                             DecreaseGridSpacingY                (void) noexcept {
+        static_assert( true, "not implemented" );
         //  this->m_grid_density[1].SetValue( this->m_grid_density[1].value >> 1 );
         //  this->_update_grid_y();
         return;
@@ -1115,46 +1266,94 @@ struct GridState
     
     
     //  "_compute_grid_spacing"
-    inline void                         _compute_grid_spacing               (void) noexcept
+    inline void                             _compute_grid_spacing               (void) noexcept
     {
         return;
     }
     
     
     //  "_update_grid"
-    inline void                         _update_grid                        (void) noexcept
+    inline void                             _update_grid                        (void) noexcept
     {
-        const size_t        NX      = static_cast<size_t>( this->m_grid_density[0].Value() );
-        const size_t        NY      = static_cast<size_t>( this->m_grid_density[1].Value() );
-        const double        xmax    = this->m_world_size[0].Value();
-        const double        ymax    = this->m_world_size[1].Value();
+        const size_t        NX          = static_cast<size_t>( this->m_grid_density[0].Value() );
+        const size_t        NY          = static_cast<size_t>( this->m_grid_density[1].Value() );
+        const double        xmax        = this->m_world_size[0].Value();
+        const double        ymax        = this->m_world_size[1].Value();
+        //
+        IM_ASSERT(          NX == NY    &&  "GridState::_update_grid: NX and NY must be equal" );
         
             
         //      1.      UPDATE DIST. BETWEEN EACH GRIDLINE...
-        m_grid_spacing[0]           = xmax / static_cast<double>( NX );
-        m_grid_spacing[1]           = ymax / static_cast<double>( NY );
+        m_grid_spacing[0]               = xmax / static_cast<double>( NX );
+        m_grid_spacing[1]               = ymax / static_cast<double>( NY );
         
         
         //      2.      RE-SIZE ARRAYS OF GRIDLINE POSITIONS...
-        this->m_gridlines[0]        .resize(NX);
-        this->m_gridlines[1]        .resize(NY);
+        this->m_gridlines    [0]        .resize(NX);    //  X-Axis.
+        this->m_grid_strings [0]        .resize(NX);
+        this->m_grid_labels  [0]        .resize(NX);
+        //
+        this->m_gridlines    [1]        .resize(NY);    //  Y-Axis.
+        this->m_grid_strings [1]        .resize(NY);
+        this->m_grid_labels  [1]        .resize(NY);
         
         
         //      3.      POPULATE ARRAYS WITH NEW VALUES...
         //
-        //              3A.     X-AXIS.
-        for (size_t x = 0; x < NX; ++x)
+        //              3A.         X-AXIS.
+        this->_update_grid_array        (0,     NX);
+        //
+        //              3B.         Y-AXIS.
+        this->_update_grid_array        (1,     NY);
+    
+    
+    
+        return;
+    }
+    
+    
+    //  "_compute_label_density"
+    //      TO-DO:  Make this a LUT Array so O(1) lookup for value of j.
+    //
+    [[nodiscard]] static inline size_t      _compute_label_density              (const size_t N1) noexcept
+    {
+        constexpr size_t    N0              = 16ULL;
+        constexpr size_t    n0              = 4ULL;
+        const size_t        n1              = std::countr_zero(N1);
+    
+        //  1.  IF N <= 16 :    PLACE EVERY LABEL.
+        //  2.  ELSE :          PLACE EVERY  j-th  LABEL, WHERE j = log_2( 16 ) - log_2( N )
+        //                      A.K.A. --- EVERY  n-th  LABEL FOR EACH ADDITIONAL  n-value POWER-OF-TWO.
+        return (N1 <= N0)   ? 1ULL  : (1ULL << ((n1 - n0) >> 1));
+    }
+    
+    
+    //  "_update_grid_array"
+    inline void                             _update_grid_array                  (const size_t axis, const size_t N) noexcept
+    {
+        constexpr size_t        phase       = 0;    //  phase (optional): shift the pattern; label when (i - phase) % j == 0
+        const size_t            j           = this->_compute_label_density(N);
+        
+        
+        for (size_t i = 0; i < N; ++i)
         {
-            this->m_gridlines[0][x]     = static_cast<double>( x ) * m_grid_spacing[0];
-        }
-        //              3B.     Y-AXIS.
-        for (size_t y = 0; y < NY; ++y)
-        {
-            this->m_gridlines[1][y]     = static_cast<double>( y ) * m_grid_spacing[1];
+            const double    value               = static_cast<double>( i ) * m_grid_spacing[axis];
+            const bool      skip                = (  ((i + N - (phase % j)) % j) == 0  );
+            //
+            this->m_gridlines    [axis][i]      = value;
+            
+            
+            //      CASE 1A :   PLACE EVERY  *j-th*  LABEL.     SKIP EVERY  *non j-th*  LABEL...
+            if ( skip )     { this->m_grid_strings [axis][i] = std::vformat( ms_GRID_LABEL_FMT, std::make_format_args(value) ); }
+            else            { this->m_grid_strings [axis][i] = ""; }
+            
+            this->m_grid_labels  [axis][i]      = this->m_grid_strings[axis][i].c_str();
         }
     
         return;
     }
+    
+    
     
     
     
@@ -1257,22 +1456,23 @@ struct Interaction
 // *************************************************************************** //
 //          PREVIOUS DATA...
 // *************************************************************************** //
+//                              STATE VARIABLES:
     bool                            hovered                 {   };
     bool                            active                  {   };
     bool                            space                   {   };
 //
 //
+//                              STATE VARIABLES:
+    ImVec2                          mouse_pos               {   };      //  ImPlotPoint
+//
 //
 //                              IMPLOT VARIABLES:
     ImVec2                          canvas                  {   };
-    ImVec2                          origin                  {   };
-    ImVec2                          tl                      {   };
-//
+    ImVec2                          origin                  {   };  //  Top-Left corner of the plot.
 //
 //
 //                              OTHER DATA:
-    mutable ImDrawList *            dl                      {   };
-//
+    mutable ImDrawList *            dl                      { nullptr };
 //
 //
 //                              NEW DATA:
@@ -1323,31 +1523,139 @@ struct Interaction
 // *************************************************************************** //
 
 //  "Selection_t"
+//      PLAIN-OLD-DATA (POD) STRUCT.
 //
 template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
 struct Selection_t
 {
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
     using                               Hit                     = Hit_t         <HitID>                 ;
     using                               PathHit                 = PathHit_t     <PathID, VertexID>      ;
+    
 //
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
 //
-//
-    inline void                         clear           (void)          { vertices.clear(); points.clear(); paths.clear();                  }        // new
-    inline bool                         empty           (void) const    { return vertices.empty() && points.empty() && paths.empty();       }
-    inline bool                         is_empty        (void) const    { return paths.empty();                                             }
-//
-//
-//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
     std::unordered_set<uint32_t>        vertices                {   };
     std::unordered_set<size_t>          points                  {   };
     std::unordered_set<size_t>          paths                   {   };     // ← NEW
-//
-//                                  CACHED ITEMS:
+    
+    // *************************************************************************** //
+    //      CACHE DATA-MEMBERS
+    // *************************************************************************** //
     mutable std::optional<Hit>          hovered                 { std::nullopt };
+    
 //
-};
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
 //
-//  "to_json"
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+                                        Selection_t             (void) noexcept                 = default;
+                                        ~Selection_t            (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+    //                                      Selection_t             (const Selection_t &    src)       = delete;   //  Copy. Constructor.
+    //                                      Selection_t             (Selection_t &&         src)       = delete;   //  Move Constructor.
+    //  Selection_t &                       operator =              (const Selection_t &    src)       = delete;   //  Assgn. Operator.
+    //  Selection_t &                       operator =              (Selection_t &&         src)       = delete;   //  Move-Assgn. Operator.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      STATIC FUNCTIONS.
+    // *************************************************************************** //
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      QUERY FUNCTIONS.
+    // *************************************************************************** //
+    
+    inline bool                         empty                               (void) const    { return vertices.empty() && points.empty() && paths.empty();       }
+    inline bool                         is_empty                            (void) const    { return paths.empty();                                             }
+    
+    
+    
+    
+    //  "IsHoveringNonObject"
+    [[nodiscard]] inline bool           IsHoveringNonObject                 (void) const noexcept
+        { return (this->hovered)  ? (*this->hovered).IsNonObjectHit() : false; }
+    [[nodiscard]] inline bool           IsHoveringObject                    (void) const noexcept
+        { return (this->hovered)  ? (*this->hovered).IsObjectHit() : false; }
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "clear"
+    inline void                         clear                               (void) noexcept
+    {
+        this->vertices  .clear();
+        this->points    .clear();
+        this->paths     .clear();
+        this->hovered   .reset();
+        return;
+    }
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "Selection_t" INLINE STRUCT DEFINITION.
+
+
+
+//      Selection_t     : "to_json"
+//
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
 inline void to_json(nlohmann::json & j, const Selection_t<VID,PtID,LID,PID,ZID,HitID> & s)
 {
@@ -1359,8 +1667,10 @@ inline void to_json(nlohmann::json & j, const Selection_t<VID,PtID,LID,PID,ZID,H
           
     return;
 }
+
+
+//      Selection_t     : "from_json"
 //
-//  "from_json"
 template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
 inline void from_json(const nlohmann::json & j, Selection_t<VID,PtID,LID,PID,ZID,HitID> & s)
 {

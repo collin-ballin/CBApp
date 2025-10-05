@@ -531,9 +531,11 @@ inline void Editor::_RENDER_top_channel(std::span<const size_t> /*z_view*/, cons
 // *************************************************************************** //
 // *************************************************************************** //
 
+#ifndef _EDITOR_REMOVE_DEPRECATED_CODE
+
 //  "_render_paths"
 //
-void Editor::_render_paths(ImDrawList * dl) const 
+void Editor::_render_paths(ImDrawList * dl) const
 {
     //  1.  BUILD THE DRAW-LIST (USE VISIBLE PATHS ONLY)...
     std::vector<const Path*>    draw_vec;
@@ -651,6 +653,9 @@ void Editor::_render_points(ImDrawList * dl) const
     
     return;
 }
+#endif  //  _EDITOR_REMOVE_DEPRECATED_CODE  //
+
+
 
 //
 //
@@ -818,7 +823,7 @@ inline void Editor::_auxiliary_highlight_object(const Path & path, const RenderC
         /*  fill_color      */      , this->m_style.AUX_HIGHLIGHT_COLOR
         /*  stroke_width    */      , this->m_style.AUX_HIGHLIGHT_WIDTH
     };
-    this->PushVertexStyle( VertexStyleType::Highlight );
+    this->PushVertexStyle( VertexStyleType::AltHighlight );
     
 
     //      1.      RENDER HIGHLIGHT FOR BROWSER-HOVERED OBJECT...
@@ -837,7 +842,7 @@ inline void Editor::_auxiliary_highlight_object(const Path & path, const RenderC
 //
 inline void Editor::_auxiliary_highlight_handle(const Vertex & v) const noexcept
 {
-    this->PushVertexStyle( VertexStyleType::Highlight );
+    this->PushVertexStyle( VertexStyleType::AltHighlight );
     
     
     //      2.      DRAW HOVERED VERTEX...

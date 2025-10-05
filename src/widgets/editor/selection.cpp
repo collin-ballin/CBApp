@@ -72,18 +72,19 @@ void Editor::_MECH_process_selection(const Interaction & it)
 void Editor::start_move_drag(const ImVec2 & press_ws)
 {
     m_dragging              = true;
-    m_movedrag              = {};
+    m_movedrag              = {   };
     m_movedrag.active       = true;
     m_movedrag.press_ws     = press_ws;
-    ImVec2                  tl{},   br{};
+    ImVec2                  tl{ },  br{ };
+    
     
     if ( _selection_bounds(tl, br, this->m_render_ctx) )    { m_movedrag.anchor_ws = tl;        }
-    else                                { m_movedrag.anchor_ws = press_ws;  }
+    else                                                    { m_movedrag.anchor_ws = press_ws;  }
 
     m_movedrag.v_ids .reserve(m_sel.vertices.size());
     m_movedrag.v_orig.reserve(m_sel.vertices.size());
 
-    for (uint32_t vid : m_sel.vertices)
+    for (VertexID vid : m_sel.vertices)
     {
         if ( const Vertex * v = find_vertex(m_vertices, vid) ) {
             m_movedrag.v_ids .push_back(vid);
@@ -96,23 +97,159 @@ void Editor::start_move_drag(const ImVec2 & press_ws)
 
 
 //  "update_move_drag_state"
-//      Press / drag / release handling ---------------------------------------
+//      Press / drag / release handling.
 //
 inline void Editor::update_move_drag_state(const Interaction & it)
 {
-    ImGuiIO & io           = ImGui::GetIO();
-    const bool lmb         = io.MouseDown[ImGuiMouseButton_Left];
-    const bool lmb_click   = ImGui::IsMouseClicked  (ImGuiMouseButton_Left);
-    const bool lmb_release = ImGui::IsMouseReleased (ImGuiMouseButton_Left);
+    static bool         press_hit_exists    = false;
+    static bool         press_hit_in_sel    = false;
+    //
+    //
+    ImGuiIO &           io                  = ImGui::GetIO();
+    const ImVec2 &      press_ws            = it.mouse_pos;
+    const bool          allow_inputs        = !it.BlockInput();
+    //
+    const bool          lmb                 = io.MouseDown[ ImGuiMouseButton_Left ];
+    const bool          lmb_click           = ImGui::IsMouseClicked  (ImGuiMouseButton_Left);
+    const bool          lmb_release         = ImGui::IsMouseReleased (ImGuiMouseButton_Left);
 
-    const float drag_px    = _drag_threshold_px();
-    const bool  drag_past  = ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, drag_px);
+    const float         drag_px             = _drag_threshold_px();
+    const bool          drag_past           = ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, drag_px);
 
-    static ImVec2 press_ws{};
-    static bool   press_hit_exists = false;
-    static bool   press_hit_in_sel = false;
 
-    if (lmb_click && it.hovered)
+
+    //      1.      PRESS...
+    if ( allow_inputs  &&  lmb_click )
+    {
+        this->m_pending_hit     = this->m_sel.hovered;                          // may be null
+        press_hit_exists        = m_pending_hit.has_value();
+        press_hit_in_sel        = ( press_hit_exists  &&  _hit_is_in_current_selection( *this->m_pending_hit ) );
+
+        const bool modifiers    = ( io.KeyCtrl  ||  io.KeyShift );
+        const bool inside_bbox  = ( !m_sel.empty()  &&  _press_inside_selection(press_ws) );
+        const bool outside_sel  = ( !press_hit_in_sel  &&  !inside_bbox );
+
+        m_pending_clear         = ( (!modifiers)  &&  outside_sel );       // only tentatively true here
+        // IMPORTANT: do NOT start drag yet; we wait for drag_past
+    }
+    
+    
+    
+    //      2.      BEGIN MOVE/DRAG ONCE MOUSE-MOVEMENT EXCEEDS THRESHOLD...
+    if ( lmb  &&  !m_dragging  &&  drag_past  &&  it.hovered )
+    {
+        if (m_pending_hit)
+        {
+            const Hit &     hit     = *m_pending_hit;
+            
+            
+            //      2.1.    *NON-OBJECT HITS* INSIDE SELECTION...
+            //  if ( hit.IsNonObjectHit() ) {
+            //      m_pending_clear     = false;        //  never clear selection in this case.
+            //      m_pending_hit       .reset();       //  prevent release-time selection toggles.
+            //      press_hit_exists    = false;
+            //      press_hit_in_sel    = false;
+            //      return;                             //  Transfer control to other handlers...
+            //  }
+            
+            
+            //      2.2.    *OBJECT HITS* INSIDE SELECTION...
+            if ( !press_hit_in_sel )
+            {
+                if ( m_pending_clear )      { this->reset_selection(); }
+                add_hit_to_selection(hit);
+            }
+            start_move_drag(press_ws);
+
+
+            //      2.3.    PREVENT CLICK-RESOLUTION FROM FIRING ON MOUSE-RELEASE...
+            m_pending_hit       .reset();
+            m_pending_clear     = false;                   // ← key fix
+            press_hit_exists    = false;
+            press_hit_in_sel    = false;
+            return;
+        }
+
+
+        //  No direct hit, but press inside current selection bbox → drag whole selection
+        if ( !m_sel.empty()  &&  _press_inside_selection(press_ws) )
+        {
+            start_move_drag(press_ws);
+            m_pending_clear = false;                   // ← also important
+            return;
+        }
+        
+
+        // Else: (optionally) start lasso after threshold if desired
+        // if (!m_lasso_active) _start_lasso_tool();
+    }
+
+
+    //      3.      PER-FRAME DRAGGING TO UPDATE SELECTION MOVEMENT...
+    if (m_dragging)
+    {
+        const ImVec2    w_mouse     = pixels_to_world(io.MousePos);
+        ImVec2          delta       { w_mouse.x - m_movedrag.press_ws.x,    w_mouse.y - m_movedrag.press_ws.y };
+
+
+        const ImVec2    snapped     = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,     m_movedrag.anchor_ws.y + delta.y });
+        delta.x                     = snapped.x - m_movedrag.anchor_ws.x;
+        delta.y                     = snapped.y - m_movedrag.anchor_ws.y;
+        
+        
+        //  OLD:
+        //      if ( want_snap() )
+        //      {
+        //          const ImVec2 snapped = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,     m_movedrag.anchor_ws.y + delta.y });
+        //          delta.x = snapped.x - m_movedrag.anchor_ws.x;
+        //          delta.y = snapped.y - m_movedrag.anchor_ws.y;
+        //      }
+        
+
+        for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i)
+        {
+            if ( Vertex * v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i]) ) {
+                const ImVec2& o = m_movedrag.v_orig[i];
+                v->x = o.x + delta.x;  v->y = o.y + delta.y;
+            }
+        }
+
+        if (lmb_release)
+        {
+            m_dragging        = false;
+            m_pending_hit.reset();
+            m_pending_clear   = false;                 // ← guard against release clearing
+            press_hit_exists  = false;
+            press_hit_in_sel  = false;
+        }
+        return; // while dragging, skip click-resolution below
+    }
+    
+    
+    return;
+}
+
+/*
+{
+    static ImVec2   press_ws            {   };
+    static bool     press_hit_exists    = false;
+    static bool     press_hit_in_sel    = false;
+    //
+    //
+    ImGuiIO &       io                  = ImGui::GetIO();
+    const bool      allow_inputs        = !it.BlockInput();
+    //
+    const bool      lmb                 = io.MouseDown[ ImGuiMouseButton_Left ];
+    const bool      lmb_click           = ImGui::IsMouseClicked  (ImGuiMouseButton_Left);
+    const bool      lmb_release         = ImGui::IsMouseReleased (ImGuiMouseButton_Left);
+
+    const float     drag_px             = _drag_threshold_px();
+    const bool      drag_past           = ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, drag_px);
+
+
+
+    //      1.      PRESS...
+    if ( allow_inputs  &&  lmb_click )
     {
         press_ws          = pixels_to_world(io.MousePos);
         m_pending_hit     = _hit_any(it);                           // may be null
@@ -127,59 +264,69 @@ inline void Editor::update_move_drag_state(const Interaction & it)
         // IMPORTANT: do NOT start drag yet; we wait for drag_past
     }
 
-    // Begin drag once movement exceeds threshold
-    if (lmb && !m_dragging && drag_past && it.hovered)
+
+
+    //      2.      BEGIN MOVE/DRAG ONCE MOUSE-MOVEMENT EXCEEDS THRESHOLD...
+    if ( lmb  &&  !m_dragging  &&  drag_past  &&  it.hovered )
     {
         if (m_pending_hit)
         {
-            if (!press_hit_in_sel) {
-                if (m_pending_clear) this->reset_selection();
-                add_hit_to_selection(*m_pending_hit);
+            //      2.2.    *OBJECT HITS* INSIDE SELECTION...
+            if ( !press_hit_in_sel )
+            {
+                if ( m_pending_clear )      { this->reset_selection(); }
+                add_hit_to_selection(hit);
             }
             start_move_drag(press_ws);
 
-            // NEW: prevent click-resolution from firing on release
-            m_pending_hit.reset();
-            m_pending_clear = false;                   // ← key fix
-            press_hit_exists = false;
-            press_hit_in_sel = false;
+
+            //      2.3.    PREVENT CLICK-RESOLUTION FROM FIRING ON MOUSE-RELEASE...
+            m_pending_hit       .reset();
+            m_pending_clear     = false;                   // ← key fix
+            press_hit_exists    = false;
+            press_hit_in_sel    = false;
             return;
         }
 
-        // No direct hit, but press inside current selection bbox → drag whole selection
-        if (!m_sel.empty() && _press_inside_selection(press_ws)) {
-            start_move_drag(press_ws);
-            m_pending_clear = false;                   // ← also important
-            return;
-        }
+
+        //  No direct hit, but press inside current selection bbox → drag whole selection
+        //  if ( !m_sel.empty()  &&  _press_inside_selection(press_ws) )
+        //  {
+        //      start_move_drag(press_ws);
+        //      m_pending_clear = false;                   // ← also important
+        //      return;
+        //  }
+        
 
         // Else: (optionally) start lasso after threshold if desired
         // if (!m_lasso_active) _start_lasso_tool();
     }
 
-    // Per-frame translation while dragging
+
+    //      3.      PER-FRAME DRAGGING TO UPDATE SELECTION MOVEMENT...
     if (m_dragging)
     {
-        const ImVec2 w_mouse = pixels_to_world(io.MousePos);
-        ImVec2 delta { w_mouse.x - m_movedrag.press_ws.x,
-                       w_mouse.y - m_movedrag.press_ws.y };
+        const ImVec2    w_mouse     = pixels_to_world(io.MousePos);
+        ImVec2          delta       { w_mouse.x - m_movedrag.press_ws.x,    w_mouse.y - m_movedrag.press_ws.y };
 
-        if (want_snap()) {
-            const ImVec2 snapped = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,
-                                                  m_movedrag.anchor_ws.y + delta.y });
+        if ( want_snap() )
+        {
+            const ImVec2 snapped = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,     m_movedrag.anchor_ws.y + delta.y });
             delta.x = snapped.x - m_movedrag.anchor_ws.x;
             delta.y = snapped.y - m_movedrag.anchor_ws.y;
         }
+        
 
         for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i)
         {
-            if (Vertex* v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i])) {
+            if ( Vertex * v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i]) ) {
                 const ImVec2& o = m_movedrag.v_orig[i];
                 v->x = o.x + delta.x;  v->y = o.y + delta.y;
             }
         }
 
-        if (lmb_release) {
+        if (lmb_release)
+        {
             m_dragging        = false;
             m_pending_hit.reset();
             m_pending_clear   = false;                 // ← guard against release clearing
@@ -188,122 +335,12 @@ inline void Editor::update_move_drag_state(const Interaction & it)
         }
         return; // while dragging, skip click-resolution below
     }
-}
-
-/*{
-    ImGuiIO &       io              = ImGui::GetIO();
-    const bool      lmb             = io.MouseDown[ImGuiMouseButton_Left];
-    const bool      lmb_click       = ImGui::IsMouseClicked  (ImGuiMouseButton_Left);
-    const bool      lmb_release     = ImGui::IsMouseReleased (ImGuiMouseButton_Left);
-    const bool      dragging_now    = ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, 0.0f);
-
-    ImVec2          w_mouse         = pixels_to_world(io.MousePos);      // NEW
-    static ImVec2   press_ws        {   };
-
-
-    // remember exact press-position once ----------------------------------
-    if ( lmb_click )    { press_ws = pixels_to_world(io.MousePos); }   // NEW
-
-
-    // --------------------------------------------------------------------
-    // 0. NEW: start drag immediately on a fresh hit
-    // --------------------------------------------------------------------
-    if ( !m_dragging  &&  lmb_click  &&  it.hovered )
-    {
-        m_pending_hit = _hit_any(it);               // fresh pick
-
-        if (m_pending_hit)                          // hit something
-        {
-            // clear selection unless additive
-            if (!io.KeyCtrl && !io.KeyShift)        { this->reset_selection(); }
-            
-            add_hit_to_selection(*m_pending_hit);   // select the hit
-            m_pending_hit.reset();
-            m_pending_clear = false;
-
-            start_move_drag(press_ws);              // begin move-drag now
-            return;                                // skip lasso test this frame
-        }
-        // if no hit, normal lasso logic continues below
-    }
-    
-
-    // --------------------------------------------------------------------
-    // 1. drag inside an already-selected region (threshold kept)
-    // --------------------------------------------------------------------
-    if ( !m_dragging && lmb && !m_sel.empty() && !m_pending_hit )
-    {
-        bool    inside_sel  = false;
-        int     idx         = _hit_point(it);
-        
-        if ( idx >= 0 && m_sel.points.count(idx) )  { inside_sel = true; }
-        else if ( m_sel.vertices.size() > 1 )
-        {
-            ImVec2 tl, br;
-            if ( _selection_bounds(tl, br, this->m_render_ctx) ) {
-                inside_sel = (press_ws.x >= tl.x && press_ws.x <= br.x &&
-                               press_ws.y >= tl.y && press_ws.y <= br.y);
-            }
-        }
-        if ( inside_sel && dragging_now )           { start_move_drag(press_ws); }
-    }
-
-    // --------------------------------------------------------------------
-    // 2. per-frame rigid-snap translation (unchanged)
-    // --------------------------------------------------------------------
-    if (m_dragging)
-    {
-        ImVec2      delta    = ImVec2( w_mouse.x - m_movedrag.press_ws.x, w_mouse.y - m_movedrag.press_ws.y );
-
-        if ( want_snap() ) {
-            ImVec2 snapped  = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,    m_movedrag.anchor_ws.y + delta.y });
-            delta.x         = snapped.x - m_movedrag.anchor_ws.x;
-            delta.y         = snapped.y - m_movedrag.anchor_ws.y;
-        }
-
-        for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i) {
-            if (Vertex* v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i]))
-            {
-                const ImVec2 &  orig    = m_movedrag.v_orig[i];
-                v->x                    = orig.x + delta.x;
-                v->y                    = orig.y + delta.y;
-            }
-        }
-
-        if (lmb_release)    { m_dragging = false; }
-    }
-
-    // ------------------------------------------------------------------
-    // 4. per-frame translation while dragging  (rigid snap)
-    // ------------------------------------------------------------------
-    if (m_dragging)
-    {
-        // raw translation from initial press
-        ImVec2      delta       = ImVec2( w_mouse.x - m_movedrag.press_ws.x, w_mouse.y - m_movedrag.press_ws.y );
-
-        // snap the delta **once**, via the bbox anchor
-        if ( this->want_snap() )
-        {
-            ImVec2 snapped_anchor   = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,    m_movedrag.anchor_ws.y + delta.y });
-            delta.x                 = snapped_anchor.x - m_movedrag.anchor_ws.x;
-            delta.y                 = snapped_anchor.y - m_movedrag.anchor_ws.y;
-        }
-
-        // apply the same delta to every vertex
-        for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i)
-            if (Vertex * v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i])) {
-                const ImVec2 & orig = m_movedrag.v_orig[i];
-                v->x = orig.x + delta.x;
-                v->y = orig.y + delta.y;
-            }
-
-        if (lmb_release)               // drag finished
-            m_dragging = false;
-    }
     
     
     return;
 }*/
+
+
 
 //
 //
@@ -352,7 +389,6 @@ inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction
         if ( m_pending_hit  ||  m_pending_clear )
         {
             if (m_pending_clear)    { this->reset_selection(); }
-
 
             if (m_pending_hit)
             {
@@ -687,8 +723,8 @@ void Editor::_update_bbox(void)
 
 
     //      1.      Read/snaps the mouse in *world* space
-    ImVec2 M = pixels_to_world(io.MousePos);
-    if ( want_snap() )      { M = snap_to_grid(M); }
+    ImVec2          M           = pixels_to_world(io.MousePos);
+    if ( want_snap() )          { M = snap_to_grid(M); }
 
 
     //      2.      Establish original box & the pivot for this frame
@@ -967,15 +1003,15 @@ inline float Editor::_drag_threshold_px(void) const
 //      True iff the press position was inside the current selection's bbox.
 //      Keep cheap; used only to allow "press inside selection → drag whole selection".
 //
-inline bool Editor::_press_inside_selection(const ImVec2 press_ws) const {
-    ImVec2  tl{}, br{};
+inline bool Editor::_press_inside_selection(const ImVec2 & press_ws) const {
+    ImVec2      tl{}, br{};
     
     if ( m_sel.empty() )                { return false; }
     
     if ( !_selection_bounds(tl, br, this->m_render_ctx) )   { return false; }
     
-    return (press_ws.x >= tl.x && press_ws.x <= br.x &&
-            press_ws.y >= tl.y && press_ws.y <= br.y);
+    return ( (press_ws.x >= tl.x)  &&  (press_ws.x <= br.x)  &&
+             (press_ws.y >= tl.y)  &&  (press_ws.y <= br.y) );
 }
 
 

@@ -314,7 +314,7 @@ void Editor::_DEBUGGER_canvas(void) const noexcept
     static float                LABEL_W                 = 0.6f * m_style.ms_SETTINGS_LABEL_WIDTH;
     static const float &        WIDGET_W                = m_style.ms_SETTINGS_WIDGET_WIDTH;
     const GridState &           GS                      = this->m_grid;
-    //  const Interaction &         it                      = *this->m_it;
+    const Interaction &         it                      = *this->m_it;
     
     
     
@@ -335,6 +335,13 @@ void Editor::_DEBUGGER_canvas(void) const noexcept
           "X: (%.0f, %.0f).     Y: (%.0f, %.0f)"
         , GS.m_window_coords.X.Min           , GS.m_window_coords.X.Max
         , GS.m_window_coords.Y.Min           , GS.m_window_coords.Y.Max
+    );
+    //
+    //              1.3.      PLOT MOUSE POSITION...
+    this->S.labelf("Mouse Pos [PLOT]:", LABEL_W, WIDGET_W);
+    ImGui::Text(
+          "(%.0f, %.0f)."
+        , it.mouse_pos.x                    , it.mouse_pos.y
     );
     
 
@@ -478,7 +485,6 @@ inline void Editor::_DEBUGGER_misc_1(const float LABEL_W, const float WIDGET_W) 
 //
 inline void Editor::_DEBUGGER_misc_2(const float LABEL_W, const float WIDGET_W) const noexcept
 {
-
     //      1.      PEN-TOOL STATE...
     ImGui::TextDisabled("PenState");
     //

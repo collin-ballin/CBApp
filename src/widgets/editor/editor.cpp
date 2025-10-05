@@ -145,6 +145,7 @@ inline void Editor::_MECH_dispatch_tool_handler([[maybe_unused]] const Interacti
 inline void Editor::_per_frame_cache_begin(void) noexcept
 {
     ImGuiIO &               io                      = ImGui::GetIO();
+    GridState &             GS                      = this->m_grid;
     //  EditorState &           ES                      = this->m_editor_S;
     //  BrowserState &          BS                      = this->m_browser_S;
     Interaction &           it                      = *m_it;
@@ -152,41 +153,56 @@ inline void Editor::_per_frame_cache_begin(void) noexcept
     
     
     
-    //      1.1.    IMPLOT STATE...
-    const bool              space                   = ImGui::IsKeyDown(ImGuiKey_Space);
-    const bool              hovered                 = ImPlot::IsPlotHovered();
-    const bool              active                  = ImPlot::IsPlotSelected();
-    eit.other_windows_open                          = (ImGui::GetTopMostPopupModal() != nullptr);
+    //      1.      FETCH BASIC INPUT DATA...
+    //
+    //              1.1.    IMPLOT STATE.
+    const bool              space                   = ImGui::IsKeyDown          (ImGuiKey_Space);
+    const bool              hovered                 = ImPlot::IsPlotHovered     ();
+    const bool              active                  = ImPlot::IsPlotSelected    ();
+    eit.other_windows_open                          = ( ImGui::GetTopMostPopupModal() != nullptr );
+    //
+    //              1.2.    IMPLOT DATA.
+    const ImVec2            origin_scr              = ImPlot::GetPlotPos();       //  TOP-LEFT Corner of the Plot.
+    const ImVec2            mouse_canvas            { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
+    //
+    const ImPlotPoint       mouse_pos               = ImPlot::GetPlotMousePos(ImAxis_X1, ImAxis_Y1);
+
+    
+    
+    
+    //      2.      PER-FRAME CACHE OPERATIONS FOR IMPLOT CANVAS...
+    //
+    GS.m_window_coords                              = ImPlot::GetPlotLimits();                                          //  6A.     DOMAIN + RANGE OF PLOT      [ IN (X,Y) PLOT UNITS ].
+    GS.m_window_size[0]                             = std::abs(GS.m_window_coords.X.Max - GS.m_window_coords.X.Min);    //  6B.     SIZE OF THE PLOT            [ IN (X,Y) PLOT UNITS ].
+    GS.m_window_size[1]                             = std::abs(GS.m_window_coords.Y.Max - GS.m_window_coords.Y.Min);    //
     //
     //
-    //      1.2.    IMPLOT DATA...
-    ImVec2                  plotTL                  = ImPlot::GetPlotPos();
-    ImVec2                  origin_scr              = plotTL;
-    ImVec2                  mouse_canvas            { io.MousePos.x - origin_scr.x,     io.MousePos.y - origin_scr.y };
+    GS.m_plot_px_dims                               = ImPlot::GetPlotSize();                                            //  6C.     PIXEL SIZE OF THE PLOT      [ IN PIXEL-DIMENSIONS ].
+    GS.m_plot_bbox                                  = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
     //
     //
-    //      1.3.    SELECTION DATA...
-    //  const size_t            N_obj_selected          = this->m_sel.paths.size();
-    //
-    //
-    //      1.4.    OTHER DATA...
     ImDrawList *            dl                      = ImPlot::GetPlotDrawList();
 
 
 
-    //      2.1.    EDITOR STATE...
-    
-
     //      3.      ASSIGN UPDATED VALUES...
-    it.hovered                      = hovered;
-    it.active                       = active;
-    it.space                        = space;
     //
-    it.canvas                       = mouse_canvas;
-    it.origin                       = origin_scr;
-    it.tl                           = plotTL;
+    //              3.1.    STATE DATA.
+    it.hovered                              = hovered;
+    it.active                               = active;
+    it.space                                = space;
     //
-    it.dl                           = dl;
+    //              3.2.    INPUT DATA.
+    it.mouse_pos                            = { static_cast<float>(mouse_pos.x), static_cast<float>(mouse_pos.y) };
+    //
+    //
+    //              3.3.    CANVAS DATA.
+    it.canvas                               = mouse_canvas;
+    it.origin                               = origin_scr;
+    //
+    //              3.4.    MISC. DATA.
+    it.dl                                   = dl;
+    
     
     
     //      4.      ASSIGNMENTS FOR EDITOR-INTERACTION OBJECT...
@@ -432,7 +448,7 @@ void Editor::Begin(const char * /*id*/)
         if ( enable_main_behavior )       /* if ( !space  &&  it.hovered ) */
         {
             //              3.5A.       PERFORM HIT-DETECTION.
-            if ( it.hovered  &&  !(m_dragging || m_boxdrag.active) )    //  ignore while dragging selection.
+            if ( it.hovered  &&  !(m_dragging  ||  m_boxdrag.active) )    //  ignore while dragging selection.
                 { this->_MECH_hit_detection(it); }
             //
             //  else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
@@ -594,7 +610,7 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
     
     
     //      1.      QUERY THE "SHOW GRID" STATUS...
-    if ( show_grid_cache != m_grid.visible) [[unlikely]]
+    if ( show_grid_cache != m_grid.visible ) [[unlikely]]
     {
         show_grid_cache = m_grid.visible;
         
@@ -610,7 +626,7 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
     
     
     //      2.      SET THE GRIDLINES FOR THE CANVAS...
-    this->_clamp_plot_axes();
+    GS.SetupImPlotGrid();
     
     
     //      3.      SET THE INITIAL SIZE OF THE CANVAS...
@@ -648,17 +664,16 @@ inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
     
     
     //      7.      PER-FRAME CACHE OPERATIONS FOR IMPLOT CANVAS...
-    GS.m_window_coords          = ImPlot::GetPlotLimits();                                          //  6A.     DOMAIN + RANGE OF PLOT      [ IN (X,Y) PLOT UNITS ].
-    GS.m_window_size[0]         = std::abs(GS.m_window_coords.X.Max - GS.m_window_coords.X.Min);    //  6B.     SIZE OF THE PLOT            [ IN (X,Y) PLOT UNITS ].
-    GS.m_window_size[1]         = std::abs(GS.m_window_coords.Y.Max - GS.m_window_coords.Y.Min);    //
-    //
-    GS.m_plot_px_dims           = ImPlot::GetPlotSize();                                            //  6C.     PIXEL SIZE OF THE PLOT      [ IN PIXEL-DIMENSIONS ].
-    GS.m_plot_bbox              = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
+    //  GS.m_window_coords          = ImPlot::GetPlotLimits();                                          //  6A.     DOMAIN + RANGE OF PLOT      [ IN (X,Y) PLOT UNITS ].
+    //  GS.m_window_size[0]         = std::abs(GS.m_window_coords.X.Max - GS.m_window_coords.X.Min);    //  6B.     SIZE OF THE PLOT            [ IN (X,Y) PLOT UNITS ].
+    //  GS.m_window_size[1]         = std::abs(GS.m_window_coords.Y.Max - GS.m_window_coords.Y.Min);    //
+    //  //
+    //  GS.m_plot_px_dims           = ImPlot::GetPlotSize();                                            //  6C.     PIXEL SIZE OF THE PLOT      [ IN PIXEL-DIMENSIONS ].
+    //  GS.m_plot_bbox              = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
     
     
     //      X.      REMAINING FUNCTIONS...
-    //
-    this->_update_grid_info();                                              //  3C.     Fetch Grid-Quantization Info.
+    //                  ...
 
 
 
@@ -1097,9 +1112,11 @@ inline void Editor::_handle_pen(const Interaction& it)
         if ( (m_pen.pending_time >= m_style.PEN_DRAG_TIME_THRESHOLD)  &&
              ImGui::IsMouseDragPastThreshold( ImGuiMouseButton_Left, m_style.PEN_DRAG_MOVEMENT_THRESHOLD ) )
         {
-            _pen_begin_handle_drag(m_pen.pending_vid,
-                                   /*out_handle=*/false,
-                                   /*force_select=*/true);
+            _pen_begin_handle_drag(
+                /*   VertexID       */        m_pen.pending_vid
+                /*   out_handle     */      , false
+                /*   force_select   */      , true
+            );
 
             if ( Vertex * v = find_vertex_mut(m_vertices, m_pen.pending_vid) )
                 { v->m_bezier.in_handle = ImVec2(0,0); }        // make new handle visible
@@ -1139,7 +1156,7 @@ inline void Editor::_handle_pen(const Interaction& it)
     int         pt_idx          = _hit_point(it);
     if ( pt_idx >= 0 )
     {
-        uint32_t    vid         = m_points[pt_idx].v;
+        VertexID    vid         = m_points[pt_idx].v;
         auto        endpoint    = _endpoint_if_open(vid);
         
         if ( endpoint.has_value() )
@@ -1215,7 +1232,6 @@ inline void Editor::_handle_pen(const Interaction& it)
     }
     
     return;
-    
 }
 
 
