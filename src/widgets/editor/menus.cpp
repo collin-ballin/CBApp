@@ -219,9 +219,6 @@ inline void Editor::_selection_context_primative([[maybe_unused]] const Interact
         //
         ImGui::EndMenu();
     }
-    
-
-
 
 
 
