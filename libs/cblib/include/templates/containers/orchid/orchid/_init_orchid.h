@@ -51,7 +51,7 @@ namespace cblib { namespace containers {   //     BEGINNING NAMESPACE "cblib::co
 //
 // *************************************************************************** //
 // *************************************************************************** //
-}//   END OF "cblib::containers" NAMESPACE.
+} }//   END OF "cblib::containers" NAMESPACE.
 
 
 

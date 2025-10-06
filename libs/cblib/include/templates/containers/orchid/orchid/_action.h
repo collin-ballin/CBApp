@@ -1,7 +1,7 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****              _ O R C H I D . H  ____  F I L E              ****
+*       ****              _ A C T I O N . H  ____  F I L E              ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond
@@ -14,11 +14,9 @@
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CBLIB_ORCHID_ORCHID_H
-#define _CBLIB_ORCHID_ORCHID_H 1
+#ifndef _CBLIB_ORCHID_ACTION_H
+#define _CBLIB_ORCHID_ACTION_H 1
 
-
-//      1.      SYSTEM HEADERS.
 #include <iostream>
 #include <type_traits>
 #include <algorithm>                //  std::clamp
@@ -36,16 +34,6 @@
 #if __cplusplus >= 201103L
 # include <initializer_list>
 #endif	//  C++11.  //
-
-
-	
-//      2.      MY HEADERS.
-#ifndef _CBLIB_ORCHID_ACTION_H
-# include "templates/containers/orchid/orchid/_action.h"
-#endif	// _CBLIB_ORCHID_ACTION_H  //
-
-
-
 
 
 
@@ -102,4 +90,4 @@ namespace cblib { namespace containers {   //     BEGINNING NAMESPACE "cblib::co
 
 // *************************************************************************** //
 // *************************************************************************** //
-#endif  //  _CBLIB_ORCHID_ORCHID_H  //
+#endif  //  _CBLIB_ORCHID_ACTION_H  //

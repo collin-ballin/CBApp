@@ -24,6 +24,12 @@
 #ifndef _CBLIB_MATRIX_H
 # include "templates/containers/matrix/matrix.h"
 #endif	// _CBLIB_MATRIX_H  //
+	
+#ifndef _CBLIB_ORCHID_H
+# include "templates/containers/orchid/orchid.h"
+#endif	// _CBLIB_ORCHID_H  //
+
+
 
 //
 //
