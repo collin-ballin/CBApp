@@ -105,22 +105,295 @@ public:
     LabelFn                             ms_TopLabel;
     LabelFn                             ms_LabelUnformat;
     
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      REFERENCES TO GLOBAL ARRAYS.
+    // *************************************************************************** //
+    
+    //      std::array< std::string *, static_cast<size_t>(Applet_t::Count) >       //  No CONSTEXPR arr for this bc I want it to copy the
+    //                                          m_applets                       = {};   //  window names EXACTLY in case we ever rename them.
+    static constexpr auto &             ms_APP_COLOR_STYLE_NAMES        = APPLICATION_COLOR_STYLE_NAMES;        //  m_app_color_style_names
+    static constexpr auto &             ms_PLOT_COLOR_STYLE_NAMES       = APPLICATION_PLOT_COLOR_STYLE_NAMES;   //  m_plot_color_style_names
+    static constexpr auto &             ms_DOCK_LOCATION_NAMES          = APPLICATION_DOCK_LOCATION_NAMES;
+    static constexpr AppleSystemColors_t
+                                        SystemColor                     = {   };
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC CONSTEXPR VALUES.
+    // *************************************************************************** //
+    //                              WINDOW VARIABLES:
+    //                                  ALL Windows.
+    static constexpr size_t             ms_WINDOWS_BEGIN            = static_cast<size_t>(Window::Dockspace);
+    static constexpr size_t             ms_RHS_WINDOWS_BEGIN        = static_cast<size_t>(Window::HomeApp);
+    static constexpr size_t             ms_WINDOWS_END              = static_cast<size_t>(Window::Count);
+    //
+    //
+    //                                  Main Application Windows.
+    static constexpr size_t             ms_APP_WINDOWS_BEGIN        = static_cast<size_t>(Window::CCounterApp);
+    static constexpr size_t             ms_APP_WINDOWS_END          = static_cast<size_t>(Window::ImGuiStyleEditor);
+    //
+    //                                  Basic Tool Windows.
+    static constexpr size_t             ms_TOOL_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiStyleEditor);
+    static constexpr size_t             ms_TOOL_WINDOWS_END         = static_cast<size_t>(Window::Logs);
+    //
+    //                                  Custom Tools Windows.
+    static constexpr size_t             ms_MY_TOOLS_WINDOWS_BEGIN   = static_cast<size_t>(Window::Logs);
+    static constexpr size_t             ms_MY_TOOLS_WINDOWS_END     = static_cast<size_t>(Window::AboutMyApp);
+    //
+    //                                  Misc Windows.
+    static constexpr size_t             ms_MISC_WINDOWS_BEGIN       = static_cast<size_t>(Window::AboutMyApp);
+#if defined( CBAPP_ENABLE_OPTIONAL_WINDOWS )
+    static constexpr size_t             ms_MISC_WINDOWS_END         = static_cast<size_t>(Window::CBDemo);                  //  1.5A.   CB_DEMO IS ENABLED.
+# elif defined( CBAPP_ENABLE_DEBUG_WINDOWS ) && !defined( CBAPP_ENABLE_OPTIONAL_WINDOWS )
+    static constexpr size_t             ms_MISC_WINDOWS_END         = static_cast<size_t>(Window::ImGuiItemPickerTool);     //  1.5B.   CB_DEMO IS *DISABLED*
+# else                                                                                                                      //          *AND* DEBUG TOOLS ARE ENABLED.
+    static constexpr size_t             ms_MISC_WINDOWS_END         = static_cast<size_t>(Window::Count);                   //  DEFAULT CASE.
+#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  ||  CBAPP_ENABLE_DEBUG_WINDOWS  //
+    //
+    //
+    //                              DEBUGGER TOOLS:
+# if defined(CBAPP_ENABLE_DEBUG_WINDOWS)
+    static constexpr size_t             ms_DEBUG_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBDebugger);
+    #if defined( CBAPP_ENABLE_OPTIONAL_WINDOWS )
+        static constexpr size_t             ms_DEBUG_WINDOWS_END        = static_cast<size_t>(Window::CBDemo);              //  2.1A.   CB_DEMO ENABLED.
+    # else
+        static constexpr size_t             ms_DEBUG_WINDOWS_END        = static_cast<size_t>(Window::Count);               //  2.1B.   CB_DEMO *DISABLED*.
+    #endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  //
+#endif  //  CBAPP_ENABLE_DEBUG_WINDOWS  //
+    //
+    //
+    //
+    //                              EXTRA WINDOWS:
+#if defined(CBAPP_ENABLE_OPTIONAL_WINDOWS)
+    # if defined(CBAPP_ENABLE_DEBUG_WINDOWS)
+        static constexpr size_t             ms_EXTRA_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBDemo);      //  2.2A.   DEBUG TOOLS ARE ENABLED.
+    # else
+        static constexpr size_t             ms_EXTRA_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBDemo);      //  2.2B.   DEBUG TOOLS ARE *DISABLED*.
+    # endif     //  CBAPP_ENABLE_DEBUG_WINDOWS  //
+    static constexpr size_t             ms_EXTRA_WINDOWS_END        = static_cast<size_t>(Window::Count);
+#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  //
+    
+//
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "CONSTANTS AND ALIASES".
-    
-    
+// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
+
+
 
 // *************************************************************************** //
 //
 //
-//      1.  PUBLIC MEMBER FUNCTIONS...
+//      1.          CLASS DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      MAIN OBJECTS.
+    // *************************************************************************** //
+    //                              GROUPS / SUB-CLASSES OF "APPSTATE":
+    utl::Logger &                       m_logger;                                                   //  1.      LOGGER...
+    ImWindows                           m_windows;                                                  //  2.      APPLICATION WINDOW STATE...
+    std::vector<WinInfo *>              m_detview_windows               = {   };                    //  2.1     WINDOWS INSIDE DETAIL VIEW...
+    ImFonts                             m_fonts;                                                    //  3.      APPLICATION FONTS...
+    UIScaler                            m_ui_scaler;                                                //  4.      GUI-SCALER OBJECT...
+    //
+    //                              OTHER / SMALLER:
+    std::vector< std::pair<Timestamp_t, std::string> >
+                                        m_notes                         = {   };
+    Timestamp_t                         m_timestamp_spawn;
+    Timestamp_t                         m_timestamp_start;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SUB-STATE INFORMATION.
+    // *************************************************************************** //
+    TaskState_t                         m_task_state;
+    //
+    //
+#ifndef __CBAPP_BUILD_CCOUNTER_APP__
+    AppColorStyle_t                     m_current_app_color_style       = AppColorStyle_t::Default;
+# else
+    AppColorStyle_t                     m_current_app_color_style       = AppColorStyle_t::Laser_410NM;
+#endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
+    PlotColorStyle_t                    m_current_plot_color_style      = PlotColorStyle_t::Default;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      OTHER IMPORTANT DATA.
+    // *************************************************************************** //
+    cb::FileDialog::Initializer         m_dialog_settings               = {
+    //
+    //                              "OPEN" SETTINGS...                      //  |   "SAVE" SETTINGS...
+        /* type               = */  cb::FileDialog::Type::Open,
+        /* window_name        = */  "File Dialog",
+        /* default_filename   = */  "",                                     //  |       "canvas_settings.json",
+        /* required_extension = */  "",                                     //  |       "json",
+        /* valid_extensions   = */  {".json", ".cbjson", ".txt"},           //  |       {".json", ".txt"}
+        /* starting_dir       = */  std::filesystem::current_path()         //  |       std::filesystem::current_path(),
+    //
+    };
+    cb::FileDialog                      m_file_dialog;
+    bool                                m_dialog_queued                 = false;
+    bool                                m_dialog_path                   = false;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      REFERENCE TO CONSTEXPR GLOBAL ARRAYS.
+    // *************************************************************************** //
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      MISC. INFORMATION.
+    // *************************************************************************** //
+//
+#if defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__) || defined(__CBAPP_DEBUG__)
+    LogLevel                            m_LogLevel                  = LogLevel::Info;
+# else
+    LogLevel                            m_LogLevel                  = LogLevel::Warning;  //LogLevel::Warning;
+#endif  //  __CBLIB_RELEASE_WITH_DEBUG_INFO__ || __CBAPP_DEBUG__  //
+
+
+    //                              GLFW AND HOST WINDOW STUFF:
+    const char *                        m_glsl_version              = nullptr;
+    ImGuiConfigFlags                    m_io_flags                  = ImGuiConfigFlags_None | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+    ImGuiViewport *                     m_main_viewport             = nullptr;
+    GLFWwindow *                        m_glfw_window               = nullptr;
+    int                                 m_glfw_interval             = 1;    //  Use 1 for VSYNC ENABLED.
+    //
+    //                              COLORS:
+    ImVec4                              m_glfw_bg                   = cb::app::DEF_ROOT_WIN_BG;
+    ImVec4                              m_dock_bg                   = cb::app::DEF_INVISIBLE_COLOR;
+    ImVec4                              m_main_bg                   = cb::app::DEF_MAIN_WIN_BG;
+    //
+    ImVec4                              m_controlbar_bg             = cb::app::DEF_CONTROLBAR_WIN_BG;
+    //
+    //                              BROWSER COLORS:
+    ImVec4                              m_browser_bg                = cb::app::DEF_BROWSER_WIN_BG;
+    ImVec4                              m_browser_left_bg           = ImVec4(0.142f,    0.142f,     0.142f,     1.000f);//  #242424     (5% shade of browser bg)
+    ImVec4                              m_browser_right_bg          = ImVec4(0.242f,    0.242f,     0.242f,     1.000f);//  ##3E3E3E    (5% tint of browser bg)
+    float                               m_browser_child_rounding    = 8.0f;
+    //
+    //                              DETAILVIEW COLORS:
+    ImVec4                              m_detview_bg                = cb::app::DEF_DETVIEW_WIN_BG;
+    
+    
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      TRANSIENT APPLICATION STATE / DIMENSIONS.
+    // *************************************************************************** //
+    
+    //                              SYSTEM:
+    int                                 m_system_w                  = -1;       //  Sys. Display Dims.
+    int                                 m_system_h                  = -1;
+    float                               m_dpi_scale                 = 1.0f;
+    float                               m_dpi_fontscale             = 1.0f;
+    //
+    //                              MAIN UI:
+    int                                 m_window_w                  = 1280;
+    int                                 m_window_h                  = 720;
+    //                              BOOLEANS:
+    std::atomic<CBSignalFlags>          m_pending                   = { CBSignalFlags_None };
+    std::atomic<bool>                   m_running                   = { true };
+    bool                                m_rebuild_dockspace         = false;
+    //
+    //                              DIFFERENT WINDOWS:
+    bool                                m_show_controlbar_window    = true;
+    bool                                m_show_browser_window       = true;
+    bool                                m_show_detview_window       = true;
+    
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      APPLICATION BEHAVIOR TOGGLES.
+    // *************************************************************************** //
+    bool                                m_show_system_preferences   = true;
+    bool                                ms_FOCUS_ON_OPEN_WINDOW     = true;     //  Set focus after "Window > Show > Open_Window_Name"...
+    
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SPECIFICS.
+    // *************************************************************************** //
+    
+    //                              MAIN DOCKINGSPACE:
+    const char *                        m_dock_name                 = "##RootDockspace";
+    ImGuiID                             m_dockspace_id              = 0;
+    //
+    ImGuiID                             m_main_dock_id              = 0;
+    ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_CentralNode | ImGuiDockNodeFlags_NoCloseButton; //ImGuiDockNodeFlags_NoDocking; ImGuiDockNodeFlags_NoDockingOverMe
+    ImGuiDockNode *                     m_main_node                 = nullptr;
+    //
+    //                              CONTROL BAR:
+    ImGuiID                             m_controlbar_dock_id        = 0;
+    ImGuiDockNodeFlags                  m_controlbar_node_flags     = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_HiddenTabBar | ImGuiDockNodeFlags_NoResize; //ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNode *                     m_controlbar_node           = nullptr;
+    //
+    float                               m_controlbar_ratio          = 0.02;
+    //
+    //                              BROWSER / SIDEBAR:
+    ImGuiID                             m_browser_dock_id           = 0;
+    ImGuiDockNodeFlags                  m_browser_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNode *                     m_browser_node              = nullptr;
+    //
+    float                               m_browser_ratio             = app::DEF_BROWSER_RATIO;
+    //
+    //                              DETAIL VIEW:
+    ImGuiID                             m_detview_dock_id           = 0;
+    ImGuiDockNodeFlags                  m_detview_node_flags        = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNode *                     m_detview_node              = nullptr;
+    //
+    float                               m_detview_ratio             = 0.45f;
+    //
+    //                              DETAIL VIEW DOCKSPACE:
+    static constexpr const char *       m_detview_dockspace_uuid    = "##DetailViewDockspace";
+    ImGuiID                             m_detview_dockspace_id      = 0;
+    ImGuiDockNodeFlags                  m_detview_dockspace_flags   = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoCloseButton;// | ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_HiddenTabBar; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
+    //
+    //                              ADD MORE SHARED STATE DATA MEMBERS HERE:
+    //                                  SubCategory.
+    //
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  CLASS DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//
+//      2.A.        MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 //
     // *************************************************************************** //
-    //      1.1A.       CLASS INITIALIZATIONS.          |   "init.cpp" ...
+    //      CLASS INITIALIZATIONS.          |   "init.cpp" ...
     // *************************************************************************** //
     
     //  "instance"                          | Meyers-Style Singleton.       Created on first call, once.
@@ -133,22 +406,25 @@ public:
     AppState &                          operator =                  (const AppState &   )       = delete;   //  Assgn. Operator.
     AppState &                          operator =                  (AppState &&        )       = delete;   //  Move-Assgn. Operator.
     
+    
+    
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //      1.1B.       PRIVATE STRUCT INITIALIZATION FUNCTIONS...
+    //      PRIVATE INITIALIZATIONS.        |   "init.cpp" ...
     // *************************************************************************** //
 protected:
                                         AppState                    (void);                 //  Default Constructor.
                                         ~AppState                   (void);                 //  Default Destructor.
-                                        
+    
+    
+    
     // *************************************************************************** //
     //
     //
     // *************************************************************************** //
-    //      1.2A.   MAIN OPERATION FUNCTIONS...
+    //      MAIN OPERATION FUNCTIONS.       |   "state.cpp" ...
     // *************************************************************************** //
 public:
     void                                init_ui_scaler              (void);
@@ -158,21 +434,22 @@ public:
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //      1.3A.   APPEARANCE HELPER FUNCTIONS...
+    //      APPEARANCE HELPER FUNCTIONS.    |   "appearance.cpp" ...
     // *************************************************************************** //
     void                                SetAppColorStyle            (const AppColorStyle_t);
     void                                SetPlotColorStyle           (const PlotColorStyle_t);
     void                                SetDarkMode                 (void);
     void                                SetLightMode                (void);
     void                                LoadCustomColorMaps         (void);
+    
+    
+    
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //      1.3B.   APPLICATION OPERATION HELPER FUNCTIONS...
+    //      APPEARANCE OPERATION FUNCTIONS. |   "appearance.cpp" ...
     // *************************************************************************** //
     //
     //                              APPLICATION UTILITIES:
@@ -192,29 +469,62 @@ public:
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //      1.3C.   MISC. HELPER FUNCTIONS...
+    //      MISC. HELPER FUNCTIONS.         |   "appearance.cpp" ...
     // *************************************************************************** //
     void                                log_startup_info            (void) noexcept;
     void                                log_shutdown_info           (void) noexcept;
     
 //
 //
+//
 // *************************************************************************** //
-// *************************************************************************** //   END "FUNCTIONS".
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
 
     
    
 // *************************************************************************** //
 //
 //
-//  1.4                 INLINE FUNCTIONS...
+//      2.B.        INLINE FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
     
     // *************************************************************************** //
-    //                      GETTER FUNCTIONS...
+    //      STATIC UTILITY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "ConditionalTextf"
+    static inline bool                  ConditionalTextf            (const bool value, const char * fmt, ...) noexcept {
+        if ( !value )       { return value; }
+        va_list args;
+        va_start(args, fmt);    ImGui::TextV(fmt, args);    va_end(args);
+        return value;
+    }
+    
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      ORCHID FUNCTIONS.
+    // *************************************************************************** //
+    
+    inline void                                     OrchidPush                  (OrchidAction && act) noexcept      { this->GetMenuState().orchid_push( std::move(act) );   }
+    inline void                                     OrchidUndo                  (void) noexcept                     { this->GetMenuState().orchid_undo();                   }
+    inline void                                     OrchidRedo                  (void) noexcept                     { this->GetMenuState().orchid_redo();                   }
+    //
+    [[nodiscard]] Orchid::size_type                 Orchid_undo_count           (void) noexcept                     { return this->GetMenuState().undo_count();             }
+    [[nodiscard]] Orchid::size_type                 Orchid_redo_count           (void) noexcept                     { return this->GetMenuState().redo_count();             }
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SETTER FUNCTIONS.
     // *************************************************************************** //
     
     //  "GetCurrentApplet"
@@ -222,7 +532,6 @@ public:
     
     //  "GetCurrentAppletName"
     [[nodiscard]] inline const char *               GetCurrentAppletName        (void) noexcept         { return this->m_task_state.GetCurrentAppletName(); }
-    
     
     
     //  "GetMainDockNodeID"
@@ -236,8 +545,6 @@ public:
     }
     
     
-    
-    
     //  "GetDetViewDockNodeID"
     [[nodiscard]] inline ImGuiDockNode *            GetDetViewDockNodeID        (void) noexcept         { return ImGui::DockBuilderGetNode( this->m_detview_dockspace_id ); }
     [[nodiscard]] inline ImGuiDockNode const *      GetDetViewDockNodeID        (void) const noexcept   { return ImGui::DockBuilderGetNode( this->m_detview_dockspace_id ); }
@@ -247,8 +554,6 @@ public:
         const ImGuiDockNode *   node    = ImGui::DockBuilderGetNode( this->m_detview_dockspace_id );    IM_ASSERT(node != nullptr);
         return ( (node->TabBar) ? node->TabBar->VisibleTabId  : 0 );
     }
-    
-    
     
     
     //  "GetNavWindowName"
@@ -261,7 +566,6 @@ public:
     [[nodiscard]] inline MenuState_t &              GetMenuState                (void) noexcept         { return this->m_task_state.m_current_menu_state.get(); }
     [[nodiscard]] inline const MenuState_t &        GetMenuState                (void) const noexcept   { return this->m_task_state.m_current_menu_state.get(); }
     
-    
     //  "GetUIScaler"
     [[nodiscard]] inline UIScaler &                 GetUIScaler                 (void) noexcept         { return this->m_ui_scaler; }
     [[nodiscard]] inline const UIScaler &           GetUIScaler                 (void) const noexcept   { return this->m_ui_scaler; }
@@ -271,9 +575,8 @@ public:
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                      SETTER FUNCTIONS...
+    //      GETTER FUNCTIONS.
     // *************************************************************************** //
     
     //  "SetMenuState"
@@ -281,8 +584,6 @@ public:
     
     //  "ResetMenuState"
     inline void                         ResetMenuState              (void)                  { this->m_task_state.m_current_menu_state = this->m_task_state.m_default_menu_state; }
-
-
 
     //  "current_app_color_style"
     inline const char *                 current_app_color_style     (void) const
@@ -297,9 +598,8 @@ public:
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                      SMALL HELPER FUNCTIONS...
+    //      SMALL HELPER FUNCTIONS.
     // *************************************************************************** //
 
     //  "HeaderSeparatorText"
@@ -315,8 +615,6 @@ public:
             ImGui::SeparatorText(text);
         ImGui::PopStyleColor();
     }
-
-
 
     //  "labelf"
     inline void                         labelf                      (const char * text, const float l_width=ms_LABEL_WIDTH, const float w_width=ms_WIDGET_WIDTH)
@@ -404,38 +702,14 @@ public:
         ImGui::TextColored( color.value_or(this->SystemColor.White), "%s", text );
         return value;
     }
-
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //                      STATIC UTILITY FUNCTIONS...
-    // *************************************************************************** //
-    
-    //  "ConditionalTextf"
-    static inline bool                  ConditionalTextf            (const bool value, const char * fmt, ...) noexcept {
-        if ( !value )       { return value; }
-        va_list args;
-        va_start(args, fmt);    ImGui::TextV(fmt, args);    va_end(args);
-        return value;
-    }
     
 
-    
-    
-    
-    // *************************************************************************** //
-    
-    
 
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                      UTILITY FUNCTIONS...
+    //      UTILITY FUNCTIONS.
     // *************************************************************************** //
     
     //  "_get_item_under_cursor"
@@ -574,15 +848,11 @@ public:
 
 
 
-
-
-
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                      PRIMARY INLINE FUNCTIONS...
+    //      ** PRIMARY FUNCTIONS. **
     // *************************************************************************** //
 
     //  "PerFrameCache"
@@ -598,7 +868,18 @@ public:
     //  "update_current_task"
     [[nodiscard]] inline bool           update_current_task         (void)
     {
-        return this->m_task_state.update_current_task( m_glfw_window );
+        //  return this->m_task_state.update_current_task( m_glfw_window );
+        
+        const bool updated = this->m_task_state.update_current_task( m_glfw_window );
+        
+        if ( updated )
+        {
+            return updated;
+        }
+        else
+        {
+            return updated;
+        }
     }
     
     
@@ -606,9 +887,8 @@ public:
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                      CENTRALIZED OPERATION FUNCTIONS...
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
 
     //  "PushFont"
@@ -648,296 +928,6 @@ public:
 //
 // *************************************************************************** //
 // *************************************************************************** //   END "INLINE" FUNCTIONS.
-
-
-
-// *************************************************************************** //
-//
-//
-//  2.              CLASS DATA-MEMBERS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-    // *************************************************************************** //
-    //  2.1             CLASS DATA MEMBERS...
-    // *************************************************************************** //
-    //                      GROUPS / SUB-CLASSES OF "APPSTATE":
-    utl::Logger &                       m_logger;                                                   //  1.      LOGGER...
-    ImWindows                           m_windows;                                                  //  2.      APPLICATION WINDOW STATE...
-    std::vector<WinInfo *>              m_detview_windows               = {   };                    //  2.1     WINDOWS INSIDE DETAIL VIEW...
-    ImFonts                             m_fonts;                                                    //  3.      APPLICATION FONTS...
-    UIScaler                            m_ui_scaler;                                                //  4.      GUI-SCALER OBJECT...
-    //
-    //                      OTHER / SMALLER:
-    std::vector< std::pair<Timestamp_t, std::string> >
-                                        m_notes                         = {   };
-    Timestamp_t                         m_timestamp_spawn;
-    Timestamp_t                         m_timestamp_start;
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //  2.2             SUB-STATE INFORMATION...
-    // *************************************************************************** //
-    TaskState_t                         m_task_state;
-    //
-    //
-#ifndef __CBAPP_BUILD_CCOUNTER_APP__
-    AppColorStyle_t                     m_current_app_color_style       = AppColorStyle_t::Default;
-# else
-    AppColorStyle_t                     m_current_app_color_style       = AppColorStyle_t::Laser_410NM;
-#endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
-    PlotColorStyle_t                    m_current_plot_color_style      = PlotColorStyle_t::Default;
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //  2.21            OTHER IMPORTANT DATA...
-    // *************************************************************************** //
-    cb::FileDialog::Initializer         m_dialog_settings               = {
-    //
-    //                              "OPEN" SETTINGS...                      //  |   "SAVE" SETTINGS...
-        /* type               = */  cb::FileDialog::Type::Open,
-        /* window_name        = */  "File Dialog",
-        /* default_filename   = */  "",                                     //  |       "canvas_settings.json",
-        /* required_extension = */  "",                                     //  |       "json",
-        /* valid_extensions   = */  {".json", ".cbjson", ".txt"},           //  |       {".json", ".txt"}
-        /* starting_dir       = */  std::filesystem::current_path()         //  |       std::filesystem::current_path(),
-    //
-    };
-    cb::FileDialog                      m_file_dialog;
-    bool                                m_dialog_queued                 = false;
-    bool                                m_dialog_path                   = false;
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //  2.3             REFERENCE TO CONSTEXPR GLOBAL ARRAYS.
-    // *************************************************************************** //
-    //      std::array< std::string *, static_cast<size_t>(Applet_t::Count) >       //  No CONSTEXPR arr for this bc I want it to copy the
-    //                                          m_applets                       = {};   //  window names EXACTLY in case we ever rename them.
-    static constexpr auto &             ms_APP_COLOR_STYLE_NAMES        = APPLICATION_COLOR_STYLE_NAMES;        //  m_app_color_style_names
-    static constexpr auto &             ms_PLOT_COLOR_STYLE_NAMES       = APPLICATION_PLOT_COLOR_STYLE_NAMES;   //  m_plot_color_style_names
-    static constexpr auto &             ms_DOCK_LOCATION_NAMES          = APPLICATION_DOCK_LOCATION_NAMES;
-    static constexpr AppleSystemColors_t
-                                        SystemColor                     = {   };
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //  2.4             STATIC AND CONSTEXPR VARIABLES.
-    // *************************************************************************** //
-    //                      1.      Window Variables:
-    //
-    //                      1.1.        ALL Windows.
-    static constexpr size_t             ms_WINDOWS_BEGIN            = static_cast<size_t>(Window::Dockspace);
-    static constexpr size_t             ms_RHS_WINDOWS_BEGIN        = static_cast<size_t>(Window::HomeApp);
-    static constexpr size_t             ms_WINDOWS_END              = static_cast<size_t>(Window::Count);
-    //
-    //
-    //                      1.2.        Main Application Windows.
-    static constexpr size_t             ms_APP_WINDOWS_BEGIN        = static_cast<size_t>(Window::CCounterApp);
-    static constexpr size_t             ms_APP_WINDOWS_END          = static_cast<size_t>(Window::ImGuiStyleEditor);
-    //
-    //
-    //                      1.3.        Basic Tool Windows.
-    static constexpr size_t             ms_TOOL_WINDOWS_BEGIN       = static_cast<size_t>(Window::ImGuiStyleEditor);
-    static constexpr size_t             ms_TOOL_WINDOWS_END         = static_cast<size_t>(Window::Logs);
-    //
-    //
-    //                      1.4.        Custom Tools Windows.
-    static constexpr size_t             ms_MY_TOOLS_WINDOWS_BEGIN   = static_cast<size_t>(Window::Logs);
-    static constexpr size_t             ms_MY_TOOLS_WINDOWS_END     = static_cast<size_t>(Window::AboutMyApp);
-    //
-    //
-    //                      1.5.        Misc Windows.
-    static constexpr size_t             ms_MISC_WINDOWS_BEGIN       = static_cast<size_t>(Window::AboutMyApp);
-#if defined( CBAPP_ENABLE_OPTIONAL_WINDOWS )
-    static constexpr size_t             ms_MISC_WINDOWS_END         = static_cast<size_t>(Window::CBDemo);                  //  1.5A.   CB_DEMO IS ENABLED.
-# elif defined( CBAPP_ENABLE_DEBUG_WINDOWS ) && !defined( CBAPP_ENABLE_OPTIONAL_WINDOWS )
-    static constexpr size_t             ms_MISC_WINDOWS_END         = static_cast<size_t>(Window::ImGuiItemPickerTool);     //  1.5B.   CB_DEMO IS *DISABLED*
-# else                                                                                                                      //          *AND* DEBUG TOOLS ARE ENABLED.
-    static constexpr size_t             ms_MISC_WINDOWS_END         = static_cast<size_t>(Window::Count);               //  DEFAULT CASE.
-#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  ||  CBAPP_ENABLE_DEBUG_WINDOWS  //
-    //
-    //
-    //
-    //
-    //
-    //
-    //                      2.1.        Debugger Tools.
-# if defined(CBAPP_ENABLE_DEBUG_WINDOWS)
-    static constexpr size_t             ms_DEBUG_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBDebugger);
-    #if defined( CBAPP_ENABLE_OPTIONAL_WINDOWS )
-        static constexpr size_t             ms_DEBUG_WINDOWS_END        = static_cast<size_t>(Window::CBDemo);              //  2.1A.   CB_DEMO ENABLED.
-    # else
-        static constexpr size_t             ms_DEBUG_WINDOWS_END        = static_cast<size_t>(Window::Count);               //  2.1B.   CB_DEMO *DISABLED*.
-    #endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  //
-#endif  //  CBAPP_ENABLE_DEBUG_WINDOWS  //
-    //
-    //
-    //
-    //                      2.2.         **Extra** Windows.
-#if defined(CBAPP_ENABLE_OPTIONAL_WINDOWS)
-    # if defined(CBAPP_ENABLE_DEBUG_WINDOWS)
-        static constexpr size_t             ms_EXTRA_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBDemo);      //  2.2A.   DEBUG TOOLS ARE ENABLED.
-    # else
-        static constexpr size_t             ms_EXTRA_WINDOWS_BEGIN      = static_cast<size_t>(Window::CBDemo);      //  2.2B.   DEBUG TOOLS ARE *DISABLED*.
-    # endif     //  CBAPP_ENABLE_DEBUG_WINDOWS  //
-    static constexpr size_t             ms_EXTRA_WINDOWS_END        = static_cast<size_t>(Window::Count);
-#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  //
-
-
-
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //  2.5             MISC. INFORMATION.
-    // *************************************************************************** //
-//
-#if defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__) || defined(__CBAPP_DEBUG__)
-    LogLevel                            m_LogLevel                  = LogLevel::Info;
-# else
-    LogLevel                            m_LogLevel                  = LogLevel::Warning;  //LogLevel::Warning;
-#endif  //  __CBLIB_RELEASE_WITH_DEBUG_INFO__ || __CBAPP_DEBUG__  //
-
-
-    //                      GLFW AND HOST WINDOW STUFF:
-    const char *                        m_glsl_version              = nullptr;
-    ImGuiConfigFlags                    m_io_flags                  = ImGuiConfigFlags_None | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
-    ImGuiViewport *                     m_main_viewport             = nullptr;
-    GLFWwindow *                        m_glfw_window               = nullptr;
-    int                                 m_glfw_interval             = 1;    //  Use 1 for VSYNC ENABLED.
-    //
-    //                      COLORS:
-    ImVec4                              m_glfw_bg                   = cb::app::DEF_ROOT_WIN_BG;
-    ImVec4                              m_dock_bg                   = cb::app::DEF_INVISIBLE_COLOR;
-    ImVec4                              m_main_bg                   = cb::app::DEF_MAIN_WIN_BG;
-    //
-    ImVec4                              m_controlbar_bg             = cb::app::DEF_CONTROLBAR_WIN_BG;
-    //
-    //                      BROWSER COLORS:
-    ImVec4                              m_browser_bg                = cb::app::DEF_BROWSER_WIN_BG;
-    ImVec4                              m_browser_left_bg           = ImVec4(0.142f,    0.142f,     0.142f,     1.000f);//  #242424     (5% shade of browser bg)
-    ImVec4                              m_browser_right_bg          = ImVec4(0.242f,    0.242f,     0.242f,     1.000f);//  ##3E3E3E    (5% tint of browser bg)
-    float                               m_browser_child_rounding    = 8.0f;
-    //
-    //                      DETAILVIEW COLORS:
-    ImVec4                              m_detview_bg                = cb::app::DEF_DETVIEW_WIN_BG;
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      2.6                         TRANSIENT APPLICATION STATE / DIMENSIONS.
-    // *************************************************************************** //
-    //                              SYSTEM:
-    int                                 m_system_w                  = -1;       //  Sys. Display Dims.
-    int                                 m_system_h                  = -1;
-    float                               m_dpi_scale                 = 1.0f;
-    float                               m_dpi_fontscale             = 1.0f;
-    //
-    //                              MAIN UI:
-    int                                 m_window_w                  = 1280;
-    int                                 m_window_h                  = 720;
-    //                              BOOLEANS:
-    std::atomic<CBSignalFlags>          m_pending                   = { CBSignalFlags_None };
-    std::atomic<bool>                   m_running                   = { true };
-    bool                                m_rebuild_dockspace         = false;
-    //
-    //                              DIFFERENT WINDOWS:
-    bool                                m_show_controlbar_window    = true;
-    bool                                m_show_browser_window       = true;
-    bool                                m_show_detview_window       = true;
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      2.6B.                       APPLICATION BEHAVIOR TOGGLES.
-    // *************************************************************************** //
-    //
-    bool                                m_show_system_preferences   = true;
-    //
-    //
-    bool                                ms_FOCUS_ON_OPEN_WINDOW     = true;     //  Set focus after "Window > Show > Open_Window_Name"...
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      2.7                         SPECIFICS.
-    // *************************************************************************** //
-    //                      MAIN DOCKINGSPACE:
-    const char *                        m_dock_name                 = "##RootDockspace";
-    ImGuiID                             m_dockspace_id              = 0;
-    //
-    ImGuiID                             m_main_dock_id              = 0;
-    ImGuiDockNodeFlags                  m_main_node_flags           = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_CentralNode | ImGuiDockNodeFlags_NoCloseButton; //ImGuiDockNodeFlags_NoDocking; ImGuiDockNodeFlags_NoDockingOverMe
-    ImGuiDockNode *                     m_main_node                 = nullptr;
-    //
-    //                      CONTROL BAR:
-    ImGuiID                             m_controlbar_dock_id        = 0;
-    ImGuiDockNodeFlags                  m_controlbar_node_flags     = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_HiddenTabBar | ImGuiDockNodeFlags_NoResize; //ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
-    ImGuiDockNode *                     m_controlbar_node           = nullptr;
-    //
-    float                               m_controlbar_ratio          = 0.02;
-    //
-    //                      BROWSER / SIDEBAR:
-    ImGuiID                             m_browser_dock_id           = 0;
-    ImGuiDockNodeFlags                  m_browser_node_flags        = ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
-    ImGuiDockNode *                     m_browser_node              = nullptr;
-    //
-    float                               m_browser_ratio             = app::DEF_BROWSER_RATIO;
-    //
-    //                      DETAIL VIEW:
-    ImGuiID                             m_detview_dock_id           = 0;
-    ImGuiDockNodeFlags                  m_detview_node_flags        = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
-    ImGuiDockNode *                     m_detview_node              = nullptr;
-    //
-    float                               m_detview_ratio             = 0.45f;
-    //
-    //                      DETAIL VIEW DOCKSPACE:
-    static constexpr const char *       m_detview_dockspace_uuid    = "##DetailViewDockspace";
-    ImGuiID                             m_detview_dockspace_id      = 0;
-    ImGuiDockNodeFlags                  m_detview_dockspace_flags   = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoCloseButton;// | ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_NoSplit
-    ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_HiddenTabBar; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
-    //
-    //                      ADD MORE SHARED STATE DATA MEMBERS HERE:
-    //
-    //                              SubCategory.
-    //
-    
-    // *************************************************************************** //
-    //
-    //
-    //
-    // *************************************************************************** //
-    //      3.                          GENERIC CONSTANTS.
-    // *************************************************************************** //
-    //      std::string                         ms_IDLE_APPLET_NAME;
-    //      std::string                         ms_UNDEFINED_APPLET_NAME;
-    
-    
-    
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "CLASS DATA-MEMBERS".
 
 
 

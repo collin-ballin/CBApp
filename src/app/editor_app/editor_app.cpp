@@ -56,6 +56,17 @@ void EditorApp::destroy(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "GetMenuState"
+[[nodiscard]] app::MenuState_t & EditorApp::GetMenuState(void) const noexcept       { return m_editor.GetMenuState(); }
+
+//  "GetMenuState"
+[[nodiscard]] app::MenuState_t & EditorApp::GetMenuState(void) noexcept             { return m_editor.GetMenuState(); }
+
+
+
+
+
+
 //  "save"
 //
 void EditorApp::save(void)

@@ -79,7 +79,9 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-namespace                       app                         { class AppState; }
+namespace                       app                         { class     AppState;       }
+namespace                       app                         { struct    MenuState_t;    }
+//
 struct                          EditorSnapshot;
 class                           History;
 struct                          SnapshotCmd;
@@ -115,6 +117,8 @@ public:
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
     _EDITOR_APP_INTERNAL_API
+    using                           MenuState                           = app::MenuState_t;
+    //
     friend class                    App;
     friend struct                   EditorSnapshot;
     friend class                    History;
@@ -425,7 +429,8 @@ protected:
     //      STATE OBJECTS...
     // *************************************************************************** //
     //                              SUBSIDIARY STATES:
-    EditorState                         m_editor_S                      {   };        //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
+    std::unique_ptr<MenuState>          m_menu_state                    {   };          //  UNDO/REDO...
+    EditorState                         m_editor_S                      {   };          //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
     mutable RenderCTX                   m_render_ctx;
     BrowserState                        m_browser_S                     {   };
     //
@@ -548,6 +553,11 @@ public:
     void                                open                                (void);
     void                                undo                                (void);
     void                                redo                                (void);
+    //
+    [[nodiscard]] MenuState &           GetMenuState                         (void) const noexcept;
+    [[nodiscard]] MenuState &           GetMenuState                         (void) noexcept;
+    //
+    //
     //
     void                                Begin                               (const char * id = "##EditorCanvas");
     void                                DrawBrowser                         (void);

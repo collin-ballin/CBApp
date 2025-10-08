@@ -423,7 +423,7 @@ protected:
     inline void                 PREFrameCache               (void)
     {
         static app::UIScaler &      ui_scaler   = this->S.GetUIScaler();
-        static float                ui_scale    = ui_scaler.GetUIScale();
+        //  static float                ui_scale    = ui_scaler.GetUIScale();
         
         
         //      1.6.    QUERY FOR UPDATING GUI-SCALE...
@@ -500,6 +500,34 @@ protected:
     }
     
     
+    //  "_update_menu_state"
+    //
+    inline void                 _update_menu_state          (void) noexcept
+    {
+        switch  (S.GetCurrentApplet() )
+        {
+            case Applet::CCounterApp :  {                       //  1.  "Coincidence Counter" Applet.
+                //  S.SetMenuState( m_counter_app.GetMenuState() );
+                break;
+            }
+
+            case Applet::EditorApp :    {                       //  2.  "Editor" Applet.
+                S.SetMenuState( m_editor_app.GetMenuState() );
+                break;
+            }
+            
+            case Applet::GraphApp :     {                       //  3.  "Graph App" Applet.
+                //  S.SetMenuState( m_graph_app.GetMenuState() );
+                break;
+            }
+            
+            default :   { S.ResetMenuState();   break; }        //  0.  USE DEFAULT MENU-STATE...
+        }
+
+        return;
+    }
+    
+    
     
     // *************************************************************************** //
     
@@ -510,36 +538,6 @@ protected:
     // *************************************************************************** //
     //      INLINE UTILITY FUNCTIONS.       |   ...
     // *************************************************************************** //
-
-    //  "_update_menu_state"
-    //
-    inline void                 _update_menu_state              (void)
-    {
-        if ( S.update_current_task() )
-        {
-            switch  (S.GetCurrentApplet() )
-            {
-                case Applet::CCounterApp :  {                       //  1.  "Coincidence Counter" Applet.
-                    //  S.SetMenuState( m_counter_app.GetMenuState() );
-                    break;
-                }
-    
-                case Applet::EditorApp :    {                       //  2.  "Editor" Applet.
-                    //  S.SetMenuState( m_editor_app.GetMenuState() );
-                    break;
-                }
-                
-                case Applet::GraphApp :     {                       //  3.  "Graph App" Applet.
-                    //  S.SetMenuState( m_graph_app.GetMenuState() );
-                    break;
-                }
-                
-                default :   { S.ResetMenuState();   break; }        //  0.  USE DEFAULT MENU-STATE...
-            }
-        }
-    
-        return;
-    }
 
     
     

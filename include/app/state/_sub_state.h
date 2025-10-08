@@ -23,19 +23,7 @@
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  1.1.        ** MY **  HEADERS...
-#include CBAPP_USER_CONFIG
-#include "cblib.h"
-#include "utility/utility.h"
-#include "widgets/widgets.h"
-//
-#include "app/state/_init.h"
-#include "app/state/_config.h"
-#include "app/state/_types.h"
-
-
-
-//  1.2     STANDARD LIBRARY HEADERS...
+//  1.1.        STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
 #include <cstdlib>          // C-Headers...
 #include <stdio.h>
@@ -54,9 +42,18 @@
 #include <atomic>
 
 
+//  1.2.        ** MY **  HEADERS...
+#include CBAPP_USER_CONFIG
+#include "cblib.h"
+#include "utility/utility.h"
+#include "widgets/widgets.h"
+//
+#include "app/state/_init.h"
+#include "app/state/_config.h"
+#include "app/state/_types.h"
 
 
-//  1.3     "DEAR IMGUI" HEADERS...
+//  1.3.        "DEAR IMGUI" HEADERS...
 #include "imgui.h"
 #include "implot.h"
 #include "imgui_internal.h"
@@ -78,89 +75,78 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 
 
 //  "MenuState_t"
+//      PLAIN-OLD-DATA (POD) STRUCT.
 //
-struct MenuState_t {
-// *************************************************************************** //
-// *************************************************************************** //
-//
-//  0.              CONSTANTS AND ALIASES...
-// *************************************************************************** //
-// *************************************************************************** //
-
+struct MenuState_t
+{
     // *************************************************************************** //
-    //      NESTED TYPENAME ALIASES.
+    //      0. |    NESTED TYPENAME ALIASES.
     // *************************************************************************** //
     _CBAPP_APPSTATE_INTERNAL_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
-
-    // *************************************************************************** //
-    //      PUBLIC API.
-    // *************************************************************************** //
-    //                              DELETED OPERATORS AND FUNCTIONS:
-                                        MenuState_t                 (const MenuState_t &    )       = delete;   //  Copy. Constructor.
-                                        MenuState_t                 (MenuState_t &&         )       = delete;   //  Move Constructor.
-    MenuState_t &                       operator =                  (const MenuState_t &    )       = delete;   //  Assgn. Operator.
-    MenuState_t &                       operator =                  (MenuState_t &&         )       = delete;   //  Move-Assgn. Operator.
     
-
-
-    // *************************************************************************** //
-    //      STATIC AND CONSTEXPR VARIABLES.
-    // *************************************************************************** //
-    static constexpr size_t             ms_MAX_RECENT_FILES         = 8;
     
-    // *************************************************************************** //
-    //      GENERIC CONSTANTS.
-    // *************************************************************************** //
-
-
-
-// *************************************************************************** //
-//
-//
-//  1.              CLASS DATA-MEMBERS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-    // *************************************************************************** //
-    //                      STATE INFORMATION.
     // *************************************************************************** //
     //
+    // *************************************************************************** //
+    //      0. |    STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      1. |    STATE VARIABLES.
+    // *************************************************************************** //
     //                                  MAIN STATE INFORMATION:
     CBMenuCapabilityFlags                   m_capabilities                  = CBMenuCapabilityFlags_Default;
     //
     //                                  FILE I/O:
-    std::filesystem::path                   m_filepath                      = {  };
-    std::vector<std::filesystem::path>      m_recent_files                  = {  };
+    std::filesystem::path                   m_filepath                      = {   };
+    std::vector<std::filesystem::path>      m_recent_files                  = {   };
     //
     //                                  SUB-STATE INFORMATION:
-    MenuCallbacks                           m_callbacks                     = {  };
+    MenuCallbacks                           m_callbacks                     = {   };
+    Orchid                                  m_orchid                        {   };
     
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //                      MUTABLE STATE INFORMATION.
-    // *************************************************************************** //
-    //                                  MUTABLE STATE DATA:
-    int                                     m_undo_count                    = 0;
-    int                                     m_redo_count                    = 0;
-    bool                                    m_dirty                         = 0;
 
     // *************************************************************************** //
     //
+    // *************************************************************************** //
+    //      1. |    IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    
+    
+    
+    // *************************************************************************** //
     //
     // *************************************************************************** //
-    //                      FUTURE STUFF...
+    //      1. |    MUTABLE STATE INFO.
+    // *************************************************************************** //
+    //                                  MUTABLE STATE DATA:
+    bool                                    m_dirty                         = 0;
+    
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      1. |    FUTURE STUFF.
     // *************************************************************************** //
     //      std::atomic<bool>                       m_running                       = { true };
     //      std::atomic<bool>                       m_closeable                     = { true };
-    
-    //
     //
     //                                          UNDO / REDO STACK:
     //      std::vector< UnReDo<T> >                m_undo_stack                    = { true };     //  Vector of UNDO/REDO Data.
     //      std::vector< UnReDo<T> >::size_type     m_undo_top                      = 0;            //  Index of the current UNDO/REDO Item.
-    //
     //
     //                                          FILE I/O:
     //      std::filesystem::path                   m_filepath                      = {  };
@@ -168,97 +154,126 @@ struct MenuState_t {
     //      std::vector< std::filesystem::path >    m_recent_files                  = {  };     //  Vector to store the recently opened files...
     
     
+    
     // *************************************************************************** //
     
 //
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
 //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    //  explicit                        MenuState_t                 (app::AppState & );             //  Def. Constructor.
+    inline                              MenuState_t                 (void)                          {   }
+                                        ~MenuState_t                (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+                                        MenuState_t                 (const MenuState_t &    src)       = delete;   //  Copy. Constructor.
+                                        MenuState_t                 (MenuState_t &&         src)       = delete;   //  Move Constructor.
+    MenuState_t &                       operator =                  (const MenuState_t &    src)       = delete;   //  Assgn. Operator.
+    MenuState_t &                       operator =                  (MenuState_t &&         src)       = delete;   //  Move-Assgn. Operator.
+    
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "CLASS DATA-MEMBERS".
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
 
-
-
-
-
+    
    
 // *************************************************************************** //
 //
-//
-//  2.C                 INLINE FUNCTIONS...
+//      2.B.        INLINE FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
     // *************************************************************************** //
-    //                      INITIALIZATION FUNCTIONS.
+    //      2.B. |  QUERY FUNCTIONS.
     // *************************************************************************** //
+    [[nodiscard]] inline bool                   has_capability          (CBMenuCapabilityFlags f) const noexcept    { return (m_capabilities & f) == f; }
+ 	[[nodiscard]] inline bool                   supports_any            (CBMenuCapabilityFlags f) const noexcept    { return (m_capabilities & f) != 0; }
+	[[nodiscard]] inline bool                   supports_all            (CBMenuCapabilityFlags f) const noexcept    { return (m_capabilities & f) == f; }
     
-    //  Default Constructor.
-    inline MenuState_t                                              (void)      {   }
+
+    // *************************************************************************** //
+    //      2.B. |  ORCHID FUNCTIONS.
+    // *************************************************************************** //
+	[[nodiscard]] inline Orchid::size_type      get_orchid_uuid         (void) const noexcept       { return this->m_orchid.get_uuid(); }
+    
+    [[nodiscard]] inline bool                   can_undo                (void) const noexcept       { return this->m_orchid.can_undo(); }
+	[[nodiscard]] inline bool                   can_redo                (void) const noexcept       { return this->m_orchid.can_redo(); }
+    
+    [[nodiscard]] Orchid::size_type             undo_count              (void) const noexcept       { return this->m_orchid.undo_count(); }
+	[[nodiscard]] Orchid::size_type             redo_count              (void) const noexcept       { return this->m_orchid.redo_count(); }
+    
+    [[nodiscard]] inline auto                   get_undo_label          (void) const noexcept       { return this->m_orchid.get_undo_label(); }
+	[[nodiscard]] inline auto                   get_redo_label          (void) const noexcept       { return this->m_orchid.get_redo_label(); }
+    
+    
+    //  "Orchid" Operation Functions...
+    inline void                                 orchid_push             (OrchidAction && act) noexcept      { this->m_orchid.push( std::move(act) );    }
+    inline void                                 orchid_undo             (void) noexcept                     { this->m_orchid.undo();                    }
+    inline void                                 orchid_redo             (void) noexcept                     { this->m_orchid.redo();                    }
+ 
 
 
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    //  "_no_op"
+    //  inline void                         _no_op                              (void)      { return; };
+
 
     // *************************************************************************** //
     //
     //
     // *************************************************************************** //
-    //                      QUERY FUNCTIONS...
+    //      2.B. |  UTILITY FUNCTIONS.
     // *************************************************************************** //
-    
-    [[nodiscard]] inline bool           has_capability              (CBMenuCapabilityFlags f) const noexcept    { return (m_capabilities & f) == f; }
- 	[[nodiscard]] inline bool           supports_any                (CBMenuCapabilityFlags f) const noexcept    { return (m_capabilities & f) != 0; }
-	[[nodiscard]] inline bool           supports_all                (CBMenuCapabilityFlags f) const noexcept    { return (m_capabilities & f) == f; }
-    
-    
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //                      UTILITY FUNCTIONS...
-    // *************************************************************************** //
-    
-	[[nodiscard]] inline bool           can_undo                    (void) const noexcept       { return m_undo_count > 0; }
-    [[nodiscard]] inline bool           can_redo                    (void) const noexcept       { return m_redo_count > 0; }
-    //
 	[[nodiscard]] inline bool           has_assigned_file           (void) const noexcept       { namespace fs = std::filesystem; return fs::exists(m_filepath); }
 	[[nodiscard]] inline bool           has_open_recent             (void) const noexcept       { return m_recent_files.empty(); }
-    //
-    //
-    //
+    
+    
     inline void                         enable_capability           (CBMenuCapabilityFlags flags) noexcept      { m_capabilities |= flags;  }       // force-on bits in 'flags'
     inline void                         set_capability              (CBMenuCapabilityFlags flags) noexcept      { m_capabilities |= flags;  }
-    //
+
+
     inline void                         disable_capability          (CBMenuCapabilityFlags flags) noexcept      { m_capabilities &= ~flags; }       // force-off bits in 'flags'
     inline void                         unset_capability            (CBMenuCapabilityFlags flags) noexcept      { m_capabilities &= ~flags; }
-    //
+
+
     inline void                         toggle_capability           (CBMenuCapabilityFlags flags) noexcept      { m_capabilities ^= flags;  }       // flip bits in 'flags'
- 
- 
- 
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //                      PRIMARY OPERATION FUNCTIONS...
+    
+    
+    
     // *************************************************************************** //
     
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2B.  INLINE" FUNCTIONS.
 
-    
+
 
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "INLINE" FUNCTIONS.
-
-
-
-
-
-
-
 // *************************************************************************** //
-// *************************************************************************** //
-};//	END "MenuState_t" STRUCT INTERFACE.
+};//	END "MenuState_t" INLINE STRUCT DEFINITION.
 
 
 
@@ -272,96 +287,75 @@ struct MenuState_t {
 
 
 //  "TaskState_t"
+//      PLAIN-OLD-DATA (POD) STRUCT.
 //
-struct TaskState_t {
-// *************************************************************************** //
-// *************************************************************************** //
-//
-//  0.              CONSTANTS AND ALIASES...
-// *************************************************************************** //
-// *************************************************************************** //
-
+struct TaskState_t
+{
     // *************************************************************************** //
-    //      NESTED TYPENAME ALIASES.
+    //      0. |    NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    _CBAPP_APPSTATE_INTERNAL_ALIAS_API       //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
-
-    // *************************************************************************** //
-    //      PUBLIC API.
-    // *************************************************************************** //
-    //                              DELETED OPERATORS AND FUNCTIONS:
-                                        TaskState_t                 (const TaskState_t &    )       = delete;   //  Copy. Constructor.
-                                        TaskState_t                 (TaskState_t &&         )       = delete;   //  Move Constructor.
-    TaskState_t &                       operator =                  (const TaskState_t &    )       = delete;   //  Assgn. Operator.
-    TaskState_t &                       operator =                  (TaskState_t &&         )       = delete;   //  Move-Assgn. Operator.
+    _CBAPP_APPSTATE_INTERNAL_ALIAS_API          //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
     
-
-
     // *************************************************************************** //
-    //      STATIC AND CONSTEXPR VARIABLES.
+    //
+    // *************************************************************************** //
+    //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
     static constexpr size_t             ms_TASK_NAME_LIMIT              = 20;
     //
     std::array< std::string *, static_cast<size_t>(Applet_t::COUNT) >                       //  No CONSTEXPR arr for this bc I want it to copy the
-                                        m_applets                       = {};               //  window names EXACTLY in case we ever rename them.
+                                        m_applets                       = {   };            //  window names EXACTLY in case we ever rename them.
     
-    // *************************************************************************** //
-    //      GENERIC CONSTANTS.
-    // *************************************************************************** //
-    //      std::string                         ms_IDLE_APPLET_NAME;
-    //      std::string                         ms_UNDEFINED_APPLET_NAME;
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
 
 
 
 // *************************************************************************** //
 //
-//
-//  1.              CLASS DATA-MEMBERS...
+//      1.          DATA-MEMBERS...
 // *************************************************************************** //
 // *************************************************************************** //
 
     // *************************************************************************** //
     //                      STATE INFORMATION.
     // *************************************************************************** //
-    //                              MAIN STATE INFORMATION:
-    Applet                              m_current_task;
-    ImGuiWindow *                       m_nav_window                    = nullptr;
-    std::string                         m_und_task_name                 = {  };
-    std::string                         m_nav_window_name               = {  };
+    //                                  MAIN STATE INFORMATION:
+    Applet                                  m_current_task;
+    ImGuiWindow *                           m_nav_window                    = nullptr;
+    std::string                             m_und_task_name                 = {   };
+    std::string                             m_nav_window_name               = {   };
     //
-    ImGuiViewport *                     focused_viewport                = nullptr; // Which viewport (if any)
+    ImGuiViewport *                         focused_viewport                = nullptr; // Which viewport (if any)
     //
-    //                              SECONDARY STATE INFORMATION:
-    bool                                has_focus                       = false;   // Any ImGui platform window focused by OS?
-    bool                                reliable                        = false;   // True if determined via Platform_GetWindowFocus
-    
-    
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //                      SUB-STATE.
-    // *************************************************************************** //
-    MenuState_t                             m_default_menu_state        = { };
-    std::reference_wrapper<MenuState_t>     m_current_menu_state        = { m_default_menu_state };
-    
-    
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //                      ACTION / EVENT STUFF.
-    // *************************************************************************** //
-    std::atomic<CBSignalFlags>          m_pending                       = { CBSignalFlags_None };
-    bool                                m_dialog_queued                 = false;
-    bool                                m_rebuild_dockspace             = false;
+    //                                  SECONDARY STATE INFORMATION:
+    bool                                    has_focus                       = false;   // Any ImGui platform window focused by OS?
+    bool                                    reliable                        = false;   // True if determined via Platform_GetWindowFocus
 
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      1. |    SUB-STATE.
+    // *************************************************************************** //
+    MenuState_t                             m_default_menu_state            = {   };
+    std::reference_wrapper<MenuState_t>     m_current_menu_state            = { m_default_menu_state };
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      1. |    GENERIC DATA.
+    // *************************************************************************** //
+    std::atomic<CBSignalFlags>              m_pending                       = { CBSignalFlags_None };
+    bool                                    m_dialog_queued                 = false;
+    bool                                    m_rebuild_dockspace             = false;
 
     // *************************************************************************** //
     //
-    //
     // *************************************************************************** //
-    //                      FUTURE STUFF...
+    //      1. |    FUTURE STUFF.
     // *************************************************************************** //
     //      std::atomic<bool>                   m_running                       = { true };
     //      std::atomic<bool>                   m_closeable                     = { true };
@@ -369,10 +363,8 @@ struct TaskState_t {
     
     // *************************************************************************** //
     //
-    //
-    //
     // *************************************************************************** //
-    //                      DATA...
+    //      1. |    DATA.
     // *************************************************************************** //
     //      GLFWwindow *                        m_glfw_window                   = nullptr;
     
@@ -381,75 +373,87 @@ struct TaskState_t {
     // *************************************************************************** //
     
 //
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
 //
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    //  explicit                        TaskState_t                (app::AppState & );             //  Def. Constructor.
+                                        //  TaskState_t                (void) noexcept                 = default;
+                                        //  ~TaskState_t               (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+                                        TaskState_t                (const TaskState_t &    src)       = delete;   //  Copy. Constructor.
+                                        TaskState_t                (TaskState_t &&         src)       = delete;   //  Move Constructor.
+    TaskState_t &                       operator =                  (const TaskState_t &    src)       = delete;   //  Assgn. Operator.
+    TaskState_t &                       operator =                  (TaskState_t &&         src)       = delete;   //  Move-Assgn. Operator.
+    
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "CLASS DATA-MEMBERS".
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
 
-
-
-
-
+    
    
 // *************************************************************************** //
 //
-//
-//  2.C                 INLINE FUNCTIONS...
+//      2.B.        INLINE FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
     // *************************************************************************** //
-    //                      INITIALIZATION FUNCTIONS.
+    //      2.B. |  QUERY FUNCTIONS.
     // *************************************************************************** //
-    
-    //  Default Constructor.
-    inline TaskState_t                                              (void)
-    {
-        //  ...
-    }
-    
-    
+
+
 
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                      GETTER FUNCTIONS...
+    //      2.B. |  SETTER/GETTER FUNCTIONS.
     // *************************************************************************** //
     
     //  "GetCurrentAppletName"
-    inline const char *                 GetCurrentAppletName           (void)
+    inline const char *                 GetCurrentAppletName                (void)
     { return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str(); }
-    
-    
+
+
 
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                      SETTER FUNCTIONS...
+    //      2.B. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
     
-    
-    
-    
-    
-    
-    
-    
-    
+    //  Default Constructor.
+    inline                              TaskState_t                         (void)
+    {
+        //  ...
+    }
+
+
+
     // *************************************************************************** //
-    //
     //
     //
     // *************************************************************************** //
-    //                      UTILITY FUNCTIONS...
+    //      2.B. |  UTILITY FUNCTIONS.
     // *************************************************************************** //
     
     //  "_OLD_current_task_name"
-    inline const char *                 _OLD_current_task_name           (void) {
+    inline const char *                 _OLD_current_task_name              (void) {
         //  if ( this->m_current_task == Applet::Undefined )
         //  {
         //      if ( this->m_nav_window_name.empty() )
@@ -462,29 +466,28 @@ struct TaskState_t {
     }
 
     //  "get_dock_node_vis_text"
-    inline const char *                 get_dock_node_vis_text          (const ImGuiDockNode * node)
+    inline const char *                 get_dock_node_vis_text              (const ImGuiDockNode * node)
     { return (node && node->VisibleWindow) ? node->VisibleWindow->Name : "NULL"; } // Same expression used inside DebugNodeDockNode()
     
     //  "get_nav_window"
-    [[nodiscard]] inline ImGuiWindow *  get_nav_window              (void) noexcept {
+    [[nodiscard]] inline ImGuiWindow *  get_nav_window                      (void) noexcept {
         //  Text("NavWindow: '%s'", g.NavWindow ? g.NavWindow->Name : "NULL");
 		ImGuiContext *	    g	    = ImGui::GetCurrentContext();
 		return ( g )    ? g->NavWindow      : nullptr;
 	}
- 
- 
- 
+
+
+
     // *************************************************************************** //
     //
     //
-    //
     // *************************************************************************** //
-    //                      PRIMARY OPERATION FUNCTIONS...
+    //      2.B. |  PRIMARY OPERATION FUNCTIONS.
     // *************************************************************************** //
     
     //  "update_current_task"
     //
-    [[nodiscard]] inline bool           update_current_task         ([[maybe_unused]] GLFWwindow * window)
+    [[nodiscard]] inline bool           update_current_task                 ([[maybe_unused]] GLFWwindow * window)
     {
         static constexpr size_t     CACHE_COMPARE_NUM       = 32;
         static constexpr size_t     LOOP_COMPARE_NUM        = 16;
@@ -503,12 +506,8 @@ struct TaskState_t {
         bool                        need_to_update          = false;
         
         
-        
-        
         this->m_nav_window                                  = vis_win;
         this->_update_task_state();
-        
-        
         
         
         //  CASE 0 :    ENTIRE APPLICATION IS UN-FOCUSED...
@@ -546,7 +545,7 @@ struct TaskState_t {
     
     //  "_update_task_state"
     //
-    inline void                         _update_task_state          (void) noexcept
+    inline void                         _update_task_state                  (void) noexcept
 	{
 		ImGuiContext*           ctx     = ImGui::GetCurrentContext();
 		ImGuiPlatformIO &       pio     = ctx->PlatformIO;
@@ -576,44 +575,24 @@ struct TaskState_t {
 		this->reliable              = false;
 		return;
 	}
-
-
+ 
+ 
+ 
+    // *************************************************************************** //
     
-
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "INLINE" FUNCTIONS.
+// *************************************************************************** //   END "2B.  INLINE" FUNCTIONS.
 
 
 
-
-
-
-
+//
+//
 // *************************************************************************** //
 // *************************************************************************** //
-};//	END "TaskState_t" STRUCT INTERFACE.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+};//	END "TaskState_t" INLINE STRUCT DEFINITION.
 
 
 

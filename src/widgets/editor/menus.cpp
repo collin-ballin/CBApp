@@ -84,7 +84,8 @@ void Editor::dispatch_selection_context_menus([[maybe_unused]] const Interaction
 //
 inline void Editor::_show_canvas_context_menu([[maybe_unused]] const Interaction & it, const char * popup_id)
 {
-    static constexpr auto   s_paste_label       = cblib::utl::strcat_literals_cx( ICON_FA_PASTE,                "  ", "Paste"       );
+    using                   cblib::utl::strcat_literals_cx;
+    static constexpr auto   s_paste_label       = strcat_literals_cx( ICON_FA_PASTE,                "  ", "Paste"       );
     const bool              can_paste           = !m_clipboard.empty();
         
         
@@ -188,12 +189,13 @@ inline void Editor::_show_selection_context_menu([[maybe_unused]] const Interact
 //
 inline void Editor::_selection_context_primative([[maybe_unused]] const Interaction & it)
 {
-    static constexpr auto       s_bring_to_label        = cblib::utl::strcat_literals_cx( ICON_FA_ROUTE,                "  ", "Bring To New Layer"  );
-    static constexpr auto       s_arrange_label         = cblib::utl::strcat_literals_cx( ICON_FA_LAYER_GROUP,          "  ", "Arrange"             ); //  ICON_FA_SQUARE_BINARY
-    static constexpr auto       s_cut_label             = cblib::utl::strcat_literals_cx( ICON_FA_CLIPBOARD_CHECK,      "  ", "Cut"                 );
-    static constexpr auto       s_copy_label            = cblib::utl::strcat_literals_cx( ICON_FA_COPY,                 "  ", "Copy"                );
-    static constexpr auto       s_paste_label           = cblib::utl::strcat_literals_cx( ICON_FA_PASTE,                "  ", "Paste"               );
-    static constexpr auto       s_delete_label          = cblib::utl::strcat_literals_cx( ICON_FA_XMARK,                "  ", "Delete"              );
+    using                       cblib::utl::strcat_literals_cx;
+    static constexpr auto       s_bring_to_label        = strcat_literals_cx( ICON_FA_LAYER_GROUP,          "  ", "Bring To New Layer"  );  //  ICON_FA_LAYER_GROUP     ICON_FA_ROUTE
+    static constexpr auto       s_arrange_label         = strcat_literals_cx( ICON_FA_RETWEET,              "  ", "Arrange"             );  //  ICON_FA_SQUARE_BINARY
+    static constexpr auto       s_cut_label             = strcat_literals_cx( ICON_FA_CLIPBOARD_CHECK,      "  ", "Cut"                 );
+    static constexpr auto       s_copy_label            = strcat_literals_cx( ICON_FA_COPY,                 "  ", "Copy"                );
+    static constexpr auto       s_paste_label           = strcat_literals_cx( ICON_FA_PASTE,                "  ", "Paste"               );
+    static constexpr auto       s_delete_label          = strcat_literals_cx( ICON_FA_XMARK,                "  ", "Delete"              );
     
     
     //      1.      MOVE-TO NEW LAYER...
@@ -289,21 +291,21 @@ inline void Editor::_selection_context_primative([[maybe_unused]] const Interact
 //
 inline void Editor::_selection_context_single([[maybe_unused]] const Interaction & it) noexcept
 {
+    using                   cblib::utl::strcat_literals_cx;
+    static constexpr auto   s_payload_label     = strcat_literals_cx( ICON_FA_CART_FLATBED_SUITCASE,        "  ", "Payload"                 ); //  ICON_FA_SQUARE_BINARY
+    static constexpr auto   s_transform_label   = strcat_literals_cx( ICON_FA_TEXT_WIDTH,                   "  ", "Transform"               );
     //
-    static constexpr auto       s_payload_label     = cblib::utl::strcat_literals_cx( ICON_FA_CART_FLATBED_SUITCASE,        "  ", "Payload"                 ); //  ICON_FA_SQUARE_BINARY
-    static constexpr auto       s_transform_label   = cblib::utl::strcat_literals_cx( ICON_FA_TEXT_WIDTH,                   "  ", "Transform"               );
+    static constexpr auto   s_move_label        = strcat_literals_cx( ICON_FA_ARROWS_UP_DOWN_LEFT_RIGHT,    "  ", "Move"                    );
+    static constexpr auto   s_scale_label       = strcat_literals_cx( ICON_FA_MAXIMIZE,                     "  ", "Scale"                   );  //  ICON_FA_EXPAND
+    static constexpr auto   s_rotate_label      = strcat_literals_cx( ICON_FA_ROTATE_LEFT,                  "  ", "Rotate"                  );
+    static constexpr auto   s_reflect_label     = strcat_literals_cx( ICON_FA_ARROWS_LEFT_RIGHT_TO_LINE,    "  ", "Reflect"                 );
     //
-    static constexpr auto       s_move_label        = cblib::utl::strcat_literals_cx( ICON_FA_ARROWS_UP_DOWN_LEFT_RIGHT,    "  ", "Move"                    );
-    static constexpr auto       s_scale_label       = cblib::utl::strcat_literals_cx( ICON_FA_MAXIMIZE,                     "  ", "Scale"                   );  //  ICON_FA_EXPAND
-    static constexpr auto       s_rotate_label      = cblib::utl::strcat_literals_cx( ICON_FA_ROTATE_LEFT,                  "  ", "Rotate"                  );
-    static constexpr auto       s_reflect_label     = cblib::utl::strcat_literals_cx( ICON_FA_ARROWS_LEFT_RIGHT_TO_LINE,    "  ", "Reflect"                 );
+    static constexpr auto   s_smooth_label      = strcat_literals_cx( ICON_FA_MOUND,                        "  ", "Smooth"                  );
+    static constexpr auto   s_pixel_label       = strcat_literals_cx( ICON_FA_RULER_COMBINED,               "  ", "Make Pixel-Perfect"      );
+    static constexpr auto   s_quantize_label    = strcat_literals_cx( ICON_FA_STAIRS,                       "  ", "Quantize"                );
     //
-    static constexpr auto       s_smooth_label      = cblib::utl::strcat_literals_cx( ICON_FA_MOUND,                        "  ", "Smooth"                  );
-    static constexpr auto       s_pixel_label       = cblib::utl::strcat_literals_cx( ICON_FA_RULER_COMBINED,               "  ", "Make Pixel-Perfect"      );
-    static constexpr auto       s_quantize_label    = cblib::utl::strcat_literals_cx( ICON_FA_STAIRS,                       "  ", "Quantize"                );
-    //
-    const size_t                sel_idx             = *m_sel.paths.begin();   // only element
-    Path &                      path                = m_paths[sel_idx];
+    const size_t            sel_idx             = *m_sel.paths.begin();   // only element
+    Path &                  path                = m_paths[sel_idx];
     
     
     
@@ -354,8 +356,9 @@ inline void Editor::_selection_context_single([[maybe_unused]] const Interaction
 //
 inline void Editor::_selection_context_single_advanced([[maybe_unused]] const Interaction & /*it*/, Path & /*path*/) noexcept
 {
-    static constexpr auto       s_discretize_label  = cblib::utl::strcat_literals_cx( ICON_FA_STAMP                    , "  ", "Stamp To Grid"     );           //  ICON_FA_BURST
-    static constexpr auto       s_interpolate_label = cblib::utl::strcat_literals_cx( ICON_FA_FEATHER_POINTED          , "  ", "Interpolate Perimeter"  );      //  ICON_FA_CIRCLE_HALF_STROKE
+    using                   cblib::utl::strcat_literals_cx;
+    static constexpr auto   s_discretize_label  = strcat_literals_cx( ICON_FA_STAMP                    , "  ", "Stamp To Grid"     );           //  ICON_FA_BURST
+    static constexpr auto   s_interpolate_label = strcat_literals_cx( ICON_FA_FEATHER_POINTED          , "  ", "Interpolate Perimeter"  );      //  ICON_FA_CIRCLE_HALF_STROKE
     
     
     //      0.      SEPARATOR...
@@ -391,7 +394,8 @@ inline void Editor::_selection_context_single_advanced([[maybe_unused]] const In
 //
 inline void Editor::_selection_context_multi([[maybe_unused]] const Interaction & it)
 {
-    static constexpr auto       s_group_label       = cblib::utl::strcat_literals_cx( ICON_FA_OBJECT_GROUP,                 "  ", "Create Group"    );
+    using                   cblib::utl::strcat_literals_cx;
+    static constexpr auto   s_group_label       = strcat_literals_cx( ICON_FA_OBJECT_GROUP,                 "  ", "Create Group"    );
 
     ImGui::BeginDisabled(true);
     //

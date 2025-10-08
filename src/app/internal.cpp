@@ -33,8 +33,6 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-
-
 //  "QuerySignalStates"
 //
 void App::QuerySignalStates(void)
@@ -100,10 +98,9 @@ inline void App::DialogHandler(void)
 
     if (S.m_dialog_queued)
     {
-    
         if (!initialized) {
             initialized  = true;
-            this->S.m_file_dialog.initialize(this->S.m_dialog_settings );
+            this->S.m_file_dialog.initialize( this->S.m_dialog_settings );
         }
 
         if ( this->S.m_file_dialog.is_open() )
@@ -167,8 +164,13 @@ void App::KeyboardShortcutHandler(void)
         //  static constexpr ImGuiKeyChord          QUIT_KEY                = ImGuiMod_Alt   | ImGuiKey_F4;
     static constexpr ImGuiKeyChord          SAVE_KEY                = ImGuiMod_Ctrl  | ImGuiKey_S;
     static constexpr ImGuiKeyChord          OPEN_KEY                = ImGuiMod_Ctrl  | ImGuiKey_O;
+    
     static constexpr ImGuiKeyChord          UNDO_KEY                = ImGuiMod_Ctrl  | ImGuiKey_Z;
+#ifdef __APPLE__
     static constexpr ImGuiKeyChord          REDO_KEY                = ImGuiMod_Ctrl  | ImGuiMod_Shift | ImGuiKey_Z;
+# else
+    static constexpr ImGuiKeyChord          REDO_KEY                = ImGuiMod_Ctrl  | ImGuiKey_Y;
+#endif  //  __APPLE__  //
     //
     [[maybe_unused]] ImGuiIO &              io                      = ImGui::GetIO();
 
@@ -303,7 +305,6 @@ void App::SaveHandler_Default(void)
             /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
             /* starting_dir       = */  std::filesystem::current_path()
         };
-
     }
     
     CB_LOG( LogLevel::Info, "Applet::HomeApp--save" );
@@ -330,16 +331,20 @@ void App::PasteHandler_Default(void)
 
 //  "UndoHandler_Default"
 //
-void App::UndoHandler_Default(void) {
-    S.m_logger.info( "Applet::HomeApp--undo" );
+void App::UndoHandler_Default(void)
+{
+    //  S.m_history.undo();
+    //  S.m_logger.info( "Applet::HomeApp--undo" );
     return;
 }
 
 
 //  "RedoHandler_Default"
 //
-void App::RedoHandler_Default(void) {
-    S.m_logger.info( "Applet::HomeApp--undo" );
+void App::RedoHandler_Default(void)
+{
+    //  S.m_history.redo();
+    //  S.m_logger.info( "Applet::HomeApp--undo" );
     return;
 }
 

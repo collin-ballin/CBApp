@@ -134,6 +134,195 @@ void CBDebugger::Begin([[maybe_unused]] const char *        uuid,
 //
 //
 //
+//      2A.     "MAIN UI FUNCTIONS"...
+// *************************************************************************** //
+// *************************************************************************** //
+namespace {
+
+
+using       namespace       cblib::containers;
+
+
+
+//  "IncrementAction"
+//      Dummy action: increments an int
+//
+struct IncrementAction : orchid::ABC
+{
+    IncrementAction             (int & ref, int delta = 1)
+        : target(ref), delta(delta)
+    {   }
+        
+
+    void                undo    (void)  noexcept override           { target -= delta;      }
+    void                redo    (void)  noexcept override           { target += delta;      }
+    std::string_view    label   (void)  const noexcept override     { return "Increment";   }
+
+private:
+    int &       target      ;
+    int         delta       ;
+};
+
+
+
+//  "ToggleFlagAction"
+//      flips a bool each time it is redone/undone
+//
+struct ToggleFlagAction : orchid::ABC
+{
+    ToggleFlagAction            (bool & ref)
+        : target(ref)
+    {   }
+        
+
+    void                undo    (void)  noexcept override           { target = !target;         }
+    void                redo    (void)  noexcept override           { target = !target;         }
+    std::string_view    label   (void)  const noexcept override     { return "Toggle flag";     }
+
+private:
+    bool &      target      ;
+};
+
+
+
+
+
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2A.  Orchid".
+}   //  END "anonymous" NAMESPACE.
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2B.     "ORCHID" TESTING...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "TestOrchid"
+//
+inline void CBDebugger::TestOrchid(void) noexcept
+{
+    static int              value               = 0;
+    static bool             flag                = false;
+    static Orchid           history             {   };
+    //
+    //
+    //
+    const bool              is_hovered          = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows      );
+    bool                    invoke_undo         = false;
+    bool                    invoke_redo         = false;
+    
+    
+    
+    //      CASE 0 :    ONLY FETCH INPUT IF WINDOW IS HOVERED...
+    if ( is_hovered )
+    {
+        invoke_undo         = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Z                        );
+        invoke_redo         = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z       );
+    }
+    
+    
+    
+    //      1.          DATA---PRESENTATION...
+    ImGui::SeparatorText("Values");
+    ImGui::Indent();
+    //
+    //
+        ImGui::Text( "Value:    %d", value);
+        ImGui::Text( "Flag:     %s", (flag) ? "True" : "False");
+    //
+    //
+    ImGui::Unindent();
+    
+    
+
+    //      2.          DATA---PRESENTATION...
+    ImGui::NewLine();
+    ImGui::SeparatorText("Orchid Information");
+    ImGui::Indent();
+    //
+    //
+        ImGui::Text(
+              "Undoable:\t%zu \nRedoable:\t%zu"
+             , this->S.Orchid_undo_count()
+             , this->S.Orchid_redo_count()
+        );
+    //
+    //
+    ImGui::Unindent();
+
+
+
+    //      3.          USER---CONTROLS / ACTIONS...
+    ImGui::NewLine();
+    ImGui::SeparatorText("Actions");
+    ImGui::Indent();
+    //
+    //
+        if ( ImGui::Button("Add  +1") )
+        {
+            this->S.OrchidPush( std::make_unique<IncrementAction>(value, 1) );
+        }
+
+        ImGui::SameLine();
+        if ( ImGui::Button("Add  +5") )
+        {
+            this->S.OrchidPush( std::make_unique<IncrementAction>(value, 5) );
+        }
+
+        ImGui::SameLine();
+        if ( ImGui::Button("Toggle Flag") )
+        {
+            this->S.OrchidPush( std::make_unique<ToggleFlagAction>(flag) );
+        }
+    //
+    //
+    ImGui::Unindent();
+
+
+
+    //      X.          QUERY USER INPUT...
+    if ( invoke_undo )          { this->S.OrchidUndo(); }         //  UNDO.   [ CTRL Z ].
+    if ( invoke_redo )          { this->S.OrchidRedo(); }         //  REDO.   [ CTRL SHIFT Z ].
+
+    return;
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2B.  Orchid TESTING".
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
 //      2.      "MAIN UI FUNCTIONS"...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -144,7 +333,7 @@ inline void CBDebugger::Begin_IMPL(void)
 {
 
 
-
+    this->TestOrchid();
 
 
     return;

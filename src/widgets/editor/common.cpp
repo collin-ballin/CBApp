@@ -101,7 +101,7 @@ void Editor::open(void)
 //  "undo"
 //
 void Editor::undo(void) {
-    CB_LOG( LogLevel::Info, "Editor--undo" );
+    //  CB_LOG( LogLevel::Info, "Editor--undo" );
     return;
 }
 
@@ -109,10 +109,22 @@ void Editor::undo(void) {
 //  "redo"
 //
 void Editor::redo(void) {
-    CB_LOG( LogLevel::Info, "Editor--redo" );
+    //  CB_LOG( LogLevel::Info, "Editor--redo" );
     return;
 }
 
+
+//  "GetMenuState"
+[[nodiscard]] Editor::MenuState & Editor::GetMenuState(void) noexcept            { return (*this->m_menu_state); }
+
+//  "GetMenuState"
+[[nodiscard]] Editor::MenuState & Editor::GetMenuState(void) const noexcept      { return (*this->m_menu_state); }
+
+
+
+
+    
+    
 //
 //
 // *************************************************************************** //

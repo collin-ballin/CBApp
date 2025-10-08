@@ -236,8 +236,6 @@ void MenuBar::FileMenubar(void)
     //
     [[maybe_unused]] ImGuiIO &          io                      = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &       style                   = ImGui::GetStyle();
-    //
-    //
     const app::MenuState_t &            MS                      = S.GetMenuState();
     //
     const bool                          has_file_new            = MS.has_capability(CBMenuCapabilityFlags_FileNew);
@@ -496,27 +494,86 @@ inline void MenuBar::file_imgui_submenu(void)
 //
 void MenuBar::EditMenubar(void)
 {
-    ImGuiIO &                   io                  = ImGui::GetIO();
-    constexpr bool              ENABLE_UNDO         = false;
-    constexpr bool              ENABLE_REDO         = false;
-    constexpr bool              ENABLE_CUT          = false;
-    constexpr bool              ENABLE_COPY         = false;
-    constexpr bool              ENABLE_PASTE        = false;
+    using                           cblib::containers::Orchid;
+    constexpr bool                  ENABLE_CUT              = false;
+    constexpr bool                  ENABLE_COPY             = false;
+    constexpr bool                  ENABLE_PASTE            = false;
+    //
+    //
+    //
+    using                           cblib::utl::strcat_literals_cx;
+    using                           namespace               app;
+    //
+    static constexpr auto           s_UNDO_LABEL            = strcat_literals_cx( ICON_FA_ROTATE_LEFT       , "  "      , "Undo"  );
+    static constexpr auto           s_REDO_LABEL            = strcat_literals_cx( ICON_FA_ROTATE_RIGHT      , "  "      , "Redo"  );
+    //
+    //
+    //
+    ImGuiIO &                       io                      = ImGui::GetIO();
+    const app::MenuState_t &        MS                      = S.GetMenuState();
+    //
+    static Orchid::size_type        s_uuid                  = Orchid::size_type( -1 );
+    static std::string              s_redo_label            = {   };
+    static std::string              s_undo_label            = {   };
+    //
+    //
+    //
+    const bool                      can_undo                = MS.can_undo();
+    const bool                      can_redo                = MS.can_redo();
     
-    //  1.  UNDO / REDO...
-    ImGui::BeginDisabled(ENABLE_UNDO);
-        if (ImGui::MenuItem("Undo",                             "CTRL+Z"))
-        { io.AddKeyEvent(ImGuiMod_Shift,true);   io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
+    
+    //      1.      UPDATE "Orchid" DIRTY CACHE...
+    if ( s_uuid != MS.get_orchid_uuid() )
+    {
+        s_uuid      = MS.get_orchid_uuid();
+        
+        if ( can_undo ) {                                           //      1A.     UPDATE "Undo" LABEL.
+            s_undo_label     = std::format( "{} \"{}\""
+                , s_UNDO_LABEL.data()
+                , *( MS.get_undo_label() )
+            );
+        }
+        //
+        if ( can_redo ) {                                           //      1B.     UPDATE "Redo" LABEL.
+            s_redo_label     = std::format( "{} \"{}\""
+                , s_REDO_LABEL.data()
+                , *( MS.get_redo_label() )
+            );
+        }
+    }
+    
+    
+    
+    
+    
+    //      1.      UNDO / REDO...
+    //
+    //              1A.     UNDO.
+    ImGui::BeginDisabled(!can_undo);
+        if ( ImGui::MenuItem( (can_undo) ?  s_undo_label.c_str()    : s_UNDO_LABEL.data() , "CTRL Z") )
+            { io.AddKeyEvent(ImGuiMod_Shift,true);      io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
     ImGui::EndDisabled();
     //
-    ImGui::BeginDisabled(ENABLE_REDO);
-        if (ImGui::MenuItem("Redo",                             "SHIFT+CTRL+Z"))
-        { io.AddKeyEvent(ImGuiMod_Shift,true);   io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
+    //
+    //              1B.     REDO.
+    ImGui::BeginDisabled(!can_redo);
+        if ( ImGui::MenuItem(s_REDO_LABEL.data(),           "SHIFT CTRL Z") )
+            { io.AddKeyEvent(ImGuiMod_Shift,true);      io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
+            
+            
+    //  #ifdef __APPLE__
+    //  #else
+    //      if ( ImGui::MenuItem(s_redo_l.data(),           "CTRL Y") )
+    //          { io.AddKeyEvent(ImGuiMod_Ctrl,true);       io.AddKeyEvent(ImGuiKey_Y,true); }
+    //  #endif  //  __APPLE__  //
+    
     ImGui::EndDisabled();
     
     
     
-    //  2.  CUT / COPY...
+    
+    
+    //      2.      CUT / COPY...
     ImGui::Separator();
     ImGui::BeginDisabled(ENABLE_CUT);
         if (ImGui::MenuItem("Cut",                              nullptr))           { }

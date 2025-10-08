@@ -426,27 +426,31 @@
 //      - "API" USED **EXCLUSIVELY** INSIDE "AppState" CLASS.
 //      - CLASS-NESTED, PUBLIC TYPENAME ALIASES FOR "CBApp" CLASSES THAT UTILIZE AN "AppState" OBJECT...
 // *************************************************************************** //
-#define                 _CBAPP_APPSTATE_INTERNAL_ALIAS_API                                                      \
-public:                                                                                                         \
-    using               CBSignalFlags                   = std::uint32_t;                                        \
-    using               CBMenuCapabilityFlags           = std::uint64_t;                                        \
-                                                                                                                \
-    using               Window                          = app::Window_t;                                        \
-    using               Applet                          = app::Applet_t;                                        \
-    using               Font                            = app::Font_t;                                          \
-    using               Cmap                            = app::Colormap_t;                                      \
-    using               Timestamp_t                     = std::chrono::time_point<std::chrono::system_clock>;   \
-                                                                                                                \
-    using               LabelFn                         = std::function<void(const char *)>;                    \
-                                                                                                                \
-                                                                                                                \
-    using               ImFonts                         = cblib::EnumArray<Font, ImFont *>;                     \
-    using               ImWindows                       = cblib::EnumArray<Window, WinInfo>;                    \
-    using               Anchor                          = utl::Anchor;                                          \
-                                                                                                                \
-    using               Logger                          = utl::Logger;                                          \
-    using               LogLevel                        = Logger::Level;                                        \
-    using               Tab_t                           = utl::Tab_t;
+#define                 _CBAPP_APPSTATE_INTERNAL_ALIAS_API                                                          \
+public:                                                                                                             \
+    using               CBSignalFlags                   = std::uint32_t                                         ;   \
+    using               CBMenuCapabilityFlags           = std::uint64_t                                         ;   \
+                                                                                                                    \
+    using               Window                          = app::Window_t                                         ;   \
+    using               Applet                          = app::Applet_t                                         ;   \
+    using               Font                            = app::Font_t                                           ;   \
+    using               Cmap                            = app::Colormap_t                                       ;   \
+    using               Timestamp_t                     = std::chrono::time_point<std::chrono::system_clock>    ;   \
+                                                                                                                    \
+    using               LabelFn                         = std::function<void(const char *)>                     ;   \
+                                                                                                                    \
+                                                                                                                    \
+    using               Orchid                          = cblib::containers::Orchid                             ;   \
+    using               OrchidAction                    = Orchid::smart_pointer                                 ;   \
+                                                                                                                    \
+                                                                                                                    \
+    using               ImFonts                         = cblib::EnumArray<Font, ImFont *>                      ;   \
+    using               ImWindows                       = cblib::EnumArray<Window, WinInfo>                     ;   \
+    using               Anchor                          = utl::Anchor                                           ;   \
+                                                                                                                    \
+    using               Logger                          = utl::Logger                                           ;   \
+    using               LogLevel                        = Logger::Level                                         ;   \
+    using               Tab_t                           = utl::Tab_t                                            ;
 //
 // *************************************************************************** //   _CBAPP_APPSTATE_INTERNAL_ALIAS_API
 
@@ -519,11 +523,15 @@ public:                                                                         
     /*  using                           GetVertexFn                 = const Vertex * (*)(void * , VertexID) ;                           */      \
     /*                                                                                                                                  */      \
     /*                                                                                                                                  */      \
-    /*      2.      GENERIC TYPES...                                                                                                    */      \
+    /*      2.      GENERIC TYPES [App]...                                                                                              */      \
     using                           Font                        = app::Font_t                                                           ;       \
     using                           Logger                      = utl::Logger                                                           ;       \
     using                           LogLevel                    = utl::LogLevel                                                         ;       \
                                                                                                                                         \
+    /*using                           CBMenuCapabilityFlags       = std::uint64_t                                                       ;*/     \
+                                                                                                                                        \
+                                                                                                                                        \
+    /*      3.      GENERIC TYPES [Editor]...                                                                                           */      \
     using                           CBCapabilityFlags           = CBCapabilityFlags_                                                    ;       \
     using                           Anchor                      = BBoxAnchor                                                            ;       \
                                                                                                                                         \

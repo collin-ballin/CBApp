@@ -32,14 +32,20 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //  Default Constructor.
 //
 Editor::Editor(app::AppState & src)
-    : CBAPP_STATE_NAME      ( src )
-    , m_ov_manager          ( world_to_pixels )
-    , m_it                  ( std::make_unique<Interaction>() )
-    , m_render_ctx          ( world_to_pixels, find_vertex, m_vertices )
-    , m_vertex_style        ( world_to_pixels, ms_VERTEX_STYLES[ VertexStyleType::Default ] )
+    : CBAPP_STATE_NAME      ( src                                                               )
+    , m_ov_manager          ( world_to_pixels                                                   )
+    , m_it                  ( std::make_unique<Interaction>()                                   )
+    , m_menu_state          ( std::make_unique<app::MenuState_t>()                              )
+    , m_render_ctx          ( world_to_pixels, find_vertex, m_vertices                          )
+    , m_vertex_style        ( world_to_pixels, ms_VERTEX_STYLES[ VertexStyleType::Default ]     )
 {
     namespace           fs                          = std::filesystem;
     this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_HiddenTabBar;
+    
+    
+    
+    //      INITIALIZE THE EDITOR'S MENU STATE...
+    this->m_menu_state->m_capabilities              = app::CBMenuCapabilityFlags_None;
     
     
     

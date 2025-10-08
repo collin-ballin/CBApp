@@ -509,7 +509,7 @@ static_assert( requires(double x)   { quantize_decimals(x, 4);  }   );
 //              3.2.    RoundingMode enum is usable in unevaluated context
 static_assert( static_cast<int>(Mode::ties_to_even)    != static_cast<int>(Mode::toward_zero)         );
 static_assert( static_cast<int>(Mode::toward_pos_inf)  != static_cast<int>(Mode::toward_neg_inf)      );
-static_assert( static_cast<int>(Mode::away_from_zero)  >= 0                                         );
+//  static_assert( static_cast<int>(Mode::away_from_zero)  >= 0                                         );      //  Always true b.c. Mode is UNSIGNED.
 
 
 //  BATCH #4.   SFINAE SANITY FOR NON-FLOATING-POINT TYPES  [ THIS SHOULD *NOT* COMPILE ]...

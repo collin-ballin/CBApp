@@ -17,27 +17,34 @@
 #ifndef _CBLIB_ORCHID_ACTION_H
 #define _CBLIB_ORCHID_ACTION_H 1
 
+//  1.  Basic I/O, Compile-Time.
 #include <iostream>
 #include <type_traits>
+#include <concepts>
 #include <algorithm>                //  std::clamp
-#if __cpp_concepts >= 201907L
-# include <concepts>
-#endif  //  C++20.  //
 
+
+//  2.  Math, Numerics.
 #include <cmath>                    //  std::nextafter
 #include <cstddef>
 #include <iomanip>
 #include <limits>
 
+
+//  3.  Data-Structures, Types.
+#include <string_view>
 #include <vector>
 #include <array>
 #if __cplusplus >= 201103L
 # include <initializer_list>
 #endif	//  C++11.  //
 
+//  4.  Misc.
+#include <memory>
 
 
-namespace cblib { namespace containers {   //     BEGINNING NAMESPACE "cblib::containers"...
+
+namespace cblib { namespace containers { namespace orchid {  //     BEGINNING NAMESPACE "cblib::containers::orchid"...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -47,16 +54,80 @@ namespace cblib { namespace containers {   //     BEGINNING NAMESPACE "cblib::co
 //
 //
 //
-//      1.      ??? ...
+//      1.      "Action"  [ ABSTRACT BASE CLASS (ABC) FOR  "Orchid"  UNDO/REDO STACK ] ...
 // *************************************************************************** //
 // *************************************************************************** //
+
+//  "Action"
+//      ABSTRACT BASE-CLASS (ABC) FOR  "Orchid"  UNDO/REDO STACK.
+//      "BASE" OF THE POLYMORPHIC "ACTION" HEIRERARCHY DESIGN.
+//
+struct Action
+{
+// *************************************************************************** //
+//
+//      1.          VIRTUAL INTERFACE FOR DERIVED TYPES...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      "RULE-OF" STUFF.                |   "..."
+    // *************************************************************************** //
+    virtual                             ~Action                 (void)                          = default;
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      BASIC VIRTUAL METHODS.          |   "..."
+    // *************************************************************************** //
+    virtual void                        undo                    (void) noexcept                 = 0;
+    virtual void                        redo                    (void) noexcept                 = 0;
+    virtual std::string_view            label                   (void) const noexcept           = 0;
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      ADVANCED VIRTUAL METHODS.       |   "..."
+    // *************************************************************************** //
+    virtual bool                        merge_with              (const Action & ) noexcept      { return false; }   //  Optional: merge consecutive edits (drag/typing)
+    
+    
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+    //                                      Action                  (const Action &    src)       = delete;   //  Copy. Constructor.
+    //                                      Action                  (Action &&         src)       = delete;   //  Move Constructor.
+    //  Action &                            operator =              (const Action &    src)       = delete;   //  Assgn. Operator.
+    //  Action &                            operator =              (Action &&         src)       = delete;   //  Move-Assgn. Operator.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MEMBER FUNCS".
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "Action" INLINE STRUCT DEFINITION.
+
+
+
 
 
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "???".
+// *************************************************************************** //   END "1.  Action Impl".
 
 
 
@@ -67,9 +138,30 @@ namespace cblib { namespace containers {   //     BEGINNING NAMESPACE "cblib::co
 //
 //
 //
+//      2.          EXPORTS FOR  "orchid"  NAMESPACE...
 // *************************************************************************** //
 // *************************************************************************** //
-} }//   END OF "cblib::containers" NAMESPACE.
+
+using       ABC         = Action;
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2.  Exported Namespace".
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+} } }//   END OF "cblib::containers" NAMESPACE.
 
 
 

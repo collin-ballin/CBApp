@@ -85,18 +85,22 @@ public:
     
     //  1.               PUBLIC MEMBER FUNCTIONS...
     // *************************************************************************** //
-    //  1.1             Default Constructor, Destructor, etc...
-    explicit            EditorApp                    (app::AppState & );                                 //  Def. Constructor.
-                        ~EditorApp                   (void);                                             //  Def. Destructor.
+    //  1.1                             Default Constructor, Destructor, etc...
+    explicit                                EditorApp                    (app::AppState & );                                 //  Def. Constructor.
+                                            ~EditorApp                   (void);                                             //  Def. Destructor.
                         
-    //  1.2             Public Member Functions...
-    void                initialize                  (void);
-    void                save                        (void);
-    void                open                        (void);
-    void                undo                        (void);
-    void                redo                        (void);
+    //  1.2                             Public Member Functions...
+    void                                    initialize                  (void);
     //
-    void                Begin                       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    [[nodiscard]] app::MenuState_t &        GetMenuState                (void) const noexcept;
+    [[nodiscard]] app::MenuState_t &        GetMenuState                (void) noexcept;
+    //
+    void                                    save                        (void);
+    void                                    open                        (void);
+    void                                    undo                        (void);
+    void                                    redo                        (void);
+    //
+    void                                    Begin                       ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
 
 
 // *************************************************************************** //

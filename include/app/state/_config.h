@@ -31,7 +31,6 @@
 //  #include "app/_init.h"
 
 
-
 //  1.2     STANDARD LIBRARY HEADERS...
 #include <iostream>         //  <======| std::cout, std::cerr, std::endl, ...
 #include <cstdlib>          // C-Headers...
@@ -47,7 +46,6 @@
 #include <functional>
 #include <limits.h>
 #include <math.h>
-
 
 
 //  1.3     "DEAR IMGUI" HEADERS...
@@ -70,24 +68,43 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  # define _CBAPP_USE_DIFFERENTIAL_APP_TITLE      0
+
+
+
 //  1.0     CREATE THE APPLICATION TITLE...
 //
-//          1.0A    COINCIDENCE COUNTER APP:
-#if defined(__CBAPP_BUILD_CCOUNTER_APP__)
-    # define __CBAPP_APP_TITLE__ "Single Photon Lab " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
 //
-//          1.0B    FDTD APP:
-# elif defined(__CBAPP_BUILD_FDTD_APP__)
-    # define __CBAPP_APP_TITLE__ "CBApp FDTD " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
+//          1.0A.       ** SAME APP TITLE FOR ALL BUILDS **
+#ifndef _CBAPP_USE_DIFFERENTIAL_APP_TITLE
 //
-//          1.0C    EDITOR APP:
-# elif defined(__CBAPP_BUILD_EDITOR_APP__)
-    # define __CBAPP_APP_TITLE__ "CBApp Editor " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
 //
-//          1.0Z    DEFAULT APPLICATION NAME:
-# else
     # define __CBAPP_APP_TITLE__ "CBApp " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
-#endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
+//
+//
+//          1.0B.       ** DIFFERENT APP TITLE FOR EACH BUILD OPTION **
+# else
+//
+//
+    //          1.0A    COINCIDENCE COUNTER APP:
+    #if defined(__CBAPP_BUILD_CCOUNTER_APP__)
+        # define __CBAPP_APP_TITLE__ "Single Photon Lab " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
+    //
+    //          1.0B    FDTD APP:
+    # elif defined(__CBAPP_BUILD_FDTD_APP__)
+        # define __CBAPP_APP_TITLE__ "CBApp FDTD " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
+    //
+    //          1.0C    EDITOR APP:
+    # elif defined(__CBAPP_BUILD_EDITOR_APP__)
+        # define __CBAPP_APP_TITLE__ "CBApp Editor " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
+    //
+    //          1.0Z    DEFAULT APPLICATION NAME:
+    # else
+        # define __CBAPP_APP_TITLE__ "CBApp " __CBAPP_VERSION__ " (Build " __CBAPP_BUILD__ ", WIP)"
+    #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
+//
+//
+#endif  //  _CBAPP_USE_DIFFERENTIAL_APP_TITLE  //
 
 
 
@@ -165,7 +182,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEBUGGER_WINDOW_FLAGS        = Im
     #define _CBAPP_DEBUG_WINDOWS(X)                                                                                                                         \
 /*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                              DOCKSPACE.                  */      \
 /*|========================================================================================================================================|        */      \
-    X(CBDebugger          , "CBDebugger"                  , false                 , _CBAPP_DEBUGGER_WINDOW_FLAGS        /**/                        )       \
+    X(CBDebugger          , "CBDebugger"                  , true                  , _CBAPP_DEBUGGER_WINDOW_FLAGS        /**/                        )       \
     X(ImGuiMetrics        , "Dear ImGui Metrics/Debugger" , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
     X(ImPlotMetrics       , "ImPlot Metrics"              , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
     X(ImGuiIDStackTool    , "ImGui ID Stack Tool"         , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
