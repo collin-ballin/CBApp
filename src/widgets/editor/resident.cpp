@@ -269,7 +269,7 @@ inline void Editor::_DEBUGGER_state_dragging(const float LABEL_W, const float WI
         ImGui::Columns(M, uuid, COLUMN_FLAGS);
         //
         //
-        for (int i = 0; i < N; ++i, idx = static_cast<size_t>(i) )
+        for ( int i = 0; i < N; ++i, idx = static_cast<size_t>(i) )
         {
             const bool      enabled     = s_bools[idx];
             
@@ -280,7 +280,6 @@ inline void Editor::_DEBUGGER_state_dragging(const float LABEL_W, const float WI
                 ++count;
             }
         }
-              
         //
         //
         ImGui::Columns(1);      //  END COLUMNS...
@@ -409,8 +408,9 @@ void Editor::_DEBUGGER_misc(void) const noexcept
 {
     static float                LABEL_W                 = 0.85f * m_style.ms_SETTINGS_LABEL_WIDTH;
     static const float &        WIDGET_W                = m_style.ms_SETTINGS_WIDGET_WIDTH;
-    static bool                 misc_1                  = false;
-    static bool                 misc_2                  = true;
+    static bool                 misc_1                  = true;
+    static bool                 misc_2                  = false;
+    static bool                 misc_3                  = false;
     
     
     
@@ -418,6 +418,8 @@ void Editor::_DEBUGGER_misc(void) const noexcept
     ImGui::Checkbox("Misc 1##Debugger_Misc_ShowMisc1",     &misc_1);
     ImGui::SameLine();
     ImGui::Checkbox("Misc 2##Debugger_Misc_ShowMisc1",     &misc_2);
+    ImGui::SameLine();
+    ImGui::Checkbox("Misc 3##Debugger_Misc_ShowMisc1",     &misc_3);
     
     ImGui::Separator();
                 
@@ -433,6 +435,7 @@ void Editor::_DEBUGGER_misc(void) const noexcept
                 
     if (misc_1)     { this->_DEBUGGER_misc_1      (LABEL_W, WIDGET_W); }
     if (misc_2)     { this->_DEBUGGER_misc_2      (LABEL_W, WIDGET_W); }
+    if (misc_3)     { this->_DEBUGGER_misc_3      (LABEL_W, WIDGET_W); }
     
 
     return;
@@ -443,7 +446,52 @@ void Editor::_DEBUGGER_misc(void) const noexcept
 //      MISC UTILITIES...
 // *************************************************************************** //
 
+//  "_DEBUGGER_misc_1"
+//
 inline void Editor::_DEBUGGER_misc_1(const float LABEL_W, const float WIDGET_W) const noexcept
+{
+    //              1.1.      "this"...
+    ImGui::TextDisabled("This...");
+    ImGui::Indent();
+    //
+        this->S.labelf("this->m_dragging:", LABEL_W, WIDGET_W);             //  1.1A.   this->m_dragging.
+        S.print_TF( this->m_dragging );
+    //
+    ImGui::Unindent();
+    
+    
+    
+    //              1.3.      "m_boxdrag" OBJECT...
+    ImGui::TextDisabled("MoveDrag / m_movedrag...");
+    ImGui::Indent();
+    //
+        //
+        S.ConditionalText( this->m_movedrag.active,    "active",        this->S.SystemColor.Green );
+    //
+    ImGui::Unindent();
+    
+    
+    
+    //              1.4.      "m_boxdrag" OBJECT...
+    ImGui::TextDisabled("BoxDrag / m_boxdrag...");
+    ImGui::Indent();
+    //
+        S.ConditionalText( this->m_boxdrag.active,    "active",        this->S.SystemColor.Green );
+        //
+        //  this->S.labelf(".view.hover_idx.has_value():", LABEL_W, WIDGET_W);
+        //  S.print_TF( this->m_boxdrag.view.hover_idx.has_value() );
+    //
+    ImGui::Unindent();
+    
+    
+
+    return;
+}
+
+
+//  "_DEBUGGER_misc_2"
+//
+inline void Editor::_DEBUGGER_misc_2(const float LABEL_W, const float WIDGET_W) const noexcept
 {
     //      1.      QUERY...
     //
@@ -481,9 +529,12 @@ inline void Editor::_DEBUGGER_misc_1(const float LABEL_W, const float WIDGET_W) 
 }
 
 
-//  "_DEBUGGER_misc_2"
+
+
+
+//  "_DEBUGGER_misc_3"
 //
-inline void Editor::_DEBUGGER_misc_2(const float LABEL_W, const float WIDGET_W) const noexcept
+inline void Editor::_DEBUGGER_misc_3(const float LABEL_W, const float WIDGET_W) const noexcept
 {
     //      1.      PEN-TOOL STATE...
     ImGui::TextDisabled("PenState");

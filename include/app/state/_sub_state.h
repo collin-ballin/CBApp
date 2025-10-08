@@ -69,11 +69,6 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 
 
 
-
-
-
-
-
 //  "MenuState_t"
 //      PLAIN-OLD-DATA (POD) STRUCT.
 //
@@ -90,6 +85,11 @@ struct MenuState_t
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
+    
+    //  "_MakeOrchid"
+    [[nodiscard]] static inline Orchid &    _MakeOrchid                     (void) noexcept {
+        static Orchid s_orchid{};   return s_orchid;
+    }
     
 //
 // *************************************************************************** //
@@ -116,8 +116,10 @@ struct MenuState_t
     //
     //                                  SUB-STATE INFORMATION:
     MenuCallbacks                           m_callbacks                     = {   };
-    Orchid                                  m_orchid                        {   };
+    //
+    inline static Orchid &                  m_orchid                        = _MakeOrchid();
     
+
 
     // *************************************************************************** //
     //
@@ -233,8 +235,18 @@ struct MenuState_t
     // *************************************************************************** //
     //      2.B. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
-    //  "_no_op"
-    //  inline void                         _no_op                              (void)      { return; };
+    
+    //  "DrawCustomMenus"
+    inline void                         DrawCustomMenus             (void) const noexcept
+    {
+        for ( const auto & menu : this->m_callbacks.custom_menus )
+        {
+            ImGui::BeginMenu( menu.label.c_str() );
+                menu.render_fn();
+            ImGui::EndMenu();
+        }
+        return;
+    }
 
 
     // *************************************************************************** //

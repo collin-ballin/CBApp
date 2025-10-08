@@ -69,39 +69,52 @@ void MenuBar::Begin([[maybe_unused]] const char *       uuid,
                     [[maybe_unused]] bool *             p_open,
                     [[maybe_unused]] ImGuiWindowFlags   flags)
 {
-    if (ImGui::BeginMainMenuBar())
+    using                               namespace               app;
+    const app::MenuState_t &            MS                      = this->S.GetMenuState();
+    const bool                          has_custom_menus        = MS.has_capability(CBMenuCapabilityFlags_CustomMenus   );
+
+
+    if ( ImGui::BeginMainMenuBar() )
     {
-        if (ImGui::BeginMenu("CBApp")) {        //  0.  "CBApp" MENU...
+        if ( ImGui::BeginMenu("CBApp") )    {       //  0.  "CBApp" MENU...
             this->CBAppMenubar();
             ImGui::EndMenu();
         }
         
-        if (ImGui::BeginMenu("File")) {         //  1.  "File" MENU...
+        if ( ImGui::BeginMenu("File") )     {       //  1.  "File" MENU...
             this->FileMenubar();
             ImGui::EndMenu();
         }
         
-        if (ImGui::BeginMenu("Edit")) {         //  2.  "Edit" MENU...
+        if ( ImGui::BeginMenu("Edit") )     {       //  2.  "Edit" MENU...
             this->EditMenubar();
             ImGui::EndMenu();
         }
         
-        if (ImGui::BeginMenu("View")) {         //  3.  "View" MENU...
+        if ( ImGui::BeginMenu("View") )     {       //  3.  "View" MENU...
             this->ViewMenubar();
             ImGui::EndMenu();
         }
         
-        if (ImGui::BeginMenu("Window")) {       //  4.  "Window" MENU...
+        
+        //      X.      CUSTOM MENUBAR MENUS...
+        if ( has_custom_menus )
+        {
+            MS.DrawCustomMenus();
+        }
+        
+        
+        if ( ImGui::BeginMenu("Window") )   {       //  4.  "Window" MENU...
             this->WindowMenubar();
             ImGui::EndMenu();
         }
         
-        if (ImGui::BeginMenu("Tools")) {        //  5.  "Tools" MENU...
+        if ( ImGui::BeginMenu("Tools") )    {       //  5.  "Tools" MENU...
             this->ToolsMenubar();
             ImGui::EndMenu();
         }
         
-        if (ImGui::BeginMenu("Help")) {         //  X.  "Help" MENU...
+        if ( ImGui::BeginMenu("Help") )     {       //  X.  "Help" MENU...
             this->HelpMenubar();
             ImGui::EndMenu();
         }
@@ -238,8 +251,8 @@ void MenuBar::FileMenubar(void)
     [[maybe_unused]] ImGuiStyle &       style                   = ImGui::GetStyle();
     const app::MenuState_t &            MS                      = S.GetMenuState();
     //
-    const bool                          has_file_new            = MS.has_capability(CBMenuCapabilityFlags_FileNew);
-    const bool                          has_file_open           = MS.has_capability(CBMenuCapabilityFlags_FileNew);
+    const bool                          has_file_new            = MS.has_capability(CBMenuCapabilityFlags_FileNew   );
+    const bool                          has_file_open           = MS.has_capability(CBMenuCapabilityFlags_FileOpen  );
     //  static cblib::ndmatrix<float>   test(4,4);
     
     
@@ -494,32 +507,26 @@ inline void MenuBar::file_imgui_submenu(void)
 //
 void MenuBar::EditMenubar(void)
 {
-    using                           cblib::containers::Orchid;
-    constexpr bool                  ENABLE_CUT              = false;
-    constexpr bool                  ENABLE_COPY             = false;
-    constexpr bool                  ENABLE_PASTE            = false;
-    //
-    //
-    //
     using                           cblib::utl::strcat_literals_cx;
     using                           namespace               app;
-    //
     static constexpr auto           s_UNDO_LABEL            = strcat_literals_cx( ICON_FA_ROTATE_LEFT       , "  "      , "Undo"  );
     static constexpr auto           s_REDO_LABEL            = strcat_literals_cx( ICON_FA_ROTATE_RIGHT      , "  "      , "Redo"  );
-    //
-    //
     //
     ImGuiIO &                       io                      = ImGui::GetIO();
     const app::MenuState_t &        MS                      = S.GetMenuState();
     //
+    //
+    const bool                      c_has_cut               = MS.has_capability(CBMenuCapabilityFlags_EditCopy      );
+    const bool                      c_has_copy              = MS.has_capability(CBMenuCapabilityFlags_EditCopy      );
+    const bool                      c_has_paste             = MS.has_capability(CBMenuCapabilityFlags_EditPaste     );
+    const bool                      can_undo                = MS.can_undo();
+    const bool                      can_redo                = MS.can_redo();
+    //
+    //
     static Orchid::size_type        s_uuid                  = Orchid::size_type( -1 );
     static std::string              s_redo_label            = {   };
     static std::string              s_undo_label            = {   };
-    //
-    //
-    //
-    const bool                      can_undo                = MS.can_undo();
-    const bool                      can_redo                = MS.can_redo();
+    
     
     
     //      1.      UPDATE "Orchid" DIRTY CACHE...
@@ -546,51 +553,48 @@ void MenuBar::EditMenubar(void)
     
     
     
-    //      1.      UNDO / REDO...
+    //      2.      UNDO / REDO...
     //
-    //              1A.     UNDO.
+    //              2A.     UNDO.
     ImGui::BeginDisabled(!can_undo);
         if ( ImGui::MenuItem( (can_undo) ?  s_undo_label.c_str()    : s_UNDO_LABEL.data() , "CTRL Z") )
             { io.AddKeyEvent(ImGuiMod_Shift,true);      io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
     ImGui::EndDisabled();
     //
     //
-    //              1B.     REDO.
+    //              2B.     REDO.
     ImGui::BeginDisabled(!can_redo);
+    #ifdef __APPLE__
         if ( ImGui::MenuItem(s_REDO_LABEL.data(),           "SHIFT CTRL Z") )
             { io.AddKeyEvent(ImGuiMod_Shift,true);      io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Z,true); }
-            
-            
-    //  #ifdef __APPLE__
-    //  #else
-    //      if ( ImGui::MenuItem(s_redo_l.data(),           "CTRL Y") )
-    //          { io.AddKeyEvent(ImGuiMod_Ctrl,true);       io.AddKeyEvent(ImGuiKey_Y,true); }
-    //  #endif  //  __APPLE__  //
-    
+    #else
+        if ( ImGui::MenuItem(s_REDO_LABEL.data(),           "CTRL Y") )
+            { io.AddKeyEvent(ImGuiMod_Ctrl,true);     io.AddKeyEvent(ImGuiKey_Y,true); }
+    #endif  //  __APPLE__  //
     ImGui::EndDisabled();
     
     
     
     
     
-    //      2.      CUT / COPY...
+    //      3.      CUT / COPY...
     ImGui::Separator();
-    ImGui::BeginDisabled(ENABLE_CUT);
+    ImGui::BeginDisabled(c_has_cut);
         if (ImGui::MenuItem("Cut",                              nullptr))           { }
     ImGui::EndDisabled();
     //
-    ImGui::BeginDisabled(ENABLE_COPY);
-        if (ImGui::MenuItem("Copy",                             "CTRL+C"))          { }
+    ImGui::BeginDisabled(c_has_copy);
+        if (ImGui::MenuItem("Copy",                             "CTRL C"))          { }
     ImGui::EndDisabled();
     
     
     
-    //  3.  "Paste" SUB-MENU...
-    ImGui::BeginDisabled(ENABLE_PASTE);
+    //  4.  "Paste" SUB-MENU...
+    ImGui::BeginDisabled(c_has_paste);
         if (ImGui::BeginMenu("Paste")) {
-            ImGui::MenuItem("Paste",                            "CTRL+V",           nullptr);
-            ImGui::MenuItem("Paste Special",                    "SHIFT+CTRL+V",     nullptr);
-            ImGui::MenuItem("Paste and Preserve Formatting",    "CTRL+ALT+V",       nullptr);
+            ImGui::MenuItem("Paste",                            "CTRL V",           nullptr);
+            ImGui::MenuItem("Paste Special",                    "SHIFT CTRL V",     nullptr);
+            ImGui::MenuItem("Paste and Preserve Formatting",    "CTRL ALT V",       nullptr);
             ImGui::EndMenu();
         }
     ImGui::EndDisabled();

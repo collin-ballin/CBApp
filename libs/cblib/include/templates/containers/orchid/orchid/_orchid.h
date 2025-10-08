@@ -302,13 +302,13 @@ public:
     
     //  "get_undo_label"
     [[nodiscard]] inline std::optional< std::string_view >      get_undo_label  (void) const noexcept       {
-        if ( this->can_undo() )     { return std::nullopt; }
+        if ( !this->can_undo() )    { return std::nullopt; }
         return ( this->m_history[ m_cursor - 1 ]->label() );
     }
     //
     [[nodiscard]] inline std::optional< std::string_view >      get_redo_label  (void) const noexcept       {
-        if ( this->can_redo() )     { return std::nullopt; }
-        return ( this->m_history[ m_cursor + 1 ]->label() );
+        if ( !this->can_redo() )    { return std::nullopt; }
+        return ( this->m_history[ m_cursor ]->label() );
     }
     
     

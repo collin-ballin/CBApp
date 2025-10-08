@@ -754,6 +754,12 @@ protected:
     //
     //                              MISC. CONTEXT MENUS:
     bool                                _show_tool_selection_menu           (const Mode) noexcept;
+    //
+    //
+    //
+    //                              CUSTOM MENUBAR MENUS:
+    void                                _MENUBAR_object_menu                (void) noexcept;
+    
     
     // *************************************************************************** //
     //
@@ -773,6 +779,7 @@ protected:
     void                                    _DEBUGGER_misc                  (void) const noexcept;
     inline void                                 _DEBUGGER_misc_1            (const float , const float ) const noexcept;
     inline void                                 _DEBUGGER_misc_2            (const float , const float ) const noexcept;
+    inline void                                 _DEBUGGER_misc_3            (const float , const float ) const noexcept;
     //
     void                                    _debugger_hit_detection             (void);
     void                                    _debugger_interaction               (void);

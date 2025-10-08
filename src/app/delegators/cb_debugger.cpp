@@ -216,7 +216,6 @@ inline void CBDebugger::TestOrchid(void) noexcept
 {
     static int              value               = 0;
     static bool             flag                = false;
-    static Orchid           history             {   };
     //
     //
     //
@@ -294,8 +293,8 @@ inline void CBDebugger::TestOrchid(void) noexcept
 
 
     //      X.          QUERY USER INPUT...
-    if ( invoke_undo )          { this->S.OrchidUndo(); }         //  UNDO.   [ CTRL Z ].
-    if ( invoke_redo )          { this->S.OrchidRedo(); }         //  REDO.   [ CTRL SHIFT Z ].
+    //  if ( invoke_undo )          { this->S.OrchidUndo(); }         //  UNDO.   [ CTRL Z ].
+    //  if ( invoke_redo )          { this->S.OrchidRedo(); }         //  REDO.   [ CTRL SHIFT Z ].
 
     return;
 }

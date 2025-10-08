@@ -639,16 +639,16 @@ enum CBMenuCapabilityFlags_ : uint64_t {
     CBMenuCapabilityFlags_FileSaveAs            = 1u <<  3,
     CBMenuCapabilityFlags_FileExport	        = 1u <<  4,
 //
-    CBMenuCapabilityFlags_EditUndo		        = 1u <<  5,         //  "Edit" Menu.
-    CBMenuCapabilityFlags_EditRedo              = 1u <<  6,
-    CBMenuCapabilityFlags_EditCopy              = 1u <<  7,
-    CBMenuCapabilityFlags_EditPaste		        = 1u <<  8,
+    CBMenuCapabilityFlags_EditCopy              = 1u <<  5,         //  "Edit" Menu.
+    CBMenuCapabilityFlags_EditPaste		        = 1u <<  6,
 //
-    CBMenuCapabilityFlags_CustomFile		    = 1u <<  9,         //  "Custom" Flags...
-    CBMenuCapabilityFlags_CustomEdit		    = 1u << 10,
-    CBMenuCapabilityFlags_CustomView		    = 1u << 11,
-    CBMenuCapabilityFlags_CustomWindow	        = 1u << 12,
-    CBMenuCapabilityFlags_CustomHelp		    = 1u << 13,
+    CBMenuCapabilityFlags_CustomFile		    = 1u <<  7,         //  "Custom" Flags...
+    CBMenuCapabilityFlags_CustomEdit		    = 1u <<  8,
+    CBMenuCapabilityFlags_CustomView		    = 1u <<  9,
+    CBMenuCapabilityFlags_CustomWindow	        = 1u << 10,
+    CBMenuCapabilityFlags_CustomHelp		    = 1u << 11,
+//
+    CBMenuCapabilityFlags_CustomMenus		    = 1u << 12,         //  Has Custom Menus...
 //
 //
     CBMenuCapabilityFlags_COUNT,
@@ -659,15 +659,30 @@ enum CBMenuCapabilityFlags_ : uint64_t {
 };
 
 
+
+
+
+
 //  "MenuCallbacks"
 //
-struct MenuCallbacks {
-	std::function<void()>	    file;		    //  Called inside   "File"      menu.
-	std::function<void()>	    edit;		    //  Called inside   "Edit"      menu.
-	std::function<void()>	    view;		    //  Called inside   "View"      menu.
-    std::function<void()>       window;         //  Called inside   "Window"    menu.
-	std::function<void()>	    tools;		    //  Called inside   "Tools"     menu.
-	std::function<void()>	    help;		    //  Called inside   "Help"      menu.
+//  template <typename T = std::function<void()> >
+struct MenuCallbacks
+{
+    struct MenuInfo {
+        std::string                 label           {   };
+        std::function<void()>       render_fn       {   };
+    };
+//
+//
+//
+	std::function<void()>	                file            ;       //  Called inside   "File"      menu.
+	std::function<void()>	                edit            ;       //  Called inside   "Edit"      menu.
+	std::function<void()>	                view            ;       //  Called inside   "View"      menu.
+    std::function<void()>                   window          ;       //  Called inside   "Window"    menu.
+	std::function<void()>	                tools           ;	    //  Called inside   "Tools"     menu.
+	std::function<void()>	                help            ;	    //  Called inside   "Help"      menu.
+//
+    std::vector< MenuInfo >                 custom_menus    ;
 };
 
 

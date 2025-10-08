@@ -249,36 +249,11 @@ void App::OpenHandler(void)
 
 
 //  "UndoHandler"
-//
-void App::UndoHandler(void)
-{
-    switch ( S.GetCurrentApplet() ) {
-        case Applet::CCounterApp            : { this->m_counter_app     .undo();        break; }
-        case Applet::EditorApp              : { this->m_editor_app      .undo();        break; }
-        case Applet::GraphApp               : { this->m_graph_app       .undo();        break; }
-        case Applet::MimicApp               : { /* ... */                               break; }
-        default                             : { this->UndoHandler_Default();            break; }
-    }
-    
-    return;
-}
+void App::UndoHandler(void)     { this->S.OrchidUndo();   return; }
 
 
 //  "RedoHandler"
-//
-void App::RedoHandler(void)
-{
-    switch ( S.GetCurrentApplet() ) {
-        case Applet::CCounterApp            : { this->m_counter_app     .redo();        break; }
-        case Applet::EditorApp              : { this->m_editor_app      .redo();        break; }
-        case Applet::GraphApp               : { this->m_graph_app       .redo();        break; }
-        case Applet::MimicApp               : { /* ... */                               break; }
-        default                             : { this->RedoHandler_Default();            break; }
-    }
-    
-    return;
-}
-
+void App::RedoHandler(void)     { this->S.OrchidRedo();   return; }
 
 
 

@@ -434,9 +434,6 @@ inline void Editor::_selection_context_multi([[maybe_unused]] const Interaction 
 // *************************************************************************** //
 // *************************************************************************** //
 
-
-
-
 //  "_show_tool_selection_menu"
 //
 bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
@@ -562,18 +559,6 @@ bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     //  #ifndef _TEMP_USE_SELECTABLE
     //  //
     //      ImGui::AlignTextToFramePadding();
@@ -614,6 +599,33 @@ bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
 
 
 
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      5.      CUSTOM MENU-BAR MENUS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_MENUBAR_object_menu"
+//
+void Editor::_MENUBAR_object_menu(void) noexcept
+{
+    return;
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "5.  MENUBAR".
 
 
 

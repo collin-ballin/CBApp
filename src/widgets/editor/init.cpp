@@ -39,13 +39,27 @@ Editor::Editor(app::AppState & src)
     , m_render_ctx          ( world_to_pixels, find_vertex, m_vertices                          )
     , m_vertex_style        ( world_to_pixels, ms_VERTEX_STYLES[ VertexStyleType::Default ]     )
 {
-    namespace           fs                          = std::filesystem;
+    using                   namespace               app;
+    namespace               fs                      = std::filesystem;
     this->m_window_class.DockNodeFlagsOverrideSet   = ImGuiDockNodeFlags_HiddenTabBar;
     
     
     
-    //      INITIALIZE THE EDITOR'S MENU STATE...
-    this->m_menu_state->m_capabilities              = app::CBMenuCapabilityFlags_None;
+    //      1.      INITIALIZE THE EDITOR'S MENU STATE...
+    MenuState &             MS          = *this->m_menu_state;
+    //
+    //              1.1.    ASSIGN MENU-CALLBACKS.
+    //  MS.m_callbacks.custom_menus         = {
+    //      {
+    //          /*  label       */    "Object"
+    //          /*  render_fn   */  , [this] { _MENUBAR_object_menu(); }
+    //      }
+    //  };
+    //  MS.set_capability                   (CBMenuCapabilityFlags_CustomMenus);
+    MS.m_capabilities                   = app::CBMenuCapabilityFlags_None;
+    
+    
+    
     
     
     
@@ -78,9 +92,9 @@ Editor::Editor(app::AppState & src)
     //      3.      INITIALIZE FUNCTIONS FOR DEBUGGER OVERLAY WINDOW...
     //  using               DebugItem                   = DebuggerState::DebugItem;
     this->m_debugger.windows    = { {
-          {   "State"         , true            , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_state           (); }       }
-        , {   "Canvas"        , false           , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_canvas          (); }       }
-        , {   "Misc."         , true            , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_misc            (); }       }
+          {   "State"         , false          , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_state           (); }       }
+        , {   "Canvas"        , false          , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_canvas          (); }       }
+        , {   "Misc."         , true           , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_misc            (); }       }
     } };
     //
     //  this->m_debugger.windows    = {{

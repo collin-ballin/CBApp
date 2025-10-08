@@ -679,20 +679,20 @@ bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br) const
 //
 void Editor::_start_bbox_drag(const Editor::BoxDrag::Anchor handle_idx, const ImVec2 tl_exp, const ImVec2 br_exp)
 {
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO &       io          = ImGui::GetIO();
 
-    m_boxdrag             = {};
-    m_boxdrag.active      = true;
-    m_boxdrag.first_frame = true;
-    m_boxdrag.handle_idx  = handle_idx;
-    m_boxdrag.bbox_tl_ws  = tl_exp;
-    m_boxdrag.bbox_br_ws  = br_exp;
-    m_boxdrag.orig_w      = br_exp.x - tl_exp.x;
-    m_boxdrag.orig_h      = br_exp.y - tl_exp.y;
+    m_boxdrag                   = {   };
+    m_boxdrag.active            = true;
+    m_boxdrag.first_frame       = true;
+    m_boxdrag.handle_idx        = handle_idx;
+    m_boxdrag.bbox_tl_ws        = tl_exp;
+    m_boxdrag.bbox_br_ws        = br_exp;
+    m_boxdrag.orig_w            = br_exp.x - tl_exp.x;
+    m_boxdrag.orig_h            = br_exp.y - tl_exp.y;
 
-    m_boxdrag.mouse_ws0   = pixels_to_world(io.MousePos);
-    m_boxdrag.handle_ws0  = BoxDrag::AnchorToWorldPos(handle_idx, tl_exp, br_exp);
-    m_boxdrag.anchor_ws   = BoxDrag::OppositePivot   (handle_idx, tl_exp, br_exp);
+    m_boxdrag.mouse_ws0         = pixels_to_world(io.MousePos);
+    m_boxdrag.handle_ws0        = BoxDrag::AnchorToWorldPos(handle_idx, tl_exp, br_exp);
+    m_boxdrag.anchor_ws         = BoxDrag::OppositePivot   (handle_idx, tl_exp, br_exp);
 
     m_boxdrag.v_ids             .clear();
     m_boxdrag.v_orig            .clear();
@@ -700,11 +700,13 @@ void Editor::_start_bbox_drag(const Editor::BoxDrag::Anchor handle_idx, const Im
     m_boxdrag.v_orig            .reserve(m_sel.vertices.size());
     
     
+    
     for (VertexID vid : m_sel.vertices)
     {
-        if ( const Vertex * v = find_vertex(m_vertices, vid) ) {
-            m_boxdrag.v_ids .push_back(vid);
-            m_boxdrag.v_orig.push_back(ImVec2{v->x, v->y});
+        if ( const Vertex * v = find_vertex(m_vertices, vid) )
+        {
+            m_boxdrag.v_ids         .push_back(vid);
+            m_boxdrag.v_orig        .push_back(ImVec2{v->x, v->y});
         }
     }
     
@@ -716,7 +718,7 @@ void Editor::_start_bbox_drag(const Editor::BoxDrag::Anchor handle_idx, const Im
 //
 void Editor::_update_bbox(void)
 {
-    using           BBAnchor    = BoxDrag::Anchor;
+    //  using           BBAnchor    = BoxDrag::Anchor;
     ImGuiIO &       io          = ImGui::GetIO();
     
     if ( !m_boxdrag.active )    { return; }
@@ -783,8 +785,8 @@ void Editor::_update_bbox(void)
     //      5.      End gesture
     if ( !io.MouseDown[ImGuiMouseButton_Left] )
     {
-        m_boxdrag.active = false;
-        m_boxdrag.first_frame = true;
+        m_boxdrag.active        = false;
+        m_boxdrag.first_frame   = true;
     }
     else
     {
