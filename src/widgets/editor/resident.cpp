@@ -255,7 +255,9 @@ inline void Editor::_DEBUGGER_state_dragging(const float LABEL_W, const float WI
     
     s_bools[0]          = this->m_dragging;
     s_bools[1]          = this->m_dragging_handle;
+#ifndef _EDITOR_REDUCE_REDUNDANCY
     s_bools[2]          = this->m_drawing;
+#endif  //  _EDITOR_REDUCE_REDUNDANCY  //
     //
     uint8_t     count   = 0;
     size_t      idx     = 0;
@@ -450,6 +452,9 @@ void Editor::_DEBUGGER_misc(void) const noexcept
 //
 inline void Editor::_DEBUGGER_misc_1(const float LABEL_W, const float WIDGET_W) const noexcept
 {
+    const bool      active          = ( this->m_dragging  ||  this->m_boxdrag.active );
+
+
     //              1.1.      "this"...
     ImGui::TextDisabled("This...");
     ImGui::Indent();
@@ -465,8 +470,15 @@ inline void Editor::_DEBUGGER_misc_1(const float LABEL_W, const float WIDGET_W) 
     ImGui::TextDisabled("MoveDrag / m_movedrag...");
     ImGui::Indent();
     //
-        //
-        S.ConditionalText( this->m_movedrag.active,    "active",        this->S.SystemColor.Green );
+        if ( active )
+        {
+            ImGui::Text(
+                  "%zu IDs,\t%zu Origins"
+                , this->m_movedrag.v_ids.size()
+                , this->m_movedrag.v_orig.size()
+            );
+        }
+    //  S.ConditionalText( this->m_movedrag.active,    "active",        this->S.SystemColor.Green );
     //
     ImGui::Unindent();
     
@@ -477,6 +489,15 @@ inline void Editor::_DEBUGGER_misc_1(const float LABEL_W, const float WIDGET_W) 
     ImGui::Indent();
     //
         S.ConditionalText( this->m_boxdrag.active,    "active",        this->S.SystemColor.Green );
+        //
+        if ( active )
+        {
+            ImGui::Text(
+                  "%zu IDs,\t%zu Origins"
+                , this->m_boxdrag.v_ids.size()
+                , this->m_boxdrag.v_orig.size()
+            );
+        }
         //
         //  this->S.labelf(".view.hover_idx.has_value():", LABEL_W, WIDGET_W);
         //  S.print_TF( this->m_boxdrag.view.hover_idx.has_value() );
@@ -506,14 +527,17 @@ inline void Editor::_DEBUGGER_misc_2(const float LABEL_W, const float WIDGET_W) 
     //
     this->S.labelf("this->m_dragging_handle:", LABEL_W, WIDGET_W);      //  1.1C.   this->m_dragging_handle.
     S.print_TF( this->m_dragging_handle );
+    //
+    //  this->S.labelf("this->m_drawing:", LABEL_W, WIDGET_W);              //  1.1D.   this->m_drawing.
+    //  S.print_TF( this->m_drawing );
     
     
     
     //              1.3.      "m_boxdrag" OBJECT...
     ImGui::TextDisabled("m_movedrag");
     //
-    this->S.labelf(".active:", LABEL_W, WIDGET_W);
-    S.print_TF( this->m_movedrag.active );
+    //  this->S.labelf(".active:", LABEL_W, WIDGET_W);
+    //  S.print_TF( this->m_movedrag.active );
     
     
     

@@ -987,7 +987,6 @@ struct PathHit_t {
 // *************************************************************************** //
 // *************************************************************************** //
 
-
 //  "GridState"
 //      PLAIN-OLD-DATA (POD) STRUCT.
 //
@@ -1946,7 +1945,9 @@ struct MoveDrag_t
 //
 //
 //
+#ifndef _EDITOR_REDUCE_REDUNDANCY
     bool                        active              = false;
+#endif  //  _EDITOR_REDUCE_REDUNDANCY  //
     ImVec2                      anchor_ws           {0.0f,      0.0f};   // top-left of selection at mouse-press
     ImVec2                      press_ws            {0.0f,      0.0f};
     ImVec2                      cum_delta           {0.0f,      0.0f};   // accumulated world-space translation
@@ -2003,10 +2004,14 @@ struct BoxDrag_t
     ImVec2                      anchor_ws                           = { 0.0f,    0.0f };
     ImVec2                      bbox_tl_ws                          = { 0.0f,    0.0f };
     ImVec2                      bbox_br_ws                          = { 0.0f,    0.0f };
-//
+    
+    
+//  _EDITOR_REDUCE_REDUNDANCY
     std::vector<vertex_id>      v_ids;
     std::vector<ImVec2>         v_orig;
 //
+
+
     ImVec2                      mouse_ws0                           = {0.0f,    0.0f};
     ImVec2                      handle_ws0;                                 //  initial world‑space position of the dragged handle
     float                       orig_w                              = 1.0f;                 //  original bbox width  (world units)
@@ -2020,6 +2025,10 @@ struct BoxDrag_t
         bool                            valid                               = false;    // recompute if false or revs changed
         bool                            visible                             = false;    // draw/hover only if true
 
+        // NEW.
+        ImVec2                          tl_tight_ws                         { 0.0f,     0.0f },
+                                        br_tight_ws                         { 0.0f,     0.0f };  // NEW: content (tight) bounds in W
+        //
         // Expanded bbox (world & pixels)
         ImVec2                          tl_ws                               { 0.0f,     0.0f };
         ImVec2                          br_ws                               { 0.0f,     0.0f };
@@ -2076,16 +2085,15 @@ struct BoxDrag_t
         {
             case Anchor::NorthWest  : case Anchor::SouthEast :      { return ImGuiMouseCursor_ResizeNWSE;   }       //  NW  , SE
             case Anchor::NorthEast  : case Anchor::SouthWest :      { return ImGuiMouseCursor_ResizeNESW;   }       //  NE  , SW
-            case Anchor::North      : case Anchor::South     :      { return ImGuiMouseCursor_ResizeEW ;    }       //  N   , S
-            case Anchor::East       : case Anchor::West      :      { return ImGuiMouseCursor_ResizeNS;     }       //  E   , W
+            case Anchor::North      : case Anchor::South     :      { return ImGuiMouseCursor_ResizeNS ;    }       //  N   , S
+            case Anchor::East       : case Anchor::West      :      { return ImGuiMouseCursor_ResizeEW;     }       //  E   , W
             //
             default:                                                { return ImGuiMouseCursor_Arrow;        }
         }
     }
 
     //  "AnchorToWorldPos"          FORMERLY: "_bbox_handle_pos_ws"
-    [[nodiscard]]
-    static inline ImVec2                AnchorToWorldPos                    (const Anchor which, const ImVec2 & tl, const ImVec2 & br) noexcept
+    [[nodiscard]] static inline ImVec2  AnchorToWorldPos                    (const Anchor which, const ImVec2 & tl, const ImVec2 & br) noexcept
     {
         const ImVec2    c   { (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };     //  Compute Center.
         switch (which)
@@ -2104,8 +2112,7 @@ struct BoxDrag_t
     }
     
     //  "OppositePivot"             FORMERLY: "_bbox_pivot_opposite"
-    [[nodiscard]]
-    static inline ImVec2                OppositePivot                       (const Anchor which, const ImVec2 & tl, const ImVec2 & br) noexcept
+    [[nodiscard]] static inline ImVec2  OppositePivot                       (const Anchor which, const ImVec2 & tl, const ImVec2 & br) noexcept
     {
         const ImVec2    c   { (tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f };
         switch (which)
@@ -2122,6 +2129,39 @@ struct BoxDrag_t
             default                :        { return {   };                 }   //  DEFAULT.
         }
     }
+    
+    //  "OppositeAnchor"
+    [[nodiscard]] static inline Anchor  OppositeAnchor                      (const Anchor which) noexcept
+    {
+        switch (which) {
+            case Anchor::NorthWest :        { return Anchor::SouthEast;     }
+            case Anchor::North     :        { return Anchor::South;         }
+            case Anchor::NorthEast :        { return Anchor::SouthWest;     }
+            case Anchor::East      :        { return Anchor::West;          }
+            case Anchor::SouthEast :        { return Anchor::NorthWest;     }
+            case Anchor::South     :        { return Anchor::North;         }
+            case Anchor::SouthWest :        { return Anchor::NorthEast;     }
+            case Anchor::West      :        { return Anchor::East;          }
+            default                :        { return which;                 }
+        }
+    }
+
+    //  "AnchorToSign"
+    [[nodiscard]] static inline ImVec2  AnchorToSign                        (const Anchor which) noexcept
+    {
+        switch (which) {
+            case Anchor::NorthWest :        { return { -1.0f,   -1.0f };    }
+            case Anchor::North     :        { return {  0.0f,   -1.0f };    }
+            case Anchor::NorthEast :        { return {  1.0f,   -1.0f };    }
+            case Anchor::East      :        { return {  1.0f,    0.0f };    }
+            case Anchor::SouthEast :        { return {  1.0f,    1.0f };    }
+            case Anchor::South     :        { return {  0.0f,    1.0f };    }
+            case Anchor::SouthWest :        { return { -1.0f,    1.0f };    }
+            case Anchor::West      :        { return { -1.0f,    0.0f };    }
+            default                :        { return { -1.0f,    0.0f };    }
+        }
+    }
+    
 
     // *************************************************************************** //
     //
@@ -2170,6 +2210,17 @@ struct BoxDrag_t
             default :                                       { return false; }
         }
     }
+    
+    
+    
+    //  "TightWSPos"
+    //
+    [[nodiscard]] inline ImVec2         TightWSPos                          (Anchor h, ImVec2 handle_ws, const float margin) noexcept
+    {
+        const ImVec2    hsign   = this->AnchorToSign(h);
+        return { handle_ws.x - hsign.x * margin,  handle_ws.y - hsign.y * margin };
+    }
+
     
 //
 // *************************************************************************** //

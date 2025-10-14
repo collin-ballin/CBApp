@@ -417,7 +417,7 @@ protected:
     bool                                m_pending_clear                 = false;    //  pending click selection state ---
     //
     //                              PEN-TOOL STATE:
-    bool                                m_drawing                       = false;
+    //  bool                                m_drawing                       = false;
     bool                                m_dragging_handle               = false;
     bool                                m_dragging_out                  = true;
     VertexID                            m_drag_vid                      = 0;
@@ -1143,27 +1143,14 @@ protected:
     // *************************************************************************** //
     
     //  "world_to_pixels"
-    //      ImPlot works in double precision; promote, convert back to float ImVec2
-    static inline ImVec2                world_to_pixels                         (ImVec2 w) noexcept {
-        ImPlotPoint p = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));
+    [[nodiscard]] static inline ImVec2  world_to_pixels                         (ImVec2 w) noexcept {
+        ImPlotPoint p = ImPlot::PlotToPixels(ImPlotPoint(w.x, w.y));    // ImPlot works in double precision; promote, convert back to float ImVec2
         return { static_cast<float>(p.x), static_cast<float>(p.y) };
     }
     
-    //  "find_vertex"
-    static inline Vertex *              find_vertex                             (std::vector<Vertex> & verts, VertexID id) noexcept
-        { for (auto & v : verts) {  if (v.id == id) {return &v;}  } return nullptr; }
-    //
-    static inline const Vertex *        find_vertex                             (const std::vector<Vertex> & verts, VertexID id) noexcept
-        { for (auto & v : verts) if (v.id == id) return &v; return nullptr; }
-
-
-    
-    
-    
-    
     //  "pixels_to_world"
-    inline ImVec2                       pixels_to_world                         (ImVec2 scr) const {
-        ImPlotPoint p = ImPlot::PixelsToPlot(scr);// ImPlot uses double; convert back to float for our structs
+    [[nodiscard]] static inline ImVec2  pixels_to_world                         (ImVec2 scr) noexcept {
+        ImPlotPoint p = ImPlot::PixelsToPlot(scr);      // ImPlot uses double; convert back to float for our structs
         return { static_cast<float>(p.x), static_cast<float>(p.y) };
     }
     
@@ -1184,21 +1171,21 @@ protected:
         
         return ws;
     }
-    /*{
-        if ( this->want_snap() ) {
-            float s = m_grid.snap_step;
-            if ( s <= 0.0f )    { return ws; }                    // safety
-            const float inv = 1.0f / s;
-            ws.x = std::round(ws.x * inv) * s;
-            ws.y = std::round(ws.y * inv) * s;
-        }
-        return ws;
-    }*/
-    
     
     //  "want_snap"
     inline bool                         want_snap                               (void) const noexcept
         { return m_grid.snap_on || ImGui::GetIO().KeyShift; }
+    
+    
+    
+    //  "find_vertex"
+    static inline Vertex *              find_vertex                             (std::vector<Vertex> & verts, VertexID id) noexcept
+        { for (auto & v : verts) {  if (v.id == id) {return &v;}  } return nullptr; }
+    //
+    static inline const Vertex *        find_vertex                             (const std::vector<Vertex> & verts, VertexID id) noexcept
+        { for (auto & v : verts) if (v.id == id) return &v; return nullptr; }
+    
+    
     
     // *************************************************************************** //
     

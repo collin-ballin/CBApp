@@ -73,7 +73,9 @@ void Editor::start_move_drag(const ImVec2 & press_ws)
 {
     m_dragging              = true;
     m_movedrag              = {   };
+#ifndef _EDITOR_REDUCE_REDUNDANCY
     m_movedrag.active       = true;
+#endif  //  _EDITOR_REDUCE_REDUNDANCY  //
     m_movedrag.press_ws     = press_ws;
     ImVec2                  tl{ },  br{ };
     
@@ -694,8 +696,13 @@ void Editor::_start_bbox_drag(const Editor::BoxDrag::Anchor handle_idx, const Im
     m_boxdrag.handle_ws0        = BoxDrag::AnchorToWorldPos(handle_idx, tl_exp, br_exp);
     m_boxdrag.anchor_ws         = BoxDrag::OppositePivot   (handle_idx, tl_exp, br_exp);
 
+
+//  #ifndef _EDITOR_REDUCE_REDUNDANCY
     m_boxdrag.v_ids             .clear();
+//  #endif  //  _EDITOR_REDUCE_REDUNDANCY  //
     m_boxdrag.v_orig            .clear();
+    
+    
     m_boxdrag.v_ids             .reserve(m_sel.vertices.size());
     m_boxdrag.v_orig            .reserve(m_sel.vertices.size());
     
@@ -714,43 +721,43 @@ void Editor::_start_bbox_drag(const Editor::BoxDrag::Anchor handle_idx, const Im
 }
 
 
+
+
 //  "_update_bbox"
 //
 void Editor::_update_bbox(void)
 {
-    //  using           BBAnchor    = BoxDrag::Anchor;
-    ImGuiIO &       io          = ImGui::GetIO();
+    //  using           BBAnchor        = BoxDrag::Anchor;
+    ImGuiIO &       io                  = ImGui::GetIO();
     
-    if ( !m_boxdrag.active )    { return; }
+    if ( !m_boxdrag.active )            { return; }
 
 
     //      1.      Read/snaps the mouse in *world* space
-    ImVec2          M           = pixels_to_world(io.MousePos);
-    if ( want_snap() )          { M = snap_to_grid(M); }
+    ImVec2          M                   = this->pixels_to_world(io.MousePos);
 
 
     //      2.      Establish original box & the pivot for this frame
-    const ImVec2    tl0     = m_boxdrag.bbox_tl_ws;
-    const ImVec2    br0     = m_boxdrag.bbox_br_ws;
-    const ImVec2    c0      { (tl0.x + br0.x) * 0.5f, (tl0.y + br0.y) * 0.5f };
+    const ImVec2    tl0                 = m_boxdrag.bbox_tl_ws;
+    const ImVec2    br0                 = m_boxdrag.bbox_br_ws;
+    const ImVec2    c0                  { (tl0.x + br0.x) * 0.5f, (tl0.y + br0.y) * 0.5f };
 
 
     //      Allow “scale from center” while Alt is held *during* drag
-    const bool      scale_from_center = alt_down();
-    const ImVec2    P       = (scale_from_center)
-                                ? c0 : BoxDrag::OppositePivot(m_boxdrag.handle_idx, tl0, br0);
+    const bool      scale_from_center   = alt_down();
+    const ImVec2    P                   = (scale_from_center)
+                                            ? c0 : BoxDrag::OppositePivot(m_boxdrag.handle_idx, tl0, br0);
 
     //      Initial handle position relative to pivot (frozen at start)
-    const ImVec2    H0              = BoxDrag::AnchorToWorldPos(m_boxdrag.handle_idx, tl0, br0);
+    const ImVec2    H0                  = BoxDrag::AnchorToWorldPos(m_boxdrag.handle_idx, tl0, br0);
 
 
     //      3.      Compute per-axis scale from the ratio (mouse-to-pivot) / (handle0-to-pivot)
-    float           sx              = 1.0f, sy = 1.0f;
-
-
-    const bool      is_corner       = BoxDrag::IsDiagonal       (m_boxdrag.handle_idx);
-    const bool      is_side_ns      = BoxDrag::IsVertical       (m_boxdrag.handle_idx);
-    const bool      is_side_ew      = BoxDrag::IsHorizontal     (m_boxdrag.handle_idx);
+    float           sx                  = 1.0f,
+                    sy                  = 1.0f;
+    const bool      is_corner           = BoxDrag::IsDiagonal       (m_boxdrag.handle_idx);
+    const bool      is_side_ns          = BoxDrag::IsVertical       (m_boxdrag.handle_idx);
+    const bool      is_side_ew          = BoxDrag::IsHorizontal     (m_boxdrag.handle_idx);
 
 
 
@@ -758,39 +765,41 @@ void Editor::_update_bbox(void)
     if ( is_corner || is_side_ns )      { sy = BoxDrag::SafeDiv(M.y - P.y, H0.y - P.y); }      //  Corner or N/S side affect Y
 
 
-    if ( is_side_ns )   { sx = 1.0f; }  //  Constrain side handles to one axis
-    if ( is_side_ew )   { sy = 1.0f; }
+    if ( is_side_ns )                   { sx = 1.0f; }  //  Constrain side handles to one axis
+    if ( is_side_ew )                   { sy = 1.0f; }
 
 
     //      Optional:   hold Shift → uniform scaling (match larger magnitude)
-    if (is_corner && io.KeyShift) {
-        const float s = (std::fabs(sx) > std::fabs(sy)) ? sx : sy;
+    if ( is_corner  &&  io.KeyShift ) {
+        const float s   = (std::fabs(sx) > std::fabs(sy)) ? sx : sy;
         sx = sy = s;
     }
 
 
     //      4.      Apply affine    x' = P + S*(x - P)      to *original* positions
-    const std::size_t n = m_boxdrag.v_ids.size();
+//  #ifndef _EDITOR_REDUCE_REDUNDANCY
+    const std::size_t n = this->m_boxdrag.v_ids.size();
     for (std::size_t i = 0; i < n; ++i)
     {
-        if (Vertex* v = find_vertex_mut(m_vertices, m_boxdrag.v_ids[i])) {
-            const ImVec2 q0 { m_boxdrag.v_orig[i].x - P.x, m_boxdrag.v_orig[i].y - P.y };
-            const ImVec2 q1 { q0.x * sx,                  q0.y * sy };
-            v->x = P.x + q1.x;
-            v->y = P.y + q1.y;
+        if ( Vertex * v = this->find_vertex_mut(this->m_vertices, this->m_boxdrag.v_ids[i]) )
+        {
+            const ImVec2    q0      {  this->m_boxdrag.v_orig[i].x - P.x    , this->m_boxdrag.v_orig[i].y - P.y     };
+            const ImVec2    q1      {  q0.x * sx                            , q0.y * sy                             };
+            v->SetXYPosition        ({ P.x + q1.x                           , P.y + q1.y                            });
         }
     }
+//  #endif  //  _EDITOR_REDUCE_REDUNDANCY  //
 
 
     //      5.      End gesture
     if ( !io.MouseDown[ImGuiMouseButton_Left] )
     {
-        m_boxdrag.active        = false;
-        m_boxdrag.first_frame   = true;
+        this->m_boxdrag.active        = false;
+        this->m_boxdrag.first_frame   = true;
     }
     else
     {
-        m_boxdrag.first_frame = false;
+        this->m_boxdrag.first_frame   = false;
     }
     
     return;

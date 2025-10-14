@@ -518,6 +518,104 @@ void Editor::Begin(const char * /*id*/)
 //
 void Editor::_selbox_rebuild_view_if_needed([[maybe_unused]] const Interaction & it)
 {
+    using A = BoxDrag::Anchor;
+    auto& view = m_boxdrag.view;
+    EditorStyle& Style = m_style;
+
+    // compute tight bounds
+    ImVec2 tl_tight{}, br_tight{};
+    const bool has_objects   = !m_sel.paths.empty();
+    const bool single_vertex = ((m_sel.vertices.size() <= 1) && !has_objects);
+    if (single_vertex || !_selection_bounds(tl_tight, br_tight, m_render_ctx)) {
+        view.visible = false; /* ...stamps... */ return;
+    }
+
+    // store tight
+    view.tl_tight_ws = tl_tight;
+    view.br_tight_ws = br_tight;
+
+    // compute expanded for visuals ONLY
+    const auto [tl_ws, br_ws] = _expand_bbox_by_pixels(tl_tight, br_tight, Style.SELECTION_BBOX_MARGIN_PX);
+    view.visible = true;
+    view.tl_ws   = tl_ws;    // expanded (visual)
+    view.br_ws   = br_ws;
+
+    // handles for visuals (expanded)
+    static constexpr A kOrder[] = { A::NorthWest, A::North, A::NorthEast, A::East,
+                                    A::SouthEast, A::South, A::SouthWest, A::West };
+    const float r = m_style.HANDLE_BOX_SIZE;
+    for (A h : kOrder) {
+        const ImVec2 w = BoxDrag::AnchorToWorldPos(h, tl_ws, br_ws);
+        const ImVec2 p = world_to_pixels(w);
+        view.handle_ws[h]      = w;
+        view.handle_px[h]      = p;
+        view.handle_rect_px[h] = ImRect({p.x - r, p.y - r}, {p.x + r, p.y + r});
+    }
+
+    view.hover_idx  = std::nullopt;
+    view.valid      = true;
+    view.sel_seen   = m_rev_sel;
+    view.geom_seen  = m_rev_geom;
+    view.cam_seen   = m_rev_cam;
+    view.style_seen = m_rev_style;
+}
+/*
+{
+    using A = BoxDrag::Anchor;
+    BoxDrag::ViewCache& view = m_boxdrag.view;
+    EditorStyle& Style = this->m_style;
+
+    // Visibility gate
+    const bool has_objects   = !m_sel.paths.empty();
+    const bool single_vertex = ((m_sel.vertices.size() <= 1) && !has_objects);
+
+    ImVec2 tl_tight{}, br_tight{};
+    if (single_vertex || !_selection_bounds(tl_tight, br_tight, this->m_render_ctx)) {
+        view.visible    = false;
+        view.valid      = true;
+        view.hover_idx  = std::nullopt;
+        view.sel_seen   = m_rev_sel;
+        view.geom_seen  = m_rev_geom;
+        view.cam_seen   = m_rev_cam;
+        view.style_seen = m_rev_style;
+        return;
+    }
+
+    // Expanded bbox
+    const auto [tl_ws, br_ws] = _expand_bbox_by_pixels(tl_tight, br_tight, Style.SELECTION_BBOX_MARGIN_PX);
+    view.visible = true;
+    view.tl_ws   = tl_ws;
+    view.br_ws   = br_ws;
+    view.tl_px   = world_to_pixels(tl_ws);
+    view.br_px   = world_to_pixels(br_ws);
+
+    // Explicit anchor order used everywhere
+    static constexpr A kOrder[] = {
+        A::NorthWest, A::North, A::NorthEast,
+        A::East,      A::SouthEast, A::South,
+        A::SouthWest, A::West
+    };
+
+    const float r = m_style.HANDLE_BOX_SIZE; // half-size in px
+
+    for (A h : kOrder) {
+        const ImVec2 w = BoxDrag::AnchorToWorldPos(h, tl_ws, br_ws);
+        const ImVec2 p = world_to_pixels(w);
+        view.handle_ws[h]      = w;
+        view.handle_px[h]      = p;
+        view.handle_rect_px[h] = ImRect(ImVec2(p.x - r, p.y - r),
+                                        ImVec2(p.x + r, p.y + r));
+    }
+
+    view.hover_idx  = std::nullopt;
+    view.valid      = true;
+    view.sel_seen   = m_rev_sel;
+    view.geom_seen  = m_rev_geom;
+    view.cam_seen   = m_rev_cam;
+    view.style_seen = m_rev_style;
+}*/
+
+/*{
     using                           AnchorType          = BoxDrag::Anchor;
     static constexpr int            N                   = static_cast<int>( AnchorType::COUNT );
     static std::array<ImVec2, N>    ws                  = {   };
@@ -587,7 +685,7 @@ void Editor::_selbox_rebuild_view_if_needed([[maybe_unused]] const Interaction &
     view.style_seen         = m_rev_style;
     
     return;
-}
+}*/
 
 
 
@@ -966,9 +1064,10 @@ inline void Editor::_handle_default(const Interaction & it)
          m_boxdrag.view.hover_idx.has_value()           &&
          ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
     {
-        // NOTE: view.tl_ws/br_ws are already the expanded bbox corners.
-        // Ensure _start_bbox_drag treats these as final (i.e., does NOT re-expand).
+        //  NOTE:   view.tl_ws/br_ws are already the expanded bbox corners.
+        //  Ensure      _start_bbox_drag treats these as final (i.e., does NOT re-expand).
         _start_bbox_drag( *m_boxdrag.view.hover_idx, m_boxdrag.view.tl_ws, m_boxdrag.view.br_ws);
+        
         return;                                      //     consume click; no lasso this frame
     }
 
@@ -1018,54 +1117,6 @@ inline void Editor::_handle_default(const Interaction & it)
 
     return;
 }
-
-
-/*{
-    [[maybe_unused]]    ImGuiIO &   io          = ImGui::GetIO();
-    
-    if (_try_begin_handle_drag(it)) {
-        _pen_update_handle_drag(it);   // keep guide visible the very first frame
-        return;                    // skip selection & mode handlers this frame
-    }
-    
-    
-    //  1.   EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
-    //  if (_try_begin_handle_drag(it)) return;
-    //  if (m_dragging_handle) { _pen_update_handle_drag(it); return; }
-
-    
-    //  2.  BBOX HANDLE HOVER...
-    if ( !m_boxdrag.active && m_hover_handle != -1 && ImGui::IsMouseClicked(ImGuiMouseButton_Left) ) {
-        ImVec2 tl, br;
-        if ( _selection_bounds(tl, br, this->m_render_ctx) )
-            { _start_bbox_drag(static_cast<uint8_t>(m_hover_handle), tl, br); }
-    }
-        
-        
-    //  3.   Update BBOX...
-    if (m_boxdrag.active)                           { _update_bbox(); }
-    
-    
-    //  4.  IGNORE ALL INPUT IF SPACE KEY IS HELD DOWN...
-    if ( it.space )                                 { return; }
-
-
-    // 5. LASSO START — begin only when selection is enabled and the mouse
-    //    isn’t captured by another UI widget.
-    if ( _mode_has(CBCapabilityFlags_Select)                      // ← NEW capability check
-         && !m_lasso_active
-         && it.hovered
-         && ImGui::IsMouseClicked(ImGuiMouseButton_Left)
-         && !_hit_any(it) )
-    {
-        _start_lasso_tool();
-    }
-    
-    //  6.  LASSO UPDATE...
-    if (m_lasso_active)                             { this->_update_lasso(it); return; }        // Skip zoom handling while dragging lasso
-        
-    return;
-}*/
 
 
 //  "_handle_hand"

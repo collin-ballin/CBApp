@@ -91,7 +91,7 @@ void Editor::_MECH_render_frame([[maybe_unused]] const Interaction & it) const
         //      6.      RENDER "Glyph" ELEMENTS.            [ HANDLES, SELECTABLES, SNAPPING-LOCATIONS, USER-INTERACTIBLES (ON-TOP of ALL OBJECT GEOMETRY) ]...
         {
             ChannelCTX::Scope           scope       ( CTX,          Layer::Glyphs           );
-            //  this->_RENDER_glyphs_channel            ( z_view,       this->m_render_ctx      );
+            this->_RENDER_glyphs_channel            ( z_view,       this->m_render_ctx      );
         }
         
         
@@ -229,11 +229,11 @@ inline void Editor::_RENDER_highlights_channel([[maybe_unused]] std::span<const 
 
 
 
-    //      2.      RENDER SELECTION B-BOX...
-    this->_render_selection_bbox        (ctx.args.dl);
+    //  //      2.      RENDER SELECTION B-BOX...
+    //  this->_render_selection_bbox        (ctx.args.dl);
 
-    //      3.      RENDER SELECTED HANDLES B-BOX...
-    this->_render_selected_handles      (ctx.args.dl);
+    //  //      3.      RENDER SELECTED HANDLES B-BOX...
+    //  this->_render_selected_handles      (ctx.args.dl);
 
 
 
@@ -497,8 +497,14 @@ inline void Editor::_ACCENTS_all_handles(std::span<const size_t> /* z_view */, c
 //  "_RENDER_glyphs_channel"
 //      [ HANDLES, SELECTABLES, SNAPPING-LOCATIONS, USER-INTERACTIBLES (ON-TOP of ALL OBJECT GEOMETRY) ]...
 //
-inline void Editor::_RENDER_glyphs_channel(std::span<const size_t> /*z_view*/, const RenderCTX & /*ctx*/) const noexcept
+inline void Editor::_RENDER_glyphs_channel(std::span<const size_t> /*z_view*/, const RenderCTX & ctx) const noexcept
 {
+    //      2.      RENDER SELECTION B-BOX...
+    this->_render_selection_bbox        (ctx.args.dl);
+
+    //      3.      RENDER SELECTED HANDLES B-BOX...
+    this->_render_selected_handles      (ctx.args.dl);
+    
     return;
 }
         

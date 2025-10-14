@@ -267,9 +267,9 @@ concept     get_vertex_CallbackTT   =
 
 //  "RenderCallbacks"
 //
-template< typename V, typename MapFn, typename GVertexFn, typename container_type=std::vector<V> >
+template< typename VID_, typename MapFn, typename GVertexFn, typename container_type=std::vector<VID_> >
     requires ws_to_px_CallbackTT        <MapFn>                     &&
-             get_vertex_CallbackTT      <GVertexFn, V>
+             get_vertex_CallbackTT      <GVertexFn, VID_>
 struct RenderCallbacks
 {
     MapFn                               ws_to_px            ;       //  e.g., lambda:   [this](ImVec2 ws)               { return world_to_pixels(ws);   }

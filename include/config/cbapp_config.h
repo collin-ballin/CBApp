@@ -505,6 +505,9 @@ public:                                                                         
 #define                 _EDITOR_DELETE_POINTS               1
 #define                 _EDITOR_DELETE_LINES                1
 #define                 _EDITOR_REFACTOR_GRID               1
+//
+#define                 _EDITOR_REDUCE_REDUNDANCY           1
+
 
 
 

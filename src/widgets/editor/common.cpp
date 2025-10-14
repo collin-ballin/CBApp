@@ -581,9 +581,9 @@ void Editor::delete_selection(void)
 void Editor::_clear_all(void)
 {
     //      1.      WIPE GEOMETRY CONTAINERS IN BULK...
-    m_paths         .clear();       // clears Path<…> vector
-    m_points        .clear();       // glyphs
-    m_vertices      .clear();       // anchors
+    this->m_paths           .clear();       // clears Path<…> vector
+    this->m_points          .clear();       // glyphs
+    this->m_vertices        .clear();       // anchors
 
 
     //      2.      RESET SELECTION AND TOOL STATES...
@@ -594,12 +594,22 @@ void Editor::_clear_all(void)
     m_lasso_active                          = false;    //  2.1.    LASSO TOOL.
     //
     m_dragging                              = false;    //  2.2.    DRAGGING SELECTION.
-    this->m_movedrag.active                 = false;
     //
+    //
+#ifndef _EDITOR_REDUCE_REDUNDANCY
     m_drawing                               = false;
+#endif  //  _EDITOR_REDUCE_REDUNDANCY  //
+    //
     //
     //
     m_next_id                               = 1;        //  RESET "NEXT-ID" COUNTERS (So new vertices/path IDs start fresh)...
+    //
+    //
+    //
+#ifndef _EDITOR_REDUCE_REDUNDANCY
+    this->m_movedrag.active                 = false;
+#endif  //  _EDITOR_REDUCE_REDUNDANCY  //
+
 
 
     //      3.      BROWSER AND FILTER HOUSEKEEPING  [ Force filter to rebuild so the clipper sees an empty list ]...
