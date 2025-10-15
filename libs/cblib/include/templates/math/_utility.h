@@ -77,12 +77,12 @@ namespace cblib { namespace math {   //     BEGINNING NAMESPACE "cblib" :: "math
 /// @param value        The value to round.
 /// @return             The smallest \p T not less than \p value with \p N decimal digits, computed as  
 ///                     \f$\displaystyle\frac{\lceil\,\text{value}\times10^{N}\,\rceil}{10^{N}}\f$.
-//
+/*
 template<auto N, typename T>
 [[nodiscard]] inline T round_to(T v)
 {
     return ::cblib::math::numerics::round_to_IMPL<N, T>::apply(v);
-}
+}*/
 
 
 
@@ -106,7 +106,7 @@ template<auto N, typename T>
 // *************************************************************************** //
 
 //  "is_close"
-//
+/*
 /// @fn template        <std::floating_point<T>>
 ///                     [[nodiscard]] inline bool
 ///                     is_close(const T a,
@@ -207,7 +207,7 @@ tolerance_interval( const T  ref,                      // reference “b”
 
     return { low, high };
 }
-
+*/
 
 
 //
@@ -229,96 +229,6 @@ tolerance_interval( const T  ref,                      // reference “b”
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "quantize"      [ CORE-IMPLEMENTATION ].
-//
-//      Quantize  x  onto the lattice,  { origin + k * quantum,  where k | k ∈ ℤ }.
-//      Preconditions :     quantum > 0 (returns x unchanged if violated).
-//                          NaN / ±inf pass through unchanged.
-//
-template <std::floating_point T>
-[[nodiscard]] inline T                      quantize_IMPL           (T x, T quanta, T origin, numerics::RoundingMode mode) noexcept
-{
-    using       namespace       ::cblib::math::numerics;
-
-    //      1.  MAP TO INDEX-SPACE (Integer Multiples);  ROUND VALUE;  MAP BACK TO VALUE-SPACE...
-    const T     n               = (x - origin) / quanta;        //  A.      n = (x - origin) / quanta
-    const T     k               = _round_integral(n, mode);     //  B.      k = round(n)
-    T           y               = origin + k * quanta;          //  C.      y = origin + k * quanta
-
-    //      2.  PRESERVE SIGNED-ZERO BY USING  sign_of( x - origin )...
-    if ( is_close(y, T(0)) )    { y = std::copysign(T(0), x - origin); }
-
-    return y;
-}
-
-
-//  "quantize"      [ WRAPPER-IMPLEMENTATIONS ].
-//
-template <std::floating_point T, std::floating_point U>
-[[nodiscard]] inline T                      quantize                (   T                       x
-                                                                      , U                       quanta
-                                                                      , U                       origin  = U(0)
-                                                                      , numerics::RoundingMode  mode    = numerics::DEF_DEFAULT_ROUNDING_MODE ) noexcept
-{
-    using       namespace   ::cblib::math::numerics;
-    if ( !_is_finite(x) || !_is_finite(quanta) || !_is_finite(origin) || !(quanta > T(0)) )   { return x; }
-    return quantize_IMPL( x, static_cast<T>(quanta), static_cast<T>(origin), mode );
-}
-
-
-
-
-
-
-//  "quantize_inplace"
-//      "in-place" overload     [ returns the value via an OUT-PARAM ]...
-//
-template <std::floating_point T>
-inline void                                 quantize_inplace        (   T &                     x
-                                                                      , T                       quantum
-                                                                      , T                       origin      = T(0)
-                                                                     , ::cblib::math::numerics::RoundingMode  mode        = ::cblib::math::numerics::DEF_DEFAULT_ROUNDING_MODE ) noexcept
-{
-    x = quantize(x, quantum, origin, mode);
-}
-
-
-//  "quantize_decimals"
-//
-//      Quantize x to a given number of decimal digits.
-//      digits ≥ 0 → snap to 10^{-digits} (e.g., 3 → 0.001)
-//      digits < 0 → snap to powers of 10 (e.g., -1 → 10, -2 → 100)
-//
-template<std::floating_point T>
-[[nodiscard]] inline T                      quantize_decimals       (   T                       x
-                                                                      , int                     digits
-                                                                      , T                       origin      = T(0)
-                                                                     , ::cblib::math::numerics::RoundingMode  mode        = ::cblib::math::numerics::DEF_DEFAULT_ROUNDING_MODE ) noexcept
-{
-    using           namespace       ::cblib::math::numerics;
-    constexpr int   MAX_DEC         = 308; // ~double range; ok for float/ldbl as a soft guard
-    
-    //  Using std::pow at runtime; clamp extremes to avoid 0/inf quantum.
-    //  Note: for very large |digits|, pow may under/overflow; we guard mildly.
-    if ( digits >  MAX_DEC )        { digits =  MAX_DEC; }
-    if ( digits < -MAX_DEC )        { digits = -MAX_DEC; }
-
-    const T         q               = std::pow(T(10), T(-digits)); // works for ±digits
-    return quantize(x, q, origin, mode);
-}
-
-
-//  "quantize_decimals_inplace"
-//      "in-place" overload of "quantize"   [ returns the value via an OUT-PARAM ]...
-//
-template <std::floating_point T>
-inline void                                 quantize_decimals_inplace   ( T &                       x
-                                                                          , int                     digits
-                                                                          , T                       origin      = T(0)
-                                                                         , ::cblib::math::numerics::RoundingMode  mode        = ::cblib::math::numerics::DEF_DEFAULT_ROUNDING_MODE ) noexcept
-{
-    x = quantize_decimals(x, digits, origin, mode);
-}
 
 
 

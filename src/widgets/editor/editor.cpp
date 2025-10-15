@@ -518,46 +518,60 @@ void Editor::Begin(const char * /*id*/)
 //
 void Editor::_selbox_rebuild_view_if_needed([[maybe_unused]] const Interaction & it)
 {
-    using A = BoxDrag::Anchor;
-    auto& view = m_boxdrag.view;
-    EditorStyle& Style = m_style;
+    using                   A               = BoxDrag::Anchor;
+    //
+    
+    // handles for visuals (expanded)
+    static constexpr A      ms_kOrder[]     = { A::NorthWest, A::North, A::NorthEast, A::East,
+                                                A::SouthEast, A::South, A::SouthWest, A::West };
+    //
+    auto &                  view            = m_boxdrag.view;
+    EditorStyle &           Style           = m_style;
+    //
+    const float             r               = m_style.HANDLE_BOX_SIZE;
+    const bool              has_objects     = !m_sel.paths.empty();
+    const bool              single_vertex   = ( (m_sel.vertices.size() <= 1)  &&  !has_objects );
+
 
     // compute tight bounds
-    ImVec2 tl_tight{}, br_tight{};
-    const bool has_objects   = !m_sel.paths.empty();
-    const bool single_vertex = ((m_sel.vertices.size() <= 1) && !has_objects);
-    if (single_vertex || !_selection_bounds(tl_tight, br_tight, m_render_ctx)) {
+    ImVec2              tl_tight            {  };
+    ImVec2              br_tight            {  };
+    if ( single_vertex  ||  !_selection_bounds(tl_tight, br_tight, m_render_ctx) )
+    {
         view.visible = false; /* ...stamps... */ return;
     }
+
 
     // store tight
     view.tl_tight_ws = tl_tight;
     view.br_tight_ws = br_tight;
 
+
     // compute expanded for visuals ONLY
     const auto [tl_ws, br_ws] = _expand_bbox_by_pixels(tl_tight, br_tight, Style.SELECTION_BBOX_MARGIN_PX);
-    view.visible = true;
-    view.tl_ws   = tl_ws;    // expanded (visual)
-    view.br_ws   = br_ws;
+    view.visible    = true;
+    view.tl_ws      = tl_ws;    // expanded (visual)
+    view.br_ws      = br_ws;
 
-    // handles for visuals (expanded)
-    static constexpr A kOrder[] = { A::NorthWest, A::North, A::NorthEast, A::East,
-                                    A::SouthEast, A::South, A::SouthWest, A::West };
-    const float r = m_style.HANDLE_BOX_SIZE;
-    for (A h : kOrder) {
-        const ImVec2 w = BoxDrag::AnchorToWorldPos(h, tl_ws, br_ws);
-        const ImVec2 p = world_to_pixels(w);
-        view.handle_ws[h]      = w;
-        view.handle_px[h]      = p;
-        view.handle_rect_px[h] = ImRect({p.x - r, p.y - r}, {p.x + r, p.y + r});
+
+    for (A h : ms_kOrder)
+    {
+        const ImVec2    w       = BoxDrag::AnchorToWorldPos(h, tl_ws, br_ws);
+        const ImVec2    p       = world_to_pixels(w);
+        view.handle_ws[h]       = w;
+        view.handle_px[h]       = p;
+        view.handle_rect_px[h]  = ImRect({p.x - r, p.y - r}, {p.x + r, p.y + r});
     }
+    
 
-    view.hover_idx  = std::nullopt;
-    view.valid      = true;
-    view.sel_seen   = m_rev_sel;
-    view.geom_seen  = m_rev_geom;
-    view.cam_seen   = m_rev_cam;
-    view.style_seen = m_rev_style;
+    view.hover_idx      = std::nullopt;
+    view.valid          = true;
+    view.sel_seen       = m_rev_sel;
+    view.geom_seen      = m_rev_geom;
+    view.cam_seen       = m_rev_cam;
+    view.style_seen     = m_rev_style;
+    
+    return;
 }
 /*
 {
@@ -793,38 +807,43 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
     
     //  RESIDENTIAL WINDOWS...
     //
-    static bool             debug_overlay_cache         = !ES.m_show_debug_overlay;                         //  1.  Debugger/Info Overlay.
+    static bool             debug_overlay_cache         = !ES.m_show_debug_overlay;                         //  1.1.    Debugger/Info Overlay.
     static auto &           debugger_entry              = m_residents[Resident::Debugger];
     static Overlay &        debugger_resident           = *m_ov_manager.lookup_resident(debugger_entry.id);
     //
-    static bool             sel_overlay_cache           = !ES.m_show_sel_overlay;                           //  2.  Selection Overlay.
+    static bool             sel_overlay_cache           = !ES.m_show_sel_overlay;                           //  1.2.    Selection Overlay.
     static auto &           selection_entry             = m_residents[Resident::Selection];
     static Overlay &        selection_resident          = *m_ov_manager.lookup_resident(selection_entry.id);
     //
-    static auto &           shape_entry                 = m_residents[Resident::Shape];                     //  3.  Shape Resident.
+    static auto &           shape_entry                 = m_residents[Resident::Shape];                     //  1.3.    Shape Resident.
     static Overlay &        shape_resident              = *m_ov_manager.lookup_resident(shape_entry.id);
     //
     //
     //
     //  UI-RESIDENT OVERLAYS...
-    static bool             ui_traits_overlay_cache     = !ES.m_show_debug_overlay;                         //  4.  UI-Traits Resident.
+    static bool             ui_traits_overlay_cache     = !ES.m_show_debug_overlay;                         //  2.1.  UI-Traits Resident.
     static auto &           ui_traits_entry             = m_residents[Resident::UITraits];
     static Overlay &        ui_traits_resident          = *m_ov_manager.lookup_resident(ui_traits_entry.id);
     //
-    static bool             ui_objects_overlay_cache    = !ES.m_show_ui_objects_overlay;                    //  5.  UI-Objects Resident.
+    static bool             ui_objects_overlay_cache    = !ES.m_show_ui_objects_overlay;                    //  2.2.  UI-Objects Resident.
     static auto &           ui_objects_entry            = m_residents[Resident::UIObjects];
     static Overlay &        ui_objects_resident         = *m_ov_manager.lookup_resident(ui_objects_entry.id);
-
+    //
+#ifdef _EDITOR_USE_SINGULAR_UI
+    static bool             ui_browser_open_cache       = !this->S.IsDetViewOpen();                         //  2.X.  Main-Browser Updates.
+    const bool              browser_changed             = ( this->S.IsDetViewOpen() != ui_browser_open_cache );
+#endif  //  _EDITOR_USE_SINGULAR_UI  //
     
     
-    //      1.      UPDATE "DEBUGGER" OVERLAY...
+    
+    //      1.1.    UPDATE "DEBUGGER" OVERLAY...
     if ( ES.m_show_debug_overlay != debug_overlay_cache ) [[unlikely]] {
         debug_overlay_cache                     = ES.m_show_debug_overlay;
         debugger_resident.info.visible          = ES.m_show_debug_overlay;
     }
     
 
-    //      2.      UPDATE SELECTION OVERLAY...
+    //      1.2.    UPDATE SELECTION OVERLAY...
     if ( ES.m_show_sel_overlay != sel_overlay_cache ) [[unlikely]] {
         sel_overlay_cache                       = ES.m_show_sel_overlay;
         selection_resident.info.visible         = ES.m_show_sel_overlay;
@@ -836,25 +855,56 @@ inline void Editor::_MECH_draw_ui([[maybe_unused]] const Interaction & it)
         }
     }
     
-    
-    //      3.      UPDATE "SHAPE" OVERLAY...
+    //      1.3.    UPDATE "SHAPE" OVERLAY...
     shape_resident.info.visible                 = ( m_mode == Mode::Shape );                //  Leaving the Shape-Tool closes the overlay window.
     
     
     
-    //      4.      UPDATE "UI-TRAITS" OVERLAY...
+    
+    
+    
+
+
+
+
+    //      2.0.      UPDATE "MAIN-BROWSER" CACHE...
+#ifdef _EDITOR_USE_SINGULAR_UI
+    if ( browser_changed )
+    {
+        ui_browser_open_cache   = !ui_browser_open_cache;
+    }
+#endif  //  _EDITOR_USE_SINGULAR_UI  //
+
+
+
+    //      2.1.      UPDATE "UI-TRAITS" OVERLAY...
+#ifndef _EDITOR_USE_SINGULAR_UI
     if ( ES.m_show_ui_traits_overlay != ui_traits_overlay_cache ) [[unlikely]] {
         ui_traits_overlay_cache                 = ES.m_show_ui_traits_overlay;
         ui_traits_resident.info.visible         = ES.m_show_ui_traits_overlay;
     }
+#else//  WinInfo_open
+    if ( (ES.m_show_ui_traits_overlay != ui_traits_overlay_cache)  ||  browser_changed ) {
+        ui_traits_overlay_cache                 = ES.m_show_ui_traits_overlay;
+        ui_traits_resident.info.visible         = (!ui_browser_open_cache)  ? ES.m_show_ui_traits_overlay  : false;
+    }
+#endif  //  _EDITOR_USE_SINGULAR_UI  //
     
     
     
-    //      5.      UPDATE "UI-OBJECTS" OVERLAY...
-    if ( ES.m_show_ui_objects_overlay != ui_objects_overlay_cache ) [[unlikely]] {
+    //      2.2.      UPDATE "UI-OBJECTS" OVERLAY...
+#ifndef _EDITOR_USE_SINGULAR_UI
+    if ( ES.m_show_ui_objects_overlay != ui_objects_overlay_cache ) {
         ui_objects_overlay_cache                = ES.m_show_ui_objects_overlay;
         ui_objects_resident.info.visible        = ES.m_show_ui_objects_overlay;
     }
+#else//  WinInfo_open
+    if ( (ES.m_show_ui_objects_overlay != ui_objects_overlay_cache)  ||  browser_changed )
+    {
+        ui_objects_overlay_cache                = ES.m_show_ui_objects_overlay;
+        ui_objects_resident.info.visible        = (!ui_browser_open_cache)  ? ES.m_show_ui_objects_overlay  : false;
+    }
+#endif  //  _EDITOR_USE_SINGULAR_UI  //
     
     
     

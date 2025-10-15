@@ -494,10 +494,25 @@ public:                                                                         
 // *************************************************************************** //
 // *************************************************************************** //
 
+
+
+//              1.  MAIN PRE-PROCESSOR MACROS FOR "EDITOR"...
+//
 //  "_EDITOR_USE_HITANY_CACHE"
 //      A Compile-Time option to begin reducing the calls to "_hit_any()".
 //      This is an EXPENSIVE function and what we want is to only call it ONCE-PER-FRAME
 //      store its return value inside a Cache Value...
+//  #define                 _EDITOR_USE_HITANY_CACHE            1
+//
+//
+//  "_EDITOR_USE_SINGULAR_UI"       Compile-Time Setting:
+//      Prevents duplicitous  OVERLAY-WINDOWS  from being drawn when the "Primary" Browser is OPEN.
+//
+#define                 _EDITOR_USE_SINGULAR_UI             1
+
+
+
+//              2.  TEMPORARY / MISC. MACROS FOR "EDITOR"...
 //
 #define                 _EDITOR_REMOVE_DEPRECATED_CODE      1
 //
@@ -603,7 +618,7 @@ public:                                                                         
     using                           BoxDrag                     = BoxDrag_t         <ObjectCFG, Vertex>                                 ;       \
     using                           MoveDrag                    = MoveDrag_t        <ObjectCFG, Vertex>                                 ;       \
     using                           Clipboard                   = Clipboard_t       <Vertex, Point, Line, Path>                         ;       \
-    using                           Selection                   = Selection_t       <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
+    using                           Selection                   = Selection_t       <ObjectCFG, Vertex>                                 ;       \
     /*                                                                                                                                  */      \
     /*      7.      TOOL STATE OBJECTS...                                                                                               */      \
     using                           PenState                    = PenState_t        <VertexID>                                          ;       \

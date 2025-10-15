@@ -851,9 +851,8 @@ public:
     //      ANALYTICAL GEOMETRY FUNCTIONS.
     // *************************************************************************** //
         
-        
     //  "_bezier_eval_ws"
-    //
+    /*
     static inline ImVec2 _bezier_eval_ws(const ImVec2& P0, const ImVec2& P1,
                                          const ImVec2& P2, const ImVec2& P3, float t) noexcept
     {
@@ -868,7 +867,6 @@ public:
         r.y = uuu * P0.y + 3.0f * uu * t * P1.y + 3.0f * u * tt * P2.y + ttt * P3.y;
         return r;
     }
-
 
     //  "_quad_unit_roots"
     //      Solve quadratic a t^2 + b t + c = 0 in (0,1); append valid roots to out[]
@@ -901,7 +899,6 @@ public:
             
         return;
     }
-
 
     //  "_aabb_cubic_tight"
     //      Axis-aligned tight AABB for one cubic segment by analytic extrema (endpoints + interior roots)
@@ -984,6 +981,54 @@ public:
         return !first;
     }
     
+    //  "aabb_control_hull"
+    template <class CTX>
+    inline bool                         aabb_control_hull                   (ImVec2 & tl_ws, ImVec2 & br_ws, const CTX & ctx) const noexcept
+    {
+        const auto &        cb              = ctx.callbacks; // cb.get_vertex(cb.vertices, id)
+        const size_t        N               = this->size();
+        auto                add_pt          = [&](const ImVec2& p) {
+            tl_ws.x = std::min(tl_ws.x, p.x);  tl_ws.y = std::min(tl_ws.y, p.y);
+            br_ws.x = std::max(br_ws.x, p.x);  br_ws.y = std::max(br_ws.y, p.y);
+        };
+        bool                first           = true;
+        auto                init            = [&](const ImVec2& p){ tl_ws = br_ws = p; first = false; };
+
+        const bool          is_area         = this->IsArea();
+        const size_t        seg_cnt         = N - (is_area ? 0 : 1);
+        
+        
+        if ( N < 2 )        { return false; }
+
+
+        for (size_t si = 0; si < seg_cnt; ++si)
+        {
+            const vertex_id     a_id    = static_cast<vertex_id>( this->verts[si]           );
+            const vertex_id     b_id    = static_cast<vertex_id>( this->verts[(si + 1) % N] );
+
+            const auto *        a       = cb.get_vertex(cb.vertices, a_id);
+            const auto *        b       = cb.get_vertex(cb.vertices, b_id);
+            if ( !a || !b )     { continue; }
+
+            const ImVec2 P0{ a->x, a->y };
+            const ImVec2 P3{ b->x, b->y };
+            const ImVec2 P1{ a->x + a->m_bezier.out_handle.x, a->y + a->m_bezier.out_handle.y };
+            const ImVec2 P2{ b->x + b->m_bezier.in_handle.x,  b->y + b->m_bezier.in_handle.y  };
+
+            if (first) { init(P0); }
+            add_pt(P0); add_pt(P1); add_pt(P2); add_pt(P3);
+        }
+        return !first;
+    }*/
+    
+
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      UTILITY FUNCTIONS.
+    // *************************************************************************** //
     
     //  "_segment_control_points"
     //
@@ -1027,55 +1072,6 @@ public:
         return true;
     }
     
-    
-    //  "aabb_control_hull"
-    template <class CTX>
-    inline bool                         aabb_control_hull                   (ImVec2 & tl_ws, ImVec2 & br_ws, const CTX & ctx) const noexcept
-    {
-        const auto &        cb              = ctx.callbacks; // cb.get_vertex(cb.vertices, id)
-        const size_t        N               = this->size();
-        auto                add_pt          = [&](const ImVec2& p) {
-            tl_ws.x = std::min(tl_ws.x, p.x);  tl_ws.y = std::min(tl_ws.y, p.y);
-            br_ws.x = std::max(br_ws.x, p.x);  br_ws.y = std::max(br_ws.y, p.y);
-        };
-        bool                first           = true;
-        auto                init            = [&](const ImVec2& p){ tl_ws = br_ws = p; first = false; };
-
-        const bool          is_area         = this->IsArea();
-        const size_t        seg_cnt         = N - (is_area ? 0 : 1);
-        
-        
-        if ( N < 2 )        { return false; }
-
-
-        for (size_t si = 0; si < seg_cnt; ++si)
-        {
-            const vertex_id     a_id    = static_cast<vertex_id>( this->verts[si]           );
-            const vertex_id     b_id    = static_cast<vertex_id>( this->verts[(si + 1) % N] );
-
-            const auto *        a       = cb.get_vertex(cb.vertices, a_id);
-            const auto *        b       = cb.get_vertex(cb.vertices, b_id);
-            if ( !a || !b )     { continue; }
-
-            const ImVec2 P0{ a->x, a->y };
-            const ImVec2 P3{ b->x, b->y };
-            const ImVec2 P1{ a->x + a->m_bezier.out_handle.x, a->y + a->m_bezier.out_handle.y };
-            const ImVec2 P2{ b->x + b->m_bezier.in_handle.x,  b->y + b->m_bezier.in_handle.y  };
-
-            if (first) { init(P0); }
-            add_pt(P0); add_pt(P1); add_pt(P2); add_pt(P3);
-        }
-        return !first;
-    }
-    
-
-    
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      UTILITY FUNCTIONS.
-    // *************************************************************************** //
     
     //  "_truncate_label"
     inline void                         _truncate_label                     (void)

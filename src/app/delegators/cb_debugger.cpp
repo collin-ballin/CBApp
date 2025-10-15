@@ -149,8 +149,8 @@ using       namespace       cblib::containers;
 //
 struct IncrementAction : orchid::ABC
 {
-    IncrementAction             (int & ref, int delta = 1)
-        : target(ref), delta(delta)
+    IncrementAction             (int & ref_, int delta_ = 1)
+        : target(ref_), delta(delta_)
     {   }
         
 

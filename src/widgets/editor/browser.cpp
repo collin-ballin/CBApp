@@ -230,7 +230,7 @@ void Editor::_MECH_draw_controls(void)
             const bool  tool_menu_open  = ImGui::BeginPopupContextItem(GetMenuID(PopupHandle::ToolSelection), ImGuiPopupFlags_MouseButtonLeft);
             if (tool_menu_open)
             {
-                if ( !this->_show_tool_selection_menu(this->m_mode) )
+                if ( !this->_MENU_tool_selection(this->m_mode) )
                     { ImGui::CloseCurrentPopup(); }
                 //
                 ImGui::EndPopup();
@@ -596,7 +596,6 @@ void Editor::_draw_obj_selector_table(void)
     //
     //  BrowserStyle &                          BStyle              = m_style.browser_style;
     BrowserState &                          BS                  = m_browser_S;
-    //  ImDrawList *                            dl                  = ImGui::GetWindowDrawList();
     ImGuiListClipper                        clipper;
 
 
@@ -604,21 +603,23 @@ void Editor::_draw_obj_selector_table(void)
     S.PushFont(Font::Main);
     ImGui::BeginDisabled(true);
     {
-        //  static float    button_rect     = 10.0f;
-        //  const float     query_width     = BStyle.OBJ_SELECTOR_DIMS.value.x - button_rect;
-    //
-    //
-    //
-        if ( utl::IconButton(   "##Editor_ObjSelector_FilterMenu"
-                              , this->S.SystemColor.Blue
-                              , ICON_FA_FILTER
-                              , 1.0f ) )
-        {
-            //  ui::open_preferences_popup( GetMenuID(PopupHandle::Settings), [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
-        }
+        static float        button_rect     = 10.0f;
         //
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(-FLT_MIN);
+        //
+    #ifdef __DONT_DEFINE_THIS__
+        BrowserStyle &      BStyle          = m_style.browser_style;
+        const float         query_width     = BStyle.OBJ_SELECTOR_DIMS.value.x - button_rect;
+    #else
+        static ImVec2       Avail;
+        Avail                               = ImGui::GetContentRegionAvail();
+        const float         query_width     = Avail.x - button_rect;
+    #endif  //  __DONT_DEFINE_THIS__  //
+    //
+    //
+    //
+        //      1.      "QUERY" BOX...
+        //  ImGui::SetNextItemWidth(-FLT_MIN);
+        ImGui::SetNextItemWidth(query_width);
         if ( ImGui::InputTextWithHint( "##Editor_ObjSelector_ObjFilterQuery",
                                        "filter",
                                        BS.m_obj_filter.InputBuf,
@@ -627,6 +628,18 @@ void Editor::_draw_obj_selector_table(void)
             BS.m_obj_filter.Build();
             BS.m_obj_filter_dirty   = true;
         }
+        //
+        //
+        //      2.      "FILTER" BUTTON...
+        ImGui::SameLine(0,0);
+        if ( utl::IconButton(   "##Editor_ObjSelector_FilterMenu"
+                              , this->S.SystemColor.Blue
+                              , ICON_FA_FILTER
+                              , 1.0f ) )
+        {
+            //  ui::open_preferences_popup( GetMenuID(PopupHandle::Settings), [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
+        }
+        button_rect = ImGui::GetItemRectSize().x;
     //
     //
     //
@@ -675,7 +688,7 @@ void Editor::_draw_obj_selector_table(void)
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
             {
                 Path &                  path                = m_paths[i];
-                bool                    selected            = m_sel.paths.count(static_cast<size_t>(i));
+                bool                    selected            = m_sel.paths.count(static_cast<int>(i));
                 bool                    mutable_path        = path.IsMutable();
 
                 //  CASE 0 :    EARLY-OUT IF FILTER REMOVES OBJ.

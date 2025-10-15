@@ -735,7 +735,7 @@ protected:
     // *************************************************************************** //
     //      MENUS & CONTEXT-WINDOW STUFF.   |   "menus.cpp" ...
     // *************************************************************************** //
-    //                              CONTEXT MENU ORCHESTRATORS:
+    //                          1.  CONTEXT MENU ORCHESTRATORS:
     void                                dispatch_selection_context_menus    ([[maybe_unused]] const Interaction & it);
     //
     //                              CANVAS CONTEXT MENUS:
@@ -752,12 +752,16 @@ protected:
     //                                  Multi---Selection.
     inline void                             _selection_context_multi            ([[maybe_unused]] const Interaction & );
     //
-    //                              MISC. CONTEXT MENUS:
-    bool                                _show_tool_selection_menu           (const Mode) noexcept;
+    //
+    //
+    //                          2.  MISC. CONTEXT MENUS:
+    bool                                _MENU_tool_selection                (const Mode) noexcept;
+    bool                                _MENU_filter_selection              (void) noexcept;
+    bool                                _MENU_object_browser_item           (void) noexcept;
     //
     //
     //
-    //                              CUSTOM MENUBAR MENUS:
+    //                          3.  CUSTOM MENUBAR MENUS:
     void                                _MENUBAR_object_menu                (void) noexcept;
     
     
@@ -866,7 +870,6 @@ protected:
     std::optional<PathHit>              _hit_path_segment                   ([[maybe_unused]] const Interaction & ) const;
     //
     //                              HIT-DETECTION UTILITIES:
-    
     inline void                         _dispatch_cursor_hint               (const Hit::Type) const noexcept; 
     inline void                         _dispatch_cursor_icon               ([[maybe_unused]] const Interaction & ) const;
     
@@ -1230,32 +1233,38 @@ protected:
 
         //  Build new container and a map old_idx -> new_idx
         std::vector<Path>       new_paths;
-        new_paths.reserve(n);
+        new_paths               .reserve(n);
         std::vector<int>        new_of_old      (n, -1);
         
         
-        for ( int new_i = 0; new_i < n; ++new_i ) {
-            int old_i = order[new_i];
-            new_of_old[old_i] = new_i;
-            new_paths.push_back(std::move(m_paths[old_i]));
+        
+        for ( int new_i = 0; new_i < n; ++new_i )
+        {
+            int old_i           = order[new_i];
+            new_of_old[old_i]   = new_i;
+            new_paths           .push_back( std::move(m_paths[old_i]) );
         }
         m_paths.swap(new_paths);
 
 
         //  Reassign sequential z so top row = greatest z
-        for (int i = 0; i < n; ++i) {
-            m_paths[i].z_index = Z_FLOOR_USER + (n - 1 - i);
+        for (int i = 0; i < n; ++i)
+        {
+            m_paths[i].z_index  = Z_FLOOR_USER + (n - 1 - i);
         }
 
 
         //  Remap selection indices
-        std::unordered_set<size_t>      remapped;
+        std::unordered_set<PathID>      remapped;
         remapped.reserve(m_sel.paths.size());
-        for (size_t old_idx : m_sel.paths) {
+        
+        for (PathID old_idx : m_sel.paths)
+        {
             int new_idx = new_of_old[static_cast<int>(old_idx)];
-            if (new_idx >= 0) remapped.insert(static_cast<size_t>(new_idx));
+            if ( new_idx >= 0 )     { remapped.insert(static_cast<PathID>(new_idx)); }
         }
         m_sel.paths.swap(remapped);
+
 
         // Remap BrowserState indices that reference OBJECT rows
         BrowserState &  BS          = m_browser_S;
@@ -1275,26 +1284,14 @@ protected:
     //  "_reorder_paths"
     inline void                         _reorder_paths                      (int src, int dst)
     {
-        BrowserState &      BS          = m_browser_S;
-        const bool          invalid     = ( (src == dst) || (src < 0) || (dst < 0) || ( src >= static_cast<int>(m_paths.size()) ) || ( dst >= static_cast<int>(m_paths.size()) ) );
-        
-        if ( invalid )      { return; }
-
-
-        //      1.      REORDER THE VECTOR.
-        Path temp      = std::move(m_paths[src]);
-        m_paths.erase( m_paths.begin() + src );
-        m_paths.insert( m_paths.begin() + (src < dst ? dst - 1 : dst), std::move(temp) );
-
-
-        //      2.      REBUILD Z-INDEX     [ TOP-ROW = HIGHEST Z-INDEX.  BOTTOM-ROW = LOWEST Z-INDEX ].
-        const int n = static_cast<int>(m_paths.size());
-        for (int i = 0; i < n; ++i) {
-            m_paths[i].z_index = Z_FLOOR_USER + (n - 1 - i);
-        }
-
-
-        //      3.      ADJUST EDITOR-WIDE INDICES.
+        BrowserState &                  BS          = this->m_browser_S;
+        const size_t                    N_paths     = this->m_paths.size();
+        const bool                      invalid     = ( (src == dst)  ||  (src < 0)  ||  (dst < 0)      ||
+                                                        ( src >= static_cast<int>(N_paths) )            ||
+                                                        ( dst >= static_cast<int>(N_paths) )
+                                                    );
+        std::unordered_set<PathID>      new_sel;
+        //
         auto remap = [&](int & idx)
         {
             if ( idx < 0 )                                      { return;       }
@@ -1305,21 +1302,37 @@ protected:
         };
         
         
-        remap(BS.m_browser_anchor);
-        remap(BS.m_layer_browser_anchor);
-        remap(BS.m_obj_rename_idx);
-        remap(BS.m_layer_rename_idx);
+        
+        if ( invalid )      { return; }
 
-        //      4.      REMAP PATH-SELECTION SET.
-        std::unordered_set<size_t> new_sel;
-        for (size_t old_idx : m_sel.paths)
+
+        //      1.      REORDER THE VECTOR...
+        Path                            temp        = std::move(m_paths[src]);
+        m_paths.erase( m_paths.begin() + src );
+        m_paths.insert( m_paths.begin() + (src < dst ? dst - 1 : dst), std::move(temp) );
+
+
+        //      2.      REBUILD Z-INDEX     [ TOP-ROW = HIGHEST Z-INDEX.  BOTTOM-ROW = LOWEST Z-INDEX ]...
+        for (size_t i = 0; i < N_paths; ++i) {
+            this->m_paths[i].z_index    = Z_FLOOR_USER + static_cast<ZID>(N_paths - 1 - i);
+        }
+
+
+        //      3.      ADJUST EDITOR-WIDE INDICES...
+        remap   (BS.m_browser_anchor            );
+        remap   (BS.m_layer_browser_anchor      );
+        remap   (BS.m_obj_rename_idx            );
+        remap   (BS.m_layer_rename_idx          );
+
+
+        //      4.      REMAP PATH-SELECTION SET...
+        for (PathID old_idx : m_sel.paths)
         {
             int idx = static_cast<int>(old_idx);
             remap(idx);
-            new_sel.insert(static_cast<size_t>(idx));
+            new_sel.insert(idx);
         }
         m_sel.paths.swap(new_sel);
-        
         
         return;
     }

@@ -1524,14 +1524,16 @@ struct Interaction
 //  "Selection_t"
 //      PLAIN-OLD-DATA (POD) STRUCT.
 //
-template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
+//  template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
+template <ObjectCFGTraits CFG, typename Vertex>
 struct Selection_t
 {
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    using                               Hit                     = Hit_t         <HitID>                 ;
-    using                               PathHit                 = PathHit_t     <PathID, VertexID>      ;
+    _USE_OBJECT_CFG_ALIASES
+    using                               Hit                     = Hit_t         <hit_id>                ;
+    using                               PathHit                 = PathHit_t     <path_id, vertex_id>    ;
     
 //
 // *************************************************************************** //
@@ -1548,9 +1550,9 @@ struct Selection_t
     // *************************************************************************** //
     //      IMPORTANT DATA-MEMBERS.
     // *************************************************************************** //
-    std::unordered_set<uint32_t>        vertices                {   };
-    std::unordered_set<size_t>          points                  {   };
-    std::unordered_set<size_t>          paths                   {   };     // ← NEW
+    std::unordered_set<vertex_id>       vertices                {   };
+    std::unordered_set<point_id>        points                  {   };
+    std::unordered_set<path_id>         paths                   {   };     // ← NEW
     
     // *************************************************************************** //
     //      CACHE DATA-MEMBERS
@@ -1655,13 +1657,21 @@ struct Selection_t
 
 //      Selection_t     : "to_json"
 //
-template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
-inline void to_json(nlohmann::json & j, const Selection_t<VID,PtID,LID,PID,ZID,HitID> & s)
+//  template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
+template <ObjectCFGTraits CFG, typename Vertex>
+inline void to_json(nlohmann::json & j, const Selection_t<CFG, Vertex> & s)
 {
+    using   sel         = Selection_t<CFG, Vertex>  ;
+    using   vertex_id   = sel::vertex_id            ;
+    using   point_id    = sel::point_id             ;
+    using   path_id     = sel::path_id              ;
+    
+    
+    
     j = {
-        { "vertices",  std::vector<VID>  (s.vertices.begin(), s.vertices.end()) },
-        { "points",    std::vector<PtID> (s.points  .begin(), s.points  .end()) },
-        { "paths",     std::vector<PID>  (s.paths   .begin(), s.paths   .end()) }
+        { "vertices",  std::vector<vertex_id>   ( s.vertices.begin()    , s.vertices.end() )  },
+        { "points",    std::vector<point_id>    ( s.points  .begin()    , s.points  .end() )  },
+        { "paths",     std::vector<path_id>     ( s.paths   .begin()    , s.paths   .end() )  }
     };
           
     return;
@@ -1670,16 +1680,24 @@ inline void to_json(nlohmann::json & j, const Selection_t<VID,PtID,LID,PID,ZID,H
 
 //      Selection_t     : "from_json"
 //
-template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
-inline void from_json(const nlohmann::json & j, Selection_t<VID,PtID,LID,PID,ZID,HitID> & s)
+//  template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
+template <ObjectCFGTraits CFG, typename Vertex>
+inline void from_json(const nlohmann::json & j, Selection_t<CFG, Vertex> & s)
 {
-    std::vector<VID >  vs;  j.at("vertices").get_to(vs);
-    std::vector<PtID>  ps;  j.at("points"  ).get_to(ps);
-    std::vector<PID >  pa;  j.at("paths"   ).get_to(pa);
+    using   sel         = Selection_t<CFG, Vertex>  ;
+    using   vertex_id   = sel::vertex_id            ;
+    using   point_id    = sel::point_id             ;
+    using   path_id     = sel::path_id              ;
+    
+    
 
-    s.vertices.clear();  s.vertices.insert(vs.begin(), vs.end());
-    s.points  .clear();  s.points  .insert(ps.begin(), ps.end());
-    s.paths   .clear();  s.paths   .insert(pa.begin(), pa.end());
+    std::vector<vertex_id>      vs  ;       j.at("vertices")    .get_to(vs)                     ;
+    std::vector<point_id>       ps  ;       j.at("points"  )    .get_to(ps)                     ;
+    std::vector<path_id >       pa  ;       j.at("paths"   )    .get_to(pa)                     ;
+
+    s.vertices  .clear()            ;       s.vertices          .insert(vs.begin(), vs.end())   ;
+    s.points    .clear()            ;       s.points            .insert(ps.begin(), ps.end())   ;
+    s.paths     .clear()            ;       s.paths             .insert(pa.begin(), pa.end())   ;
     
     return;
 }
@@ -2184,7 +2202,7 @@ struct BoxDrag_t
     //  "SafeDiv"
     template <typename T> requires std::floating_point<T>
     static inline T                     SafeDiv                             (T num, T den) noexcept
-        { constexpr T eps = cblib::math::numerics::default_rel_tol<T>();  return (std::fabs(den) > eps) ? (num / den) : T(1); }
+        { constexpr T eps = cblib::math::numerics::cv_default_rel_tol_v<T>();  return (std::fabs(den) > eps) ? (num / den) : T(1); }
     
     
     

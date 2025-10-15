@@ -367,7 +367,6 @@ inline void Editor::update_move_drag_state(const Interaction & it)
 //
 inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction & it)
 {
-    using       HitType     = Hit::Type;
     ImGuiIO &   io          = ImGui::GetIO();
     
     
@@ -400,7 +399,7 @@ inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction
                 switch (hit.type)
                 {
                     //      CASE 1 :    HIT A POINT.
-                    case HitType::Vertex :
+                    case Hit::Type::Vertex :
                     {
                         const VertexID  vid     = m_points[idx].v;
                         
@@ -411,7 +410,7 @@ inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction
                     }
                     //
                     //      CASE 2 :    HIT A PATH  *OR*  EDGE.
-                    case HitType::Edge :    case HitType::Surface :
+                    case Hit::Type::Edge :    case Hit::Type::Surface :
                     {
                         const Path &    p       = m_paths[idx];
 
@@ -522,18 +521,16 @@ inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction
 //
 void Editor::add_hit_to_selection(const Hit & hit)
 {
-    using HitType = Hit::Type;
-    
     
     switch (hit.type)
     {
         //      1.          CLICKED ON "HANDLE".
-        case HitType::Handle : {
+        case Hit::Type::Handle : {
             return;
         }
         //
         //      2.          CLICKED ON "VERTEX".
-        case HitType::Vertex :
+        case Hit::Type::Vertex :
         {
             size_t          idx     = hit.index;
             VertexID        vid     = this->m_points[idx].v;
@@ -544,8 +541,8 @@ void Editor::add_hit_to_selection(const Hit & hit)
         }
         //
         //      3.          CLICKED ON "EDGE"  *OR*  "SURFACE".
-        case HitType::Edge :
-        case HitType::Surface :
+        case Hit::Type::Edge :
+        case Hit::Type::Surface :
         {
             size_t          idx     = hit.index;
             const Path &    p       = m_paths[idx];
@@ -618,8 +615,81 @@ void Editor::_rebuild_vertex_selection(void)
 //
 bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) const
 {
-    bool    have_any    = false;
-    auto    add_pt      = [&](const ImVec2 & p)
+    namespace   bez         = cblib::math::bezier;
+    bool        have_any    = false;
+    auto        add_pt      = [&](const ImVec2 & p)
+    {
+        if ( !have_any )    { tl = br = p; have_any = true; }
+        else {
+            tl.x = std::min(tl.x, p.x);     tl.y = std::min(tl.y, p.y);
+            br.x = std::max(br.x, p.x);     br.y = std::max(br.y, p.y);
+        }
+    };
+
+
+    //      A)      Vertex anchors (existing behavior)
+    for (VertexID vid : m_sel.vertices)
+    {
+        if ( const Vertex * v = find_vertex(m_vertices, vid) )
+            { add_pt(ImVec2{ v->x, v->y }); }
+    }
+
+    //      B)      Path control-hull union (new: captures curvature envelope)
+    for (PathID pidx : this->m_sel.paths)
+    {
+        if ( static_cast<size_t>(pidx) >= m_paths.size() )      { continue; }
+        
+        const Path &    p           = m_paths[pidx];
+        const size_t    N           = p.size();
+        if ( N < 2 )                { continue; }
+
+        bool            first       = true;
+        const bool      is_area     = p.IsArea();
+        const size_t    seg_cnt     = N - ( (is_area)   ? 0u    : 1u);
+        //
+        ImVec2          p_tl        {  };
+        ImVec2          p_br        {  };
+
+
+        for (size_t si = 0; si < seg_cnt; ++si)
+        {
+            const VertexID  a_id    = p.verts[si];
+            const VertexID  b_id    = p.verts[(si + 1) % N];
+
+            const Vertex* a = ctx.callbacks.get_vertex(ctx.callbacks.vertices, a_id);
+            const Vertex* b = ctx.callbacks.get_vertex(ctx.callbacks.vertices, b_id);
+            if (!a || !b) continue;
+
+            // WORLD-space cubic control points using effective handles
+            const ImVec2 P0{a->x, a->y};
+            const ImVec2 P3{b->x, b->y};
+
+            const ImVec2 out_eff = a->EffectiveOutHandle(); // {0,0} if linear
+            const ImVec2 in_eff  = b->EffectiveInHandle();  // {0,0} if linear
+
+            const ImVec2 P1{P0.x + out_eff.x, P0.y + out_eff.y};
+            const ImVec2 P2{P3.x + in_eff.x , P3.y + in_eff.y };
+
+            // Choose conservative control-hull AABB (fast) or tight geometry AABB (precise)
+            constexpr bool kUseTightAABB = false; // set true if you prefer tight boxes
+            if (kUseTightAABB)
+                bez::tight_aabb_cubic<ImVec2, float>(P0, P1, P2, P3, p_tl, p_br, first);
+            else
+                bez::hull_aabb_cubic<ImVec2>(P0, P1, P2, P3, p_tl, p_br, first);
+        }
+
+        if (!first) { add_pt(p_tl); add_pt(p_br); }
+    }
+
+    return have_any;
+}
+
+/*
+bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) const
+{
+    namespace   bez         = cblib::math::bezier;
+    bool        have_any    = false;
+    auto        add_pt      = [&](const ImVec2 & p)
     {
         if ( !have_any )    { tl = br = p; have_any = true; }
         else {
@@ -643,7 +713,8 @@ bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) 
         const Path & p = m_paths[pidx];
 
         ImVec2 p_tl{}, p_br{};
-        if ( p.aabb_control_hull(p_tl, p_br, ctx) ) {
+        if ( p.aabb_control_hull(p_tl, p_br, ctx) )
+        {
             add_pt(p_tl);
             add_pt(p_br);
         }
@@ -651,29 +722,6 @@ bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) 
 
     return have_any;
 }
-
-/*
-bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br) const
-{
-    if ( m_sel.vertices.empty() )   { return false; }
-    
-    bool first = true;
-    
-    for (uint32_t vid : m_sel.vertices)
-    {
-        if (const Vertex * v = find_vertex(m_vertices, vid))
-        {
-            ImVec2 p{ v->x, v->y };
-            if (first)  { tl = br = p; first = false; }
-            else
-            {
-                tl.x = std::min(tl.x, p.x); tl.y = std::min(tl.y, p.y);
-                br.x = std::max(br.x, p.x); br.y = std::max(br.y, p.y);
-            }
-        }
-    }
-    
-    return !first;
 }*/
 
 
@@ -781,7 +829,7 @@ void Editor::_update_bbox(void)
     const std::size_t n = this->m_boxdrag.v_ids.size();
     for (std::size_t i = 0; i < n; ++i)
     {
-        if ( Vertex * v = this->find_vertex_mut(this->m_vertices, this->m_boxdrag.v_ids[i]) )
+        if ( Vertex * v = this->find_vertex(this->m_vertices, this->m_boxdrag.v_ids[i]) )
         {
             const ImVec2    q0      {  this->m_boxdrag.v_orig[i].x - P.x    , this->m_boxdrag.v_orig[i].y - P.y     };
             const ImVec2    q1      {  q0.x * sx                            , q0.y * sy                             };

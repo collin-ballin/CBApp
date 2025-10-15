@@ -434,9 +434,9 @@ inline void Editor::_selection_context_multi([[maybe_unused]] const Interaction 
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_show_tool_selection_menu"
+//  "_MENU_tool_selection"
 //
-bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
+bool Editor::_MENU_tool_selection(const Mode current_tool) noexcept
 {
     //  using                               IconStyle           = utl::icon_widgets::Style;
     using                               IconAnchor          = utl::icon_widgets::Anchor;
@@ -474,6 +474,9 @@ bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
 
 
     //      CASE 0 :    IF NO TABLE, EXIT EARLY...
+    ImGui::SeparatorText("Tool Selection");
+    ImGui::NewLine();
+    //
     if ( !ImGui::BeginTable("ToolSelectionTable", 3, FLAGS, table_dims) )    { return false; }
     
     
@@ -585,6 +588,34 @@ bool Editor::_show_tool_selection_menu(const Mode current_tool) noexcept
     
     return !close;  //  Return TRUE if window should CLOSE...
 }
+
+
+
+//  "_MENU_filter_selection"
+//
+bool Editor::_MENU_filter_selection(void) noexcept
+{
+    ImGui::SeparatorText("Filter");
+    ImGui::NewLine();
+    
+    return false;
+}
+
+
+
+//  "_MENU_object_browser_item"
+//
+bool Editor::_MENU_object_browser_item(void) noexcept
+{
+    ImGui::SeparatorText("Object-Browser-Row | RMB Context-Menu");
+    ImGui::NewLine();
+    
+    return false;
+}
+
+
+
+
 
 
 //

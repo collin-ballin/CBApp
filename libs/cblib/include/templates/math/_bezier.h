@@ -33,6 +33,15 @@
 #if __cplusplus >= 201103L
 # include <initializer_list>
 #endif	//  C++11.  //
+	
+ 
+ 
+#ifndef _CBLIB_MATH_INTERNAL_H
+# include "templates/math/_internal.h"
+#endif	// _CBLIB_MATH_INTERNAL_H  //
+
+
+
 
 
 
@@ -285,11 +294,182 @@ template <typename T>
 
 // *************************************************************************** //
 //
-//
-//
 //      2.      CUBIC BÉZIER-CURVE COMPUTATIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+//
+//  Cubic curve :       B(t)    =   (1−t)^3 A  +  3(1−t)^2 t C1  +  3(1−t) t^2 C2  +  t^3 B
+//  First deriv :       B'(t)   =   3(1−t)^2 (C1−A)  +  6(1−t)t (C2−C1)  +  3 t^2 (B−C2)
+//
+//  Notes:
+//      eval_cubic(…,0)     = A             , eval_cubic(…,1)   = B
+//      deriv_cubic(…,0)    = 3(C1−A)       , deriv_cubic(…,1)  = 3(B−C2)
+//
+// *************************************************************************** //
+
+//  "eval_cubic"
+//
+template<typename V2, typename T>
+[[nodiscard]] inline V2 eval_cubic(const V2 & A, const V2 & C1, const V2 & C2, const V2 & B, T t) noexcept {
+    const T     u       = T(1) - t,
+                u2      = u*u,
+                t2      = t*t;
+    
+    V2          r   = v2_add<V2>( v2_mul<V2,T>(A , u*u2)    , v2_mul<V2,T>( C1 , T(3) * u2 * t )    );
+                r   = v2_add<V2>( r                         , v2_mul<V2,T>( C2 , T(3) * u * t2 )    );
+                r   = v2_add<V2>( r                         , v2_mul<V2,T>( B  , t * t2        )    );
+       
+    return r;
+}
+
+
+//  "deriv_cubic"
+//
+template<typename V2, typename T>
+[[nodiscard]] inline V2 deriv_cubic(const V2& A, const V2& C1, const V2& C2, const V2& B, T t) noexcept {
+    const T u  = T(1) - t, u2 = u*u, t2 = t*t;
+    const V2 d0 = v2_mul<V2,T>( v2_sub(C1, A), T(3)*u2 );
+    const V2 d1 = v2_mul<V2,T>( v2_sub(C2, C1), T(6)*u*t );
+    const V2 d2 = v2_mul<V2,T>( v2_sub(B , C2), T(3)*t2 );
+    return v2_add<V2>( v2_add<V2>(d0, d1), d2 );
+}
+
+
+//  "sample_cubic_polyline"
+//      Polyline sampler (fixed steps) — used by fills/hit tests
+//
+template<typename V2, typename T, typename Emit>
+inline void sample_cubic_polyline(const V2& A,const V2& C1,const V2& C2,const V2& B,
+                                  int steps, Emit&& emit) noexcept
+{
+    if (steps < 1)  { steps = 1; }
+    for (int k = 0; k <= steps; ++k)
+    {
+        const T t = static_cast<T>(k) / static_cast<T>(steps);
+        emit( eval_cubic<V2,T>(A,C1,C2,B,t), t );
+    }
+    
+    return;
+}
+
+
+
+
+
+
+//  "quadratic_unit_roots"
+//      Quadratic unit roots (0,1) — analytic, epsilon-guarded
+//
+template<typename T>
+inline void quadratic_unit_roots(   T       a
+                                  , T       b
+                                  , T       c
+                                  , T       out[2]
+                                  , int &   count
+                                  , T       eps = static_cast<T>(1e-8) ) noexcept
+{
+    count                   = 0;
+    const T         D       = std::pow(b, T(0)) - ( T(4) * a * c );
+    
+    if ( std::abs(a) < eps )
+    {
+        const T     t   = -c / b;
+        if ( std::abs(b) < eps )            { return; }
+        if ( (t > T(0))  &&  (t < T(1)) )   { out[count++] = t; }
+        return;
+    }
+    if ( D < T(0) )     { return; }
+    
+    
+    const T         sD      = std::sqrt(std::max(D, T(0)));
+    const T         inv2a   = T(0.5) / a;
+    const T         t1      = (-b - sD) * inv2a;
+    const T         t2      = (-b + sD) * inv2a;
+    //
+    const bool      cond1   = ( (t1 > T(0))  &&  (t1 < T(1)) );
+    const bool      cond2   = ( (t2 > T(0))  &&  (t2 < T(1))  &&  ( (count == 0)  ||  std::abs(t2 - out[0]) > T(1e-6) ) );
+    
+    if ( cond1 )    { out[count++] = t1; }
+    if ( cond2 )    { out[count++] = t2; }
+    
+    return;
+}
+
+
+//  "tight_aabb_cubic"
+//
+template<typename V2, typename T>
+inline void tight_aabb_cubic(const V2& A, const V2& C1, const V2& C2, const V2& B,
+                             V2& tl_ws, V2& br_ws, bool& first) noexcept
+{
+    T           ax          = T(0);
+    T           bx          = T(0);
+    T           cx          = T(0);
+    T           ay          = T(0);
+    T           by          = T(0);
+    T           cy          = T(0);
+    int         nx          = 0;
+    int         ny          = 0;
+    T           tx[2]       = {  };
+    T           ty[2]       = {  };
+    //
+    //
+    auto        add         = [&](const V2& q)
+    {
+        if (first)  { tl_ws = br_ws = q; first = false; }
+        else {
+            tl_ws.x     = std::min(tl_ws.x, q.x);
+            tl_ws.y     = std::min(tl_ws.y, q.y);
+            br_ws.x     = std::max(br_ws.x, q.x);
+            br_ws.y     = std::max(br_ws.y, q.y);
+        }
+    };
+    auto        coeffs      = [](T p0,T p1,T p2,T p3,T& a,T& b,T& c)
+    {
+        a   = (-p0 + T(3)*p1 - T(3)*p2 + p3);
+        b   = T(2)*(p0 - T(2)*p1 + p2);
+        c   = (-p0 + p1);
+    };
+    
+    
+    
+    add(A); add(B); // endpoints always included
+    
+    coeffs(A.x, C1.x, C2.x, B.x, ax, bx, cx);
+    coeffs(A.y, C1.y, C2.y, B.y, ay, by, cy);
+    
+    quadratic_unit_roots<T>(ax, bx, cx, tx, nx);
+    quadratic_unit_roots<T>(ay, by, cy, ty, ny);
+
+    for (int i=0; i<nx; ++i)    { add( eval_cubic<V2,T>(A,C1,C2,B, tx[i]) ); }
+    for (int i=0; i<ny; ++i)    { add( eval_cubic<V2,T>(A,C1,C2,B, ty[i]) ); }
+    
+    return;
+}
+
+
+//  "hull_aabb_cubic"
+//      Optional: control-hull AABB (fast conservative)
+//
+template <typename V2>
+inline void hull_aabb_cubic(const V2& A,const V2& C1,const V2& C2,const V2& B,
+                            V2& tl_ws,V2& br_ws,bool& first) noexcept
+{
+    auto add = [&](const V2& q){
+        if (first) { tl_ws = br_ws = q; first = false; }
+        else {
+            tl_ws.x = std::min(tl_ws.x,q.x);
+            tl_ws.y = std::min(tl_ws.y,q.y);
+            br_ws.x = std::max(br_ws.x,q.x);
+            br_ws.y = std::max(br_ws.y,q.y);
+        }
+    };
+    add(A); add(C1); add(C2); add(B);
+    
+    return;
+}
+
+
 
 //
 //

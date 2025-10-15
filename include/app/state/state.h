@@ -524,6 +524,20 @@ public:
     //
     //
     // *************************************************************************** //
+    //      QUERY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "IsDetViewOpen"
+    [[nodiscard]] inline bool                       IsDetViewOpen               (void) const noexcept   { return this->m_show_detview_window;       }
+    [[nodiscard]] inline bool                       IsBrowserOpen               (void) const noexcept   { return this->m_show_browser_window;       }
+    [[nodiscard]] inline bool                       IsControlBarOpen            (void) const noexcept   { return this->m_show_controlbar_window;    }
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
     //      SETTER FUNCTIONS.
     // *************************************************************************** //
     
