@@ -217,27 +217,30 @@ void Editor::_MECH_draw_controls(void)
         //
         //
         ImGui::PushItemWidth( BUTTON_SIZE.x );
-        this->S.PushFont(Font::Main);
-        {
-            utl::IconButton(   "##Editor_Controls_ToolIcon"
-                             , this->S.SystemColor.White
-                             , this->ms_EDITOR_STATE_ICONS[ static_cast<Mode>(mode_i) ]
-                             , Style.ms_TOOLBAR_ICON_SCALE 
-                             , IconAnchor::North    // TextBaseline    South   Center
-                             , Padding::Tight );
-            //
-            //          1.1.    TOOL-SELECTOR CONTEXT MENU...
-            const bool  tool_menu_open  = ImGui::BeginPopupContextItem(GetMenuID(PopupHandle::ToolSelection), ImGuiPopupFlags_MouseButtonLeft);
-            if (tool_menu_open)
+        ImGui::BeginGroup();
+            this->S.PushFont(Font::Main);
             {
-                if ( !this->_MENU_tool_selection(this->m_mode) )
-                    { ImGui::CloseCurrentPopup(); }
+                utl::IconButton(   "##Editor_Controls_ToolIcon"
+                                 , this->S.SystemColor.White
+                                 , this->ms_EDITOR_STATE_ICONS[ static_cast<Mode>(mode_i) ]
+                                 , Style.ms_TOOLBAR_ICON_SCALE
+                                 , IconAnchor::North    // TextBaseline    South   Center
+                                 , Padding::Tight );
                 //
-                ImGui::EndPopup();
+                //          1.1.    TOOL-SELECTOR CONTEXT MENU...
+                const bool  tool_menu_open  = ImGui::BeginPopupContextItem(GetMenuID(PopupHandle::ToolSelection), ImGuiPopupFlags_MouseButtonLeft);
+                if (tool_menu_open)
+                {
+                    if ( !this->_MENU_tool_selection(this->m_mode) )
+                        { ImGui::CloseCurrentPopup(); }
+                    //
+                    ImGui::EndPopup();
+                }
             }
-        }
-        this->S.PopFont();
+            this->S.PopFont();
+        ImGui::EndGroup();
         ImGui::PopItemWidth();
+        this->m_tooltip.UpdateTooltip( TooltipKey::ToolSelection );
         //
         //
         //
@@ -585,7 +588,11 @@ void Editor::_dispatch_obj_inspector_column(ObjectTrait & which_menu)
 void Editor::_draw_obj_selector_table(void)
 {
     using                                   namespace           icon;
+    using                                   Payload             = BrowserState::PathRowDragPayload;
     using                                   IconAnchor          = utl::icon_widgets::Anchor;
+    using                                   Padding             = utl::icon_widgets::PaddingPolicy;
+    //  using                               IconStyle           = utl::icon_widgets::Style;
+    //
     constexpr ImGuiTableFlags               TABLE_FLAGS         = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY; // | ImGuiTableFlags_RowBg;
     constexpr ImGuiTableColumnFlags         C_EYE               = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
     constexpr ImGuiTableColumnFlags         C_LOCK              = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
@@ -594,32 +601,26 @@ void Editor::_draw_obj_selector_table(void)
     //
     //
     //
-    //  BrowserStyle &                          BStyle              = m_style.browser_style;
-    BrowserState &                          BS                  = m_browser_S;
+    BrowserState &                          BS                  = this->m_browser_S;
+    BrowserStyle &                          BStyle              = this->m_style.browser_style;
+    ItemDDropper &                          DS                  = this->m_ddropper_S;
     ImGuiListClipper                        clipper;
 
 
     //      1.      SEARCH-QUERY BOX...
     S.PushFont(Font::Main);
-    ImGui::BeginDisabled(true);
     {
         static float        button_rect     = 10.0f;
-        //
-        //
-    #ifdef __DONT_DEFINE_THIS__
-        BrowserStyle &      BStyle          = m_style.browser_style;
-        const float         query_width     = BStyle.OBJ_SELECTOR_DIMS.value.x - button_rect;
-    #else
         static ImVec2       Avail;
+        //
         Avail                               = ImGui::GetContentRegionAvail();
         const float         query_width     = Avail.x - button_rect;
-    #endif  //  __DONT_DEFINE_THIS__  //
     //
     //
     //
         //      1.      "QUERY" BOX...
-        //  ImGui::SetNextItemWidth(-FLT_MIN);
         ImGui::SetNextItemWidth(query_width);
+        ImGui::BeginDisabled(true);
         if ( ImGui::InputTextWithHint( "##Editor_ObjSelector_ObjFilterQuery",
                                        "filter",
                                        BS.m_obj_filter.InputBuf,
@@ -628,23 +629,35 @@ void Editor::_draw_obj_selector_table(void)
             BS.m_obj_filter.Build();
             BS.m_obj_filter_dirty   = true;
         }
+        ImGui::EndDisabled();
         //
         //
         //      2.      "FILTER" BUTTON...
         ImGui::SameLine(0,0);
-        if ( utl::IconButton(   "##Editor_ObjSelector_FilterMenu"
-                              , this->S.SystemColor.Blue
-                              , ICON_FA_FILTER
-                              , 1.0f ) )
         {
-            //  ui::open_preferences_popup( GetMenuID(PopupHandle::Settings), [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
+            utl::IconButton(   "##Editor_ObjSelector_FilterMenu"
+                             , this->S.SystemColor.Blue
+                             , ICON_FA_FILTER
+                             , 1.0f
+                             , IconAnchor::Center    // TextBaseline    South   Center
+                             , Padding::Tight );
+            //
+            //
+            //          1.1.    TOOL-SELECTOR CONTEXT MENU...
+            button_rect                     = ImGui::GetItemRectSize().x;
+            const bool  filter_menu_open    = ImGui::BeginPopupContextItem(GetMenuID(PopupHandle::FilterCTX), ImGuiPopupFlags_MouseButtonLeft);
+            if (filter_menu_open)
+            {
+                if ( !this->_MENU_filter_selection() )
+                    { ImGui::CloseCurrentPopup(); }
+                //
+                ImGui::EndPopup();
+            }
         }
-        button_rect = ImGui::GetItemRectSize().x;
     //
     //
     //
     }
-    ImGui::EndDisabled();
     S.PopFont();
     ImGui::Separator();
 
@@ -690,6 +703,7 @@ void Editor::_draw_obj_selector_table(void)
                 Path &                  path                = m_paths[i];
                 bool                    selected            = m_sel.paths.count(static_cast<int>(i));
                 bool                    mutable_path        = path.IsMutable();
+                const bool              is_renaming         = ( BS.m_obj_rename_idx == i );
 
                 //  CASE 0 :    EARLY-OUT IF FILTER REMOVES OBJ.
                 if ( !BS.m_obj_filter.PassFilter(path.label.c_str()) )      { continue; }
@@ -700,8 +714,7 @@ void Editor::_draw_obj_selector_table(void)
                 ImGui::TableNextRow();
                 //
                 //
-                //
-                //  //      4.1.        "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY).
+                //  //          4.1.        "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY).
                     ImGui::TableSetColumnIndex(0);
                     {
                         if (   utl::IconButton(   "##Editor_Browser_ObjVisibilityButton"
@@ -715,8 +728,7 @@ void Editor::_draw_obj_selector_table(void)
                     }
                     //
                     //
-                    //
-                    //      4.2.        "LOCK" BUTTON (TO TOGGLE OBJECT'S LOCKED-STATE).
+                    //          4.2.        "LOCK" BUTTON (TO TOGGLE OBJECT'S LOCKED-STATE).
                     ImGui::TableSetColumnIndex(1);
                     {
                         if (   utl::IconButton(   "##Editor_Browser_ObjLockButton"
@@ -729,52 +741,57 @@ void Editor::_draw_obj_selector_table(void)
                         {  path.locked = !path.locked; _prune_selection_mutability();  }
                     }
                     //
-                    //  {
-                    //      ImGui::InvisibleButton("##Editor_Browser_ObjLockButton", {CELL_SZ, CELL_SZ});
-                    //      if ( ImGui::IsItemClicked() )   { path.locked = !path.locked; _prune_selection_mutability(); }
-                    //      //
-                    //      const bool hovered = ImGui::IsItemHovered();
-                    //      //
-                    //      ( (path.locked) ? draw_lock_icon : draw_unlock_icon )
-                    //          ( dl,
-                    //            ImGui::GetItemRectMin(),
-                    //            { CELL_SZ, CELL_SZ },
-                    //            ( path.locked )
-                    //              ? ( (hovered)   ? col_text  : col_text_uh       )
-                    //              : ( (hovered)   ? col_dim   : col_dim_uh        )
-                    //      );
-                    //  }
                     //
-                    //
-                    //
-                    //      4.3.        DRAW THE SELECTABLE FOR THIS OBJECT.
+                    //          4.3.        DRAW THE SELECTABLE FOR THIS OBJECT.
                     ImGui::TableSetColumnIndex(2);
                     this->_draw_obj_selectable( path, i, mutable_path, selected );
                     //
                     //
                     //
-                    //      4.4.        DRAG / DROP TARGETS FOR RE-ORDERING EACH ROW.
-                    //                      Make the *Selectable item itself* the drag source & drop target.
-                    //                      Skip when this row is in rename mode so typing doesn't start drags.
-                    if ( m_browser_S.m_obj_rename_idx != i )
+                    //          4.4.        DRAG / DROP TARGETS FOR RE-ORDERING EACH ROW.
+                    //                          Make the *Selectable item itself* the drag source & drop target.
+                    //                          Skip when this row is in rename mode so typing doesn't start drags.
+                    if ( !is_renaming )
                     {
-                        //      DRAG-DROP SOURCE :      Only when user actually drags (prevents double-click conflicts).
+                        //      1.      DRAG-DROP SOURCE :      Only when user actually drags (prevents double-click conflicts).
                         if ( ImGui::IsItemActive() &&
-                             ImGui::IsMouseDragging(ImGuiMouseButton_Left, 2.0f) &&
-                             ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) )
+                             ImGui::IsMouseDragging(ImGuiMouseButton_Left, BS.ms_DRAGDROP_DRAG_THRESHOLD ) &&
+                             ImGui::BeginDragDropSource(ImGuiDragDropFlags_None) )    //  ImGuiDragDropFlags_SourceNoPreviewTooltip   ImGuiDragDropFlags_AcceptNoDrawDefaultRect
                         {
-                            int src = i;
-                            ImGui::SetDragDropPayload( "OBJ_ROW", &src, sizeof(src) );
+                        
+                            ImGui::Text("Tooltip");
+                            
+                            //
+                            //  DS.SetPathRowDragPayload           (Payload(i));
+                            Payload         drag            = Payload(i); // i = this row
+                            
+                            //  DS.StartPathRowDragging();
+                            
+                            
+                            Payload::SetDragDropPayload     (drag);
+                            //
+                            //
+                            //  Payload         drag            = Payload(i); // i = this row
+                            //  Payload::SetDragDropPayload     (drag);
+                            //
                             ImGui::EndDragDropSource();
                         }
                         //
-                        //      DRAG-DROP TARGET :      Same cell accepts the row payload.
-                        if ( ImGui::BeginDragDropTarget() )
-                        {
-                            if ( const ImGuiPayload * p = ImGui::AcceptDragDropPayload("OBJ_ROW") )
+                        //      2.      DRAG-DROP TARGET :      Same cell accepts the row payload.
+                        if ( ImGui::BeginDragDropTarget() ) {
+                            if ( Payload * drag = Payload::GetPayloadIfValid(ImGuiDragDropFlags_AcceptNoDrawDefaultRect) )
                             {
-                                int src = *static_cast<const int*>(p->Data);
-                                _reorder_paths(src, i);
+                                //  int         src             = *static_cast<const int*>(drag->Data);
+                                const int       src             = drag->src_index;
+                                ImVec2          r_min           = ImGui::GetItemRectMin();
+                                ImVec2          r_max           = ImGui::GetItemRectMax();
+                                float           mid_y           = 0.5f * (r_min.y + r_max.y);
+                                float           mouse_y         = ImGui::GetIO().MousePos.y;
+                                bool            drop_above      = (mouse_y < mid_y);
+            
+                                int             dst_slot        = i + (drop_above ? 0 : 1);
+                                _reorder_paths(src, dst_slot);
+
 
                                 //  IMPORTANT:          //  we mutated m_paths; close scopes and return immediately.
                                 ImGui::PopID();         //  pop the row PushID(i)
@@ -783,14 +800,33 @@ void Editor::_draw_obj_selector_table(void)
                                 return;
                             }
                             ImGui::EndDragDropTarget();
-                        }
+                            
+                            
+                            //      3.      DRAG-RENDERING :    Draw a live insertion cue (thin line) while dragging over the row.
+                            if ( ImGui::IsDragDropActive() )
+                            {
+                            
+                                DS.RenderPathRowDragHint( ImGui::GetWindowDrawList() );
+                                
+                            }// END     DRAG-RENDER.
+                            //
+                            //
+                            //      3A.     DRAGGING HAS STOPPED...
+                            else if ( DS.IsPathRowDragging() )
+                            {
+                                DS.StopPathRowDragging();
+                            }
+                            
+                            
+                        }// END     ALL-DRAGGING.
+                    
                     }
                     //
                     //
                     //
                     //      4.5.        "DELETE" BUTTON.
                     ImGui::TableSetColumnIndex(3);
-                    if ( !path.locked && selected )
+                    if ( !path.locked  &&  selected  &&  !is_renaming )
                     {
                         if ( utl::IconButton(   "##Editor_Browser_ObjDeleteButton"
                                               , this->S.SystemColor.Red
@@ -810,45 +846,9 @@ void Editor::_draw_obj_selector_table(void)
                             return;
                         }
                     }
-                    //
-                    //
-                    //  if ( !path.locked && selected )
-                    //  {
-                    //      //  utl::SmallCButton( BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR );
-                    //      //  utl::CButton( BStyle.ms_DELETE_BUTTON_HANDLE, BStyle.ms_DELETE_BUTTON_COLOR, {CELL_SZ, CELL_SZ} );
-                    //      //
-                    //      //
-                    //      //
-                    //      ImGui::InvisibleButton("##Editor_Browser_ObjDeleteButton", {CELL_SZ, CELL_SZ});
-                    //      const bool hovered = ImGui::IsItemHovered();
-                    //      draw_icon_background(
-                    //          dl,
-                    //          ImGui::GetItemRectMin(),
-                    //          {CELL_SZ, CELL_SZ},
-                    //          ( hovered )
-                    //              ? (BStyle.ms_DELETE_BUTTON_COLOR | 0xFF000000u) : BStyle.ms_DELETE_BUTTON_COLOR,
-                    //          8.0f * icon::BG_ROUNDING
-                    //      );
-                    //      //
-                    //      //
-                    //      if ( ImGui::IsItemClicked() )
-                    //      {
-                    //          _erase_path_and_orphans(static_cast<PathID>(i));
-                    //          reset_selection();
-                    //          BS.m_inspector_vertex_idx = -1;
-                    //          _prune_selection_mutability();
-
-                    //          ImGui::PopID();
-                    //          clipper.End();
-                    //          ImGui::EndTable();
-                    //          return;
-                    //      }
-                    //  }
                 //
                 //
                 //  END OF ROW.
-                
-                
                 ImGui::PopID();
             //
             //

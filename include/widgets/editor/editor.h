@@ -428,12 +428,14 @@ protected:
     // *************************************************************************** //
     //      STATE OBJECTS...
     // *************************************************************************** //
-    //                              SUBSIDIARY STATES:
+    //                              EDITOR DEPENDENCY STATES:
     std::unique_ptr<MenuState>          m_menu_state                    {   };          //  UNDO/REDO...
     EditorState                         m_editor_S                      {   };          //  <======|    NEW CONVENTION.  Let's use "m_name_S" to denote a STATE variable...
     mutable RenderCTX                   m_render_ctx;
     BrowserState                        m_browser_S                     {   };
+    ItemDDropper                        m_ddropper_S                    {   };          //  NEW: Used for DRAG/DROPPING Items in Browser and etc.
     //
+    //                              MECHANIC STATES:
     Selection                           m_sel                   ;
     mutable BoxDrag                     m_boxdrag               ;
     MoveDrag                            m_movedrag              ;
@@ -1281,7 +1283,61 @@ protected:
     }
 
 
+
+
+
+
+    //  "_reorder_paths_interstitial"
+    //      Interstitial reorder: src_row ∈ [0..N-1], dst_slot ∈ [0..N] (N+1 gaps).
+    //      Rows are the browser rows (sorted by z_index desc: top = highest z).
+    //
+    inline void _reorder_paths_interstitial(int src_row, int dst_slot)
+    {
+        const size_t N = m_paths.size();
+        if (N <= 1) return;
+
+        // Build rank = indices sorted by z desc (row 0 is highest z)
+        std::vector<size_t> rank(N);
+        std::iota(rank.begin(), rank.end(), size_t{0});
+        std::stable_sort(rank.begin(), rank.end(),
+            [&](size_t a, size_t b){ return m_paths[a].z_index > m_paths[b].z_index; });
+
+        // Clamp args to valid ranges
+        if (src_row < 0 || src_row >= static_cast<int>(N)) return;
+        if (dst_slot < 0) dst_slot = 0;
+        if (dst_slot > static_cast<int>(N)) dst_slot = static_cast<int>(N);
+
+        // No-op: dropping into the same slot the item already occupies
+        // (the two slots that border the item are src_row and src_row+1)
+        if (dst_slot == src_row || dst_slot == src_row + 1) return;
+
+        // Remove moving item from the row-ordered list
+        const size_t moving_idx = rank[static_cast<size_t>(src_row)];
+        rank.erase(rank.begin() + src_row); // rank now size N-1 (and has N slots: 0..N-1)
+
+        // Map original dst_slot (0..N) to post-removal insertion index (0..N-1)
+        size_t ins = (dst_slot <= src_row) ? static_cast<size_t>(dst_slot)
+                                           : static_cast<size_t>(dst_slot - 1);
+        if (ins > rank.size()) ins = rank.size(); // allow "after last"
+
+        rank.insert(rank.begin() + ins, moving_idx);
+
+        // Reassign z so row 0 remains highest, dense and deterministic
+        const size_t M = rank.size();
+        for (size_t row = 0; row < M; ++row)
+            m_paths[rank[row]].z_index = Z_FLOOR_USER + static_cast<ZID>(M - 1 - row);
+
+        // Note: m_paths container order is unchanged → no remaps needed for selections/anchors
+        return;
+    }
+
     //  "_reorder_paths"
+    inline void                         _reorder_paths                      (int src, int dst)
+    {
+        _reorder_paths_interstitial(src, dst);
+        return;
+    }
+    /*
     inline void                         _reorder_paths                      (int src, int dst)
     {
         BrowserState &                  BS          = this->m_browser_S;
@@ -1335,7 +1391,7 @@ protected:
         m_sel.paths.swap(new_sel);
         
         return;
-    }
+    }*/
     
     // *************************************************************************** //
     

@@ -589,8 +589,8 @@ public:                                                                         
     using                           Point                       = Point_t           <PointID>                                           ;       \
     using                           Line                        = Line_t            <LineID, ZID>                                       ;       \
     using                           Path                        = Path_t            <ObjectCFG, Vertex>                                 ;       \
-    using                           PayloadType                 = Path::PayloadType                                                     ;       \
-    using                           Payload                     = Path::Payload                                                         ;       \
+        /*  using                   PayloadType                 = Path::PayloadType                                 ;   */                      \
+        /*  using                   Payload                     = Path::Payload                                     ;   */                      \
     using                           Overlay                     = Overlay_t         <OverlayID>                                         ;       \
     using                           Hit                         = Hit_t             <HitID>                                             ;       \
     using                           PathHit                     = PathHit_t         <PathID, VertexID>                                  ;       \
@@ -612,6 +612,7 @@ public:                                                                         
     using                           EditorRuntime               = EditorRuntime_t   <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     using                           EditorState                 = EditorState_t     <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     using                           BrowserState                = BrowserState_t    <ObjectCFG>                                         ;       \
+    using                           ItemDDropper                = ItemDDropper_t                                                        ;       \
     using                           IndexState                  = IndexState_t      <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     /*                                                                                                                                  */      \
     /*      6.      AUXILIARY STATE OBJECTS...                                                                                          */      \

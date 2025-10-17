@@ -741,7 +741,9 @@ inline void Editor::_draw_vertex_properties_panel(Vertex & v, const LabelFn & ca
 //
 void Editor::_draw_payload_panel(Path & path, [[maybe_unused]] const size_t pidx, const LabelFn & callback)
 {
-    const bool                          has_payload                 = path.payload_type != PayloadType::None;
+    //  using               Payload             = Path::Payload;
+    using               PayloadType         = Path::PayloadType;
+    const bool          has_payload         = path.payload_type != PayloadType::None;
 
 
     S.DisabledSeparatorText("Payload");

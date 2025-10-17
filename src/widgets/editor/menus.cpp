@@ -474,8 +474,8 @@ bool Editor::_MENU_tool_selection(const Mode current_tool) noexcept
 
 
     //      CASE 0 :    IF NO TABLE, EXIT EARLY...
-    ImGui::SeparatorText("Tool Selection");
-    ImGui::NewLine();
+    ImGui::SeparatorText( GetMenuName(PopupHandle::ToolSelection) );
+    //  ImGui::NewLine();
     //
     if ( !ImGui::BeginTable("ToolSelectionTable", 3, FLAGS, table_dims) )    { return false; }
     
@@ -595,10 +595,10 @@ bool Editor::_MENU_tool_selection(const Mode current_tool) noexcept
 //
 bool Editor::_MENU_filter_selection(void) noexcept
 {
-    ImGui::SeparatorText("Filter");
+    ImGui::SeparatorText( GetMenuName(PopupHandle::FilterCTX) );
     ImGui::NewLine();
     
-    return false;
+    return true;
 }
 
 
@@ -607,10 +607,10 @@ bool Editor::_MENU_filter_selection(void) noexcept
 //
 bool Editor::_MENU_object_browser_item(void) noexcept
 {
-    ImGui::SeparatorText("Object-Browser-Row | RMB Context-Menu");
+    ImGui::SeparatorText( GetMenuName(PopupHandle::BrowserCTX) );
     ImGui::NewLine();
     
-    return false;
+    return true;
 }
 
 

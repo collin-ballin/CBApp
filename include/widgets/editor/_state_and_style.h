@@ -46,6 +46,7 @@
 #include <cstdlib>          // C-Headers...
 #include <stdio.h>
 #include <unistd.h>
+#include <cassert>
 #include <random>
 #include <tuple>
 #include <utility>
@@ -54,6 +55,7 @@
 #include <array>
 #include <unordered_set>
 #include <optional>
+#include <variant>
 
 #include <string>           //  <======| std::string, ...
 #include <string_view>
@@ -85,57 +87,8 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 //
 //
-//      1.      MISC. / DEPRECATED STUFF...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "Bounds"
 //
-struct Bounds {
-    float min_x{0}, min_y{0}, max_x{0}, max_y{0};
-};
-
-
-//  "Camera"
-//
-struct Camera {
-    ImVec2  pan             {0,0};      // world coords of viewport top-left
-    float   zoom_mag        = 1.0f;     // 1 = fit, >1 zooms in, <1 zooms out
-
-    // helpers --------------------------------------------------------
-    inline float pixels_per_world(const ImVec2& view_sz, const Bounds& world) const {
-        float w = world.max_x - world.min_x;
-        float h = world.max_y - world.min_y;
-        if (w <= 0) w = 1;              // avoid div-by-zero
-        if (h <= 0) h = 1;
-        float fit = std::min(view_sz.x / w, view_sz.y / h);
-        return fit * zoom_mag;
-    }
-};
-
-
-
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "DEPRECATED" STUFF.
-
-
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//      3.      OTHER...
+//      1.      OTHER...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -204,6 +157,966 @@ inline void from_json(nlohmann::json & j, ZOrderCFG_t<ZID> & obj)
 //
 //
 //
+//      1.      "DRAG/DROP" PAYLOAD STATE...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//      1A. DRAG/DROP PAYLOADS  |       TYPE SYSTEM DEFINITIONS.
+// *************************************************************************** //
+
+//  "DDropItemInfo"
+//
+struct DDropItemInfo
+{
+    const char *    name       ;
+    const char *    type       ;
+};
+
+
+//  "DDropItemType"
+//
+enum class DDropItemType  : uint8_t {
+      None = 0
+    , PathRow
+    , Empty
+    , COUNT
+};
+
+
+//  "DEF_DDROP_ITEM_INFOS"
+//
+static constexpr cblib::EnumArray< DDropItemType, DDropItemInfo >
+DEF_DDROP_ITEM_INFOS = { {
+    /*  None        */        DDropItemInfo{ "None"             , nullptr           }
+    /*  PathRow     */      , DDropItemInfo{ "Path Row"         , "PATH_ROW"        }
+    /*  Empty     */        , DDropItemInfo{ "Empty"            , "EMPTY"           }   //  placeholder for now (unused).
+} };
+
+    
+
+//      ENUM #1 :   "PathRow"...
+//
+//                  1A.     ENFORCE  *NAME*  RESTRICTIONS FOR DRAG/DROP PAYLOAD...
+static_assert(
+    DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].name                           &&      //  "name" is NOT NULL.
+    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].name)       != 0                //  "name" is NOT empty-string.
+);
+//                  1B.     ENFORCE  *TYPE*  RESTRICTIONS FOR DRAG/DROP PAYLOAD...
+static_assert(
+    DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].type                           &&      //  "type" is NOT NULL.
+    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].type)       != 0        &&      //  "type" is NOT empty-string.
+    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].type)       <= 32       &&      //  ImGui DRAG/DROP Type-Strings have MAX. SIZE of 32-characters.
+    DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].type[0]            != '_'              //  Type-Strings beginning with "_" are reserved for ImGui-Types.
+);
+//
+//      ENUM #2 :   "Empty"...
+static_assert(
+    DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].name                             &&
+    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].name)         != 0
+);
+static_assert(
+    DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].type                             &&
+    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].type)         != 0        &&
+    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].type)         <= 32       &&
+    DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].type[0]              != '_'
+);
+
+
+
+
+
+
+
+// *************************************************************************** //
+//      1B. DRAG/DROP PAYLOADS  |       ACTUAL PAYLOAD DEFINITIONS.
+// *************************************************************************** //
+
+
+
+namespace ddrop {   //     BEGINNING NAMESPACE "ddrop"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+//  "ParcelHeader"
+//
+struct ParcelHeader {
+    static constexpr uint32_t       ms_MAGIC            = 0x44525044;   // 'DRPD'
+    static constexpr uint16_t       ms_VERSION          = 1;
+//
+    uint32_t                        magic               = ms_MAGIC;
+    uint16_t                        version             = ms_VERSION;
+    uint16_t                        _pad                = 0;
+};
+
+
+
+// *************************************************************************** //
+//      2.      DEFINE DATA-PAYLOADS (FOR EACH PAYLOAD-TYPE TO CARRY)...
+// *************************************************************************** //
+
+//  "PathRowParcel"
+//      PLAIN-OLD-DATA (POD) STRUCT.
+//
+struct PathRowParcel
+{
+    // *************************************************************************** //
+    //      0. |    NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    struct Payload
+    {
+        int32_t             src_row                 = -1;       //  visual row index when drag began
+        int32_t             src_index               = -1;       //  backing m_paths index when drag began
+        uint32_t            path_id                 = 0;        //  optional: if you have stable IDs
+    };
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      0. |    STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr ImU32                  ms_PATH_DRAG_HINT_COLOR         = 0xFFBF661A;
+    static constexpr float                  ms_PATH_DRAG_HINT_WIDTH         = 4.0f;
+    
+    
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      1. |    IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    Payload                             payload                         = {   };
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    //  explicit                        MyStruct                (app::AppState & );             //  Def. Constructor.
+                                        PathRowParcel           (void) noexcept                 = default;
+                                        ~PathRowParcel          (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      2.B. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+
+    //  "GetPayload"
+    [[nodiscard]] inline Payload *      GetPayload                          (void) noexcept         { return std::addressof( this->payload ); }
+    [[nodiscard]] inline size_t         GetPayloadSize                      (void) const noexcept   { return sizeof( Payload ); }
+
+    
+    //  "ui_properties"
+    inline void                         ui_properties                       (void)      { return; }
+    
+    //  "render"
+    inline void                         render                              (ImDrawList * dl) const noexcept    { return; }
+    /*
+    {
+        ImU32           col             = ImGui::GetColorU32(ImGuiCol_SeparatorActive);
+    
+        ImVec2          r_min           = ImGui::GetItemRectMin();
+        ImVec2          r_max           = ImGui::GetItemRectMax();
+        float           mid_y           = 0.5f * (r_min.y + r_max.y);
+        float           mouse_y         = ImGui::GetIO().MousePos.y;
+        bool            drop_above      = (mouse_y < mid_y);
+        float           y               = drop_above ? r_min.y : r_max.y;
+
+
+        dl->AddLine(ImVec2(r_min.x, y), ImVec2(r_max.x, y), col, 2.0f);
+        
+        return;
+    }*/
+    
+    //  "render_tooltip"
+    inline void                         render_tooltip                      (void) const noexcept
+    {
+        return;
+    }
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2B.  INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "PathRowParcel" INLINE STRUCT DEFINITION.
+//
+//  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PathRowParcel, x, y, data, meta)
+
+
+
+
+//  "EmptyParcel"
+//      PLAIN-OLD-DATA (POD) STRUCT.
+//
+struct EmptyParcel
+{
+    // *************************************************************************** //
+    //      0. |    NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    struct Payload
+    {
+        int32_t             src_row                 = -1;       //  visual row index when drag began
+        int32_t             src_index               = -1;       //  backing m_paths index when drag began
+        uint32_t            path_id                 = 0;        //  optional: if you have stable IDs
+    };
+    
+    
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      1. |    IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    Payload                             payload                         = {   };
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    //  explicit                        MyStruct                (app::AppState & );             //  Def. Constructor.
+                                        EmptyParcel             (void) noexcept                 = default;
+                                        ~EmptyParcel            (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      2.B. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+
+    //  "GetPayload"
+    [[nodiscard]] inline Payload *      GetPayload                          (void) noexcept         { return std::addressof( this->payload ); }
+    [[nodiscard]] inline size_t         GetPayloadSize                      (void) const noexcept   { return sizeof( Payload ); }
+
+    
+    //  "ui_properties"
+    inline void                         ui_properties                       (void)              { return; }
+    
+    //  "render"
+    inline void                         render                              (ImDrawList * dl) const noexcept    { return; }
+    
+    //  "render_tooltip"
+    inline void                         render_tooltip                      (void) const noexcept
+    {
+        return;
+    }
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2B.  INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "EmptyParcel" INLINE STRUCT DEFINITION.
+//
+//  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EmptyParcel, x, y, data, meta)
+
+
+
+
+
+
+// *************************************************************************** //
+//      3.      DEFINE  "PARCEL"  STD::VARIANT ALIAS TYPE...
+// *************************************************************************** //
+
+//      1.      Ensure each Payload is POD Type...
+static_assert(
+      std::is_trivially_copyable_v<PathRowParcel::Payload>          &&
+      std::is_trivially_copyable_v<EmptyParcel::Payload>
+    , "Each payload-type must be Plain-Old-Data struct (POD)"
+);
+//
+//      2.      Ensure each Payload is small-size...
+static_assert(
+      ( sizeof(PathRowParcel::Payload)      <= 64 )                 &&
+      ( sizeof(EmptyParcel::Payload)        <= 64 )
+    , "Each payload must be, at most, 64-bytes in memory"   //  ImGui DEEP-COPIES the Payload Data...
+);
+
+
+
+//  "Parcel"
+//
+using Parcel = std::variant<
+      std::monostate
+    , PathRowParcel
+    , EmptyParcel
+>;
+
+
+//  "ParcelOf"      Type-Specific "Getter" Function.
+//
+template <DDropItemType K>
+struct ParcelOf;
+
+template <>
+struct ParcelOf<DDropItemType::PathRow>     { using type = ddrop::PathRowParcel; };
+template <>
+struct ParcelOf<DDropItemType::Empty>       { using type = ddrop::EmptyParcel;   };
+
+
+
+
+
+// *************************************************************************** //
+//      4.      DEFINE "JSON" HELPERS FOR PAYLOADS...
+// *************************************************************************** //
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}// END NAMESPACE "ddrop".
+
+
+
+
+
+
+
+
+
+//  "PathRowDragPayload"
+//
+struct PathRowDragPayload
+{
+    // *************************************************************************** //
+    //      0. |    NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    //  using                               MyAlias                         = MyTypename_t;
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      0. |    STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr const char *       ms_TYPE                         = "PATH_ROW";
+    static constexpr uint32_t           ms_MAGIC                        = 0x50525731u;      //  'ROW1'
+    static constexpr uint16_t           ms_VERSION                      = 1;                //  VER 1.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      1. |    IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    int                                 src_index                       = -1;               //  row index in current view (top = 0)
+    //
+    uint32_t                            magic                           = ms_MAGIC;
+    uint16_t                            version                         = ms_VERSION;       //  bump if layout changes
+    //  uint16_t                            kind                            = 0;                //  0 = paths (future: 1 = layers, etc.)
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+                                        PathRowDragPayload              (void)                          = default;
+                                        ~PathRowDragPayload             (void)                          = default;
+    
+    //  "PathRowDragPayload"
+    inline explicit                     PathRowDragPayload              (const int index_) noexcept
+        : src_index(index_)     { return; }
+    
+    
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      2.B. |  STATIC INLINE FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "SetDragDropPayload"
+    static inline bool                  SetDragDropPayload                  (const PathRowDragPayload & src) noexcept
+    {
+        return ImGui::SetDragDropPayload( PathRowDragPayload::ms_TYPE, &src, sizeof(src) );
+    }
+    
+    //  "AcceptDragDropPayload"
+    [[nodiscard]] static inline const ImGuiPayload *
+                                        AcceptDragDropPayload               (const ImGuiDragDropFlags flags = ImGuiDragDropFlags_None) noexcept   //  ImGuiDragDropFlags_AcceptPeekOnly
+    {
+        return ImGui::AcceptDragDropPayload(PathRowDragPayload::ms_TYPE, flags);
+    }
+    
+    //  "IsValid"
+    [[nodiscard]] static inline bool    IsValid                             (const ImGuiPayload * ptr) noexcept
+    {
+        using               Payload     = PathRowDragPayload;
+        const bool          bad_type    = ( !ptr  ||  !ptr->IsDataType(ms_TYPE) )  ||  ( ptr->DataSize != sizeof(Payload) ) ;
+        
+        if ( bad_type )                 { return false; }
+            
+        const Payload *     data        = static_cast<const PathRowDragPayload*>(ptr->Data);
+        return ( data  &&  data->IsValid() );
+    }
+    
+    //  "GetPayloadIfValid"
+    [[nodiscard]] static inline PathRowDragPayload *
+                                        GetPayloadIfValid                   (const ImGuiDragDropFlags flags = ImGuiDragDropFlags_None) noexcept   //  ImGuiDragDropFlags_AcceptPeekOnly
+    {
+        using                   Payload     = PathRowDragPayload;
+        const ImGuiPayload *    ptr         = Payload::AcceptDragDropPayload(flags);
+        Payload *               payload     = nullptr; //   static_cast<Payload*>( ptr->Data );
+        const bool              bad_type    = ( !ptr  ||  !ptr->IsDataType(ms_TYPE) )  ||  ( ptr->DataSize != sizeof(Payload) ) ;
+        
+        
+        if ( bad_type                                         ||
+             !(payload = static_cast<Payload*>( ptr->Data ))  ||
+             !(payload->IsValid()) )
+        {
+            return nullptr;
+        }
+
+        return payload;
+    }
+    
+    // *************************************************************************** //
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  QUERY FUNCTIONS.
+    // *************************************************************************** //
+    //  "IsValid"
+    [[nodiscard]] inline bool           IsValid                             (void) const noexcept
+    {
+        return (    ( this->magic     == ms_MAGIC    )   &&
+                    ( this->version   == ms_VERSION  )   &&
+                    ( this->src_index >= 0           ) );
+    }
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    //  "reset"
+    inline void                         reset                               (void) noexcept
+    {
+        this->src_index = -1;
+        return;
+    }
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  UTILITY FUNCTIONS.
+    // *************************************************************************** //
+    
+                                
+                                
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2B.  INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "PathRowDragPayload" INLINE STRUCT DEFINITION.
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//      1C. DRAG/DROP PAYLOADS  |       PRIMARY STATE OBJECT.
+// *************************************************************************** //
+
+//  "ItemDDropper_t"
+//      PLAIN-OLD-DATA (POD) STRUCT.
+//
+struct ItemDDropper_t
+{
+    // *************************************************************************** //
+    //      0. |    NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    using                                   ItemType                        = DDropItemType;
+    using                                   Parcel                          = ddrop::Parcel;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      0. |    STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr auto &                 ms_ITEM_INFOS                   = DEF_DDROP_ITEM_INFOS;
+    static constexpr ImU32                  ms_PATH_DRAG_HINT_COLOR         = 0xFFBF661A;
+    static constexpr float                  ms_PATH_DRAG_HINT_WIDTH         = 4.0f;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      1. |    PAYLOAD DATA-MEMBERS.
+    // *************************************************************************** //
+    std::optional<PathRowDragPayload>       m_path_payload                  { std::nullopt };
+    //
+    ItemType                                m_type                          = { ItemType::None };
+    Parcel                                  m_parcel                        {   };
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      1. |    STATE DATA-MEMBERS.
+    // *************************************************************************** //
+    bool                                    m_path_dragging                 = false;    //  NEW: TRUE when DRAGGING OBJ in the Browser.
+    bool                                    m_is_dragging                   = false;    //  NEW: TRUE when DRAGGING.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    //  explicit                        ItemDDropper_t                 (app::AppState & );             //  Def. Constructor.
+                                        ItemDDropper_t                  (void)                          = default;
+                                        ~ItemDDropper_t                 (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+    //                                      ItemDDropper_t                  (const ItemDDropper_t &     src)         = delete;   //  Copy. Constructor.
+    //                                      ItemDDropper_t                  (ItemDDropper_t &&          src)         = delete;   //  Move Constructor.
+    //  ItemDDropper_t &                    operator =                      (const ItemDDropper_t &     src)         = delete;   //  Assgn. Operator.
+    //  ItemDDropper_t &                    operator =                      (ItemDDropper_t &&          src)         = delete;   //  Move-Assgn. Operator.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      2.B. |  STATIC INLINE MEMBER FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "s_make_default_payload"
+    //
+    static inline Parcel                s_make_default_payload              (const ItemType k)
+    {
+        switch (k)
+        {
+            case ItemType::PathRow              : { return ddrop::PathRowParcel     {   };      }   //  default-constructed
+            case ItemType::Empty                : { return ddrop::EmptyParcel       {   };      }
+        //
+            default                             : { return std::monostate           {   };      }   //  PayloadType::None or unknown
+        }
+    }
+    
+    //  "has_payload_v"
+    //      Helpers to get the active parcel’s Payload address/size (for ImGui bytes)
+    template <class TParcel>
+    static constexpr bool               has_payload_v                       = requires(TParcel p)   { sizeof(typename TParcel::Payload); p.payload; };
+    
+    
+    
+    
+    
+    
+    //  "BeginDragDropSource"
+    //
+    inline bool                         BeginDragDropSource                 (const ImGuiDragDropFlags flags = ImGuiDragDropFlags_SourceNoPreviewTooltip) noexcept
+    {
+        IM_ASSERT( (this->m_type != ItemType::None) && "ItemDDropper_t: \"SetDragDropPayload()\" called without valid payload" );
+        const char *    type_str        = this->GetItemTypeString();
+        bool            accepted        = ImGui::BeginDragDropSource(flags);    //  Only when ImGui says a source begins this frame.
+        
+        //  IM_ASSERT( accepted && "ItemDDropper_t: ImGui failed to accept DragDropSource" );
+        std::visit([&](auto & parcel)
+        {
+            using P = std::decay_t<decltype(parcel)>;
+            if constexpr ( !std::is_same_v<P, std::monostate>  &&  has_payload_v<P> )
+            {
+                accepted = ImGui::SetDragDropPayload(type_str, parcel.GetPayload(), parcel.GetPayloadSize());;
+                
+                if ( accepted ) {
+                    parcel.render_tooltip();
+                }
+            }
+        }, this->m_parcel);
+
+        return accepted;
+    }
+    
+    
+    
+    //  "GetParcelIfValid"
+    //
+    template <class T>
+    [[nodiscard]] inline T *            GetParcelIfValid                    (const ItemType type) noexcept
+    {
+        const bool      valid       = ( (this->m_type == type)  &&  (ImGui::IsDragDropActive()) );
+    
+        if (!valid)                 { return nullptr; }
+    
+        return std::get_if<T>( &this->m_parcel );
+    }
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  PAYLOAD FUNCTIONS.
+    // *************************************************************************** //
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  SETTER/GETTER FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "GetPathPayload"
+    //  [[nodiscard]] inline PathRowDragPayload         GetPathPayload      (void) const noexcept   { return this->m_path_payload; };
+    
+    //  "SetPathRowDragPayload"
+    inline void                         SetPathRowDragPayload               (const PathRowDragPayload & payload_) noexcept
+        { this->m_path_payload = payload_; };
+    inline void                         SetPathRowDragPayload               (const int index_) noexcept
+        { this->m_path_payload = PathRowDragPayload(index_); };
+        
+        
+        
+    //  "GetItemTypeString"
+    [[nodiscard]] inline const char *   GetItemTypeString                   (void) const noexcept   { return ms_ITEM_INFOS[this->m_type].type; };
+    [[nodiscard]] inline const char *   GetItemTypeName                     (void) const noexcept   { return ms_ITEM_INFOS[this->m_type].name; };
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  QUERY FUNCTIONS.
+    // *************************************************************************** //
+    //  "IsPathRowDragging"
+    [[nodiscard]] inline bool           IsPathRowDragging                   (void) const noexcept   { return this->m_path_dragging; }
+    //  "IsDragging"
+    [[nodiscard]] inline bool           IsDragging                          (void) const noexcept   { return this->m_is_dragging; }
+    
+    
+    //  "IsDragging"
+    [[nodiscard]] inline bool           IsDragging                          (const ItemType type) const noexcept
+    {
+        return ( (this->m_type == type)  &&  (ImGui::IsDragDropActive()) );
+    }
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  OPERATION FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "render"
+    inline void                         render                              (ImDrawList * dl) const noexcept
+    {
+        std::visit( [&](auto & payload)
+        {
+            using T = std::decay_t<decltype(payload)>;
+            if constexpr (!std::is_same_v<T, std::monostate>)   { payload.render(dl); }     //  Skip monostate (has no draw_ui).
+        }, m_parcel);
+        
+        return;
+    }
+    
+    //  "SetItemType"
+    inline void                         SetItemType                     (const ItemType type) noexcept
+    {
+        this->m_type        = type;
+        this->m_parcel      = this->s_make_default_payload(type);
+        return;
+    }
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "reset"
+    inline void                         reset                               (void) noexcept
+    {
+        //      1.      BOOLEAN-STATE VALUES...
+        this->m_path_dragging       = false;
+        this->m_is_dragging         = false;
+        
+        
+        //      2.      PAYLOAD VALUES...
+        this->m_type                = ItemType::None;
+        this->m_parcel              = this->s_make_default_payload( ItemType::None );
+        //
+        this->m_path_payload        .reset();
+        
+        
+        
+        return;
+    }
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  OPERATION FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "StartPathRowDragging"
+    inline bool                         StartPathRowDragging                (void)
+    {
+        IM_ASSERT( this->m_path_payload.has_value()     && "ItemDDropper_t: \"StartPathRowDragging\" called with no payload (must call \"SetPathRowDragPayload(...)\" first)" );
+        bool    accepted            = false;
+        this->m_path_dragging       = true;
+        
+        accepted    = PathRowDragPayload::SetDragDropPayload( *this->m_path_payload );
+        
+        //  IM_ASSERT( accepted && "Failure to begin PathRowParcel Dragging");
+        return accepted;
+    }
+    
+    
+    //  "StopPathRowDragging"
+    inline void                         StopPathRowDragging                 (void)
+    {
+        this->m_path_dragging       = false;
+        return;
+    }
+    
+    
+    //  "RenderPathRowDragHint"
+    inline void                         RenderPathRowDragHint               (ImDrawList * dl) const noexcept
+    {
+        ImVec2          r_min           = ImGui::GetItemRectMin();
+        ImVec2          r_max           = ImGui::GetItemRectMax();
+        //
+        float           mid_y           = 0.5f * (r_min.y + r_max.y);
+        float           mouse_y         = ImGui::GetIO().MousePos.y;
+        bool            drop_above      = (mouse_y < mid_y);
+        float           y               = drop_above ? r_min.y : r_max.y;
+
+
+        dl->AddLine(ImVec2(r_min.x, y), ImVec2(r_max.x, y), ms_PATH_DRAG_HINT_COLOR, this->ms_PATH_DRAG_HINT_WIDTH);
+        
+        return;
+    }
+    
+    
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2B.  INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "ItemDDropper_t" INLINE STRUCT DEFINITION.
+
+
+
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   [[ END "1.  DRAG/DROP" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
 //      2.      "BROWSER" STATE...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -211,43 +1124,158 @@ inline void from_json(nlohmann::json & j, ZOrderCFG_t<ZID> & obj)
 
 
 // *************************************************************************** //
-//      2A. BROWSER STATES |        BROWSER---STATE.
+//      2B. BROWSER STATE |        BROWSER---STATE.
 // *************************************************************************** //
 
 //  "BrowserState_t"
+//      PLAIN-OLD-DATA (POD) STRUCT.
 //
 template<ObjectCFGTraits CFG>
 struct BrowserState_t
 {
-// *************************************************************************** //
-// *************************************************************************** //
-
-
     // *************************************************************************** //
-    //      1.      NESTED TYPENAME ALIASES...
+    //      0. |    NESTED TYPENAME ALIASES.
     // *************************************************************************** //
     //  USE_OBJECT_CFG_ALIASES(CFG);
     _USE_OBJECT_CFG_ALIASES
+    using                               Vertex                                  = Vertex_t      <CFG>                               ;
+    using                               Path                                    = Path_t        <CFG, Vertex>                       ;
+    using                               PathRowDragPayload                      = PathRowDragPayload;
+    
+    // *************************************************************************** //
     //
-    using                       Vertex                                  = Vertex_t      <CFG>                               ;
-    using                       Path                                    = Path_t        <CFG, Vertex>                       ;
+    // *************************************************************************** //
+    //      0. |    STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr float              ms_DRAGDROP_DRAG_THRESHOLD              = 2.0f;
+    //
+    static constexpr size_t             ms_MAX_PATH_TITLE_LENGTH                = Path::ms_MAX_PATH_LABEL_LENGTH + 64ULL;
+    static constexpr size_t             ms_MAX_VERTEX_TITLE_LENGTH              = Vertex::ms_VERTEX_NAME_BUFFER_SIZE + 32ULL;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      1. |    STATE VARIABLES.
+    // *************************************************************************** //
 
     // *************************************************************************** //
-    //      2.      CONSTEXPR VALUES...
-    // *************************************************************************** //
-    static constexpr size_t     ms_MAX_PATH_TITLE_LENGTH                = Path::ms_MAX_PATH_LABEL_LENGTH + 64ULL;
-    //
-    static constexpr size_t     ms_MAX_VERTEX_TITLE_LENGTH              = Vertex::ms_VERTEX_NAME_BUFFER_SIZE + 32ULL;
-
-    // *************************************************************************** //
-    //      3.      MEMBER FUNCTIONS...
+    //      1. |    IMPORTANT DATA-MEMBERS.
     // *************************************************************************** //
     
+    // *************************************************************************** //
+    //      1. |    GENERIC DATA.
+    // *************************************************************************** //
+    //                              MUTABLE STATE VARIABLES:
+    bool                                m_show_default_properties                   = false;
+    bool                                m_renaming_layer                            = false;    //  TRUE when user is in the middle of MODIFYING NAME.
+    bool                                m_renaming_obj                              = false;    //
+    //
+    //
+    //                              NEW STUFF:
+        //      std::vector<int>            m_layer_rows                                {  };
+        //      bool                        m_layer_filter_dirty                        = false;    //  Flag to queue Browser to RE-COMPUTE sorted items.
+        //      int                         m_layer_rows_paths_rev                      = -1;
+    //
+    std::vector<int>                    m_obj_rows                                  {   };
+    bool                                m_obj_filter_dirty                          = false;    //
+    int                                 m_obj_rows_paths_rev                        = -1;
+    //
+    //
+    //                              INDICES:
+    int                                 m_layer_browser_anchor                      = -1;       //  ?? currently selected LAYER ??
+    //
+    //
+    int                                 m_browser_anchor                            = -1;       //  ?? anchor index for Shift‑range select ??
+    //
+    mutable int                         m_hovered_obj                               = -1;
+    mutable int                         m_hovered_canvas_obj                        = -1;
+    //
+    //
+    int                                 m_inspector_vertex_idx                      = -1;       //  ...
+    mutable std::pair<int,int>          m_hovered_vertex                            = {-1, -1};
+    //
+    //
+    int                                 m_layer_rename_idx                          = -1;       //  LAYER that is BEING RENAMED     (–1 = none)
+    int                                 m_obj_rename_idx                            = -1;       //  OBJECT that is BEING RENAMED    (–1 = none)
+    //
+    //
+    //                              CACHE AND MISC. DATA:
+    char                                m_name_buffer[ ms_MAX_PATH_TITLE_LENGTH ]   = {   };    //  scratch text
+    //
+    //
+    //
+    //                              OTHER DATA ITEMS:
+    ImGuiTextFilter                     m_layer_filter;                                         //  search box for "LAYER" browser.
+    ImGuiTextFilter                     m_obj_filter;                                           //  search box for "OBJECT" browser.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    //  explicit                        BrowserState_t          (app::AppState & );             //  Def. Constructor.
+                                        BrowserState_t          (void) noexcept                 = default;
+                                        ~BrowserState_t         (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+                                        BrowserState_t          (const BrowserState_t &    src)       = delete;   //  Copy. Constructor.
+                                        BrowserState_t          (BrowserState_t &&         src)       = delete;   //  Move Constructor.
+    BrowserState_t &                    operator =              (const BrowserState_t &    src)       = delete;   //  Assgn. Operator.
+    BrowserState_t &                    operator =              (BrowserState_t &&         src)       = delete;   //  Move-Assgn. Operator.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      2.B. |  QUERY FUNCTIONS.
+    // *************************************************************************** //
+    //  "_has_query"
+    //  [[nodiscard]] inline bool           _has_query                          (void) const noexcept   { return; };
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
     //  "reset"
-    inline void                 reset(void) { this->clear(); }
+    inline void                         reset                           (void) noexcept                 { this->clear(); }
     
     //  "clear"
-    inline void                 clear(void)
+    inline void                         clear                           (void) noexcept
     {
         //  Renaming "Active" State.
         m_renaming_layer            = false;
@@ -287,8 +1315,6 @@ struct BrowserState_t
         m_hovered_vertex            = { -1, -1 };   //  Hovered VERTEX in Browser.
         
           
-          
-          
         //  ??  Other  ??
         m_layer_browser_anchor      = -1;
         m_browser_anchor            = -1;
@@ -298,7 +1324,8 @@ struct BrowserState_t
     }
     
     // *************************************************************************** //
-
+    //
+    //
     // *************************************************************************** //
     //      3.1.    UTILITY FUNCTIONS...
     // *************************************************************************** //
@@ -320,64 +1347,17 @@ struct BrowserState_t
         return;
     }
     
-    
-    
-    // *************************************************************************** //
-
-
-    // *************************************************************************** //
-    //      3.      DATA MEMBERS...
-    // *************************************************************************** //
-    //                      MUTABLE STATE VARIABLES:
-    bool                        m_show_default_properties                   = false;
-    bool                        m_renaming_layer                            = false;    //  TRUE when user is in the middle of MODIFYING NAME.
-    bool                        m_renaming_obj                              = false;    //
-    //
-    //
-    //                      NEW STUFF:
-        //      std::vector<int>            m_layer_rows                                {  };
-        //      bool                        m_layer_filter_dirty                        = false;    //  Flag to queue Browser to RE-COMPUTE sorted items.
-        //      int                         m_layer_rows_paths_rev                      = -1;
-    //
-    std::vector<int>            m_obj_rows                                  {   };
-    bool                        m_obj_filter_dirty                          = false;    //
-    int                         m_obj_rows_paths_rev                        = -1;
-    //
-    //
-    //                      INDICES:
-    int                         m_layer_browser_anchor                      = -1;       //  ?? currently selected LAYER ??
-    //
-    //
-    int                         m_browser_anchor                            = -1;       //  ?? anchor index for Shift‑range select ??
-    //
-    mutable int                 m_hovered_obj                               = -1;
-    mutable int                 m_hovered_canvas_obj                        = -1;
-    //
-    //
-    int                         m_inspector_vertex_idx                      = -1;       //  ...
-    mutable std::pair<int,int>  m_hovered_vertex                            = {-1, -1};
-    //
-    //
-    int                         m_layer_rename_idx                          = -1;       //  LAYER that is BEING RENAMED     (–1 = none)
-    int                         m_obj_rename_idx                            = -1;       //  OBJECT that is BEING RENAMED    (–1 = none)
-    //
-    //
-    //                      CACHE AND MISC. DATA:
-    char                        m_name_buffer[ ms_MAX_PATH_TITLE_LENGTH ]   = {   };    //  scratch text
-    //
-    //
-    //
-    //                      OTHER DATA ITEMS:
-    ImGuiTextFilter             m_layer_filter;                                         //  search box for "LAYER" browser.
-    ImGuiTextFilter             m_obj_filter;                                           //  search box for "OBJECT" browser.
-    
-    
-    
-    // *************************************************************************** //
-
+//
 // *************************************************************************** //
-// *************************************************************************** //   END "BrowserState_t".
-};
+// *************************************************************************** //   END "2B.  INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "BrowserState_t" INLINE STRUCT DEFINITION.
 
 
 
@@ -389,15 +1369,45 @@ struct BrowserState_t
 // *************************************************************************** //
 
 //  "BrowserStyle"
+//      PLAIN-OLD-DATA (POD) STRUCT.
 //
 struct BrowserStyle
 {
+    // *************************************************************************** //
+    //      0. |    NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
     CBAPP_CBLIB_TYPES_API
     
-// *************************************************************************** //
-//                                      BROWSER WINDOW STYLE...
-// *************************************************************************** //
+    // *************************************************************************** //
     //
+    // *************************************************************************** //
+    //      0. |    STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr float              ms_MY_CONSTEXPR_VALUE           = 240.0f;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      1. |    STATE VARIABLES.
+    // *************************************************************************** //
+
+    // *************************************************************************** //
+    //      1. |    IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      1. |    WIDGET---APPEARANCE DATA.
+    // *************************************************************************** //
     //                              BROWSER CHILD-WINDOW FLAGS:
     ImGuiChildFlags                     DYNAMIC_CHILD_FLAGS                         = ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX;
     ImGuiChildFlags                     STATIC_CHILD_FLAGS                          = ImGuiChildFlags_Borders;
@@ -446,79 +1456,72 @@ struct BrowserStyle
     float                               OBJ_PROPERTIES_REL_WIDTH                    = 0.5f;     // Relative width of OBJECT PROPERTIES PANEL.
     float                               VERTEX_SELECTOR_REL_WIDTH                   = 0.075f;   // Rel. width of Vertex SELECTOR COLUMN.
     float                               VERTEX_INSPECTOR_REL_WIDTH                  = 0.0f;     // Rel. width of Vertex INSPECTOR COLUMN.
-
-// *************************************************************************** //
-//
-//
+    
 //
 // *************************************************************************** //
-//                                      GENERAL WIDGET STUFF...
-// *************************************************************************** //
-    //                              BROWSER **ALL** WIDGET STUFF:
-    //  float                               ms_BROWSER_BUTTON_SEP                       = 8.0f;
-    //  float                               ms_BROWSER_SELECTABLE_SEP                   = 16.0f;
-    std::pair<float,float>              ms_BROWSER_ITEM_SEPS                        = { 8.0f,   16.0f };
-    //
-    //                              BROWSER PATH WIDGET STUFF:
-    float                               ms_BROWSER_OBJ_LABEL_WIDTH                  = 55.0f;
-    float                               ms_BROWSER_OBJ_WIDGET_WIDTH                 = 256.0f;
-    //
-    //                              BROWSER VERTEX WIDGET STUFF:
-    float                               ms_BROWSER_VERTEX_LABEL_WIDTH               = 75.0f;
-    float                               ms_BROWSER_VERTEX_WIDGET_WIDTH              = 196.0f;
-
-// *************************************************************************** //
-//
-//
-//
-// *************************************************************************** //
-//                                      SPECIFIC WIDGET STUFF...
-// *************************************************************************** //
-    //                              DELETE BUTTON:
-    static constexpr const char *       ms_DELETE_BUTTON_HANDLE                     = "x";
-    static constexpr ImU32              ms_DELETE_BUTTON_COLOR                      = cblib::utl::ColorConvertFloat4ToU32_constexpr( ImVec4(   1.000f,     0.271f,     0.227f,     0.500f      )  );
-    static constexpr size_t             ms_ACTION_DESCRIPTION_LIMIT                 = 256ULL;
-    //
-    //                              DRAG/DROP STUFF:
-    static constexpr const char *       ms_DRAG_HANDLE_ICON                         = "=";
-
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "DATA MEMBERS".
-
-
-
+// *************************************************************************** //   END "1.  DATA-MEMBERS".
 
 
 
 // *************************************************************************** //
 //
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    //  explicit                        BrowserStyle                (app::AppState & );             //  Def. Constructor.
+                                        BrowserStyle                (void) noexcept                 = default;
+                                        ~BrowserStyle               (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+                                        BrowserStyle                (const BrowserStyle &    src)       = delete;   //  Copy. Constructor.
+                                        BrowserStyle                (BrowserStyle &&         src)       = delete;   //  Move Constructor.
+    BrowserStyle &                      operator =                  (const BrowserStyle &    src)       = delete;   //  Assgn. Operator.
+    BrowserStyle &                      operator =                  (BrowserStyle &&         src)       = delete;   //  Move-Assgn. Operator.
+    
 //
-//      2.C         INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
     // *************************************************************************** //
-    //      1.      UTILITY FUNCTIONS...
+    //      2.B. |  QUERY FUNCTIONS.
     // *************************************************************************** //
-    
+    //  "_has_query"
+    //  [[nodiscard]] inline bool           _has_query                          (void) const noexcept   { return; };
+
+    // *************************************************************************** //
     //
-    //  ...
     //
+    // *************************************************************************** //
+    //      2.B. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    //  "_no_op"
+    //  inline void                         _no_op                              (void)      { return; };
     
 //
+// *************************************************************************** //
+// *************************************************************************** //   END "2B.  INLINE" FUNCTIONS.
+
+
+
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "INLINE" FUNCTIONS.
-    
-
-
 // *************************************************************************** //
-// *************************************************************************** //   END "EditorBrowserStyle"
-};
+};//	END "BrowserStyle" INLINE STRUCT DEFINITION.
 
 
 
@@ -526,9 +1529,7 @@ struct BrowserStyle
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "3.  BROWSER STATE".
-
-
+// *************************************************************************** //   END [[ 2.  "BROWSER" ]].
 
 
 
@@ -544,14 +1545,14 @@ struct BrowserStyle
 //
 //
 //
-//      4.      "EDITOR" STATE...
+//      3.      "EDITOR" STATE...
 // *************************************************************************** //
 // *************************************************************************** //
 
 
 
 // *************************************************************************** //
-//      4A. EDITOR STATES |         EDITOR---RUNTIME.
+//      3A. EDITOR STATES |         EDITOR---RUNTIME.
 // *************************************************************************** //
 
 //  "EditorRuntime_t"
@@ -1177,9 +2178,6 @@ struct EditorStyle
 
 
 
-
-
-
 // *************************************************************************** //
 // *************************************************************************** //
 };//	END "MyClass" INLINE CLASS DEFINITION.
@@ -1190,7 +2188,7 @@ struct EditorStyle
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "4.  EDITOR STYLE".
+// *************************************************************************** //   END [[ 3.  "EDITOR" ]].
 
 
 

@@ -144,7 +144,7 @@ DEF_EDITOR_STATE_ICONS  = { {
     , ICON_FA_SHAPES
     , ICON_FA_PLUS
     , ICON_FA_MINUS
-    , ICON_FA_PEN_NIB
+    , ICON_FA_BEZIER_CURVE  //    ICON_FA_PEN_NIB
 } };
 
 
@@ -405,7 +405,8 @@ enum class EditorPopupBits : uint8_t {
     , Selection
     , Canvas
     , ToolSelection
-    , Browser
+    , BrowserCTX
+    , FilterCTX
     , Settings
     , AskOkCancel
 //
@@ -422,7 +423,8 @@ enum CBEditorPopupFlags_ : uint32_t {
 //
     CBEditorPopupFlags_Selection            = 1u << static_cast<unsigned>(  EditorPopupBits::Selection      ),
     CBEditorPopupFlags_Canvas               = 1u << static_cast<unsigned>(  EditorPopupBits::Canvas         ),
-    CBEditorPopupFlags_Browser              = 1u << static_cast<unsigned>(  EditorPopupBits::Browser        ),
+    CBEditorPopupFlags_BrowserCTX           = 1u << static_cast<unsigned>(  EditorPopupBits::BrowserCTX     ),
+    CBEditorPopupFlags_FilterCTX            = 1u << static_cast<unsigned>(  EditorPopupBits::FilterCTX      ),
 //
     CBEditorPopupFlags_Settings             = 1u << static_cast<unsigned>(  EditorPopupBits::Settings       ),
     CBEditorPopupFlags_AskOkCancel          = 1u << static_cast<unsigned>(  EditorPopupBits::AskOkCancel    ),
@@ -465,14 +467,15 @@ struct EditorPopupInfo {
 //
 static constexpr std::array< EditorPopupInfo, static_cast<size_t>( EditorPopupBits::COUNT ) >
 DEF_EDITOR_POPUP_INFOS      = { {
-    /* None             */  { nullptr                                   , "None"                },
-    /* Selection        */  { "Editor_Selection_ContextMenu"            , "Selection"           },
-    /* Canvas           */  { "Editor_Canvas_ContextMenu"               , "Canvas"              },
-    /* ToolSelection    */  { "Editor_ControlBar_ToolSelectionMenu"     , "Tool Selection"      },
-    /* Browser          */  { "Editor_Browser_ContextMenu"              , "Browser"             },
-    /* Settings         */  { "Editor System Preferences"               , "Settings"            },
-    /* AskOkCancel      */  { nullptr                                   , ""                    },
-    /* Other            */  { nullptr                                   , "Other"               }
+    /* None             */  { nullptr                                   , "None"                            },
+    /* Selection        */  { "Editor_Selection_ContextMenu"            , "Selection"                       },
+    /* Canvas           */  { "Editor_Canvas_ContextMenu"               , "Canvas"                          },
+    /* ToolSelection    */  { "Editor_ControlBar_ToolSelectionMenu"     , "Tool Selection"                  },
+    /* FilterCTX        */  { "Browser_Filter_CTXMenu"                  , "Browser | Filter Context"        },
+    /* BrowserCTX       */  { "Browser_Object_CTXMenu"                  , "Browser | Object Context"        },
+    /* Settings         */  { "Editor System Preferences"               , "Settings"                        },
+    /* AskOkCancel      */  { nullptr                                   , ""                                },
+    /* Other            */  { nullptr                                   , "Other"                           }
 } };
 
 
@@ -500,6 +503,10 @@ static inline const char * popup_name_from_flag(CBEditorPopupFlags_ single)
 //  "GetMenuID"
 static inline const char * GetMenuID(const EditorPopupBits & handle)
     { return DEF_EDITOR_POPUP_INFOS[ static_cast<size_t>( handle ) ].uuid; }
+
+//  "GetMenuName"
+static inline const char * GetMenuName(const EditorPopupBits & handle)
+    { return DEF_EDITOR_POPUP_INFOS[ static_cast<size_t>( handle ) ].name; }
 
 
 
@@ -545,17 +552,17 @@ DEF_TOOLTIP_INFOS  = { {
     /*  OpenSettings        */      , "Open \"Editor\" system preferences menu  [CTRL ,]"
 //
 //      2.      SELECTION STATE.
-    /*  SelectionSurface    */      , "Toggle ability to select SURFACES"
-    /*  SelectionEdge       */      , "Toggle ability to select EDGES"
-    /*  SelectionVertex     */      , "Toggle ability to select VERTICES"
+    /*  SelectionSurface    */      , "Toggle SURFACE selection"
+    /*  SelectionEdge       */      , "Toggle EDGE selection"
+    /*  SelectionVertex     */      , "Toggle VERTEX selection"
 //
 //      3.      GRID CONTROLS.
     /*  GridSnap            */      , "Toggle Snap-To-Grid  [SHIFT G]"
-    /*  GridPixelPerfect    */      , "Toggle Pixel-Perfect-Snapping (treat coordinates as integers)"
+    /*  GridPixelPerfect    */      , "Toggle Pixel-Perfect-Snapping (treat all coords. as integers)"
     /*  GridShow            */      , "Toggle visibility of the grid"
     /*  GridDecrease        */      , "Reduce grid resolution by ONE-HALF  [SHIFT -]"
     /*  GridIncrease        */      , "Increase grid resolution by DOUBLE  [SHIFT +]"
-    /*  GridDensityValue    */      , "(x,y) snap-to-grid resolution (quantization value)"
+    /*  GridDensityValue    */      , "Snap-To-Grid resolution ( (x,y) quantization value )"
 //
 //
 //
