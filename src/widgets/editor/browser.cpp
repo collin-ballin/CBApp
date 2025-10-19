@@ -588,6 +588,266 @@ void Editor::_dispatch_obj_inspector_column(ObjectTrait & which_menu)
 void Editor::_draw_obj_selector_table(void)
 {
     using                                   namespace           icon;
+    //using                                   Payload             = BrowserState::PathRowDragPayload;
+    using                                   Parcel              = ItemDDropper::PathRowParcel;
+    using                                   Payload             = Parcel::Payload;
+    using                                   IconAnchor          = utl::icon_widgets::Anchor;
+    using                                   Padding             = utl::icon_widgets::PaddingPolicy;
+    //  using                               IconStyle           = utl::icon_widgets::Style;
+    //
+    constexpr ImGuiTableFlags               TABLE_FLAGS         = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY; // | ImGuiTableFlags_RowBg;
+    constexpr ImGuiTableColumnFlags         C_EYE               = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    constexpr ImGuiTableColumnFlags         C_LOCK              = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    constexpr ImGuiTableColumnFlags         C_NAME              = ImGuiTableColumnFlags_WidthStretch;
+    constexpr ImGuiTableColumnFlags         C_DEL               = ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_WidthFixed;
+    //
+    //
+    //
+    BrowserState &                          BS                  = this->m_browser_S;
+    BrowserStyle &                          BStyle              = this->m_style.browser_style;
+    ItemDDropper &                          DS                  = this->m_ddropper_S;
+    ImGuiListClipper                        clipper;
+
+
+    //      1.      SEARCH-QUERY BOX...
+    S.PushFont(Font::Main);
+    {
+        static float        button_rect     = 10.0f;
+        static ImVec2       Avail;
+        //
+        Avail                               = ImGui::GetContentRegionAvail();
+        const float         query_width     = Avail.x - button_rect;
+    //
+    //
+    //
+        //      1.      "QUERY" BOX...
+        ImGui::SetNextItemWidth(query_width);
+        ImGui::BeginDisabled(true);
+        if ( ImGui::InputTextWithHint( "##Editor_ObjSelector_ObjFilterQuery",
+                                       "filter",
+                                       BS.m_obj_filter.InputBuf,
+                                       IM_ARRAYSIZE( BS.m_obj_filter.InputBuf ) ) )
+        {
+            BS.m_obj_filter.Build();
+            BS.m_obj_filter_dirty   = true;
+        }
+        ImGui::EndDisabled();
+        //
+        //
+        //      2.      "FILTER" BUTTON...
+        ImGui::SameLine(0,0);
+        {
+            utl::IconButton(   "##Editor_ObjSelector_FilterMenu"
+                             , this->S.SystemColor.Blue
+                             , ICON_FA_FILTER
+                             , 1.0f
+                             , IconAnchor::Center    // TextBaseline    South   Center
+                             , Padding::Tight );
+            //
+            //
+            //          1.1.    TOOL-SELECTOR CONTEXT MENU...
+            button_rect                     = ImGui::GetItemRectSize().x;
+            const bool  filter_menu_open    = ImGui::BeginPopupContextItem(GetMenuID(PopupHandle::FilterCTX), ImGuiPopupFlags_MouseButtonLeft);
+            if (filter_menu_open)
+            {
+                if ( !this->_MENU_filter_selection() )
+                    { ImGui::CloseCurrentPopup(); }
+                //
+                ImGui::EndPopup();
+            }
+        }
+    //
+    //
+    //
+    }
+    S.PopFont();
+    ImGui::Separator();
+
+
+
+    //      1.2.    RE-BUILD LIST OF SORTED INDICES...
+    (void)this->_ensure_paths_sorted_by_z_desc();
+    
+    
+
+    //      2.      BEGIN THE TABLE TO PRESENT EACH OBJECT...
+    if ( ImGui::BeginTable("##Editor_ObjSelector_ObjTable", 4, TABLE_FLAGS, ImVec2(0, -1)) )
+    {
+        ImGui::TableSetupColumn("Eye",      C_EYE,    CELL_SZ       );
+        ImGui::TableSetupColumn("Lock",     C_LOCK,   CELL_SZ       );
+        ImGui::TableSetupColumn("Name",     C_NAME                  );
+        ImGui::TableSetupColumn("Del",      C_DEL,    CELL_SZ       );
+
+        clipper.Begin( static_cast<int>(m_paths.size()), -1 );
+
+
+        //          3.      DRAWING EACH OBJECT IN THE LEFT-HAND SELECTION COLUMN OF THE BROWSER...
+        while ( clipper.Step() )
+        {
+            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+            {
+                Path &                  path                = m_paths[i];
+                bool                    selected            = m_sel.paths.count(static_cast<int>(i));
+                bool                    mutable_path        = path.IsMutable();
+                const bool              is_renaming         = ( BS.m_obj_rename_idx == i );
+
+                //  CASE 0 :    EARLY-OUT IF FILTER REMOVES OBJ.
+                if ( !BS.m_obj_filter.PassFilter(path.label.c_str()) )      { continue; }
+
+
+                //      4.      BEGIN THE ROW...
+                ImGui::PushID(i);       //  ImGui::BeginGroup();
+                ImGui::TableNextRow();
+                //
+                //
+                //  //          4.1.        "EYE" BUTTON (TO TOGGLE OBJECT'S VISIBILITY).
+                    ImGui::TableSetColumnIndex(0);
+                    {
+                        if (   utl::IconButton(   "##Editor_Browser_ObjVisibilityButton"
+                             , (path.visible)
+                                    ? this->S.SystemColor.White     : this->S.SystemColor.Gray
+                             , (path.visible)
+                                    ? ICON_FA_EYE                   : ICON_FA_EYE_SLASH
+                             , 1.0f
+                             , { CELL_SZ, CELL_SZ } ))
+                        {  path.visible = !path.visible; _prune_selection_mutability();  }
+                    }
+                    //
+                    //
+                    //          4.2.        "LOCK" BUTTON (TO TOGGLE OBJECT'S LOCKED-STATE).
+                    ImGui::TableSetColumnIndex(1);
+                    {
+                        if (   utl::IconButton(   "##Editor_Browser_ObjLockButton"
+                             , (path.locked)
+                                    ? this->S.SystemColor.White     : this->S.SystemColor.Gray
+                             , (path.locked)
+                                    ? ICON_FA_LOCK                   : ICON_FA_LOCK_OPEN
+                             , 1.0f
+                             , { CELL_SZ, CELL_SZ } ))
+                        {  path.locked = !path.locked; _prune_selection_mutability();  }
+                    }
+                    //
+                    //
+                    //          4.3.        DRAW THE SELECTABLE FOR THIS OBJECT.
+                    ImGui::TableSetColumnIndex(2);
+                    this->_draw_obj_selectable( path, i, mutable_path, selected );
+                    //
+                    //
+                    //
+                    //          4.4.        DRAG / DROP TARGETS FOR RE-ORDERING EACH ROW.
+                    //                          Make the *Selectable item itself* the drag source & drop target.
+                    //                          Skip when this row is in rename mode so typing doesn't start drags.
+                    if ( !is_renaming )
+                    {
+                        //      1.      DRAG-DROP SOURCE :      Only when user actually drags (prevents double-click conflicts).
+                        if ( ImGui::IsItemActive() &&
+                             ImGui::IsMouseDragging(ImGuiMouseButton_Left, DS.ms_DRAGDROP_DRAG_THRESHOLD ) &&
+                             ImGui::BeginDragDropSource(ImGuiDragDropFlags_None) )    //  ImGuiDragDropFlags_SourceNoPreviewTooltip   ImGuiDragDropFlags_AcceptNoDrawDefaultRect
+                        {
+                            ImGui::Text("Tooltip");
+                            
+                            
+                            DS.SetDragDropPayload( Parcel({i, i}) );
+                            //
+                            ImGui::EndDragDropSource();
+                        }
+                        //
+                        //      2.      DRAG-DROP TARGET :      Same cell accepts the row payload.
+                        if ( ImGui::BeginDragDropTarget() )
+                        {
+                            std::optional<Payload>   data    = DS.GetPayloadIfValid<Parcel>(ImGuiDragDropFlags_None);    //  ImGuiDragDropFlags_AcceptNoDrawDefaultRect
+                            
+                            if ( data.has_value() )
+                            {
+                                //  int         src             = *static_cast<const int*>(drag->Data);
+                                const int       src             = data->src_index;
+                                ImVec2          r_min           = ImGui::GetItemRectMin();
+                                ImVec2          r_max           = ImGui::GetItemRectMax();
+                                float           mid_y           = 0.5f * (r_min.y + r_max.y);
+                                float           mouse_y         = ImGui::GetIO().MousePos.y;
+                                bool            drop_above      = (mouse_y < mid_y);
+            
+                                int             dst_slot        = i + (drop_above ? 0 : 1);
+                                this->_reorder_paths            (src, dst_slot);
+
+
+                                //  IMPORTANT:          //  we mutated m_paths; close scopes and return immediately.
+                                ImGui::PopID();         //  pop the row PushID(i)
+                                clipper.End();
+                                ImGui::EndTable();
+                                return;
+                            }
+                            ImGui::EndDragDropTarget();
+                            
+                            
+                            //      3.      DRAG-RENDERING :    Draw a live insertion cue (thin line) while dragging over the row.
+                            if ( ImGui::IsDragDropActive() )
+                            {
+                            
+                                DS.RenderDragHint( ImGui::GetWindowDrawList() );
+                                
+                            }// END     DRAG-RENDER.
+                            //
+                            //
+                            //      3A.     DRAGGING HAS STOPPED...
+                            else if ( DS.IsDragging() )
+                            {
+                                DS.StopDragging();
+                            }
+                            
+                            
+                        }// END     ALL-DRAGGING.
+                    
+                    }
+                    //
+                    //
+                    //      4.5.        "DELETE" BUTTON.
+                    ImGui::TableSetColumnIndex(3);
+                    if ( !path.locked  &&  selected  &&  !is_renaming )
+                    {
+                        if ( utl::IconButton(   "##Editor_Browser_ObjDeleteButton"
+                                              , this->S.SystemColor.Red
+                                              , ICON_FA_SQUARE_XMARK   //  ICON_FA_DELETE_LEFT     // ICON_FA_SQUARE_MINUS      //  ICON_FA_CIRCLE_MINUS
+                                              , 1.0f
+                                              , IconAnchor::South // IconAnchor::TextBaseline
+                                              , {CELL_SZ, CELL_SZ} )
+                        ) {
+                            _erase_path_and_orphans(static_cast<PathID>(i));
+                            reset_selection();
+                            BS.m_inspector_vertex_idx = -1;
+                            _prune_selection_mutability();
+
+                            ImGui::PopID();
+                            clipper.End();
+                            ImGui::EndTable();
+                            return;
+                        }
+                    }
+                //
+                //  END OF ROW.
+                ImGui::PopID();
+            //
+            }// END "ROW for-loop".
+        //
+        }// END "while-loop" [CLIPPER]
+
+
+        clipper.End();
+        ImGui::EndTable();
+    //
+    //
+    //
+    }// END ALL.
+    
+    
+    
+    return;
+}
+
+
+/*
+{
+    using                                   namespace           icon;
     using                                   Payload             = BrowserState::PathRowDragPayload;
     using                                   IconAnchor          = utl::icon_widgets::Anchor;
     using                                   Padding             = utl::icon_widgets::PaddingPolicy;
@@ -868,7 +1128,7 @@ void Editor::_draw_obj_selector_table(void)
     
     
     return;
-}
+}*/
 
 
 //  "_draw_obj_selectable"

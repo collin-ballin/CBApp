@@ -164,21 +164,41 @@ inline void from_json(nlohmann::json & j, ZOrderCFG_t<ZID> & obj)
 
 
 // *************************************************************************** //
-//      1A. DRAG/DROP PAYLOADS  |       TYPE SYSTEM DEFINITIONS.
+//      1B. DRAG/DROP PAYLOADS  |       ACTUAL PAYLOAD DEFINITIONS.
 // *************************************************************************** //
 
-//  "DDropItemInfo"
+namespace ddrop {   //     BEGINNING NAMESPACE "ddrop"...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//      1.      GLOBAL STUFF.
+// *************************************************************************** //
+
+static constexpr size_t         s_IMGUI_PAYLOAD_TYPE_STRING_SIZE    = 32;
+static constexpr size_t         s_IMGUI_PAYLOAD_DATA_SIZE           = 64;
+
+
+//  "ItemInfo"
 //
-struct DDropItemInfo
+struct ItemInfo
 {
     const char *    name       ;
     const char *    type       ;
 };
 
 
-//  "DDropItemType"
+
+
+// *************************************************************************** //
+//      2.      DEFINITION OF EACH PAYLOAD---TYPE.
+// *************************************************************************** //
+
+//  "ItemType"
 //
-enum class DDropItemType  : uint8_t {
+enum class ItemType  : uint8_t {
       None = 0
     , PathRow
     , Empty
@@ -186,14 +206,15 @@ enum class DDropItemType  : uint8_t {
 };
 
 
-//  "DEF_DDROP_ITEM_INFOS"
+//  "DEF_ITEM_INFOS"
 //
-static constexpr cblib::EnumArray< DDropItemType, DDropItemInfo >
-DEF_DDROP_ITEM_INFOS = { {
-    /*  None        */        DDropItemInfo{ "None"             , nullptr           }
-    /*  PathRow     */      , DDropItemInfo{ "Path Row"         , "PATH_ROW"        }
-    /*  Empty     */        , DDropItemInfo{ "Empty"            , "EMPTY"           }   //  placeholder for now (unused).
+static constexpr cblib::EnumArray< ItemType, ItemInfo >
+DEF_ITEM_INFOS = { {
+    /*  None        */        ItemInfo{ "None"             , nullptr           }
+    /*  PathRow     */      , ItemInfo{ "Path Row"         , "PATH_ROW"        }
+    /*  Empty     */        , ItemInfo{ "Empty"            , "EMPTY"           }   //  placeholder for now (unused).
 } };
+
 
     
 
@@ -201,27 +222,27 @@ DEF_DDROP_ITEM_INFOS = { {
 //
 //                  1A.     ENFORCE  *NAME*  RESTRICTIONS FOR DRAG/DROP PAYLOAD...
 static_assert(
-    DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].name                           &&      //  "name" is NOT NULL.
-    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].name)       != 0                //  "name" is NOT empty-string.
+    DEF_ITEM_INFOS[ItemType::PathRow].name                                                       &&      //  "name" is NOT NULL.
+    sizeof(DEF_ITEM_INFOS[ItemType::PathRow].name)       != 0                                            //  "name" is NOT empty-string.
 );
 //                  1B.     ENFORCE  *TYPE*  RESTRICTIONS FOR DRAG/DROP PAYLOAD...
 static_assert(
-    DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].type                           &&      //  "type" is NOT NULL.
-    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].type)       != 0        &&      //  "type" is NOT empty-string.
-    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].type)       <= 32       &&      //  ImGui DRAG/DROP Type-Strings have MAX. SIZE of 32-characters.
-    DEF_DDROP_ITEM_INFOS[DDropItemType::PathRow].type[0]            != '_'              //  Type-Strings beginning with "_" are reserved for ImGui-Types.
+    DEF_ITEM_INFOS[ItemType::PathRow].type                                                       &&      //  "type" is NOT NULL.
+    sizeof(DEF_ITEM_INFOS[ItemType::PathRow].type)       != 0                                    &&      //  "type" is NOT empty-string.
+    sizeof(DEF_ITEM_INFOS[ItemType::PathRow].type)       <= s_IMGUI_PAYLOAD_TYPE_STRING_SIZE     &&      //  ImGui DRAG/DROP Type-Strings have MAX. SIZE of 32-characters.
+    DEF_ITEM_INFOS[ItemType::PathRow].type[0]            != '_'                                          //  Type-Strings beginning with "_" are reserved for ImGui-Types.
 );
 //
 //      ENUM #2 :   "Empty"...
 static_assert(
-    DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].name                             &&
-    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].name)         != 0
+    DEF_ITEM_INFOS[ItemType::Empty].name                                                         &&
+    sizeof(DEF_ITEM_INFOS[ItemType::Empty].name)         != 0
 );
 static_assert(
-    DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].type                             &&
-    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].type)         != 0        &&
-    sizeof(DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].type)         <= 32       &&
-    DEF_DDROP_ITEM_INFOS[DDropItemType::Empty].type[0]              != '_'
+    DEF_ITEM_INFOS[ItemType::Empty].type                                                         &&
+    sizeof(DEF_ITEM_INFOS[ItemType::Empty].type)         != 0                                    &&
+    sizeof(DEF_ITEM_INFOS[ItemType::Empty].type)         <= s_IMGUI_PAYLOAD_TYPE_STRING_SIZE     &&
+    DEF_ITEM_INFOS[ItemType::Empty].type[0]              != '_'
 );
 
 
@@ -230,16 +251,9 @@ static_assert(
 
 
 
-// *************************************************************************** //
-//      1B. DRAG/DROP PAYLOADS  |       ACTUAL PAYLOAD DEFINITIONS.
-// *************************************************************************** //
-
-
-
-namespace ddrop {   //     BEGINNING NAMESPACE "ddrop"...
-// *************************************************************************** //
-// *************************************************************************** //
-
+[[nodiscard]] inline const char *   GetTypeString               (const ItemType k) noexcept   { return DEF_ITEM_INFOS[k].type; };
+[[nodiscard]] inline const char *   GetypeName                  (const ItemType k) noexcept   { return DEF_ITEM_INFOS[k].name; };
+    
 
 
 //  "ParcelHeader"
@@ -255,8 +269,11 @@ struct ParcelHeader {
 
 
 
+
+
+
 // *************************************************************************** //
-//      2.      DEFINE DATA-PAYLOADS (FOR EACH PAYLOAD-TYPE TO CARRY)...
+//      3.      DEFINE DATA-PAYLOADS (FOR EACH PAYLOAD-TYPE TO CARRY)...
 // *************************************************************************** //
 
 //  "PathRowParcel"
@@ -269,9 +286,8 @@ struct PathRowParcel
     // *************************************************************************** //
     struct Payload
     {
-        int32_t             src_row                 = -1;       //  visual row index when drag began
-        int32_t             src_index               = -1;       //  backing m_paths index when drag began
-        uint32_t            path_id                 = 0;        //  optional: if you have stable IDs
+        int                 src_row                 = -1;       //  visual row index when drag began
+        int                 src_index               = -1;       //  backing m_paths index when drag began
     };
     
     // *************************************************************************** //
@@ -279,6 +295,9 @@ struct PathRowParcel
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
+    static constexpr ItemType               type                            = ItemType::PathRow;
+    static constexpr const char *           type_name                       = DEF_ITEM_INFOS[ type ].name;
+    static constexpr const char *           type_string                     = DEF_ITEM_INFOS[ type ].type;
     static constexpr ImU32                  ms_PATH_DRAG_HINT_COLOR         = 0xFFBF661A;
     static constexpr float                  ms_PATH_DRAG_HINT_WIDTH         = 4.0f;
     
@@ -316,13 +335,13 @@ struct PathRowParcel
     // *************************************************************************** //
     //      INITIALIZATION METHODS.         |   "init.cpp" ...
     // *************************************************************************** //
-    //  explicit                        MyStruct                (app::AppState & );             //  Def. Constructor.
                                         PathRowParcel           (void) noexcept                 = default;
                                         ~PathRowParcel          (void)                          = default;
-    
-    // *************************************************************************** //
-    //      DELETED FUNCTIONS.              |   ...
-    // *************************************************************************** //
+                                        
+    //  In-Place Construction.
+    explicit                            PathRowParcel           (Payload && p) noexcept
+        : payload( std::move(p) )
+    {   }
     
 //
 // *************************************************************************** //
@@ -342,18 +361,15 @@ struct PathRowParcel
 
     //  "GetPayload"
     [[nodiscard]] inline Payload *      GetPayload                          (void) noexcept         { return std::addressof( this->payload ); }
-    [[nodiscard]] inline size_t         GetPayloadSize                      (void) const noexcept   { return sizeof( Payload ); }
+    [[nodiscard]] static inline size_t  GetPayloadSize                      (void) noexcept         { return sizeof( Payload ); }
 
     
     //  "ui_properties"
     inline void                         ui_properties                       (void)      { return; }
     
-    //  "render"
-    inline void                         render                              (ImDrawList * dl) const noexcept    { return; }
-    /*
+    //  "RenderDragHint"
+    inline void                         RenderDragHint                      (ImDrawList * dl) const noexcept 
     {
-        ImU32           col             = ImGui::GetColorU32(ImGuiCol_SeparatorActive);
-    
         ImVec2          r_min           = ImGui::GetItemRectMin();
         ImVec2          r_max           = ImGui::GetItemRectMax();
         float           mid_y           = 0.5f * (r_min.y + r_max.y);
@@ -361,17 +377,12 @@ struct PathRowParcel
         bool            drop_above      = (mouse_y < mid_y);
         float           y               = drop_above ? r_min.y : r_max.y;
 
-
-        dl->AddLine(ImVec2(r_min.x, y), ImVec2(r_max.x, y), col, 2.0f);
-        
-        return;
-    }*/
-    
-    //  "render_tooltip"
-    inline void                         render_tooltip                      (void) const noexcept
-    {
+        dl->AddLine(ImVec2(r_min.x, y), ImVec2(r_max.x, y), this->ms_PATH_DRAG_HINT_COLOR, this->ms_PATH_DRAG_HINT_WIDTH);
         return;
     }
+    
+    //  "RenderDragTooltip"
+    inline void                         RenderDragTooltip                   (ImDrawList * dl) const noexcept    { return; }
     
 //
 // *************************************************************************** //
@@ -401,9 +412,16 @@ struct EmptyParcel
     struct Payload
     {
         int32_t             src_row                 = -1;       //  visual row index when drag began
-        int32_t             src_index               = -1;       //  backing m_paths index when drag began
-        uint32_t            path_id                 = 0;        //  optional: if you have stable IDs
     };
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      0. |    STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr ItemType               type                            = ItemType::Empty;
+    static constexpr const char *           type_name                       = DEF_ITEM_INFOS[ type ].name;
+    static constexpr const char *           type_string                     = DEF_ITEM_INFOS[ type ].type;
     
     
     
@@ -465,20 +483,17 @@ struct EmptyParcel
 
     //  "GetPayload"
     [[nodiscard]] inline Payload *      GetPayload                          (void) noexcept         { return std::addressof( this->payload ); }
-    [[nodiscard]] inline size_t         GetPayloadSize                      (void) const noexcept   { return sizeof( Payload ); }
+    [[nodiscard]] static inline size_t  GetPayloadSize                      (void) noexcept         { return sizeof( Payload ); }
 
     
     //  "ui_properties"
     inline void                         ui_properties                       (void)              { return; }
     
-    //  "render"
-    inline void                         render                              (ImDrawList * dl) const noexcept    { return; }
+    //  "RenderDragHint"
+    inline void                         RenderDragHint                      (ImDrawList * dl) const noexcept    { return; }
     
-    //  "render_tooltip"
-    inline void                         render_tooltip                      (void) const noexcept
-    {
-        return;
-    }
+    //  "RenderDragTooltip"
+    inline void                         RenderDragTooltip                   (ImDrawList * dl) const noexcept    { return; }
     
 //
 // *************************************************************************** //
@@ -505,18 +520,17 @@ struct EmptyParcel
 
 //      1.      Ensure each Payload is POD Type...
 static_assert(
-      std::is_trivially_copyable_v<PathRowParcel::Payload>          &&
+      std::is_trivially_copyable_v<PathRowParcel::Payload>                      &&
       std::is_trivially_copyable_v<EmptyParcel::Payload>
     , "Each payload-type must be Plain-Old-Data struct (POD)"
 );
 //
 //      2.      Ensure each Payload is small-size...
 static_assert(
-      ( sizeof(PathRowParcel::Payload)      <= 64 )                 &&
-      ( sizeof(EmptyParcel::Payload)        <= 64 )
+      ( sizeof(PathRowParcel::Payload)      <= s_IMGUI_PAYLOAD_DATA_SIZE )      &&
+      ( sizeof(EmptyParcel::Payload)        <= s_IMGUI_PAYLOAD_DATA_SIZE )
     , "Each payload must be, at most, 64-bytes in memory"   //  ImGui DEEP-COPIES the Payload Data...
 );
-
 
 
 //  "Parcel"
@@ -530,16 +544,102 @@ using Parcel = std::variant<
 
 //  "ParcelOf"      Type-Specific "Getter" Function.
 //
-template <DDropItemType K>
+template <ItemType K>
 struct ParcelOf;
 
 template <>
-struct ParcelOf<DDropItemType::PathRow>     { using type = ddrop::PathRowParcel; };
+struct ParcelOf<ItemType::PathRow>      { using type = ddrop::PathRowParcel; };
 template <>
-struct ParcelOf<DDropItemType::Empty>       { using type = ddrop::EmptyParcel;   };
+struct ParcelOf<ItemType::Empty>        { using type = ddrop::EmptyParcel;   };
 
 
 
+    
+    
+    
+//  "parcel_type"
+//
+template <class T>
+concept parcel_type =
+    std::is_default_constructible_v<T>  &&
+    requires(T t)
+{
+    //      1.      REQUIRED DATA---MEMBERS...
+    typename T::Payload;                                                        //  nested payload type
+    requires std::is_trivially_copyable_v<typename T::Payload>;
+    //
+    T::type;                                                                    //  Enum Type-Tag for the Parcel.
+    T::type_name;                                                               //  Human-Readable Type-Name.
+    T::type_string;                                                             //  Type-String for ImGui Payload.
+    //
+    //      2.      REQUIRED MEMBER---FUNCTIONS...
+    { t.GetPayload() }          -> std::same_as<typename T::Payload*>;          //  pointer getter
+    //  { t.GetPayloadSize() }      -> std::same_as<size_t>;                    //  sizeof(payload)
+    //
+    t.RenderDragHint    ( static_cast<ImDrawList*>(nullptr) );                  //  RenderDragHint(dl)
+    t.RenderDragTooltip ( static_cast<ImDrawList*>(nullptr) );                  //  RenderDragTooltip(dl)
+};
+
+
+//  "parcel_type"
+/*
+template <class T>
+concept parcel_type =
+    //
+    //      1.      TYPE-TRAITS FOR PARCEL-TYPE     (Typename T)...
+    std::default_initializable<T>           &&
+    std::is_default_constructible_v<T>      &&
+    //
+    //      2.      TYPE-TRAITS FOR PAYLOAD-TYPE    (Typename T::Payload)...
+    requires
+    {
+        typename T::Payload;
+        requires std::is_trivially_copyable_v<typename T::Payload>      ;
+        requires std::default_initializable<T>                          ;
+        requires std::is_default_constructible_v<T>                     ;
+    }
+    &&
+    //
+    //      3.      REQUIRED MEMBER-FUNCTIONS...
+    requires        // static function presence/signature/noexcept
+    {
+        { T::GetPayloadSize() } noexcept -> std::same_as<size_t>;
+    }
+    &&
+    requires (T t)
+    {
+        T::type; T::type_name; T::type_string;
+        { t.GetPayload() } -> std::same_as<typename T::Payload*>;
+        t.render(static_cast<ImDrawList*>(nullptr));
+    };*/
+    
+
+
+//  "ExtractPayloadData"
+//
+template <parcel_type T, typename U = T::Payload>
+[[nodiscard]] static inline bool ExtractPayloadData(const ImGuiPayload * src, U & dst) noexcept
+{
+    constexpr const size_t &    length      = s_IMGUI_PAYLOAD_TYPE_STRING_SIZE;
+    const size_t                size        = T::GetPayloadSize();
+    const bool                  valid       = (
+        ( src != nullptr )                                              &&
+        ( std::strncmp(src->DataType, T::type_string, length) == 0 )    &&
+        ( static_cast<size_t>( src->DataSize ) == size )
+    );
+
+    if (!valid)     { return false; }   //  CASE 0 :    INVALID IMGUI PAYLOAD  [ Wrong---Type-Str,  Null---Ptr,  Wrong---Size ].
+    
+    
+    std::memcpy( std::addressof(dst), src->Data, size );
+    return true;
+}
+
+
+
+
+
+    
 
 
 // *************************************************************************** //
@@ -566,196 +666,6 @@ struct ParcelOf<DDropItemType::Empty>       { using type = ddrop::EmptyParcel;  
 
 
 
-//  "PathRowDragPayload"
-//
-struct PathRowDragPayload
-{
-    // *************************************************************************** //
-    //      0. |    NESTED TYPENAME ALIASES.
-    // *************************************************************************** //
-    //  using                               MyAlias                         = MyTypename_t;
-    
-    // *************************************************************************** //
-    //
-    // *************************************************************************** //
-    //      0. |    STATIC CONSTEXPR CONSTANTS.
-    // *************************************************************************** //
-    static constexpr const char *       ms_TYPE                         = "PATH_ROW";
-    static constexpr uint32_t           ms_MAGIC                        = 0x50525731u;      //  'ROW1'
-    static constexpr uint16_t           ms_VERSION                      = 1;                //  VER 1.
-    
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
-
-
-
-// *************************************************************************** //
-//
-//      1.          DATA-MEMBERS...
-// *************************************************************************** //
-// *************************************************************************** //
-    
-    // *************************************************************************** //
-    //      1. |    IMPORTANT DATA-MEMBERS.
-    // *************************************************************************** //
-    int                                 src_index                       = -1;               //  row index in current view (top = 0)
-    //
-    uint32_t                            magic                           = ms_MAGIC;
-    uint16_t                            version                         = ms_VERSION;       //  bump if layout changes
-    //  uint16_t                            kind                            = 0;                //  0 = paths (future: 1 = layers, etc.)
-    
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "1.  DATA-MEMBERS".
-
-
-
-// *************************************************************************** //
-//
-//      2.A.        MEMBER FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-    
-    // *************************************************************************** //
-    //      INITIALIZATION METHODS.         |   "init.cpp" ...
-    // *************************************************************************** //
-                                        PathRowDragPayload              (void)                          = default;
-                                        ~PathRowDragPayload             (void)                          = default;
-    
-    //  "PathRowDragPayload"
-    inline explicit                     PathRowDragPayload              (const int index_) noexcept
-        : src_index(index_)     { return; }
-    
-    
-    
-    // *************************************************************************** //
-    //      DELETED FUNCTIONS.              |   ...
-    // *************************************************************************** //
-    
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "2A.  MEMBER FUNCS".
-
-    
-   
-// *************************************************************************** //
-//
-//      2.B.        INLINE FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-    // *************************************************************************** //
-    //      2.B. |  STATIC INLINE FUNCTIONS.
-    // *************************************************************************** //
-    
-    //  "SetDragDropPayload"
-    static inline bool                  SetDragDropPayload                  (const PathRowDragPayload & src) noexcept
-    {
-        return ImGui::SetDragDropPayload( PathRowDragPayload::ms_TYPE, &src, sizeof(src) );
-    }
-    
-    //  "AcceptDragDropPayload"
-    [[nodiscard]] static inline const ImGuiPayload *
-                                        AcceptDragDropPayload               (const ImGuiDragDropFlags flags = ImGuiDragDropFlags_None) noexcept   //  ImGuiDragDropFlags_AcceptPeekOnly
-    {
-        return ImGui::AcceptDragDropPayload(PathRowDragPayload::ms_TYPE, flags);
-    }
-    
-    //  "IsValid"
-    [[nodiscard]] static inline bool    IsValid                             (const ImGuiPayload * ptr) noexcept
-    {
-        using               Payload     = PathRowDragPayload;
-        const bool          bad_type    = ( !ptr  ||  !ptr->IsDataType(ms_TYPE) )  ||  ( ptr->DataSize != sizeof(Payload) ) ;
-        
-        if ( bad_type )                 { return false; }
-            
-        const Payload *     data        = static_cast<const PathRowDragPayload*>(ptr->Data);
-        return ( data  &&  data->IsValid() );
-    }
-    
-    //  "GetPayloadIfValid"
-    [[nodiscard]] static inline PathRowDragPayload *
-                                        GetPayloadIfValid                   (const ImGuiDragDropFlags flags = ImGuiDragDropFlags_None) noexcept   //  ImGuiDragDropFlags_AcceptPeekOnly
-    {
-        using                   Payload     = PathRowDragPayload;
-        const ImGuiPayload *    ptr         = Payload::AcceptDragDropPayload(flags);
-        Payload *               payload     = nullptr; //   static_cast<Payload*>( ptr->Data );
-        const bool              bad_type    = ( !ptr  ||  !ptr->IsDataType(ms_TYPE) )  ||  ( ptr->DataSize != sizeof(Payload) ) ;
-        
-        
-        if ( bad_type                                         ||
-             !(payload = static_cast<Payload*>( ptr->Data ))  ||
-             !(payload->IsValid()) )
-        {
-            return nullptr;
-        }
-
-        return payload;
-    }
-    
-    // *************************************************************************** //
-
-
-
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      2.B. |  QUERY FUNCTIONS.
-    // *************************************************************************** //
-    //  "IsValid"
-    [[nodiscard]] inline bool           IsValid                             (void) const noexcept
-    {
-        return (    ( this->magic     == ms_MAGIC    )   &&
-                    ( this->version   == ms_VERSION  )   &&
-                    ( this->src_index >= 0           ) );
-    }
-
-
-
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      2.B. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
-    // *************************************************************************** //
-    //  "reset"
-    inline void                         reset                               (void) noexcept
-    {
-        this->src_index = -1;
-        return;
-    }
-
-
-
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      2.B. |  UTILITY FUNCTIONS.
-    // *************************************************************************** //
-    
-                                
-                                
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "2B.  INLINE" FUNCTIONS.
-
-
-
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-};//	END "PathRowDragPayload" INLINE STRUCT DEFINITION.
-
-
-
-
-
-
-
 
 
 
@@ -771,7 +681,10 @@ struct ItemDDropper_t
     // *************************************************************************** //
     //      0. |    NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    using                                   ItemType                        = DDropItemType;
+    using                                   ItemType                        = ddrop::ItemType;
+    //
+    using                                   PathRowParcel                   = ddrop::PathRowParcel;
+    using                                   EmptyParcel                     = ddrop::EmptyParcel;
     using                                   Parcel                          = ddrop::Parcel;
     
     // *************************************************************************** //
@@ -780,9 +693,9 @@ struct ItemDDropper_t
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr auto &                 ms_ITEM_INFOS                   = DEF_DDROP_ITEM_INFOS;
-    static constexpr ImU32                  ms_PATH_DRAG_HINT_COLOR         = 0xFFBF661A;
-    static constexpr float                  ms_PATH_DRAG_HINT_WIDTH         = 4.0f;
+    static constexpr auto &                 ms_ITEM_INFOS                   = ddrop::DEF_ITEM_INFOS;
+    //
+    static constexpr float                  ms_DRAGDROP_DRAG_THRESHOLD      = 2.0f;
     
 //
 // *************************************************************************** //
@@ -799,8 +712,6 @@ struct ItemDDropper_t
     // *************************************************************************** //
     //      1. |    PAYLOAD DATA-MEMBERS.
     // *************************************************************************** //
-    std::optional<PathRowDragPayload>       m_path_payload                  { std::nullopt };
-    //
     ItemType                                m_type                          = { ItemType::None };
     Parcel                                  m_parcel                        {   };
 
@@ -812,7 +723,6 @@ struct ItemDDropper_t
     // *************************************************************************** //
     //      1. |    STATE DATA-MEMBERS.
     // *************************************************************************** //
-    bool                                    m_path_dragging                 = false;    //  NEW: TRUE when DRAGGING OBJ in the Browser.
     bool                                    m_is_dragging                   = false;    //  NEW: TRUE when DRAGGING.
     
 //
@@ -830,9 +740,9 @@ struct ItemDDropper_t
     // *************************************************************************** //
     //      INITIALIZATION METHODS.         |   "init.cpp" ...
     // *************************************************************************** //
-    //  explicit                        ItemDDropper_t                 (app::AppState & );             //  Def. Constructor.
-                                        ItemDDropper_t                  (void)                          = default;
-                                        ~ItemDDropper_t                 (void)                          = default;
+    //  explicit                        ItemDDropper_t                      (app::AppState & );             //  Def. Constructor.
+                                        ItemDDropper_t                      (void)                          = default;
+                                        ~ItemDDropper_t                     (void)                          = default;
     
     // *************************************************************************** //
     //      DELETED FUNCTIONS.              |   ...
@@ -871,15 +781,20 @@ struct ItemDDropper_t
         }
     }
     
+    
     //  "has_payload_v"
     //      Helpers to get the active parcel’s Payload address/size (for ImGui bytes)
     template <class TParcel>
     static constexpr bool               has_payload_v                       = requires(TParcel p)   { sizeof(typename TParcel::Payload); p.payload; };
     
-    
-    
-    
-    
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  PAYLOAD FUNCTIONS.
+    // *************************************************************************** //
     
     //  "BeginDragDropSource"
     //
@@ -889,7 +804,6 @@ struct ItemDDropper_t
         const char *    type_str        = this->GetItemTypeString();
         bool            accepted        = ImGui::BeginDragDropSource(flags);    //  Only when ImGui says a source begins this frame.
         
-        //  IM_ASSERT( accepted && "ItemDDropper_t: ImGui failed to accept DragDropSource" );
         std::visit([&](auto & parcel)
         {
             using P = std::decay_t<decltype(parcel)>;
@@ -897,9 +811,11 @@ struct ItemDDropper_t
             {
                 accepted = ImGui::SetDragDropPayload(type_str, parcel.GetPayload(), parcel.GetPayloadSize());;
                 
-                if ( accepted ) {
-                    parcel.render_tooltip();
-                }
+                //  if ( accepted ) {
+                //      parcel.RenderDragTooltip();
+                //  }
+                this->m_is_dragging = accepted;
+                //  IM_ASSERT( accepted && "ItemDDropper_t: ImGui failed to accept DragDropSource" );
             }
         }, this->m_parcel);
 
@@ -907,26 +823,43 @@ struct ItemDDropper_t
     }
     
     
-    
-    //  "GetParcelIfValid"
+    //  "GetPayloadIfValid"
+    //      Call inside an active ImGui::BeginDragDropTarget() scope.
     //
-    template <class T>
-    [[nodiscard]] inline T *            GetParcelIfValid                    (const ItemType type) noexcept
+    template < ddrop::parcel_type T, typename U = T::Payload >
+    [[nodiscard]] inline typename std::optional<U>
+                                        GetPayloadIfValid                    (const ImGuiDragDropFlags flags = ImGuiDragDropFlags_None) noexcept
     {
-        const bool      valid       = ( (this->m_type == type)  &&  (ImGui::IsDragDropActive()) );
-    
-        if (!valid)                 { return nullptr; }
-    
-        return std::get_if<T>( &this->m_parcel );
+        using                   namespace           ddrop;
+        
+        //      1.      OBTAIN PAYLOAD FROM IMGUI...
+        U                       payload             = {   };
+        const ImGuiPayload *    received            = ImGui::AcceptDragDropPayload(T::type_string, flags);
+        
+        if ( received  &&  ExtractPayloadData<T>(received, payload) )
+        {
+            return payload;
+        }
+
+        return std::nullopt;
     }
-
-
-    // *************************************************************************** //
+    
+    
+    //  "SetDragDropPayload"
+    //      PREPARE the dropper with a parcel (copy or move), but DO NOT send to ImGui yet.
     //
-    //
-    // *************************************************************************** //
-    //      2.B. |  PAYLOAD FUNCTIONS.
-    // *************************************************************************** //
+    template <ddrop::parcel_type T>
+    inline bool                         SetDragDropPayload                  (T && parcel)
+    {
+        //      CASE 0 :    FIRST-FRAME OF DRAG/DROP...
+        if ( this->m_type == ItemType::None )       { this->m_type = T::type;   }
+        else if ( T::type != this->m_type )         { return false;             }   //  IM_ASSERT( (this->m_type != T::type)  &&  "ItemDDropper_t: \"SetDragDropPayload()\" invoked while a payload of different-type is still active");
+        
+        
+        this->m_parcel                  = std::forward<T>( parcel );   // stores into the std::variant
+        const bool      sent            = ImGui::SetDragDropPayload( T::type_string, parcel.GetPayload(), parcel.GetPayloadSize() );
+        return sent;
+    }
 
 
 
@@ -937,16 +870,13 @@ struct ItemDDropper_t
     //      2.B. |  SETTER/GETTER FUNCTIONS.
     // *************************************************************************** //
     
-    //  "GetPathPayload"
-    //  [[nodiscard]] inline PathRowDragPayload         GetPathPayload      (void) const noexcept   { return this->m_path_payload; };
-    
-    //  "SetPathRowDragPayload"
-    inline void                         SetPathRowDragPayload               (const PathRowDragPayload & payload_) noexcept
-        { this->m_path_payload = payload_; };
-    inline void                         SetPathRowDragPayload               (const int index_) noexcept
-        { this->m_path_payload = PathRowDragPayload(index_); };
-        
-        
+    //  "SetItemType"
+    inline void                         SetItemType                         (const ItemType type) noexcept
+    {
+        this->m_type        = type;
+        this->m_parcel      = this->s_make_default_payload(type);
+        return;
+    }
         
     //  "GetItemTypeString"
     [[nodiscard]] inline const char *   GetItemTypeString                   (void) const noexcept   { return ms_ITEM_INFOS[this->m_type].type; };
@@ -960,8 +890,12 @@ struct ItemDDropper_t
     // *************************************************************************** //
     //      2.B. |  QUERY FUNCTIONS.
     // *************************************************************************** //
-    //  "IsPathRowDragging"
-    [[nodiscard]] inline bool           IsPathRowDragging                   (void) const noexcept   { return this->m_path_dragging; }
+    
+    //  "IsPayloadSet"
+    [[nodiscard]] inline bool           IsPayloadSet                        (void) const noexcept
+        { return (m_parcel.index() != 0); }
+        //  { return std::holds_alternative<std::monostate>(m_parcel); }   //  *OR:*   return m_parcel.index() != 0; // assuming monostate is the first alternative
+
     //  "IsDragging"
     [[nodiscard]] inline bool           IsDragging                          (void) const noexcept   { return this->m_is_dragging; }
     
@@ -981,23 +915,15 @@ struct ItemDDropper_t
     //      2.B. |  OPERATION FUNCTIONS.
     // *************************************************************************** //
     
-    //  "render"
-    inline void                         render                              (ImDrawList * dl) const noexcept
+    //  "RenderDragHint"
+    inline void                         RenderDragHint                      (ImDrawList * dl) const noexcept
     {
         std::visit( [&](auto & payload)
         {
             using T = std::decay_t<decltype(payload)>;
-            if constexpr (!std::is_same_v<T, std::monostate>)   { payload.render(dl); }     //  Skip monostate (has no draw_ui).
-        }, m_parcel);
+            if constexpr (!std::is_same_v<T, std::monostate>)   { payload.RenderDragHint(dl); }     //  Skip monostate (has no draw_ui).
+        }, this->m_parcel);
         
-        return;
-    }
-    
-    //  "SetItemType"
-    inline void                         SetItemType                     (const ItemType type) noexcept
-    {
-        this->m_type        = type;
-        this->m_parcel      = this->s_make_default_payload(type);
         return;
     }
 
@@ -1010,69 +936,18 @@ struct ItemDDropper_t
     //      2.B. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
     
+    //  "StopDragging"
+    inline void                         StopDragging                        (void) noexcept         { this->reset(); }
+    
     //  "reset"
     inline void                         reset                               (void) noexcept
     {
         //      1.      BOOLEAN-STATE VALUES...
-        this->m_path_dragging       = false;
         this->m_is_dragging         = false;
-        
         
         //      2.      PAYLOAD VALUES...
         this->m_type                = ItemType::None;
         this->m_parcel              = this->s_make_default_payload( ItemType::None );
-        //
-        this->m_path_payload        .reset();
-        
-        
-        
-        return;
-    }
-
-
-
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      2.B. |  OPERATION FUNCTIONS.
-    // *************************************************************************** //
-    
-    //  "StartPathRowDragging"
-    inline bool                         StartPathRowDragging                (void)
-    {
-        IM_ASSERT( this->m_path_payload.has_value()     && "ItemDDropper_t: \"StartPathRowDragging\" called with no payload (must call \"SetPathRowDragPayload(...)\" first)" );
-        bool    accepted            = false;
-        this->m_path_dragging       = true;
-        
-        accepted    = PathRowDragPayload::SetDragDropPayload( *this->m_path_payload );
-        
-        //  IM_ASSERT( accepted && "Failure to begin PathRowParcel Dragging");
-        return accepted;
-    }
-    
-    
-    //  "StopPathRowDragging"
-    inline void                         StopPathRowDragging                 (void)
-    {
-        this->m_path_dragging       = false;
-        return;
-    }
-    
-    
-    //  "RenderPathRowDragHint"
-    inline void                         RenderPathRowDragHint               (ImDrawList * dl) const noexcept
-    {
-        ImVec2          r_min           = ImGui::GetItemRectMin();
-        ImVec2          r_max           = ImGui::GetItemRectMax();
-        //
-        float           mid_y           = 0.5f * (r_min.y + r_max.y);
-        float           mouse_y         = ImGui::GetIO().MousePos.y;
-        bool            drop_above      = (mouse_y < mid_y);
-        float           y               = drop_above ? r_min.y : r_max.y;
-
-
-        dl->AddLine(ImVec2(r_min.x, y), ImVec2(r_max.x, y), ms_PATH_DRAG_HINT_COLOR, this->ms_PATH_DRAG_HINT_WIDTH);
         
         return;
     }
@@ -1140,15 +1015,12 @@ struct BrowserState_t
     _USE_OBJECT_CFG_ALIASES
     using                               Vertex                                  = Vertex_t      <CFG>                               ;
     using                               Path                                    = Path_t        <CFG, Vertex>                       ;
-    using                               PathRowDragPayload                      = PathRowDragPayload;
     
     // *************************************************************************** //
     //
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr float              ms_DRAGDROP_DRAG_THRESHOLD              = 2.0f;
-    //
     static constexpr size_t             ms_MAX_PATH_TITLE_LENGTH                = Path::ms_MAX_PATH_LABEL_LENGTH + 64ULL;
     static constexpr size_t             ms_MAX_VERTEX_TITLE_LENGTH              = Vertex::ms_VERTEX_NAME_BUFFER_SIZE + 32ULL;
     
