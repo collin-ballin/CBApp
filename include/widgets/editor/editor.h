@@ -1745,10 +1745,10 @@ public:
     // *************************************************************************** //
     //      CORE DATA...
     // *************************************************************************** //
-    std::vector<Vertex>                 vertices;
-    std::vector<Path>                   paths;
-    std::vector<Point>                  points;
-    std::vector<Line>                   lines;
+    std::vector<Vertex>                 vertices    ;
+    std::vector<Path>                   paths       ;
+    std::vector<Point>                  points      ;
+    std::vector<Line>                   lines       ;
     
     // *************************************************************************** //
     //
@@ -1987,7 +1987,7 @@ inline void from_json(const nlohmann::json & j, EditorSnapshot & s)
 
 
 
-//  MORE STATIC HELPERS...
+//      MORE STATIC HELPERS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -2001,7 +2001,7 @@ inline void from_json(const nlohmann::json & j, EditorSnapshot & s)
 
 
 
-//  NEW STATIC HELPERS...
+//      NEW STATIC HELPERS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -2058,7 +2058,7 @@ inline bool s_draw_vertex_slider(const char * label, double & value, const float
 
 
 
-//  0.  STATIC INLINE       | DRAWING / CURVATURE / RENDERING...
+//      0.      STATIC INLINE       | DRAWING / CURVATURE / RENDERING...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -2231,6 +2231,9 @@ inline Vertex * find_vertex_mut( std::vector< Vertex > & arr, ID id ) noexcept
         
     return nullptr;
 }
+
+
+//  "find_vertex_mut"
 //
 template< typename ID, typename Vertex = Vertex_t<ID> >
 inline const Vertex * find_vertex_mut( const std::vector< Vertex > & arr, ID id ) noexcept
@@ -2241,6 +2244,20 @@ inline const Vertex * find_vertex_mut( const std::vector< Vertex > & arr, ID id 
     }
         
     return nullptr;
+}
+
+
+//  "s_path_ddrop_index"
+//
+[[nodiscard]] static inline int s_path_ddrop_index(const size_t i) noexcept
+{
+    ImVec2          r_min           = ImGui::GetItemRectMin();
+    ImVec2          r_max           = ImGui::GetItemRectMax();
+    float           mid_y           = 0.5f * (r_min.y + r_max.y);
+    float           mouse_y         = ImGui::GetIO().MousePos.y;
+    bool            drop_above      = (mouse_y < mid_y);
+                                
+    return static_cast<int>( i + ((drop_above)   ? 0     : 1) );
 }
 
 

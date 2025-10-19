@@ -284,6 +284,9 @@ struct PathRowParcel
     // *************************************************************************** //
     //      0. |    NESTED TYPENAME ALIASES.
     // *************************************************************************** //
+    static constexpr ItemType               type                            = ItemType::PathRow;
+    static constexpr const char *           type_name                       = DEF_ITEM_INFOS[ type ].name;
+    static constexpr const char *           type_string                     = DEF_ITEM_INFOS[ type ].type;
     struct Payload
     {
         int                 src_row                 = -1;       //  visual row index when drag began
@@ -295,11 +298,11 @@ struct PathRowParcel
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr ItemType               type                            = ItemType::PathRow;
-    static constexpr const char *           type_name                       = DEF_ITEM_INFOS[ type ].name;
-    static constexpr const char *           type_string                     = DEF_ITEM_INFOS[ type ].type;
-    static constexpr ImU32                  ms_PATH_DRAG_HINT_COLOR         = 0xFFBF661A;
-    static constexpr float                  ms_PATH_DRAG_HINT_WIDTH         = 4.0f;
+    static constexpr ImU32                  ms_PATH_DRAG_LINE_COLOR         = 0xFFFFFFFF;   //  1A
+    static constexpr float                  ms_PATH_DRAG_LINE_WIDTH         = 1.5f;
+    //
+    static constexpr ImU32                  ms_PATH_DRAG_FILL_COLOR         = 0x9BBF661A;   //  1A
+    static constexpr float                  ms_PATH_DRAG_FILL_WIDTH         = 12.0f;
     
     
     
@@ -377,12 +380,18 @@ struct PathRowParcel
         bool            drop_above      = (mouse_y < mid_y);
         float           y               = drop_above ? r_min.y : r_max.y;
 
-        dl->AddLine(ImVec2(r_min.x, y), ImVec2(r_max.x, y), this->ms_PATH_DRAG_HINT_COLOR, this->ms_PATH_DRAG_HINT_WIDTH);
+        dl->AddLine(ImVec2(r_min.x, y), ImVec2(r_max.x, y), this->ms_PATH_DRAG_LINE_COLOR, this->ms_PATH_DRAG_LINE_WIDTH);
+        dl->AddLine(ImVec2(r_min.x, y), ImVec2(r_max.x, y), this->ms_PATH_DRAG_FILL_COLOR, this->ms_PATH_DRAG_FILL_WIDTH);
+        
         return;
     }
     
     //  "RenderDragTooltip"
-    inline void                         RenderDragTooltip                   (ImDrawList * dl) const noexcept    { return; }
+    inline void                         RenderDragTooltip                   (void) const noexcept
+    {
+        ImGui::Text("Path-Row %d", this->payload.src_index);
+        return;
+    }
     
 //
 // *************************************************************************** //
@@ -409,6 +418,9 @@ struct EmptyParcel
     // *************************************************************************** //
     //      0. |    NESTED TYPENAME ALIASES.
     // *************************************************************************** //
+    static constexpr ItemType               type                            = ItemType::Empty;
+    static constexpr const char *           type_name                       = DEF_ITEM_INFOS[ type ].name;
+    static constexpr const char *           type_string                     = DEF_ITEM_INFOS[ type ].type;
     struct Payload
     {
         int32_t             src_row                 = -1;       //  visual row index when drag began
@@ -419,9 +431,6 @@ struct EmptyParcel
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr ItemType               type                            = ItemType::Empty;
-    static constexpr const char *           type_name                       = DEF_ITEM_INFOS[ type ].name;
-    static constexpr const char *           type_string                     = DEF_ITEM_INFOS[ type ].type;
     
     
     
@@ -490,10 +499,14 @@ struct EmptyParcel
     inline void                         ui_properties                       (void)              { return; }
     
     //  "RenderDragHint"
-    inline void                         RenderDragHint                      (ImDrawList * dl) const noexcept    { return; }
+    inline void                         RenderDragHint                      (ImDrawList * /*dl*/) const noexcept    { return; }
     
     //  "RenderDragTooltip"
-    inline void                         RenderDragTooltip                   (ImDrawList * dl) const noexcept    { return; }
+    inline void                         RenderDragTooltip                   (void) const noexcept
+    {
+        ImGui::TextUnformatted("Empty Parcel");
+        return;
+    }
     
 //
 // *************************************************************************** //
@@ -573,11 +586,11 @@ concept parcel_type =
     T::type_string;                                                             //  Type-String for ImGui Payload.
     //
     //      2.      REQUIRED MEMBER---FUNCTIONS...
-    { t.GetPayload() }          -> std::same_as<typename T::Payload*>;          //  pointer getter
+    { t.GetPayload( ) }          -> std::same_as<typename T::Payload*>;         //  pointer getter
     //  { t.GetPayloadSize() }      -> std::same_as<size_t>;                    //  sizeof(payload)
     //
     t.RenderDragHint    ( static_cast<ImDrawList*>(nullptr) );                  //  RenderDragHint(dl)
-    t.RenderDragTooltip ( static_cast<ImDrawList*>(nullptr) );                  //  RenderDragTooltip(dl)
+    t.RenderDragTooltip ( );                                                    //  RenderDragTooltip(dl)
 };
 
 
@@ -798,29 +811,27 @@ struct ItemDDropper_t
     
     //  "BeginDragDropSource"
     //
-    inline bool                         BeginDragDropSource                 (const ImGuiDragDropFlags flags = ImGuiDragDropFlags_SourceNoPreviewTooltip) noexcept
-    {
-        IM_ASSERT( (this->m_type != ItemType::None) && "ItemDDropper_t: \"SetDragDropPayload()\" called without valid payload" );
-        const char *    type_str        = this->GetItemTypeString();
-        bool            accepted        = ImGui::BeginDragDropSource(flags);    //  Only when ImGui says a source begins this frame.
-        
-        std::visit([&](auto & parcel)
-        {
-            using P = std::decay_t<decltype(parcel)>;
-            if constexpr ( !std::is_same_v<P, std::monostate>  &&  has_payload_v<P> )
-            {
-                accepted = ImGui::SetDragDropPayload(type_str, parcel.GetPayload(), parcel.GetPayloadSize());;
-                
-                //  if ( accepted ) {
-                //      parcel.RenderDragTooltip();
-                //  }
-                this->m_is_dragging = accepted;
-                //  IM_ASSERT( accepted && "ItemDDropper_t: ImGui failed to accept DragDropSource" );
-            }
-        }, this->m_parcel);
+    //  inline bool                         BeginDragDropSource                 (const ImGuiDragDropFlags flags = ImGuiDragDropFlags_SourceNoPreviewTooltip) noexcept
+    //  {
+    //      IM_ASSERT( (this->m_type != ItemType::None) && "ItemDDropper_t: \"SetDragDropPayload()\" called without valid payload" );
+    //      const char *    type_str        = this->GetItemTypeString();
+    //      bool            accepted        = ImGui::BeginDragDropSource(flags);    //  Only when ImGui says a source begins this frame.
+    //
+    //      std::visit([&](auto & parcel)
+    //      {
+    //          using P = std::decay_t<decltype(parcel)>;
+    //          if constexpr ( !std::is_same_v<P, std::monostate>  &&  has_payload_v<P> )
+    //          {
+    //              accepted = ImGui::SetDragDropPayload(type_str, parcel.GetPayload(), parcel.GetPayloadSize());;
+    //
+    //              if ( accepted )     { parcel.RenderDragTooltip(); }
+    //              this->m_is_dragging = accepted;
+    //              //  IM_ASSERT( accepted && "ItemDDropper_t: ImGui failed to accept DragDropSource" );
+    //          }
+    //      }, this->m_parcel);
 
-        return accepted;
-    }
+    //      return accepted;
+    //  }
     
     
     //  "GetPayloadIfValid"
@@ -858,6 +869,9 @@ struct ItemDDropper_t
         
         this->m_parcel                  = std::forward<T>( parcel );   // stores into the std::variant
         const bool      sent            = ImGui::SetDragDropPayload( T::type_string, parcel.GetPayload(), parcel.GetPayloadSize() );
+        
+        if (sent)                                   { parcel.RenderDragTooltip(); }
+        
         return sent;
     }
 

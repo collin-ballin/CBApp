@@ -744,9 +744,6 @@ void Editor::_draw_obj_selector_table(void)
                              ImGui::IsMouseDragging(ImGuiMouseButton_Left, DS.ms_DRAGDROP_DRAG_THRESHOLD ) &&
                              ImGui::BeginDragDropSource(ImGuiDragDropFlags_None) )    //  ImGuiDragDropFlags_SourceNoPreviewTooltip   ImGuiDragDropFlags_AcceptNoDrawDefaultRect
                         {
-                            ImGui::Text("Tooltip");
-                            
-                            
                             DS.SetDragDropPayload( Parcel({i, i}) );
                             //
                             ImGui::EndDragDropSource();
@@ -755,20 +752,14 @@ void Editor::_draw_obj_selector_table(void)
                         //      2.      DRAG-DROP TARGET :      Same cell accepts the row payload.
                         if ( ImGui::BeginDragDropTarget() )
                         {
-                            std::optional<Payload>   data    = DS.GetPayloadIfValid<Parcel>(ImGuiDragDropFlags_None);    //  ImGuiDragDropFlags_AcceptNoDrawDefaultRect
+                            std::optional<Payload>   data    = DS.GetPayloadIfValid<Parcel>(ImGuiDragDropFlags_AcceptNoDrawDefaultRect);    //  ImGuiDragDropFlags_AcceptNoDrawDefaultRect
                             
                             if ( data.has_value() )
                             {
                                 //  int         src             = *static_cast<const int*>(drag->Data);
                                 const int       src             = data->src_index;
-                                ImVec2          r_min           = ImGui::GetItemRectMin();
-                                ImVec2          r_max           = ImGui::GetItemRectMax();
-                                float           mid_y           = 0.5f * (r_min.y + r_max.y);
-                                float           mouse_y         = ImGui::GetIO().MousePos.y;
-                                bool            drop_above      = (mouse_y < mid_y);
-            
-                                int             dst_slot        = i + (drop_above ? 0 : 1);
-                                this->_reorder_paths            (src, dst_slot);
+                                const int       dst_slot        = s_path_ddrop_index(i);
+                                this->_reorder_paths(src, dst_slot);
 
 
                                 //  IMPORTANT:          //  we mutated m_paths; close scopes and return immediately.
