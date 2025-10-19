@@ -613,8 +613,99 @@ void Editor::_rebuild_vertex_selection(void)
 
 //  "_selection_bounds"
 //
-bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) const
+bool Editor::_selection_bounds(ImVec2& tl, ImVec2& br, const RenderCTX& ctx) const
 {
+    namespace bez = cblib::math::bezier;
+    using cblib::math::is_close;
+
+    bool have_any = false;
+
+    auto add_pt = [&](const ImVec2& p) {
+        if (!have_any) { tl = br = p; have_any = true; }
+        else {
+            tl.x = std::min(tl.x, p.x); tl.y = std::min(tl.y, p.y);
+            br.x = std::max(br.x, p.x); br.y = std::max(br.y, p.y);
+        }
+    };
+    auto add_box = [&](const ImVec2& btl, const ImVec2& bbr) { add_pt(btl); add_pt(bbr); };
+
+    // A) Vertex anchors
+    for (VertexID vid : m_sel.vertices) {
+        if (const Vertex* v = find_vertex(m_vertices, vid))     { add_pt(ImVec2{v->x, v->y}); }
+    }
+
+    // B) Per-path segment AABBs (tight, degree-aware)
+    for (PathID pidx : m_sel.paths)
+    {
+        if (static_cast<size_t>(pidx) >= m_paths.size())    { continue; }
+        const Path& p = m_paths[pidx];
+        const size_t N = p.size();
+        if (N < 2) continue;
+
+        const bool is_area = p.IsArea();
+        const size_t seg_cnt = N - (is_area ? 0u : 1u);
+
+        bool first = true;         // per-path accumulator flag
+        ImVec2 p_tl{}, p_br{};     // per-path bbox
+
+        for (size_t si = 0; si < seg_cnt; ++si)
+        {
+            const VertexID a_id = p.verts[si];
+            const VertexID b_id = p.verts[(si + 1) % N];
+
+            const Vertex* a = ctx.callbacks.get_vertex(ctx.callbacks.vertices, a_id);
+            const Vertex* b = ctx.callbacks.get_vertex(ctx.callbacks.vertices, b_id);
+            if (!a || !b) continue;
+
+            const ImVec2 P0{a->x, a->y};
+            const ImVec2 P3{b->x, b->y};
+
+            const ImVec2 out_eff = a->EffectiveOutHandle();
+            const ImVec2 in_eff  = b->EffectiveInHandle();
+
+            const bool out_zero = is_close(out_eff.x, 0.0f) && is_close(out_eff.y, 0.0f);
+            const bool in_zero  = is_close(in_eff.x , 0.0f) && is_close(in_eff.y , 0.0f);
+            const bool linear   = out_zero && in_zero;
+
+            if (linear)
+            {
+                // Straight segment → endpoints only
+                ImVec2 seg_tl{ std::min(P0.x, P3.x), std::min(P0.y, P3.y) };
+                ImVec2 seg_br{ std::max(P0.x, P3.x), std::max(P0.y, P3.y) };
+                if (first) { p_tl = seg_tl; p_br = seg_br; first = false; }
+                else {
+                    p_tl.x = std::min(p_tl.x, seg_tl.x); p_tl.y = std::min(p_tl.y, seg_tl.y);
+                    p_br.x = std::max(p_br.x, seg_br.x); p_br.y = std::max(p_br.y, seg_br.y);
+                }
+            }
+            else if (a->IsQuadratic())
+            {
+                // Quadratic: C = A + out_eff
+                const ImVec2 C{ P0.x + out_eff.x, P0.y + out_eff.y };
+                auto [q_tl, q_br] = bez::bbox_quadratic_tight<ImVec2, float>(P0, C, P3);
+                if (first) { p_tl = q_tl; p_br = q_br; first = false; }
+                else {
+                    p_tl.x = std::min(p_tl.x, q_tl.x); p_tl.y = std::min(p_tl.y, q_tl.y);
+                    p_br.x = std::max(p_br.x, q_br.x); p_br.y = std::max(p_br.y, q_br.y);
+                }
+            }
+            else {
+                // Cubic: pass path accumulators directly (matches bbox_cubic_tight signature)
+                const ImVec2 P1{ P0.x + out_eff.x, P0.y + out_eff.y };
+                const ImVec2 P2{ P3.x + in_eff.x , P3.y + in_eff.y  };
+                bez::bbox_cubic_tight<ImVec2, float>(P0, P1, P2, P3, p_tl, p_br, first);
+            }
+        }
+
+        if (!first) add_box(p_tl, p_br);
+    }
+
+    return have_any;
+}
+
+
+
+/*{
     namespace   bez         = cblib::math::bezier;
     bool        have_any    = false;
     auto        add_pt      = [&](const ImVec2 & p)
@@ -682,7 +773,7 @@ bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) 
     }
 
     return have_any;
-}
+}*/
 
 /*
 bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) const

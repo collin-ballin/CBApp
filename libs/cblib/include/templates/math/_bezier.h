@@ -64,13 +64,22 @@ namespace bezier { //     BEGINNING NAMESPACE "bezier"...
 //
 //
 //
-//      1.      PRIMATIVES FOR ALL BÉZIERS...
+//      1.      PRIMATIVES FOR BÉZIER---MODULE...
 // *************************************************************************** //
 // *************************************************************************** //
 
 
+
 // *************************************************************************** //
-//              1.1.    MINIMAL |R^2 HELPERS.
+//              1A.     ABSTRACTIONS FOR BÉZIER MODULE.
+// *************************************************************************** //
+
+
+
+
+
+// *************************************************************************** //
+//              1B.     MINIMAL |R^2 HELPERS.
 // *************************************************************************** //
 
 //  "v2_make"
@@ -103,7 +112,7 @@ template <typename V2>
 
 
 // *************************************************************************** //
-//              1.2.    BASIC PRIMATIVES.
+//              1C.     BASIC PRIMATIVES.
 // *************************************************************************** //
 
 //  "normalize"
@@ -125,11 +134,73 @@ template <typename V2, typename T = decltype(V2{}.x)>
 
 
 
+// *************************************************************************** //
+//              1D.     MORE PRIMATIVES.
+// *************************************************************************** //
+
+//  "clamp01"
+//      --- utility: clamp to [0,1] with a hair of tolerance ---
+//
+//  template <class T>
+//  inline T clamp01(T v) noexcept { return v < T(0) ? T(0) : (v > T(1) ? T(1) : v); }
+//
+template <typename T>
+inline T clamp01(T t) noexcept
+{
+    if (t < T(0)) return T(0);
+    if (t > T(1)) return T(1);
+    return t;
+}
+
+
+//  "quadratic_unit_roots"
+//      Quadratic unit roots (0,1) — analytic, epsilon-guarded
+//
+template<typename T>
+inline void quadratic_unit_roots(   T       a
+                                  , T       b
+                                  , T       c
+                                  , T       out[2]
+                                  , int &   count
+                                  , T       eps = static_cast<T>(1e-8) ) noexcept
+{
+    count                   = 0;
+    const T         D       = b * b; // std::pow(b, T(0)) - ( T(4) * a * c );
+    
+    if ( std::abs(a) < eps )
+    {
+        const T     t   = -c / b;
+        if ( std::abs(b) < eps )            { return; }
+        if ( (t > T(0))  &&  (t < T(1)) )   { out[count++] = t; }
+        return;
+    }
+    if ( D < T(0) )     { return; }
+    
+    
+    const T         sD      = std::sqrt(std::max(D, T(0)));
+    const T         inv2a   = T(0.5) / a;
+    const T         t1      = (-b - sD) * inv2a;
+    const T         t2      = (-b + sD) * inv2a;
+    //
+    const bool      cond1   = ( (t1 > T(0))  &&  (t1 < T(1)) );
+    const bool      cond2   = ( (t2 > T(0))  &&  (t2 < T(1))  &&  ( (count == 0)  ||  std::abs(t2 - out[0]) > T(1e-6) ) );
+    
+    if ( cond1 )    { out[count++] = t1; }
+    if ( cond2 )    { out[count++] = t2; }
+    
+    return;
+}
+
+
+
 //
 //
 //
 // *************************************************************************** //
 // *************************************************************************** //   END [[ 1.  "PRIMATIVES" ]].
+
+
+
 
 
 
@@ -165,6 +236,26 @@ template <typename V2, typename T>
                        v2_mul<V2,T>(B, tt) );
 }
 
+
+//  "eval_quadratic_coord"
+//      scalar quadratic coord eval
+//
+template <typename T>
+[[nodiscard]] inline T eval_quadratic_coord(T a0, T c, T b, T t) noexcept {
+    const T u = T(1) - t;
+    return u*u*a0 + T(2)*u*t*c + t*t*b;
+}
+
+
+//  "eval_quadratic_1d"
+//
+template <class T>
+inline T eval_quadratic_1d(T a, T c, T b, T t) noexcept {
+    const T s = T(1) - t;
+    return s*s*a + T(2)*s*t*c + t*t*b;
+}
+
+
 //  "deriv_quadratic"
 //      @brief First derivative Q'(t) = 2(1−t)(C−A) + 2t(B−C).
 //
@@ -178,6 +269,7 @@ template<typename V2, typename T>
                          static_cast<T>(2) );
 }
 
+
 //  "tangent_quadratic_unit"
 //      @brief Unit tangent T̂(t) of quadratic Bézier.
 //
@@ -187,6 +279,7 @@ template<typename V2, typename T>
     const V2 d = deriv_quadratic<V2,T>(A, C, B, t);
     return normalize<V2,T>(d, eps);
 }
+
 
 //  "normal_quadratic_unit"
 //      Left-hand unit normal N̂(t) to the quadratic Bézier.
@@ -307,6 +400,97 @@ template <typename T>
 //              2D.     BOUNDING BOX FOR QUADRATIC BEZIER.
 // *************************************************************************** //
 
+//  "extremum_param_quadratic_axis"
+//      Axis-only param of interior extremum for a quadratic axis.
+//      Returns true and writes t∈(0,1) when an interior extremum exists.
+//
+template <typename T>
+[[nodiscard]] inline bool extremum_param_quadratic_axis(T a0, T a1, T a2,
+                                                        T& t,
+                                                        T eps = static_cast<T>(1e-8)) noexcept
+{
+    const T denom = a0 - T(2)*a1 + a2;            // from dQ/dt = 0  ⇒  (a0-2a1+a2)·t = (a0-a1)
+    if (std::abs(denom) <= eps) return false;     // axis is effectively linear
+    const T tt = (a0 - a1) / denom;
+    if (tt <= T(0) || tt >= T(1)) return false;   // not interior
+    t = tt;
+    return true;
+}
+
+//  "bbox_union_scalar"
+//      Update scalar min/max with a sample value.
+//
+template <typename T>
+inline void bbox_union_scalar(T v, T& lo, T& hi) noexcept {
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+}
+
+
+//  "bbox_quadratic_tight"
+//      tight bbox for a quadratic (axis-isolated, aggregating form)
+//      Scalar quadratic evaluation for one coordinate
+//
+//      Exact axis-wise bbox for a quadratic Bézier p(t) = (1−t)^2 p0 + 2(1−t)t p1 + t^2 p2
+//      Returns {min, max}. V2 must have .x/.y members; T is a floating scalar type.
+//
+template <typename V2, typename T = decltype(V2{}.x)>
+[[nodiscard]] inline std::pair<V2,V2>
+bbox_quadratic_tight(const V2& A, const V2& C, const V2& B,
+                     T eps = static_cast<T>(1e-8)) noexcept
+{
+    // Start with endpoints
+    T xmin = (A.x < B.x) ? A.x : B.x;
+    T xmax = (A.x > B.x) ? A.x : B.x;
+    T ymin = (A.y < B.y) ? A.y : B.y;
+    T ymax = (A.y > B.y) ? A.y : B.y;
+
+    // X axis interior extremum
+    {
+        T tx{};
+        if (extremum_param_quadratic_axis(static_cast<T>(A.x),
+                                          static_cast<T>(C.x),
+                                          static_cast<T>(B.x),
+                                          tx, eps))
+        {
+            const T qx = eval_quadratic_coord(static_cast<T>(A.x),
+                                              static_cast<T>(C.x),
+                                              static_cast<T>(B.x), tx);
+            bbox_union_scalar(qx, xmin, xmax);
+        }
+    }
+    // Y axis interior extremum
+    {
+        T ty{};
+        if (extremum_param_quadratic_axis(static_cast<T>(A.y),
+                                          static_cast<T>(C.y),
+                                          static_cast<T>(B.y),
+                                          ty, eps))
+        {
+            const T qy = eval_quadratic_coord(static_cast<T>(A.y),
+                                              static_cast<T>(C.y),
+                                              static_cast<T>(B.y), ty);
+            bbox_union_scalar(qy, ymin, ymax);
+        }
+    }
+
+    return { V2{ xmin, ymin }, V2{ xmax, ymax } };
+}
+
+
+//  "bbox_quadratic_hull"
+//      Convenience overload: your quadratic is authored as A (anchor), C_offset (A→control), B (next anchor).
+//
+template <class V2, class T = decltype(V2{}.x)>
+inline std::pair<V2,V2> bbox_quadratic_hull(const V2& A,
+                                                   const V2& C_offset,
+                                                   const V2& B,
+                                                   T eps = T(1e-12)) noexcept
+{
+    V2 C{ A.x + C_offset.x, A.y + C_offset.y };
+    return bbox_quadratic_tight<V2,T>(A, C, B, eps);
+}
+
 
 
 //
@@ -349,31 +533,56 @@ template <typename T>
 
 //  "eval_cubic"
 //
-template<typename V2, typename T>
-[[nodiscard]] inline V2 eval_cubic(const V2 & A, const V2 & C1, const V2 & C2, const V2 & B, T t) noexcept {
-    const T     u       = T(1) - t,
-                u2      = u*u,
-                t2      = t*t;
-    
-    V2          r   = v2_add<V2>( v2_mul<V2,T>(A , u*u2)    , v2_mul<V2,T>( C1 , T(3) * u2 * t )    );
-                r   = v2_add<V2>( r                         , v2_mul<V2,T>( C2 , T(3) * u * t2 )    );
-                r   = v2_add<V2>( r                         , v2_mul<V2,T>( B  , t * t2        )    );
-       
-    return r;
+template <typename V2, typename T>
+[[nodiscard]] inline V2 eval_cubic(const V2& A, const V2& C1,
+                                   const V2& C2, const V2& B, T t) noexcept
+{
+    const T u  = T(1) - t;
+    const T u2 = u*u,  u3 = u2*u;
+    const T t2 = t*t,  t3 = t2*t;
+    // (1-t)^3 A + 3(1-t)^2 t C1 + 3(1-t) t^2 C2 + t^3 B
+    return v2_add<V2>( v2_add<V2>( v2_mul<V2,T>(A , u3),
+                                   v2_mul<V2,T>(C1, T(3)*u2*t) ),
+                       v2_add<V2>( v2_mul<V2,T>(C2, T(3)*u*t2),
+                                   v2_mul<V2,T>(B , t3) ) );
+}
+
+//  "eval_cubic_coord"
+//      Scalar cubic evaluation for one coordinate
+//
+template <typename T>
+[[nodiscard]] inline T eval_cubic_coord(T a0, T a1, T a2, T a3, T t) noexcept {
+    const T u  = T(1) - t;
+    const T u2 = u * u,  u3 = u2 * u;
+    const T t2 = t * t,  t3 = t2 * t;
+    return u3*a0 + T(3)*u2*t*a1 + T(3)*u*t2*a2 + t3*a3;
 }
 
 
 //  "deriv_cubic"
 //
-template<typename V2, typename T>
-[[nodiscard]] inline V2 deriv_cubic(const V2& A, const V2& C1, const V2& C2, const V2& B, T t) noexcept {
-    const T u  = T(1) - t, u2 = u*u, t2 = t*t;
-    const V2 d0 = v2_mul<V2,T>( v2_sub(C1, A), T(3)*u2 );
-    const V2 d1 = v2_mul<V2,T>( v2_sub(C2, C1), T(6)*u*t );
-    const V2 d2 = v2_mul<V2,T>( v2_sub(B , C2), T(3)*t2 );
-    return v2_add<V2>( v2_add<V2>(d0, d1), d2 );
+template <typename V2, typename T>
+[[nodiscard]] inline V2 deriv_cubic(const V2& A, const V2& C1,
+                                    const V2& C2, const V2& B, T t) noexcept {
+    const T u  = T(1) - t;
+    const T u2 = u*u;
+    // 3[(1-t)^2(C1-A) + 2(1-t)t(C2-C1) + t^2(B-C2)]
+    const V2 d1 = v2_sub<V2>(C1, A);
+    const V2 d2 = v2_sub<V2>(C2, C1);
+    const V2 d3 = v2_sub<V2>(B , C2);
+    return v2_mul<V2,T>(
+        v2_add<V2>( v2_mul<V2,T>(d1, u2),
+                    v2_add<V2>( v2_mul<V2,T>(d2, T(2)*u*t),
+                                v2_mul<V2,T>(d3, t*t) ) ),
+        T(3)
+    );
 }
 
+
+
+// *************************************************************************** //
+//              3B.     SECONDARY FOR CUBIC BÉZIER.
+// *************************************************************************** //
 
 //  "sample_cubic_polyline"
 //      Polyline sampler (fixed steps) — used by fills/hit tests
@@ -393,122 +602,51 @@ inline void sample_cubic_polyline(const V2& A,const V2& C1,const V2& C2,const V2
 }
 
 
-
-// *************************************************************************** //
-//              3B.     SECONDARY FOR CUBIC BÉZIER.
-// *************************************************************************** //
-
-//  "quadratic_unit_roots"
-//      Quadratic unit roots (0,1) — analytic, epsilon-guarded
+//  "cubic_deriv_quad_coeffs"
+//      Given A,C1,C2,B, return qa, qb, qc so that for each axis:
+//          (Q'_3/3)(t) = qa * t^2 + qb * t + qc
 //
-template<typename T>
-inline void quadratic_unit_roots(   T       a
-                                  , T       b
-                                  , T       c
-                                  , T       out[2]
-                                  , int &   count
-                                  , T       eps = static_cast<T>(1e-8) ) noexcept
+template <typename V2, typename T = decltype(V2{}.x)>
+inline void cubic_deriv_quad_coeffs(const V2& A,  const V2& C1,
+                                    const V2& C2, const V2& B,
+                                    V2& qa, V2& qb, V2& qc) noexcept
 {
-    count                   = 0;
-    const T         D       = std::pow(b, T(0)) - ( T(4) * a * c );
+    //      1.      a = -A + 3C1 - 3C2 + B
+    qa.x = -A.x + T(3)*C1.x - T(3)*C2.x + B.x;
+    qa.y = -A.y + T(3)*C1.y - T(3)*C2.y + B.y;
     
-    if ( std::abs(a) < eps )
-    {
-        const T     t   = -c / b;
-        if ( std::abs(b) < eps )            { return; }
-        if ( (t > T(0))  &&  (t < T(1)) )   { out[count++] = t; }
-        return;
-    }
-    if ( D < T(0) )     { return; }
+    //      2.      b = 2*(A - 2C1 + C2)
+    qb.x = T(2)*(A.x - T(2)*C1.x + C2.x);
+    qb.y = T(2)*(A.y - T(2)*C1.y + C2.y);
     
+    //      3.      c = -A + C1
+    qc.x = -A.x + C1.x;
+    qc.y = -A.y + C1.y;
+    return;
+}
+
+
+//  "cubic_extrema_params_axis"
+//      --- auxiliary: extrema params for one axis via quadratic solver --------------
+//      Finds t in (0,1) solving qa*t^2 + qb*t + qc = 0.
+//      Uses your existing quadratic root semantics (eps guards & dedup).
+//
+template <typename T>
+inline void cubic_extrema_params_axis(T qa, T qb, T qc,
+                                      T out[2], int& count,
+                                      T eps = static_cast<T>(1e-8)) noexcept
+{
+    //  Reuse the same endpoint/epsilon policy as quadratic_unit_roots
+    quadratic_unit_roots<T>(qa, qb, qc, out, count, eps);
     
-    const T         sD      = std::sqrt(std::max(D, T(0)));
-    const T         inv2a   = T(0.5) / a;
-    const T         t1      = (-b - sD) * inv2a;
-    const T         t2      = (-b + sD) * inv2a;
-    //
-    const bool      cond1   = ( (t1 > T(0))  &&  (t1 < T(1)) );
-    const bool      cond2   = ( (t2 > T(0))  &&  (t2 < T(1))  &&  ( (count == 0)  ||  std::abs(t2 - out[0]) > T(1e-6) ) );
-    
-    if ( cond1 )    { out[count++] = t1; }
-    if ( cond2 )    { out[count++] = t2; }
+    //  Clamp defensively (the helper already filters, this is idempotent)
+    for (int i = 0; i < count; ++i)
+        { out[i] = clamp01(out[i]); }
     
     return;
 }
 
 
-//  "tight_aabb_cubic"
-//
-template<typename V2, typename T>
-inline void tight_aabb_cubic(const V2& A, const V2& C1, const V2& C2, const V2& B,
-                             V2& tl_ws, V2& br_ws, bool& first) noexcept
-{
-    T           ax          = T(0);
-    T           bx          = T(0);
-    T           cx          = T(0);
-    T           ay          = T(0);
-    T           by          = T(0);
-    T           cy          = T(0);
-    int         nx          = 0;
-    int         ny          = 0;
-    T           tx[2]       = {  };
-    T           ty[2]       = {  };
-    //
-    //
-    auto        add         = [&](const V2& q)
-    {
-        if (first)  { tl_ws = br_ws = q; first = false; }
-        else {
-            tl_ws.x     = std::min(tl_ws.x, q.x);
-            tl_ws.y     = std::min(tl_ws.y, q.y);
-            br_ws.x     = std::max(br_ws.x, q.x);
-            br_ws.y     = std::max(br_ws.y, q.y);
-        }
-    };
-    auto        coeffs      = [](T p0,T p1,T p2,T p3,T& a,T& b,T& c)
-    {
-        a   = (-p0 + T(3)*p1 - T(3)*p2 + p3);
-        b   = T(2)*(p0 - T(2)*p1 + p2);
-        c   = (-p0 + p1);
-    };
-    
-    
-    
-    add(A); add(B); // endpoints always included
-    
-    coeffs(A.x, C1.x, C2.x, B.x, ax, bx, cx);
-    coeffs(A.y, C1.y, C2.y, B.y, ay, by, cy);
-    
-    quadratic_unit_roots<T>(ax, bx, cx, tx, nx);
-    quadratic_unit_roots<T>(ay, by, cy, ty, ny);
-
-    for (int i=0; i<nx; ++i)    { add( eval_cubic<V2,T>(A,C1,C2,B, tx[i]) ); }
-    for (int i=0; i<ny; ++i)    { add( eval_cubic<V2,T>(A,C1,C2,B, ty[i]) ); }
-    
-    return;
-}
-
-
-//  "hull_aabb_cubic"
-//      Optional: control-hull AABB (fast conservative)
-//
-template <typename V2>
-inline void hull_aabb_cubic(const V2& A,const V2& C1,const V2& C2,const V2& B,
-                            V2& tl_ws,V2& br_ws,bool& first) noexcept
-{
-    auto add = [&](const V2& q){
-        if (first) { tl_ws = br_ws = q; first = false; }
-        else {
-            tl_ws.x = std::min(tl_ws.x,q.x);
-            tl_ws.y = std::min(tl_ws.y,q.y);
-            br_ws.x = std::max(br_ws.x,q.x);
-            br_ws.y = std::max(br_ws.y,q.y);
-        }
-    };
-    add(A); add(C1); add(C2); add(B);
-    
-    return;
-}
 
 
 
@@ -535,6 +673,131 @@ namespace px { //     BEGINNING NAMESPACE "px"...
 // *************************************************************************** //
 //              3D.     BOUNDING-BOX FOR CUBIC BÉZIER.
 // *************************************************************************** //
+
+//  "bbox_cubic_hull"
+//      --- conservative control-hull AABB (min/max of control cage) -----------------
+//
+template <typename V2>
+inline void bbox_cubic_hull(const V2& A, const V2& C1,
+                            const V2& C2, const V2& B,
+                            V2& tl, V2& br, bool& first) noexcept {
+    const V2 pts[4] = {A, C1, C2, B};
+    for (const V2& p : pts) {
+        if (first) { tl = br = p; first = false; }
+        else {
+            tl.x = (p.x < tl.x) ? p.x : tl.x;  tl.y = (p.y < tl.y) ? p.y : tl.y;
+            br.x = (p.x > br.x) ? p.x : br.x;  br.y = (p.y > br.y) ? p.y : br.y;
+        }
+    }
+}
+
+
+//  "bbox_cubic_tight"
+//      --- tight analytic AABB (endpoints + axis extrema) ---------------------------
+//      Matches the shader: include endpoints, then add Q_3(t*) for all interior roots
+//      of dQx/dt and dQy/dt that lie in (0,1).
+//
+template <typename V2, typename T = decltype(V2{}.x)>
+inline void bbox_cubic_tight(const V2& A, const V2& C1,
+                             const V2& C2, const V2& B,
+                             V2& tl, V2& br, bool& first,
+                             T eps = static_cast<T>(1e-8)) noexcept
+{
+    auto add_pt = [&](T x, T y) noexcept {
+        if (first) { tl.x = br.x = x; tl.y = br.y = y; first = false; return; }
+        tl.x = (x < tl.x) ? x : tl.x;  tl.y = (y < tl.y) ? y : tl.y;
+        br.x = (x > br.x) ? x : br.x;  br.y = (y > br.y) ? y : br.y;
+    };
+
+    // Always include endpoints
+    add_pt(A.x, A.y);
+    add_pt(B.x, B.y);
+
+    // Helper: process one axis independently (component-wise shader logic)
+    auto process_axis = [&](T a0, T a1, T a2, T a3, T& minv, T& maxv) noexcept {
+        const T k0 = -a0 + a1;
+        const T k1 =  a0 - T(2)*a1 + a2;
+        const T k2 = -a0 + T(3)*a1 - T(3)*a2 + a3;
+
+        const T h  = k1*k1 - k0*k2;                // discriminant of derivative quad
+
+        if (h > eps) {
+            const T root = std::sqrt(h);
+
+            auto try_root = [&](T denom) noexcept {
+                if (std::abs(denom) <= eps) return;            // guard
+                T t = k0 / denom;                               // stable form (shader)
+                if (t <= T(0) || t >= T(1)) return;             // only interior roots
+                const T q = eval_cubic_coord(a0, a1, a2, a3, t);
+                if (q < minv) minv = q;
+                if (q > maxv) maxv = q;
+            };
+
+            // Two candidate roots for this axis
+            try_root(-k1 - root);
+            try_root(-k1 + root);
+        }
+    };
+
+    // Initialize axis min/max with current box edges
+    T xmin = tl.x, xmax = br.x;
+    T ymin = tl.y, ymax = br.y;
+
+    // Axis-isolated extrema updates (NO cross-coupling!)
+    process_axis(static_cast<T>(A.x), static_cast<T>(C1.x),
+                 static_cast<T>(C2.x), static_cast<T>(B.x),
+                 xmin, xmax);
+
+    process_axis(static_cast<T>(A.y), static_cast<T>(C1.y),
+                 static_cast<T>(C2.y), static_cast<T>(B.y),
+                 ymin, ymax);
+
+    // Write back tightened edges
+    tl.x = xmin; br.x = xmax;
+    tl.y = ymin; br.y = ymax;
+}
+//
+/*
+    // 1) Always include endpoints
+    if (first) { tl = br = A; first = false; }
+    else {
+        tl.x = (A.x < tl.x) ? A.x : tl.x;  tl.y = (A.y < tl.y) ? A.y : tl.y;
+        br.x = (A.x > br.x) ? A.x : br.x;  br.y = (A.y > br.y) ? A.y : br.y;
+    }
+    tl.x = (B.x < tl.x) ? B.x : tl.x;  tl.y = (B.y < tl.y) ? B.y : tl.y;
+    br.x = (B.x > br.x) ? B.x : br.x;  br.y = (B.y > br.y) ? B.y : br.y;
+
+    // 2) Axis extrema from derivative quadratic coeffs
+    V2 qa{}, qb{}, qc{};
+    cubic_deriv_quad_coeffs<V2,T>(A, C1, C2, B, qa, qb, qc);
+
+    // X axis roots
+    {
+        T tx[2]; int nx = 0;
+        cubic_extrema_params_axis<T>(qa.x, qb.x, qc.x, tx, nx, eps);
+        for (int i = 0; i < nx; ++i) {
+            const V2 q = eval_cubic<V2,T>(A, C1, C2, B, tx[i]);
+            // only X is guaranteed extremal; still safe to update both axes with q
+            tl.x = (q.x < tl.x) ? q.x : tl.x;
+            br.x = (q.x > br.x) ? q.x : br.x;
+            // Y update is harmless and keeps bbox conservative/tight
+            tl.y = (q.y < tl.y) ? q.y : tl.y;
+            br.y = (q.y > br.y) ? q.y : br.y;
+        }
+    }
+    // Y axis roots
+    {
+        T ty[2]; int ny = 0;
+        cubic_extrema_params_axis<T>(qa.y, qb.y, qc.y, ty, ny, eps);
+        for (int i = 0; i < ny; ++i) {
+            const V2 q = eval_cubic<V2,T>(A, C1, C2, B, ty[i]);
+            tl.x = (q.x < tl.x) ? q.x : tl.x;
+            br.x = (q.x > br.x) ? q.x : br.x;
+            tl.y = (q.y < tl.y) ? q.y : tl.y;
+            br.y = (q.y > br.y) ? q.y : br.y;
+        }
+    }
+}*/
 
 
 
