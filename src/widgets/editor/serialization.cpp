@@ -374,8 +374,6 @@ inline void Editor::_H2_state(SettingsData & args)
                 
                 this->S.labelf("Hide Tick-Marks:",                      args.LABEL_W,               args.WIDGET_W);       //  2.5.        TICK MARKS.
                 if ( ImGui::CheckboxFlags("##H2_Axes_TickMarks",        &GS.axes[0].flags,          ImPlotAxisFlags_NoTickMarks ) )
-                    { GS.axes[1].flags ^= ImPlotAxisFlags_NoTickMarks; }
-                
             
                 
                 

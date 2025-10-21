@@ -769,11 +769,14 @@ inline void RightHandJustify(const ImVec2 & size) {
 // *************************************************************************** //
 //
 //
-//  1.  DEFINED IN "utility.cpp"...
+//      1.      DEFINED IN "utility.cpp"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//      1.1     MISC / UTILITY FUNCTIONS...
+
+
+// *************************************************************************** //
+//              1.1     MISC / UTILITY FUNCTIONS...
 // *************************************************************************** //
 void                            HelpMarker                  (const char * desc);
 const char *                    get_opengl_version          (void);
@@ -787,14 +790,17 @@ inline bool                     GetIO_KeyCtrl               (void) {
                                 }
 
 
-//      1.2     WINDOW / GLFW FUNCTIONS...
+
+// *************************************************************************** //
+//              1.2     WINDOW / GLFW FUNCTIONS...
 // *************************************************************************** //
 void                            glfw_error_callback         (int error, const char * description);
 [[nodiscard]] GLFWwindow *      CreateGLFWWindow            (int width, int height, const char * title, GLFWmonitor * monitor, GLFWwindow * share);
 
 
 
-//      1.3     WINDOW SIZE / GEOMETRY FUNCTIONS...
+// *************************************************************************** //
+//              1.3     WINDOW SIZE / GEOMETRY FUNCTIONS...
 // *************************************************************************** //
 [[nodiscard]]
 std::tuple<int,int>             GetMonitorDimensions        (GLFWwindow * window);
@@ -813,6 +819,11 @@ void                            SetGLFWWindowLocation       (GLFWwindow *   win,
 ImVec2                          GetImGuiWindowCoords        (const char * , const Anchor & );
 
 
+
+// *************************************************************************** //
+//
+//
+//
 //      1.4     WIDGET FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -821,71 +832,66 @@ ImVec2                          GetImGuiWindowCoords        (const char * , cons
 
 
 //              1.4B    POP-UP WINDOWS, FILE-DIALOGUE WINDOWS, ETC...
-bool                            Popup_Save                  (const char * );
-bool                            Popup_AskOkCancel           (const char * );
+bool                                    Popup_Save                          (const char * );
+bool                                    Popup_AskOkCancel                   (const char * );
 //
-bool                            Popup_AskQuestion           (const char * );
-bool                            Popup_AskRetryCancel        (const char * );
-bool                            Popup_AskYesNo              (const char * );
-bool                            Popup_ShowError             (const char * );
-bool                            Popup_ShowInfo              (const char * );
-bool                            Popup_ShowWarning           (const char * );
-bool                            file_exists                 (const char * );
+bool                                    Popup_AskQuestion                   (const char * );
+bool                                    Popup_AskRetryCancel                (const char * );
+bool                                    Popup_AskYesNo                      (const char * );
+bool                                    Popup_ShowError                     (const char * );
+bool                                    Popup_ShowInfo                      (const char * );
+bool                                    Popup_ShowWarning                   (const char * );
+bool                                    file_exists                         (const char * );
 
 
 
-//              1.4C    GENERAL WIDGET FUNCTIONS...
-    //  void                            LeftLabelSimple             (const char * );
-    //  void                            LeftLabel2                  (const char * , const float );
-    //  void                            LeftLabel2                  (const char * , const float, const float );
-    //  void                            LeftLabel                   (const char * ,
-    //                                                               const float label_width = 150.0f,
-    //                                                               const float widget_width = 250.0f);
-    //  void                            LeftLabel                   (const char * ,   const ImVec2 & ,  const float );
-    //  void                            LeftLabel                   (const char * ,   const ImVec2 & ,  const ImVec2 & );
-
-
-//      1.5     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
 // *************************************************************************** //
-const char *                    get_glsl_version            (void);
-
-
-//      1.6     MISC I/O FUNCTIONS...
+//              1.5     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
 // *************************************************************************** //
-//              1.6A-1      SAVING/WRITING FUNCTIONS...
-                //              1.  ImGui Style:
+[[nodiscard]] const char *      get_glsl_version                    (void) noexcept;
+void                            glfwApplyPlatformWindowHints        (void) noexcept;
+void                            glfwApplySecondaryWindowHints       (void) noexcept;
+
+
+
+// *************************************************************************** //
+//              1.6     MISC I/O FUNCTIONS...
+// *************************************************************************** //
+//          1.6A-1      SAVING/WRITING FUNCTIONS...
+//
+//                          ImGui Style:
 bool                            SaveImGuiStyleToDisk        (const ImGuiStyle &     style,  const std::string &         file_path);
 bool                            SaveImGuiStyleToDisk        (const ImGuiStyle &     style,  const char *                file_path);
 bool                            SaveImGuiStyleToDisk        (const ImGuiStyle &     style,  std::string_view            file_path);
-                            //
+
 bool                            SaveImGuiStyleToDiskAsync   (const ImGuiStyle &     style,  const char *                file_path);
 // bool                          SaveImGuiStyleToDiskAsync   (ImGuiStyle             style,  const char *                file_path);
-                //
-                //              2.  ImPlot Style:
+//
+//                          ImPlot Style:
 bool                            SaveImPlotStyleToDisk       (const ImPlotStyle &    style,  const std::string &         file_path);
 bool                            SaveImPlotStyleToDisk       (const ImPlotStyle &    style,  const char *                file_path);
 bool                            SaveImPlotStyleToDisk       (const ImPlotStyle &    style,  std::string_view            file_path);
-                            //
+
 bool                            SaveImPlotStyleToDiskAsync  (const ImPlotStyle &    style,  const char *                file_path);
 // bool                         SaveImPlotStyleToDiskAsync  (ImPlotStyle            style,  const char *                file_path);
 
 
 
-//              1.6B-1      LOADING FUNCTIONS...
-                //              1.  ImGui Style:
+//          1.6B-1      LOADING FUNCTIONS...
+//                          ImGui Style:
 bool                            LoadImGuiStyleFromDisk      (ImGuiStyle &           style,  const char *                file_path);
 bool                            LoadImGuiStyleFromDisk      (ImGuiStyle &           style,  const std::string &         file_path);
 bool                            LoadImGuiStyleFromDisk      (ImGuiStyle &           style,  const std::string_view &    file_path);
-                //
-                //              2.  ImPlot Style:
+//
+//                          ImPlot Style:
 bool                            LoadImPlotStyleFromDisk     (ImPlotStyle &         style,  const char *                file_path);
 bool                            LoadImPlotStyleFromDisk     (ImPlotStyle &         style,  const std::string &         file_path);
 bool                            LoadImPlotStyleFromDisk     (ImPlotStyle &         style,  const std::string_view &    file_path);
-                //
-                //              3.  ImGui ".ini" File:
+
+//                          ImGui ".ini" File:
 bool                            LoadIniSettingsFromDisk     (const char *);
 
-//              1.6B-2      ASYNCHRONUS LOADING FUNCTIONS...
+//          1.6B-2      ASYNCHRONUS LOADING FUNCTIONS...
                             //
                             //      ...
                             //
@@ -905,12 +911,15 @@ bool                            LoadIniSettingsFromDisk     (const char *);
 // *************************************************************************** //
 //
 //
-//  2.  DEFINED IN "plot_utility.cpp"...
+//
+//      2.      DEFINED IN "plot_utility.cpp"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//      2.1     UTILITY...
+
+
 // *************************************************************************** //
+//              2.1.        UTILITY.
 // *************************************************************************** //
 int                                 GetPlotItems                (ImGuiID );
 int                                 GetPlotItems                (ImPlotPlot * );
@@ -919,8 +928,9 @@ ImGuiID                             GetPlotID                   (const char * );
 int                                 DisplayAllPlotIDs           (void);
 
 
-//      2.1     OLD PLOTTING STUFF...
+
 // *************************************************************************** //
+//              2.2.        OLD PLOTTING STUFF.
 // *************************************************************************** //
 void                                Sparkline                   (const char * id, const float * values, int count, float min_v, float max_v, int offset, const ImVec4 & color, const ImVec2 & size);
 void                                ScrollingSparkline          (const float time, ScrollingBuffer & data, const float window, const ImPlotAxisFlags flags, const float center = 0.75f);
@@ -932,8 +942,8 @@ void                                ScrollingSparkline          (const float tim
                                                                  const float center=0.75f);
 
                                                                  
-//      2.2     UTILITY FUNCTIONS FOR IMPLOT STUFF...
 // *************************************************************************** //
+//              2.3.        UTILITY FUNCTIONS FOR IMPLOT STUFF...
 // *************************************************************************** //
 [[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (const size_t M);
 [[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (int M, const char * cmap);

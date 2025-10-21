@@ -1116,6 +1116,7 @@ public:
     // *************************************************************************** //
     
     //  "render_fill_area"
+    //
     template<class CTX>
     inline void                         render_fill_area                    (const CTX & ctx) const noexcept
     {
@@ -1175,7 +1176,9 @@ public:
         return;
     }
     
+    
     //  "render_stroke"
+    //
     template<class CTX>
     inline void	                        render_stroke                       (const CTX & ctx) const noexcept
     {

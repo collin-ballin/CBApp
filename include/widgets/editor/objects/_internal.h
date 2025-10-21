@@ -55,7 +55,8 @@
 #include <utility>
 
 
-//  0.3     "DEAR IMGUI" HEADERS...
+
+//      0.3.        "DEAR IMGUI" HEADERS...
 #include "json.hpp"
 //
 #include "imgui.h"
@@ -63,6 +64,9 @@
 #include "imgui_internal.h"
 #include "implot.h"
 #include "implot_internal.h"
+
+
+
 
 
 
@@ -298,9 +302,9 @@ struct RenderCallbacks
 //
 struct RenderFrameArgs
 {
-    ImDrawList *        dl                  ;       //  target draw list (already set to the channel)
-    int                 bezier_fill_steps   ;       //  e.g., style.ms_BEZIER_FILL_STEPS
-    int                 bezier_segments     ;       //  (for strokes later)
+    ImDrawList *        dl                  ;               //  target draw list (already set to the channel)
+    int                 bezier_fill_steps   ;               //  e.g., style.ms_BEZIER_FILL_STEPS
+    int                 bezier_segments     ;               //  (for strokes later)
 //
 //
 //
@@ -527,28 +531,6 @@ struct ChannelCTX
 //
 // *************************************************************************** //
 // *************************************************************************** //   END "RENDERING UTILITIES".
-
-
-
-
-
-
-
-
-
-
-
-
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "MISC".
-
-  
-
-
-
 
 
 

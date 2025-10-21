@@ -18,6 +18,7 @@
 
 
 
+
 namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -37,7 +38,7 @@ void App::run(void)
     this->S.log_startup_info();
 
 
-    //  1.  MAIN PROGRAM LOOP...
+    //      1.      MAIN PROGRAM LOOP...
 #ifdef __EMSCRIPTEN__
     io.IniFilename = nullptr;   //  For an Emscripten build, we are disabling file-system access.  So let's not attempt an
     EMSCRIPTEN_MAINLOOP_BEGIN   //  "fopen()" of the "imgui.ini" file.  You may manually call LoadIniSettingsFromMemory() to load settings from your own storage.
@@ -45,19 +46,19 @@ void App::run(void)
     while ( !glfwWindowShouldClose(this->S.m_glfw_window) && S.m_running.load(std::memory_order_relaxed) )
 #endif  //  __EMSCRIPTEN__  //
     {
-        //  1.1     SET A POLL AND HANDLE EVENTS (inputs, window resize, etc.)...
-        //          You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        //              - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-        //              - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-        //          Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+        //      1.1     SET A POLL AND HANDLE EVENTS (inputs, window resize, etc.)...
+        //                  You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+        //                      - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
+        //                      - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
+        //                  Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfwPollEvents();
         if ( glfwGetWindowAttrib(this->S.m_glfw_window, GLFW_ICONIFIED) )       { ImGui_ImplGlfw_Sleep(10); continue; }
         
 
-        //  2.  START THE "DEAR IMGUI" FRAME...
+        //      2.      START THE "DEAR IMGUI" FRAME...
         //
         //
-        //      Any operations that must take place BEFORE the next ImGui Frame begins.
+        //              Any operations that must take place BEFORE the next ImGui Frame begins.
                 this->PREFrameCache();
         //
         ImGui_ImplOpenGL3_NewFrame();
@@ -69,7 +70,7 @@ void App::run(void)
         
         
         
-        //  3.  INVOKE THE PRIMARY GUI-LOOP FOR  **MY OWN**  APPLICATION.     [ Draw each application window, etc. ]...
+        //      3.      INVOKE THE PRIMARY GUI-LOOP FOR  **MY OWN**  APPLICATION.     [ Draw each application window, etc. ]...
         this->run_IMPL();
 
 
@@ -77,7 +78,7 @@ void App::run(void)
         // *************************************************************************** //
         //
         //
-        //  4.  RENDERING...
+        //      4.      RENDERING...
         ImGui::Render();
         glfwGetFramebufferSize(this->S.m_glfw_window,  &this->S.m_window_w,  &this->S.m_window_h); // int display_w, display_h;     // glfwGetFramebufferSize(this->S.m_glfw_window, &display_w, &display_h);
         glViewport(0, 0, this->S.m_window_w, this->S.m_window_w);

@@ -105,7 +105,7 @@
 // *************************************************************************** //
 // *************************************************************************** //
 //  #define     CBAPP_NEW_DOCKSPACE                             1
-#define     CBAPP_USE_NEW_GLFW_CALLBACKS                    1           //  Aug. 15, 2025:  USING "APP REGISTRY" TO OBTAIN "this" PTR INSIDE GLFW CALLBACK FUNCs...
+//  #define     CBAPP_USE_NEW_GLFW_CALLBACKS                    1           //  Aug. 15, 2025:  USING "APP REGISTRY" TO OBTAIN "this" PTR INSIDE GLFW CALLBACK FUNCs...
 
 
 
@@ -513,7 +513,6 @@ public:                                                                         
 
 
 //              2.  TEMPORARY / MISC. MACROS FOR "EDITOR"...
-//
 #define                 _EDITOR_REMOVE_DEPRECATED_CODE      1
 //
 #define                 _EDITOR_USE_HITANY_CACHE            1

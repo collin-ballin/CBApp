@@ -43,14 +43,14 @@ App::App(void)
     S.m_notes.push_back( std::make_pair(cblib::utl::get_timestamp(), "Beginning initialization ({})") );
     
 
-    glfwSetErrorCallback(utl::glfw_error_callback);         //  1.  SET GLFW CALLBACK & CHECK IF PROPERLY INITIALIZED...
+    glfwSetErrorCallback(utl::glfw_error_callback);         //  1.  SET GLFW CALLBACK & CHECK IF PROPERLY INITIALIZED.
     if ( !glfwInit() ) {
         throw std::runtime_error(cb::error::GLFW_INIT_ERROR);
     }
     
     
-    this->S.m_glsl_version = utl::get_glsl_version();       //  2.  DECIDE WHICH GL + GLSL VERSION...
-    this->init();                                           //  3.  INVOKE "HELPER" FUNCTION TO COMPLETE INITIALIZATION...
+    this->S.m_glsl_version = utl::get_glsl_version();       //  2.  DECIDE WHICH GL + GLSL VERSION.
+    this->init();                                           //  3.  INVOKE "HELPER" FUNCTION TO COMPLETE INITIALIZATION.
 }
 
 
@@ -112,13 +112,13 @@ void App::init(void)
 //
 void App::CreateContext(void)
 {
-    //  0.1.    SET GLFW WINDOW SETTINGS...     [ PRE ].
-    glfwWindowHint                  ( GLFW_SCALE_TO_MONITOR,                GLFW_TRUE                       );      //  Honor per‑monitor content scaling.
-    glfwWindowHint                  ( GLFW_TRANSPARENT_FRAMEBUFFER,         GLFW_TRUE                       );
-    //glfwWindowHint                ( GLFW_COCOA_RETINA_FRAMEBUFFER,        GLFW_TRUE                       );
+    //      0.1.    SET GLFW WINDOW SETTINGS...             [ PRE---WINDOW-CREATION ].
+    utl::glfwApplyPlatformWindowHints();                    //  0.1A.   APPLY GFLW WINDOW-HINTS FOR RESPECTIVE PLATFORM.
+    utl::glfwApplySecondaryWindowHints();                   //  0.1B.   APPLY GFLW WINDOW-HINTS FOR RESPECTIVE PLATFORM.
     
     
-    //  0.2.    CREATE A WINDOW WITH GRAPHICS CONTEXT.
+    
+    //      0.2.    CREATE A WINDOW WITH GRAPHICS CONTEXT.
     this->S.m_glfw_window = utl::CreateGLFWWindow(this->S.m_window_w, this->S.m_window_h, this->S.m_windows[Window::Host].uuid.c_str(), nullptr, nullptr);
     //
     //      CASE 1  : FAILURE TO CREATE GLFW WINDOW...
@@ -126,28 +126,9 @@ void App::CreateContext(void)
         
     
     
-    //  0.3.    ASSIGN MY OWN USER-POINTER.
-#ifdef CBAPP_USE_NEW_GLFW_CALLBACKS
-
-
-#endif  //  CBAPP_USE_NEW_GLFW_CALLBACKS  //
     
     
-    
-    //  0.4.    SET GLFW CALLBACKS...           [ POST ].
-#ifndef CBAPP_USE_NEW_GLFW_CALLBACKS
-//
-    glfwSetWindowUserPointer            ( this->S.m_glfw_window,            this                            );      //  Allow callbacks to reach this App instance.     [THIS IS WRONG.  DO NOT READ FROM THIS POINTER IN A CALLBACK].
-    glfwSetWindowContentScaleCallback   ( this->S.m_glfw_window,                                                    //  Set callback for system DPI change.
-        [](GLFWwindow * win, float xs, float ys)
-        {
-            if ( auto * self = static_cast<App*>(glfwGetWindowUserPointer(win)) )
-                self->OnDpiScaleChanged(xs, ys);    // treat xs==ys; ignore ys
-        }
-    );
-//
-# else
-//
+    //      0.4.    SET GLFW CALLBACKS...                           [ POST ].
     app::register_app( this->S.m_glfw_window, this );
     glfwSetWindowContentScaleCallback   ( this->S.m_glfw_window,
         [](GLFWwindow * win, float xs, float ys)
@@ -158,33 +139,30 @@ void App::CreateContext(void)
             return;
         }
     );
-//
-#endif  //  CBAPP_USE_NEW_GLFW_CALLBACKS  //
-        
-        
+
         
     //utl::SetGLFWWindowLocation(this->S.m_glfw_window, utl::WindowLocation::Center, cb::app::DEF_ROOT_WINDOW_SCALE);
-    utl::SetGLFWWindowSize          ( this->S.m_glfw_window,                cb::app::DEF_ROOT_WINDOW_SCALE  );
+    utl::SetGLFWWindowSize          ( this->S.m_glfw_window                 , cb::app::DEF_ROOT_WINDOW_SCALE    );
     //
-    glfwMakeContextCurrent          ( this->S.m_glfw_window                                                 );
-    glfwSwapInterval                ( this->S.m_glfw_interval                                               );      //  Enable vsync
-    glEnable                        ( GL_BLEND                                                              );
-    glBlendFunc                     ( GL_SRC_ALPHA,                         GL_ONE_MINUS_SRC_ALPHA          );
+    glfwMakeContextCurrent          ( this->S.m_glfw_window                                                     );
+    glfwSwapInterval                ( this->S.m_glfw_interval                                                   );      //  Enable vsync
+    glEnable                        ( GL_BLEND                                                                  );
+    glBlendFunc                     ( GL_SRC_ALPHA                          , GL_ONE_MINUS_SRC_ALPHA            );
 
 
 
-    //  2.  SETUP "Dear ImGui", "ImPlot", etc, CONTEXTS...
+    //      2.      SETUP "Dear ImGui", "ImPlot", etc, CONTEXTS...
     IMGUI_CHECKVERSION();
     if ( !ImGui::CreateContext()    )       { throw std::runtime_error(cb::error::IMGUI_CONTEXT_CREATION_ERROR);    }
     if ( !ImPlot::CreateContext()   )       { throw std::runtime_error(cb::error::IMPLOT_CONTEXT_CREATION_ERROR);   }
         
     
     
-    [[maybe_unused]] ImGuiIO &      io          = ImGui::GetIO();
-    [[maybe_unused]] ImGuiStyle &   style       = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
 
-    style.Colors[ImGuiCol_WindowBg].w           = 0.0f;     // host window background
-    style.Colors[ImGuiCol_DockingEmptyBg].w     = 0.0f;     // the “empty” parts of your dockspace
+    style.Colors[ImGuiCol_WindowBg].w               = 0.0f;     // host window background
+    style.Colors[ImGuiCol_DockingEmptyBg].w         = 0.0f;     // the “empty” parts of your dockspace
     
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)      //  When viewports are enabled we tweak WindowRounding/WindowBg
     {                                                           //  so platform windows can look identical to regular ones.
@@ -644,14 +622,12 @@ void App::destroy(void)
 
 
 
-    //  1.  REMOVE THIS APP FROM GLFW CALLBACK REGISTRY...
-#ifdef CBAPP_USE_NEW_GLFW_CALLBACKS
+    //      1.      REMOVE THIS APP FROM GLFW CALLBACK REGISTRY...
     app::unregister_app(this->S.m_glfw_window);
-#endif  //  CBAPP_USE_NEW_GLFW_CALLBACKS  //
     
     
     
-    //  2.  CLEAN-UP CONTEXTS FOR:    (1) OPENGL,  (2) GLFW,  (3) IMPLOT,  (4) IMGUI,    ETC...
+    //      2.      CLEAN-UP CONTEXTS FOR:    (1) OPENGL,  (2) GLFW,  (3) IMPLOT,  (4) IMGUI,    ETC...
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImPlot::DestroyContext();
@@ -659,7 +635,7 @@ void App::destroy(void)
 
 
 
-    //  3.  TERMINATE OPENGL / GLFW...
+    //      3.      TERMINATE OPENGL / GLFW...
     if ( this->S.m_glfw_window )
     {
         glfwDestroyWindow(this->S.m_glfw_window);

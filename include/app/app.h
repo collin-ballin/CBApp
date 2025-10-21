@@ -584,38 +584,31 @@ inline App &            instance                    (void)                      
 
 
 
-
-
-#ifdef CBAPP_USE_NEW_GLFW_CALLBACKS
+//  "app_registry"
 //
-//
-    //  "app_registry"
-    //
-    static inline std::unordered_map<GLFWwindow*, App*> &
-                            app_registry                (void)
-    {
-        static std::unordered_map<GLFWwindow*, App*> r;
-        return r;
-    }
+static inline std::unordered_map<GLFWwindow*, App*> &
+                        app_registry                (void)
+{
+    static std::unordered_map<GLFWwindow*, App*> r;
+    return r;
+}
 
-    //  "register_app"
-    //
-    static inline void      register_app                (GLFWwindow * w, App * a)       { app_registry()[w] = a; }
-
-    //  "unregister_app"
-    //
-    static inline void      unregister_app              (GLFWwindow * w)                { app_registry().erase(w); }
-
-    //  "lookup_app"
-    //
-    static inline App *     lookup_app                  (GLFWwindow * w)
-    {
-        auto it = app_registry().find(w);
-        return ( ( it == app_registry().end() )     ? nullptr   : it->second );
-    }
+//  "register_app"
 //
+static inline void      register_app                (GLFWwindow * w, App * a)       { app_registry()[w] = a; }
+
+//  "unregister_app"
 //
-#endif  //  CBAPP_USE_NEW_GLFW_CALLBACKS  //
+static inline void      unregister_app              (GLFWwindow * w)                { app_registry().erase(w); }
+
+//  "lookup_app"
+//
+static inline App *     lookup_app                  (GLFWwindow * w)
+{
+    auto it = app_registry().find(w);
+    return ( ( it == app_registry().end() )     ? nullptr   : it->second );
+}
+
 
 
 

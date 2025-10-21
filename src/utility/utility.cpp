@@ -503,38 +503,101 @@ bool file_exists(const char * path) {
 // *************************************************************************** //
 //
 //
-//  1.5     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
+//          1.5     CONTEXT CREATION / INITIALIZATION FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
 //  "get_glsl_version"
+//      [ WARNING ] :   THIS FUNCTION  *MUST*  BE CALLED  *BEFORE*  CALLING "glfwCreateWindow(...);" !!!
 //
-const char * get_glsl_version(void)
+[[nodiscard]] const char * get_glsl_version(void) noexcept
 {
 #if defined(IMGUI_IMPL_OPENGL_ES2)                  //  1.1     GL ES 2.0 + GLSL 100 (WebGL 1.0)
-    const char * glsl_version   = "#version 100";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    constexpr const char * glsl_version   = "#version 100";
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+//  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
 # elif defined(IMGUI_IMPL_OPENGL_ES3)               //  1.2     GL ES 3.0 + GLSL 300 es (WebGL 2.0)
-    const char * glsl_version   = "#version 300 es";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    constexpr const char * glsl_version   = "#version 300 es";
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+//  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
 # elif defined(__APPLE__)                           //  1.3     GL 3.2 + GLSL 150
-    const char * glsl_version   = "#version 150";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);      //  ...3.2 + only
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);                //  ...Required on Mac
+    constexpr const char * glsl_version   = "#version 150";
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+//  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);      //  ...3.2 + only
+//  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);                //  ...Required on Mac
 # else                                              //  1.4     GL 3.0 + GLSL 130
-    const char * glsl_version   = "#version 130";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    constexpr const char * glsl_version   = "#version 130";
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 #endif      //  IMGUI_IMPL_OPENGL_ES2  //
 
     return glsl_version;
 }
+
+
+//  "glfwApplyPlatformWindowHints"
+//      [ WARNING ] :   THIS FUNCTION  *MUST*  BE CALLED  *BEFORE*  CALLING "glfwCreateWindow(...);" !!!
+//
+void glfwApplyPlatformWindowHints(void) noexcept
+{
+//  glfwDefaultWindowHints();      //  reset to defaults first
+    
+    
+#if defined(IMGUI_IMPL_OPENGL_ES2)          //  1.      GL ES 2.0 + GLSL 100 (WebGL 1.0)        | glsl_version = "#version 100";
+//
+    glfwWindowHint      ( GLFW_CONTEXT_VERSION_MAJOR            , 2                         );
+    glfwWindowHint      ( GLFW_CONTEXT_VERSION_MINOR            , 0                         );
+    glfwWindowHint      ( GLFW_CLIENT_API                       , GLFW_OPENGL_ES_API        );
+//
+//
+# elif defined(IMGUI_IMPL_OPENGL_ES3)       //  2.      GL ES 3.0 + GLSL 300 es (WebGL 2.0)     | glsl_version = "#version 300 es";
+//
+    glfwWindowHint      ( GLFW_CONTEXT_VERSION_MAJOR            , 3                         );
+    glfwWindowHint      ( GLFW_CONTEXT_VERSION_MINOR            , 0                         );
+    glfwWindowHint      ( GLFW_CLIENT_API                       , GLFW_OPENGL_ES_API        );
+//
+//
+# elif defined(__APPLE__)                   //  3.      GL 3.2 + GLSL 150                       | glsl_version = "#version 150";
+//
+    glfwWindowHint      ( GLFW_CONTEXT_VERSION_MAJOR            , 3                         );
+    glfwWindowHint      ( GLFW_CONTEXT_VERSION_MINOR            , 2                         );
+    glfwWindowHint      ( GLFW_OPENGL_PROFILE                   , GLFW_OPENGL_CORE_PROFILE  );              //  3.2 + only.
+    glfwWindowHint      ( GLFW_OPENGL_FORWARD_COMPAT            , GL_TRUE);                                 //  Required on macOS.
+//
+//
+# else                                      //  4.      GL 3.0 + GLSL 130                       | glsl_version = "#version 130";
+//
+    glfwWindowHint      ( GLFW_CONTEXT_VERSION_MAJOR            , 3                         );
+    glfwWindowHint      ( GLFW_CONTEXT_VERSION_MINOR            , 0                         );
+//
+//
+#endif      //  IMGUI_IMPL_OPENGL_ES2  //
+
+    return;
+}
+
+
+//  "glfwApplySecondaryWindowHints"
+//
+void glfwApplySecondaryWindowHints(void) noexcept
+{
+#if !defined( IMGUI_IMPL_OPENGL_ES2 )  &&  !defined( IMGUI_IMPL_OPENGL_ES3 )
+//
+//
+//
+    glfwWindowHint                  ( GLFW_SCALE_TO_MONITOR                 , GLFW_TRUE                     );      //  Honor per‑monitor content scaling.
+    glfwWindowHint                  ( GLFW_TRANSPARENT_FRAMEBUFFER          , GLFW_TRUE                     );
+    //glfwWindowHint                ( GLFW_COCOA_RETINA_FRAMEBUFFER         , GLFW_TRUE                     );
+//
+//
+//
+#endif  //  IMGUI_IMPL_OPENGL_ES2  &&  IMGUI_IMPL_OPENGL_ES3  //
+    return;
+}
+
 
 
 
@@ -544,7 +607,9 @@ const char * get_glsl_version(void)
 //  "create_glfw_window_IMPL"
 //
 GLFWwindow * create_glfw_window_IMPL(int width, int height, const char * title, GLFWmonitor * monitor, GLFWwindow * share)
-{ return glfwCreateWindow(width, height, title, monitor, share); }
+{
+    return glfwCreateWindow(width, height, title, monitor, share);
+}
 
 
 //  "create_glfw_window"

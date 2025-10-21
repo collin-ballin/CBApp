@@ -439,15 +439,15 @@ template <typename V2, typename T = decltype(V2{}.x)>
 bbox_quadratic_tight(const V2& A, const V2& C, const V2& B,
                      T eps = static_cast<T>(1e-8)) noexcept
 {
-    // Start with endpoints
+    //      Start with endpoints
     T xmin = (A.x < B.x) ? A.x : B.x;
     T xmax = (A.x > B.x) ? A.x : B.x;
     T ymin = (A.y < B.y) ? A.y : B.y;
     T ymax = (A.y > B.y) ? A.y : B.y;
 
-    // X axis interior extremum
+    //      X-axis interior extremum
     {
-        T tx{};
+        T   tx  {  };
         if (extremum_param_quadratic_axis(static_cast<T>(A.x),
                                           static_cast<T>(C.x),
                                           static_cast<T>(B.x),
@@ -459,9 +459,9 @@ bbox_quadratic_tight(const V2& A, const V2& C, const V2& B,
             bbox_union_scalar(qx, xmin, xmax);
         }
     }
-    // Y axis interior extremum
+    //      Y-axis interior extremum
     {
-        T ty{};
+        T   ty  {  };
         if (extremum_param_quadratic_axis(static_cast<T>(A.y),
                                           static_cast<T>(C.y),
                                           static_cast<T>(B.y),
