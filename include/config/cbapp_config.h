@@ -521,6 +521,8 @@ public:                                                                         
 #define                 _EDITOR_REFACTOR_GRID               1
 //
 #define                 _EDITOR_REDUCE_REDUNDANCY           1
+#define                 _EDITOR_USE_STATE_RESETS            1
+#define                 _EDITOR_REMOVE_MDRAGGING            1
 
 
 
@@ -537,6 +539,7 @@ public:                                                                         
     /*                                                                                                                                  */      \
     using                           LabelFn                     = std::function<void(const char *)>                                     ;       \
     using                           MappingFn                   = ImVec2 (&)(ImVec2) noexcept                                           ;       \
+    using                           PamFn                       = ImVec2 (&)(ImVec2) noexcept                                           ;       \
     /*  using                           GetVertexFn                 = const Vertex * (*)(void * , VertexID) ;                           */      \
     /*                                                                                                                                  */      \
     /*                                                                                                                                  */      \
@@ -550,7 +553,7 @@ public:                                                                         
                                                                                                                                         \
     /*      3.      GENERIC TYPES [Editor]...                                                                                           */      \
     using                           CBCapabilityFlags           = CBCapabilityFlags_                                                    ;       \
-    using                           Anchor                      = BBoxAnchor                                                            ;       \
+    using                           Anchor                      = utl::Anchor                                                           ;       \
                                                                                                                                         \
     using                           PopupHandle                 = EditorPopupBits                                                       ;       \
     using                           CBEditorPopupFlags          = CBEditorPopupFlags_                                                   ;       \
@@ -616,7 +619,6 @@ public:                                                                         
     /*                                                                                                                                  */      \
     /*      6.      AUXILIARY STATE OBJECTS...                                                                                          */      \
     using                           BoxDrag                     = BoxDrag_t         <ObjectCFG, Vertex>                                 ;       \
-    using                           MoveDrag                    = MoveDrag_t        <ObjectCFG, Vertex>                                 ;       \
     using                           Clipboard                   = Clipboard_t       <Vertex, Point, Line, Path>                         ;       \
     using                           Selection                   = Selection_t       <ObjectCFG, Vertex>                                 ;       \
     /*                                                                                                                                  */      \
@@ -636,14 +638,17 @@ public:                                                                         
 #define                 _EDITOR_APP_MISC_TYPES_API                                                                                      \
     /*                                                                                                                                  */      \
     /*      8.      MORE CALLBACKS...                                                                                                   */      \
-    using                           GetVertexFn                 = const Vertex* (&)(const std::vector<Vertex>&, VertexID) noexcept      ;       \
+    using                           GVertexFn                   = Vertex* (&)(std::vector<Vertex> &, VertexID) noexcept                 ;       \
+    using                           CGVertexFn                  = const Vertex* (&)(const std::vector<Vertex>&, VertexID) noexcept      ;       \
     /*                                                                                                                                  */      \
     /*      9.      OTHER OBJECT TYPES...                                                                                               */      \
     using                           OverlayManager              = OverlayManager_t  <OverlayID, MappingFn>                              ;       \
     using                           ResidentEntry               = ResidentEntry_t   <OverlayID>                                         ;       \
     using                           VertexStyle                 = VertexStyle       <MappingFn>                                         ;       \
     using                           VertexStyleType             = VertexStyle::StyleType                                                ;       \
-    using                           RenderCTX                   = RenderCTX_t       <Vertex, MappingFn, GetVertexFn>                    ;
+    using                           RenderCTX                   = RenderCTX_t       <                                                           \
+        Vertex      , MappingFn     , PamFn     , GVertexFn         , CGVertexFn                                                                \
+    > ;
 //
 // *************************************************************************** //   _EDITOR_APP_MISC_TYPES_API
 

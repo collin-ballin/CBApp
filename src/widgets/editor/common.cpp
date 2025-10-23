@@ -593,7 +593,10 @@ void Editor::_clear_all(void)
 
     m_lasso_active                          = false;    //  2.1.    LASSO TOOL.
     //
+#ifndef _EDITOR_REMOVE_MDRAGGING
     m_dragging                              = false;    //  2.2.    DRAGGING SELECTION.
+#endif
+    this->m_boxdrag                         .reset();
     //
     //
 #ifndef _EDITOR_REDUCE_REDUNDANCY
@@ -603,12 +606,6 @@ void Editor::_clear_all(void)
     //
     //
     m_next_id                               = 1;        //  RESET "NEXT-ID" COUNTERS (So new vertices/path IDs start fresh)...
-    //
-    //
-    //
-#ifndef _EDITOR_REDUCE_REDUNDANCY
-    this->m_movedrag.active                 = false;
-#endif  //  _EDITOR_REDUCE_REDUNDANCY  //
 
 
 

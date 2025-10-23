@@ -57,7 +57,7 @@ concept ParamNumeric = std::integral<U> || std::floating_point<U>;
 
 // *************************************************************************** //
 // *************************************************************************** //
-}//   END OF "nlohmann" NAMESPACE.
+}//   END OF "anon" NAMESPACE.
 
 
 
@@ -74,12 +74,18 @@ concept ParamNumeric = std::integral<U> || std::floating_point<U>;
 //
 //
 //
-//      1.  GENERAL MATH TYPES AND DATA ABSTRACTIONS...
+//      1.      GENERAL MATH TYPES AND DATA ABSTRACTIONS...
 // *************************************************************************** //
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//      1A. GENERAL. |      AUXILIARY DEFINITIONS.
 // *************************************************************************** //
 
 //  "Range"
-//      - 1.
+//
 template<typename T>
 struct Range {
     T               min,    max;
@@ -87,20 +93,8 @@ struct Range {
 
 
 
-
-
-
-
-
-
-
-
-
 // *************************************************************************** //
-// *************************************************************************** //
-//                PRIMARY CLASS INTERFACE:
-// 		Class-Interface for the "Param" Abstraction.
-// *************************************************************************** //
+//      1B. GENERAL. |      PRIMARY "Param" CLASS IMPLEMENTATION.
 // *************************************************************************** //
 
 //  "Param"
@@ -329,32 +323,342 @@ public:
 
 
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 1.  "GENERAL ABSTRACTIONS" ]].
 
 
 
-//  "Param"
-//      - 2.    A parameter that carries both a value and its valid range
-/*
-template<typename T>
-struct Param {
-//
-//                          INITIALIZATION FUNCTIONS...
-//
-//
-//                          OVERLOADED OPERATORS...
-    inline T &                  Value                   (void)      { return value;         }
-    inline T &                  Min                     (void)      { return limits.min;    }
-    inline T &                  Max                     (void)      { return limits.max;    }
-//
-    inline T &                  RangeMin                (void)      { return limits.min;    }
-    inline T &                  RangeMax                (void)      { return limits.max;    }
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
 //
 //
-//                          DATA MEMBERS...
-    T                           value;
-    Range<T>                    limits;
-};
-*/
+//
+//      2.      GEOMETRY ABSTRACTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//      2A. GEOMETRY. |     BOUNDING BOXES.
+// *************************************************************************** //
+
+//  "BBox2"
+//      PLAIN-OLD-DATA (POD) STRUCT.
+//
+template <typename T>
+struct BBox2 {
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      1. |    IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    T                                   min_x                           = T(0);         //  left
+    T                                   min_y                           = T(0);         //  bottom
+    T                                   max_x                           = T(0);         //  right
+    T                                   max_y                           = T(0);         //  top
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+                                        BBox2                   (void) noexcept                     = default;
+                                        BBox2                   (const T & min_x_, const T & min_y_, const T & max_x_, const T & max_y_) noexcept
+                                                                    :  min_x(min_x_)     , min_y(min_y_)    , max_x(max_x_)     , max_y(max_y_)     {   }
+                                        ~BBox2                  (void)                              = default;
+                                        BBox2                   (const BBox2 & ) noexcept           = default;      //  Copy CTOR.
+                                        BBox2                   (const BBox2 && ) noexcept          = default;      //  Move CTOR.
+    
+    //  "empty"
+    //
+    static constexpr BBox2              s_empty                 (void) noexcept {
+        return {   std::numeric_limits<T>::max()        , std::numeric_limits<T>::max()
+                 , std::numeric_limits<T>::lowest()     , std::numeric_limits<T>::lowest()  };
+    }
+    constexpr void                      clear_zero              (void)  noexcept    { min_x = min_y = max_x = max_y = T(0);     }
+    constexpr void                      clear_empty             (void) noexcept     { *this = empty();                          }
+    
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+    friend constexpr BBox2              operator +              (const BBox2 & , const BBox2 & )    = delete;
+    friend constexpr BBox2              operator -              (const BBox2 & , const BBox2 & )    = delete;
+
+    friend constexpr BBox2              operator *              (const BBox2 & , T  )               = delete;
+    friend constexpr BBox2              operator *              (T, const BBox2 &   )               = delete;
+    friend constexpr BBox2              operator /              (const BBox2 & , T  )               = delete;
+
+    friend constexpr bool               operator <              (const BBox2 & , const BBox2 & )    = delete;
+    friend constexpr bool               operator <=             (const BBox2 & , const BBox2 & )    = delete;
+    friend constexpr bool               operator >              (const BBox2 & , const BBox2 & )    = delete;
+    friend constexpr bool               operator >=             (const BBox2 & , const BBox2 & )    = delete;
+
+    friend constexpr BBox2              operator +              (const BBox2 & )                    = delete;   //  unary +
+    friend constexpr BBox2              operator -              (const BBox2 & )                    = delete;   //  unary -
+    
+    
+    // *************************************************************************** //
+    //      OVERLOADED MEMBER OPERATORS.    |   ...
+    // *************************************************************************** //
+    //                              ASSIGNMENT OPERATORS.
+    BBox2 &                             operator =              (const BBox2 &       ) noexcept     = default;   //  Assgn. Operator.
+    BBox2 &                             operator =              (BBox2 &&            ) noexcept     = default;   //  Move-Assgn. Operator.
+    //
+    //                              COMPOUND-ASSIGNMENT OPERATORS.
+    constexpr BBox2 &                   operator +=             (const std::pair<T,T>& d) noexcept {
+        min_x += d.first;  max_x += d.first;
+        min_y += d.second; max_y += d.second;
+        return *this;
+    }
+    constexpr BBox2&                    operator -=             (const std::pair<T,T>& d) noexcept {
+        min_x -= d.first;  max_x -= d.first;
+        min_y -= d.second; max_y -= d.second;
+        return *this;
+    }
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      OVERLOADED NON-MEMBER OPERATORS. |   ...
+    // *************************************************************************** //
+    //
+    //                              COMPARISON OPERATORS.
+    friend constexpr bool               operator ==             (const BBox2 & a, const BBox2 & b) noexcept
+    {
+        return ( ( a.min_x == b.min_x)  &&  ( a.min_y == b.min_y)  &&  ( a.max_x == b.max_x)  &&  ( a.max_y == b.max_y) );
+    }
+    friend constexpr bool               operator !=             (const BBox2 & a, const BBox2 & b) noexcept     { return !(a == b); }
+    //
+    //                              HIDDEN FRIEND OPERATORS.
+    friend constexpr BBox2              operator +              (BBox2 b, const std::pair<T,T> & d) noexcept    { b += d;  return b;        }
+    friend constexpr BBox2              operator -              (BBox2 b, const std::pair<T,T> & d) noexcept    { b -= d;  return b;        }
+    friend constexpr BBox2              operator |              (const BBox2 & a, const BBox2 & b) noexcept     { return a.united(b);       }
+    friend constexpr BBox2              operator &              (const BBox2 & a, const BBox2 & b) noexcept     { return a.intersected(b);  }
+
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      2.B. |  QUERY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "is_empty"
+    [[nodiscard]] constexpr bool                is_empty                    (void) const noexcept       { return true; ( (min_x > max_x)  ||  (min_y > max_y) ); }
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  OPERATION FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "translate"
+    constexpr BBox2 &                           translate                   (T dx, T dy) noexcept
+    {
+        this->min_x       += dx;
+        this->max_x       += dx;
+        this->min_y       += dy;
+        this->max_y       += dy;
+        return *this;
+    }
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  DIMENSIONS.
+    // *************************************************************************** //
+    
+    //  "width"
+    [[nodiscard]] constexpr T                   width                       (void) const noexcept       { return max_x - min_x;                                         }
+    [[nodiscard]] constexpr T                   height                      (void) const noexcept       { return max_y - min_y;                                         }
+    [[nodiscard]] constexpr std::pair<T,T>      dims                        (void) const noexcept       { return { this->width(), this->height() };                     };
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  COORDINATES.
+    // *************************************************************************** //
+
+    [[nodiscard]] constexpr std::pair<T,T>      center                      (void) const noexcept       { return { (min_x + max_x) / T(2), (min_y + max_y) / T(2) };    }
+    //
+    [[nodiscard]] constexpr std::pair<T,T>      bl                          (void) const noexcept       { return { min_x, min_y };                                      }
+    [[nodiscard]] constexpr std::pair<T,T>      br                          (void) const noexcept       { return { max_x, min_y };                                      }
+    [[nodiscard]] constexpr std::pair<T,T>      tl                          (void) const noexcept       { return { min_x, max_y };                                      }
+    [[nodiscard]] constexpr std::pair<T,T>      tr                          (void) const noexcept       { return { max_x, max_y };                                      }
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  PREDICATE FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "contains"
+    //
+    [[nodiscard]] constexpr bool                contains                    (T x, T y) const noexcept {
+        return (x >= min_x) && (x <= max_x) && (y >= min_y) && (y <= max_y);
+    }
+    
+    //  "overlaps"
+    //
+    [[nodiscard]] constexpr bool                overlaps                    (const BBox2 & b) const noexcept {
+        return !(b.max_x < min_x || b.min_x > max_x || b.max_y < min_y || b.min_y > max_y);
+    }
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  INTER-BBOX FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "swap"
+    //
+    friend constexpr void                       swap                        (BBox2 & a, BBox2 & b) noexcept
+    {
+        std::swap(a.min_x, b.min_x);     std::swap(a.min_y, b.min_y);
+        std::swap(a.max_x, b.max_x);     std::swap(a.max_y, b.max_y);
+        return;
+    }
+
+
+    //  "united"
+    //      --- pure functions returning new boxes (no mutation required) ---
+    //
+    [[nodiscard]] constexpr BBox2               united                      (const BBox2 & b) const noexcept
+    {
+        return {
+            std::min(min_x, b.min_x), std::min(min_y, b.min_y),
+            std::max(max_x, b.max_x), std::max(max_y, b.max_y)
+        };
+    }
+    
+    
+    //  "intersected"
+    //
+    [[nodiscard]] constexpr BBox2               intersected                 (const BBox2 & b) const noexcept
+    {
+        BBox2 r{
+            std::max(min_x, b.min_x), std::max(min_y, b.min_y),
+            std::min(max_x, b.max_x), std::min(max_y, b.max_y)
+        };
+        return r; // may be empty (inverted); caller can test r.is_empty()
+    }
+
+
+    //  "include"
+    //      --- small mutators (optional, still POD-safe) ---
+    //
+    constexpr void                              include                     (T x, T y) noexcept
+    {
+        if ( is_empty() )   { min_x = max_x = x; min_y = max_y = y; return; }
+        min_x = std::min(min_x, x); min_y = std::min(min_y, y);
+        max_x = std::max(max_x, x); max_y = std::max(max_y, y);
+    }
+    constexpr void                              include                     (const BBox2 & b) noexcept
+    {
+        if (b.is_empty()) return;
+        if (is_empty()) { *this = b; return; }
+        min_x = std::min(min_x, b.min_x); min_y = std::min(min_y, b.min_y);
+        max_x = std::max(max_x, b.max_x); max_y = std::max(max_y, b.max_y);
+    }
+
+
+    //  "empty"
+    //      --- factories (static, keep aggregate default construction intact) ---
+    //
+    [[nodiscard]] static constexpr BBox2        empty                       (void) noexcept
+    {
+        // Works for integral or floating T
+        return { std::numeric_limits<T>::max(),  std::numeric_limits<T>::max(),
+                 std::numeric_limits<T>::lowest(), std::numeric_limits<T>::lowest() };
+    }
+    
+    
+    //  "from_min_max"
+    //
+    [[nodiscard]] static constexpr BBox2        from_min_max                (T lx, T by, T rx, T ty) noexcept
+    {
+        return { lx, by, rx, ty }; // may be unnormalized; caller can pass normalized if desired
+    }
+    
+    
+    //  "from_center_size"
+    //
+    [[nodiscard]] static constexpr BBox2        from_center_size            (T cx, T cy, T w, T h) noexcept
+    {
+        const T hx = w / T(2), hy = h / T(2);
+        return { cx - hx, cy - hy, cx + hx, cy + hy };
+    }
+    
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2B.  INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "MyStruct" INLINE STRUCT DEFINITION.
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2.  "GEOMETRY ABSTRACTIONS" ]].
+
+
+
+
+
 
 
 
@@ -385,7 +689,7 @@ struct Param {
 //
 //
 //
-//      3.      JSON SERIALIZERS FOR CBLIB TYPES...
+//      X.      JSON SERIALIZERS FOR CBLIB TYPES...
 // *************************************************************************** //
 // *************************************************************************** //
 

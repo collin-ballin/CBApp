@@ -252,8 +252,14 @@ inline void Editor::_DEBUGGER_state_dragging(const float LABEL_W, const float WI
     };
     
     
-    
+
+#ifndef _EDITOR_REMOVE_MDRAGGING
     s_bools[0]          = this->m_dragging;
+#else
+    s_bools[0]          = false;
+#endif  //  _EDITOR_REMOVE_MDRAGGING  //
+
+
     s_bools[1]          = this->m_dragging_handle;
 #ifndef _EDITOR_REDUCE_REDUNDANCY
     s_bools[2]          = this->m_drawing;
@@ -452,55 +458,61 @@ void Editor::_DEBUGGER_misc(void) const noexcept
 //
 inline void Editor::_DEBUGGER_misc_1(const float LABEL_W, const float WIDGET_W) const noexcept
 {
-    const bool      active          = ( this->m_dragging  ||  this->m_boxdrag.active );
+#ifndef _EDITOR_REMOVE_MDRAGGING
+    const bool      active          = ( this->m_dragging  ||  this->m_boxdrag.IsActive() );
+#else
+    const bool      active          = this->m_boxdrag.IsActive();
+#endif  //  _EDITOR_REMOVE_MDRAGGING  //
 
 
     //              1.1.      "this"...
     ImGui::TextDisabled("This...");
     ImGui::Indent();
     //
+#ifndef _EDITOR_REMOVE_MDRAGGING
         this->S.labelf("this->m_dragging:", LABEL_W, WIDGET_W);             //  1.1A.   this->m_dragging.
         S.print_TF( this->m_dragging );
-    //
-    ImGui::Unindent();
-    
-    
-    
-    //              1.3.      "m_boxdrag" OBJECT...
-    ImGui::TextDisabled("MoveDrag / m_movedrag...");
-    ImGui::Indent();
-    //
-        if ( active )
-        {
-            ImGui::Text(
-                  "%zu IDs,\t%zu Origins"
-                , this->m_movedrag.v_ids.size()
-                , this->m_movedrag.v_orig.size()
-            );
-        }
-    //  S.ConditionalText( this->m_movedrag.active,    "active",        this->S.SystemColor.Green );
+#endif
     //
     ImGui::Unindent();
     
     
     
     //              1.4.      "m_boxdrag" OBJECT...
-    ImGui::TextDisabled("BoxDrag / m_boxdrag...");
+    const bool      is_idle             = this->m_boxdrag.IsIdle();
+    const bool      boxdrag_active      = ( this->m_boxdrag.IsActive() );
+    const char *    drag_state_name     = this->m_boxdrag.GetDragStateName();
+    //
+    //
+    //
+    if ( !boxdrag_active ) {
+        ImGui::TextDisabled("BoxDrag / m_boxdrag...");
+    }
+    else {
+        ImGui::TextColored( this->S.SystemColor.Green, "BoxDrag / m_boxdrag..." );
+    }
+    
+    
+    
     ImGui::Indent();
     //
-        S.ConditionalText( this->m_boxdrag.active,    "active",        this->S.SystemColor.Green );
-        //
-        if ( active )
+    //
+        if ( true ) //active )
         {
+            //      1.      DRAG-STATE VALUE...
+            {
+                this->S.labelf("DragState:", LABEL_W, WIDGET_W);
+                this->S.print_TF( !is_idle, drag_state_name, drag_state_name );
+            }
+            //
+            //      2.      NUM. OF IDs  AND  ORIGINS...
             ImGui::Text(
                   "%zu IDs,\t%zu Origins"
                 , this->m_boxdrag.v_ids.size()
                 , this->m_boxdrag.v_orig.size()
             );
         }
-        //
-        //  this->S.labelf(".view.hover_idx.has_value():", LABEL_W, WIDGET_W);
-        //  S.print_TF( this->m_boxdrag.view.hover_idx.has_value() );
+    //
     //
     ImGui::Unindent();
     
@@ -519,8 +531,11 @@ inline void Editor::_DEBUGGER_misc_2(const float LABEL_W, const float WIDGET_W) 
     //              1.1.      "this"...
     ImGui::TextDisabled("this");
     //
+
+#ifndef _EDITOR_REMOVE_MDRAGGING
     this->S.labelf("this->m_dragging:", LABEL_W, WIDGET_W);             //  1.1A.   this->m_dragging.
     S.print_TF( this->m_dragging );
+#endif
     //
     this->S.labelf("this->m_drag_vid > 0:", LABEL_W, WIDGET_W);         //  1.1B.   this->m_drag_vid > 0.
     S.print_TF( (this->m_drag_vid > 0) );
@@ -530,14 +545,6 @@ inline void Editor::_DEBUGGER_misc_2(const float LABEL_W, const float WIDGET_W) 
     //
     //  this->S.labelf("this->m_drawing:", LABEL_W, WIDGET_W);              //  1.1D.   this->m_drawing.
     //  S.print_TF( this->m_drawing );
-    
-    
-    
-    //              1.3.      "m_boxdrag" OBJECT...
-    ImGui::TextDisabled("m_movedrag");
-    //
-    //  this->S.labelf(".active:", LABEL_W, WIDGET_W);
-    //  S.print_TF( this->m_movedrag.active );
     
     
     

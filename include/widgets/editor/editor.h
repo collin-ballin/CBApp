@@ -248,7 +248,7 @@ public:
             //
                 /*  placement       */  OverlayPlacement::CanvasPoint,
                 /*  src_anchor      */  Anchor::North,
-                /*  offscreen       */  OffscreenPolicy::Hide,
+                /*  offscreen       */  OffscreenPolicy::Clamp,   //  OffscreenPolicy::Hide,
                 /*  anchor_px       */  ImVec2{0,   25}                      //  Window Offset.
             },
             {//     STYLE...
@@ -412,7 +412,7 @@ protected:
     //                              MUTABLE / TRANSIENT STATE:
     std::unique_ptr<Interaction>        m_it;
     //
-    bool                                m_dragging                      = false;
+    //  bool                                m_dragging                      = false;
     bool                                m_lasso_active                  = false;
     bool                                m_pending_clear                 = false;    //  pending click selection state ---
     //
@@ -438,7 +438,6 @@ protected:
     //                              MECHANIC STATES:
     Selection                           m_sel                   ;
     mutable BoxDrag                     m_boxdrag               ;
-    MoveDrag                            m_movedrag              ;
     Clipboard                           m_clipboard             ;
     mutable TooltipState<TooltipKey>    m_tooltip                       { DEF_TOOLTIP_INFOS };
     //
@@ -596,8 +595,8 @@ protected:
     //
     //                              SMALLER HELPERS / UTILITIES:
     inline void                         _MECH_show_tooltip_info             (void) const noexcept;
-    inline void                         _MECH_change_state                  ([[maybe_unused]] const Interaction & );            //  formerly "_mode_switch_hotkeys"
-    inline void                         _MECH_dispatch_tool_handler         ([[maybe_unused]] const Interaction & );            //  formerly "_dispatch_mode_handler"
+    inline void                         _MECH_change_state                  ([[maybe_unused]] const Interaction & );            //  formerly:   "_mode_switch_hotkeys"
+    inline void                         _MECH_dispatch_tool_handler         ([[maybe_unused]] const Interaction & );            //  formerly:   "_dispatch_mode_handler"
     //
     inline void                         _per_frame_cache_begin              (void) noexcept;
     inline void                         _per_frame_cache_end                (void) noexcept;
@@ -605,8 +604,11 @@ protected:
     //
     //
     //                              PRIMARY MECHANIC HANDLERS:
-    void                                _MECH_hit_detection                 (const Interaction & ) const;                       //  formerly "update_cursor_select"
+    void                                _MECH_rebuild_selection_view        (const Interaction & ) noexcept;                    //  formerly:   "_selbox_rebuild_view_if_needed"
+    void                                _MECH_hit_detection                 (const Interaction & ) const;                       //  formerly:   "update_cursor_select"
     inline void                         _MECH_update_canvas                 ([[maybe_unused]] const Interaction & );            //  * NEW  _MECH  FUNCTION *
+    
+    
     //
     inline void                         _MECH_draw_ui                       ([[maybe_unused]] const Interaction & );            //  formerly "_handle_overlays()"
     inline void                         _MECH_dispatch_action               ([[maybe_unused]] const Interaction & ) noexcept;   //  * NEW  _MECH  FUNCTION *
@@ -883,21 +885,28 @@ protected:
     // *************************************************************************** //
     //                              MAIN SELECTION OPERATIONS:
     inline void                         resolve_pending_selection           (const Interaction & it);
-    inline void                         update_move_drag_state              (const Interaction & it);
-    void                                start_move_drag                     (const ImVec2 & anchor_ws);
     void                                add_hit_to_selection                (const Hit & hit);
     void                                _rebuild_vertex_selection           (void);   // decl
+    //
     //
     //                              SELECTION HIGHLIGHT / USER-INTERACTION / APPEARANCE:
     bool                                _selection_bounds                   (ImVec2 & tl, ImVec2 & br, const RenderCTX & ) const;
     //
-    //                              BOUNDING BOX MECHANICS:
-    void                                _start_bbox_drag                    (const BoxDrag::Anchor , const ImVec2 , const ImVec2 );
-    void                                _update_bbox                        (void);
     //
-    //                              LASSO TOOL MECHANICS:
+    //                              MOVING THE SELECTED OBJECTS:
+    void                                _start_bbox_move                    (const ImVec2 & anchor_ws);                                 //  formerly     "start_move_drag"
+    inline void                         _update_bbox_move                   (const Interaction & it);                                   //  formerly     "update_move_drag_state"
+    //
+    //
+    //                              SCALING THE SELECTED OBJECTS:
+    void                                _start_bbox_scaling                 (const BoxDrag::Anchor , const ImVec2 , const ImVec2 );     //  formerly     "_start_bbox_drag"
+    void                                _update_bbox_scaling                (void);                                                     //  formerly     "_update_bbox"
+    //
+    //
+    //                              LASSO---TOOL MECHANICS:
     void                                _start_lasso_tool                   (void);
     void                                _update_lasso                       (const Interaction & );
+    //
     //
     //                              NEW HELPER FUNCTIONS:
     inline float                        _drag_threshold_px                  (void) const;
@@ -1052,9 +1061,6 @@ protected:
     
     
     
-    //  "_selbox_rebuild_view_if_needed"
-    void                                _selbox_rebuild_view_if_needed          (const Interaction & it);
-    
     //  "_expand_bbox_by_pixels"
     inline std::pair<ImVec2, ImVec2>    _expand_bbox_by_pixels                  (const ImVec2& tl_ws_in, const ImVec2& br_ws_in, float margin_px) const {
         ImVec2 p0 = world_to_pixels(tl_ws_in);
@@ -1113,11 +1119,24 @@ protected:
     }
     //
     //  "IsDraggingSelection"
+#ifndef _EDITOR_REMOVE_MDRAGGING
     [[nodiscard]] inline bool           IsDraggingSelection                     (void) const noexcept   { return ( this->m_dragging                 );          }
+#else
+    [[nodiscard]] inline bool           IsDraggingSelection                     (void) const noexcept   { return ( this->m_boxdrag.IsMoving()       );          }
+#endif  //  _EDITOR_REMOVE_MDRAGGING
+    
+    
+    
+#ifdef _EDITOR_REDUCE_REDUNDANCY
     [[nodiscard]] inline bool           IsScalingSelection                      (void) const noexcept   { return ( this->m_boxdrag.IsScaling()      );          }
-    //
+#else
+    [[nodiscard]] inline bool           IsScalingSelection                      (void) const noexcept   { return ( this->m_boxdrag.IsScaling()      );          }
+#endif  //  _EDITOR_REDUCE_REDUNDANCY  //
+    
+        
     //  [[nodiscard]] inline bool           IsDraggingVertex                        (void) const noexcept   { return static_cast<bool>( this->m_drag_vid > 0 );     }
-    [[nodiscard]] inline bool           IsDraggingVertex                        (void) const noexcept   { return ( this->m_dragging                 );          }
+    //  [[nodiscard]] inline bool           IsDraggingVertex                        (void) const noexcept   { return ( this->m_dragging                 );          }
+    [[nodiscard]] inline bool           IsDraggingVertex                        (void) const noexcept   { return ( false                            );          }
     [[nodiscard]] inline bool           IsDraggingHandle                        (void) const noexcept   { return ( this->m_dragging_handle          );          }
     [[nodiscard]] inline bool           IsDraggingLasso                         (void) const noexcept   { return ( this->m_lasso_active             );          }
     
@@ -1434,9 +1453,12 @@ protected:
     }
     
     //  "parent_path_of_vertex"
+    //
     [[nodiscard]] inline const Path *   parent_path_of_vertex               (VertexID vid) const noexcept {
-        for (const Path & p : m_paths) {
-            for (VertexID v : p.verts)      { if (v == vid) return &p; }
+        for (const Path & p : this->m_paths) {
+            for (VertexID v : p.verts) {
+                if (v == vid)   { return &p; }
+            }
         }
         return nullptr;                     // not found
     }
@@ -1764,7 +1786,6 @@ public:
     //  BrowserState                        m_browser_S                     {   };
     //  Selection                           m_sel;
     //  mutable BoxDrag                     m_boxdrag;
-    //  MoveDrag                            m_movedrag;
     //  Clipboard                           m_clipboard;
     //
     //                              TOOL STATES:

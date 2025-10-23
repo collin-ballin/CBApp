@@ -101,7 +101,7 @@ public:
     using                               Overlay                         = Overlay_t<OverlayID>;
     using                               OverlayInfo                     = Overlay::OverlayInfo;
     using                               WindowType                      = OverlayInfo::WindowType;
-    using                               Anchor                          = BBoxAnchor;
+    using                               Anchor                          = utl::Anchor;
     
     // *************************************************************************** //
     //

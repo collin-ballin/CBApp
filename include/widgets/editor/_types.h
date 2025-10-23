@@ -1520,198 +1520,6 @@ struct Interaction
 
 
 
-
-
-
-
-// *************************************************************************** //
-//      2C. AUXILIARY |         SELECTION STATE.
-// *************************************************************************** //
-
-//  "Selection_t"
-//      PLAIN-OLD-DATA (POD) STRUCT.
-//
-//  template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
-template <ObjectCFGTraits CFG, typename Vertex>
-struct Selection_t
-{
-    // *************************************************************************** //
-    //      NESTED TYPENAME ALIASES.
-    // *************************************************************************** //
-    _USE_OBJECT_CFG_ALIASES
-    using                               Hit                     = Hit_t         <hit_id>                ;
-    using                               PathHit                 = PathHit_t     <path_id, vertex_id>    ;
-    
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "CONSTANTS AND ALIASES".
-
-
-
-// *************************************************************************** //
-//
-//      1.          DATA-MEMBERS...
-// *************************************************************************** //
-// *************************************************************************** //
-    
-    // *************************************************************************** //
-    //      IMPORTANT DATA-MEMBERS.
-    // *************************************************************************** //
-    std::unordered_set<vertex_id>       vertices                {   };
-    std::unordered_set<point_id>        points                  {   };
-    std::unordered_set<path_id>         paths                   {   };     // ← NEW
-    
-    // *************************************************************************** //
-    //      CACHE DATA-MEMBERS
-    // *************************************************************************** //
-    mutable std::optional<Hit>          hovered                 { std::nullopt };
-    
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "DATA-MEMBERS".
-
-
-
-// *************************************************************************** //
-//
-//      2.A.        MEMBER FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-    
-    // *************************************************************************** //
-    //      INITIALIZATION METHODS.         |   "init.cpp" ...
-    // *************************************************************************** //
-                                        Selection_t             (void) noexcept                 = default;
-                                        ~Selection_t            (void)                          = default;
-    
-    // *************************************************************************** //
-    //      DELETED FUNCTIONS.              |   ...
-    // *************************************************************************** //
-    //                                      Selection_t             (const Selection_t &    src)       = delete;   //  Copy. Constructor.
-    //                                      Selection_t             (Selection_t &&         src)       = delete;   //  Move Constructor.
-    //  Selection_t &                       operator =              (const Selection_t &    src)       = delete;   //  Assgn. Operator.
-    //  Selection_t &                       operator =              (Selection_t &&         src)       = delete;   //  Move-Assgn. Operator.
-    
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "MEMBER FUNCS".
-
-    
-   
-// *************************************************************************** //
-//
-//      2.B.        INLINE FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-    // *************************************************************************** //
-    //      STATIC FUNCTIONS.
-    // *************************************************************************** //
-
-
-
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      QUERY FUNCTIONS.
-    // *************************************************************************** //
-    
-    inline bool                         empty                               (void) const    { return vertices.empty() && points.empty() && paths.empty();       }
-    inline bool                         is_empty                            (void) const    { return paths.empty();                                             }
-    
-    
-    
-    
-    //  "IsHoveringNonObject"
-    [[nodiscard]] inline bool           IsHoveringNonObject                 (void) const noexcept
-        { return (this->hovered)  ? (*this->hovered).IsNonObjectHit() : false; }
-    [[nodiscard]] inline bool           IsHoveringObject                    (void) const noexcept
-        { return (this->hovered)  ? (*this->hovered).IsObjectHit() : false; }
-
-
-
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
-    // *************************************************************************** //
-    
-    //  "clear"
-    inline void                         clear                               (void) noexcept
-    {
-        this->vertices  .clear();
-        this->points    .clear();
-        this->paths     .clear();
-        this->hovered   .reset();
-        return;
-    }
-    
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "INLINE" FUNCTIONS.
-
-
-
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //
-};//	END "Selection_t" INLINE STRUCT DEFINITION.
-
-
-
-//      Selection_t     : "to_json"
-//
-//  template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
-template <ObjectCFGTraits CFG, typename Vertex>
-inline void to_json(nlohmann::json & j, const Selection_t<CFG, Vertex> & s)
-{
-    using   sel         = Selection_t<CFG, Vertex>  ;
-    using   vertex_id   = sel::vertex_id            ;
-    using   point_id    = sel::point_id             ;
-    using   path_id     = sel::path_id              ;
-    
-    
-    
-    j = {
-        { "vertices",  std::vector<vertex_id>   ( s.vertices.begin()    , s.vertices.end() )  },
-        { "points",    std::vector<point_id>    ( s.points  .begin()    , s.points  .end() )  },
-        { "paths",     std::vector<path_id>     ( s.paths   .begin()    , s.paths   .end() )  }
-    };
-          
-    return;
-}
-
-
-//      Selection_t     : "from_json"
-//
-//  template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
-template <ObjectCFGTraits CFG, typename Vertex>
-inline void from_json(const nlohmann::json & j, Selection_t<CFG, Vertex> & s)
-{
-    using   sel         = Selection_t<CFG, Vertex>  ;
-    using   vertex_id   = sel::vertex_id            ;
-    using   point_id    = sel::point_id             ;
-    using   path_id     = sel::path_id              ;
-    
-    
-
-    std::vector<vertex_id>      vs  ;       j.at("vertices")    .get_to(vs)                     ;
-    std::vector<point_id>       ps  ;       j.at("points"  )    .get_to(ps)                     ;
-    std::vector<path_id >       pa  ;       j.at("paths"   )    .get_to(pa)                     ;
-
-    s.vertices  .clear()            ;       s.vertices          .insert(vs.begin(), vs.end())   ;
-    s.points    .clear()            ;       s.points            .insert(ps.begin(), ps.end())   ;
-    s.paths     .clear()            ;       s.paths             .insert(pa.begin(), pa.end())   ;
-    
-    return;
-}
-
-
-
-
 //
 //
 //
@@ -1925,25 +1733,11 @@ inline void from_json(const nlohmann::json & j, ShapeState_t<OID> & o)
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "3.  PRIMARY TOOL STATES".
+// *************************************************************************** //   END [[ 3.  "PRIMARY TOOL STATES" ]].
 
 
 
 
-
-
-
-
-
-//  "IndexState_t"
-//
-template< typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HID >
-struct IndexState_t {
-    VID                         next_vid                                = 0;    //  original:   "m_next_id"...
-    PID                         next_pid                                = 0;    //  original:   "m_next_pid"...
-//
-    size_t                      m_paths_rev                             = 0ULL;
-};
 
 
 
@@ -1960,41 +1754,239 @@ struct IndexState_t {
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "MoveDrag_t"
+
+
+// *************************************************************************** //
+//      4A. AUXILIARY |         INDEX STATE.
+// *************************************************************************** //
+
+//  "IndexState_t"
 //
-template <ObjectCFGTraits CFG, typename Vertex>
-struct MoveDrag_t
-{
-    //  USE_OBJECT_CFG_ALIASES(CFG);
-    _USE_OBJECT_CFG_ALIASES
+template< typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HID >
+struct IndexState_t {
+    VID                         next_vid                                = 0;    //  original:   "m_next_id"...
+    PID                         next_pid                                = 0;    //  original:   "m_next_pid"...
 //
-//
-//
-#ifndef _EDITOR_REDUCE_REDUNDANCY
-    bool                        active              = false;
-#endif  //  _EDITOR_REDUCE_REDUNDANCY  //
-    ImVec2                      anchor_ws           {0.0f,      0.0f};   // top-left of selection at mouse-press
-    ImVec2                      press_ws            {0.0f,      0.0f};
-    ImVec2                      cum_delta           {0.0f,      0.0f};   // accumulated world-space translation
-//
-//
-    std::vector<vertex_id>      v_ids;               //     selected vertex IDs
-    std::vector<ImVec2>         v_orig;              //     original positions (same order)
+    size_t                      m_paths_rev                             = 0ULL;
 };
 
 
 
+// *************************************************************************** //
+//      4B. AUXILIARY |         SELECTION STATE.
+// *************************************************************************** //
+
+//  "Selection_t"
+//      PLAIN-OLD-DATA (POD) STRUCT.
+//
+//  template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
+template <ObjectCFGTraits CFG, typename Vertex>
+struct Selection_t
+{
+    // *************************************************************************** //
+    //      NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    _USE_OBJECT_CFG_ALIASES
+    using                               Hit                     = Hit_t         <hit_id>                ;
+    using                               PathHit                 = PathHit_t     <path_id, vertex_id>    ;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
 
 
-//  "BBoxAnchor"
-//      Defiled in the order of unit circle angles (0deg = +x-axis) and DEFAULT = 0 = CENTER.
+
+// *************************************************************************** //
 //
-enum class BBoxAnchor : uint8_t {
-      Center = 0
-    , East, NorthEast, North, NorthWest, West, SouthWest, South, SouthEast
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    std::unordered_set<vertex_id>       vertices                {   };
+    std::unordered_set<point_id>        points                  {   };
+    std::unordered_set<path_id>         paths                   {   };     // ← NEW
+    
+    // *************************************************************************** //
+    //      CACHE DATA-MEMBERS
+    // *************************************************************************** //
+    mutable std::optional<Hit>          hovered                 { std::nullopt };
+    
 //
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+                                        Selection_t             (void) noexcept                 = default;
+                                        ~Selection_t            (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+    //                                      Selection_t             (const Selection_t &    src)       = delete;   //  Copy. Constructor.
+    //                                      Selection_t             (Selection_t &&         src)       = delete;   //  Move Constructor.
+    //  Selection_t &                       operator =              (const Selection_t &    src)       = delete;   //  Assgn. Operator.
+    //  Selection_t &                       operator =              (Selection_t &&         src)       = delete;   //  Move-Assgn. Operator.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      STATIC FUNCTIONS.
+    // *************************************************************************** //
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      QUERY FUNCTIONS.
+    // *************************************************************************** //
+    
+    inline bool                         empty                               (void) const    { return vertices.empty() && points.empty() && paths.empty();       }
+    inline bool                         is_empty                            (void) const    { return ( this->paths.empty()  &&  this->vertices.empty() );       }
+    //  inline bool                         is_empty                            (void) const    { return paths.empty();                                             }
+    
+    
+    
+    
+    //  "IsHoveringNonObject"
+    [[nodiscard]] inline bool           IsHoveringNonObject                 (void) const noexcept
+        { return (this->hovered)  ? (*this->hovered).IsNonObjectHit() : false; }
+    [[nodiscard]] inline bool           IsHoveringObject                    (void) const noexcept
+        { return (this->hovered)  ? (*this->hovered).IsObjectHit() : false; }
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "clear_hover"
+    inline void                         clear_hover                         (void) noexcept         { this->hovered.reset(); }
+    
+    
+    //  "clear"
+    inline void                         clear                               (void) noexcept
+    {
+        this->clear_hover();
+        this->vertices  .clear();
+        this->points    .clear();
+        this->paths     .clear();
+        
+        return;
+    }
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "Selection_t" INLINE STRUCT DEFINITION.
+
+
+//      Selection_t     : "to_json"
+//
+//  template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
+template <ObjectCFGTraits CFG, typename Vertex>
+inline void to_json(nlohmann::json & j, const Selection_t<CFG, Vertex> & s)
+{
+    using   sel         = Selection_t<CFG, Vertex>  ;
+    using   vertex_id   = sel::vertex_id            ;
+    using   point_id    = sel::point_id             ;
+    using   path_id     = sel::path_id              ;
+    
+    
+    
+    j = {
+        { "vertices",  std::vector<vertex_id>   ( s.vertices.begin()    , s.vertices.end() )  },
+        { "points",    std::vector<point_id>    ( s.points  .begin()    , s.points  .end() )  },
+        { "paths",     std::vector<path_id>     ( s.paths   .begin()    , s.paths   .end() )  }
+    };
+          
+    return;
+}
+
+
+//      Selection_t     : "from_json"
+//
+//  template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
+template <ObjectCFGTraits CFG, typename Vertex>
+inline void from_json(const nlohmann::json & j, Selection_t<CFG, Vertex> & s)
+{
+    using   sel         = Selection_t<CFG, Vertex>  ;
+    using   vertex_id   = sel::vertex_id            ;
+    using   point_id    = sel::point_id             ;
+    using   path_id     = sel::path_id              ;
+    
+    
+
+    std::vector<vertex_id>      vs  ;       j.at("vertices")    .get_to(vs)                     ;
+    std::vector<point_id>       ps  ;       j.at("points"  )    .get_to(ps)                     ;
+    std::vector<path_id >       pa  ;       j.at("paths"   )    .get_to(pa)                     ;
+
+    s.vertices  .clear()            ;       s.vertices          .insert(vs.begin(), vs.end())   ;
+    s.points    .clear()            ;       s.points            .insert(ps.begin(), ps.end())   ;
+    s.paths     .clear()            ;       s.paths             .insert(pa.begin(), pa.end())   ;
+    
+    return;
+}
+
+
+
+
+
+
+// *************************************************************************** //
+//      4C. AUXILIARY |         BOX-DRAG STATE.
+// *************************************************************************** //
+
+//  "DragState"
+//
+enum class DragState : uint8_t {
+      None = 0
+    , Lasso
+    , Moving
+    , Scaling
     , COUNT
 };
+//
+//  "DEF_DRAGSTATE_NAMES"
+static constexpr cblib::EnumArray< DragState, const char * >
+    DEF_DRAGSTATE_NAMES  = { {
+        "None",     "Lasso",        "Moving",       "Scaling"
+} };
+
 
 
 
@@ -2010,96 +2002,28 @@ struct BoxDrag_t
     _USE_OBJECT_CFG_ALIASES
     template<typename T_, typename E_>
     using                               EnumArray                       = cblib::EnumArray<T_, E_>;
-    using                               Anchor                          = BBoxAnchor;
-    
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "CONSTANTS AND ALIASES".
-
-
-
-// *************************************************************************** //
-//
-//      1.          DATA-MEMBERS...
-// *************************************************************************** //
-// *************************************************************************** //
-    
-    bool                        active                              = false;
-    Anchor                      handle_idx                          = static_cast<Anchor>( 0 );
-    ImVec2                      anchor_ws                           = { 0.0f,    0.0f };
-    ImVec2                      bbox_tl_ws                          = { 0.0f,    0.0f };
-    ImVec2                      bbox_br_ws                          = { 0.0f,    0.0f };
+    using                               Anchor                          = utl::Anchor;
+    //
+    using                               Hit                             = Hit_t         <hit_id>                ;
+    using                               PathHit                         = PathHit_t     <path_id, vertex_id>    ;
     
     
-//  _EDITOR_REDUCE_REDUNDANCY
-    std::vector<vertex_id>      v_ids;
-    std::vector<ImVec2>         v_orig;
-//
-
-
-    ImVec2                      mouse_ws0                           = {0.0f,    0.0f};
-    ImVec2                      handle_ws0;                                 //  initial world‑space position of the dragged handle
-    float                       orig_w                              = 1.0f;                 //  original bbox width  (world units)
-    float                       orig_h                              = 1.0f;                 //  original bbox height (world units)
-    bool                        first_frame                         = true;
-
-    // *************************************************************************** //
-    //      NEW STUFF.
-    // *************************************************************************** //
-    struct ViewCache {
-        bool                            valid                               = false;    // recompute if false or revs changed
-        bool                            visible                             = false;    // draw/hover only if true
-
-        // NEW.
-        ImVec2                          tl_tight_ws                         { 0.0f,     0.0f },
-                                        br_tight_ws                         { 0.0f,     0.0f };  // NEW: content (tight) bounds in W
-        //
-        // Expanded bbox (world & pixels)
-        ImVec2                          tl_ws                               { 0.0f,     0.0f };
-        ImVec2                          br_ws                               { 0.0f,     0.0f };
-        ImVec2                          tl_px                               { 0.0f,     0.0f };
-        ImVec2                          br_px                               { 0.0f,     0.0f };
-
-        // Handle anchors (world & pixels) and their pixel rects
-        EnumArray<Anchor, ImVec2>       handle_ws                           {   };
-        EnumArray<Anchor, ImVec2>       handle_px                           {   };
-        EnumArray<Anchor, ImRect>       handle_rect_px                      {   };
-        //
-        std::optional<Anchor>           hover_idx                           = std::nullopt;     // -1 = none
-
-        // Last-seen revision stamps (compare to Editor’s counters)
-        uint64_t                        sel_seen                            = 0;
-        uint64_t                        geom_seen                           = 0;
-        uint64_t                        cam_seen                            = 0;
-        uint64_t                        style_seen                          = 0;
-    };
-    ViewCache                           view                                {   };
     
-    
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "DATA-MEMBERS".
-
-    
-   
-// *************************************************************************** //
-//
-//      2.B.        INLINE FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-    // *************************************************************************** //
-    //      QUERY FUNCTIONS.
-    // *************************************************************************** //
-    
-    //  "IsScaling"
-    [[nodiscard]] inline bool           IsScaling                           (void) const noexcept   { return ( this->active  &&  this->view.hover_idx.has_value() ); }
-
     // *************************************************************************** //
     //
     //
     // *************************************************************************** //
-    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    //      0. |    STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr auto &             ms_DRAGSTATE_NAMES              = DEF_DRAGSTATE_NAMES;
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      STATIC INLINE HELPER FUNCTIONS.
     // *************************************************************************** //
     
     //  "AnchorToCursor"            FORMERLY: "..."
@@ -2187,31 +2111,10 @@ struct BoxDrag_t
         }
     }
     
-
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      SETTER / GETTER FUNCTIONS...
-    // *************************************************************************** //
-    
-    //  "SafeDiv"
-    //  static inline T                     SafeDiv                             (T num, T den) noexcept
-    //      { constexpr T eps = cblib::math::default_rel_tol<T>();;  return (std::fabs(den) > eps) ? (num / den) : T(1); }
-
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      STATIC INLINE HELPER FUNCTIONS.
-    // *************************************************************************** //
-    
     //  "SafeDiv"
     template <typename T> requires std::floating_point<T>
     static inline T                     SafeDiv                             (T num, T den) noexcept
         { constexpr T eps = cblib::math::numerics::cv_default_rel_tol_v<T>();  return (std::fabs(den) > eps) ? (num / den) : T(1); }
-    
-    
     
     //  "IsDiagonal"
     [[nodiscard]] static inline bool    IsDiagonal                          (const Anchor handle) noexcept {
@@ -2221,6 +2124,7 @@ struct BoxDrag_t
             default :                                               { return false; }
         }
     }
+    
     //  "IsVertical"
     [[nodiscard]] static inline bool    IsVertical                          (const Anchor handle) noexcept {
         switch (handle) {
@@ -2228,6 +2132,7 @@ struct BoxDrag_t
             default :                                       { return false; }
         }
     }
+    
     //  "IsHorizontal"
     [[nodiscard]] static inline bool    IsHorizontal                        (const Anchor handle) noexcept {
         switch (handle) {
@@ -2238,15 +2143,327 @@ struct BoxDrag_t
     
     
     
-    //  "TightWSPos"
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
     //
+    //                          STATE-VARIABLES.
+    DragState                       state                               = DragState::None;
+    //
+    //
+    Anchor                          handle_idx                          = static_cast<Anchor>( 0 );
+    ImVec2                          anchor_ws                           = { 0.0f,    0.0f };
+    ImVec2                          bbox_tl_ws                          = { 0.0f,    0.0f };
+    ImVec2                          bbox_br_ws                          = { 0.0f,    0.0f };
+    //
+    //                          DATA.
+    std::vector<vertex_id>          v_ids;               //     selected vertex IDs
+    std::vector<ImVec2>             v_orig;              //     original positions (same order)
+    //
+    //
+    //                          MIGRATED FROM "MoveDrag_t".
+#ifdef _EDITOR_REDUCE_REDUNDANCY
+    //  ImVec2                          anchor_ws                           {0.0f,      0.0f};   // top-left of selection at mouse-press
+    ImVec2                          press_ws                            {0.0f,      0.0f};
+    ImVec2                          cum_delta                           {0.0f,      0.0f};   // accumulated world-space translation
+//
+#endif  //  _EDITOR_REDUCE_REDUNDANCY  //
+    //
+    //
+    //                          EXISTING STUFF.
+    ImVec2                          mouse_ws0                           = {0.0f,    0.0f};
+    ImVec2                          handle_ws0;                                 //  initial world‑space position of the dragged handle
+    float                           orig_w                              = 1.0f;                 //  original bbox width  (world units)
+    float                           orig_h                              = 1.0f;                 //  original bbox height (world units)
+    bool                            first_frame                         = true;
+
+    // *************************************************************************** //
+    //      1. |    NEW STUFF.
+    // *************************************************************************** //
+    struct ViewCache {
+        bool                            valid                               = false;    // recompute if false or revs changed
+        bool                            visible                             = false;    // draw/hover only if true
+
+        // NEW.
+        ImVec2                          tl_tight_ws                         { 0.0f,     0.0f },
+                                        br_tight_ws                         { 0.0f,     0.0f };  // NEW: content (tight) bounds in W
+        //
+        // Expanded bbox (world & pixels)
+        ImVec2                          tl_ws                               { 0.0f,     0.0f };
+        ImVec2                          br_ws                               { 0.0f,     0.0f };
+        ImVec2                          tl_px                               { 0.0f,     0.0f };
+        ImVec2                          br_px                               { 0.0f,     0.0f };
+
+        // Handle anchors (world & pixels) and their pixel rects
+        EnumArray<Anchor, ImVec2>       handle_ws                           {   };
+        EnumArray<Anchor, ImVec2>       handle_px                           {   };
+        EnumArray<Anchor, ImRect>       handle_rect_px                      {   };
+        //
+        std::optional<Anchor>           hover_idx                           = std::nullopt;     // -1 = none
+
+        // Last-seen revision stamps (compare to Editor’s counters)
+        uint64_t                        sel_seen                            = 0;
+        uint64_t                        geom_seen                           = 0;
+        uint64_t                        cam_seen                            = 0;
+        uint64_t                        style_seen                          = 0;
+    };
+    ViewCache                       view                                {   };
+    
+    // *************************************************************************** //
+    //      1. |    MIGRATED FROM "Selection_t".
+    // *************************************************************************** //
+    std::unordered_set<vertex_id>   vertices                            {   };
+    std::unordered_set<point_id>    points                              {   };
+    std::unordered_set<path_id>     paths                               {   };     // ← NEW
+    mutable std::optional<Hit>      hovered                             { std::nullopt };
+    
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "DATA-MEMBERS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      QUERY FUNCTIONS.
+    // *************************************************************************** //
+    
+    
+    //  "IsMoving"
+    [[nodiscard]] inline bool           IsMoving                            (void) const noexcept   { return ( this->state == DragState::Moving );      }
+    [[nodiscard]] inline bool           IsScaling                           (void) const noexcept   { return ( this->state == DragState::Scaling );     }
+    [[nodiscard]] inline bool           IsActive                            (void) const noexcept   { return ( this->state != DragState::None );        }
+    [[nodiscard]] inline bool           IsIdle                              (void) const noexcept   { return ( this->state == DragState::None );        }
+    
+    
+    //  "IsScaling"
+    //  [[nodiscard]] inline bool           IsScaling                           (void) const noexcept   { return ( this->active  &&  this->view.hover_idx.has_value() ); }
+    
+
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SETTER / GETTER FUNCTIONS...
+    // *************************************************************************** //
+    
+    //  "StartMoving"
+    inline void                         StartMoving                         (void) noexcept         { this->state = DragState::Moving;      }
+    inline void                         StopMoving                          (void) noexcept         { this->state = DragState::None;        }
+    
+    //  "StartScaling"
+    inline void                         StartScaling                        (void) noexcept         { this->state = DragState::Scaling;     }
+    inline void                         StopScaling                         (void) noexcept         { this->state = DragState::None;        }
+    
+    
+    
+    //  "GetDragState"
+    [[nodiscard]] inline DragState      GetDragState                        (void) const noexcept   { return this->state;                               }
+    [[nodiscard]] inline const char *   GetDragStateName                    (void) const noexcept   { return this->ms_DRAGSTATE_NAMES[ this->state ];   }
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "clear"
+    inline void                         clear                               (void) noexcept { this->reset(); }
+    
+    //  "reset"
+    inline void                         reset                               (void) noexcept
+    {
+        //      1.      STATE...
+        this->first_frame       = true;
+        state                   = DragState::None;
+        //
+        this->handle_idx        = static_cast<Anchor>( 0 );
+        this->anchor_ws         = { 0.0f    , 0.0f };
+        this->bbox_tl_ws        = { 0.0f    , 0.0f };
+        this->bbox_br_ws        = { 0.0f    , 0.0f };
+
+
+        //      2.      DATA...
+        this->v_ids             .clear();
+        this->v_orig            .clear();
+        //
+        this->vertices          .clear();
+        this->points            .clear();
+        this->paths             .clear();
+        this->hovered           .reset();
+        //
+        this->view              = {   };
+
+
+        //      3.      MIGRATED FROM "MoveDrag_t"...
+    #ifdef _EDITOR_REDUCE_REDUNDANCY
+        this->press_ws          = { 0.0f    , 0.0f };
+        this->cum_delta         = { 0.0f    , 0.0f };
+    #endif  //  _EDITOR_REDUCE_REDUNDANCY  //
+
+
+        //      4.      EXISTING STUFF...
+        this->mouse_ws0         = { 0.0f    , 0.0f };
+        this->handle_ws0        = { 0.0f    , 0.0f };
+        this->orig_w            = 1.0f;
+        this->orig_h            = 1.0f;
+        
+    
+        return;
+    }
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      OPERATION FUNCTIONS.
+    // *************************************************************************** //
+
+    //  "_selection_bounds"
+    template <typename RenderCTX>
+    inline bool                         _selection_bounds                   (ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) const
+    {
+    /*
+        using           cblib::math::is_close;
+        namespace       bez             = cblib::math::bezier;
+        bool            have_any        = false;
+        //
+        auto            add_pt          = [&](const ImVec2 & p) {
+            if (!have_any) { tl = br = p; have_any = true; }
+            else {
+                tl.x = std::min(tl.x, p.x); tl.y = std::min(tl.y, p.y);
+                br.x = std::max(br.x, p.x); br.y = std::max(br.y, p.y);
+            }
+        };
+        auto            add_box         = [&](const ImVec2& btl, const ImVec2& bbr) { add_pt(btl); add_pt(bbr); };
+
+
+
+        // A) Vertex anchors
+        for (vertex_id vid : this->vertices)
+        {
+            if ( const Vertex* v = find_vertex(m_vertices, vid) )       { add_pt(ImVec2{v->x, v->y}); }
+        }
+
+        // B) Per-path segment AABBs (tight, degree-aware)
+        for (path_id pidx : m_sel.paths)
+        {
+            if ( static_cast<size_t>(pidx) >= m_paths.size() )      { continue; }
+            
+            const Path &    p   = m_paths[pidx];
+            const size_t    N   = p.size();
+            
+            if ( N < 2 )                    { continue; }
+
+            const bool      is_area         = p.IsArea();
+            const size_t    seg_cnt         = N - (is_area ? 0u : 1u);
+
+            bool            first           = true;         // per-path accumulator flag
+            ImVec2          p_tl            {   },
+                            p_br            {   };          // per-path bbox
+
+
+            for (size_t si = 0; si < seg_cnt; ++si)
+            {
+                const vertex_id     a_id        = p.verts[si];
+                const vertex_id     b_id        = p.verts[(si + 1) % N];
+
+                const Vertex *      a           = ctx.callbacks.get_vertex(ctx.callbacks.vertices, a_id);
+                const Vertex *      b           = ctx.callbacks.get_vertex(ctx.callbacks.vertices, b_id);
+                if ( !a || !b )                 { continue; }
+
+                const ImVec2        P0          {a->x, a->y};
+                const ImVec2        P3          {b->x, b->y};
+
+
+                const ImVec2        out_eff     = a->EffectiveOutHandle();
+                const ImVec2        in_eff      = b->EffectiveInHandle();
+
+
+                const bool          out_zero    = ( is_close(out_eff.x, 0.0f)  &&  is_close(out_eff.y, 0.0f) );
+                const bool          in_zero     = ( is_close(in_eff.x , 0.0f)  &&  is_close(in_eff.y , 0.0f) );
+                const bool          linear      = ( out_zero  &&  in_zero );
+
+
+                //      CASE 1 :    SPLINE / LINEAR SEGMENT:        Use Endpoints ONLY.
+                if (linear)
+                {=
+                    ImVec2          seg_tl      { std::min(P0.x, P3.x), std::min(P0.y, P3.y) };
+                    ImVec2          seg_br      { std::max(P0.x, P3.x), std::max(P0.y, P3.y) };
+                    if (first) { p_tl = seg_tl; p_br = seg_br; first = false; }
+                    else {
+                        p_tl.x = std::min(p_tl.x, seg_tl.x); p_tl.y = std::min(p_tl.y, seg_tl.y);
+                        p_br.x = std::max(p_br.x, seg_br.x); p_br.y = std::max(p_br.y, seg_br.y);
+                    }
+                }
+                //      CASE 2 :    QUADRATIC SEGMENT:              C = A + out_eff.
+                else if ( a->IsQuadratic() )
+                {
+                    const ImVec2        C               { P0.x + out_eff.x, P0.y + out_eff.y };
+                    auto                [q_tl, q_br]    = bez::bbox_quadratic_tight<ImVec2, float>(P0, C, P3);
+                    
+                    if (first) { p_tl = q_tl; p_br = q_br; first = false; }
+                    else {
+                        p_tl.x = std::min(p_tl.x, q_tl.x); p_tl.y = std::min(p_tl.y, q_tl.y);
+                        p_br.x = std::max(p_br.x, q_br.x); p_br.y = std::max(p_br.y, q_br.y);
+                    }
+                }
+                //
+                //      CASE 3 :    CUBIC SEGMENT:                  Pass path accumulators directly (matches bbox_cubic_tight signature)
+                else {
+                    const ImVec2        P1          { P0.x + out_eff.x, P0.y + out_eff.y };
+                    const ImVec2        P2          { P3.x + in_eff.x , P3.y + in_eff.y  };
+                    bez::bbox_cubic_tight<ImVec2, float>(P0, P1, P2, P3, p_tl, p_br, first);
+                }
+            }
+            if ( !first )       { add_box(p_tl, p_br); }
+        }
+
+        return have_any;
+        */
+        return false;
+    }
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      UTILITY FUNCTIONS.
+    // *************************************************************************** //
+
+    //  "TightWSPos"
     [[nodiscard]] inline ImVec2         TightWSPos                          (Anchor h, ImVec2 handle_ws, const float margin) noexcept
     {
         const ImVec2    hsign   = this->AnchorToSign(h);
         return { handle_ws.x - hsign.x * margin,  handle_ws.y - hsign.y * margin };
     }
 
-    
+
+
 //
 // *************************************************************************** //
 // *************************************************************************** //   END "INLINE" FUNCTIONS.
@@ -2270,7 +2487,7 @@ struct BoxDrag_t
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "3.  TOOL STATES".
+// *************************************************************************** //   END [[ 4.  "AUXILIARY STATES" ]].
 
 
 
@@ -2287,7 +2504,7 @@ struct BoxDrag_t
 //
 //
 //
-//      4.    SERIALIZATION STUFF...
+//      5.    SERIALIZATION STUFF...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -2311,7 +2528,7 @@ struct Clipboard_t {
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "4.  SERIALIZATION"
+// *************************************************************************** //   END [[ 5.  "SERIALIZATION" ]].
 
 
 
@@ -2407,7 +2624,7 @@ struct OverlayCFG {
     bool                        locked;             //  TRUE :  Allows user to modify Overlay settings (with right-click context menu).
 //
     OverlayPlacement            placement           { OverlayPlacement::Custom };
-    BBoxAnchor                  src_anchor          = BBoxAnchor::NorthWest;            //  top-centre of the window
+    utl::Anchor                 src_anchor          = utl::Anchor::NorthWest;            //  top-centre of the window
     OffscreenPolicy             offscreen           { OffscreenPolicy::Clamp };         //  NEW
 //
 //
@@ -2539,7 +2756,7 @@ struct ResidentEntry_t {
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "5.  OVERLAY"
+// *************************************************************************** //   END [[ 5.  "OVERLAY" ]].
 
 
 
@@ -2634,7 +2851,7 @@ struct DebuggerState_t
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "6.  DEBUGGER" STATE.
+// *************************************************************************** //   END [[ 6.  "DEBUGGER" ]].
 
 
 
@@ -2667,7 +2884,20 @@ struct DebuggerState_t
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "7.  UNDO/REDO".
+// *************************************************************************** //   END [[ 6.  "UNDO/REDO" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

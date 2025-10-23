@@ -155,8 +155,8 @@ struct Tab_t    {
 
 //  "WindowLocation"
 //
-enum class WindowLocation {
-    Center,             //  default.
+enum class WindowLocation : uint8_t {
+    Center = 0,         //  default.
     LeftHalf,           //  left half of the monitor.
     RightHalf,          //  right half of the monitor.
     Fill,               //  Expand window to fill the entire screen.
@@ -164,43 +164,58 @@ enum class WindowLocation {
 };
 
 
+
+
 //  "Anchor"
 //
-enum class Anchor {
-    Center,             //  default.
-    East,
-    NorthEast,
-    North,
-    NorthWest,
-    West,
-    SouthWest,
-    South,
-    SouthEast,
+enum class Anchor : uint8_t {
+      Center = 0
+    , East, NorthEast, North, NorthWest, West, SouthWest, South, SouthEast
 //
-    COUNT
+    , COUNT
 };
 
 
-//  "AnchorAngles"
+//  "DEF_ANCHOR_NAMES"
 //
-inline constexpr std::array<float, 9>   AnchorAngles = {
-    0.0f,                // Center (same as North)
-    IM_PI * 0.5f,        // East
-    IM_PI * 0.25f,       // NorthEast
-    0.0f,                // North
-    -IM_PI * 0.25f,      // NorthWest
-    -IM_PI * 0.5f,       // West
-    -IM_PI * 0.75f,      // SouthWest
-    IM_PI,               // South
-    IM_PI * 0.75f        // SouthEast
-};
+static constexpr cblib::EnumArray< Anchor, const char * >
+DEF_ANCHOR_NAMES = { {
+    /*  Center / North      */    "Center"
+    /*  East                */  , "East"
+    /*  NorthEast           */  , "North-East"
+    /*  North               */  , "North"
+    /*  NorthWest           */  , "North-West"
+    /*  West                */  , "West"
+    /*  SouthWest           */  , "South-West"
+    /*  South               */  , "South"
+    /*  SouthEast           */  , "South-East"
+} };
+
+
+//  "DEF_ANCHOR_RADIAN_ANGLES"
+//
+static constexpr cblib::EnumArray< Anchor, double >
+DEF_ANCHOR_RADIAN_ANGLES = { {
+    /*  Center / North      */     0.0                   //  (0π)    [rad]   ==   0°   [deg]
+    /*  East                */  ,  1.5707963267948966    //  (π/2)   [rad]   ==  90°   [deg]
+    /*  NorthEast           */  ,  0.7853981633974483    //  (π/4)   [rad]   ==  45°   [deg]
+    /*  North               */  ,  0.0                   //  (0π)    [rad]   ==   0°   [deg]
+    /*  NorthWest           */  , -0.7853981633974483    //  (-π/4)  [rad]   == -45°   [deg]
+    /*  West                */  , -1.5707963267948966    //  (-π/2)  [rad]   == -90°   [deg]
+    /*  SouthWest           */  , -2.356194490192345     //  (-3π/4) [rad]   == -135°  [deg]
+    /*  South               */  ,  3.141592653589793     //  (π)     [rad]   ==  180°  [deg]
+    /*  SouthEast           */  ,  2.356194490192345     //  (3π/4)  [rad]   ==  135°  [deg]
+} };
+
+
 
 
 
 // *************************************************************************** //
 //
 //
-//  2.      PLOTS AND GRAPHS...
+//
+//      2.      PLOTS AND GRAPHS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -249,10 +264,14 @@ struct PlotCFG {
 
 
 
+
+
+
 // *************************************************************************** //
 //
 //
-//  3.      MISC / SPECIFIC USE-CASES...
+//
+//      3.      MISC / SPECIFIC USE-CASES...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -264,7 +283,7 @@ struct PlotCFG {
 
 //  "ChannelIdx"
 //
-enum ChannelIdx : std::size_t {
+enum ChannelIdx : uint8_t {
     UNUSED = 0,
     D,      C,      CD,
     B,      BD,     BC,     BCD,

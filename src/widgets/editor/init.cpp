@@ -36,7 +36,11 @@ Editor::Editor(app::AppState & src)
     , m_ov_manager          ( world_to_pixels                                                   )
     , m_it                  ( std::make_unique<Interaction>()                                   )
     , m_menu_state          ( std::make_unique<app::MenuState_t>()                              )
-    , m_render_ctx          ( world_to_pixels, find_vertex, m_vertices                          )
+    , m_render_ctx          (
+          world_to_pixels           , pixels_to_world
+        , find_vertex               , find_vertex
+        , m_vertices
+    )
     , m_vertex_style        ( world_to_pixels, ms_VERTEX_STYLES[ VertexStyleType::Default ]     )
 {
     using                   namespace               app;
@@ -92,7 +96,7 @@ Editor::Editor(app::AppState & src)
     //      3.      INITIALIZE FUNCTIONS FOR DEBUGGER OVERLAY WINDOW...
     //  using               DebugItem                   = DebuggerState::DebugItem;
     this->m_debugger.windows    = { {
-          {   "State"         , false          , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_state           (); }       }
+          {   "State"         , true           , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_state           (); }       }
         , {   "Canvas"        , false          , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_canvas          (); }       }
         , {   "Misc."         , true           , DebuggerState::ms_FLAGS       , [this]{ this->_DEBUGGER_misc            (); }       }
     } };

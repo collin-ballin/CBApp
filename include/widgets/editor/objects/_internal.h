@@ -87,7 +87,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 // *************************************************************************** //
-//              1A.     "OBJECT" POLICY  [ FIRST LAYER ].
+//      1A. POLICY |        "OBJECT" POLICY  [ FIRST LAYER ].
 // *************************************************************************** //
 
 //  "ObjectCFG_t"
@@ -133,7 +133,7 @@ concept ObjectCFGTraits =
 
 
 // *************************************************************************** //
-//              1B.     "EDITOR" POLICY  [ SECOND LAYER ].
+//      1B. POLICY |        "EDITOR" POLICY  [ SECOND LAYER ].
 // *************************************************************************** //
 
 //  "EditorCFG_t"
@@ -178,7 +178,7 @@ concept EditorCFGTraits =
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "CONFIGS".
+// *************************************************************************** //   END [[ 1.  "CONFIGS" ]].
 
 
 
@@ -194,7 +194,13 @@ concept EditorCFGTraits =
 // *************************************************************************** //
 
 
+
+// *************************************************************************** //
+//      2A. MISC. |        GEOMETRY-OBJECT UTILITIES.
+// *************************************************************************** //
+
 //  "EndpointInfo"
+//
 template<typename PID>
 struct EndpointInfo_t
 {
@@ -204,19 +210,19 @@ struct EndpointInfo_t
 //
 };   // prepend==true ↔ first vertex
 
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "MISC/UTILITIES".
-
 
 
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "MISC".
+// *************************************************************************** //   END [[ 2.  "MISC" ]].
+
+
+
+
+
+
 
 
 
@@ -227,24 +233,31 @@ struct EndpointInfo_t
 //
 //
 //
-//      2.      RENDERING UTILITIES...
+//      3.      RENDERING UTILITIES...
 // *************************************************************************** //
 // *************************************************************************** //
-
-
-
 namespace render { //     BEGINNING NAMESPACE "render"...
-// *************************************************************************** //
-// *************************************************************************** //
+
+
 
 // *************************************************************************** //
-//              2A.     TYPE TRAITS.
+//      3A. RENDERING. |        TYPE---TRAITS.
 // *************************************************************************** //
 
 //  "ws_to_px_CallbackTT"
 //
 template<typename Func>
 concept     ws_to_px_CallbackTT     =
+    requires (Func tp, ImVec2 ws) {
+        { tp(ws) } noexcept -> std::same_as<ImVec2>;
+    }
+    && std::is_nothrow_invocable_r_v<ImVec2, Func, ImVec2>;
+    
+   
+//  "px_to_ws_CallbackTT"
+//
+template<typename Func>
+concept     px_to_ws_CallbackTT     =
     requires (Func tp, ImVec2 ws) {
         { tp(ws) } noexcept -> std::same_as<ImVec2>;
     }
@@ -265,28 +278,53 @@ concept     get_vertex_CallbackTT   =
 
 
 
+
+
 // *************************************************************************** //
-//              2B.     SUBSIDIARY TYPES IMPLEMENTATION.
+//      3B. RENDERING. |        SUBSIDIARY TYPES IMPLEMENTATION.
 // *************************************************************************** //
 
 //  "RenderCallbacks"
 //
-template< typename VID_, typename MapFn, typename GVertexFn, typename container_type=std::vector<VID_> >
+template<
+      typename VID_
+    , typename MapFn                                        //  "MapFn"     =   Pixels -- To -- World.
+    , typename PamFn                                        //  "PamFn"     =   World -- To -- Pixels.
+    , typename GVertexFn
+    , typename CGVertexFn
+    , typename container_type=std::vector<VID_>
+>
     requires ws_to_px_CallbackTT        <MapFn>                     &&
-             get_vertex_CallbackTT      <GVertexFn, VID_>
+             px_to_ws_CallbackTT        <PamFn>                     &&
+             get_vertex_CallbackTT      <CGVertexFn, VID_>
+//
 struct RenderCallbacks
 {
+//                                  COORDINATE FUNCTIONS.
     MapFn                               ws_to_px            ;       //  e.g., lambda:   [this](ImVec2 ws)               { return world_to_pixels(ws);   }
-    GVertexFn                           get_vertex          ;       //  e.g., lambda:   [this](VID id) -> const V *     { return find_vertex(...);      }
+    PamFn                               px_to_ws            ;       //  e.g., lambda:   [this](ImVec2 ws)               { return world_to_pixels(ws);   }
 //
-    const container_type &              vertices            ;       //  REFERENCE to the array of vertices...
+//
+//                                  DATA---FETCHING FUNCTIONS.
+    GVertexFn                           get_vertex          ;
+    CGVertexFn                          cget_vertex         ;       //  e.g., lambda:   [this](VID id) -> const V *     { return find_vertex(...);      }
+//
+//
+//                                  REFERENCES TO DATA.
+    container_type &                    vertices            ;       //  REFERENCE to the array of vertices...
 //
 //
 //
     //  inline                              RenderCallbacks                     (MapFn ws_to_px_, GVertexFn get_vertex_) noexcept
-    inline RenderCallbacks(MapFn ws_to_px_, GVertexFn get_vertex_, const container_type & vertices_) noexcept
-        : ws_to_px(ws_to_px_)
-        , get_vertex(get_vertex_)
+    inline RenderCallbacks(
+          MapFn                         ws_to_px_
+        , PamFn                         px_to_ws_
+        , GVertexFn                     get_vertex_
+        , CGVertexFn                    cget_vertex_
+        , container_type &              vertices_
+    ) noexcept
+        : ws_to_px(ws_to_px_)               , px_to_ws(px_to_ws_)
+        , get_vertex(get_vertex_)           , cget_vertex(cget_vertex_)
         , vertices(vertices_)
     {   }
 //
@@ -295,7 +333,6 @@ struct RenderCallbacks
 //  [ LATER... ]        more hooks (selection tint, masks) with additional concepts
 //
 };
-
 
 
 //  "RenderCallbacks"
@@ -318,7 +355,7 @@ struct RenderFrameArgs
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //
+// *************************************************************************** //   END [ 3A.  "Render" ].
 }//   END OF "render" NAMESPACE.
 
 
@@ -327,24 +364,37 @@ struct RenderFrameArgs
 
 
 // *************************************************************************** //
-//              2C.     MAIN "RenderCTX" IMPLEMENTATION.
+//      3C. RENDERING. |        MAIN "RenderCTX" IMPLEMENTATION.
 // *************************************************************************** //
 
 //  "RenderCTX_t"
 //
-template< typename V, typename MapFn, typename GVertexFn, typename container_type=std::vector<V> >
+template<
+      typename V
+    , typename MapFn
+    , typename PamFn
+    , typename GVertexFn
+    , typename CGVertexFn
+    , typename container_type=std::vector<V>
+>
 struct RenderCTX_t
 {
-    using                               Callbacks                           = render::RenderCallbacks<V, MapFn, GVertexFn>;
+    using                               Callbacks                           = render::RenderCallbacks<V, MapFn, PamFn, GVertexFn, CGVertexFn>;
     using                               Args                                = render::RenderFrameArgs;
     using                               Vertex                              = V;
     using                               VertexID                            = V::id_type;
-//
 
-    inline RenderCTX_t(MapFn ws_to_px_, GVertexFn get_vertex_, const container_type & vertices_) noexcept
-        : callbacks(ws_to_px_, get_vertex_, vertices_)
-        //  , data( std::addressof(data_) )
-        {   }
+    //  "RenderCTX_t"
+    //
+    inline RenderCTX_t(
+          MapFn                     ws_to_px_
+        , PamFn                     px_to_ws_
+        , GVertexFn                 get_vertex_
+        , CGVertexFn                cget_vertex_
+        , container_type &          vertices_
+    ) noexcept
+        : callbacks( ws_to_px_      , px_to_ws_     , get_vertex_       , cget_vertex_      , vertices_ )
+    {   }
 //
 //
 //
@@ -354,29 +404,8 @@ struct RenderCTX_t
 
 
 
-//
-//
-//
 // *************************************************************************** //
-// *************************************************************************** //   END "RENDERING UTILITIES".
-
-
-
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//      3.      RENDERING UTILITIES...
-// *************************************************************************** //
+//      3D. RENDERING. |        OBJECT RENDER---CHANNEL ABSTRACTION.
 // *************************************************************************** //
 
 //  "CanvasDrawChannel"
@@ -522,15 +551,11 @@ struct ChannelCTX
 
 
 
-
-
-
-
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "RENDERING UTILITIES".
+// *************************************************************************** //   END [[ 3.  "RENDERING UTILITIES" ]].
 
 
 

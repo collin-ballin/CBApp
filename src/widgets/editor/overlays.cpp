@@ -230,7 +230,7 @@ void OverlayManager_t<OID, MapFn>::_draw_context_menu(Overlay & ov)
     };
     
     //  "emit_anchor"
-    auto        emit_anchor         = [&](const char * label, BBoxAnchor a) {
+    auto        emit_anchor         = [&](const char * label, Anchor a) {
         bool sel = (ov.cfg.src_anchor == a);
         if ( ImGui::MenuItem(label, nullptr, sel) )     { ov.cfg.src_anchor = a; }
     };
@@ -413,7 +413,7 @@ void OverlayManager_t<OID, MapFn>::_draw_custom_context_menu(Overlay & ov)
     };
     
     //  "emit_anchor"
-    auto        emit_anchor         = [&](const char * label, BBoxAnchor a) {
+    auto        emit_anchor         = [&](const char * label, Anchor a) {
         bool sel = (ov.cfg.src_anchor == a);
         if ( ImGui::MenuItem(label, nullptr, sel) )     { ov.cfg.src_anchor = a; }
     };

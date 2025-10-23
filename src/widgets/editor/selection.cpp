@@ -30,10 +30,35 @@ namespace cb {  //     BEGINNING NAMESPACE "cb"...
 //
 void Editor::_MECH_process_selection(const Interaction & it)
 {
-    update_move_drag_state              (it);   //  Helpers (2-4 merged)...
+    const DragState         state       = this->m_boxdrag.GetDragState();
     
     
-    if ( it.hovered && !m_dragging )    { resolve_pending_selection(it); }
+    switch (state)
+    {
+        //      1.      SELECTION---MOVING...
+        case DragState::Moving : {
+            break;
+        }
+        //
+        //      2.      SELECTION---SCALING...
+        case DragState::Scaling : {
+            break;
+        }
+        //
+        //      DEFAULT...
+        default : {
+            break;
+        }
+    }
+    
+    
+    this->_update_bbox_move             (it);   //  Helpers (2-4 merged)...
+    
+    
+    
+    //  if ( it.hovered  &&  !m_dragging )
+    if ( it.hovered  &&  !this->m_boxdrag.IsActive() )
+        { resolve_pending_selection(it); }
     
     
     dispatch_selection_context_menus    (it);   //  Right-Click CONTEXT MENU...
@@ -47,6 +72,31 @@ void Editor::_MECH_process_selection(const Interaction & it)
     
     return;
 }
+/*
+void Editor::_MECH_process_selection(const Interaction & it)
+{
+    this->_update_bbox_move             (it);   //  Helpers (2-4 merged)...
+    
+    
+    //  if ( it.hovered  &&  !m_dragging )
+    if ( it.hovered  &&  !this->m_boxdrag.IsActive() )
+        { resolve_pending_selection(it); }
+    
+    
+    dispatch_selection_context_menus    (it);   //  Right-Click CONTEXT MENU...
+    
+    
+    //  OPEN/CLOSE SELECTION OVERLAY WINDOW...
+    if ( m_sel.is_empty() )             { return; }
+    else                                { this->m_editor_S.m_show_sel_overlay = true; }
+    
+    
+    
+    return;
+}
+*/
+
+
 
 //
 //
@@ -67,30 +117,34 @@ void Editor::_MECH_process_selection(const Interaction & it)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "start_move_drag"
+//  "_start_bbox_move"
 //
-void Editor::start_move_drag(const ImVec2 & press_ws)
+void Editor::_start_bbox_move(const ImVec2 & press_ws)
 {
-    m_dragging              = true;
-    m_movedrag              = {   };
-#ifndef _EDITOR_REDUCE_REDUNDANCY
-    m_movedrag.active       = true;
-#endif  //  _EDITOR_REDUCE_REDUNDANCY  //
-    m_movedrag.press_ws     = press_ws;
+#ifndef _EDITOR_USE_STATE_RESETS
+    this->m_boxdrag         = {   };
+#else
+    this->m_boxdrag         .reset();
+#endif  //  _EDITOR_USE_STATE_RESETS  //
+    
+    
+    this->m_boxdrag         .StartMoving();
+    //
+    m_boxdrag.press_ws      = press_ws;
     ImVec2                  tl{ },  br{ };
     
     
-    if ( _selection_bounds(tl, br, this->m_render_ctx) )    { m_movedrag.anchor_ws = tl;        }
-    else                                                    { m_movedrag.anchor_ws = press_ws;  }
+    if ( _selection_bounds(tl, br, this->m_render_ctx) )    { m_boxdrag.anchor_ws = tl;        }
+    else                                                    { m_boxdrag.anchor_ws = press_ws;  }
 
-    m_movedrag.v_ids .reserve(m_sel.vertices.size());
-    m_movedrag.v_orig.reserve(m_sel.vertices.size());
 
+    m_boxdrag.v_ids .reserve( m_sel.vertices.size() );
+    m_boxdrag.v_orig.reserve( m_sel.vertices.size() );
     for (VertexID vid : m_sel.vertices)
     {
         if ( const Vertex * v = find_vertex(m_vertices, vid) ) {
-            m_movedrag.v_ids .push_back(vid);
-            m_movedrag.v_orig.push_back({ v->x, v->y });
+            m_boxdrag.v_ids .push_back(vid);
+            m_boxdrag.v_orig.push_back( v->GetXYPosition() );
         }
     }
     
@@ -98,11 +152,13 @@ void Editor::start_move_drag(const ImVec2 & press_ws)
 }
 
 
-//  "update_move_drag_state"
+//  "_update_bbox_move"
 //      Press / drag / release handling.
 //
-inline void Editor::update_move_drag_state(const Interaction & it)
+inline void Editor::_update_bbox_move(const Interaction & it)
 {
+//    IM_ASSERT( this->m_boxdrag.IsMoving() );
+    
     static bool         press_hit_exists    = false;
     static bool         press_hit_in_sel    = false;
     //
@@ -138,7 +194,11 @@ inline void Editor::update_move_drag_state(const Interaction & it)
     
     
     //      2.      BEGIN MOVE/DRAG ONCE MOUSE-MOVEMENT EXCEEDS THRESHOLD...
-    if ( lmb  &&  !m_dragging  &&  drag_past  &&  it.hovered )
+#ifndef _EDITOR_REMOVE_MDRAGGING
+    if ( lmb  &&  !(m_dragging || m_boxdrag.IsMoving())  &&  drag_past  &&  it.hovered )
+#else
+    if ( lmb  &&  !m_boxdrag.IsMoving()  &&  drag_past  &&  it.hovered )
+#endif  //  _EDITOR_REMOVE_MDRAGGING  //
     {
         if (m_pending_hit)
         {
@@ -161,7 +221,7 @@ inline void Editor::update_move_drag_state(const Interaction & it)
                 if ( m_pending_clear )      { this->reset_selection(); }
                 add_hit_to_selection(hit);
             }
-            start_move_drag(press_ws);
+            _start_bbox_move(press_ws);
 
 
             //      2.3.    PREVENT CLICK-RESOLUTION FROM FIRING ON MOUSE-RELEASE...
@@ -176,7 +236,7 @@ inline void Editor::update_move_drag_state(const Interaction & it)
         //  No direct hit, but press inside current selection bbox → drag whole selection
         if ( !m_sel.empty()  &&  _press_inside_selection(press_ws) )
         {
-            start_move_drag(press_ws);
+            _start_bbox_move(press_ws);
             m_pending_clear = false;                   // ← also important
             return;
         }
@@ -188,41 +248,59 @@ inline void Editor::update_move_drag_state(const Interaction & it)
 
 
     //      3.      PER-FRAME DRAGGING TO UPDATE SELECTION MOVEMENT...
-    if (m_dragging)
+    if ( this->m_boxdrag.IsMoving() )
     {
         const ImVec2    w_mouse     = pixels_to_world(io.MousePos);
-        ImVec2          delta       { w_mouse.x - m_movedrag.press_ws.x,    w_mouse.y - m_movedrag.press_ws.y };
+        ImVec2          delta       { w_mouse.x - m_boxdrag.press_ws.x,    w_mouse.y - m_boxdrag.press_ws.y };
 
-
-        const ImVec2    snapped     = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,     m_movedrag.anchor_ws.y + delta.y });
-        delta.x                     = snapped.x - m_movedrag.anchor_ws.x;
-        delta.y                     = snapped.y - m_movedrag.anchor_ws.y;
+        const ImVec2    snapped     = snap_to_grid({ m_boxdrag.anchor_ws.x + delta.x,     m_boxdrag.anchor_ws.y + delta.y });
+        delta.x                     = snapped.x - m_boxdrag.anchor_ws.x;
+        delta.y                     = snapped.y - m_boxdrag.anchor_ws.y;
         
         
-        //  OLD:
-        //      if ( want_snap() )
-        //      {
-        //          const ImVec2 snapped = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,     m_movedrag.anchor_ws.y + delta.y });
-        //          delta.x = snapped.x - m_movedrag.anchor_ws.x;
-        //          delta.y = snapped.y - m_movedrag.anchor_ws.y;
-        //      }
-        
+        ImVec2 total_delta { snapped.x - m_boxdrag.anchor_ws.x,
+                     snapped.y - m_boxdrag.anchor_ws.y };
 
-        for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i)
-        {
-            if ( Vertex * v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i]) ) {
-                const ImVec2& o = m_movedrag.v_orig[i];
-                v->x = o.x + delta.x;  v->y = o.y + delta.y;
+        // incremental step we still need to apply THIS frame
+        ImVec2 step        { total_delta.x - m_boxdrag.cum_delta.x,
+                             total_delta.y - m_boxdrag.cum_delta.y };
+
+        // apply the step once to each selected path
+        if (step.x != 0.0f || step.y != 0.0f) {
+            for (PathID pid : m_sel.paths) {
+                m_paths[pid].translate(m_render_ctx, step.x, step.y);
             }
+            // update accumulator so next frame knows how much is already applied
+            m_boxdrag.cum_delta = total_delta;
         }
 
+        
+        //  for (size_t idx : m_sel.paths)
+        //  {
+        //      Path &        path            = this->m_paths[idx];
+        //  
+        //      path.translate(this->m_render_ctx, delta.x, delta.y); //    (hl_style, ctx);
+        //  }
+        
+        //  for (size_t i = 0; i < m_boxdrag.v_ids.size(); ++i)
+        //  {
+        //      if ( Vertex * v = find_vertex_mut( this->m_vertices, this->m_boxdrag.v_ids[i]) )
+        //      {
+        //          const ImVec2 & o = m_boxdrag.v_orig[i];
+        //          v->x = o.x + delta.x;  v->y = o.y + delta.y;
+        //      }
+        //  }
+        
+        
+        
         if (lmb_release)
         {
-            m_dragging        = false;
-            m_pending_hit.reset();
-            m_pending_clear   = false;                 // ← guard against release clearing
-            press_hit_exists  = false;
-            press_hit_in_sel  = false;
+            this->m_boxdrag             .StopMoving();
+            //
+            m_pending_hit               .reset();
+            m_pending_clear             = false;                 // ← guard against release clearing
+            press_hit_exists            = false;
+            press_hit_in_sel            = false;
         }
         return; // while dragging, skip click-resolution below
     }
@@ -230,117 +308,6 @@ inline void Editor::update_move_drag_state(const Interaction & it)
     
     return;
 }
-
-/*
-{
-    static ImVec2   press_ws            {   };
-    static bool     press_hit_exists    = false;
-    static bool     press_hit_in_sel    = false;
-    //
-    //
-    ImGuiIO &       io                  = ImGui::GetIO();
-    const bool      allow_inputs        = !it.BlockInput();
-    //
-    const bool      lmb                 = io.MouseDown[ ImGuiMouseButton_Left ];
-    const bool      lmb_click           = ImGui::IsMouseClicked  (ImGuiMouseButton_Left);
-    const bool      lmb_release         = ImGui::IsMouseReleased (ImGuiMouseButton_Left);
-
-    const float     drag_px             = _drag_threshold_px();
-    const bool      drag_past           = ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, drag_px);
-
-
-
-    //      1.      PRESS...
-    if ( allow_inputs  &&  lmb_click )
-    {
-        press_ws          = pixels_to_world(io.MousePos);
-        m_pending_hit     = _hit_any(it);                           // may be null
-        press_hit_exists  = m_pending_hit.has_value();
-        press_hit_in_sel  = press_hit_exists && _hit_is_in_current_selection(*m_pending_hit);
-
-        const bool modifiers   = (io.KeyCtrl || io.KeyShift);
-        const bool inside_bbox = (!m_sel.empty() && _press_inside_selection(press_ws));
-        const bool outside_sel = !press_hit_in_sel && !inside_bbox;
-
-        m_pending_clear        = (!modifiers) && outside_sel;       // only tentatively true here
-        // IMPORTANT: do NOT start drag yet; we wait for drag_past
-    }
-
-
-
-    //      2.      BEGIN MOVE/DRAG ONCE MOUSE-MOVEMENT EXCEEDS THRESHOLD...
-    if ( lmb  &&  !m_dragging  &&  drag_past  &&  it.hovered )
-    {
-        if (m_pending_hit)
-        {
-            //      2.2.    *OBJECT HITS* INSIDE SELECTION...
-            if ( !press_hit_in_sel )
-            {
-                if ( m_pending_clear )      { this->reset_selection(); }
-                add_hit_to_selection(hit);
-            }
-            start_move_drag(press_ws);
-
-
-            //      2.3.    PREVENT CLICK-RESOLUTION FROM FIRING ON MOUSE-RELEASE...
-            m_pending_hit       .reset();
-            m_pending_clear     = false;                   // ← key fix
-            press_hit_exists    = false;
-            press_hit_in_sel    = false;
-            return;
-        }
-
-
-        //  No direct hit, but press inside current selection bbox → drag whole selection
-        //  if ( !m_sel.empty()  &&  _press_inside_selection(press_ws) )
-        //  {
-        //      start_move_drag(press_ws);
-        //      m_pending_clear = false;                   // ← also important
-        //      return;
-        //  }
-        
-
-        // Else: (optionally) start lasso after threshold if desired
-        // if (!m_lasso_active) _start_lasso_tool();
-    }
-
-
-    //      3.      PER-FRAME DRAGGING TO UPDATE SELECTION MOVEMENT...
-    if (m_dragging)
-    {
-        const ImVec2    w_mouse     = pixels_to_world(io.MousePos);
-        ImVec2          delta       { w_mouse.x - m_movedrag.press_ws.x,    w_mouse.y - m_movedrag.press_ws.y };
-
-        if ( want_snap() )
-        {
-            const ImVec2 snapped = snap_to_grid({ m_movedrag.anchor_ws.x + delta.x,     m_movedrag.anchor_ws.y + delta.y });
-            delta.x = snapped.x - m_movedrag.anchor_ws.x;
-            delta.y = snapped.y - m_movedrag.anchor_ws.y;
-        }
-        
-
-        for (size_t i = 0; i < m_movedrag.v_ids.size(); ++i)
-        {
-            if ( Vertex * v = find_vertex_mut(m_vertices, m_movedrag.v_ids[i]) ) {
-                const ImVec2& o = m_movedrag.v_orig[i];
-                v->x = o.x + delta.x;  v->y = o.y + delta.y;
-            }
-        }
-
-        if (lmb_release)
-        {
-            m_dragging        = false;
-            m_pending_hit.reset();
-            m_pending_clear   = false;                 // ← guard against release clearing
-            press_hit_exists  = false;
-            press_hit_in_sel  = false;
-        }
-        return; // while dragging, skip click-resolution below
-    }
-    
-    
-    return;
-}*/
 
 
 
@@ -521,7 +488,6 @@ inline void Editor::resolve_pending_selection([[maybe_unused]] const Interaction
 //
 void Editor::add_hit_to_selection(const Hit & hit)
 {
-    
     switch (hit.type)
     {
         //      1.          CLICKED ON "HANDLE".
@@ -613,217 +579,57 @@ void Editor::_rebuild_vertex_selection(void)
 
 //  "_selection_bounds"
 //
-bool Editor::_selection_bounds(ImVec2& tl, ImVec2& br, const RenderCTX& ctx) const
-{
-    namespace bez = cblib::math::bezier;
-    using cblib::math::is_close;
-
-    bool have_any = false;
-
-    auto add_pt = [&](const ImVec2& p) {
-        if (!have_any) { tl = br = p; have_any = true; }
-        else {
-            tl.x = std::min(tl.x, p.x); tl.y = std::min(tl.y, p.y);
-            br.x = std::max(br.x, p.x); br.y = std::max(br.y, p.y);
-        }
-    };
-    auto add_box = [&](const ImVec2& btl, const ImVec2& bbr) { add_pt(btl); add_pt(bbr); };
-
-    // A) Vertex anchors
-    for (VertexID vid : m_sel.vertices) {
-        if (const Vertex* v = find_vertex(m_vertices, vid))     { add_pt(ImVec2{v->x, v->y}); }
-    }
-
-    // B) Per-path segment AABBs (tight, degree-aware)
-    for (PathID pidx : m_sel.paths)
-    {
-        if (static_cast<size_t>(pidx) >= m_paths.size())    { continue; }
-        const Path& p = m_paths[pidx];
-        const size_t N = p.size();
-        if (N < 2) continue;
-
-        const bool is_area = p.IsArea();
-        const size_t seg_cnt = N - (is_area ? 0u : 1u);
-
-        bool first = true;         // per-path accumulator flag
-        ImVec2 p_tl{}, p_br{};     // per-path bbox
-
-        for (size_t si = 0; si < seg_cnt; ++si)
-        {
-            const VertexID a_id = p.verts[si];
-            const VertexID b_id = p.verts[(si + 1) % N];
-
-            const Vertex* a = ctx.callbacks.get_vertex(ctx.callbacks.vertices, a_id);
-            const Vertex* b = ctx.callbacks.get_vertex(ctx.callbacks.vertices, b_id);
-            if (!a || !b) continue;
-
-            const ImVec2 P0{a->x, a->y};
-            const ImVec2 P3{b->x, b->y};
-
-            const ImVec2 out_eff = a->EffectiveOutHandle();
-            const ImVec2 in_eff  = b->EffectiveInHandle();
-
-            const bool out_zero = is_close(out_eff.x, 0.0f) && is_close(out_eff.y, 0.0f);
-            const bool in_zero  = is_close(in_eff.x , 0.0f) && is_close(in_eff.y , 0.0f);
-            const bool linear   = out_zero && in_zero;
-
-            if (linear)
-            {
-                // Straight segment → endpoints only
-                ImVec2 seg_tl{ std::min(P0.x, P3.x), std::min(P0.y, P3.y) };
-                ImVec2 seg_br{ std::max(P0.x, P3.x), std::max(P0.y, P3.y) };
-                if (first) { p_tl = seg_tl; p_br = seg_br; first = false; }
-                else {
-                    p_tl.x = std::min(p_tl.x, seg_tl.x); p_tl.y = std::min(p_tl.y, seg_tl.y);
-                    p_br.x = std::max(p_br.x, seg_br.x); p_br.y = std::max(p_br.y, seg_br.y);
-                }
-            }
-            else if (a->IsQuadratic())
-            {
-                // Quadratic: C = A + out_eff
-                const ImVec2 C{ P0.x + out_eff.x, P0.y + out_eff.y };
-                auto [q_tl, q_br] = bez::bbox_quadratic_tight<ImVec2, float>(P0, C, P3);
-                if (first) { p_tl = q_tl; p_br = q_br; first = false; }
-                else {
-                    p_tl.x = std::min(p_tl.x, q_tl.x); p_tl.y = std::min(p_tl.y, q_tl.y);
-                    p_br.x = std::max(p_br.x, q_br.x); p_br.y = std::max(p_br.y, q_br.y);
-                }
-            }
-            else {
-                // Cubic: pass path accumulators directly (matches bbox_cubic_tight signature)
-                const ImVec2 P1{ P0.x + out_eff.x, P0.y + out_eff.y };
-                const ImVec2 P2{ P3.x + in_eff.x , P3.y + in_eff.y  };
-                bez::bbox_cubic_tight<ImVec2, float>(P0, P1, P2, P3, p_tl, p_br, first);
-            }
-        }
-
-        if (!first) add_box(p_tl, p_br);
-    }
-
-    return have_any;
-}
-
-
-
-/*{
-    namespace   bez         = cblib::math::bezier;
-    bool        have_any    = false;
-    auto        add_pt      = [&](const ImVec2 & p)
-    {
-        if ( !have_any )    { tl = br = p; have_any = true; }
-        else {
-            tl.x = std::min(tl.x, p.x);     tl.y = std::min(tl.y, p.y);
-            br.x = std::max(br.x, p.x);     br.y = std::max(br.y, p.y);
-        }
-    };
-
-
-    //      A)      Vertex anchors (existing behavior)
-    for (VertexID vid : m_sel.vertices)
-    {
-        if ( const Vertex * v = find_vertex(m_vertices, vid) )
-            { add_pt(ImVec2{ v->x, v->y }); }
-    }
-
-    //      B)      Path control-hull union (new: captures curvature envelope)
-    for (PathID pidx : this->m_sel.paths)
-    {
-        if ( static_cast<size_t>(pidx) >= m_paths.size() )      { continue; }
-        
-        const Path &    p           = m_paths[pidx];
-        const size_t    N           = p.size();
-        if ( N < 2 )                { continue; }
-
-        bool            first       = true;
-        const bool      is_area     = p.IsArea();
-        const size_t    seg_cnt     = N - ( (is_area)   ? 0u    : 1u);
-        //
-        ImVec2          p_tl        {  };
-        ImVec2          p_br        {  };
-
-
-        for (size_t si = 0; si < seg_cnt; ++si)
-        {
-            const VertexID  a_id    = p.verts[si];
-            const VertexID  b_id    = p.verts[(si + 1) % N];
-
-            const Vertex* a = ctx.callbacks.get_vertex(ctx.callbacks.vertices, a_id);
-            const Vertex* b = ctx.callbacks.get_vertex(ctx.callbacks.vertices, b_id);
-            if (!a || !b) continue;
-
-            // WORLD-space cubic control points using effective handles
-            const ImVec2 P0{a->x, a->y};
-            const ImVec2 P3{b->x, b->y};
-
-            const ImVec2 out_eff = a->EffectiveOutHandle(); // {0,0} if linear
-            const ImVec2 in_eff  = b->EffectiveInHandle();  // {0,0} if linear
-
-            const ImVec2 P1{P0.x + out_eff.x, P0.y + out_eff.y};
-            const ImVec2 P2{P3.x + in_eff.x , P3.y + in_eff.y };
-
-            // Choose conservative control-hull AABB (fast) or tight geometry AABB (precise)
-            constexpr bool kUseTightAABB = false; // set true if you prefer tight boxes
-            if (kUseTightAABB)
-                bez::tight_aabb_cubic<ImVec2, float>(P0, P1, P2, P3, p_tl, p_br, first);
-            else
-                bez::hull_aabb_cubic<ImVec2>(P0, P1, P2, P3, p_tl, p_br, first);
-        }
-
-        if (!first) { add_pt(p_tl); add_pt(p_br); }
-    }
-
-    return have_any;
-}*/
-
-/*
 bool Editor::_selection_bounds(ImVec2 & tl, ImVec2 & br, const RenderCTX & ctx) const
 {
-    namespace   bez         = cblib::math::bezier;
-    bool        have_any    = false;
-    auto        add_pt      = [&](const ImVec2 & p)
-    {
-        if ( !have_any )    { tl = br = p; have_any = true; }
+    using               BBox2           = Path::BBox2;
+    bool                have_any        = false;
+    const size_t        N_paths         = this->m_paths.size();
+    //
+    auto                add_pt          = [&](const ImVec2& p) {
+        if (!have_any) { tl = br = p; have_any = true; }
         else {
-            tl.x = std::min(tl.x, p.x);     tl.y = std::min(tl.y, p.y);
-            br.x = std::max(br.x, p.x);     br.y = std::max(br.y, p.y);
+            tl.x = std::min(tl.x, p.x);  tl.y = std::min(tl.y, p.y);
+            br.x = std::max(br.x, p.x);  br.y = std::max(br.y, p.y);
         }
+    };
+    auto                add_box         = [&](const BBox2 & box)
+    {
+        add_pt(ImVec2{ box.min_x, box.min_y });
+        add_pt(ImVec2{ box.max_x, box.max_y });
     };
 
 
-    // A) Vertex anchors (existing behavior)
+    // A) Union all selected vertex anchors (world-space)
     for (VertexID vid : m_sel.vertices)
     {
-        if ( const Vertex * v = find_vertex(m_vertices, vid) )
-            { add_pt(ImVec2{ v->x, v->y }); }
+        if (const Vertex* v = find_vertex(m_vertices, vid)) {
+            add_pt(ImVec2{ v->x, v->y });
+        }
     }
 
-    // B) Path control-hull union (new: captures curvature envelope)
+    // B) Union tight BBox of each selected path (world-space)
     for (PathID pidx : m_sel.paths)
     {
-        if ( pidx >= m_paths.size() )   { continue; }
-        const Path & p = m_paths[pidx];
+        const size_t idx = static_cast<size_t>(pidx);
+        if (idx >= N_paths)     { continue; }
 
-        ImVec2 p_tl{}, p_br{};
-        if ( p.aabb_control_hull(p_tl, p_br, ctx) )
-        {
-            add_pt(p_tl);
-            add_pt(p_br);
-        }
+        const Path & p = this->m_paths[idx];
+            add_box( p.bbox(ctx) );
     }
 
     return have_any;
 }
-}*/
 
 
-//  "_start_bbox_drag"
+//  "_start_bbox_scaling"
 //
-void Editor::_start_bbox_drag(const Editor::BoxDrag::Anchor handle_idx, const ImVec2 tl_exp, const ImVec2 br_exp)
+void Editor::_start_bbox_scaling(const Editor::BoxDrag::Anchor handle_idx, const ImVec2 tl_exp, const ImVec2 br_exp)
 {
     ImGuiIO &       io          = ImGui::GetIO();
 
     m_boxdrag                   = {   };
-    m_boxdrag.active            = true;
+    this->m_boxdrag             .StartScaling();
+    //
     m_boxdrag.first_frame       = true;
     m_boxdrag.handle_idx        = handle_idx;
     m_boxdrag.bbox_tl_ws        = tl_exp;
@@ -831,14 +637,13 @@ void Editor::_start_bbox_drag(const Editor::BoxDrag::Anchor handle_idx, const Im
     m_boxdrag.orig_w            = br_exp.x - tl_exp.x;
     m_boxdrag.orig_h            = br_exp.y - tl_exp.y;
 
+
     m_boxdrag.mouse_ws0         = pixels_to_world(io.MousePos);
     m_boxdrag.handle_ws0        = BoxDrag::AnchorToWorldPos(handle_idx, tl_exp, br_exp);
     m_boxdrag.anchor_ws         = BoxDrag::OppositePivot   (handle_idx, tl_exp, br_exp);
 
 
-//  #ifndef _EDITOR_REDUCE_REDUNDANCY
     m_boxdrag.v_ids             .clear();
-//  #endif  //  _EDITOR_REDUCE_REDUNDANCY  //
     m_boxdrag.v_orig            .clear();
     
     
@@ -862,14 +667,15 @@ void Editor::_start_bbox_drag(const Editor::BoxDrag::Anchor handle_idx, const Im
 
 
 
-//  "_update_bbox"
+//  "_update_bbox_scaling"
 //
-void Editor::_update_bbox(void)
+void Editor::_update_bbox_scaling(void)
 {
+    IM_ASSERT( this->m_boxdrag.IsScaling() );
     //  using           BBAnchor        = BoxDrag::Anchor;
     ImGuiIO &       io                  = ImGui::GetIO();
     
-    if ( !m_boxdrag.active )            { return; }
+    //  if ( !m_boxdrag.scaling )           { return; }
 
 
     //      1.      Read/snaps the mouse in *world* space
@@ -933,12 +739,12 @@ void Editor::_update_bbox(void)
     //      5.      End gesture
     if ( !io.MouseDown[ImGuiMouseButton_Left] )
     {
-        this->m_boxdrag.active        = false;
-        this->m_boxdrag.first_frame   = true;
+        this->m_boxdrag                 .StopScaling();
+        this->m_boxdrag.first_frame     = true;
     }
     else
     {
-        this->m_boxdrag.first_frame   = false;
+        this->m_boxdrag.first_frame     = false;
     }
     
     return;

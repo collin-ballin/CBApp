@@ -568,6 +568,12 @@ inline void from_json(const nlohmann::json & j, Payload & v)
 // *************************************************************************** //
 // *************************************************************************** //
 
+
+
+// *************************************************************************** //
+//      6A. PATH. |        STYLE ABSTRACTIONS.
+// *************************************************************************** //
+
 //  "PathStyle"
 //
 struct PathStyle {
@@ -604,6 +610,101 @@ inline void from_json(const nlohmann::json & j, PathStyle & s)
 
 
 
+
+
+
+// *************************************************************************** //
+//      6B. PATH. |        AUXILIARY ABSTRACTIONS.
+// *************************************************************************** //
+
+
+
+//  "PathCache"
+//
+template <typename T>
+struct PathCache
+{
+    // *************************************************************************** //
+    //      0. |    NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    using                               BBox2                           = cblib::math::BBox2<T>;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      1. |    IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    bool                                valid                           = false;
+    BBox2                               bbox                            {   };
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    //  explicit                        PathCache               (app::AppState & );             //  Def. Constructor.
+    //                                  PathCache               (void) noexcept                 = default;
+    //                                  ~PathCache              (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+    //                                  PathCache               (const PathCache &    src)       = delete;   //  Copy. Constructor.
+    //                                  PathCache               (PathCache &&         src)       = delete;   //  Move Constructor.
+    //  PathCache &                     operator =              (const PathCache &    src)       = delete;   //  Assgn. Operator.
+    //  PathCache &                     operator =              (PathCache &&         src)       = delete;   //  Move-Assgn. Operator.
+    
+    // *************************************************************************** //
+    //      PUBLIC API.                     |   ...
+    // *************************************************************************** //
+    
+    //  "IsValid"
+    [[nodiscard]] inline bool           IsValid                             (void) const noexcept   { return (this->valid == true);     }
+    
+    //  "Validate"
+    inline void                         Validate                            (void) noexcept         { this->valid = true;               }
+    inline void                         Invalidate                          (void) noexcept         { this->valid = false;              }
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "PathCache" INLINE STRUCT DEFINITION.
+
+
+
+
+
+// *************************************************************************** //
+//      6C. PATH. |        PRIMARY "Path_t" CLASS IMPLEMENTATION.
+// *************************************************************************** //
+
 //  "Path_t"  -- (polyline / spline / area).
 //
 //      A sequence of vertex IDs. `closed == true` means the last vertex connects
@@ -611,7 +712,7 @@ inline void from_json(const nlohmann::json & j, PathStyle & s)
 //      only stores ordering and style.
 //
 template< ObjectCFGTraits CFG, typename V_ >
-struct Path_t
+class Path_t
 {
 //      0.          CONSTANTS AND ALIASES...
 // *************************************************************************** //
@@ -630,10 +731,16 @@ public:
     using                               size_type                               = container_type::size_type;
     using                               iterator                                = typename container_type::iterator;
     //
+    //
     //                              OBJECT TYPES:
     using                               Vertex                                  = V_;
     using                               Path                                    = Path_t<CFG, Vertex>;
+    //
+    using                               PathCache                               = PathCache<float>;
+    using                               BBox2                                   = PathCache::BBox2;
+    using                               PathStyle                               = PathStyle;
     using                               Payload                                 = path::Payload;
+    //
     //
     //                              ENUM TYPES:
     using                               PathState                               = path::PathState;
@@ -670,12 +777,13 @@ public:
     container_type                  verts;   // ordered anchor IDs
     path_id                         id                              = 0;
     z_id                            z_index                         = Z_FLOOR_USER;
+    std::string                     label                           = "";
 
     // *************************************************************************** //
     //                          CORE:
     // *************************************************************************** //
     PathStyle                       style                           = PathStyle();
-    std::string                     label                           = "";
+    mutable PathCache               cache                           = {   };
     
     
     // *************************************************************************** //
@@ -749,7 +857,6 @@ public:
     
     
     
-    
     //  "IsLocked"
     [[nodiscard]] inline bool           IsLocked                        (void) const noexcept           { return ( this->locked );                      }
     
@@ -774,6 +881,17 @@ public:
                     ? ( !is_visible  &&  (stroke_is_transparent || fill_is_transparent) )
                     : ( !is_visible  &&  stroke_is_transparent );
     }
+    
+
+
+    //  "IsCacheValid"
+    [[nodiscard]] constexpr bool        IsCacheValid                    (void) const noexcept       { return (this->cache.valid == true);       }
+    
+    //  "ValidateCache"
+    constexpr void                      ValidateCache                   (void) const noexcept       { this->cache.valid = true;                 }
+    constexpr void                      InvalidateCache                 (void) const noexcept       { this->cache.valid = false;                }
+    
+    
     
     //  "SegmentIsCurved"
     //      Curvature rule: segment is curved   iff   a.Out NOT linear  *OR*  b.In NOT linear...
@@ -808,16 +926,8 @@ public:
     //      CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
     
-        
-    
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      PATH OPERATION FUNCTIONS.
-    // *************************************************************************** //
-    
     //  "remove_vertex"
+    //
     inline bool                         remove_vertex                       (vertex_id vid) noexcept
     {
         const size_t        N       = this->size();
@@ -835,6 +945,7 @@ public:
     }
     
     //  "insert_vertex_after"
+    //
     inline iterator                     insert_vertex_after                 (size_t seg_idx, vertex_id new_vid)
         { return verts.insert(verts.begin() + seg_idx + 1, new_vid); }
     
@@ -848,179 +959,145 @@ public:
     //
     //
     // *************************************************************************** //
-    //      ANALYTICAL GEOMETRY FUNCTIONS.
+    //      PATH OPERATION FUNCTIONS.
     // *************************************************************************** //
-        
-    //  "_bezier_eval_ws"
-    /*
-    static inline ImVec2 _bezier_eval_ws(const ImVec2& P0, const ImVec2& P1,
-                                         const ImVec2& P2, const ImVec2& P3, float t) noexcept
-    {
-        const float u   = 1.0f - t;
-        const float uu  = u * u;
-        const float tt  = t * t;
-        const float uuu = uu * u;
-        const float ttt = tt * t;
-
-        ImVec2 r;
-        r.x = uuu * P0.x + 3.0f * uu * t * P1.x + 3.0f * u * tt * P2.x + ttt * P3.x;
-        r.y = uuu * P0.y + 3.0f * uu * t * P1.y + 3.0f * u * tt * P2.y + ttt * P3.y;
-        return r;
-    }
-
-    //  "_quad_unit_roots"
-    //      Solve quadratic a t^2 + b t + c = 0 in (0,1); append valid roots to out[]
+    
+    //  "translate"
     //
-    static inline void _quad_unit_roots(float a, float b, float c, float out[2], int& count) noexcept
+    template<class CTX>
+    inline void                         translate                           (const CTX & ctx, float dx, float dy) noexcept
     {
-        const float     eps     = 1e-8f;
-        count                   = 0;
-
-        if ( fabsf(a) < eps )
+        auto &      cbacks          = ctx.callbacks;
+        
+        // 1) Move all vertices referenced by this path
+        for (vertex_id vid : verts)
         {
-            const float t = -c / b;
-            
-            if ( fabsf(b) < eps )               { return; }
-            if ( (t > 0.0f)  &&  (t < 1.0f) )   { out[count++] = t; }
-            return;
+            if ( Vertex * v = cbacks.get_vertex(cbacks.vertices, vid) ) {
+                v->Translate(dx, dy); 
+            }
         }
 
-        const float D = b*b - 4.0f*a*c;
-        if (D < 0.0f)   { return; }
-
-        const float     sD      = sqrtf(std::max(D, 0.0f));
-        const float     inv2    = 0.5f / a;
-        float           t1      = (-b - sD) * inv2;
-        float           t2      = (-b + sD) * inv2;
-
-        if ( (t1 > 0.0f)  &&  (t1 < 1.0f) )     { out[count++] = t1; }
-        if ( (t2 > 0.0f)  &&  (t2 < 1.0f)  &&  (count == 0 || fabsf(t2 - out[0]) > 1e-6f) )
-            { out[count++] = t2; }
-            
+        // 2) Adjust the cached bbox if it is currently valid
+        if (cache.valid) {
+            cache.bbox.min_x += dx;  cache.bbox.max_x += dx;
+            cache.bbox.min_y += dy;  cache.bbox.max_y += dy;
+            // no further work needed
+        }
+        // else: leave invalid; a later call to bbox(ctx) will rebuild it
+        
         return;
     }
 
-    //  "_aabb_cubic_tight"
-    //      Axis-aligned tight AABB for one cubic segment by analytic extrema (endpoints + interior roots)
+
+    
+    // *************************************************************************** //
     //
-    static inline void _aabb_cubic_tight(const ImVec2 & P0, const ImVec2 & P1,
-                                         const ImVec2 & P2, const ImVec2 & P3,
-                                         ImVec2 & tl_ws, ImVec2 & br_ws, bool & first) noexcept
+    //
+    // *************************************************************************** //
+    //      GEOMETRY OPERATION FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "bbox"
+    //
+    template<class CTX>
+    [[nodiscard]] inline BBox2          bbox                                (const CTX & ctx) const noexcept
     {
-        auto add = [&](const ImVec2 & q)
+        if ( !this->IsCacheValid() )    {
+            this->_bbox(ctx);
+            this->ValidateCache();
+        }
+        
+        return this->cache.bbox;
+    }
+    
+    
+    //  "_bbox"
+    //
+    template<class CTX>
+    inline void                         _bbox                               (const CTX & ctx) const noexcept
+    {
+        namespace           bez             = cblib::math::bezier;
+        const auto &        cbacks          = ctx.callbacks;
+        const size_t        N               = this->size();
+        
+        
+        if (N < 2)                          { this->cache.bbox = { };  return; }
+
+
+        ImVec2              min_ws          {   },
+                            max_ws          {   };
+        bool                first           = true;
+        const bool          is_area         = this->IsArea();
+        const size_t        seg_cnt         = N - (is_area ? 0u : 1u);
+
+        for (size_t si = 0; si < seg_cnt; ++si)
         {
-            if (first)  { tl_ws = br_ws = q; first = false; }
+            const vertex_id     a_id        = static_cast<vertex_id>( this->verts[si]           );
+            const vertex_id     b_id        = static_cast<vertex_id>( this->verts[(si + 1) % N] );
+
+            const Vertex *      a_ptr       = cbacks.cget_vertex( cbacks.vertices, a_id );
+            const Vertex *      b_ptr       = cbacks.cget_vertex( cbacks.vertices, b_id );
+            if ( !a_ptr  ||  !b_ptr )       { continue; }
+            
+            
+            const Vertex &      a           = *(a_ptr);
+            const Vertex &      b           = *(b_ptr);
+            const ImVec2        P0          = a.GetXYPosition();  //  {a->x, a->y};
+            const ImVec2        P3          = b.GetXYPosition();  //  {b->x, b->y};
+
+
+            //      Linear segment → union endpoints
+            if ( a.IsOutLinear()  &&  b.IsInLinear() )
+            {
+                if (first)      { min_ws = max_ws = P0; first = false; }
+                
+                // include P0
+                min_ws.x    = std::min(min_ws.x, P0.x);        min_ws.y     = std::min(min_ws.y, P0.y);
+                max_ws.x    = std::max(max_ws.x, P0.x);        max_ws.y     = std::max(max_ws.y, P0.y);
+                // include P3
+                min_ws.x    = std::min(min_ws.x, P3.x);        min_ws.y     = std::min(min_ws.y, P3.y);
+                max_ws.x    = std::max(max_ws.x, P3.x);        max_ws.y     = std::max(max_ws.y, P3.y);
+            }
+            //
+            //      Quadratic (outgoing endpoint declares it)
+            else if ( a.IsQuadratic() )
+            {
+                const ImVec2 out_eff = a.EffectiveOutHandle();
+                const ImVec2 C       = ImVec2{ P0.x + out_eff.x, P0.y + out_eff.y };
+
+                auto tight = bez::bbox_quadratic_tight<ImVec2, float>(P0, C, P3);
+                const ImVec2 qmin = tight.first;
+                const ImVec2 qmax = tight.second;
+
+                if (first) { min_ws = qmin; max_ws = qmax; first = false; }
+                else {
+                    min_ws.x = std::min(min_ws.x, qmin.x); min_ws.y = std::min(min_ws.y, qmin.y);
+                    max_ws.x = std::max(max_ws.x, qmax.x); max_ws.y = std::max(max_ws.y, qmax.y);
+                }
+            }
+            //
+            //      Cubic (default)
             else
             {
-                tl_ws.x = std::min(tl_ws.x, q.x);  tl_ws.y = std::min(tl_ws.y, q.y);
-                br_ws.x = std::max(br_ws.x, q.x);  br_ws.y = std::max(br_ws.y, q.y);
+                const ImVec2 out_eff = a.EffectiveOutHandle();
+                const ImVec2 in_eff  = b.EffectiveInHandle();
+
+                const ImVec2 P1{ P0.x + out_eff.x, P0.y + out_eff.y };
+                const ImVec2 P2{ P3.x + in_eff.x , P3.y + in_eff.y  };
+
+                bez::bbox_cubic_tight<ImVec2, float>(P0, P1, P2, P3, min_ws, max_ws, first);
             }
-        };
+        }
 
-        add(P0); add(P3);   //  Always include endpoints
 
-        //  For cubic B(t), the derivative component coefficients are quadratic:
-        //
-        //      B'(t)   = 3 * ( a t^2 + b t + c ) ; with,
-        //            a = -P0 + 3P1 - 3P2 + P3
-        //            b = 2*( P0 - 2P1 + P2 )
-        //            c = -P0 + P1
-        //
-        auto deriv_coeffs = [](float p0, float p1, float p2, float p3, float & a, float & b, float & c)
-        {
-            a = (-p0 + 3.0f*p1 - 3.0f*p2 + p3);
-            b = 2.0f*( p0 - 2.0f*p1 + p2 );
-            c = (-p0 + p1);
-        };
-
-        float ax, bx, cx, ay, by, cy;
-        deriv_coeffs( P0.x, P1.x, P2.x, P3.x, ax, bx, cx );
-        deriv_coeffs( P0.y, P1.y, P2.y, P3.y, ay, by, cy );
-
-        float tx[2]; int nx = 0; _quad_unit_roots(ax, bx, cx, tx, nx);
-        float ty[2]; int ny = 0; _quad_unit_roots(ay, by, cy, ty, ny);
-
-        for (int i = 0; i < nx; ++i)    { add( _bezier_eval_ws(P0, P1, P2, P3, tx[i]) ); }
-        for (int i = 0; i < ny; ++i)    { add( _bezier_eval_ws(P0, P1, P2, P3, ty[i]) ); }
+        this->cache.bbox.min_x      = min_ws.x;
+        this->cache.bbox.min_y      = min_ws.y;
+        this->cache.bbox.max_x      = max_ws.x;
+        this->cache.bbox.max_y      = max_ws.y;
         
         return;
     }
-    
-    
-    //  "aabb_geometry_tight"
-    //
-    template <class CTX>
-    inline bool aabb_geometry_tight(const CTX & ctx, ImVec2 & tl_ws, ImVec2 & br_ws) const noexcept
-    {
-        constexpr auto &    cb              = ctx.callbacks; // cb.get_vertex(cb.vertices, id)
-        const size_t        N               = this->size();
-        bool                first           = true;
-        const bool          is_area         = this->IsArea();
-        const size_t        seg_cnt         = N - (is_area ? 0 : 1);
-        
-        
-        if ( N < 2 )        { return false; }
 
-
-        for (size_t si = 0; si < seg_cnt; ++si)
-        {
-            const vertex_id     a_id    = static_cast<vertex_id>( this->verts[si]           );
-            const vertex_id     b_id    = static_cast<vertex_id>( this->verts[(si + 1) % N] );
-
-            const auto* a = cb.get_vertex(cb.vertices, a_id);
-            const auto* b = cb.get_vertex(cb.vertices, b_id);
-            if (!a || !b) continue;
-
-            const ImVec2 P0{ a->x, a->y };
-            const ImVec2 P3{ b->x, b->y };
-            const ImVec2 P1{ a->x + a->m_bezier.out_handle.x, a->y + a->m_bezier.out_handle.y };
-            const ImVec2 P2{ b->x + b->m_bezier.in_handle.x,  b->y + b->m_bezier.in_handle.y  };
-
-            _aabb_cubic_tight(P0, P1, P2, P3, tl_ws, br_ws, first);
-        }
-        return !first;
-    }
-    
-    //  "aabb_control_hull"
-    template <class CTX>
-    inline bool                         aabb_control_hull                   (ImVec2 & tl_ws, ImVec2 & br_ws, const CTX & ctx) const noexcept
-    {
-        const auto &        cb              = ctx.callbacks; // cb.get_vertex(cb.vertices, id)
-        const size_t        N               = this->size();
-        auto                add_pt          = [&](const ImVec2& p) {
-            tl_ws.x = std::min(tl_ws.x, p.x);  tl_ws.y = std::min(tl_ws.y, p.y);
-            br_ws.x = std::max(br_ws.x, p.x);  br_ws.y = std::max(br_ws.y, p.y);
-        };
-        bool                first           = true;
-        auto                init            = [&](const ImVec2& p){ tl_ws = br_ws = p; first = false; };
-
-        const bool          is_area         = this->IsArea();
-        const size_t        seg_cnt         = N - (is_area ? 0 : 1);
-        
-        
-        if ( N < 2 )        { return false; }
-
-
-        for (size_t si = 0; si < seg_cnt; ++si)
-        {
-            const vertex_id     a_id    = static_cast<vertex_id>( this->verts[si]           );
-            const vertex_id     b_id    = static_cast<vertex_id>( this->verts[(si + 1) % N] );
-
-            const auto *        a       = cb.get_vertex(cb.vertices, a_id);
-            const auto *        b       = cb.get_vertex(cb.vertices, b_id);
-            if ( !a || !b )     { continue; }
-
-            const ImVec2 P0{ a->x, a->y };
-            const ImVec2 P3{ b->x, b->y };
-            const ImVec2 P1{ a->x + a->m_bezier.out_handle.x, a->y + a->m_bezier.out_handle.y };
-            const ImVec2 P2{ b->x + b->m_bezier.in_handle.x,  b->y + b->m_bezier.in_handle.y  };
-
-            if (first) { init(P0); }
-            add_pt(P0); add_pt(P1); add_pt(P2); add_pt(P3);
-        }
-        return !first;
-    }*/
-    
 
     
     // *************************************************************************** //
@@ -1046,8 +1123,8 @@ public:
         //  const vertex_id     b_id        = static_cast<vertex_id>( this->verts[ (si + 1) ]   );
 
 
-        const auto *	    a           = cbacks.get_vertex(cbacks.vertices, a_id);
-        const auto *	    b           = cbacks.get_vertex(cbacks.vertices, b_id);
+        const auto *	    a           = cbacks.cget_vertex(cbacks.vertices, a_id);
+        const auto *	    b           = cbacks.cget_vertex(cbacks.vertices, b_id);
         if ( !a  ||  !b )               { return false; }
 
 
@@ -1076,17 +1153,6 @@ public:
     //  "_truncate_label"
     inline void                         _truncate_label                     (void)
         { if (this->label.size() > ms_MAX_PATH_LABEL_LENGTH) { this->label.resize( ms_MAX_PATH_LABEL_LENGTH ); } }
-    
-    
-    //  inline void                         _segment_is_curved                  (const V * a, const V * b) noexcept
-    //  {
-    //      constexpr float eps2 = 1e-8f; // or your ms_BEZIER_NUMERICAL_EPSILON_SQ
-    //      const float o2 = a->m_bezier.out_handle.x * a->m_bezier.out_handle.x
-    //                     + a->m_bezier.out_handle.y * a->m_bezier.out_handle.y;
-    //      const float i2 = b->m_bezier.in_handle.x  * b->m_bezier.in_handle.x
-    //                     + b->m_bezier.in_handle.y  * b->m_bezier.in_handle.y;
-    //      return (o2 > eps2) || (i2 > eps2);
-    //  };
     
     
     //  "make_default_payload"
@@ -1120,7 +1186,7 @@ public:
     template<class CTX>
     inline void                         render_fill_area                    (const CTX & ctx) const noexcept
     {
-        const auto &        callbacks           = ctx.callbacks;
+        const auto &        cbacks              = ctx.callbacks;
         const auto &        args                = ctx.args;
         ImDrawList *        dl                  = args.dl;
         const size_t        N                   = this->size();
@@ -1137,8 +1203,8 @@ public:
         //  Build the pixel-space outline by walking each segment (a -> b)
         for (size_t i = 0; i < N; ++i)
         {
-            const Vertex *      a       = callbacks.get_vertex(     callbacks.vertices,      static_cast<vertex_id>( this->verts[i]            )   );
-            const Vertex *      b       = callbacks.get_vertex(     callbacks.vertices,      static_cast<vertex_id>( this->verts[(i + 1) % N]  )   );
+            const Vertex *      a       = cbacks.cget_vertex(     cbacks.vertices,      static_cast<vertex_id>( this->verts[i]            )   );
+            const Vertex *      b       = cbacks.cget_vertex(     cbacks.vertices,      static_cast<vertex_id>( this->verts[(i + 1) % N]  )   );
             if ( !a  ||  !b )           { continue; }
 
 
@@ -1148,7 +1214,7 @@ public:
             if ( !curved )
             {
                 //  Straight segment: append anchor 'a' in pixel space
-                dl->PathLineTo( callbacks.ws_to_px(ImVec2{ a->x, a->y }) );
+                dl->PathLineTo( cbacks.ws_to_px(ImVec2{ a->x, a->y }) );
             }
             else
             {
@@ -1156,7 +1222,7 @@ public:
                 if ( steps <= 0 )
                 {
                     // Degenerate sampling: fall back to anchor 'a'
-                    dl->PathLineTo( callbacks.ws_to_px(ImVec2{ a->x, a->y }) );
+                    dl->PathLineTo( cbacks.ws_to_px(ImVec2{ a->x, a->y }) );
                 }
                 else
                 {
@@ -1193,8 +1259,8 @@ public:
     }
     
     
-    
     //  "render_highlight"
+    //
     template<class CTX>
     inline void	                        render_highlight                    (const PathStyle & style_, const CTX & ctx) const noexcept
     {
@@ -1208,15 +1274,15 @@ public:
     }
     
     
-    
     //  "render_vertices"
+    //
     template<class CTX, class VStyle>
     inline void	                        render_vertices                     (const CTX & ctx, const VStyle & style_) const noexcept
     {
         const auto &	    cbacks		    = ctx.callbacks;
         for (const vertex_id vid : this->verts)
         {
-            const Vertex *  v	= cbacks.get_vertex( cbacks.vertices, vid );
+            const Vertex *  v	= cbacks.cget_vertex( cbacks.vertices, vid );
             if ( !v )		{ continue; }
 
             v->render(style_);
@@ -1224,14 +1290,16 @@ public:
         return;
     }
     
+    
     //  "render_vertices_all"
+    //
     template<class CTX, class VStyle>
     inline void	                        render_vertices_all                 (const CTX & ctx, const VStyle & style_) const noexcept
     {
         const auto &	    cbacks		    = ctx.callbacks;
         for (const vertex_id vid : this->verts)
         {
-            const Vertex *  v	= cbacks.get_vertex( cbacks.vertices, vid );
+            const Vertex *  v	= cbacks.cget_vertex( cbacks.vertices, vid );
             if ( !v )		{ continue; }
 
             v->render_all(style_);
@@ -1285,12 +1353,13 @@ public:
         // Per your rule: when a segment is Quadratic, we use ONLY the
         // start vertex's out_handle as THE single control point.
         {
+            const auto &    cbacks  = ctx.callbacks;
             const size_t    N       = this->verts.size();
             const auto      vid_a   = this->verts[si];
             const auto      vid_b   = this->verts[(si + 1) % N];
 
-            const auto *    va      = ctx.callbacks.get_vertex(ctx.callbacks.vertices, vid_a);
-            const auto *    vb      = ctx.callbacks.get_vertex(ctx.callbacks.vertices, vid_b);
+            const auto *    va      = cbacks.cget_vertex(cbacks.vertices, vid_a);
+            const auto *    vb      = cbacks.cget_vertex(cbacks.vertices, vid_b);
 
             if (va  &&  vb)
             {
@@ -1340,42 +1409,6 @@ public:
         
         return;
     }
-
-    /*{
-        ImDrawList * dl = ctx.args.dl;
-
-        // Compute control points in WORLD space via your existing helper
-        ImVec2 P0, P1, P2, P3;
-        if (!this->segment_control_points(si, P0, P1, P2, P3, ctx))
-            return;
-
-        // Linear iff effective control points coincide with endpoints
-        const bool linear = (P1.x == P0.x && P1.y == P0.y &&
-                             P2.x == P3.x && P2.y == P3.y);
-
-        const ImVec2 A = ctx.callbacks.ws_to_px(P0);
-        const ImVec2 B = ctx.callbacks.ws_to_px(P3);
-
-        if (linear)
-        {
-            dl->AddLine(A, B,
-                        this->style.stroke_color,
-                        this->style.stroke_width);
-            return;
-        }
-
-        // Non-linear → draw cubic (Quadratic can be emitted as cubic-equivalent here later)
-        const ImVec2 Q1  = ctx.callbacks.ws_to_px(P1);
-        const ImVec2 Q2  = ctx.callbacks.ws_to_px(P2);
-        const int    segs = (ctx.args.bezier_segments > 0) ? ctx.args.bezier_segments : 0; // 0 = ImGui auto
-
-        dl->AddBezierCubic(A, Q1, Q2, B,
-                           this->style.stroke_color,
-                           this->style.stroke_width,
-                           segs);
-    
-        return;
-    }*/
         
         
         
@@ -1572,11 +1605,13 @@ inline void from_json(const nlohmann::json & j, Path_t<CFG, V> & p)
     return;
 }
 
+
+
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "PATH".
+// *************************************************************************** //   END [[ 6.  "PATH" ]].
 
   
 

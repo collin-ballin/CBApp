@@ -312,15 +312,13 @@ inline void Editor::_update_action(const Interaction & /* it */) noexcept
             //
             //      ACTION #3.1 :       GROUP       | DRAGGING A SELECTION.
             case Action::BBoxDrag : {
-                //  switch_action   = ( this->m_movedrag.active );
-                //  switch_action   = ( this->m_dragging );
                 switch_action   = this->IsDraggingSelection();
                 break;
             }
             //      ACTION #3.2 :       GROUP       | SCALING A SELECTION.
             case Action::BBoxScale : {
-                switch_action   = ( this->m_boxdrag.active  &&  this->m_boxdrag.view.hover_idx.has_value() );
-                //  switch_action   = this->IsScalingSelection();
+                //  switch_action   = ( this->m_boxdrag.active  &&  this->m_boxdrag.view.hover_idx.has_value() );
+                switch_action   = this->IsScalingSelection();
                 break;
             }
             //
@@ -383,7 +381,6 @@ void Editor::Begin(const char * /*id*/)
     //
     ImPlotInputMap          backup                  = ImPlot::GetInputMap();                            //  Adjust ImPlot input map (backup, edit, restore at end)
     ImPlotInputMap &        map                     = ImPlot::GetInputMap();
-    //  ImPlotInputMap          m_state.m_backup        = ImPlot::GetInputMap();
     //
     //
     map.Pan                                         = ImGuiMouseButton_Left;
@@ -425,7 +422,7 @@ void Editor::Begin(const char * /*id*/)
         
         //          3.2.    UPDATE THE EDITOR'S CACHE / STORE "PER-FRAME" VALUES IN THE "Interaction" OBJECT FOR THIS FRAME...
         this->_per_frame_cache_begin();
-        this->_selbox_rebuild_view_if_needed(it);   //  NEW: prepares bbox view cache (noop for now)
+        this->_MECH_rebuild_selection_view(it);     //  NEW: prepares bbox view cache (noop for now)
 
 
         //          3.3.    MODE SWITCH BEHAVIORS AND OVERLAY WINDOWS...
@@ -448,8 +445,13 @@ void Editor::Begin(const char * /*id*/)
         if ( enable_main_behavior )       /* if ( !space  &&  it.hovered ) */
         {
             //              3.5A.       PERFORM HIT-DETECTION.
+    #ifndef _EDITOR_REMOVE_MDRAGGING
             if ( it.hovered  &&  !(m_dragging  ||  m_boxdrag.active) )    //  ignore while dragging selection.
+    #else
+            if ( it.hovered  &&  m_boxdrag.IsIdle() )       //  Do *NOT* use Hit-Detection when MOVING/DRAGGING...
+    #endif  //  _EDITOR_REMOVE_MDRAGGING  //
                 { this->_MECH_hit_detection(it); }
+            else    { this->m_sel.clear_hover(); }          //  If HIT-DETECTION is removed, CLEAR the hover-state.
             //
             //  else if ( !space && it.hovered && _mode_has(CBCapabilityFlags_CursorHint) )
             //      { this->_MECH_hit_detection(it); }
@@ -514,15 +516,12 @@ void Editor::Begin(const char * /*id*/)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_selbox_rebuild_view_if_needed"
+//  "_MECH_draw_ui"             formerly named:     "_selbox_rebuild_view_if_needed".
 //
-void Editor::_selbox_rebuild_view_if_needed([[maybe_unused]] const Interaction & it)
+void Editor::_MECH_rebuild_selection_view([[maybe_unused]] const Interaction & it) noexcept 
 {
     using                   A               = BoxDrag::Anchor;
-    //
-    
-    // handles for visuals (expanded)
-    static constexpr A      ms_kOrder[]     = { A::NorthWest, A::North, A::NorthEast, A::East,
+    static constexpr A      ms_kOrder[]     = { A::NorthWest, A::North, A::NorthEast, A::East,      // handles for visuals (expanded)
                                                 A::SouthEast, A::South, A::SouthWest, A::West };
     //
     auto &                  view            = m_boxdrag.view;
@@ -575,23 +574,13 @@ void Editor::_selbox_rebuild_view_if_needed([[maybe_unused]] const Interaction &
 }
 
 
-
-
-
-
-
-
-
-
-
-
 //  "_MECH_update_canvas"       formerly: "_update_cursor_select"
 //
 inline void Editor::_MECH_update_canvas([[maybe_unused]] const Interaction & it)
 {
     GridState &         GS                  = this->m_grid;
     //
-    static bool         show_grid_cache     = !m_grid.visible;
+    static bool         show_grid_cache     = !GS.visible;
     
     
     //      1.      QUERY THE "SHOW GRID" STATUS...
@@ -970,6 +959,75 @@ inline void Editor::_MECH_drive_io(void)
 //
 inline void Editor::_handle_default(const Interaction & it)
 {
+    [[maybe_unused]] ImGuiIO &      io          = ImGui::GetIO();
+    const DragState                 state       = this->m_boxdrag.GetDragState();
+
+
+
+    switch (state)
+    {
+    
+    
+    
+    }
+
+
+
+
+    const bool      start_scaling       = (
+        m_boxdrag.IsMoving()                            &&
+        _mode_has(CBCapabilityFlags_Select)             &&
+        m_boxdrag.view.visible                          &&
+        m_boxdrag.view.hover_idx.has_value()            &&
+        ImGui::IsMouseClicked(ImGuiMouseButton_Left)
+    );
+    
+    
+
+
+    //      1.      EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
+    if ( start_scaling )
+    {
+        //  NOTE:   view.tl_ws/br_ws are already the expanded bbox corners.
+        //  Ensure      _start_bbox_drag treats these as final (i.e., does NOT re-expand).
+        _start_bbox_scaling( *m_boxdrag.view.hover_idx, m_boxdrag.view.tl_ws, m_boxdrag.view.br_ws);
+        
+        return;                                      //     consume click; no lasso this frame
+    }
+
+
+    //      2.      BEGIN BOUNDING-BOX DRAG  [ Update BBox and Exit-Early ]...
+    if ( m_boxdrag.IsScaling() )
+    {
+        _update_bbox_scaling();
+        return;                                      //     while dragging, ignore other inputs
+    }
+
+
+    //      4.      START LASSO TOOL (ONLY IF WE ARE NOT HOVERING OVER A HANDLE OR ANOTHER HIT)...
+    if ( _mode_has(CBCapabilityFlags_Select)            &&
+         !m_lasso_active                                &&
+         it.hovered                                     &&
+         ImGui::IsMouseClicked(ImGuiMouseButton_Left)   &&
+         !m_boxdrag.view.hover_idx.has_value()          &&      //  NEW: don't lasso from over BBox handle
+         !this->m_sel.hovered.has_value() )                     //  keep existing pick test
+    {
+        _start_lasso_tool();
+    }
+
+
+
+    //      5.      UPDATE THE LASSO TOOL...
+    if (m_lasso_active)
+    {
+        _update_lasso(it);
+        return;
+    }
+
+    return;
+}
+/*
+{
     [[maybe_unused]] ImGuiIO & io = ImGui::GetIO();
 
     //      0.      Bezier control-handle drag (Alt + LMB) — unchanged
@@ -981,7 +1039,8 @@ inline void Editor::_handle_default(const Interaction & it)
 
 
     //      1.      EDIT BEZIER CTRL POINTS IN DEFAULT STATE...
-    if ( !m_boxdrag.active                              &&
+    //  if ( !m_boxdrag.active                              &&
+    if ( !m_boxdrag.moving                              &&
          _mode_has(CBCapabilityFlags_Select)            &&
          m_boxdrag.view.visible                         &&
          m_boxdrag.view.hover_idx.has_value()           &&
@@ -989,15 +1048,16 @@ inline void Editor::_handle_default(const Interaction & it)
     {
         //  NOTE:   view.tl_ws/br_ws are already the expanded bbox corners.
         //  Ensure      _start_bbox_drag treats these as final (i.e., does NOT re-expand).
-        _start_bbox_drag( *m_boxdrag.view.hover_idx, m_boxdrag.view.tl_ws, m_boxdrag.view.br_ws);
+        _start_bbox_scaling( *m_boxdrag.view.hover_idx, m_boxdrag.view.tl_ws, m_boxdrag.view.br_ws);
         
         return;                                      //     consume click; no lasso this frame
     }
 
 
     //      2.      BEGIN BOUNDING-BOX DRAG  [ Update BBox and Exit-Early ]...
-    if ( m_boxdrag.active ) {
-        _update_bbox();
+    //  if ( m_boxdrag.active ) {
+    if ( m_boxdrag.scaling ) {
+        _update_bbox_scaling();
         return;                                      //     while dragging, ignore other inputs
     }
 
@@ -1039,7 +1099,7 @@ inline void Editor::_handle_default(const Interaction & it)
     }
 
     return;
-}
+}*/
 
 
 //  "_handle_hand"
