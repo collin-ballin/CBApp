@@ -840,6 +840,11 @@ public:
     // *************************************************************************** //
     //      QUERY FUNCTIONS.
     // *************************************************************************** //
+    
+    //  "size"
+    [[nodiscard]] inline size_type      size                            (void) const noexcept           { return this->verts.size(); }
+
+
 
     //  "IsSelectable"
     [[nodiscard]] inline bool           IsSelectable                    (void) const noexcept           { return ( this->visible  &&  !this->locked );  }
@@ -882,7 +887,7 @@ public:
                     : ( !is_visible  &&  stroke_is_transparent );
     }
     
-
+    
 
     //  "IsCacheValid"
     [[nodiscard]] constexpr bool        IsCacheValid                    (void) const noexcept       { return (this->cache.valid == true);       }
@@ -908,8 +913,8 @@ public:
     //      SETTER / GETTER FUNCTIONS.
     // *************************************************************************** //
     
-    //  "size"
-    [[nodiscard]] inline size_type      size                            (void) const noexcept           { return this->verts.size(); }
+    //  "GetID"
+    [[nodiscard]] inline path_id        GetID                           (void) const noexcept           { return this->id; }
     
         
         
@@ -933,15 +938,14 @@ public:
         const size_t        N       = this->size();
     
         //      CASE 0 :    PREVENT DELETION OF PATH WITH ONLY 1 VERTEX...
-        if ( N <= 1 )   { return false; }
+        if ( N <= 1 )                   { return false; }
     
     
         verts.erase( std::remove(verts.begin(), verts.end(), vid), verts.end() );
         
-        if ( closed && (verts.size() < 3) )     { closed = false; }     // cannot stay a polygon
+        if ( closed && (N < 3) )        { closed = false; }     // cannot stay a polygon
 
-
-        return ( verts.size() >= 2 );
+        return ( N >= 2 );
     }
     
     //  "insert_vertex_after"

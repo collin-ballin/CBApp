@@ -1779,16 +1779,13 @@ struct IndexState_t {
 //  "Selection_t"
 //      PLAIN-OLD-DATA (POD) STRUCT.
 //
-//  template< typename VertexID, typename PointID, typename LineID, typename PathID, typename ZID, typename HitID >
-template <ObjectCFGTraits CFG, typename Vertex>
+template <EditorCFGTraits CFG_>
 struct Selection_t
 {
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    _USE_OBJECT_CFG_ALIASES
-    using                               Hit                     = Hit_t         <hit_id>                ;
-    using                               PathHit                 = PathHit_t     <path_id, vertex_id>    ;
+    _USE_EDITOR_CFG_ALIASES
     
 //
 // *************************************************************************** //
@@ -1832,14 +1829,6 @@ struct Selection_t
                                         Selection_t             (void) noexcept                 = default;
                                         ~Selection_t            (void)                          = default;
     
-    // *************************************************************************** //
-    //      DELETED FUNCTIONS.              |   ...
-    // *************************************************************************** //
-    //                                      Selection_t             (const Selection_t &    src)       = delete;   //  Copy. Constructor.
-    //                                      Selection_t             (Selection_t &&         src)       = delete;   //  Move Constructor.
-    //  Selection_t &                       operator =              (const Selection_t &    src)       = delete;   //  Assgn. Operator.
-    //  Selection_t &                       operator =              (Selection_t &&         src)       = delete;   //  Move-Assgn. Operator.
-    
 //
 // *************************************************************************** //
 // *************************************************************************** //   END "MEMBER FUNCS".
@@ -1870,14 +1859,11 @@ struct Selection_t
     //  inline bool                         is_empty                            (void) const    { return paths.empty();                                             }
     
     
-    
-    
     //  "IsHoveringNonObject"
     [[nodiscard]] inline bool           IsHoveringNonObject                 (void) const noexcept
         { return (this->hovered)  ? (*this->hovered).IsNonObjectHit() : false; }
     [[nodiscard]] inline bool           IsHoveringObject                    (void) const noexcept
         { return (this->hovered)  ? (*this->hovered).IsObjectHit() : false; }
-
 
 
     // *************************************************************************** //
@@ -1890,7 +1876,6 @@ struct Selection_t
     //  "clear_hover"
     inline void                         clear_hover                         (void) noexcept         { this->hovered.reset(); }
     
-    
     //  "clear"
     inline void                         clear                               (void) noexcept
     {
@@ -1898,6 +1883,32 @@ struct Selection_t
         this->vertices  .clear();
         this->points    .clear();
         this->paths     .clear();
+        
+        return;
+    }
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      OPERATION FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "AddPath"
+    //  [[nodiscard]] inline bool           AddPath                             (const Path & p) noexcept
+    inline void                         AddPath                             (const Path & p) noexcept
+    {
+            this->paths.insert( p.GetID() );
+
+            //  for (VertexID vid : p.verts)        // include every vertex + its glyph index
+            //  {
+            //      m_sel.vertices.insert(vid);
+            //      for (size_t gi = 0; gi < m_points.size(); ++gi)
+            //      {
+            //          if (m_points[gi].v == vid)      { m_sel.points.insert(gi); }
+            //      }
+            //  }
         
         return;
     }
@@ -1917,11 +1928,10 @@ struct Selection_t
 
 //      Selection_t     : "to_json"
 //
-//  template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
-template <ObjectCFGTraits CFG, typename Vertex>
-inline void to_json(nlohmann::json & j, const Selection_t<CFG, Vertex> & s)
+template <EditorCFGTraits CFG_>
+inline void to_json(nlohmann::json & j, const Selection_t<CFG_> & s)
 {
-    using   sel         = Selection_t<CFG, Vertex>  ;
+    using   sel         = Selection_t<CFG_>         ; 
     using   vertex_id   = sel::vertex_id            ;
     using   point_id    = sel::point_id             ;
     using   path_id     = sel::path_id              ;
@@ -1940,11 +1950,10 @@ inline void to_json(nlohmann::json & j, const Selection_t<CFG, Vertex> & s)
 
 //      Selection_t     : "from_json"
 //
-//  template<typename VID, typename PtID, typename LID, typename PID, typename ZID, typename HitID>
-template <ObjectCFGTraits CFG, typename Vertex>
-inline void from_json(const nlohmann::json & j, Selection_t<CFG, Vertex> & s)
+template <EditorCFGTraits CFG_>
+inline void from_json(const nlohmann::json & j, Selection_t<CFG_> & s)
 {
-    using   sel         = Selection_t<CFG, Vertex>  ;
+    using   sel         = Selection_t<CFG_>         ;
     using   vertex_id   = sel::vertex_id            ;
     using   point_id    = sel::point_id             ;
     using   path_id     = sel::path_id              ;
@@ -1993,18 +2002,17 @@ static constexpr cblib::EnumArray< DragState, const char * >
 //  "BoxDrag_t"
 //      struct (add fields for handle_ws0, orig_w, orig_h after mouse_ws0)
 //
-template <ObjectCFGTraits CFG, typename Vertex>
+template <EditorCFGTraits CFG_>
 struct BoxDrag_t
 {
     // *************************************************************************** //
     //      NESTED TYPENAME ALIASES.
     // *************************************************************************** //
-    _USE_OBJECT_CFG_ALIASES
+    _USE_EDITOR_CFG_ALIASES
     template<typename T_, typename E_>
     using                               EnumArray                       = cblib::EnumArray<T_, E_>;
     using                               Anchor                          = utl::Anchor;
     //
-    using                               Hit                             = Hit_t         <hit_id>                ;
     using                               PathHit                         = PathHit_t     <path_id, vertex_id>    ;
     
     

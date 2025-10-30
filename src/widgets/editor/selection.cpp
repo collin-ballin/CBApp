@@ -158,7 +158,7 @@ void Editor::_start_bbox_move(const ImVec2 & press_ws)
 inline void Editor::_update_bbox_move(const Interaction & it)
 {
 //    IM_ASSERT( this->m_boxdrag.IsMoving() );
-    
+    using               cblib::math::is_close;
     static bool         press_hit_exists    = false;
     static bool         press_hit_in_sel    = false;
     //
@@ -250,35 +250,42 @@ inline void Editor::_update_bbox_move(const Interaction & it)
     //      3.      PER-FRAME DRAGGING TO UPDATE SELECTION MOVEMENT...
     if ( this->m_boxdrag.IsMoving() )
     {
-        const ImVec2    w_mouse     = pixels_to_world(io.MousePos);
-        ImVec2          delta       { w_mouse.x - m_boxdrag.press_ws.x,    w_mouse.y - m_boxdrag.press_ws.y };
+        constexpr float     s_PATH_DRAG_TOL         = 1e-3;
+        const ImVec2        w_mouse                 = pixels_to_world(io.MousePos);
+        ImVec2              delta                   { w_mouse.x - m_boxdrag.press_ws.x                  , w_mouse.y - m_boxdrag.press_ws.y };
+        //
+        const ImVec2        snapped                 = snap_to_grid({ m_boxdrag.anchor_ws.x + delta.x    , m_boxdrag.anchor_ws.y + delta.y });
+        delta.x                                     = snapped.x - m_boxdrag.anchor_ws.x;
+        delta.y                                     = snapped.y - m_boxdrag.anchor_ws.y;
+        ImVec2              total_delta             { snapped.x - m_boxdrag.anchor_ws.x                 , snapped.y - m_boxdrag.anchor_ws.y };
+        ImVec2              step                    { total_delta.x - m_boxdrag.cum_delta.x, total_delta.y - m_boxdrag.cum_delta.y };   //  incremental step we still need to apply THIS frame
 
-        const ImVec2    snapped     = snap_to_grid({ m_boxdrag.anchor_ws.x + delta.x,     m_boxdrag.anchor_ws.y + delta.y });
-        delta.x                     = snapped.x - m_boxdrag.anchor_ws.x;
-        delta.y                     = snapped.y - m_boxdrag.anchor_ws.y;
+
+        //      3.1.    TRANSLATE EACH PATH IN THE SELECTION  (apply the step once to each selected path).
+        if ( !is_close( step.x, 0.0f, s_PATH_DRAG_TOL )  ||  !is_close( step.y, 0.0f, s_PATH_DRAG_TOL ) )
+        {
+            std::unordered_set<PathID>      moved_paths;
+            moved_paths                     .reserve( m_sel.paths.size() );
         
         
-        ImVec2 total_delta { snapped.x - m_boxdrag.anchor_ws.x,
-                     snapped.y - m_boxdrag.anchor_ws.y };
-
-        // incremental step we still need to apply THIS frame
-        ImVec2 step        { total_delta.x - m_boxdrag.cum_delta.x,
-                             total_delta.y - m_boxdrag.cum_delta.y };
-
-        // apply the step once to each selected path
-        if (step.x != 0.0f || step.y != 0.0f) {
+            //      3.1A.       Move each PATH-OBJECT in the selection.
             for (PathID pid : m_sel.paths) {
                 m_paths[pid].translate(m_render_ctx, step.x, step.y);
             }
-            // update accumulator so next frame knows how much is already applied
-            m_boxdrag.cum_delta = total_delta;
+            
+            //      3.1B.       Move each standalone VERTEX in the selection.       [[ TO-DO ]]:
+            //  for (PathID pid : m_sel.paths) {
+            //      m_paths[pid].translate(m_render_ctx, step.x, step.y);
+            //  }
+            
+            m_boxdrag.cum_delta = total_delta;  //  update accumulator so next frame knows how much is already applied
         }
 
         
         //  for (size_t idx : m_sel.paths)
         //  {
         //      Path &        path            = this->m_paths[idx];
-        //  
+        //
         //      path.translate(this->m_render_ctx, delta.x, delta.y); //    (hl_style, ctx);
         //  }
         
@@ -496,8 +503,7 @@ void Editor::add_hit_to_selection(const Hit & hit)
         }
         //
         //      2.          CLICKED ON "VERTEX".
-        case Hit::Type::Vertex :
-        {
+        case Hit::Type::Vertex : {
             size_t          idx     = hit.index;
             VertexID        vid     = this->m_points[idx].v;
             this->m_sel.points      .insert(idx);
@@ -508,20 +514,21 @@ void Editor::add_hit_to_selection(const Hit & hit)
         //
         //      3.          CLICKED ON "EDGE"  *OR*  "SURFACE".
         case Hit::Type::Edge :
-        case Hit::Type::Surface :
-        {
-            size_t          idx     = hit.index;
-            const Path &    p       = m_paths[idx];
-            m_sel.paths             .insert(idx);
-
-            for (VertexID vid : p.verts)        // include every vertex + its glyph index
-            {
-                m_sel.vertices.insert(vid);
-                for (size_t gi = 0; gi < m_points.size(); ++gi)
-                {
-                    if (m_points[gi].v == vid)      { m_sel.points.insert(gi); }
-                }
-            }
+        case Hit::Type::Surface : {
+            const size_t        idx     = hit.index;
+            const Path &        p       = m_paths[idx];
+            this->m_sel.AddPath(p);
+            
+            
+            //  m_sel.paths             .insert(idx);
+            //  for (VertexID vid : p.verts)        // include every vertex + its glyph index
+            //  {
+            //      m_sel.vertices.insert(vid);
+            //      for (size_t gi = 0; gi < m_points.size(); ++gi)
+            //      {
+            //          if (m_points[gi].v == vid)      { m_sel.points.insert(gi); }
+            //      }
+            //  }
             break;
         }
         //

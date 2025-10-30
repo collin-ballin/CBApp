@@ -182,7 +182,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEBUGGER_WINDOW_FLAGS        = Im
     #define _CBAPP_DEBUG_WINDOWS(X)                                                                                                                         \
 /*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                              DOCKSPACE.                  */      \
 /*|========================================================================================================================================|        */      \
-    X(CBDebugger          , "CBDebugger"                  , true                  , _CBAPP_DEBUGGER_WINDOW_FLAGS        /**/                        )       \
+    X(CBDebugger          , "CBDebugger"                  , false                 , _CBAPP_DEBUGGER_WINDOW_FLAGS        /**/                        )       \
     X(ImGuiMetrics        , "Dear ImGui Metrics/Debugger" , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
     X(ImPlotMetrics       , "ImPlot Metrics"              , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
     X(ImGuiIDStackTool    , "ImGui ID Stack Tool"         , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
@@ -287,7 +287,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEBUGGER_WINDOW_FLAGS        = Im
     X(GraphApp            , "Graph App"                   , DEF_FDTD_APP_VIS      , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       \
 /*                                                                                                                                                  */      \
 /*          MIMIC APP...                                                                                                                            */      \
-    X(MimicApp            , "Mimic App"                   , true                  , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       \
+    X(MimicApp            , "Mimic App"                   , false                 , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       \
 /*                                                                                                                                                  */      \
 /*                                                                                                                                                  */      \
 /*  3.  BASIC TOOLS...                                                                                                                              */      \

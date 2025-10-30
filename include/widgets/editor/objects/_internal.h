@@ -141,6 +141,8 @@ concept ObjectCFGTraits =
 template < typename Vertex_, typename Point_, typename Line_, typename Path_, typename Hit_ >
 struct EditorCFG_t
 {
+    using                           ObjectCFG               = Vertex_::ObjectCFG                                                    ;
+    //
     using                           Vertex                  = Vertex_                                                               ;
     using                           Point                   = Point_                                                                ;
     using                           Line                    = Line_                                                                 ;
@@ -158,19 +160,9 @@ template <class CFG>
 concept EditorCFGTraits =
     requires
     {
-        typename CFG::vertex_id     ;
-        typename CFG::point_id      ;
-        typename CFG::line_id       ;
-        typename CFG::path_id       ;
-        typename CFG::z_id          ;
-        typename CFG::hit_id        ;
+        typename CFG::ObjectCFG             ;
     }                                                               &&
-    std::unsigned_integral  < typename CFG::vertex_id       >       &&
-    std::unsigned_integral  < typename CFG::point_id        >       &&
-    std::unsigned_integral  < typename CFG::line_id         >       &&
-    std::unsigned_integral  < typename CFG::path_id         >       &&
-    std::unsigned_integral  < typename CFG::z_id            >       &&
-    std::unsigned_integral  < typename CFG::hit_id          >;
+    ObjectCFGTraits     <     typename CFG::ObjectCFG       >;
 
 
 

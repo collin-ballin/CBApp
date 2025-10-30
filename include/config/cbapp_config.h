@@ -598,7 +598,7 @@ public:                                                                         
     using                           PathHit                     = PathHit_t         <PathID, VertexID>                                  ;       \
     using                           EndpointInfo                = EndpointInfo_t    <PathID>                                            ;       \
                                                                                                                                         \
-    /*using                           EditorCFG                   = EditorCFG_t       <Vertex>                                            ; */      \
+    using                           EditorCFG                   = EditorCFG_t       <Vertex, Point, Line, Path, Hit>                    ;
 //
 // *************************************************************************** //   _EDITOR_APP_CANVAS_OBJECTS_API
 
@@ -618,9 +618,9 @@ public:                                                                         
     using                           IndexState                  = IndexState_t      <VertexID, PointID, LineID, PathID, ZID, HitID>     ;       \
     /*                                                                                                                                  */      \
     /*      6.      AUXILIARY STATE OBJECTS...                                                                                          */      \
-    using                           BoxDrag                     = BoxDrag_t         <ObjectCFG, Vertex>                                 ;       \
+    using                           BoxDrag                     = BoxDrag_t         <EditorCFG>                                         ;       \
     using                           Clipboard                   = Clipboard_t       <Vertex, Point, Line, Path>                         ;       \
-    using                           Selection                   = Selection_t       <ObjectCFG, Vertex>                                 ;       \
+    using                           Selection                   = Selection_t       <EditorCFG>                                         ;       \
     /*                                                                                                                                  */      \
     /*      7.      TOOL STATE OBJECTS...                                                                                               */      \
     using                           PenState                    = PenState_t        <VertexID>                                          ;       \
@@ -698,6 +698,7 @@ public:                                                                         
 //
 // *************************************************************************** //
 #define                 _USE_OBJECT_CFG_ALIASES                                                                                         \
+    using                           ObjectCFG                   = CFG                                                                   ;       \
     using                           vertex_id                   = CFG::vertex_id                                                        ;       \
     using                           point_id                    = CFG::point_id                                                         ;       \
     using                           line_id                     = CFG::line_id                                                          ;       \
@@ -721,12 +722,25 @@ public:                                                                         
 
 
 
-//      "_EDITOR_CFG_OBJECTS_ALIASES"                |   ** INTERNAL **
+//      "_USE_EDITOR_CFG_ALIASES"                   |   ** INTERNAL **
 //
 // *************************************************************************** //
-#define                 _EDITOR_CFG_OBJECTS_ALIASES                                                                                     \
-    using                           Vertex                      = Vertex_t<vertex_id>                                                   ;       \
-    using                           Path                        = Path_t<path_id, vertex_id, z_id>                                      ;
+#define                 _USE_EDITOR_CFG_ALIASES                                                                                         \
+    using                           ObjectCFG                   = CFG_::ObjectCFG                                                       ;       \
+    using                           EditorCFG                   = CFG_                                                                  ;       \
+                                                                                                                                        \
+    using                           vertex_id                   = typename ObjectCFG::vertex_id                                         ;       \
+    using                           point_id                    = typename ObjectCFG::point_id                                          ;       \
+    using                           line_id                     = typename ObjectCFG::line_id                                           ;       \
+    using                           path_id                     = typename ObjectCFG::path_id                                           ;       \
+    using                           z_id                        = typename ObjectCFG::z_id                                              ;       \
+    using                           hit_id                      = typename ObjectCFG::hit_id                                            ;       \
+                                                                                                                                        \
+    using                           Vertex                      = CFG_::Vertex                                                          ;       \
+    using                           Point                       = CFG_::Point                                                           ;       \
+    using                           Line                        = CFG_::Line                                                            ;       \
+    using                           Path                        = CFG_::Path                                                            ;       \
+    using                           Hit                         = CFG_::Hit                                                             ;
 //
 // *************************************************************************** //   _EDITOR_CFG_OBJECTS_ALIASES
 
