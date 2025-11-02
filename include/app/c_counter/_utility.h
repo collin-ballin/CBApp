@@ -68,13 +68,14 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //  "ccounter" NAMESPACE...
 //
 namespace ccounter {
-    inline static constexpr size_t      BUFFER_SIZE                 = 500;
-    static bool                         enter                       = false;
-    static float                        row_height_px               = 60.0f;
+    inline static constexpr size_t      ms_CMD_BUFFER_SIZE              = 512;
+    //
+    static bool                         enter                           = false;
+    static float                        row_height_px                   = 60.0f;
 //
 //
-    static float                        delay_s                     = 1.0f;                 // command slider
-    static char                         line_buf[512]{};                                    // manual send box
+    static float                        delay_s                         = 1.0f;                 // command slider
+    static char                         line_buf[ms_CMD_BUFFER_SIZE]    {   };                  // manual send box
 //
 //
     static ImGuiInputTextFlags          write_file_flags            = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue;

@@ -44,9 +44,9 @@ static utl::PyStream            proc(app::PYTHON_DUMMY_FPGA_FILEPATH);
 
 //  "ShowCCPlots"
 //
-void CCounterApp::ShowCCPlots(void)
+void CCounterApp::ShowCCPlots(void) noexcept
 {
-    using                           namespace               ccounter;
+    namespace                       cc                      = ccounter;
     std::string                     raw;
     bool                            got_packet              = false;
     //
@@ -70,10 +70,10 @@ void CCounterApp::ShowCCPlots(void)
     // ------------------------------------------------------------
     // 1.  Poll child process and push new points
     // ------------------------------------------------------------
-    while (m_python.try_receive(raw))
+    while ( m_python.try_receive(raw) )
     {
         got_packet = true;
-        if (auto pkt = utl::parse_packet(raw, m_use_mutex_count))
+        if (auto pkt = cc::parse_packet(raw, m_use_mutex_count))
         {
             const auto &counts = pkt->counts;
             for (int i = 0; i < static_cast<int>(ms_NUM); ++i)
@@ -277,7 +277,7 @@ void CCounterApp::ShowCCPlots(void)
                     ImGui::PushID(static_cast<int>(row));
                     if (!buf.empty())
                         utl::ScrollingSparkline(spark_now, m_history_length.value, buf, m_plot_flags,
-                                                m_plot_colors[row], ImVec2(-1, row_height_px), ms_CENTER);
+                                                m_plot_colors[row], ImVec2(-1, cc::row_height_px), ms_CENTER);
                     ImGui::PopID();
                 }
                 
@@ -302,13 +302,14 @@ void CCounterApp::ShowCCPlots(void)
 // *************************************************************************** //
 //
 //
-//  2.  PRIMARY "PLOT" AND "CONTROL" FUNCTIONS...
+//
+//      2.      PRIMARY "PLOT" AND "CONTROL" FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "ShowCCControls"
+//  "TAB_Controls"
 //
-void CCounterApp::ShowCCControls(void)
+void CCounterApp::TAB_Controls(void) noexcept
 {
     //  1.  CONTROL PARAMETERS [FREE-STANDING / TEMPORARY]...
     //      if (ImGui::Button("Toggle All Plots")) {
@@ -369,6 +370,15 @@ void CCounterApp::ShowCCControls(void)
     ImGui::EndChild();
     */
     
+    return;
+}
+
+
+
+//  "TAB_Appearance"
+//
+void CCounterApp::TAB_Appearance(void) noexcept
+{
     return;
 }
 

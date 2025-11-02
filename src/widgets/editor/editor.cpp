@@ -963,13 +963,13 @@ inline void Editor::_handle_default(const Interaction & it)
     const DragState                 state       = this->m_boxdrag.GetDragState();
 
 
-
+    /*
     switch (state)
     {
     
     
     
-    }
+    }*/
 
 
 

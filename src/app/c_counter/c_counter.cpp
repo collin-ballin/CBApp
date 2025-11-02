@@ -55,7 +55,7 @@ void CCounterApp::redo(void) {
 //
 //
 //
-//  1B.     PUBLIC MEMBER FUNCTIONS...
+//      1B.     PUBLIC MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -63,14 +63,14 @@ void CCounterApp::redo(void) {
 //
 void CCounterApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
-    //  1.  CREATING THE HOST WINDOW...
+    //      1.      CREATING THE HOST WINDOW...
     ImGui::Begin(uuid, p_open, flags);
         this->display_plots();
     ImGui::End();
     
     
     
-    //  2.  CREATE TOP WINDOW FOR PLOTS...
+    //      2.      CREATE TOP WINDOW FOR PLOTS...
     if (m_detview_window.open) {
         //ImGui::SetNextWindowClass(&this->m_window_class[1]);
         ImGui::Begin( m_detview_window.uuid.c_str(), nullptr, m_detview_window.flags );
@@ -90,7 +90,7 @@ void CCounterApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 // *************************************************************************** //
 //
 //
-//  2.      PROTECTED MEMBER FUNCTIONS...
+//      2.      PROTECTED MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -208,10 +208,13 @@ void CCounterApp::display_controls(void)
 // *************************************************************************** //
 //
 //
-//  ?.      NEW...
+//
+//      ?.      NEW...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  "_draw_control_bar"
+//
 void CCounterApp::_draw_control_bar(void)
 {
     static constexpr const char *   uuid            = "##Editor_Controls_Columns";
@@ -286,120 +289,16 @@ void CCounterApp::_draw_control_bar(void)
         
         //  5.  Clear Plot.
         ImGui::NextColumn();
-        if ( ImGui::Button("Clear Plot") ) {
+        if ( ImGui::Button("Clear Plot") )
+        {
             for (auto & b : m_buffers) {
                 b.clear(); //b.Erase();
             }
-            std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.f);
+            std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.0f);
         }
-    
-    
-
-    //
-    //
-    //if ( ImGui::Button("Reset Averages") ) {
-    //    for (auto & vec : m_avg_counts)
-    //        vec.clear(); //b.Erase();
-    //}
-    //
-    //ImGui::SameLine();
-    //
-    //if ( ImGui::Button("Reset Max") )
-    //    std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.f);
-    //
-    //ImGui::SameLine();
-    //ImGui::Checkbox("Plot Crawling", &m_smooth_scroll);
-                
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-/*
-        //  2.  GRID VISIBILITY...
-        ImGui::NextColumn();
-        ImGui::Text("Show Grid:");
-        //
-        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
-        ImGui::Checkbox("##Editor_Controls_ShowGrid",           &m_grid.visible);
-
-
-
-        //  3.  SNAP-TO-GRID...
-        ImGui::NextColumn();
-        ImGui::Text("Snap-To-Grid:");
-        //
-        ImGui::Checkbox("##Editor_Controls_SnapToGrid",         &m_grid.snap_on);
         
         
         
-        //  4.  GRID-LINE DENSITY...
-        ImGui::NextColumn();
-        ImGui::Text("Grid Density:");
-        //
-        //
-        //
-        if ( ImGui::ArrowButtonEx("##Editor_Controls_GridDensityDown",      ImGuiDir_Down,
-                          BUTTON_SIZE,                                      BUTTON_FLAGS) )
-        {
-            m_grid.snap_step *= 2.f;
-        }
-        //
-        ImGui::SameLine(0.0f, 0.0f);
-        //
-        if ( ImGui::ArrowButtonEx("##Editor_Controls_GridDensityUp",        ImGuiDir_Up,
-                          BUTTON_SIZE,                                      BUTTON_FLAGS) )
-        {
-            m_grid.snap_step = std::max(ms_GRID_STEP_MIN, m_grid.snap_step * 0.5f);
-        }
-        //
-        ImGui::SameLine();
-        //
-        ImGui::Text("(%.1f)", m_grid.snap_step);
-
-
-
-        //  5.  CANVAS SETTINGS...
-        ImGui::NextColumn();
-        //ImGui::Text("##Editor_Controls_CanvasSettings");
-        ImGui::Text("");
-        //
-        //
-        if ( ImGui::Button("Canvas Settings", WIDGET_SIZE) ) {
-            ImGui::OpenPopup("Editor_CanvasSettingsPopup");
-        }
-        if ( ImGui::BeginPopup("Editor_CanvasSettingsPopup") ) {
-            this->_display_canvas_settings();
-            ImGui::EndPopup();
-        }
-
-
-        
-        //  6.  EMPTY SPACES FOR LATER...
-        for (int i = ImGui::GetColumnIndex(); i < NC - 1; ++i) {
-            ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
-        }
-
-
-
-        //  X.  CLEAR ALL...
-        //ImGui::NextColumn();
-        //ImGui::TextUnformatted("##Editor_Controls_ClearCanvas");
-        ImGui::Text("");
-        if ( ImGui::Button("Clear", WIDGET_SIZE) ) {
-            _clear_all();
-        }
-    */
     //
     //
     //
@@ -417,53 +316,10 @@ void CCounterApp::_draw_control_bar(void)
 // *************************************************************************** //
 //
 //
-//  ?.      UTILITY FUNCTIONS...
+//
+//      ?.      UTILITY FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-
-//  "get_tab"
-//
-utl::Tab_t * CCounterApp::get_ctrl_tab(const std::string & uuid, std::vector<Tab_t> & tabs) {
-    bool            match       = false;
-    const size_t    N           = tabs.size();
-    size_t          idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
-    
-    //  1.  FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
-    for (size_t i = 0; i < N && !match; ++i) {
-        match = ( uuid == tabs[i].uuid );
-        if (match) idx = i;
-    }
-    
-    if (!match)
-        return nullptr;
-    
-    return std::addressof( tabs[idx] );
-}
-
-
-//  "RebuildDockspace"
-//
-void CCounterApp::RebuildDockspace(void)
-{
-    //ImGui::DockBuilderRemoveNode    (this->S.m_dockspace_id);
-    //m_dockspace_id          = ImGui::GetID(m_dockspace_name);
-    
-    //  ImGui::DockSpace(m_dockspace_id,    ImVec2(0.0f, 0.0f),     m_dockspace_flags);
-    //  ImGui::DockBuilderRemoveNode    (m_dockspace_id); // clear any previous layout
-    //  ImGui::DockBuilderAddNode       (m_dockspace_id, ImGuiDockNodeFlags_DockSpace);
-    
-    ImGui::DockBuilderSetNodeSize   (m_dockspace_id, ImVec2(800, 600));
-
-        // Example split: left and right
-        m_dock_ids[1]   = ImGui::DockBuilderSplitNode( m_dockspace_id, ImGuiDir_Down, m_dockspace_ratio,
-                                                       nullptr, &m_dock_ids[0] );
-
-        ImGui::DockBuilderDockWindow(m_win_uuids[0],    m_dock_ids[0]);
-        ImGui::DockBuilderDockWindow(m_win_uuids[1],    m_dock_ids[1]);
-        ImGui::DockBuilderFinish(m_dockspace_id);
-
-    return;
-}
 
 
 
@@ -478,7 +334,8 @@ void CCounterApp::RebuildDockspace(void)
 // *************************************************************************** //
 //
 //
-//  3.      PRIVATE MEMBER FUNCTIONS...
+//
+//      3.      PRIVATE MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -488,28 +345,39 @@ void CCounterApp::RebuildDockspace(void)
 float CCounterApp::ComputeAverage(const buffer_type &buf, AvgMode mode,
                                   ImU64 N_samples, double seconds, float now) const
 {
-    const std::size_t sz = buf.size();
-    if (sz == 0) return 0.f;
+    const std::size_t   size        = buf.size();
+    float               sum         = 0.0f;
+    std::size_t         count       = 0;
+    
+    
+    
+    if (size == 0)      { return 0.0f; }
 
-    float sum = 0.f;
-    std::size_t cnt = 0;
 
-    if (mode == AvgMode::Samples) {
-        const ImU64 N = std::min<ImU64>(N_samples, sz);
-        const std::size_t start = sz - static_cast<std::size_t>(N);
-        for (std::size_t i = start; i < sz; ++i) {
+
+    //      CASE 1 :    COUNT-BASED AVERAGE...
+    if (mode == AvgMode::Samples)
+    {
+        const ImU64         N       = std::min<ImU64>(N_samples, size);
+        const std::size_t   start   = size - static_cast<std::size_t>(N);
+        for (std::size_t i = start; i < size; ++i) {
             sum += buf[i].y;
-            ++cnt;
-        }
-    } else { // AvgMode::Seconds
-        for (std::size_t i = sz; i-- > 0; ) {
-            const float dt = now - buf[i].x;
-            if (dt > seconds) break;
-            sum += buf[i].y;
-            ++cnt;
+            ++count;
         }
     }
-    return cnt ? sum / static_cast<float>(cnt) : 0.f;
+    //
+    //      CASE 2 :    TIME-BASED AVERAGE...
+    else
+    {
+        for (std::size_t i = size; i-- > 0; )
+        {
+            const float     dt      = now - buf[i].x;
+            if (dt > seconds)       { break; }
+            sum += buf[i].y;
+            ++count;
+        }
+    }
+    return (count)    ? sum / static_cast<float>(count)     : 0.0f;
 }
 
 

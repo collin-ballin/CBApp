@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 #############################################################################################
-#   setup_cbapp – one-click bootstrap for Collin’s Dear ImGui project               #
 #                                                                                           #
 #   SECTIONS:                                                                               #
 #       1.  Initial safeguards & helpers                                                    #
@@ -9,8 +8,8 @@
 #       4.  Ensure build/ dir, then run CMake                                               #
 #       5.  Completion                                                                      #
 #                                                                                           #
-#  USAGE:                                                                                   #
-#       ./setup_cbapp.sh [--branch <name>] [--force]                                   #
+#   USAGE:                                                                                  #
+#       ./setup_cbapp.sh [--branch <name>] [--force]                                        #
 #                                                                                           #
 #############################################################################################
 #  TO-DO:                                                                                   #

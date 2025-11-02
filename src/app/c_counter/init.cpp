@@ -25,7 +25,8 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 //
 //
-//  1.      INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
+//
+//      1.      INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -55,45 +56,38 @@ void CCounterApp::initialize(void)
 //
 void CCounterApp::init(void)
 {
-    //  ms_I_PLOT_COL_WIDTH                                        *= S.m_dpi_scale;
-    //  ms_SPACING                                                 *= S.m_dpi_scale;
-    //  m_mst_plot_slider_height                                   *= S.m_dpi_scale;
-    //  m_mst_plot_height                                          *= S.m_dpi_scale;
-    //  ms_COLLAPSE_BUTTON_SIZE.x                                *= S.m_dpi_scale;
-    //  ms_COLLAPSE_BUTTON_SIZE.y                                *= S.m_dpi_scale;
-    m_cmap                                                      = ImPlot::GetColormapIndex("CCounter_Map");
+    m_cmap                                                          = ImPlot::GetColormapIndex("CCounter_Map");
     
     
     //  1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
-    m_window_class[0].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
-    m_window_class[1].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar;      //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
-    
-    
-    std::snprintf(m_filepath, ms_BUFFER_SIZE, "%s", app::PYTHON_DUMMY_FPGA_FILEPATH);
+    m_window_class[0].DockNodeFlagsOverrideSet                      = ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
+    m_window_class[1].DockNodeFlagsOverrideSet                      = ImGuiDockNodeFlags_HiddenTabBar;      //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     
         
         
     //  2.      DEFAULT TAB OPTIONS...
-    static ImGuiTabItemFlags        ms_DEF_PLOT_TAB_FLAGS       = ImGuiTabItemFlags_None;
-    static ImGuiTabItemFlags        ms_DEF_CTRL_TAB_FLAGS       = ImGuiTabItemFlags_None;
+    static ImGuiTabItemFlags        ms_DEF_PLOT_TAB_FLAGS           = ImGuiTabItemFlags_None;
+    static ImGuiTabItemFlags        ms_DEF_CTRL_TAB_FLAGS           = ImGuiTabItemFlags_None;
+    static ImGuiTabItemFlags        ms_DEF_APPEARANCE_TAB_FLAGS     = ImGuiTabItemFlags_None;
     
     
     //  3A.     TABS FOR PLOT WINDOW...
     ms_PLOT_TABS                                                = {
     //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
-        Tab_t(  "C-Counter Plots",          true,           true,               ms_DEF_PLOT_TAB_FLAGS,          nullptr)
+        Tab_t(  "C-Counter Plots",          true,           true,               ms_DEF_PLOT_TAB_FLAGS,          nullptr     )
     };
     
 
     //  4A.     TABS FOR CONTROL WINDOW...
     ms_CTRL_TABS                                                = {
-    //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
-        Tab_t(  "C-Counter Controls",       true,           true,               ms_DEF_CTRL_TAB_FLAGS,          nullptr)
+    //            TAB NAME.                   OPEN.         NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
+          Tab_t(  "Controls",                 true,         true,               ms_DEF_CTRL_TAB_FLAGS,          nullptr     )
+        , Tab_t(  "Appearance",               true,         true,               ms_DEF_APPEARANCE_TAB_FLAGS,    nullptr     )
     };
     
     
     //  3B.     ASSIGN THE CALLBACK RENDER FUNCTIONS FOR EACH PLOT TAB...
-    for (std::size_t i = 0; i < ms_PLOT_TABS.size(); ++i) {
+    for (size_t i = 0; i < ms_PLOT_TABS.size(); ++i) {
         auto &      tab                     = ms_PLOT_TABS[i];
         ms_PLOT_TABS[i].render_fn           = [this, tab]([[maybe_unused]] const char * id, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
                                               { this->dispatch_plot_function( tab.uuid ); };
@@ -163,7 +157,7 @@ void CCounterApp::dispatch_plot_function(const std::string & uuid)
     if (!match) return;
     
     
-    //  DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
+    //      DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
     switch (idx)
     {
         //      0.  Model PARAMETERS...
@@ -191,23 +185,29 @@ void CCounterApp::dispatch_ctrl_function(const std::string & uuid)
     size_t          idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
 
     //  1.  FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
-    for (size_t i = 0; i < N && !match; ++i) {
+    for (size_t i = 0; i < N && !match; ++i)
+    {
         match = ( uuid == ms_CTRL_TABS[i].uuid );
-        if (match) idx = i;
+        if (match)  { idx = i; }
     }
     if (!match) return;
     
     
     
-    //  DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
+    //      DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
     switch (idx)
     {
-        //      0.  Model PARAMETERS...
+        //      0.      CCounter CONTROLS...
         case 0:         {
-            this->ShowCCControls();
+            this->TAB_Controls();
             break;
         }
         //
+        //      1.      CCounter APPEARANCE SETTINGS...
+        case 1:         {
+            this->TAB_Appearance();
+            break;
+        }
         //
         //
         default: {
@@ -257,19 +257,21 @@ void CCounterApp::DefaultCtrlTabRenderFunc([[maybe_unused]] const char * uuid, [
 //
 void CCounterApp::init_ctrl_rows(void)
 {
-    using namespace ccounter;
+    namespace                       cc                  = ccounter;
+    namespace                       fs                  = std::filesystem;
     
     //  INTERACTIVE VARIABLES...
-    static ImGuiSliderFlags             SLIDER_FLAGS            = ImGuiSliderFlags_AlwaysClamp;
+    static ImGuiSliderFlags         SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;
 
-    constexpr float                     margin                  = 0.75f;
-    constexpr float                     pad                     = 10.0f;
-
-
+    constexpr float                 margin              = 0.75f;
+    constexpr float                 pad                 = 10.0f;
 
 
 
-
+    std::snprintf( m_filebuffer, ms_MSG_BUFFER_SIZE, "%s", this->m_filepath.string().c_str() );
+    
+    
+        
     ms_CTRL_ROWS            = {
     //
     //  1.  CONTROL PARAMETERS [TABLE]...
@@ -278,17 +280,28 @@ void CCounterApp::init_ctrl_rows(void)
             //
             //  1.  PYTHON-SCRIPT FILEPATH FIELD...
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
-                enter   = ImGui::InputText("##PyFilepath", m_filepath, ms_BUFFER_SIZE, write_file_flags);
+                cc::enter   = ImGui::InputText("##PyFilepath", m_filebuffer, ms_MSG_BUFFER_SIZE, cc::write_file_flags);
+                //
+                //
+                //
                 ImGui::SameLine(0.0f, pad);
                 //
-                if (enter)
+                if (cc::enter)
                 {
-                    if ( utl::file_exists(m_filepath) ) {
-                        std::snprintf(m_filepath, ms_BUFFER_SIZE, "%s", "INVALID FILEPATH");
-                        enter = false;
-                    }
-                    else {
+                    this->m_filepath        = fs::path{ this->m_filebuffer };
+                    const bool valid_file   = ( !this->m_filepath.empty() && fs::exists(this->m_filepath) && fs::is_regular_file(this->m_filepath) );
+                    //
+                    //
+                    if ( valid_file ) {
                         m_python.set_filepath(m_filepath);
+                    }
+                    else
+                    {
+                        cc::enter = false;
+                        //  std::snprintf(m_filepath, ms_MSG_BUFFER_SIZE, "%s", "INVALID FILEPATH");
+                        
+                        this->m_filepath        = fs::path{   };
+                        this->S.m_logger.debug( std::format("CCounter | invalid filepath, \"{}\"", this->m_filepath.string()) );
                     }
                 }
                 //
@@ -306,7 +319,7 @@ void CCounterApp::init_ctrl_rows(void)
                                 ImGui::OpenPopup("launch_error");
                             }
                             else {
-                                m_max_counts[0] = 0.f; // reset stats
+                                m_max_counts[0] = 0.0f; // reset stats
                             }
                         }
                     }
@@ -335,8 +348,8 @@ void CCounterApp::init_ctrl_rows(void)
                 }
                 //
                 if (m_process_running)    {
-                    char cmd[ms_BUFFER_SIZE];
-                    std::snprintf(cmd, ms_BUFFER_SIZE, "integration_window %.3f\n", m_integration_window.value);
+                    char cmd[ms_MSG_BUFFER_SIZE];
+                    std::snprintf(cmd, ms_MSG_BUFFER_SIZE, "integration_window %.3f\n", m_integration_window.value);
                     m_python.send(cmd);
                 }
             //
@@ -351,19 +364,19 @@ void CCounterApp::init_ctrl_rows(void)
                 //
                 //
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
-                if ( ImGui::InputText("##send", line_buf, IM_ARRAYSIZE(line_buf),  ImGuiInputTextFlags_EnterReturnsTrue) )   {
+                if ( ImGui::InputText("##send", cc::line_buf, cc::ms_CMD_BUFFER_SIZE,  ImGuiInputTextFlags_EnterReturnsTrue) )   {
                     if (m_process_running)    {
-                    char cmd[ms_BUFFER_SIZE];
-                        std::snprintf(cmd, ms_BUFFER_SIZE, "integration_window %.3f\n", delay_s);
+                    char cmd[ms_MSG_BUFFER_SIZE];
+                        std::snprintf(cmd, ms_MSG_BUFFER_SIZE, "integration_window %.3f\n", cc::delay_s);
                         m_python.send(cmd);
                     }
                 }
                 ImGui::SameLine(0.0f, pad);
                 if ( ImGui::Button("Send", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) || ImGui::IsItemDeactivatedAfterEdit() )
                 {
-                    if (m_process_running && line_buf[0]) {
-                        m_python.send(line_buf);        // passthrough; must include \n if desired
-                        line_buf[0]     = '\0';
+                    if (m_process_running && cc::line_buf[0]) {
+                        m_python.send(cc::line_buf);        // passthrough; must include \n if desired
+                        cc::line_buf[0]     = '\0';
                     }
                 }
                 ImGui::Dummy( ImVec2(pad, 0.0f) );
@@ -385,8 +398,8 @@ void CCounterApp::init_ctrl_rows(void)
                                         &m_coincidence_window.limits.min, &m_coincidence_window.limits.max,  "%llu ticks", SLIDER_FLAGS) )
                 {
                     if (m_process_running)    {
-                        char cmd[ms_BUFFER_SIZE];
-                        std::snprintf(cmd, ms_BUFFER_SIZE, "coincidence_window %llu\n", m_coincidence_window.value);
+                        char cmd[ms_MSG_BUFFER_SIZE];
+                        std::snprintf(cmd, ms_MSG_BUFFER_SIZE, "coincidence_window %llu\n", m_coincidence_window.value);
                         m_python.send(cmd);
                     }
                 }
@@ -399,15 +412,15 @@ void CCounterApp::init_ctrl_rows(void)
                 if ( ImGui::SliderScalar("##IntegrationWindow",          ImGuiDataType_Double,       &m_integration_window.value,
                                     &m_integration_window.limits.min,     &m_integration_window.limits.max,     "%.3f seconds", SLIDER_FLAGS) ) {
                     if (m_process_running) {
-                        char cmd[ms_BUFFER_SIZE];
-                        std::snprintf(cmd, ms_BUFFER_SIZE, "integration_window %.3f\n", m_integration_window.value);
+                        char cmd[ms_MSG_BUFFER_SIZE];
+                        std::snprintf(cmd, ms_MSG_BUFFER_SIZE, "integration_window %.3f\n", m_integration_window.value);
                         m_python.send(cmd);
                     }
                 }
                 ImGui::SameLine(0.0f, pad);
                 if (ImGui::Button("Apply", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
-                    char cmd[ms_BUFFER_SIZE];
-                    std::snprintf(cmd, ms_BUFFER_SIZE, "integration_window %.3f\n", delay_s);
+                    char cmd[ms_MSG_BUFFER_SIZE];
+                    std::snprintf(cmd, ms_MSG_BUFFER_SIZE, "integration_window %.3f\n", cc::delay_s);
                     m_python.send(cmd);
                 }
                 ImGui::Dummy( ImVec2(pad, 0.0f) );
@@ -514,7 +527,7 @@ void CCounterApp::init_ctrl_rows(void)
         {"Individual Plot Height",              []
             {
                 ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-                ImGui::SliderFloat("##SinglePlotHeight",    &row_height_px,         30.f,   240,  "%.0f px",  SLIDER_FLAGS);
+                ImGui::SliderFloat("##SinglePlotHeight",    &cc::row_height_px,         30.f,   240,  "%.0f px",  SLIDER_FLAGS);
             }
         },
     //
@@ -536,7 +549,8 @@ void CCounterApp::init_ctrl_rows(void)
                     //ImPlot::BustColorCache(cc::heatmap_uuid);
                 }
                 //ImPlot::PushColormap(m_cmap);
-            }}
+            }
+        }
     };
 
 
