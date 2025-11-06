@@ -364,24 +364,24 @@ protected:
     // *************************************************************************** //
     //      SERIALIZATION STUFF...
     // *************************************************************************** //
-    cb::FileDialog::Initializer         m_SAVE_DIALOG_DATA              = {
-        /* type               = */  cb::FileDialogType::Save,
+    FileDialog::Initializer             m_SAVE_DIALOG_DATA              = {
+        /* type               = */  FileDialog::Type::Save,
         /* window_name        = */  "Save Editor Session",
         /* default_filename   = */  "canvas_settings.json",
         /* required_extension = */  "json",
         /* valid_extensions   = */  {".json", ".txt"},
         /* starting_dir       = */  std::filesystem::current_path()
     };
-    cb::FileDialog::Initializer         m_OPEN_DIALOG_DATA              = {
-        /* type               = */  cb::FileDialogType::Open,
+    FileDialog::Initializer         m_OPEN_DIALOG_DATA              = {
+        /* type               = */  FileDialog::Type::Open,
         /* window_name        = */  "Open Editor Session",
         /* default_filename   = */  "",
         /* required_extension = */  "",
         /* valid_extensions   = */  {".json", ".cbjson", ".txt"},
         /* starting_dir       = */  std::filesystem::current_path()
     };
-    cb::FileDialog                      m_save_dialog;
-    cb::FileDialog                      m_open_dialog;
+    FileDialog                          m_save_dialog;
+    FileDialog                          m_open_dialog;
     //  std::filesystem::path               m_filepath                      = {"../../assets/.cbapp/presets/editor/editor-fdtd_v0.json"};
     
     // *************************************************************************** //

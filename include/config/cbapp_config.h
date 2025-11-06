@@ -440,6 +440,7 @@ public:                                                                         
     using               LabelFn                         = std::function<void(const char *)>                     ;   \
                                                                                                                     \
                                                                                                                     \
+    using               FileDialog                      = cb::FileDialog                                        ;   \
     using               Orchid                          = cblib::containers::Orchid                             ;   \
     using               OrchidAction                    = Orchid::smart_pointer                                 ;   \
                                                                                                                     \

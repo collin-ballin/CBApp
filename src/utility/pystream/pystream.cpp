@@ -15,6 +15,28 @@
 #include <cstring>
 
 
+#ifdef _WIN32
+//
+    #ifndef _WIN32_WINNT
+    #define _WIN32_WINNT 0x0600     //  for CancelSynchronousIo on Vista+
+    #endif
+    #include <windows.h>
+    //  no POSIX headers on Windows
+//
+# else
+//
+    #include <unistd.h>             //  fork, execvp, pipe, dup2, read, write, close
+    #include <fcntl.h>              //  fcntl, FD_CLOEXEC, O_CLOEXEC
+    #include <sys/types.h>          //  pid_t
+    #include <sys/wait.h>           //  waitpid, WIFEXITED, WEXITSTATUS, WIFSIGNALED, WTERMSIG
+    #include <errno.h>              //  errno, EINTR, EAGAIN, EWOULDBLOCK, EPIPE
+//
+#endif  //  _WIN32  //
+
+
+
+
+
 
 namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
@@ -22,6 +44,59 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 
 
 
+//      0.      STATIC INLINE HELPER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+//
+#ifdef _WIN32
+
+//  "s_utf8_to_wide"
+//
+static inline std::wstring s_utf8_to_wide(const std::string & s)
+{
+    int             n       = -1;
+    std::wstring    w;
+    
+    if ( s.empty() )    { return {}; }
+    
+    n       = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
+    w       = ( (n)     ? n - 1     : 0, L'\0' );               //  exclude the null terminator
+    if ( n )            { MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, w.data(), n); }
+    
+    return w;
+}
+
+//  "s_quote_if_needed"
+//
+static inline std::wstring s_quote_if_needed(const std::wstring & s)
+{
+    return (s.find_first_of(L" \t\"") == std::wstring::npos) ? s : L"\"" + s + L"\"";
+}
+
+
+
+#endif  //  _WIN32  //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 0.  "STATIC UTILS." ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
 //      1.      INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -50,7 +125,7 @@ PyStream::~PyStream(void)
 //
 //
 //
-//      1B.     PUBLIC MEMBER FUNCTIONS...
+//      1B.     MAIN PUBLIC MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -104,37 +179,77 @@ bool PyStream::start(void)
 void PyStream::stop(void)
 #ifdef PYSTREAM_REFACTOR
 {
-    if ( !this->m_running.exchange(false) )   { return; }     // already stopped
+    if ( !this->m_running.exchange(false) )     { return; }       //  already stopped
 
 #ifdef _WIN32
-    //      1.      Cancel the blocked ReadFile in the reader thread (if any)
+    //      1.      [ _WIN32 ] :    CANCEL THE BLOCKED "ReadFile" IN THE READER-THREAD (IF ANY)...
     if ( this->m_reader_thread.joinable() ) {
         ::CancelSynchronousIo( (HANDLE)this->m_reader_thread.native_handle() );     //  native_handle() is a HANDLE on Windows
     }
 
-    //      2.      Terminate child and wait briefly for it to exit
+
+    //      2.      [ _WIN32 ] :    TERMINATE CHILD PROCESS AND WAIT FOR IT TO EXIT;  COLLECT EXIT_CODE AND SIGNAL...
     if ( this->m_proc_info.hProcess )
     {
-        TerminateProcess(this->m_proc_info.hProcess, 0);
-        WaitForSingleObject(this->m_proc_info.hProcess, 5000);
-        CloseHandle(this->m_proc_info.hProcess);      this->m_proc_info.hProcess = nullptr;
-        CloseHandle(this->m_proc_info.hThread);       this->m_proc_info.hThread  = nullptr;
-    }
+        DWORD                           code        = 0;
+        [[maybe_unused]] const BOOL     kill_ok     = ::TerminateProcess    (this->m_proc_info.hProcess , 0) ;
+        const DWORD                     wait_rc     = ::WaitForSingleObject (this->m_proc_info.hProcess , PyStream::ms_PROCESS_TIMEOUT_MS );
+    
+        //      2A.     DESTROY THE CHILD.  CORRUPT THEM ALL.
+        switch ( wait_rc )
+        {
+            //      CASE 0 :        Child dies within the timeout duration.
+            case WAIT_OBJECT_0 :    { break; }
+            //
+            //      CASE 1 :        Child is STILL ALIVE beyond the timeout duration.
+            case WAIT_TIMEOUT  :    { /* ::TerminateProcess(...); ::WaitForSingleObject(..., INFINITE); */  break; }
+            //
+            //      CASE 2 :        Child is STILL ALIVE beyond the timeout duration.
+            case WAIT_FAILED   :    { /* log GetLastError(); proceed to close handles */                    break; }
+            //
+            //
+            //      DEFAULT :       Defensive Default Case.
+            default            :    {  break; }
+        }
+    
+        if ( ::GetExitCodeProcess(this->m_proc_info.hProcess, &code) )   { this->m_last_exit_code.store((int)code); }
+        else                                                             { this->m_last_exit_code.store(-1); }
 
-    //      3.      Close our pipe ends (idempotent)
+        ::CloseHandle(this->m_proc_info.hProcess);   this->m_proc_info.hProcess = nullptr;
+        ::CloseHandle(this->m_proc_info.hThread );   this->m_proc_info.hThread  = nullptr;
+    }
+    //  this->m_last_term_sig.store(0);     //  ** DO NOT UN-COMMENT **     (No m_last_term_sig on Windows).
+
+
+    //      3.      [ _WIN32 ] :    CLOSE OUR PIPE-ENDS (idempotent)...
     if (this->m_child_stdin_w)      { CloseHandle(this->m_child_stdin_w);   this->m_child_stdin_w  = nullptr; }
     if (this->m_child_stdout_r)     { CloseHandle(this->m_child_stdout_r);  this->m_child_stdout_r = nullptr; }
-#else
+//
+//
+# else
+//
+//
+    //      1.      [ POSIX ] :     TERMINATE & COLLECT EXIT-STATUS...
     if ( this->m_child_pid > 0 )
     {
-        kill(this->m_child_pid, SIGTERM);
-        waitpid(this->m_child_pid, nullptr, 0);
+        int     status      = 0;
+        ::kill(this->m_child_pid, SIGTERM);
+        ::waitpid(this->m_child_pid, &status, 0);
+
+        if      ( WIFEXITED(status) )           { this->m_last_exit_code.store(WEXITSTATUS(status))     ; this->m_last_term_sig.store(0);                   }
+        else if ( WIFSIGNALED(status) )         { this->m_last_exit_code.store(-1)                      ; this->m_last_term_sig.store(WTERMSIG(status));    }
+        else                                    { this->m_last_exit_code.store(-1)                      ; this->m_last_term_sig.store(0);                   }
         this->m_child_pid = -1;
     }
-    if ( this->m_child_stdin_fd  != -1 )        { close(this->m_child_stdin_fd);        this->m_child_stdin_fd  = -1; }
-    if ( this->m_child_stdout_fd != -1 )        { close(this->m_child_stdout_fd);       this->m_child_stdout_fd = -1; }
+    
+    //      2.      [ POSIX ] :     CLOSE OUR PIPE-ENDS (idempotent)...
+    if ( this->m_child_stdin_fd  != -1 )        { ::close( this->m_child_stdin_fd  );   this->m_child_stdin_fd  = -1; }
+    if ( this->m_child_stdout_fd != -1 )        { ::close( this->m_child_stdout_fd );   this->m_child_stdout_fd = -1; }
+//
+//
 #endif  //  _WIN32  //
 
+    //      4.      JOIN READER & CLEAR QUEUE...
     if ( this->m_reader_thread.joinable() )     { this->m_reader_thread.join(); }
 
     std::lock_guard<std::mutex>     lock    (this->m_queue_mutex);
@@ -234,54 +349,91 @@ bool PyStream::try_receive(std::string & out)
 void PyStream::reader_thread_func(void)
 #ifdef PYSTREAM_REFACTOR
 {
-    std::string     buf;
-    char            ch      = '\0';
-    ssize_t         n       = 0;
+    constexpr size_t            BSIZE       = PyStream::ms_READ_BUFFER_SIZE;
+    static thread_local char    s_buffer    [BSIZE];
+    //
+    std::string                 line        = {   };        //     accumulates current line (without '\n')
+    char                        ch          = '\0';
+#ifdef _WIN32
+    DWORD                       n           = 0;
+# else
+    ssize_t                     n           = 0;
+#endif  //  _WIN32  //
+    line.reserve(BSIZE);
     
-    
-    buf.reserve(this->ms_READ_BUFFER_SIZE);
-
 
 #ifdef _WIN32
-    DWORD           nread;
-    while ( m_running.load() )
+    while ( this->m_running.load() )
     {
-        const bool      good_read   = ReadFile(this->m_child_stdout_r, &ch, 1, &nread, nullptr);
+        const BOOL  ok      = ReadFile(m_child_stdout_r, s_buffer, static_cast<DWORD>(BSIZE), &n, nullptr);
         
-        if ( !good_read  ||  nread == 0 )   { break;    }
-        if ( ch == '\r' )                   { continue; }              //   normalize CRLF -> LF
-        if (ch == '\n') {
-            std::lock_guard<std::mutex>     lock    (this->m_queue_mutex);
-            this->m_recv_queue              .emplace_back(std::move(buf));
-            buf.clear();
-        }
-        else { buf.push_back(ch); }
-    }
-#else
-    while ( m_running.load() )
-    {
-        n   = ::read(m_child_stdout_fd, &ch, 1);
-        
-        if ( n <= 0 )           { break; }
-        if ( ch == '\n' )
+        if ( !ok || n == 0 )            { break; }  //  CASE 1 :    BREAK LOOP ON EOF or ERROR...
+         
+        //      2.      ITERATE THRU INPUT...
+        for (DWORD i = 0; i < n; ++i)
         {
-            std::lock_guard<std::mutex>     lock    (this->m_queue_mutex);
-            this->m_recv_queue              .emplace_back(std::move(buf));
-            buf.clear();
-        }
-        else { buf.push_back(ch); }
-    }
-#endif  //  _WIN32  //
-
-    //  Flush final unterminated line on EOF
-    if ( !buf.empty() )
+            ch = s_buffer[i];
+            
+            switch (ch)
+            {
+                //      CASE 2.1 :      CRLF -> LF normalize.
+                case '\r': {
+                    continue;
+                }
+                //      CASE 2.2. :     ???.
+                case '\n': {
+                    enqueue_line_(std::move(line));  line.clear();
+                    break;
+                }
+                //
+                //      CASE 2.3. :     DEFAULT / ELSE.
+                default: {
+                    line.push_back(ch);
+                    break;
+                }
+            }
+        //
+        }// END  input-iteration.
+    //
+    }// END "while(run)".
+#else
+    for (;;)
     {
-        std::lock_guard<std::mutex>     lock    (this->m_queue_mutex);
-        this->m_recv_queue              .emplace_back(std::move(buf));
-    }
+        n               = ::read(this->m_child_stdout_fd, s_buffer, BSIZE);
+        
+        if (n <= 0)     { break; }      //  CASE 1 :    BREAK LOOP ON EOF or ERROR...
+        
+        //      2.      ITERATE THRU INPUT...
+        for (ssize_t i = 0; i < n; ++i)
+        {
+            ch = s_buffer[i];
+            
+            switch (ch)
+            {
+                //      CASE 2.1. :     ???.
+                case '\n': {
+                    enqueue_line_(std::move(line));  line.clear();
+                    break;
+                }
+                //
+                //      CASE 2.2. :     DEFAULT / ELSE.
+                default: {
+                    line.push_back(ch);
+                    break;
+                }
+            }
+        //
+        }// END  input-iteration.
+        
+        if ( !m_running.load() )    { break; }
+    //
+    //
+    }// END "while(run)".
+    
+#endif
+    if ( !line.empty() )    { enqueue_line_(std::move(line));  line.clear(); }      //  flush any unterminated tail on EOF.
 
-    //  Reflect child/pipe EOF in liveness flag
-    this->m_running.store(false);
+    this->m_running.store(false);     // reflect EOF in liveness
     return;
 }
 //
@@ -290,7 +442,7 @@ void PyStream::reader_thread_func(void)
 {
     std::string     buf;
     char            ch;
-    buf             .reserve(4096);
+    buf             .reserve(this->ms_READ_BUFFER_SIZE);
     
 #ifdef _WIN32
     DWORD nread;
@@ -330,7 +482,7 @@ void PyStream::reader_thread_func(void)
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END [[ 1.  "PUBLIC" ]].
+// *************************************************************************** //   END [[ 1.  "PUBLIC API" ]].
 
 
 
@@ -354,36 +506,246 @@ void PyStream::reader_thread_func(void)
 
 
 // *************************************************************************** //
+//      2A. PROTECTED. |     MULTI-PLATFORM IMPLEMENTATION.
+// *************************************************************************** //
+
+//  "launch_process"
+//
+bool PyStream::launch_process(void)
+#ifdef PYSTREAM_REFACTOR
+{
+#ifdef _WIN32
+    //      1.      WINDOWS : CREATE PIPES...
+    SECURITY_ATTRIBUTES     sa              { sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
+    HANDLE                  stdin_r         = nullptr;
+    HANDLE                  stdout_w        = nullptr;
+
+    if ( !::CreatePipe(&stdin_r, &this->m_child_stdin_w, &sa, 0) )              { return false; }
+    if ( !::CreatePipe(&this->m_child_stdout_r, &stdout_w, &sa, 0) )            { ::CloseHandle(stdin_r); ::CloseHandle(this->m_child_stdin_w); return false; }
+
+    ::SetHandleInformation(this->m_child_stdin_w , HANDLE_FLAG_INHERIT, 0);
+    ::SetHandleInformation(this->m_child_stdout_r, HANDLE_FLAG_INHERIT, 0);
+
+    //      2.      BUILD COMMAND LINE (WIDE)...
+    std::wstringstream      ss;
+    ss  << L"python " << s_quote_if_needed(this->m_script_path.wstring());
+    for (const auto & a : this->m_args) { ss << L" " << s_quote_if_needed(s_utf8_to_wide(a)); }
+    std::wstring            cmd     = ss.str();
+
+    //      3.      STARTUP INFO...
+    STARTUPINFOW            si      {   };
+    si.cb                           = sizeof(si);
+    si.dwFlags                      = STARTF_USESTDHANDLES;
+    si.hStdInput                    = stdin_r;
+    si.hStdOutput                   = stdout_w;
+    si.hStdError                    = stdout_w;
+
+    BOOL                        ok  =
+        ::CreateProcessW( nullptr, cmd.data(), nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &this->m_proc_info );
+
+    ::CloseHandle(stdin_r);
+    ::CloseHandle(stdout_w);
+
+    return ok == TRUE;
+
+#else   //  POSIX  //
+
+    int         in_pipe  [2]        = { -1, -1 };       //  parent writes   -> child reads
+    int         out_pipe [2]        = { -1, -1 };       //  child writes    -> parent reads
+
+
+    //      1.      CREATE PIPES  (USE <CLOEXEC>, IF AVAILABLE)...
+# if defined(__linux__)  &&  defined(O_CLOEXEC)
+//
+    if ( ::pipe2(in_pipe , O_CLOEXEC) == -1 )           { return false; }
+    if ( ::pipe2(out_pipe, O_CLOEXEC) == -1 )           { ::close(in_pipe[0]); ::close(in_pipe[1]); return false; }
+//
+# else
+//
+    if ( ::pipe(in_pipe)  == -1 )                        { return false; }
+    if ( ::pipe(out_pipe) == -1 )                        { ::close(in_pipe[0]); ::close(in_pipe[1]); return false; }
+    auto set_cloexec = [](int fd) {
+        int flags = ::fcntl(fd, F_GETFD);
+        if (flags != -1) { ::fcntl(fd, F_SETFD, flags | FD_CLOEXEC); }
+    };
+    set_cloexec(in_pipe [0]);   set_cloexec(in_pipe [1]);
+    set_cloexec(out_pipe[0]);   set_cloexec(out_pipe[1]);
+//
+# endif  //  defined(__linux__)  &&  defined(0_CLOEXEC)  //
+
+
+    //      2.      FORK...
+    this->m_child_pid   = ::fork();
+    if ( this->m_child_pid == -1 )
+    {
+        ::close(in_pipe[0]);    ::close(in_pipe[1]);
+        ::close(out_pipe[0]);   ::close(out_pipe[1]);
+        return false;
+    }
+
+    //      3.      CHILD...
+    if ( m_child_pid == 0 )
+    {
+        std::vector<char*>      argv;
+        argv    .reserve    ( 2 + this->m_args.size() + 1);
+        argv    .push_back( const_cast<char*>("python3") );
+        argv    .push_back( const_cast<char*>( m_script_path.c_str()) );
+        
+        
+        //          3A.     REDIRECT STDIO.
+        if ( ::dup2(in_pipe [0], STDIN_FILENO ) == -1 )     { _exit(1); }
+        if ( ::dup2(out_pipe[1], STDOUT_FILENO) == -1 )     { _exit(1); }
+        if ( ::dup2(out_pipe[1], STDERR_FILENO) == -1 )     { _exit(1); }
+
+
+        //          3B.     CLOSE INHERITED FDs.
+        ::close(in_pipe [0]);  ::close(in_pipe [1]);
+        ::close(out_pipe[0]);  ::close(out_pipe[1]);
+
+
+        //          3C.     ???.
+        for (auto & a : m_args)     { argv.push_back(const_cast<char*>( a.c_str() )); }
+        argv.push_back(nullptr);
+
+        ::execvp( "python3", argv.data() );
+        _exit(1);    // exec failed
+    }
+
+    //      4.      PARENT; CLOSE UNUSED ENDS, ADOPT OUR ENDS...
+    ::close(in_pipe [0]);
+    ::close(out_pipe[1]);
+
+    this->m_child_stdin_fd      = in_pipe [1];
+    this->m_child_stdout_fd     = out_pipe[0];
+
+    return true;
+//
+//
+# endif  //  _WIN32  //
+}
+/*
+//
+//
+//
+{
+    int         in_pipe  [2]        = { -1, -1 };       //  parent writes   -> child reads
+    int         out_pipe [2]        = { -1, -1 };       //  child writes    -> parent reads
+    //
+    auto        set_cloexec         = [](int fd) {
+        int flags = ::fcntl(fd, F_GETFD);
+        if (flags != -1) { ::fcntl(fd, F_SETFD, flags | FD_CLOEXEC); }
+    };
+    
+
+    //      1.      CREATE PIPES WITH <CLOEXEC>, IF AVAILABLE...
+#if defined(__linux__)  &&  defined(O_CLOEXEC)
+    if ( ::pipe2(in_pipe , O_CLOEXEC) == -1 )   { return false; }
+    if ( ::pipe2(out_pipe, O_CLOEXEC) == -1 )   { ::close(in_pipe[0]);  ::close(in_pipe[1]);  return false; }
+#else
+    if ( ::pipe(in_pipe)  == -1 )               { return false; }
+    if ( ::pipe(out_pipe) == -1 )               { ::close(in_pipe[0]);  ::close(in_pipe[1]);  return false; }
+    //
+    set_cloexec(in_pipe [0]);   set_cloexec(in_pipe [1]);
+    set_cloexec(out_pipe[0]);   set_cloexec(out_pipe[1]);
+#endif  //  defined(__linux__)  && defined(0_CLOEXEC)  //
+
+
+    //      2.      FORK...
+    this->m_child_pid   = ::fork();
+    if ( this->m_child_pid == -1 )
+    {
+        ::close(in_pipe[0]);    ::close(in_pipe[1]);
+        ::close(out_pipe[0]);   ::close(out_pipe[1]);
+        return false;
+    }
+
+    //      3.      CHILD...
+    if ( m_child_pid == 0 )
+    {
+        std::vector<char*>      argv;
+        argv    .reserve    ( 2 + this->m_args.size() + 1);
+        argv    .push_back( const_cast<char*>("python3") );
+        argv    .push_back( const_cast<char*>( m_script_path.c_str()) );
+        
+        
+        //          3A.     REDIRECT STDIO.
+        if ( ::dup2(in_pipe [0], STDIN_FILENO ) == -1 )     { _exit(1); }
+        if ( ::dup2(out_pipe[1], STDOUT_FILENO) == -1 )     { _exit(1); }
+        if ( ::dup2(out_pipe[1], STDERR_FILENO) == -1 )     { _exit(1); }
+
+
+        //          3B.     CLOSE INHERITED FDs.
+        ::close(in_pipe [0]);  ::close(in_pipe [1]);
+        ::close(out_pipe[0]);  ::close(out_pipe[1]);
+
+
+        //          3C.     ???.
+        for (auto & a : m_args)     { argv.push_back(const_cast<char*>( a.c_str() )); }
+        argv.push_back(nullptr);
+
+        ::execvp( "python3", argv.data() );
+        _exit(1);    // exec failed
+    }
+
+    //      4.      PARENT; CLOSE UNUSED ENDS, ADOPT OUR ENDS...
+    ::close(in_pipe [0]);
+    ::close(out_pipe[1]);
+
+    this->m_child_stdin_fd      = in_pipe [1];
+    this->m_child_stdout_fd     = out_pipe[0];
+
+    return true;
+}*/
+//
+#else
+//
+{
+    SECURITY_ATTRIBUTES     sa          { sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
+    HANDLE                  stdin_r     = nullptr;
+    HANDLE                  stdout_w    = nullptr;
+    std::wstring            cmd;
+
+
+    if ( !CreatePipe(&stdin_r           , &m_child_stdin_w  , &sa   , 0 ) )     { return false; }
+    if ( !CreatePipe(&m_child_stdout_r  , &stdout_w         , &sa   , 0 ) )     { return false; }
+    SetHandleInformation(m_child_stdin_w,  HANDLE_FLAG_INHERIT, 0);
+    SetHandleInformation(m_child_stdout_r, HANDLE_FLAG_INHERIT, 0);
+
+    {
+        std::wstringstream ss;
+        ss << L"python " << s_quote_if_needed(m_script_path.wstring());
+        for (const auto& a : m_args) {
+            ss << L" " << s_quote_if_needed(s_utf8_to_wide(a));
+        }
+        cmd = ss.str();
+    }
+
+    STARTUPINFOW    si          {   };                  //  value-initialises every byte to 0
+    si.cb                       = sizeof(si);           //  required by CreateProcessW
+
+    si.dwFlags                  = STARTF_USESTDHANDLES;
+    si.hStdInput                = stdin_r;
+    si.hStdOutput               = stdout_w;
+    si.hStdError                = stdout_w;             //  merge stderr
+
+    const bool      spawned     = CreateProcessW(nullptr, cmd.data(), nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &m_proc_info);
+    if (!spawned)               { return false; }
+
+    CloseHandle(stdin_r);
+    CloseHandle(stdout_w);
+    return true;
+}
+#endif  //  PYSTREAM_REFACTOR  //
+
+
+
+
+
+
+// *************************************************************************** //
 //      2A. PROTECTED. |     PLATFORM-SPECIFIC      [[ WIN32 ]].
 // *************************************************************************** //
 #ifdef _WIN32
-
-
-
-//  "s_utf8_to_wide"
-//
-static inline std::wstring s_utf8_to_wide(const std::string & s)
-{
-    int             n       = -1;
-    std::wstring    w;
-    
-    if ( s.empty() )    { return {}; }
-    
-    n       = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
-    w       = ( (n)     ? n - 1     : 0, L'\0' );               //  exclude the null terminator
-    if ( n )            { MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, w.data(), n); }
-    
-    return w;
-}
-
-//  "s_quote_if_needed"
-//
-static inline std::wstring s_quote_if_needed(const std::wstring & s)
-{
-    return (s.find_first_of(L" \t\"") == std::wstring::npos) ? s : L"\"" + s + L"\"";
-}
-
-
 
 
 //  "write_pipe"
@@ -426,47 +788,6 @@ bool PyStream::write_pipe(const char * data, size_t n)
 }
 # endif  //  PYSTREAM_REFACTOR  //
 
-
-
-//  "launch_process"
-//
-bool PyStream::launch_process(void)
-{
-    SECURITY_ATTRIBUTES     sa          { sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
-    HANDLE                  stdin_r     = nullptr;
-    HANDLE                  stdout_w    = nullptr;
-    std::wstring            cmd;
-
-
-    if ( !CreatePipe(&stdin_r           , &m_child_stdin_w  , &sa   , 0 ) )     { return false; }
-    if ( !CreatePipe(&m_child_stdout_r  , &stdout_w         , &sa   , 0 ) )     { return false; }
-    SetHandleInformation(m_child_stdin_w,  HANDLE_FLAG_INHERIT, 0);
-    SetHandleInformation(m_child_stdout_r, HANDLE_FLAG_INHERIT, 0);
-
-    {
-        std::wstringstream ss;
-        ss << L"python " << s_quote_if_needed(m_script_path.wstring());
-        for (const auto& a : m_args) {
-            ss << L" " << s_quote_if_needed(s_utf8_to_wide(a));
-        }
-        cmd = ss.str();
-    }
-
-    STARTUPINFOW    si          {   };                  //  value-initialises every byte to 0
-    si.cb                       = sizeof(si);           //  required by CreateProcessW
-
-    si.dwFlags                  = STARTF_USESTDHANDLES;
-    si.hStdInput                = stdin_r;
-    si.hStdOutput               = stdout_w;
-    si.hStdError                = stdout_w;             //  merge stderr
-
-    const bool      spawned     = CreateProcessW(nullptr, cmd.data(), nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &m_proc_info);
-    if (!spawned)               { return false; }
-
-    CloseHandle(stdin_r);
-    CloseHandle(stdout_w);
-    return true;
-}
 
 //
 // *************************************************************************** //
@@ -533,59 +854,6 @@ bool PyStream::write_fd(int fd, const char * data, size_t n)
 }
 #endif  //  PYSTREAM_REFACTOR  //
   
-
-//  "launch_process"
-//
-bool PyStream::launch_process(void)
-{
-    int     in_pipe     [2];        //  parent writes -> child reads
-    int     out_pipe    [2];        //  child writes  -> parent reads
-    
-    if ( pipe(in_pipe)  == -1 )     { return false; }
-    if ( pipe(out_pipe) == -1 )     {
-        close(in_pipe[0]);
-        close(in_pipe[1]);
-        return false;
-    }
-
-    m_child_pid = fork();
-    if ( m_child_pid == -1 )  { return false; }
-
-    if ( m_child_pid == 0 )
-    {
-        dup2(in_pipe [0]    , STDIN_FILENO  );        // child process
-        dup2(out_pipe[1]    , STDOUT_FILENO );
-        dup2(out_pipe[1]    , STDERR_FILENO );
-
-        close(in_pipe [0]);     close(in_pipe [1]);
-        close(out_pipe[0]);     close(out_pipe[1]);
-
-        std::vector<char*>      argv;               //  build argv
-        argv.push_back(const_cast<char*>("python3"));
-        argv.push_back(const_cast<char*>(m_script_path.c_str()));
-        
-        for (auto & a : m_args) {
-            argv.push_back(const_cast<char*>(a.c_str()));
-        }
-        argv.push_back(nullptr);
-
-        execvp("python3", argv.data());
-        _exit(1);   //  exec failed
-    }
-
-    //  parent — close unused ends
-    close(in_pipe [0]);
-    close(out_pipe[1]);
-
-    m_child_stdin_fd    = in_pipe [1];
-    m_child_stdout_fd   = out_pipe[0];
-
-    // set close‑on‑exec & optionally non‑blocking
-    fcntl(m_child_stdout_fd, F_SETFD, FD_CLOEXEC);
-    fcntl(m_child_stdin_fd,  F_SETFD, FD_CLOEXEC);
-
-    return true;
-}
 
 //
 // *************************************************************************** //

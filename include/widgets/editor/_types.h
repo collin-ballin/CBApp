@@ -207,9 +207,7 @@ enum class IOResult {
 //
 //  "DEF_IORESULT_NAMES"
 static constexpr cblib::EnumArray< IOResult, const char * >
-    DEF_IORESULT_NAMES  = { {
-        "OK",   "I/O Error",    "Parsing Error",    "Version Mismatch"
-} };
+    DEF_IORESULT_NAMES      = { { "OK",   "I/O Error",    "Parsing Error",    "Version Mismatch" } };
 
 
 
@@ -221,17 +219,17 @@ static constexpr cblib::EnumArray< IOResult, const char * >
 //      -Bitfield that defines what behaviors/capabilities each Editor State (Mode) has.
 //
 enum CBCapabilityFlags_ : uint64_t {
-    CBCapabilityFlags_None                      = 0,                    //  No special behaviours...
+    CBCapabilityFlags_None                      = 0ULL,                     //  No special behaviours...
 //
-    CBCapabilityFlags_Pan                       = 1u << 0,              //  Space + drag navigation
-    CBCapabilityFlags_Zoom                      = 1u << 1,              //  mouse-wheel magnification
-    CBCapabilityFlags_Select                    = 1u << 2,              //  click / lasso / move-drag
-    CBCapabilityFlags_CursorHint                = 1u << 3,              //  hand or resize cursor
-    CBCapabilityFlags_EnableMutableHotkeys      = 1u << 4,              //  Disables hotkeys that alter objects (like [ DEL ]).
-    CBCapabilityFlags_EnableAdvancedHotkeys     = 1u << 5,              //  Enable EXTRA hotkeys (CMD+J to join, etc)
+    CBCapabilityFlags_Pan                       = 1ULL << 0,                //  Space + drag navigation
+    CBCapabilityFlags_Zoom                      = 1ULL << 1,                //  mouse-wheel magnification
+    CBCapabilityFlags_Select                    = 1ULL << 2,                //  click / lasso / move-drag
+    CBCapabilityFlags_CursorHint                = 1ULL << 3,                //  hand or resize cursor
+    CBCapabilityFlags_EnableMutableHotkeys      = 1ULL << 4,                //  Disables hotkeys that alter objects (like [ DEL ]).
+    CBCapabilityFlags_EnableAdvancedHotkeys     = 1ULL << 5,                //  Enable EXTRA hotkeys (CMD+J to join, etc)
 //
 //
-    CBCapabilityFlags_COUNT,                                            //  helper: number of bits
+    CBCapabilityFlags_COUNT,                                                //  helper: number of bits
 //
 //
 //

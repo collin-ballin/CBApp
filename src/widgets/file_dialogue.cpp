@@ -138,7 +138,8 @@ FileDialog::FileDialog() noexcept
 //
 bool FileDialog::Begin(void)
 {
-    State &  s   = *m_state;
+    using       namespace       dialog;
+    State &     s               = *m_state;
     
     //  0.  FIRST-FRAME INITIALIZATION  | Set size & position on the frame the popup appears...
     if (m_first_frame) {
@@ -200,6 +201,7 @@ bool FileDialog::Begin(void)
 //
 inline void FileDialog::draw_file_list(State & s, const char * list_id)
 {
+    using       namespace       dialog;
     ImGui::BeginChild(list_id, ImVec2(0, 200), true, ImGuiWindowFlags_None); // ImGuiWindowFlags_NoScrollWithMouse);
     //  handle_keyboard_nav(s);
 
@@ -233,6 +235,7 @@ inline void FileDialog::draw_file_list(State & s, const char * list_id)
 //
 inline void FileDialog::draw_file_table(State & s, const char * table_id)
 {
+    using       namespace       dialog;
     static constexpr ImGuiTableColumnFlags      sort_col_flags  = ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_PreferSortDescending;
     const float                                 row_h           = ImGui::GetFrameHeightWithSpacing();
     const float                                 reserve_h       = 0.5f * (TOP_HEIGHT + BOTTOM_HEIGHT) * ( row_h ); // filename + buttons
@@ -382,7 +385,7 @@ inline void FileDialog::draw_file_table(State & s, const char * table_id)
             else {
                 std::error_code     ec;
                 std::uintmax_t      bytes = std::filesystem::file_size(e.path(), ec);
-                ImGui::TextUnformatted(ec ? EMPTY_STRING : fmt_file_size(bytes).c_str());
+                ImGui::TextUnformatted(ec ? EMPTY_STRING : cblib::utl::fmt_file_size(bytes).c_str());
             }
 
 
@@ -411,6 +414,7 @@ inline void FileDialog::draw_file_table(State & s, const char * table_id)
 //
 inline void FileDialog::draw_top_bar(State & s)
 {
+    using           namespace       dialog;
     const float     ROW_HEIGHT      = ImGui::GetFrameHeightWithSpacing();
     
     
@@ -428,6 +432,7 @@ inline void FileDialog::draw_top_bar(State & s)
 //
 inline void FileDialog::draw_breadcrumb_bar(State & s)
 {
+    using                           namespace       dialog;
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
     //float                           avail_total     = 1.0f * this->m_window_size.x; // - 2 * style.WindowPadding.x;   // popup width
     float                           avail_total     = 1.35f * ImGui::GetContentRegionAvail().x;

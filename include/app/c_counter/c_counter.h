@@ -89,7 +89,9 @@ public:
     CBAPP_APPSTATE_ALIAS_API            //  *OR*    CBAPP_CBLIB_TYPES_API       //  FOR CBLIB...
     friend class                            App;
     //
-    static constexpr size_t                 ms_BUFFER_SIZE                  = 512ULL;
+    static constexpr size_t                 ms_BUFFER_SIZE                  = 128ULL;       //  NUM. OF DATA-PACKETS FROM CCOUNTER.
+    //
+    //
     using                                   buffer_type                     = cblib::RingBuffer<ImVec2, ms_BUFFER_SIZE>;     // utl::ScrollingBuffer;     // cblib::RingBuffer<int, 2000>
     using                                   AvgMode                         = AvgMode;
     
@@ -100,8 +102,8 @@ public:
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr size_t                 ms_NUM                          = 15;
-    static constexpr size_t                 ms_MSG_BUFFER_SIZE              = 256;
+    static constexpr size_t                 ms_NUM                          = 15;           //  NUM. OF CHANNELS.
+    static constexpr size_t                 ms_MSG_BUFFER_SIZE              = 256;          //  BUFFER-SIZE FOR MESSAGE TO PYSTREAM.
     
     // *************************************************************************** //
     //
@@ -191,25 +193,26 @@ protected:
     bool                                    m_streaming_active              = false;        //  derived each frame
     bool                                    m_streaming_prev                = false;        //  true on previous frame if data arrived
     bool                                    m_process_running               = false;
-    bool                                    m_counter_running               = true;
+    bool                                    m_process_recording             = false;
+    bool                                    m_counter_running               = true;         //  <==| THIS IS SUPPOSED TO BE TRUE BY DEFAULT!!!  DO NOT TOUCH!
     //
     //
     //                                  COINCIDENCE-COUNTER VARIABLES:
-    Param<ImU64>                            m_coincidence_window            = { 10,     {1, 100}        };
-    Param<double>                           m_integration_window            = { 1.00f,  {0.001f, 2.50f} };
+    Param<ImU64>                            m_coincidence_window            = { 10,     {1          , 100   }   };
+    Param<double>                           m_integration_window            = { 1.00f,  {0.001f     , 2.50f }   };
     //
     //
     //
     //                                  PLOT-APPEARANCE STUFF:
     float                                   ms_CENTER                       = 0.95f;
     Param<double>                           m_history_length                = { 30.0f,  {5.0f,   90.0}  };
-    float                                   m_last_packet_time              = 0.0f; // time of last data arrival
-    float                                   m_freeze_xmin                   = 0.f;                              // cached limits when paused
-    float                                   m_freeze_xmax                   = 0.f;
-    float                                   m_freeze_now                    = 0.f;                              // reference time for sparklines when paused
+    float                                   m_last_packet_time              = 0.0f;                             //  time of last data arrival
+    float                                   m_freeze_xmin                   = 0.0f;                             //  cached limits when paused
+    float                                   m_freeze_xmax                   = 0.0f;
+    float                                   m_freeze_now                    = 0.0f;                             //  reference time for sparklines when paused
     //
-    bool                                    m_smooth_scroll                 = false;                            // checkbox toggled in UI
-    bool                                    m_xaxis_paused                  = true;                             // start paused until first sample
+    bool                                    m_smooth_scroll                 = false;                            //  checkbox toggled in UI
+    bool                                    m_xaxis_paused                  = true;                             //  start paused until first sample
     //
     //
     //                                  COMPUTATION STUFF:
@@ -259,11 +262,11 @@ protected:
     // *************************************************************************** //
     //      1. |    RUN-TIME CONSTANT DATA.
     // *************************************************************************** //
-    Param<ImU64>                            m_PLOT_LIMIT                    = { 0,     {0, ms_NUM-1}        };
+    Param<ImU64>                            m_PLOT_LIMIT                    = { 0,     {0, ms_NUM - 1}          };
     
     //  CONSTANTS.
-    std::array<const char *, 2>             ms_PLOT_UUIDs                   = { "##CCounterMasterPlot",     "##CCounterIndividualPlot"};
-    std::array<const char *, 2>             ms_TABLE_UUIDs                  = { "##IndividualPlotTable",    "##CCounterControlTable"};
+    std::array<const char *, 2>             ms_PLOT_UUIDs                   = { "##CCounterMasterPlot"      , "##CCounterIndividualPlot"    };
+    std::array<const char *, 2>             ms_TABLE_UUIDs                  = { "##IndividualPlotTable"     , "##CCounterControlTable"      };
     
     
     
@@ -274,19 +277,15 @@ protected:
     // *************************************************************************** //
     //      MISC / UNKNOWN...
     // *************************************************************************** //
-
-
-
-
-    
-    //  INDIVIDUAL PLOT STUFF...
+    //
+    //                                                  INDIVIDUAL PLOT STUFF...
     ImGuiTableColumnFlags                                   ms_i_plot_table_flags           = ImGuiTableFlags_None | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoKeepColumnsVisible;
     ImGuiTableColumnFlags                                   ms_i_plot_column_flags          = ImGuiTableColumnFlags_WidthFixed;   //    ImGuiTableColumnFlags_WidthFixed;   ImGuiTableColumnFlags_None
     ImGuiTableColumnFlags                                   ms_i_plot_plot_flags            = ImGuiTableColumnFlags_WidthStretch;
     float                                                   ms_I_PLOT_COL_WIDTH             = 100.0f;
     float                                                   ms_I_PLOT_PLOT_WIDTH            = -1.0f;
     
-    //  VARIOUS FLAGS...
+    //                                                  VARIOUS FLAGS...
     ImPlotLineFlags                                         m_channel_flags                 = ImPlotLineFlags_None | ImPlotLineFlags_Shaded;
     ImPlotAxisFlags                                         m_plot_flags                    = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
     ImPlotFlags                                             m_mst_PLOT_flags                = ImPlotFlags_None | ImPlotFlags_NoTitle;
@@ -339,11 +338,14 @@ protected:
     
     //                                              6.  PLOTTING STUFF...
     bool                                                m_colormap_cache_invalid        = true;
+    //
     ImPlotColormap                                      m_cmap                          = ImPlotColormap_Cool;
     std::vector<ImVec4>                                 m_plot_colors                   = std::vector<ImVec4>(ms_NUM);
+    std::vector<ImVec4>                                 m_avg_colors                    = std::vector<ImVec4>(ms_NUM);
     static constexpr std::array<const char *, 2>        ms_mst_axis_labels              = { "Time  [sec]",      "Counts  [Arb.]" };
-    Param<float>                                        m_AVG_OPACITY                   = { 0.50f,      {0.0f,   1.00f}     };
-    Param<float>                                        m_AVG_LINEWIDTH                 = { 10.0f,      {1.0f,   20.00f}    };
+    Param<float>                                        m_AVG_OPACITY                   = { 0.50f,      {0.0f       , 1.00f     }       };
+    Param<float>                                        m_AVG_LINEWIDTH                 = { 10.0f,      {1.0f       , 20.00f    }       };
+    Param<float>                                        m_avg_color_shade               = { -0.25,      {-1.0f      , 1.00f     }       };
     
 //
 //
@@ -411,21 +413,7 @@ protected:
     // *************************************************************************** //
     void                                init                                (void);
     void                                destroy                             (void);
-    void                                dispatch_plot_function              (const std::string & );
-    void                                dispatch_ctrl_function              (const std::string & );
     
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
-    //      2.B. |  MAIN UI FUNCTIONS.              |   "interface.cpp" ...
-    // *************************************************************************** //
-    //                              MAIN GUI FUNCTIONS:
-    void                                handle_ui                           (void);
-    //
-    //                              UTILITIES FOR MAIN GUI FUNCTIONS:
-    void                                _draw_selector                      (void);
-    void                                _draw_inspector                     (void);
     
     // *************************************************************************** //
     //
@@ -433,10 +421,39 @@ protected:
     // *************************************************************************** //
     //      2.B. |  OPERATION FUNCTIONS.            |   "tools.cpp" ...
     // *************************************************************************** //
-    void                                ShowCCPlots                         (void) noexcept;
+    void                                _Begin_Plots_IMPL                   (void) noexcept;        //  formerly:   "display_plots"
+    void                                _Begin_Controls_IMPL                (void) noexcept;
+    //
+    //
+    //                              PLOT FUNCTIONS:
+    void                                ShowCCPlots                         (void);
+    //
+    [[nodiscard]]
+    inline std::pair<float, float>      _FetchData                          (const float , const float ) noexcept;
+    inline void                         _PlotMaster                         (const float , const float )  noexcept;
+    inline void                         _PlotSingles                        (const float ) noexcept;
+    inline void                         _DisplayControlBar                  (void) noexcept;
+    //
+    //
+    //                              BOTTOM TAB-BAR FUNCTIONS:
     void                                TAB_Controls                        (void) noexcept;
     void                                TAB_Appearance                      (void) noexcept;
+
     
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.B. |  PLOTTING FUNCTIONS.             |   "tools.cpp" ...
+    // *************************************************************************** //
+    template<typename RB = buffer_type>
+    inline void                         plot_sparkline                      (const RB & , const ImVec4 & , const ImVec2 , const float , const float , const float , const ImPlotAxisFlags) const noexcept;
+    float                               ComputeAverage                      (const buffer_type &, AvgMode , ImU64 , double , float ) const;
+
+
+
+
+        
     // *************************************************************************** //
     //
     //
@@ -444,14 +461,15 @@ protected:
     //      2.B. |  UTILITY FUNCTIONS.              |   "main_application.cpp" ...
     // *************************************************************************** //
     void                                init_ctrl_rows                      (void);
-    void                                display_plots                       (void);
-    void                                display_controls                    (void);
-    void                                _draw_control_bar                   (void);
+    //
+    //
+    void                                dispatch_plot_function              (const std::string & );
+    void                                dispatch_ctrl_function              (const std::string & );
+    //
     //
     void                                DefaultPlotTabRenderFunc            ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     void                                DefaultCtrlTabRenderFunc            ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     Tab_t *                             get_ctrl_tab                        (const std::string & , std::vector<Tab_t> & );
-    float                               ComputeAverage                      (const buffer_type &, AvgMode , ImU64 , double , float ) const;
     
 //
 //
@@ -496,6 +514,156 @@ protected:
     // *************************************************************************** //
     //      2.C. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
+    
+    //  "_start_process"
+    inline void                         _start_process                      (const bool run_and_rec=false) noexcept
+    {
+        IM_ASSERT(!this->m_process_running);    //  [[ TO-DO ]]:    Make this so that it only asserts script is not running if run_and_rec is NOT also true (ALLOW recording in middle of execution).
+        IM_ASSERT( !(this->m_process_recording && run_and_rec) );
+        
+        if ( !this->m_process_running )
+        {
+            this->m_process_running     = m_python.start();
+            
+            //      CASE 1 :    REQUEST TO RUN *AND* RECORD...
+            if (run_and_rec)
+            {
+                const bool  recording       = this->_start_recording();
+                
+                //      ERROR : PROCESS PLAYBACK WAS BLOCKED BY RECORDING-ISSUE...
+                if (!recording) {
+                    this->m_process_running     = false;
+                    this->m_process_recording   = false;
+                    ui::ask_ok_cancel(   "Recording Error"
+                                       , "An issue with the current record settings prevented Python from launching."
+                                       , [ ]{   });
+                }
+                else {
+                    this->m_process_recording   = true;
+                }
+            }
+            
+            
+            //      CASE 2 :    FAILURE TO START PROCESS...
+            if ( !m_process_running )
+            {
+                ui::ask_ok_cancel(   "Python Error"
+                                   , "Failure to launch Python child process."
+                                   , [ ]{   });
+            }
+            //
+            //      CASE 2 :    PROCESS SUCCESSFULLY STARTED...
+            else
+            {
+                m_max_counts[0]     = 0.0f;     // reset stats
+            }
+        }
+        
+        return;
+    }
+    
+    //  "_stop_process"
+    inline void                         _stop_process                       (const bool pause=false) noexcept
+    {
+        IM_ASSERT(this->m_process_running);
+        
+        //      CASE 1 :    *PAUSE* RECORDING  [ stop playback but leave recording status ].
+        if (pause) {
+            this->m_python.stop();
+            this->m_process_running         = false;
+            return;
+        }
+        //
+        //      CASE 2 :    CEASE PLAYBACK *AND* FINALIZE RECORDING...
+        else {
+            this->m_python.stop();
+            this->m_process_running         = false;
+            this->_stop_recording();
+        }
+        
+        return;
+    }
+    
+    
+    //  "_start_recording"
+    //  [[nodiscard]] inline bool           _start_recording                    (void) noexcept {
+    inline bool                             _start_recording                    (void) noexcept {
+    
+        //  if (this->m_process_running) {
+        //
+        //  }
+        
+        this->m_process_recording = true;
+        return true;
+    }
+    
+    //  "_stop_recording"
+    inline void                         _stop_recording                     (void) noexcept {
+        this->m_process_recording = false;
+        return;
+    }
+    
+    
+    
+    //  "_clear_all"
+    inline void                         _clear_all                          (void) noexcept
+    {
+        //      CASE 1 :    STOP RECORDING...
+        if (this->m_process_recording) {
+            this->_stop_process(false);
+        }
+        
+        this->_clear_plot_data();
+        this->_reset_max_values();
+        this->_reset_average_values();
+        
+        return;
+    }
+    
+    
+    
+    //  "_clear_plot_data"
+    inline void                         _clear_plot_data                    (void) noexcept
+    {
+        for (auto & b : m_buffers) {
+            b.clear(); //b.Erase();
+        }
+        return;
+    }
+    
+    //  "_reset_max_values"
+    inline void                         _reset_max_values                   (void) noexcept {
+        std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.f);
+        return;
+    }
+    
+    //  "_reset_average_values"
+    inline void                         _reset_average_values               (void) noexcept
+    {
+        for (auto & vec : m_avg_counts) {
+            vec.clear();    //  b.Erase();
+        }
+        return;
+    }
+    
+    //  "_validate_colormap_cache"
+    inline void                         _validate_colormap_cache            (void) noexcept
+    {
+        if (this->m_colormap_cache_invalid)
+        {
+            m_colormap_cache_invalid    = false;
+            m_plot_colors               = cb::utl::GetColormapSamples( ms_NUM, m_cmap );
+            
+            for (size_t i = 0; i < ms_NUM; ++i) {
+                const auto & color      = m_plot_colors[i];
+                this->m_avg_colors[i]   = cblib::utl::compute_tint( color, this->m_avg_color_shade.Value() );
+            }
+        }
+        
+        return;
+    }
+    
+    
     
         //
         //  ...

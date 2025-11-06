@@ -19,7 +19,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-//  1A.     PUBLIC API...
+//      1A.     PUBLIC API...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -65,16 +65,17 @@ void CCounterApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 {
     //      1.      CREATING THE HOST WINDOW...
     ImGui::Begin(uuid, p_open, flags);
-        this->display_plots();
+        this->_Begin_Plots_IMPL();
     ImGui::End();
     
     
     
     //      2.      CREATE TOP WINDOW FOR PLOTS...
-    if (m_detview_window.open) {
+    if (m_detview_window.open)
+    {
         //ImGui::SetNextWindowClass(&this->m_window_class[1]);
         ImGui::Begin( m_detview_window.uuid.c_str(), nullptr, m_detview_window.flags );
-            this->display_controls();
+            this->_Begin_Controls_IMPL();
         ImGui::End();
     }
 
@@ -90,93 +91,28 @@ void CCounterApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 // *************************************************************************** //
 //
 //
+//
 //      2.      PROTECTED MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "display_plots"
+//  "_Begin_Controls_IMPL"              //  formerly:   "display_controls"
 //
-void CCounterApp::display_plots(void)
+void CCounterApp::_Begin_Controls_IMPL(void) noexcept
 {
-    //  DEFINE MISC. VARIABLES...
-    static bool                     SHOW_HELP_TABS              = true;
-    static bool                     ENABLE_ADDING_TABS          = true;
-    
-
-    //  BEGIN THE TAB BAR...
-    if ( ImGui::BeginTabBar(m_tabbar_uuids[0], m_tabbar_flags[0]) )
-    {
-        //  1.      DRAW HELP-MENU TAB-BUTTON ITEM ("?")...
-        if (SHOW_HELP_TABS) {
-            if (ImGui::TabItemButton("?", ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_NoTooltip))
-                ImGui::OpenPopup("MyHelpMenu");
-        }
-        if (ImGui::BeginPopup("MyHelpMenu")) {
-            ImGui::Selectable("Here's a help message!  The PLOTS go here, on the top.");
-            ImGui::EndPopup();
-        }
-
-
-        if (ENABLE_ADDING_TABS)     //  2.      DRAW THE "ADD-TAB" BUTTON ("+")...
-        {
-            if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip))
-            {   ImGui::OpenPopup("add_plot_tab_popup");     }
-            //
-            if (ImGui::BeginPopup("add_plot_tab_popup")) {  //          - NEW PLOTTING TAB POP-UP...
-                //
-                //  AddNewPlotTab();
-                //
-                ImGui::EndPopup();
-            }// END "Popup".
-        }
-
-
-
-        //      2.3     DRAW EACH OF THE TAB ITEMS...
-        for (auto & tab : this->ms_PLOT_TABS)
-        {
-            if ( ImGui::BeginTabItem( tab.get_uuid(), (tab.no_close) ? nullptr : &tab.open, tab.flags ) )
-            {
-                if (tab.render_fn) {
-                    tab.render_fn( tab.get_uuid(), &tab.open, tab.flags );
-                }
-                else {
-                    this->DefaultPlotTabRenderFunc(tab.get_uuid(), &tab.open, tab.flags);
-                }
-                
-            ImGui::EndTabItem();
-            }// END "BeginTabItem".
-        
-        } // END "for auto & tab".
-
-
-    ImGui::EndTabBar();
-        
-    } // END "BeginTabBar".
-
-    return;
-}
-
-
-//  "display_controls"
-//
-void CCounterApp::display_controls(void)
-{
-    //  DEFINE MISC. VARIABLES...
+    //      DEFINE MISC. VARIABLES...
     const ImGuiWindowFlags          CHILD_FLAGS     = ImGuiWindowFlags_AlwaysVerticalScrollbar;
     
     
-    this->_draw_control_bar();
     
-    
-    //  BEGIN THE TAB BAR...
+    //      BEGIN THE TAB BAR...
     if ( ImGui::BeginTabBar(m_tabbar_uuids[1], m_tabbar_flags[1]) )
     {
         //      2.3     DRAW EACH OF THE TAB ITEMS...
         for (auto & tab : this->ms_CTRL_TABS)
         {
         
-            //  PLACING EACH TAB...
+            //          PLACING EACH TAB...
             if ( ImGui::BeginTabItem( tab.get_uuid(), (tab.no_close) ? nullptr : &tab.open, tab.flags ) )
             {
                 ImGui::BeginChild("##Control_TabBar_ChildWindow", ImVec2(0,0), /*border=*/false, CHILD_FLAGS);
@@ -188,16 +124,19 @@ void CCounterApp::display_controls(void)
                         this->DefaultCtrlTabRenderFunc(tab.get_uuid(), &tab.open, tab.flags);
                     }
                 
-                
-            ImGui::EndChild();          // <- scrollable
+            ImGui::EndChild();          //  <- scrollable
             ImGui::EndTabItem();
+            //
             }// END "BeginTabItem".
-        
+        //
+        //
         } // END "for auto & tab".
 
 
     ImGui::EndTabBar();
-    } // END "BeginTabBar".
+    //
+    //
+    }// END "BeginTabBar".
 
     return;
 }
@@ -205,180 +144,295 @@ void CCounterApp::display_controls(void)
 
 
 
+
+
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
 //
-//      ?.      NEW...
+//      ?.      OLD "ShowCCPlots"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "_draw_control_bar"
+//  "ShowCCPlots"       //  formerly: "ShowCCPlots"
 //
-void CCounterApp::_draw_control_bar(void)
+void CCounterApp::ShowCCPlots(void)
 {
-    static constexpr const char *   uuid            = "##Editor_Controls_Columns";
-    static constexpr int            NC              = 8;
-    static ImGuiOldColumnFlags      COLUMN_FLAGS    = ImGuiOldColumnFlags_None;
-    static ImVec2                   WIDGET_SIZE     = ImVec2( -1,  32 );
-    static ImVec2                   BUTTON_SIZE     = ImVec2( 32,   WIDGET_SIZE.y );
+    namespace               cc                  = ccounter;
+    std::string             raw;
+    bool                    got_packet          = false;
     //
-    //  constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiOldColumnFlags_NoPreserveWidths;
-    //int                             mode_i          = static_cast<int>(m_mode);
+    float                   xmin                = 0.0f,
+                            xmax                = m_history_length.value;
+    //
+    static float            now                 = static_cast<float>(ImGui::GetTime());
+                                    
+                                    
+                                    
+    if ( m_process_running )
+        now += ImGui::GetIO().DeltaTime;
     
     
-    const auto                      Label           = [this](const char * text)
-    { S.PushFont(Font::Small); ImGui::TextUnformatted(text); S.PopFont(); };
+    const float             spark_now           = (!m_counter_running   ? m_freeze_now    : ( (m_smooth_scroll)     ? now   : m_last_packet_time) );
+    
+    
+    // ------------------------------------------------------------
+    // 1.  Poll child process and push new points
+    // ------------------------------------------------------------
+    while ( m_python.try_receive(raw) )
+    {
+        got_packet = true;
+        if (auto pkt = cc::parse_packet(raw, m_use_mutex_count))
+        {
+            const auto &counts = pkt->counts;
+            for (int i = 0; i < static_cast<int>(ms_NUM); ++i)
+            {
+                const size_t ch         = ms_channels[i].idx;
+                const float   v         = static_cast<float>(counts[ch]);
+                m_buffers[i].push_back({ now, v });
+                m_max_counts[i]         = std::max(m_max_counts[i], v);
+                m_avg_counts[i].push_back({ now, ComputeAverage( m_buffers[i], m_avg_mode, m_avg_window_samp.value,
+                                                                 m_avg_window_sec.value, spark_now ) });
+            }
+        }
+    }
 
-   
-   
-    //  BEGIN COLUMNS...
-    //
-    ImGui::Columns(NC, uuid, COLUMN_FLAGS);
-    //
-    //
-    //
-        //  1.  BEGIN PYTHON SCRIPT...
-        if (!m_process_running)
-        {
-            if ( ImGui::Button("Start Process") ) {
-                m_process_running         = m_python.start();
-                if ( !m_process_running )       { ImGui::OpenPopup("launch_error"); }
-                else                            { m_max_counts[0] = 0.f; } // reset stats
-            }
+    if (got_packet) {
+        m_last_packet_time = now;
+    }
+
+    // streaming considered active if we’ve received data within timeout
+    m_streaming_active = (now - m_last_packet_time) < m_stream_timeout;
+
+
+    //------------------------------------------------------------------
+    // 2.  Update cached freeze range when streaming or on first frame
+    //------------------------------------------------------------------
+    if (!m_counter_running) {               //  Recording stopped – freeze completely.
+        xmin = m_freeze_xmin;
+        xmax = m_freeze_xmax;
+    }
+    else if (m_smooth_scroll) {             //  Continuous crawl following real time.
+        xmin = now - ms_CENTER * m_history_length.value;
+        xmax = xmin + m_history_length.value;
+        m_freeze_xmin = xmin;               //  Keep cache fresh in case we pause later.
+        m_freeze_xmax = xmax;
+    }
+    else { // Stepped mode
+        if (got_packet) {                   //  Jump so the newest packet sits at right edge of window.
+            xmin            = m_last_packet_time - ms_CENTER * m_history_length.value;
+            xmax            = xmin + m_history_length.value;
+            m_freeze_xmin   = xmin;
+            m_freeze_xmax   = xmax;
         }
-        //  CASE 2 :    SCRIPT  **IS**  RUNNING...
-        else
-        {
-            //      ImGui::PushStyleColor(ImGuiCol_Button,          ImVec4(0.800f, 0.216f, 0.180f, 1.00f) );
-            //      ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   app::DEF_APPLE_RED );
-            //if ( ImGui::Button("Stop Process") ) {
-            if ( utl::CButton("Stop Process", app::DEF_APPLE_RED) ) {
-                m_python.stop();
-                m_process_running = false;
-            }
-            //      ImGui::PopStyleColor(2);
+        else {                              //  Hold still between packets.
+            xmin            = m_freeze_xmin;
+            xmax            = m_freeze_xmax;
         }
+    }
+
+    //  Ensure an initial range on app startup
+    if (xmax <= xmin) {
+        xmin            = 0.0f;
+        xmax            = m_history_length.value;
+        m_freeze_xmin   = xmin;
+        m_freeze_xmax   = xmax;
+    }
+
+
+    //      5.      "MASTER" PLOT FOR MASTER PLOT...
+    //
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if ( ImGui::CollapsingHeader("Master Plot") )
+    {
+        //          5.1.    DISPLAY VERTICAL SLIDER BESIDE PLOT...
+        ImGui::VSliderFloat("##MasterPlotHeight", ImVec2(m_mst_plot_slider_height, m_mst_plot_height), &m_mst_plot_height, 750.0f, 150.0f, "");
+        //
+        //
+        //          5.2.    DISPLAY MASTER PLOT...
+        ImGui::SameLine();
+        ImGui::PushID(ms_PLOT_UUIDs[0]);    //  Adjust x‑axis flags: disable AutoFit when paused so ImPlot won't override our limits
+        ImPlotAxisFlags xflags = m_mst_xaxis_flags;
+        if (!m_counter_running) xflags &= ~ImPlotAxisFlags_AutoFit;
         
         
         
-        
-        //  2.  Plot Crawling.
-        ImGui::NextColumn();    Label("Plot Crawling:");
-        ImGui::Checkbox("##CCounterControls_PlotCrawling",              &m_smooth_scroll);
-    
-    
-    
-        
-        //  3.  Mutex Counts.
-        ImGui::NextColumn();    Label("Use Mutex Counts:");
-        ImGui::SetNextItemWidth( BUTTON_SIZE.x );
-        ImGui::Checkbox("##CCounterControls_UseMutexCounts",           &m_use_mutex_count);
-            
+        if (ImPlot::BeginPlot(ms_PLOT_UUIDs[0], ImVec2(-1, m_mst_plot_height), m_mst_PLOT_flags))    //  m_mst_plot_flags
+        {
+            ImPlot::SetupAxes(ms_mst_axis_labels[0], ms_mst_axis_labels[1], xflags, m_mst_yaxis_flags);
+            ImPlot::SetupLegend(m_mst_legend_loc, m_mst_legend_flags);
+            ImPlot::SetupAxisLimits(ImAxis_X1, xmin, xmax, ImGuiCond_Always);
+
+
+            for (int k = 0; k < static_cast<int>(ms_NUM); ++k)
+            {
+                const auto &        buf         = m_buffers[k];
+                const auto &        avg         = m_avg_counts[k];
+                auto &              channel     = ms_channels[k];
                 
-        
-        
-        //  4.  Reset Averages.
-        ImGui::NextColumn();
-        if ( ImGui::Button("Reset Averages") ) {
-            for (auto & vec : m_avg_counts)
-                vec.clear(); //b.Erase();
+                if ( buf.empty() )      { continue; }
+                
+    
+    
+                //      2.      PLOT AVERAGE COUNTER VALUES...
+                ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
+                ImPlot::SetNextLineStyle( ImVec4( m_plot_colors[k].x, m_plot_colors[k].y, m_plot_colors[k].z, m_AVG_OPACITY.value ),   m_AVG_LINEWIDTH.value);
+                ImPlot::SetNextFillStyle(m_plot_colors[k], 0.0f);
+                //
+                    if ( !channel.vis.average )     { ImPlot::HideNextItem( true    , ImGuiCond_Always );   }
+                    else                            { ImPlot::HideNextItem( false   , ImGuiCond_Always );   }
+                    ImPlot::PlotLine(
+                          ""
+                        , &avg.raw()[0].x
+                        , &avg.raw()[0].y
+                        , static_cast<int>( avg.size() )
+                        , ImPlotLineFlags_Shaded
+                        , static_cast<int>( avg.offset() )
+                        , sizeof(ImVec2)
+                    );
+                //
+                ImPlot::PopStyleVar();
+                
+                
+                
+                //      1.      PLOT MAIN COUNTER VALUES...
+                ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
+                ImPlot::SetNextLineStyle(m_plot_colors[k], 1.5f);
+                ImPlot::SetNextFillStyle(m_plot_colors[k], 0.0f);
+                //
+                    if (!channel.vis.master)        { ImPlot::HideNextItem( true    , ImGuiCond_Always ); }
+                    else                            { ImPlot::HideNextItem( false   , ImGuiCond_Always ); }
+                    ImPlot::PlotLine(
+                          ms_channels[k].name
+                        , &buf.raw()[0].x
+                        , &buf.raw()[0].y
+                        , static_cast<int>( buf.size() )
+                        , ImPlotLineFlags_Shaded
+                        , static_cast<int>( buf.offset() )
+                        , sizeof(ImVec2)
+                    );
+                //
+                ImPlot::PopStyleVar();
+            //
+            //
+            //
+            } // END FOR-LOOP.
+            
+            ImPlot::EndPlot();
         }
+        ImGui::PopID();
+    //
+    //
+    //
+    //ImGui::TreePop();
+    }// END TREE NODE.
         
-        
-        
-        //  5.  Clear Plot.
-        ImGui::NextColumn();
-        if ( ImGui::Button("Clear Plot") )
+
+
+    //      6.      DRAW THE TABLE OF EACH INDIVIDUAL COUNTER...
+    //
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if ( ImGui::CollapsingHeader("Individual Counters") )
+    {
+        if ( ImGui::BeginTable(ms_PLOT_UUIDs[1],  6,  ms_i_plot_table_flags) ) //  ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg
         {
-            for (auto & b : m_buffers) {
-                b.clear(); //b.Erase();
-            }
-            std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.0f);
-        }
-        
-        
-        
-    //
-    //
-    //
-    ImGui::Columns(1);      //  END COLUMNS...
+            ImGui::TableSetupColumn     ("Visibility     "   ,   ms_i_plot_column_flags  , 2 * ms_I_PLOT_COL_WIDTH);
+            ImGui::TableSetupColumn     ("Counter(s)"        ,   ms_i_plot_column_flags  , ms_I_PLOT_COL_WIDTH   );
+            ImGui::TableSetupColumn     ("Max"               ,   ms_i_plot_column_flags  , ms_I_PLOT_COL_WIDTH   );
+            ImGui::TableSetupColumn     ("Avg."              ,   ms_i_plot_column_flags  , ms_I_PLOT_COL_WIDTH   );
+            ImGui::TableSetupColumn     ("Current"           ,      ms_i_plot_column_flags  , ms_I_PLOT_COL_WIDTH   );
+            ImGui::TableSetupColumn     ("Plot"              ,         ms_i_plot_plot_flags    , ms_I_PLOT_PLOT_WIDTH  );
+            ImGui::TableHeadersRow();
+
+
+            for (size_t row = 0; row < static_cast<size_t>(ms_NUM - m_PLOT_LIMIT.value); ++row)
+            {
+                auto &          buf         = m_buffers[row];
+                auto &          channel     = ms_channels[row];
+                const bool      is_empty    = buf.empty();
+                ImGui::TableNextRow();
+
+
+                //      1.      COLUMN 1.       VISIBILITY SWITCHES...
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Checkbox( channel.vis.master_ID,     &channel.vis.master );
+                ImGui::SameLine();
+                ImGui::Checkbox( channel.vis.average_ID,    &channel.vis.average );
+                ImGui::SameLine();
+                ImGui::Checkbox( channel.vis.single_ID,    &channel.vis.single );
+                
+                
+                //      2.      COLUMN 2.       CHANNEL ID...
+                ImGui::TableSetColumnIndex(1);
+                ImGui::TextUnformatted(ms_channels[row].name);
     
     
+                //      3.      COLUMN 3.       MAXIMUM VALUE...
+                ImGui::TableSetColumnIndex(2);
+                ImGui::Text("%.0f", m_max_counts[row]);
+
+
+                //      4.      COLUMN 4.       AVERAGE VALUE...
+                ImGui::TableSetColumnIndex(3);
+                //  loc_avg = ComputeAverage(buf, m_avg_mode,
+                //                   m_avg_window_samp.value,
+                //                   m_avg_window_sec.value,
+                //                   spark_now);
+                ImGui::Text("%.2f", (is_empty)  ? 0.0f  : m_avg_counts[row].top().y );
+
+
+                //      5.      COLUMN 5.       CURRENT VALUE...
+                ImGui::TableSetColumnIndex(4);
+                const float     curr    = (is_empty)    ? 0.0f   : buf.back().y;
+                ImGui::Text("%.0f", curr);
+
+
+                //      6.      COLUMN 6.       ANIMATED PLOT...
+                ImGui::TableSetColumnIndex(5);
+                if ( channel.vis.single )
+                {
+                    ImGui::PushID( static_cast<int>(row) );
+                    if ( !is_empty  &&  channel.vis.single )
+                    {
+                        //  This is bitching at me b.c. I made the func. "inline" but it is in a diff. .cpp file...
+                        //
+                        //      this->plot_sparkline(
+                        //            buf
+                        //          , this->m_plot_colors[row]
+                        //          , ImVec2(-1, cc::row_height_px)
+                        //          , spark_now
+                        //          , this->m_history_length.Value()
+                        //          , this->ms_CENTER
+                        //          , this->m_plot_flags
+                        //      );
+                    }
+                    ImGui::PopID();
+                }
+            //
+            //
+            }// END "FOR-LOOP".
+        
+        
+        ImGui::EndTable();
+        }// END "table".
+    //
+    //
+    //
+    }// END TABLE...
+
+
+
+    //ImPlot::PopColormap();
+    //ImGui::End();
     return;
 }
 
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//      ?.      UTILITY FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//      3.      PRIVATE MEMBER FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//--------------------------------------------------------------------
-// Helper to compute localized average
-//--------------------------------------------------------------------
-float CCounterApp::ComputeAverage(const buffer_type &buf, AvgMode mode,
-                                  ImU64 N_samples, double seconds, float now) const
-{
-    const std::size_t   size        = buf.size();
-    float               sum         = 0.0f;
-    std::size_t         count       = 0;
-    
-    
-    
-    if (size == 0)      { return 0.0f; }
-
-
-
-    //      CASE 1 :    COUNT-BASED AVERAGE...
-    if (mode == AvgMode::Samples)
-    {
-        const ImU64         N       = std::min<ImU64>(N_samples, size);
-        const std::size_t   start   = size - static_cast<std::size_t>(N);
-        for (std::size_t i = start; i < size; ++i) {
-            sum += buf[i].y;
-            ++count;
-        }
-    }
-    //
-    //      CASE 2 :    TIME-BASED AVERAGE...
-    else
-    {
-        for (std::size_t i = size; i-- > 0; )
-        {
-            const float     dt      = now - buf[i].x;
-            if (dt > seconds)       { break; }
-            sum += buf[i].y;
-            ++count;
-        }
-    }
-    return (count)    ? sum / static_cast<float>(count)     : 0.0f;
-}
 
 
 

@@ -77,20 +77,20 @@ struct RingBuffer
     /*------------------------------------------------------------------
         Standard container typedefs
     ------------------------------------------------------------------*/
-    using value_type        = T;
-    using size_type         = std::size_t;
-    using difference_type   = std::ptrdiff_t;
-    using reference         = T &;              //  now _mutable_
-    using const_reference   = const T &;
-    using pointer           = T *;
-    using const_pointer     = const T *;
+    using                   value_type                  = T;
+    using                   size_type                   = std::size_t;
+    using                   difference_type             = std::ptrdiff_t;
+    using                   reference                   = T &;                  //  now _mutable_
+    using                   const_reference             = const T &;
+    using                   pointer                     = T *;
+    using                   const_pointer               = const T *;
 
     /*------------------------------------------------------------------
         Storage & state
     ------------------------------------------------------------------*/
-    T         buf[N];          // fixed-size storage (no heap)
-    size_type head  {0};       // index of next write (also "oldest" when full)
-    size_type count {0};       // number of valid elements (≤ N)
+    T                       buf                         [N];                    //  fixed-size storage (no heap)
+    size_type               head                        { 0 };                  //  index of next write (also "oldest" when full)
+    size_type               count                       { 0 };                  //  number of valid elements (≤ N)
 
     [[nodiscard]] inline bool full() const noexcept { return count == N; }
 

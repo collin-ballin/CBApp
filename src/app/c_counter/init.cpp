@@ -30,22 +30,25 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+//  Default Constructor.
+//
 CCounterApp::CCounterApp(app::AppState & src) noexcept
     : S(src)
 {
-    //  1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
+    //      1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
     m_window_class[0].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     m_window_class[1].DockNodeFlagsOverrideSet                  = ImGuiDockNodeFlags_HiddenTabBar;      //    ImGuiDockNodeFlags_NoTabBar; //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     
     //  this->m_detview_window.render_fn    = std::bind_front(&CCounterApp::display_controls, this);
+    return;
 }
+
 
 //  "initialize"
 //
 void CCounterApp::initialize(void)
 {
-    if (this->m_initialized)
-        return;
+    if (this->m_initialized)    { return; }
         
     this->init();
     return;
@@ -59,52 +62,60 @@ void CCounterApp::init(void)
     m_cmap                                                          = ImPlot::GetColormapIndex("CCounter_Map");
     
     
-    //  1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
+    //      1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
     m_window_class[0].DockNodeFlagsOverrideSet                      = ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     m_window_class[1].DockNodeFlagsOverrideSet                      = ImGuiDockNodeFlags_HiddenTabBar;      //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     
         
         
-    //  2.      DEFAULT TAB OPTIONS...
-    static ImGuiTabItemFlags        ms_DEF_PLOT_TAB_FLAGS           = ImGuiTabItemFlags_None;
+    //      2.      DEFAULT TAB OPTIONS...
+    //  static ImGuiTabItemFlags        ms_DEF_PLOT_TAB_FLAGS           = ImGuiTabItemFlags_None;
     static ImGuiTabItemFlags        ms_DEF_CTRL_TAB_FLAGS           = ImGuiTabItemFlags_None;
     static ImGuiTabItemFlags        ms_DEF_APPEARANCE_TAB_FLAGS     = ImGuiTabItemFlags_None;
     
     
-    //  3A.     TABS FOR PLOT WINDOW...
-    ms_PLOT_TABS                                                = {
-    //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
-        Tab_t(  "C-Counter Plots",          true,           true,               ms_DEF_PLOT_TAB_FLAGS,          nullptr     )
+    //      3A.     TABS FOR PLOT WINDOW...
+#ifndef DEF_REFACTOR_CC
+    ms_PLOT_TABS    = {
+    //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.         FLAGS.                          CALLBACK.
+        Tab_t(  "Home"                      , true          , true                  , ms_DEF_PLOT_TAB_FLAGS         , nullptr     )
     };
+#endif  //  DEF_REFACTOR_CC  //
     
 
-    //  4A.     TABS FOR CONTROL WINDOW...
-    ms_CTRL_TABS                                                = {
-    //            TAB NAME.                   OPEN.         NOT CLOSE-ABLE.     FLAGS.                          CALLBACK.
-          Tab_t(  "Controls",                 true,         true,               ms_DEF_CTRL_TAB_FLAGS,          nullptr     )
-        , Tab_t(  "Appearance",               true,         true,               ms_DEF_APPEARANCE_TAB_FLAGS,    nullptr     )
+    //      4A.     TABS FOR CONTROL WINDOW...
+    ms_CTRL_TABS    = {
+    //            TAB NAME.                 OPEN.           NOT CLOSE-ABLE.         FLAGS.                          CALLBACK.
+          Tab_t(  "Controls"                , true          , true                  , ms_DEF_CTRL_TAB_FLAGS         , nullptr     )
+        , Tab_t(  "Appearance"              , true          , true                  , ms_DEF_APPEARANCE_TAB_FLAGS   , nullptr     )
     };
     
     
-    //  3B.     ASSIGN THE CALLBACK RENDER FUNCTIONS FOR EACH PLOT TAB...
-    for (size_t i = 0; i < ms_PLOT_TABS.size(); ++i) {
+    
+    //      3B.     ASSIGN THE CALLBACK RENDER FUNCTIONS FOR EACH PLOT TAB...
+#ifndef DEF_REFACTOR_CC
+    for (size_t i = 0; i < ms_PLOT_TABS.size(); ++i)
+    {
         auto &      tab                     = ms_PLOT_TABS[i];
         ms_PLOT_TABS[i].render_fn           = [this, tab]([[maybe_unused]] const char * id, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
                                               { this->dispatch_plot_function( tab.uuid ); };
     }
-    //  4B.     ASSIGN CALLBACKS TO EACH CTRL TAB...
-    for (std::size_t i = 0; i < ms_CTRL_TABS.size(); ++i) {
+#endif  //  DEF_REFACTOR_CC  //
+
+
+    //      4B.     ASSIGN CALLBACKS TO EACH CTRL TAB...
+    for (size_t i = 0ULL; i < ms_CTRL_TABS.size(); ++i)
+    {
         auto &      tab                     = ms_CTRL_TABS[i];
         ms_CTRL_TABS[i].render_fn           = [this, tab]([[maybe_unused]] const char * id, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
                                               { this->dispatch_ctrl_function( tab.uuid ); };
     }
     
     
+    //      Set the initial "freeze" limits so plot begins with sensible X-Limits.
+    m_freeze_xmin   = 0.0f;
+    m_freeze_xmax   = this->m_history_length.Value();
     
-    
-    
-    
-    //m_plot_colors                           = cb::utl::GetColormapSamples( m_NUM_COLORS, m_cmap );
     this->init_ctrl_rows();
     
     
@@ -130,28 +141,52 @@ void CCounterApp::destroy(void)
 
 
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  INITIALIZATIONS".
+
+
+
+
+
+
+
+
+
 
 
 
 // *************************************************************************** //
 //
 //
-//  2.  TAB FUNCTIONS...
+//
+//      2.      TAB FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
 //  "dispatch_plot_function"
 //
-void CCounterApp::dispatch_plot_function(const std::string & uuid)
+void CCounterApp::dispatch_plot_function([[maybe_unused]] const std::string & uuid)
+#ifdef DEF_REFACTOR_CC
+//
 {
-    bool            match       = false;
-    const size_t    N           = ms_PLOT_TABS.size();
-    size_t          idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
+    return;
+}
+//
+# else
+//
+{
+    bool                match       = false;
+    const size_t        N           = ms_PLOT_TABS.size();
+    size_t              idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
 
-    //  1.  FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
-    for (size_t i = 0; i < N && !match; ++i) {
-        match = ( uuid == ms_PLOT_TABS[i].uuid );
-        if (match) idx = i;
+    //      1.      FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
+    for (size_t i = 0; i < N && !match; ++i)
+    {
+        match           = ( uuid == ms_PLOT_TABS[i].uuid );
+        if (match)      { idx = i; }
     }
     
     if (!match) return;
@@ -162,7 +197,7 @@ void CCounterApp::dispatch_plot_function(const std::string & uuid)
     {
         //      0.  Model PARAMETERS...
         case 0:         {
-            this->ShowCCPlots();
+            this->_Begin_IMPL();
             break;
         }
         //
@@ -172,8 +207,13 @@ void CCounterApp::dispatch_plot_function(const std::string & uuid)
             break;
         }
     }
+    
     return;
 }
+//
+#endif  //  DEF_REFACTOR_CC  //
+
+
 
 
 //  "dispatch_ctrl_function"
@@ -184,7 +224,7 @@ void CCounterApp::dispatch_ctrl_function(const std::string & uuid)
     const size_t    N           = ms_CTRL_TABS.size();
     size_t          idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
 
-    //  1.  FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
+    //      1.      FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
     for (size_t i = 0; i < N && !match; ++i)
     {
         match = ( uuid == ms_CTRL_TABS[i].uuid );
@@ -214,6 +254,7 @@ void CCounterApp::dispatch_ctrl_function(const std::string & uuid)
             break;
         }
     }
+    
     return;
 }
 
@@ -221,8 +262,7 @@ void CCounterApp::dispatch_ctrl_function(const std::string & uuid)
 //  "DefaultPlotTabRenderFunc"
 //
 void CCounterApp::DefaultPlotTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
-    if (!p_open)
-        return;
+    if (!p_open)    { return; }
         
     ImGui::Text("Window Tab \"%s\".  Here is some default text dispatched by \"DefaultPlotTabRenderFunc()\".", uuid);
     return;
@@ -232,8 +272,7 @@ void CCounterApp::DefaultPlotTabRenderFunc([[maybe_unused]] const char * uuid, [
 //  "DefaultCtrlTabRenderFunc"
 //
 void CCounterApp::DefaultCtrlTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
-    if (!p_open)
-        return;
+    if (!p_open)    { return; }
         
     ImGui::BulletText("Tab UUID: \"%s\".", uuid);
         
@@ -243,13 +282,28 @@ void CCounterApp::DefaultCtrlTabRenderFunc([[maybe_unused]] const char * uuid, [
 
 
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2.  MAIN COUNTER---LOOP".
+
+
+
+
+
+
+
+
+
 
 
 
 // *************************************************************************** //
 //
 //
-//  ?       APPLICATION WIDGETS...
+//
+//      X.      UTILITY...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -275,6 +329,7 @@ void CCounterApp::init_ctrl_rows(void)
     ms_CTRL_ROWS            = {
     //
     //  1.  CONTROL PARAMETERS [TABLE]...
+    /*
         {"Record",                              [this]
             {// BEGIN.
             //
@@ -358,8 +413,10 @@ void CCounterApp::init_ctrl_rows(void)
             //
             } // END.
         },
+        */
         {"Communicate",                         [this]
             {// BEGIN.
+                ImGui::BeginDisabled();
                 ImGui::BeginGroup();
                 //
                 //
@@ -385,8 +442,11 @@ void CCounterApp::init_ctrl_rows(void)
                 ImGui::EndGroup();//  TOOL-TIP FOR "COMMUNICATION...
                 if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort | ImGuiHoveredFlags_NoSharedDelay))
                     ImGui::SetTooltip( "Manual communication to the child process.  DO NOT TOUCH THIS UNLESS YOU KNOW WHAT YOU'RE DOING." );
-                
+                //
+                //
+                ImGui::EndDisabled();
             }// END.
+            //
         },
     //
         {"Coincidence Window",                  [this]
@@ -509,18 +569,35 @@ void CCounterApp::init_ctrl_rows(void)
     //
         {"Average Appearance",                  [this]
             {// BEGIN.
-                ImGui::SetNextItemWidth( 0.5 * ImGui::GetColumnWidth() );
+                //
+                //      Alpha.
+                const float     width   = 0.33 * ImGui::GetColumnWidth();
+                bool            dirty   = false;
+                
+                ImGui::SetNextItemWidth( width );
                 ImGui::SliderScalar("##AvgOpacity",                     ImGuiDataType_Float,            &m_AVG_OPACITY.value,
                                     &m_AVG_OPACITY.limits.min,          &m_AVG_OPACITY.limits.max,      "Opacity: %.1f %%", SLIDER_FLAGS);
                 ImGui::SameLine(0.0f, pad);
                 
                 
+                //      Tint.
+                ImGui::SetNextItemWidth( width );
+                dirty = ImGui::SliderScalar("##AvgTint",                        ImGuiDataType_Float,            &m_avg_color_shade.value,
+                                            &m_avg_color_shade.limits.min,      &m_avg_color_shade.limits.max,  "Tint/Shade: %.1f%%", SLIDER_FLAGS);
+                ImGui::SameLine(0.0f, pad);
                 
+                
+                //      LineWidth.
                 ImGui::SetNextItemWidth( -1 );
                 ImGui::SliderScalar("##AvgLineWidth",                   ImGuiDataType_Float,            &m_AVG_LINEWIDTH.value,
                                     &m_AVG_LINEWIDTH.limits.min,        &m_AVG_LINEWIDTH.limits.max,    "Linewidth: %.1f pt", SLIDER_FLAGS);
                 
+                
                 ImGui::Dummy( ImVec2(pad, 0.0f) );
+                //
+                //
+                if (dirty)      { this->m_colormap_cache_invalid = false; }
+                
             }// END.
         },
     //
@@ -554,10 +631,19 @@ void CCounterApp::init_ctrl_rows(void)
     };
 
 
-
+    //      INITIAL ASSIGNMENT OF CMAP...
+    this->_validate_colormap_cache();
 
     return;
 }
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "X.  UTILITY".
 
 
 

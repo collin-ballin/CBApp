@@ -57,43 +57,20 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 // *************************************************************************** //
-//      CONSTANTS...
+//
+//
+//
+//      0.      SMALL_INTERNAL_NAMESPACE...
 // *************************************************************************** //
-
-#if defined(_WIN32) || defined(MINGW)
-    inline static constexpr const char *    BREADCRUMB_DELIM                    = "\\";
-# else
-    inline static constexpr const char *    BREADCRUMB_DELIM                    = "/";
-#endif  //  defined(_WIN32) || defined(MINGW)  //
-
-
-
-inline static constexpr ImVec2              OPENMODE_ABS_WINDOW_SIZE            = ImVec2(702.0f,    481.2f);       //    ImVec2(585.0f,    401.0f);        //  Pop-up Window Size          [ ABSOLUTE Dimensions ].
-inline static constexpr ImVec2              SAVEMODE_ABS_WINDOW_SIZE            = ImVec2(969.6f,    549.6f);       //    ImVec2(808.0f,    458.0f);        //  Pop-up Window Size          [ ABSOLUTE Dimensions ].
-inline static constexpr ImVec2              FILE_DIALOG_REL_WINDOW_SIZE         = ImVec2(0.5f,      0.5f);          //  Pop-up Window Size          [ Relative to main viewport ].
+// *************************************************************************** //
 //
-inline static constexpr ImVec2              FILE_DIALOG_REL_WINDOW_POSITION     = ImVec2(0.5f,      2.0f/3.0f);     //  Pop-up Window Postion       [ Relative to main viewport ].
-//
-inline static constexpr float               TOP_HEIGHT                          = 3.0f;                             //  RESERVED SPACE AT TOP       [ multiples of FRAME height ].
-inline static constexpr float               BOTTOM_HEIGHT                       = 6.0f;                             //  RESERVED SPACE AT BOTTOM    [ multiples of FRAME height ].
-inline static constexpr float               MODIFIED_COLUMN_WIDTH               = 0.40f;                            //  DEFAULT WIDTH OF "DATE MODIFIED" COLUMN.
-//
-//
-//
-inline static constexpr const char *        EMPTY_STRING                        = "--";                         //  Used for empty fields in File Dialog browser.
-inline static constexpr const char *        ERROR_STRING                        = "???";                        //  Used if "std::error_code" for file operation.
-inline static constexpr const char *        UPDIR_NAME                          = "..";                         //  Name for "cd .." (MOVE OUT OF CWD).
-inline static constexpr const char *        TRUNCATION_CHAR                     = "...";                        //  Characters appended after TRUNCATION occurs.
-inline static constexpr int                 TRUNCATION_CHAR_LENGTH              = 3;                            //  = strnlen( TRUNCATION_CHAR );
-
-inline static constexpr const char *        DIRECTORY_PREFIX                    = "";                           //  "[D] "
-inline static constexpr const char *        FILENAME_PREFIX                     = "    ";                       //  "    "
-inline static constexpr const char *        DIR_TITLE                           = "Folder";
-inline static constexpr const char *        DATETIME_FMT                        = "%Y-%m-%d %H:%M:%S";          //  Format of the "date modified" for each file.
-//
-inline static constexpr int                 BREADCRUMB_DIRNAME_LIMIT            = 10;
+namespace dialog { //     BEGINNING NAMESPACE "dialog"...
 
 
+
+// *************************************************************************** //
+//      "dialog" |    TYPES.
+// *************************************************************************** //
 
 //  "FileDialogType"
 //      Enum to define different TYPES/BEHAVIORS of File Dialog menus.
@@ -102,12 +79,11 @@ enum class FileDialogType : uint8_t {
     None, Open, Save, COUNT
 };
 
+
 //  "FileDialogSortingCriteria"
 //      Enum to define which parameter we sort the file entries by.
 //
-enum class FileDialogSortingCriterion : uint8_t {
-    Name, Size, Type, Time, COUNT
-};
+enum class FileDialogSortingCriterion : uint8_t     { Name = 0  , Size  , Type  , Time  , COUNT };
 
     
 //  "Initializer_t"
@@ -116,12 +92,11 @@ struct Initializer_t {
     using                                           Type                    = FileDialogType;
     Type                                            type                    = Type::None;
     std::string                                     window_name             = "File Dialog";
-    std::string                                     default_filename;           // empty ⇒ none
-    std::string                                     required_extension;         // ".json" etc.; empty ⇒ none
+    std::string                                     default_filename;           //  empty -> none
+    std::string                                     required_extension;         //  ".json" etc.;    empty -> none
     std::vector<std::string>                        valid_extensions;           //  What file extensions the user is able to select.
     std::filesystem::path                           default_dir             = std::filesystem::current_path();
 };
-
 
 
 //  "FileDialogState_t"
@@ -132,7 +107,7 @@ struct FileDialogState_t {
 //
 //  TARGET FILE DATA:
     std::string                                     default_filename;
-    std::string                                     required_extension;                 // File-Extension that will be appended by FORCE (whether or not the user types it).
+    std::string                                     required_extension;                 //  File-Extension that will be appended by FORCE (whether or not the user types it).
     std::optional<std::filesystem::path>            selected_path;
 //
 //
@@ -166,18 +141,78 @@ struct FileDialogState_t {
 
 
 // *************************************************************************** //
+//      "dialog" |    INTERNAL CONSTANTS.
+// *************************************************************************** //
+
+#if defined(_WIN32) || defined(MINGW)
+    inline static constexpr const char *    BREADCRUMB_DELIM                    = "\\";
+# else
+    inline static constexpr const char *    BREADCRUMB_DELIM                    = "/";
+#endif  //  defined(_WIN32) || defined(MINGW)  //
+
+
+
+inline static constexpr ImVec2              OPENMODE_ABS_WINDOW_SIZE            = ImVec2(702.0f,    481.2f);        //  ImVec2(585.0f,    401.0f);        //  Pop-up Window Size          [ ABSOLUTE Dimensions ].
+inline static constexpr ImVec2              SAVEMODE_ABS_WINDOW_SIZE            = ImVec2(969.6f,    549.6f);        //  ImVec2(808.0f,    458.0f);        //  Pop-up Window Size          [ ABSOLUTE Dimensions ].
+inline static constexpr ImVec2              FILE_DIALOG_REL_WINDOW_SIZE         = ImVec2(0.5f,      0.5f);          //  Pop-up Window Size          [ Relative to main viewport ].
+//
+inline static constexpr ImVec2              FILE_DIALOG_REL_WINDOW_POSITION     = ImVec2(0.5f,      2.0f/3.0f);     //  Pop-up Window Postion       [ Relative to main viewport ].
+//
+inline static constexpr float               TOP_HEIGHT                          = 3.0f;                             //  RESERVED SPACE AT TOP       [ multiples of FRAME height ].
+inline static constexpr float               BOTTOM_HEIGHT                       = 6.0f;                             //  RESERVED SPACE AT BOTTOM    [ multiples of FRAME height ].
+inline static constexpr float               MODIFIED_COLUMN_WIDTH               = 0.40f;                            //  DEFAULT WIDTH OF "DATE MODIFIED" COLUMN.
+//
+//
+//
+inline static constexpr const char *        EMPTY_STRING                        = "--";                             //  Used for empty fields in File Dialog browser.
+inline static constexpr const char *        ERROR_STRING                        = "???";                            //  Used if "std::error_code" for file operation.
+inline static constexpr const char *        UPDIR_NAME                          = "..";                             //  Name for "cd .." (MOVE OUT OF CWD).
+inline static constexpr const char *        TRUNCATION_CHAR                     = "...";                            //  Characters appended after TRUNCATION occurs.
+inline static constexpr int                 TRUNCATION_CHAR_LENGTH              = 3;                                //  = strnlen( TRUNCATION_CHAR );
+
+inline static constexpr const char *        DIRECTORY_PREFIX                    = "";                               //  "[D] "
+inline static constexpr const char *        FILENAME_PREFIX                     = "    ";                           //  "    "
+inline static constexpr const char *        DIR_TITLE                           = "Folder";
+inline static constexpr const char *        DATETIME_FMT                        = "%Y-%m-%d %H:%M:%S";              //  Format of the "date modified" for each file.
+//
+inline static constexpr int                 BREADCRUMB_DIRNAME_LIMIT            = 10;
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}// END NAMESPACE "dialog".
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+// *************************************************************************** //
 //                 PRIMARY TEMPLATE DECLARATION:
 //          "C B _ B R O W S E R" CLASS IMPLEMENTATION...
 // *************************************************************************** //
 // *************************************************************************** //
 
-class FileDialog {
+class FileDialog
+{
 public:
-    using                               Type                        = FileDialogType;
-    using                               SortCriterion               = FileDialogSortingCriterion;
-    using                               Initializer                 = Initializer_t;
-    using                               Sort                        = FileDialogSortingCriterion;
-    using                               State                       = FileDialogState_t;
+    using                               Type                        = dialog::FileDialogType;
+    using                               SortCriterion               = dialog::FileDialogSortingCriterion;
+    using                               Initializer                 = dialog::Initializer_t;
+    using                               Sort                        = dialog::FileDialogSortingCriterion;
+    using                               State                       = dialog::FileDialogState_t;
 //
 //  CBAPP_APPSTATE_ALIAS_API        //  CLASS-DEFINED, NESTED TYPENAME ALIASES.
 //
@@ -263,6 +298,7 @@ private:
     //  "get_window_size"
     [[nodiscard]] inline ImVec2         get_window_size             (void)
     {
+        using               namespace   dialog;
         ImGuiViewport *     vp          = ImGui::GetMainViewport();
         ImVec2              size        = vp->Size * FILE_DIALOG_REL_WINDOW_SIZE;
         
@@ -274,20 +310,6 @@ private:
         
         return size;
     }
-    
-    //  "fmt_file_size"
-    [[nodiscard]] inline std::string    fmt_file_size               (const std::uintmax_t bytes) {
-        static constexpr const char *   units[]         = { "B", "KB", "MB", "GB", "TB" };
-        static constexpr size_t         SIZE            = 64;
-        //
-        char                            buf[SIZE]       = {};
-        double                          value           = static_cast<double>(bytes);
-        int                             idx             = 0;
-        
-        while ( value >= 1024.0 && idx < 4 )            { value /= 1024.0; ++idx; }
-        std::snprintf(buf, sizeof(buf), (idx == 0) ? "%.0f %s" : "%.1f %s", value, units[idx]);
-        return buf;
-    };
     
     // *************************************************************************** //
     // *************************************************************************** //
