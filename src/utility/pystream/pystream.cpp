@@ -712,10 +712,11 @@ bool PyStream::launch_process(void)
     SetHandleInformation(m_child_stdout_r, HANDLE_FLAG_INHERIT, 0);
 
     {
-        std::wstringstream ss;
-        ss << L"python " << s_quote_if_needed(m_script_path.wstring());
+        ss << s_quote_if_needed(this->m_python_exe.wstring())       // <- native wide path
+           << L" "
+           << s_quote_if_needed(this->m_script_path.wstring());
         for (const auto& a : m_args) {
-            ss << L" " << s_quote_if_needed(s_utf8_to_wide(a));
+            ss << L" " << s_quote_if_needed(s_utf8_to_wide(a));     // args remain UTF-8 -> wide
         }
         cmd = ss.str();
     }

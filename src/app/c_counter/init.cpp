@@ -59,7 +59,10 @@ void CCounterApp::initialize(void)
 //
 void CCounterApp::init(void)
 {
-    m_cmap                                                          = ImPlot::GetColormapIndex("CCounter_Map");
+    this->m_cmap        = ImPlot::GetColormapIndex("CCounter_Map");
+    
+    this->m_python.set_filepath( this->m_filepath );
+    
     
     
     //      1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
@@ -70,6 +73,8 @@ void CCounterApp::init(void)
         
     //      2.      DEFAULT TAB OPTIONS...
     //  static ImGuiTabItemFlags        ms_DEF_PLOT_TAB_FLAGS           = ImGuiTabItemFlags_None;
+    //
+    static ImGuiTabItemFlags        ms_DEF_INDIVIDUALS_TAB_FLAGS    = ImGuiTabItemFlags_None;
     static ImGuiTabItemFlags        ms_DEF_CTRL_TAB_FLAGS           = ImGuiTabItemFlags_None;
     static ImGuiTabItemFlags        ms_DEF_APPEARANCE_TAB_FLAGS     = ImGuiTabItemFlags_None;
     
@@ -77,17 +82,18 @@ void CCounterApp::init(void)
     //      3A.     TABS FOR PLOT WINDOW...
 #ifndef DEF_REFACTOR_CC
     ms_PLOT_TABS    = {
-    //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.         FLAGS.                          CALLBACK.
-        Tab_t(  "Home"                      , true          , true                  , ms_DEF_PLOT_TAB_FLAGS         , nullptr     )
+    //          TAB NAME.                   OPEN.           NOT CLOSE-ABLE.         FLAGS.                              CALLBACK.
+        Tab_t(  "Home"                      , true          , true                  , ms_DEF_PLOT_TAB_FLAGS             , nullptr     )
     };
 #endif  //  DEF_REFACTOR_CC  //
     
 
     //      4A.     TABS FOR CONTROL WINDOW...
     ms_CTRL_TABS    = {
-    //            TAB NAME.                 OPEN.           NOT CLOSE-ABLE.         FLAGS.                          CALLBACK.
-          Tab_t(  "Controls"                , true          , true                  , ms_DEF_CTRL_TAB_FLAGS         , nullptr     )
-        , Tab_t(  "Appearance"              , true          , true                  , ms_DEF_APPEARANCE_TAB_FLAGS   , nullptr     )
+    //            TAB NAME.                 OPEN.           NOT CLOSE-ABLE.         FLAGS.                              CALLBACK.
+          Tab_t(  "Indivual Counters"       , true          , true                  , ms_DEF_INDIVIDUALS_TAB_FLAGS      , nullptr     )
+        , Tab_t(  "Controls"                , true          , true                  , ms_DEF_CTRL_TAB_FLAGS             , nullptr     )
+        , Tab_t(  "Appearance"              , true          , true                  , ms_DEF_APPEARANCE_TAB_FLAGS       , nullptr     )
     };
     
     
@@ -146,147 +152,6 @@ void CCounterApp::destroy(void)
 //
 // *************************************************************************** //
 // *************************************************************************** //   END "1.  INITIALIZATIONS".
-
-
-
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//      2.      TAB FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "dispatch_plot_function"
-//
-void CCounterApp::dispatch_plot_function([[maybe_unused]] const std::string & uuid)
-#ifdef DEF_REFACTOR_CC
-//
-{
-    return;
-}
-//
-# else
-//
-{
-    bool                match       = false;
-    const size_t        N           = ms_PLOT_TABS.size();
-    size_t              idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
-
-    //      1.      FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
-    for (size_t i = 0; i < N && !match; ++i)
-    {
-        match           = ( uuid == ms_PLOT_TABS[i].uuid );
-        if (match)      { idx = i; }
-    }
-    
-    if (!match) return;
-    
-    
-    //      DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
-    switch (idx)
-    {
-        //      0.  Model PARAMETERS...
-        case 0:         {
-            this->_Begin_IMPL();
-            break;
-        }
-        //
-        //
-        //
-        default: {
-            break;
-        }
-    }
-    
-    return;
-}
-//
-#endif  //  DEF_REFACTOR_CC  //
-
-
-
-
-//  "dispatch_ctrl_function"
-//
-void CCounterApp::dispatch_ctrl_function(const std::string & uuid)
-{
-    bool            match       = false;
-    const size_t    N           = ms_CTRL_TABS.size();
-    size_t          idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
-
-    //      1.      FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
-    for (size_t i = 0; i < N && !match; ++i)
-    {
-        match = ( uuid == ms_CTRL_TABS[i].uuid );
-        if (match)  { idx = i; }
-    }
-    if (!match) return;
-    
-    
-    
-    //      DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
-    switch (idx)
-    {
-        //      0.      CCounter CONTROLS...
-        case 0:         {
-            this->TAB_Controls();
-            break;
-        }
-        //
-        //      1.      CCounter APPEARANCE SETTINGS...
-        case 1:         {
-            this->TAB_Appearance();
-            break;
-        }
-        //
-        //
-        default: {
-            break;
-        }
-    }
-    
-    return;
-}
-
-
-//  "DefaultPlotTabRenderFunc"
-//
-void CCounterApp::DefaultPlotTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
-    if (!p_open)    { return; }
-        
-    ImGui::Text("Window Tab \"%s\".  Here is some default text dispatched by \"DefaultPlotTabRenderFunc()\".", uuid);
-    return;
-}
-
-
-//  "DefaultCtrlTabRenderFunc"
-//
-void CCounterApp::DefaultCtrlTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
-    if (!p_open)    { return; }
-        
-    ImGui::BulletText("Tab UUID: \"%s\".", uuid);
-        
-    ImGui::Text("Window Tab \"%s\".  Here is some default text dispatched by \"DefaultCtrlTabRenderFunc()\".", uuid);
-    return;
-}
-
-
-
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "2.  MAIN COUNTER---LOOP".
 
 
 
@@ -572,31 +437,32 @@ void CCounterApp::init_ctrl_rows(void)
                 //
                 //      Alpha.
                 const float     width   = 0.33 * ImGui::GetColumnWidth();
-                bool            dirty   = false;
+                bool            dirty1  = false;
+                bool            dirty2  = false;
                 
                 ImGui::SetNextItemWidth( width );
-                ImGui::SliderScalar("##AvgOpacity",                     ImGuiDataType_Float,            &m_AVG_OPACITY.value,
-                                    &m_AVG_OPACITY.limits.min,          &m_AVG_OPACITY.limits.max,      "Opacity: %.1f %%", SLIDER_FLAGS);
+                dirty1  = ImGui::SliderScalar( "##AvgOpacity",                     ImGuiDataType_Float,            &m_avg_opacity.value,
+                                               &m_avg_opacity.limits.min,          &m_avg_opacity.limits.max,      "Opacity: %.2f %%", SLIDER_FLAGS );
                 ImGui::SameLine(0.0f, pad);
                 
                 
                 //      Tint.
                 ImGui::SetNextItemWidth( width );
-                dirty = ImGui::SliderScalar("##AvgTint",                        ImGuiDataType_Float,            &m_avg_color_shade.value,
-                                            &m_avg_color_shade.limits.min,      &m_avg_color_shade.limits.max,  "Tint/Shade: %.1f%%", SLIDER_FLAGS);
+                dirty2 = ImGui::SliderScalar( "##AvgTint",                        ImGuiDataType_Float,            &m_avg_color_shade.value,
+                                              &m_avg_color_shade.limits.min,      &m_avg_color_shade.limits.max,  "Tint/Shade: %.2f%%", SLIDER_FLAGS );
                 ImGui::SameLine(0.0f, pad);
                 
                 
                 //      LineWidth.
                 ImGui::SetNextItemWidth( -1 );
-                ImGui::SliderScalar("##AvgLineWidth",                   ImGuiDataType_Float,            &m_AVG_LINEWIDTH.value,
-                                    &m_AVG_LINEWIDTH.limits.min,        &m_AVG_LINEWIDTH.limits.max,    "Linewidth: %.1f pt", SLIDER_FLAGS);
+                ImGui::SliderScalar("##AvgLineWidth",                   ImGuiDataType_Float,            &m_avg_linewidth.value,
+                                    &m_avg_linewidth.limits.min,        &m_avg_linewidth.limits.max,    "Linewidth: %.2f px", SLIDER_FLAGS);
                 
                 
                 ImGui::Dummy( ImVec2(pad, 0.0f) );
                 //
                 //
-                if (dirty)      { this->m_colormap_cache_invalid = false; }
+                this->m_colormap_cache_invalid  = ( dirty1  ||  dirty2 );
                 
             }// END.
         },
@@ -608,24 +474,34 @@ void CCounterApp::init_ctrl_rows(void)
             }
         },
     //
-        {"Plot Limiter",                        [this]
-            {
-                ImGui::SetNextItemWidth( ImGui::GetColumnWidth() );
-                ImGui::SliderScalar("##PlotLimiter",    ImGuiDataType_U64,      &m_PLOT_LIMIT.value,
-                                        &m_PLOT_LIMIT.limits.min, &m_PLOT_LIMIT.limits.max,  "%llu", SLIDER_FLAGS);
-            }
-        },
-    //
         {"Colormap",                            [this]
             {
-                float w = ImGui::GetColumnWidth();
-                if (ImPlot::ColormapButton(ImPlot::GetColormapName(m_cmap), ImVec2(w, 0), m_cmap))
+                float   w   = ImGui::GetColumnWidth();
+                
+                
+                
+                
+                if (ImPlot::ColormapButton( ImPlot::GetColormapName(m_cmap), ImVec2(w, 0), m_cmap) )
                 {
-                    m_colormap_cache_invalid    = true;
-                    m_cmap                      = (m_cmap + 1) % ImPlot::GetColormapCount();
+                    //  m_colormap_cache_invalid    = true;
+                    //  m_cmap                      = (m_cmap + 1) % ImPlot::GetColormapCount();
                     //ImPlot::BustColorCache(cc::heatmap_uuid);
                 }
-                //ImPlot::PushColormap(m_cmap);
+                //
+                //          1.1.    OPEN COLOR-MAP MENU...
+                const bool  open_cmap_menu  = ImGui::BeginPopupContextItem(
+                      this->ms_CMAP_SELECTION_MENU /* GetMenuID( PopupHandle::ToolSelection )*/
+                    , ImGuiPopupFlags_MouseButtonLeft
+                );
+                if (open_cmap_menu)
+                {
+                    if ( !this->_MENU_cmap_selection(this->m_cmap) )
+                        { ImGui::CloseCurrentPopup(); }
+                    //
+                    ImGui::EndPopup();
+                }
+                
+                
             }
         }
     };

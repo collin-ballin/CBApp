@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 """
-fpga_stream.py  –  Streams coincidence‑counter data to stdout (JSON lines). 
+"fpga_stream.py"
+    @brief Streams coincidence‑counter data to stdout (JSON lines). 
     VERSION 2.0 --- May 24, 2025.
 
-Modes:
+    
+MODES OF OPERATION:
 -----
-1) Real hardware  (default)
-2) Mock           (--mock or hardware unavailable)
+    1) Real hardware    (default)
+    2) Mock             (--mock or hardware unavailable)
 
-Commands via stdin:
+
+COMMANDS VIA STDIN:
 ------------------
-    duration <sec>      # seconds per acquisition   (alias: time)
-    window   <clks>     # coincidence‑window register
-    quit                # clean exit
+    duration    <sec>           #   seconds per acquisition   (alias: time)
+    window      <clks>          #   coincidence‑window register
+    quit                        #   clean exit
+
 """
 import sys, time, json, threading, queue, signal, datetime, argparse, random
 from typing import List, Tuple
@@ -101,10 +105,13 @@ def finish_measure(session):
 ################################################################################
 #
 #
+#
 #    3.     COMMAND THREAD: Reads stdin, pushes updates -> queue
 ################################################################################
 ################################################################################
 cmd_q: "queue.Queue[Tuple[str, float|int|None]]" = queue.Queue()
+
+
 
 #  "stdin_reader"
 #
@@ -146,7 +153,7 @@ def stdin_reader():
     return
 
 
-#   3.  GRACEFUL SIGNALS...
+#       3.      GRACEFUL SIGNALS...
 ################################################################################
 ################################################################################
 threading.Thread(target=stdin_reader, daemon=True).start()
@@ -154,14 +161,18 @@ signal.signal(signal.SIGINT,  signal.SIG_DFL)
 signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
 
-#   4.  MOCK‑PACKET GENERATOR...
+
+#       4.      MOCK‑PACKET GENERATOR...
 ################################################################################
 ################################################################################
+
+
 
 #   "mock_packets"
 #
 def mock_packets():
     i = 0
+
     while True:
         counts, cycles = SAMPLE_PACKETS[i]
         jittered = [int(random.poisson(mu) if mu > 20 else mu)
@@ -170,6 +181,8 @@ def mock_packets():
         yield jittered, cycles
         i = (i + 1) % len(SAMPLE_PACKETS)
 
+    return
+
 
 
 
@@ -178,7 +191,8 @@ def mock_packets():
 ################################################################################
 #
 #
-#   5.  MAIN LOOP...
+#
+#   5.      MAIN LOOP...
 ################################################################################
 ################################################################################
 

@@ -94,6 +94,9 @@ public:
     //
     using                                   buffer_type                     = cblib::RingBuffer<ImVec2, ms_BUFFER_SIZE>;     // utl::ScrollingBuffer;     // cblib::RingBuffer<int, 2000>
     using                                   AvgMode                         = AvgMode;
+    //
+    using                                   PerFrame                        = ccounter::PerFrame_t;
+    using                                   Style                           = ccounter::CCounterStyle;
     
     
     // *************************************************************************** //
@@ -104,6 +107,7 @@ public:
     // *************************************************************************** //
     static constexpr size_t                 ms_NUM                          = 15;           //  NUM. OF CHANNELS.
     static constexpr size_t                 ms_MSG_BUFFER_SIZE              = 256;          //  BUFFER-SIZE FOR MESSAGE TO PYSTREAM.
+    
     
     // *************************************************************************** //
     //
@@ -128,9 +132,12 @@ public:
 protected:
     
     // *************************************************************************** //
-    //      1. |    STATE VARIABLES.
+    //      1. |    SUBSIDIARY STATE OBJECTS.
     // *************************************************************************** //
     AppState &                              CBAPP_STATE_NAME;
+    Style                                   m_style                         = {   };
+    PerFrame                                m_perframe                      = {   };
+
 
     // *************************************************************************** //
     //
@@ -138,37 +145,60 @@ protected:
     // *************************************************************************** //
     //      1. |    IMPORTANT DATA-MEMBERS.
     // *************************************************************************** //
-    std::array<buffer_type, ms_NUM>         m_buffers                       = {   };
-    std::array<buffer_type, ms_NUM>         m_avg_counts                    = {   };
-    float                                   m_max_counts[ms_NUM]            = { 0.0f };
+    //
+    //                                  IMPORTANT DATA:
+    std::array<buffer_type, ms_NUM>         m_buffers                       = {   };        //  RAW-DATA values for each counter.
+    std::array<buffer_type, ms_NUM>         m_avg_counts                    = {   };        //  AVERAGE values for each counter.
+    float                                   m_max_counts[ms_NUM]            = { 0.0f };     //  MAXIMUM values for each counter.
+    //
     std::vector<Tab_t>                      ms_PLOT_TABS                    = {   };
     std::vector<Tab_t>                      ms_CTRL_TABS                    = {   };
-    std::vector<utl::WidgetRow>             ms_CTRL_ROWS                    = {   };
-    std::vector<utl::WidgetRow>             ms_APPEARANCE_ROWS              = {   };
+    std::vector<utl::WidgetRow>             ms_CTRL_ROWS                    = {   };        //  vector that contains each widget for the CONTROL---TAB.
+    std::vector<utl::WidgetRow>             ms_APPEARANCE_ROWS              = {   };        //  ...for the APPEARANCE---TAB.
     //
     //
     //
     ChannelSpec                             ms_channels[ms_NUM]             = {
-    //                  MASTER.                     SINGLE.                     AVERAGE.
-        { 8,  "A",      {true, "##MasterA",         true, "##SingleA",          true, "##AvgA"          }      },
-        { 4,  "B",      {true, "##MasterB",         true, "##SingleB",          true, "##AvgB"          }      },
-        { 2,  "C",      {true, "##MasterC",         true, "##SingleC",          false, "##AvgC"         }      },
-        { 1,  "D",      {true, "##MasterD",         true, "##SingleD",          false, "##AvgD"         }      },
+    //                          MASTER---PLOT.                  SINGLE---PLOT.                      AVERAGE---PLOT.
+          { 8   , "A"       , { true    , "##MasterA"           , true      , "##SingleA"           , true      , "##AvgA"          }     }
+        , { 4   , "B"       , { true    , "##MasterB"           , true      , "##SingleB"           , true      , "##AvgB"          }     }
+        , { 2   , "C"       , { true    , "##MasterC"           , true      , "##SingleC"           , false     , "##AvgC"          }     }
+        , { 1   , "D"       , { true    , "##MasterD"           , true      , "##SingleD"           , false     , "##AvgD"          }     }
     //
-        {12,  "AB",     {true, "##MasterAB",        true, "##SingleAB",         true, "##AvgAB"         }      },
-        {10,  "AC",     {true, "##MasterAC",        true, "##SingleAC",         true, "##AvgAC"         }      },
-        { 9,  "AD",     {true, "##MasterAD",        true, "##SingleAD",         false, "##AvgAD"        }      },
-        { 6,  "BC",     {true, "##MasterBC",        true, "##SingleBC",         false, "##AvgBC"        }      },
-        { 5,  "BD",     {true, "##MasterBD",        true, "##SingleBD",         false, "##AvgBD"        }      },
-        { 3,  "CD",     {true, "##MasterCD",        true, "##SingleCD",         false, "##AvgCD"        }      },
+        , {12   , "AB"      , { true    , "##MasterAB"          , true      , "##SingleAB"          , true      , "##AvgAB"         }     }
+        , {10   , "AC"      , { true    , "##MasterAC"          , true      , "##SingleAC"          , true      , "##AvgAC"         }     }
+        , { 9   , "AD"      , { true    , "##MasterAD"          , true      , "##SingleAD"          , false     , "##AvgAD"         }     }
+        , { 6   , "BC"      , { true    , "##MasterBC"          , true      , "##SingleBC"          , false     , "##AvgBC"         }     }
+        , { 5   , "BD"      , { true    , "##MasterBD"          , true      , "##SingleBD"          , false     , "##AvgBD"         }     }
+        , { 3   , "CD"      , { true    , "##MasterCD"          , true      , "##SingleCD"          , false     , "##AvgCD"         }     }
     //
-        {14,  "ABC",    {false, "##MasterABC",      false, "##SingleABC",       false, "##AvgABC"       }      },
-        {13,  "ABD",    {false, "##MasterABD",      false, "##SingleABD",       false, "##AvgABD"       }      },
-        {11,  "ACD",    {false, "##MasterACD",      false, "##SingleACD",       false, "##AvgACD"       }      },
-        { 7,  "BCD",    {false, "##MasterBCD",      false, "##SingleBCD",       false, "##AvgBCD"       }      },
+        , {14   , "ABC"     , { false   , "##MasterABC"         , false     , "##SingleABC"         , false     , "##AvgABC"        }     }
+        , {13   , "ABD"     , { false   , "##MasterABD"         , false     , "##SingleABD"         , false     , "##AvgABD"        }     }
+        , {11   , "ACD"     , { false   , "##MasterACD"         , false     , "##SingleACD"         , false     , "##AvgACD"        }     }
+        , { 7   , "BCD"     , { false   , "##MasterBCD"         , false     , "##SingleBCD"         , false     , "##AvgBCD"        }     }
     //
-        {15,  "ABCD",   {false, "##MasterABCD",     false, "##SingleABCD",      false, "##AvgABCD"      }      }
+        , {15   , "ABCD"    , { false   , "##MasterABCD"        , false     , "##SingleABCD"        , false     , "##AvgABCD"       }     }
     };
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      1. |    PROCESS-STREAMING DATA-MEMBERS.
+    // *************************************************************************** //
+    //
+    //                                  PYSTREAM:
+    utl::PyStream                           m_python                            = {   };    //  utl::PyStream(app::PYTHON_DUMMY_FPGA_FILEPATH);
+    char                                    m_filebuffer[ms_MSG_BUFFER_SIZE]    = {   };
+    //
+    //
+    std::filesystem::path                   m_filepath                          = {"../../scripts/python/fpga_stream_v3.py"};
+    //
+    //
+    //                                  COINCIDENCE-COUNTER VARIABLES:
+    Param<ImU64>                            m_coincidence_window            = { 10,     {1          , 100   }   };
+    Param<double>                           m_integration_window            = { 1.00f,  {0.001f     , 2.50f }   };
 
 
     // *************************************************************************** //
@@ -177,10 +207,8 @@ protected:
     // *************************************************************************** //
     //      1. |    WIDGET DATA-MEMBERS.
     // *************************************************************************** //
-    //                                  PYSTREAM:
-    utl::PyStream                           m_python                            = utl::PyStream(app::PYTHON_DUMMY_FPGA_FILEPATH);
-    char                                    m_filebuffer[ms_MSG_BUFFER_SIZE]    = {   };
-    std::filesystem::path                   m_filepath                          = {"../../scripts/python/fpga_stream.py"};
+    //
+    //
     //
     //const char *       PYTHON_FPGA_FILEPATH                = "../../scripts/python/fpga.py";
     //const char *       PYTHON_ECHO_FILEPATH                = "../../scripts/python/echo.py";
@@ -195,11 +223,6 @@ protected:
     bool                                    m_process_running               = false;
     bool                                    m_process_recording             = false;
     bool                                    m_counter_running               = true;         //  <==| THIS IS SUPPOSED TO BE TRUE BY DEFAULT!!!  DO NOT TOUCH!
-    //
-    //
-    //                                  COINCIDENCE-COUNTER VARIABLES:
-    Param<ImU64>                            m_coincidence_window            = { 10,     {1          , 100   }   };
-    Param<double>                           m_integration_window            = { 1.00f,  {0.001f     , 2.50f }   };
     //
     //
     //
@@ -251,8 +274,8 @@ protected:
     // *************************************************************************** //
     //      1. |    APPEARANCE DATA.
     // *************************************************************************** //
-    float                                   m_mst_plot_slider_height        = 20.0f;
-    float                                   m_mst_plot_height               = 400.0f;
+    //  float                                   m_mst_plot_slider_height        = 20.0f;
+    //  float                                   m_mst_plot_height               = 400.0f;
     
     
     
@@ -262,9 +285,8 @@ protected:
     // *************************************************************************** //
     //      1. |    RUN-TIME CONSTANT DATA.
     // *************************************************************************** //
-    Param<ImU64>                            m_PLOT_LIMIT                    = { 0,     {0, ms_NUM - 1}          };
-    
     //  CONSTANTS.
+    static constexpr const char *           ms_CMAP_SELECTION_MENU          = "CCounter_Cmap_SelectionMenu";
     std::array<const char *, 2>             ms_PLOT_UUIDs                   = { "##CCounterMasterPlot"      , "##CCounterIndividualPlot"    };
     std::array<const char *, 2>             ms_TABLE_UUIDs                  = { "##IndividualPlotTable"     , "##CCounterControlTable"      };
     
@@ -339,13 +361,25 @@ protected:
     //                                              6.  PLOTTING STUFF...
     bool                                                m_colormap_cache_invalid        = true;
     //
+    //  static constexpr std::array<const char *, 2>        ms_mst_axis_labels              = { "Time  [sec]",      "Counts  [Arb.]" };
+    //
+    //
+    //
+    //                                              7.  PLOT APPEARANCE STUFF...
     ImPlotColormap                                      m_cmap                          = ImPlotColormap_Cool;
+    //
+    //                                              MASTER PLOTS.
     std::vector<ImVec4>                                 m_plot_colors                   = std::vector<ImVec4>(ms_NUM);
+    Param<float>                                        m_plot_linewidth                = { 0.60f,      { 2.6f      , 4.00f     }       };
+    //
+    //                                              AVERAGE PLOTS.
     std::vector<ImVec4>                                 m_avg_colors                    = std::vector<ImVec4>(ms_NUM);
-    static constexpr std::array<const char *, 2>        ms_mst_axis_labels              = { "Time  [sec]",      "Counts  [Arb.]" };
-    Param<float>                                        m_AVG_OPACITY                   = { 0.50f,      {0.0f       , 1.00f     }       };
-    Param<float>                                        m_AVG_LINEWIDTH                 = { 10.0f,      {1.0f       , 20.00f    }       };
-    Param<float>                                        m_avg_color_shade               = { -0.25,      {-1.0f      , 1.00f     }       };
+    Param<float>                                        m_avg_opacity                   = { 0.60f,      { 0.0f      , 1.00f     }       };
+    Param<float>                                        m_avg_linewidth                 = { 14.0f,      { 4.0f      , 30.00f    }       };
+    Param<float>                                        m_avg_color_shade               = { -0.45,      { -1.0f     , 1.00f     }       };
+    //
+    //
+    //                                              INDIVIDUAL PLOTS.
     
 //
 //
@@ -366,18 +400,20 @@ public:
     // *************************************************************************** //
     //      2.A. |  INITIALIZATION METHODS.         |   "init.cpp" ...
     // *************************************************************************** //
-    explicit                            CCounterApp             (app::AppState & ) noexcept;            //  Def. Constructor.
-                                        ~CCounterApp            (void);
+    explicit                            CCounterApp                         (app::AppState & ) noexcept;            //  Def. Constructor.
+                                        ~CCounterApp                        (void);
     //
-    void                                initialize              (void);
+    void                                initialize                          (void);
+    
     
     // *************************************************************************** //
     //      2.A. |  DELETED FUNCTIONS.              |   ...
     // *************************************************************************** //
-                                        CCounterApp             (const CCounterApp &    src)        = delete;   //  Copy. Constructor.
-                                        CCounterApp             (CCounterApp &&         src)        = delete;   //  Move Constructor.
-    CCounterApp &                       operator =              (const CCounterApp &    src)        = delete;   //  Assgn. Operator.
-    CCounterApp &                       operator =              (CCounterApp &&         src)        = delete;   //  Move-Assgn. Operator.
+                                        CCounterApp                         (const CCounterApp &    src)        = delete;   //  Copy. Constructor.
+                                        CCounterApp                         (CCounterApp &&         src)        = delete;   //  Move Constructor.
+    CCounterApp &                       operator =                          (const CCounterApp &    src)        = delete;   //  Assgn. Operator.
+    CCounterApp &                       operator =                          (CCounterApp &&         src)        = delete;   //  Move-Assgn. Operator.
+    
     
     // *************************************************************************** //
     //
@@ -385,12 +421,13 @@ public:
     // *************************************************************************** //
     //      2.A. |  MAIN PUBLIC API.                |   "interface.cpp" ...
     // *************************************************************************** //
-    void                                Begin                   ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                                save                    (void);
-    void                                undo                    (void);
-    void                                redo                    (void);
+    void                                Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     //
-    void                                ToggleAllPlots          (const char * title_id);
+    void                                save                                (void);
+    void                                undo                                (void);
+    void                                redo                                (void);
+    //
+    void                                ToggleAllPlots                      (const char * title_id);
     
 //
 //
@@ -413,63 +450,79 @@ protected:
     // *************************************************************************** //
     void                                init                                (void);
     void                                destroy                             (void);
+    //
+    void                                init_ctrl_rows                      (void);                     //  initializes the rows of widgets.
     
     
     // *************************************************************************** //
     //
-    //
     // *************************************************************************** //
-    //      2.B. |  OPERATION FUNCTIONS.            |   "tools.cpp" ...
+    //      2.B. |  MAIN USER-INTERFACE FUNCTIONS.  |   "c_counter.cpp" ...
     // *************************************************************************** //
-    void                                _Begin_Plots_IMPL                   (void) noexcept;        //  formerly:   "display_plots"
-    void                                _Begin_Controls_IMPL                (void) noexcept;
-    //
-    //
-    //                              PLOT FUNCTIONS:
-    void                                ShowCCPlots                         (void);
-    //
-    [[nodiscard]]
-    inline std::pair<float, float>      _FetchData                          (const float , const float ) noexcept;
-    inline void                         _PlotMaster                         (const float , const float )  noexcept;
-    inline void                         _PlotSingles                        (const float ) noexcept;
-    inline void                         _DisplayControlBar                  (void) noexcept;
-    //
-    //
-    //                              BOTTOM TAB-BAR FUNCTIONS:
-    void                                TAB_Controls                        (void) noexcept;
-    void                                TAB_Appearance                      (void) noexcept;
-
+    inline void                         _Begin_IMPL                         (void) noexcept;        //  MAIN UPDATE LOOP FOR THE APP  [ called by Begin(...) ]      //  formerly:   "display_plots"
+    inline void                         _Begin_DetView_IMPL                 (void) noexcept;        //  MAIN FUNC. for the DETVIEW part of the app (in the bottom tab)...
+    
     
     // *************************************************************************** //
     //
+    // *************************************************************************** //
+    //      2.B. |  CORE MECHANICS.                 |   "c_counter.cpp" ...
+    // *************************************************************************** //
+    //                              MAIN "_MECH" FUNCTIONS:
+    inline void                         _MECH_per_frame_cache               (void) noexcept;
+    inline void                         _MECH_draw_controls                 (void) noexcept;
+    //
+    //
+    //                              "_MECH" HELPER FUNCTIONS:
+    inline void                         _FetchData                          (void) noexcept;
+    //
+    inline float                        ComputeAverage                      (const buffer_type &, AvgMode , ImU64 , double , float ) const;
+    //
+    //
+    //
+    //                              DEPRICATED:
+    void                                ShowCCPlots                         (void);                 //  [DEPRECATED]; just keeping a copy for now.  will delete soon.
+    
+    
+    // *************************************************************************** //
     //
     // *************************************************************************** //
-    //      2.B. |  PLOTTING FUNCTIONS.             |   "tools.cpp" ...
+    //      2.B. |  PLOTTING FUNCTIONS.             |   "plots.cpp" ...
     // *************************************************************************** //
+    //                              MAIN PLOTTING FUNCTIONS:
+    void                                _PlotMaster                         (void) noexcept;
+    void                                _PlotSingles                        (void) noexcept;
+    //
+    //                              PLOTTING UTILITIES:
     template<typename RB = buffer_type>
     inline void                         plot_sparkline                      (const RB & , const ImVec4 & , const ImVec2 , const float , const float , const float , const ImPlotAxisFlags) const noexcept;
-    float                               ComputeAverage                      (const buffer_type &, AvgMode , ImU64 , double , float ) const;
-
-
-
 
         
     // *************************************************************************** //
     //
     //
     // *************************************************************************** //
-    //      2.B. |  UTILITY FUNCTIONS.              |   "main_application.cpp" ...
+    //      2.B. |  USER-INTERFACE FUNCTIONS.       |   "interface.cpp" ...
     // *************************************************************************** //
-    void                                init_ctrl_rows                      (void);
+    //                              MAIN USER-INTERFACE:
+    void                                TAB_Controls                        (void) noexcept;
+    void                                TAB_Appearance                      (void) noexcept;
     //
     //
-    void                                dispatch_plot_function              (const std::string & );
-    void                                dispatch_ctrl_function              (const std::string & );
+    //                              OTHER GUI FUNCTIONS:
+    [[nodiscard]] bool                  _MENU_cmap_selection                (const ImPlotColormap ) noexcept;
     //
     //
-    void                                DefaultPlotTabRenderFunc            ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
-    void                                DefaultCtrlTabRenderFunc            ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
+    //                              TABBAR FUNCTIONS:
+    void                                dispatch_plot_function              (const std::string & );     //  dispatch render_fn for the TOP-TABBAR.
+    void                                dispatch_ctrl_function              (const std::string & );     //  dispatch render_fn for the BOTTOM-TABBAR.
+    //
+    void                                DefaultTabRenderFunc                ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     Tab_t *                             get_ctrl_tab                        (const std::string & , std::vector<Tab_t> & );
+    
+    
+    
+    // *************************************************************************** //
     
 //
 //
@@ -516,7 +569,7 @@ protected:
     // *************************************************************************** //
     
     //  "_start_process"
-    inline void                         _start_process                      (const bool run_and_rec=false) noexcept
+    inline void                             _start_process                      (const bool run_and_rec=false) noexcept
     {
         IM_ASSERT(!this->m_process_running);    //  [[ TO-DO ]]:    Make this so that it only asserts script is not running if run_and_rec is NOT also true (ALLOW recording in middle of execution).
         IM_ASSERT( !(this->m_process_recording && run_and_rec) );
@@ -563,7 +616,7 @@ protected:
     }
     
     //  "_stop_process"
-    inline void                         _stop_process                       (const bool pause=false) noexcept
+    inline void                             _stop_process                       (const bool pause=false) noexcept
     {
         IM_ASSERT(this->m_process_running);
         
@@ -586,7 +639,6 @@ protected:
     
     
     //  "_start_recording"
-    //  [[nodiscard]] inline bool           _start_recording                    (void) noexcept {
     inline bool                             _start_recording                    (void) noexcept {
     
         //  if (this->m_process_running) {
@@ -598,7 +650,7 @@ protected:
     }
     
     //  "_stop_recording"
-    inline void                         _stop_recording                     (void) noexcept {
+    inline void                             _stop_recording                     (void) noexcept {
         this->m_process_recording = false;
         return;
     }
@@ -606,7 +658,7 @@ protected:
     
     
     //  "_clear_all"
-    inline void                         _clear_all                          (void) noexcept
+    inline void                             _clear_all                          (void) noexcept
     {
         //      CASE 1 :    STOP RECORDING...
         if (this->m_process_recording) {
@@ -623,7 +675,7 @@ protected:
     
     
     //  "_clear_plot_data"
-    inline void                         _clear_plot_data                    (void) noexcept
+    inline void                             _clear_plot_data                    (void) noexcept
     {
         for (auto & b : m_buffers) {
             b.clear(); //b.Erase();
@@ -632,13 +684,13 @@ protected:
     }
     
     //  "_reset_max_values"
-    inline void                         _reset_max_values                   (void) noexcept {
+    inline void                             _reset_max_values                   (void) noexcept {
         std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.f);
         return;
     }
     
     //  "_reset_average_values"
-    inline void                         _reset_average_values               (void) noexcept
+    inline void                             _reset_average_values               (void) noexcept
     {
         for (auto & vec : m_avg_counts) {
             vec.clear();    //  b.Erase();
@@ -647,16 +699,18 @@ protected:
     }
     
     //  "_validate_colormap_cache"
-    inline void                         _validate_colormap_cache            (void) noexcept
+    inline void                             _validate_colormap_cache            (void) noexcept
     {
         if (this->m_colormap_cache_invalid)
         {
-            m_colormap_cache_invalid    = false;
-            m_plot_colors               = cb::utl::GetColormapSamples( ms_NUM, m_cmap );
+            const float alpha                   = this->m_avg_opacity.Value();
+            this->m_colormap_cache_invalid      = false;
+            this->m_plot_colors                 = cb::utl::GetColormapSamples( ms_NUM, m_cmap );
             
             for (size_t i = 0; i < ms_NUM; ++i) {
-                const auto & color      = m_plot_colors[i];
-                this->m_avg_colors[i]   = cblib::utl::compute_tint( color, this->m_avg_color_shade.Value() );
+                const auto & color          = m_plot_colors[i];
+                this->m_avg_colors[i]       = cblib::utl::compute_tint( color, this->m_avg_color_shade.Value() );
+                this->m_avg_colors[i].w     = alpha;
             }
         }
         

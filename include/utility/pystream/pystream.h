@@ -40,14 +40,21 @@
 #include <string>           //  <======| std::string, ...
 #include <string_view>
 #include <vector>           //  <======| std::vector, ...
+#include <initializer_list>
+
+#include <limits.h>
+#include <math.h>
+
+
+//  filepaths, processes, threads, concurrency.
+#include <filesystem>
 #include <stdexcept>        //  <======| ...
+#include <system_error>
+
 #include <deque>
 #include <thread>
 #include <mutex>
 #include <atomic>
-
-#include <limits.h>
-#include <math.h>
 
 
 
@@ -123,6 +130,46 @@ struct ProcessInfo
 };
 
 
+
+// *************************************************************************** //
+//      "process" |     FUNCTIONS.
+// *************************************************************************** //
+
+//  "cv_get_default_python_exe_cstr"
+//
+[[nodiscard]] constexpr const char *            cv_get_default_python_exe_cstr  (void) noexcept {
+#ifdef _WIN32
+    return "python";      // venv: <venv>\Scripts\python.exe
+#else
+    return "python3";     // venv: <venv>/bin/python
+#endif  //  _WIN32  //
+}
+
+
+
+//  "make_path_from_utf8"
+//      Build a path from UTF-8 robustly across OSes (inline, header-safe).
+//
+[[nodiscard]] inline std::filesystem::path      make_path_from_utf8             (const char * s) {
+#ifdef _WIN32
+    return std::filesystem::path(reinterpret_cast<const char8_t*>(s));
+#else
+    return std::filesystem::path(s);
+#endif  //  _WIN32  //
+}
+
+
+//      OVERLOAD    std::string
+//
+[[nodiscard]] inline std::filesystem::path      make_path_from_utf8             (const std::string & s) {
+#ifdef _WIN32
+    return std::filesystem::path(reinterpret_cast<const char8_t*>(s.c_str()));
+#else
+    return std::filesystem::path(s);
+#endif  //  _WIN32  //
+}
+    
+    
 
 //
 // *************************************************************************** //
@@ -210,6 +257,12 @@ protected:
     path_t                                  m_script_path                   ;                           // = {"../../scripts/python/fpga_stream.py"};
     //
     std::vector<std::string>                m_args                          ;
+    //
+    path_t                                  m_python_exe                    = path_t(process::cv_get_default_python_exe_cstr());
+    path_t                                  m_cwd                           = std::filesystem::current_path();
+    //
+    //
+    //
     size_t                                  m_queue_capacity                = ms_DEF_QUEUE_CAPACITY;    //  cap; tune as needed
 
 
@@ -281,6 +334,7 @@ public:
     // *************************************************************************** //
     //      2.A. |  INITIALIZATION METHODS.         |   "init.cpp" ...
     // *************************************************************************** //
+                                        PyStream                            (void)  = default;
     explicit                            PyStream                            (const std::string & script_path,   const std::vector<std::string> & args = {});  //  Def. Constructor.
                                         ~PyStream                           (void);                             //  Def. Destructor.
     
@@ -298,12 +352,12 @@ public:
     //      2.A. |  MAIN API.                       |   "interface.cpp" ...
     // *************************************************************************** //
     //                              OPERATION FUNCTIONS:
-    bool                                start                               (void);                             //  Launch process & reader thread.
-    void                                stop                                (void);                             //  Terminate child & join thread.
-    void                                shutdown                            (void);                             //  [[ NOT IMPLEMENTED ]]
+    bool                                        start                               (void);                             //  Launch process & reader thread.
+    void                                        stop                                (void);                             //  Terminate child & join thread.
+    void                                        shutdown                            (void);                             //  [[ NOT IMPLEMENTED ]]
     //
-    bool                                send                                (const std::string & msg);          //  write msg + \n
-    bool                                try_receive                         (std::string & out);                //  pop next complete line
+    bool                                        send                                (const std::string & msg);          //  write msg + \n
+    bool                                        try_receive                         (std::string & out);                //  pop next complete line
     
     
 //
@@ -325,12 +379,12 @@ protected:
     // *************************************************************************** //
     //      2.B. |  OPERATION FUNCTIONS.            |   "tools.cpp" ...
     // *************************************************************************** //
-    bool                                launch_process                      (void);
-    void                                reader_thread_func                  (void);
+    bool                                        launch_process                      (void);
+    void                                        reader_thread_func                  (void);
 #ifdef _WIN32
-    bool                                write_pipe                          (const char * data, size_t n);
+    bool                                        write_pipe                          (const char * data, size_t n);
 #else
-    bool                                write_fd                            (int fd, const char * data, size_t n);
+    bool                                        write_fd                            (int fd, const char * data, size_t n);
 #endif
     
     
@@ -355,12 +409,12 @@ public:
     // *************************************************************************** //
 
     //  "is_running"
-    [[nodiscard]] inline bool           is_running                          (void) const noexcept       { return this->m_running.load(); }
+    [[nodiscard]] inline bool                   is_running                          (void) const noexcept       { return this->m_running.load(); }
 
 
     //  "is_process_running"
     //
-    [[nodiscard]] inline bool           is_process_running                  (void) const noexcept {
+    [[nodiscard]] inline bool                   is_process_running                  (void) const noexcept {
     #ifdef _WIN32
         //      1.      [ _WIN32 ] :    STILL_ACTIVE == running...
         if ( this->m_proc_info.hProcess == nullptr )  { return false; }
@@ -391,7 +445,7 @@ public:
     # ifdef _WIN32
     //
     //
-    [[nodiscard]] inline ProcessInfo    get_process_info                    (void) const noexcept {
+    [[nodiscard]] inline ProcessInfo                get_process_info                    (void) const noexcept {
         using           State       = ProcessState;
         ProcessInfo     out         = {   };
         DWORD           code        = 0;
@@ -416,7 +470,7 @@ public:
     # else
     //
     //
-    [[nodiscard]] inline ProcessInfo    get_process_info                    (const bool allow_reap=false) const noexcept {
+    [[nodiscard]] inline ProcessInfo                get_process_info                    (const bool allow_reap=false) const noexcept {
         using           State       = ProcessState;
         ProcessInfo     out         = {   };
         int             rc_kill     = ::kill( this->m_child_pid, 0 );
@@ -486,6 +540,17 @@ public:
     #endif  //  _WIN32  //
 
 
+    //  "get_pid"
+    [[nodiscard]] inline uint32_t                   get_pid                         (void) const noexcept {
+      # ifdef _WIN32
+        return this->m_proc_info.dwProcessId    ? this->m_proc_info.dwProcessId     : 0U;
+      # else
+        return (this->m_child_pid > 0)  ? static_cast<uint32_t>(this->m_child_pid)  : 0U;
+      # endif  //  _WIN32  //
+    }
+
+
+
     // *************************************************************************** //
     //
     // *************************************************************************** //
@@ -493,13 +558,60 @@ public:
     // *************************************************************************** //
     
     //  "set_filepath"
-    inline void                         set_filepath                        (const char * path) noexcept            { this->m_script_path = path_t{ path }; }
-    inline void                         set_filepath                        (const std::string & path) noexcept     { this->m_script_path = path_t{ path }; }
-    inline void                         set_filepath                        (const path_t & path) noexcept          { this->m_script_path = path; }
+    //
+    inline void                                     set_filepath                    (const char * path_utf8)                    { this->_set_filepath(process::make_path_from_utf8(path_utf8)); }
+    inline void                                     set_filepath                    (const std::string & path_utf8)             { this->_set_filepath(process::make_path_from_utf8(path_utf8)); }
+    inline void                                     set_filepath                    (const path_t & path)                       { this->_set_filepath(path); }
+    
+    
+    //  "set_args"
+    //
+    inline void                                     set_args                        (const std::vector<std::string> & args)     { this->_set_args(args); }
+    inline void                                     set_args                        (std::initializer_list<std::string> args) {
+        std::vector<std::string>    tmp;
+        tmp.reserve(args.size());
+        for (const auto & s : args)     { tmp.emplace_back(s); }
+        this->_set_args(tmp);
+        return;
+    }
+    inline void                                     set_args                        (std::size_t argc, const char * const argv[]) {
+        std::vector<std::string>    tmp;
+    
+        //      CASE 1 :    INVALID POINTERS...
+        if ( argc > 0 && argv == nullptr ) { throw std::invalid_argument("PyStream::set_args(argc,argv): argv is null"); }
+
+        //      1.          BUILD VECTOR...
+        tmp.reserve(argc);
+        for (std::size_t i = 0; i < argc; ++i)
+        {
+            const char * p = argv[i];
+            if ( p == nullptr ) { throw std::invalid_argument("PyStream::set_args(argc,argv): argv[i] is null"); }
+            tmp.emplace_back(p);
+        }
+
+        //      2.      FORWARD TO INTERNAL FUNC...
+        this->_set_args(tmp);
+        return;
+    }
+
+
+    //  "set_python_executable"
+    //
+    inline void                                     set_python_executable           (const char * s)            { this->_set_python_executable(process::make_path_from_utf8(s)); }
+    inline void                                     set_python_executable           (const std::string & s)     { this->_set_python_executable(process::make_path_from_utf8(s)); }
+    inline void                                     set_python_executable           (const path_t & p)          { this->_set_python_executable(p); }
+
+
+    //  "set_working_directory"
+    //
+    inline void                                     set_working_directory           (const char * s)            { this->_set_working_directory(process::make_path_from_utf8(s)); }
+    inline void                                     set_working_directory           (const std::string & s)     { this->_set_working_directory(process::make_path_from_utf8(s)); }
+    inline void                                     set_working_directory           (const path_t & p)          { this->_set_working_directory(p); }
+    inline void                                     clear_working_directory         (void)                      { this->_enforce_not_running("clear_working_directory()");  this->m_cwd.clear(); }
 
 
     //  "set_queue_capacity"
-    inline void                         set_queue_capacity                  (const size_t cap) {
+    inline void                                     set_queue_capacity              (const size_t cap) {
         if ( (cap < PyStream::ms_MIN_QUEUE_CAPACITY)  ||  (cap > PyStream::ms_MAX_QUEUE_CAPACITY) ) {
             throw std::out_of_range(  std::format("queue_capacity: value must be inside range [{}, {}]"
                                     , PyStream::ms_MIN_QUEUE_CAPACITY, PyStream::ms_MAX_QUEUE_CAPACITY) );
@@ -508,20 +620,36 @@ public:
     }
 
 
-
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.C. |  GETTER FUNCTIONS.
+    // *************************************************************************** //
+    
     //  "get_filepath"
-    [[nodiscard]] inline std::string    get_filepath                        (void) const noexcept   { return this->m_script_path.string(); }
+    [[nodiscard]] inline std::string                get_filepath                    (void) const noexcept   { return this->m_script_path.string(); }
+    
+    //  "get_args"
+    [[nodiscard]] inline std::vector<std::string>   get_args                        (void) const noexcept   { return this->m_args; }    //  RETURN A DEEP-COPY.  CALLER OWNS IT.
+
+    //  "get_python_executable"
+    [[nodiscard]] inline path_t                     get_python_executable           (void) const noexcept   { return this->m_python_exe; }
+
+    //  "get_working_directory"
+    [[nodiscard]] inline path_t                     get_working_directory           (void) const noexcept   { return this->m_cwd; }
+
 
     //  "get_queue_capacity"
-    [[nodiscard]] inline size_t         get_queue_capacity                  (void) const noexcept   { return this->m_queue_capacity;            }
-    [[nodiscard]] inline size_t         get_dropped_lines                   (void) const noexcept   { return this->m_dropped_lines.load();      }
+    [[nodiscard]] inline size_t                     get_queue_capacity              (void) const noexcept   { return this->m_queue_capacity;            }
+    [[nodiscard]] inline size_t                     get_dropped_lines               (void) const noexcept   { return this->m_dropped_lines.load();      }
 
     //  "get_last_exit_code"        TELEMETRY ACCESSORS...
-    [[nodiscard]] inline int            get_last_exit_code                  (void) const noexcept   { return this->m_last_exit_code.load();     }
+    [[nodiscard]] inline int                        get_last_exit_code              (void) const noexcept   { return this->m_last_exit_code.load();     }
   # ifdef _WIN32
-    [[nodiscard]] inline int            get_last_termination_signal         (void) const noexcept   { return -1;                                }   //  DISABLED ON NON-POSIX.
+    [[nodiscard]] inline int                        get_last_termination_signal     (void) const noexcept   { return -1;                                }   //  DISABLED ON NON-POSIX.
   # else
-    [[nodiscard]] inline int            get_last_termination_signal         (void) const noexcept   { return this->m_last_term_sig.load();      }
+    [[nodiscard]] inline int                        get_last_termination_signal     (void) const noexcept   { return this->m_last_term_sig.load();      }
   # endif  //  _WIN32  //
   
   
@@ -546,7 +674,7 @@ protected:
     // *************************************************************************** //
     
     //  "enqueue_line_"
-    inline void                         enqueue_line_                       (std::string && s)
+    inline void                                     enqueue_line_                   (std::string && s)
     {
         std::lock_guard<std::mutex>     lock    (this->m_queue_mutex);
         if ( this->m_recv_queue.size() >= this->m_queue_capacity ) {
@@ -555,6 +683,132 @@ protected:
         this->m_recv_queue.emplace_back(std::move(s));
         return;
     }
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.D. |  INTERNAL SETTER FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "_set_filepath"
+    inline void                                     _set_filepath                   (const path_t & path)
+    {
+        this->_enforce_not_running("_set_filepath");
+        this->m_script_path = PyStream::_validate_filepath(path, "_set_filepath");
+    }
+    
+    
+    //  "_set_args"
+    //
+    inline void                                     _set_args                       (const std::vector<std::string> & args)
+    {
+        this->_enforce_not_running("_set_args");
+        for (const auto & a : args) {
+            if (a.find('\0') != std::string::npos) { throw std::invalid_argument("_set_args: argument contains embedded NUL"); }
+        }
+        this->m_args = args;
+        return;
+    }
+    
+    
+    //  "_set_working_directory"
+    //
+    inline void                                     _set_working_directory          (const path_t & dir)
+    {
+        this->_enforce_not_running("_set_working_directory");
+        this->m_cwd = PyStream::_validate_directory(dir, "_set_working_directory");
+    }
+    
+    
+    //  "_set_python_executable"
+    //
+    inline void                                     _set_python_executable          (const path_t & path)
+    {
+        this->_enforce_not_running("_set_python_executable");
+        if ( path.empty() )     { throw std::invalid_argument("_set_python_executable: empty path"); }
+
+        const bool is_bare_name = ( path.parent_path().empty()  &&  !path.has_root_path() );
+        if (is_bare_name) {
+            this->m_python_exe = path;                 // let PATH lookup happen at spawn
+            return;
+        }
+
+        // Validate real path, require executability on POSIX (Windows branch is no-op).
+        this->m_python_exe = PyStream::_validate_filepath(path, "_set_python_executable", /*require_exec=*/true);
+    }
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.D. |  INTERNAL UTILITY FUNCTIONS.
+    // *************************************************************************** //
+    
+    //  "_enforce_not_running"
+    inline void                                     _enforce_not_running            (const char * where="unknown") {
+        if ( this->m_running.load() )   { throw std::logic_error(std::string(where) + ": cannot change while process is running"); }
+        return;
+    }
+    
+    
+    //  "_validate_filepath"
+    //
+    [[nodiscard]] static inline path_t              _validate_filepath              (const path_t & path, const char * where="unknown", [[maybe_unused]] bool require_exec=false)
+    {
+        namespace           fs      = std::filesystem;
+        std::error_code     ec      {   };
+        
+        if ( path.empty() )         {    throw std::invalid_argument(std::string(where) + ": empty path"); }
+        
+        
+        if ( !fs::exists(path, ec) )
+        {
+            if (ec)     { throw std::runtime_error( std::string(where) + ": exists() failed: " + ec.message() ); }
+            throw std::invalid_argument(std::string(where) + ": file does not exist");
+        }
+        if ( !fs::is_regular_file(path, ec) )
+        {
+            if (ec)     { throw std::runtime_error( std::string(where) + ": is_regular_file() failed: " + ec.message() ); }
+            throw std::invalid_argument(std::string(where) + ": not a regular file");
+        }
+      # ifndef _WIN32
+        if (require_exec  &&  ::access(path.c_str(), X_OK) != 0)    { throw std::invalid_argument(std::string(where)+": not executable"); }
+      # endif   //  _WIN32  //
+        const path_t    canon   = std::filesystem::weakly_canonical(path, ec);
+        return ( !ec && !canon.empty() )  ? canon     : path;
+    }
+    
+    
+    
+    //  "_validate_directory"
+    //
+    [[nodiscard]] static inline path_t              _validate_directory             (const path_t & dir, const char * where="unknown")
+    {
+        namespace           fs      = std::filesystem;
+        std::error_code     ec      {   };
+        
+        if ( dir.empty() )          {    throw std::invalid_argument(std::string(where) + ": empty path"); }
+        
+        
+        if ( !fs::exists(dir, ec) )
+        {
+            if (ec)     { throw std::runtime_error( std::string(where) + ": exists() failed: " + ec.message() ); }
+            throw std::invalid_argument(std::string(where) + ": file does not exist");
+        }
+        if ( !fs::is_regular_file(dir, ec) )
+        {
+            if (ec)     { throw std::runtime_error( std::string(where) + ": is_directory() failed: " + ec.message() ); }
+            throw std::invalid_argument(std::string(where) + ": not a directory");
+        }
+        const path_t canon = std::filesystem::weakly_canonical(dir, ec);
+        return ( !ec && !canon.empty() )    ? canon     : dir;
+    }
+    
+    
+
 
     
     // *************************************************************************** //

@@ -436,7 +436,7 @@ inline void Editor::_selection_context_multi([[maybe_unused]] const Interaction 
 
 //  "_MENU_tool_selection"
 //
-bool Editor::_MENU_tool_selection(const Mode current_tool) noexcept
+[[nodiscard]] bool Editor::_MENU_tool_selection(const Mode current_tool) noexcept
 {
     //  using                               IconStyle           = utl::icon_widgets::Style;
     using                               IconAnchor          = utl::icon_widgets::Anchor;

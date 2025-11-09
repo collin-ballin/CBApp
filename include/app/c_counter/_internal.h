@@ -85,6 +85,26 @@ namespace cb { namespace ccounter { //     BEGINNING NAMESPACE "cb::ccounter"...
 //      1A. TYPES |        ABSTRACTIONS FOR THE COINCIDENCE-COUNTER.
 // *************************************************************************** //
 
+//  "PerFrame_t"
+//
+//      [[ TO-DO ]]:    REPLACE THIS!!!
+//                      This is just a POD struct to carry the per-frame data we need throughout the CCounter class.
+//
+struct PerFrame_t {
+    std::string     raw             {   };
+    float           xmin            = -1.0f;
+    float           xmax            = -1.0f;
+    float           now             = -1.0f;
+    float           spark_now       = -1.0f;
+//
+    bool            got_packet      = false;
+};
+
+
+
+
+
+
 //  "ChannelIdx"
 //
 enum ChannelIdx : uint8_t {
@@ -240,9 +260,151 @@ parse_packet(std::string_view line, bool mutual_exclusion)   // NEW ARG (default
 
 
 
+
 // *************************************************************************** //
-//      2A. DATA |      STATIC DATA-MEMBERS USED FOR CCOUNTER CLASS.
+//      2A. OTHER |         CCOUNTER---STYLE.
 // *************************************************************************** //
+
+//  "CCounterStyle"
+//      PLAIN-OLD-DATA (POD) STRUCT.
+//
+struct CCounterStyle
+{
+    // *************************************************************************** //
+    //      0. |    NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    CBAPP_APPSTATE_ALIAS_API            //  *OR*    CBAPP_CBLIB_TYPES_API       //  FOR CBLIB...
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      0. |    STATIC CONSTEXPR CONSTANTS.
+    // *************************************************************************** //
+    static constexpr float              ms_MY_CONSTEXPR_VALUE           = 240.0f;
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "0.  CONSTANTS AND ALIASES".
+
+
+
+// *************************************************************************** //
+//
+//      1.          DATA-MEMBERS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      1. |    IMPORTANT DATA-MEMBERS.
+    // *************************************************************************** //
+    
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      1. |    UI---DIMENSION VARIABLES.
+    // *************************************************************************** //
+    float                                   m_mst_plot_slider_height        = 20.0f;
+    float                                   m_mst_plot_height               = 400.0f;
+    
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      1. |    MASTER PLOT STUFF.
+    // *************************************************************************** //
+    //  ImPlotLineFlags                                         m_channel_flags                 = ImPlotLineFlags_None | ImPlotLineFlags_Shaded;
+    //  ImPlotAxisFlags                                         m_plot_flags                    = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
+    //  ImPlotFlags                                             m_mst_PLOT_flags                = ImPlotFlags_None | ImPlotFlags_NoTitle;
+    //  ImPlotAxisFlags                                         m_mst_plot_flags                = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoSideSwitch;
+    //  ImPlotAxisFlags                                         m_mst_xaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
+    //  ImPlotAxisFlags                                         m_mst_yaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
+    
+    //  ImPlotLocation                                          m_mst_legend_loc                = ImPlotLocation_NorthWest;                                                 // legend position.
+    //  ImPlotLegendFlags                                       m_mst_legend_flags              = ImPlotLegendFlags_None; //ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
+    
+    
+    ImPlotFlags                             plot_flags                      = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;  //  ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
+    utl::AxisCFG                            mst_axes [2]                    = {
+        {"Time  [sec]"      ,   ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit | ImPlotAxisFlags_Opposite },
+        {"Counts  [Arb.]"   ,   ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit  }
+    };
+    utl::LegendCFG                          legend                          = { ImPlotLocation_NorthWest, ImPlotLegendFlags_None };
+    
+    
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      1. |    PLOT---STYLE VARIABLES.
+    // *************************************************************************** //
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      1. |    TRANSIENT / INTERNAL STATE VARIABLES.
+    // *************************************************************************** //
+    
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "1.  DATA-MEMBERS".
+
+
+
+// *************************************************************************** //
+//
+//      2.A.        MEMBER FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+    
+    // *************************************************************************** //
+    //      INITIALIZATION METHODS.         |   "init.cpp" ...
+    // *************************************************************************** //
+    //  explicit                        CCounterStyle           (app::AppState & );             //  Def. Constructor.
+                                        CCounterStyle           (void) noexcept                 = default;
+                                        ~CCounterStyle          (void)                          = default;
+    
+    // *************************************************************************** //
+    //      DELETED FUNCTIONS.              |   ...
+    // *************************************************************************** //
+                                        CCounterStyle           (const CCounterStyle &    src)       = delete;   //  Copy. Constructor.
+                                        CCounterStyle           (CCounterStyle &&         src)       = delete;   //  Move Constructor.
+    CCounterStyle &                     operator =              (const CCounterStyle &    src)       = delete;   //  Assgn. Operator.
+    CCounterStyle &                     operator =              (CCounterStyle &&         src)       = delete;   //  Move-Assgn. Operator.
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2A.  MEMBER FUNCS".
+
+    
+   
+// *************************************************************************** //
+//
+//      2.B.        INLINE FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+    // *************************************************************************** //
+    //      2.B. |  QUERY FUNCTIONS.
+    // *************************************************************************** //
+    //  "_no_op"
+    inline void                         _no_op                              (void)      { return; };
+    
+    
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2B.  INLINE" FUNCTIONS.
+
+
+
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+};//	END "CCounterStyle" INLINE STRUCT DEFINITION.
 
 
 

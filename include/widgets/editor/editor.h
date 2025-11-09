@@ -759,7 +759,7 @@ protected:
     //
     //
     //                          2.  MISC. CONTEXT MENUS:
-    bool                                _MENU_tool_selection                (const Mode) noexcept;
+    [[nodiscard]]  bool                 _MENU_tool_selection                (const Mode) noexcept;
     bool                                _MENU_filter_selection              (void) noexcept;
     bool                                _MENU_object_browser_item           (void) noexcept;
     //
