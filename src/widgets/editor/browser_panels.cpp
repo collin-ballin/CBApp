@@ -476,7 +476,7 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
         int retcode     = std::snprintf( title, TITLE_SIZE, Vertex::ms_DEF_VERTEX_TITLE_FMT_STRING, m_browser_S.m_inspector_vertex_idx, vid );
         
         if (retcode < 0) [[unlikely]] {//  Log a warning message if truncation takes place.
-            auto message = std::format( "snprintf truncated Vertex title.\n"
+            auto message = std::format( "[[Editor]] snprintf truncated Vertex title.\n"
                                         "vertex-ID: {}.  title: \"{}\".  buffer-size: {}.  return value: \"{}\".",
                                         vid, title, TITLE_SIZE, retcode );
             CB_LOG( LogLevel::Warning, message );

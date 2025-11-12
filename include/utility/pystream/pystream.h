@@ -115,6 +115,13 @@ enum class ProcessState : uint8_t
     , Unknown                       //  Non-destructive probe (the process could be RUNNING or a ZOMBIE but we have to kill it to check).
     , COUNT
 };
+//
+//  "DEF_PROCESS_STATE_NAMES"
+static constexpr cblib::EnumArray< ProcessState, const char * >
+    DEF_PROCESS_STATE_NAMES     = { { "None"    , "Running"     , "Zombie"      "Exited"    , "Unknown" } };
+
+
+
 
 
 //  "ProcessInfo"
@@ -168,6 +175,38 @@ struct ProcessInfo
     return std::filesystem::path(s);
 #endif  //  _WIN32  //
 }
+
+
+//  "quote_if_needed"
+//
+[[nodiscard]] inline std::string                quote_if_needed                 (const std::string & s) {
+    std::string     out;
+    
+    if ( s.find_first_of(" \t\"") == std::string::npos )    { return s; }
+    
+    out.reserve(s.size() + 2);      out.push_back('"');
+    for (char c : s) {
+        if (c == '\"')      { out.push_back('\\'); }
+        out.push_back(c);
+    }
+    out.push_back('"');
+    return out;
+}
+
+
+//  "path_to_utf8"
+//
+[[nodiscard]] inline std::string                path_to_utf8                    (const std::filesystem::path & p, const bool abs_path=false)
+# ifdef _WIN32
+{
+    const std::u8string     u   = (abs_path)    ? p.u8string()  : p.filename().u8string();      //   native -> UTF-8
+    return std::string(reinterpret_cast<const char*>(u.data()), u.size());
+}
+# else
+{
+    return (abs_path)   ? p.string()    : p.filename().string();      //   UTF-8 on modern POSIX
+}
+# endif   // _WIN32 //
     
     
 
@@ -234,6 +273,13 @@ public:
     static constexpr size_t                 ms_DEF_QUEUE_CAPACITY           = 1024ULL;
     static constexpr size_t                 ms_MIN_QUEUE_CAPACITY           = 128ULL;
     static constexpr size_t                 ms_MAX_QUEUE_CAPACITY           = 16'384ULL;    //  2^14
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      0. |    REFERENCES TO GLOBAL ARRAYS.
+    // *************************************************************************** //
+    static constexpr auto &                 ms_PROCESS_STATE_NAMES          = process::DEF_PROCESS_STATE_NAMES;
     
 //
 //
@@ -352,7 +398,13 @@ public:
     //      2.A. |  MAIN API.                       |   "interface.cpp" ...
     // *************************************************************************** //
     //                              OPERATION FUNCTIONS:
-    bool                                        start                               (void);                             //  Launch process & reader thread.
+#ifdef PYSTREAM_REFACTOR
+    [[nodiscard]] uint32_t                      start                               (void);                             //  Launch process & reader thread.
+#else
+    bool                                        start                               (void);
+#endif  //  PYSTREAM_REFACTOR  //
+    [[nodiscard]] std::optional<uint32_t>       try_start                           (void) noexcept;                    //  Non-Throwing version of "start". 
+    //
     void                                        stop                                (void);                             //  Terminate child & join thread.
     void                                        shutdown                            (void);                             //  [[ NOT IMPLEMENTED ]]
     //
@@ -547,6 +599,27 @@ public:
       # else
         return (this->m_child_pid > 0)  ? static_cast<uint32_t>(this->m_child_pid)  : 0U;
       # endif  //  _WIN32  //
+    }
+    
+    
+    //  "get_invocation"
+    [[nodiscard]] inline std::string                get_invocation                  (void) const
+    {
+        using   namespace   process;
+        
+        //      BUILD:  "<python_exe> <script_path> <args...>"...
+        const std::string    exe        = process::quote_if_needed( path_to_utf8(this->m_python_exe)   );
+        const std::string    script     = process::quote_if_needed( path_to_utf8(this->m_script_path)  );
+
+        std::string          cmd        = exe;
+        cmd                            += " ";
+        cmd                            += script;
+        for (const auto & a : this->m_args) {
+            cmd += " ";
+            cmd += quote_if_needed(a);                                  //  args already UTF-8
+        }
+
+        return cmd;
     }
 
 

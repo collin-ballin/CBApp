@@ -59,9 +59,30 @@ void CCounterApp::initialize(void)
 //
 void CCounterApp::init(void)
 {
-    this->m_cmap        = ImPlot::GetColormapIndex("CCounter_Map");
+    namespace       fs      = std::filesystem;
+    this->m_cmap            = ImPlot::GetColormapIndex("CCounter_Map");
     
-    this->m_python.set_filepath( this->m_filepath );
+    
+    //      CASE 0 :    ASSIGN VALUES FOR THE PYTHON SCRIPT.
+    if ( !this->m_script_filepath.empty() )
+    {
+        try {
+            this->m_python.set_filepath( this->m_script_filepath );
+            CB_LOG(
+                  LogLevel::Debug
+                , "[[CCounter]] using python script at filepath, \"{}\""
+                , this->m_script_filepath.relative_path().string()
+            );
+        }
+        //
+        catch (...) {
+            CB_LOG(
+                  LogLevel::Warning
+                , "[[CCounter]] no python script exists at default filepath, \"{}\""
+                , this->m_script_filepath.relative_path().string()
+            );
+        }
+    }
     
     
     
@@ -74,8 +95,9 @@ void CCounterApp::init(void)
     //      2.      DEFAULT TAB OPTIONS...
     //  static ImGuiTabItemFlags        ms_DEF_PLOT_TAB_FLAGS           = ImGuiTabItemFlags_None;
     //
-    static ImGuiTabItemFlags        ms_DEF_INDIVIDUALS_TAB_FLAGS    = ImGuiTabItemFlags_None;
     static ImGuiTabItemFlags        ms_DEF_CTRL_TAB_FLAGS           = ImGuiTabItemFlags_None;
+    static ImGuiTabItemFlags        ms_DEF_OLD_CTRL_TAB_FLAGS       = ImGuiTabItemFlags_None;
+    static ImGuiTabItemFlags        ms_DEF_INDIVIDUALS_TAB_FLAGS    = ImGuiTabItemFlags_None;
     static ImGuiTabItemFlags        ms_DEF_APPEARANCE_TAB_FLAGS     = ImGuiTabItemFlags_None;
     
     
@@ -91,8 +113,9 @@ void CCounterApp::init(void)
     //      4A.     TABS FOR CONTROL WINDOW...
     ms_CTRL_TABS    = {
     //            TAB NAME.                 OPEN.           NOT CLOSE-ABLE.         FLAGS.                              CALLBACK.
-          Tab_t(  "Indivual Counters"       , true          , true                  , ms_DEF_INDIVIDUALS_TAB_FLAGS      , nullptr     )
-        , Tab_t(  "Controls"                , true          , true                  , ms_DEF_CTRL_TAB_FLAGS             , nullptr     )
+          Tab_t(  "Controls"                , true          , true                  , ms_DEF_CTRL_TAB_FLAGS             , nullptr     )
+        , Tab_t(  "Old Controls"            , true          , true                  , ms_DEF_OLD_CTRL_TAB_FLAGS         , nullptr     )
+        , Tab_t(  "Indivual Counters"       , true          , true                  , ms_DEF_INDIVIDUALS_TAB_FLAGS      , nullptr     )
         , Tab_t(  "Appearance"              , true          , true                  , ms_DEF_APPEARANCE_TAB_FLAGS       , nullptr     )
     };
     
@@ -119,8 +142,10 @@ void CCounterApp::init(void)
     
     
     //      Set the initial "freeze" limits so plot begins with sensible X-Limits.
-    m_freeze_xmin   = 0.0f;
-    m_freeze_xmax   = this->m_history_length.Value();
+    this->m_perframe.xmin   = 0.0f;
+    this->m_freeze_xmin     = this->m_perframe.xmin;
+    this->m_perframe.xmax   = this->m_history_length.Value();
+    this->m_freeze_xmax     = this->m_perframe.xmax;
     
     this->init_ctrl_rows();
     
@@ -168,6 +193,149 @@ void CCounterApp::destroy(void)
 //
 //
 //
+//      2.      TABBAR FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "dispatch_plot_function"
+//
+void CCounterApp::dispatch_plot_function([[maybe_unused]] const std::string & uuid)
+#ifdef DEF_REFACTOR_CC
+//
+{
+    return;
+}
+//
+# else
+//
+{
+    bool                match       = false;
+    const size_t        N           = ms_PLOT_TABS.size();
+    size_t              idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
+
+    //      1.      FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
+    for (size_t i = 0; i < N && !match; ++i)
+    {
+        match           = ( uuid == ms_PLOT_TABS[i].uuid );
+        if (match)      { idx = i; }
+    }
+    
+    if (!match) return;
+    
+    
+    //      DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
+    switch (idx)
+    {
+        //      0.  Model PARAMETERS...
+        case 0:         {
+            this->_Begin_IMPL();
+            break;
+        }
+        //
+        //
+        //
+        default: {
+            break;
+        }
+    }
+    
+    return;
+}
+//
+#endif  //  DEF_REFACTOR_CC  //
+
+
+
+
+//  "dispatch_ctrl_function"
+//
+void CCounterApp::dispatch_ctrl_function(const std::string & uuid)
+{
+    bool            match       = false;
+    const size_t    N           = ms_CTRL_TABS.size();
+    size_t          idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
+
+    //      1.      FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
+    for (size_t i = 0; i < N && !match; ++i)
+    {
+        match = ( uuid == ms_CTRL_TABS[i].uuid );
+        if (match)  { idx = i; }
+    }
+    if (!match)     { return; }
+    
+    
+    
+    //      DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
+    switch (idx)
+    {
+        //
+        //      0.      NEW CCounter CONTROLS...
+        case 0:         {
+            this->TAB_NewControls();
+            break;
+        }
+        //
+        //      1.      OLD CCounter CONTROLS...
+        case 1:         {
+            this->TAB_Controls();
+            break;
+        }
+        //
+        //      2.      INDIVIDUAL CHANNELS...
+        case 2:         {
+            this->_PlotSingles();
+            break;
+        }
+        //
+        //      3.      CCounter APPEARANCE SETTINGS...
+        case 3:         {
+            this->TAB_Appearance();
+            break;
+        }
+        //
+        //
+        //      X.      DEFAULT SAFETY...
+        default: {
+            break;
+        }
+    }
+    
+    return;
+}
+
+
+//  "DefaultTabRenderFunc"
+//
+void CCounterApp::DefaultTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
+    if (!p_open)    { return; }
+        
+    ImGui::Text("Window Tab \"%s\".  Here is some default text dispatched by \"DefaultPlotTabRenderFunc()\".", uuid);
+    return;
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END "2.  TABBAR FUNCTIONS".
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
 //      X.      UTILITY...
 // *************************************************************************** //
 // *************************************************************************** //
@@ -187,7 +355,7 @@ void CCounterApp::init_ctrl_rows(void)
 
 
 
-    std::snprintf( m_filebuffer, ms_MSG_BUFFER_SIZE, "%s", this->m_filepath.string().c_str() );
+    std::snprintf( m_filebuffer, ms_CMD_MSG_SIZE, "%s", this->m_script_filepath.string().c_str() );
     
     
         
@@ -200,7 +368,7 @@ void CCounterApp::init_ctrl_rows(void)
             //
             //  1.  PYTHON-SCRIPT FILEPATH FIELD...
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
-                cc::enter   = ImGui::InputText("##PyFilepath", m_filebuffer, ms_MSG_BUFFER_SIZE, cc::write_file_flags);
+                cc::enter   = ImGui::InputText("##PyFilepath", m_filebuffer, ms_CMD_MSG_SIZE, cc::write_file_flags);
                 //
                 //
                 //
@@ -218,7 +386,7 @@ void CCounterApp::init_ctrl_rows(void)
                     else
                     {
                         cc::enter = false;
-                        //  std::snprintf(m_filepath, ms_MSG_BUFFER_SIZE, "%s", "INVALID FILEPATH");
+                        //  std::snprintf(m_filepath, ms_CMD_MSG_SIZE, "%s", "INVALID FILEPATH");
                         
                         this->m_filepath        = fs::path{   };
                         this->S.m_logger.debug( std::format("CCounter | invalid filepath, \"{}\"", this->m_filepath.string()) );
@@ -268,8 +436,8 @@ void CCounterApp::init_ctrl_rows(void)
                 }
                 //
                 if (m_process_running)    {
-                    char cmd[ms_MSG_BUFFER_SIZE];
-                    std::snprintf(cmd, ms_MSG_BUFFER_SIZE, "integration_window %.3f\n", m_integration_window.value);
+                    char cmd[ms_CMD_MSG_SIZE];
+                    std::snprintf(cmd, ms_CMD_MSG_SIZE, "integration_window %.3f\n", m_integration_window.value);
                     m_python.send(cmd);
                 }
             //
@@ -288,8 +456,8 @@ void CCounterApp::init_ctrl_rows(void)
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
                 if ( ImGui::InputText("##send", cc::line_buf, cc::ms_CMD_BUFFER_SIZE,  ImGuiInputTextFlags_EnterReturnsTrue) )   {
                     if (m_process_running)    {
-                    char cmd[ms_MSG_BUFFER_SIZE];
-                        std::snprintf(cmd, ms_MSG_BUFFER_SIZE, "integration_window %.3f\n", cc::delay_s);
+                    char cmd[ms_CMD_MSG_SIZE];
+                        std::snprintf(cmd, ms_CMD_MSG_SIZE, "integration_window %.3f\n", cc::delay_s);
                         m_python.send(cmd);
                     }
                 }
@@ -323,8 +491,8 @@ void CCounterApp::init_ctrl_rows(void)
                                         &m_coincidence_window.limits.min, &m_coincidence_window.limits.max,  "%llu ticks", SLIDER_FLAGS) )
                 {
                     if (m_process_running)    {
-                        char cmd[ms_MSG_BUFFER_SIZE];
-                        std::snprintf(cmd, ms_MSG_BUFFER_SIZE, "coincidence_window %llu\n", m_coincidence_window.value);
+                        char cmd[ms_CMD_MSG_SIZE];
+                        std::snprintf(cmd, ms_CMD_MSG_SIZE, "coincidence_window %llu\n", m_coincidence_window.value);
                         m_python.send(cmd);
                     }
                 }
@@ -337,15 +505,15 @@ void CCounterApp::init_ctrl_rows(void)
                 if ( ImGui::SliderScalar("##IntegrationWindow",          ImGuiDataType_Double,       &m_integration_window.value,
                                     &m_integration_window.limits.min,     &m_integration_window.limits.max,     "%.3f seconds", SLIDER_FLAGS) ) {
                     if (m_process_running) {
-                        char cmd[ms_MSG_BUFFER_SIZE];
-                        std::snprintf(cmd, ms_MSG_BUFFER_SIZE, "integration_window %.3f\n", m_integration_window.value);
+                        char cmd[ms_CMD_MSG_SIZE];
+                        std::snprintf(cmd, ms_CMD_MSG_SIZE, "integration_window %.3f\n", m_integration_window.value);
                         m_python.send(cmd);
                     }
                 }
                 ImGui::SameLine(0.0f, pad);
                 if (ImGui::Button("Apply", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
-                    char cmd[ms_MSG_BUFFER_SIZE];
-                    std::snprintf(cmd, ms_MSG_BUFFER_SIZE, "integration_window %.3f\n", cc::delay_s);
+                    char cmd[ms_CMD_MSG_SIZE];
+                    std::snprintf(cmd, ms_CMD_MSG_SIZE, "integration_window %.3f\n", cc::delay_s);
                     m_python.send(cmd);
                 }
                 ImGui::Dummy( ImVec2(pad, 0.0f) );
@@ -408,15 +576,11 @@ void CCounterApp::init_ctrl_rows(void)
                 ImGui::Checkbox("Use Mutex Counts", &m_use_mutex_count);
                 ImGui::SameLine();
                 
-                if ( ImGui::Button("Reset Averages") ) {
-                    for (auto & vec : m_avg_counts)
-                        vec.clear(); //b.Erase();
-                }
+                if ( ImGui::Button("Reset Averages") )      { this->_reset_average_values(); }
                 
                 ImGui::SameLine();
                 
-                if ( ImGui::Button("Reset Max") )
-                    std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.f);
+                if ( ImGui::Button("Reset Max") )           { this->_reset_max_values(); }
                 
                 ImGui::SameLine();
                 ImGui::Checkbox("Plot Crawling", &m_smooth_scroll);
@@ -476,6 +640,27 @@ void CCounterApp::init_ctrl_rows(void)
     //
         {"Colormap",                            [this]
             {
+                const bool      shuffled    = this->m_colormap_shuffled;
+                
+                //      SHUFFLE...
+                this->S.PushFont(Font::Main);
+                {
+                    if ( utl::IconButton(   "##CCounter_Controls_StartProcess"
+                                          , this->S.SystemColor.Blue
+                                          , (shuffled) ? ICON_FA_ARROW_UP_RIGHT_DOTS    : ICON_FA_ARROW_UP_RIGHT_DOTS  //    ICON_FA_ARROW_UP_WIDE_SHORT,
+                                          , this->m_style.ms_TOOLBAR_ICON_SCALE ) )
+                    {
+                        this->m_colormap_shuffled           = !this->m_colormap_shuffled;
+                        this->m_colormap_cache_invalid      = true;
+                    }
+                }
+                this->S.PopFont();
+                
+        
+            
+            
+                ImGui::SameLine();
+            
                 float   w   = ImGui::GetColumnWidth();
                 
                 

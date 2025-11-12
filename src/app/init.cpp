@@ -93,7 +93,7 @@ void App::init(void)
     //  4.      PERFORM ALL RUNTIME ASSERTION STATEMENTS AND
     //          STATE VALIDATIONS BEFORE APPLICATION BEGINS...
     if ( this->init_asserts() ) {
-        S.m_logger.debug( std::format("Initial runtime assertions:      PASSED") );
+        S.m_logger.debug( std::format("[[CBApp]] passed initial runtime assertions") );
     }
 
     return;
@@ -219,7 +219,7 @@ void App::init_appstate_pre(void)
     //
     
     
-    CB_LOG(LogLevel::Debug, "System DPI Scale: {}.  System DPI Fontscale: {}",        S.m_dpi_scale, S.m_dpi_fontscale );
+    CB_LOG(LogLevel::Debug, "[[CBApp]] system DPI-scale, DPI-fontscale: ({}, {})",        S.m_dpi_scale, S.m_dpi_fontscale );
 
 
     //  1.  LOAD MISC. APPLICATION SETTINGS...
@@ -291,7 +291,7 @@ void App::init_appstate_post(void)
         {
             match       = (win.uuid == detwin->uuid);
             if ( match )  {
-                win.dockspace_id    = cblib::maximum_value_of_type<ImGuiID>();
+                win.dockspace_id    = cblib::traits::maximum_value_of_type<ImGuiID>();
                 break;
             }
         }
@@ -512,16 +512,16 @@ void App::load(void)
     
     
 #if defined(CBAPP_DISABLE_INI)
-    S.m_logger.debug( std::format("#CBAPP_DISABLE_INI is defined -- Loading from \".ini\" file is disabled") );
+    S.m_logger.info( std::format("[[CBApp]] use of .ini files is disabled for this build (#define CBAPP_DISABLE_INI)") );
     io.IniFilename                      = nullptr;
 # else
     io.IniFilename                      = cb::app::INI_FILEPATH;
     if ( utl::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH) ) {
-        S.m_logger.debug( std::format("Successfully loaded ImGui \".ini\" from \"{}\"", cb::app::INI_FILEPATH) );
+        S.m_logger.debug( std::format("[[CBApp]] loaded init file, \"{}\"", cb::app::INI_FILEPATH) );
     }
     else
     {
-        S.m_logger.warning( std::format("Failure to load \".ini\" info from file \"{}\".  Fall back to default .ini content", cb::app::INI_FILEPATH) );
+        S.m_logger.warning( std::format("[[CBApp]] failed to load init file \"{}\" -- falling back to default .ini content", cb::app::INI_FILEPATH) );
     }
 #endif  //  CBAPP_DISABLE_INI  //
     
@@ -534,22 +534,22 @@ void App::load(void)
 #ifdef CBAPP_LOAD_STYLE_FILE
     //  1.  Load ImGui Style...
     if ( utl::LoadImGuiStyleFromDisk(style, cb::app::IMGUI_STYLE_FILEPATH) ) {
-        S.m_logger.debug( std::format("Successfully loaded ImGui style from \"{}\"", cb::app::IMGUI_STYLE_FILEPATH) );
+        S.m_logger.debug( std::format("[[CBApp]] ImGui style loaded from \"{}\"", cb::app::IMGUI_STYLE_FILEPATH) );
     }
     else {
-        S.m_logger.warning( std::format("Failure to load ImGui style from \"{}\".  Fall back to default S.SetDarkMode()", cb::app::IMGUI_STYLE_FILEPATH) );
+        S.m_logger.warning( std::format("[[CBApp]] failed to load ImGui style from \"{}\" -- falling back to default (S.SetDarkMode)", cb::app::IMGUI_STYLE_FILEPATH) );
         S.SetDarkMode();
     }
     //
     //  2.  Load ImPlot Style...
     if ( utl::LoadImPlotStyleFromDisk(ImPlot::GetStyle(), cb::app::IMPLOT_STYLE_FILEPATH) ) {
-        S.m_logger.debug( std::format("Successfully loaded ImPlot style from \"{}\"", cb::app::IMPLOT_STYLE_FILEPATH) );
+        S.m_logger.debug( std::format("[[CBApp]] ImPlot style loaded from \"{}\"", cb::app::IMPLOT_STYLE_FILEPATH) );
     }
     else {
-        S.m_logger.warning( std::format("Failure to load ImPlot style from \"{}\".", cb::app::IMPLOT_STYLE_FILEPATH) );
+        S.m_logger.warning( std::format("[[CBApp]] failed to load ImPlot style from \"{}\"", cb::app::IMPLOT_STYLE_FILEPATH) );
     }
 # else
-    S.m_logger.debug( std::format("#CBAPP_LOAD_STYLE_FILE is defined -- Loading from external style file is disabled") );
+    S.m_logger.info( std::format("[[CBApp]] use of external files to set application appearance style is disabled for this build (#ifndef CBAPP_LOAD_STYLE_FILE)") );
     S.SetDarkMode();
 #endif  //  CBAPP_LOAD_STYLE_FILE  //
 

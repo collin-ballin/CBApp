@@ -67,36 +67,7 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //      Averaging mode selector.
 //
 enum class AvgMode {
-    Samples, Seconds, COUNTER
-};
-
-
-
-    
-
-
-// *************************************************************************** //
-//
-//
-//      2.      STRUCTS / TYPES...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "VisSpec"
-//      - Define the visibility of each COUNTER PLOT...
-struct VisSpec {
-    bool    master;         const char * master_ID;
-    bool    single;         const char * single_ID;
-    bool    average;        const char * average_ID;
-};
-
-
-//  "ChannelSpec"
-//      POD Struct to define each COUNTER PLOT for the COINCIDENCE COUNTER...
-struct ChannelSpec {
-    const size_t        idx;
-    const char *        name;
-    VisSpec             vis;
+    Samples = 0     , Seconds   , COUNT
 };
 
 

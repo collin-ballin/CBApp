@@ -109,7 +109,7 @@ public:
     // *************************************************************************** //
     //      STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr size_t             ms_INVALID_ID                   = cblib::maximum_value_of_type<OID>();
+    static constexpr size_t             ms_INVALID_ID                   = cblib::traits::maximum_value_of_type<OID>();
     
 //
 //

@@ -110,23 +110,7 @@ void CCounterApp::redo(void) {
 //
 inline void CCounterApp::_Begin_IMPL(void) noexcept
 {
-    namespace           cc              = ccounter;
-    this->m_perframe.now                = static_cast<float>( ImGui::GetTime() );
-                                    
-    if ( m_process_running )            { this->m_perframe.now += ImGui::GetIO().DeltaTime; }
-    
-    
-    this->m_perframe.spark_now          = (!m_counter_running   ? m_freeze_now    : ( (m_smooth_scroll)     ? this->m_perframe.now   : m_last_packet_time) );
-    //  const float         spark_now       = (!m_counter_running   ? m_freeze_now    : ( (m_smooth_scroll)     ? now   : m_last_packet_time) );
-    //  const auto          [xmin, xmax]    = this->_FetchData(now, spark_now);
-    this->_FetchData();
-    
-    
-    
-    
-    
-    
-    //      1.      PER-FRAME CACHE OPERATIONS...
+    //      1.      PERFORM ALL PER-FRAME COMPUTE OPERATIONS...
     this->_MECH_per_frame_cache();
     
     
@@ -136,18 +120,8 @@ inline void CCounterApp::_Begin_IMPL(void) noexcept
     
     
     
-    
-    
-
     //      3.      MASTER PLOT...
-    //  ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    //  if ( ImGui::CollapsingHeader("Master Plot") )
-    //  {
-    //
-        this->_PlotMaster();
-    //
-    //
-    //  }
+    this->_PlotMaster();
 
 
 
@@ -245,20 +219,28 @@ inline void CCounterApp::_Begin_DetView_IMPL(void) noexcept
 //
 inline void CCounterApp::_MECH_per_frame_cache(void) noexcept
 {
-    namespace           cc              = ccounter;
-    this->m_perframe.now                = static_cast<float>( ImGui::GetTime() );
+    namespace           cc      = ccounter;
+    PerFrame &          PF      = this->m_perframe;
+    
+    PF.now                      = static_cast<float>( ImGui::GetTime() );
                                     
-    if ( m_process_running )            { this->m_perframe.now += ImGui::GetIO().DeltaTime; }
+    if ( m_process_running )     { PF.now += ImGui::GetIO().DeltaTime; }
     
     
-    this->m_perframe.spark_now          = (!m_counter_running   ? m_freeze_now    : ( (m_smooth_scroll)     ? this->m_perframe.now   : m_last_packet_time) );
+    PF.spark_now                = (!m_counter_running   ? m_freeze_now    : ( (m_smooth_scroll)     ? PF.now   : m_last_packet_time) );
     //  const float         spark_now       = (!m_counter_running   ? m_freeze_now    : ( (m_smooth_scroll)     ? now   : m_last_packet_time) );
     //  const auto          [xmin, xmax]    = this->_FetchData(now, spark_now);
+    
+    
+    
+    //      2.      FETCH DATA FROM PYTHON PROCESS...
     this->_FetchData();
     
     
-    
-    
+    //      3.      VERIFY IF COLOR-MAP CACHE NEEDS RE-VALIDATION...
+    if ( this->m_colormap_cache_invalid ) {
+        this->_validate_colormap_cache();
+    }
     
     
     return;
@@ -274,9 +256,8 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
     using                                   Padding                     = utl::icon_widgets::PaddingPolicy;
     //
     static constexpr const char *           uuid                        = "##Editor_Controls_Columns";
-    static constexpr int                    ms_NC                       = 7;
-    static constexpr int                    ms_NE                       = 2;
-    static constexpr float                  ms_TOOLBAR_ICON_SCALE       = 1.5f;
+    static constexpr int                    ms_NC                       = 9;
+    static constexpr int                    ms_NE                       = 3;
     //
     static ImGuiOldColumnFlags              COLUMN_FLAGS                = ImGuiOldColumnFlags_None;
     static ImVec2                           WIDGET_SIZE                 = ImVec2( -1,  32 );
@@ -284,9 +265,9 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
    
    
    
-    const bool      running     = this->m_process_running;
-    const bool      rec         = this->m_process_recording;
-   
+    const float         scale       = this->m_style.ms_TOOLBAR_ICON_SCALE;
+    const bool          running     = this->m_process_running;
+    const bool          rec         = this->m_process_recording;
    
    
     //      BEGIN COLUMNS...
@@ -305,7 +286,7 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
             if ( utl::IconButton(   "##CCounter_Controls_StartProcess"
                                   , (running)     ? this->S.SystemColor.Yellow      : this->S.SystemColor.Blue
                                   , (running)     ? ICON_FA_PAUSE                   : ICON_FA_PLAY
-                                  , ms_TOOLBAR_ICON_SCALE ) )
+                                  , scale ) )
             {
                 if ( !running )     { this->_start_process(/*run_and_rec=*/false);  }   //      CASE 1 :    START PROCESS...
                 else                { this->_stop_process(/*pause=*/true);          }   //      CASE 2 :    PAUSE PROCESS...
@@ -320,7 +301,7 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
             if ( utl::IconButton(   "##CCounter_Controls_RecordProcess"
                                   , (rec)       ? this->S.SystemColor.Red       : this->S.SystemColor.Disabled
                                   , (rec)       ? ICON_FA_MICROPHONE_LINES      : ICON_FA_MICROPHONE_LINES_SLASH
-                                  , ms_TOOLBAR_ICON_SCALE ) )
+                                  , scale ) )
             {
             //
             //
@@ -339,39 +320,6 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
         }
         //
         this->S.PopFont();
-        
-        
-        
-        
-        
-        
-        
-        /*
-        if (!m_process_running)
-        {
-            if ( ImGui::Button("Start Process") )
-            {
-                m_process_running               = m_python.start();
-                if ( !m_process_running )
-                {
-                    ImGui::OpenPopup("launch_error");
-                }
-                else {
-                    m_max_counts[0] = 0.0f;
-                } // reset stats
-            }
-        }
-        //
-        //      CASE 2 :    SCRIPT  **IS**  RUNNING...
-        else
-        {
-            if ( utl::CButton("Stop Process", app::DEF_APPLE_RED) ) {
-                m_python.stop();
-                m_process_running = false;
-            }
-            //      ImGui::PopStyleColor(2);
-        }*/
-        
         
         
         
@@ -394,9 +342,7 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
         ImGui::NextColumn();
         if ( ImGui::Button("Reset Averages") )
         {
-            for (auto & vec : m_avg_counts) {
-                vec.clear();    //  b.Erase();
-            }
+            this->_reset_average_values();
         }
         
         
@@ -405,10 +351,7 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
         ImGui::NextColumn();
         if ( ImGui::Button("Clear Plot") )
         {
-            for (auto & b : m_buffers) {
-                b.clear(); //b.Erase();
-            }
-            std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.0f);
+            this->_clear_plot_data();
         }
 
 
@@ -420,14 +363,26 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
         for (int i = ImGui::GetColumnIndex(); i < ms_NC - ms_NE; ++i) {
             ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
         }
+        
+        
+        
+                
+        
+        
+        //      X.1.    # OF PACKETS.
+        ImGui::NextColumn();
+        this->S.column_label("Packets Recieved:");
+        ImGui::Text("%06zu", this->m_num_packets);
+        
+        
+                
+        
+        
 
 
 
-
-
-
-        //      X.1.    CLEAR ALL...
-        this->S.column_label("Clear Data:");
+        //      X.3.    CLEAR ALL...
+        ImGui::NextColumn();        this->S.column_label("Clear Data:");
         //
         ImGui::PushItemWidth( BUTTON_SIZE.x );
         this->S.PushFont(Font::Main);
@@ -435,7 +390,7 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
             if ( utl::IconButton(   "##Editor_Controls_ClearAllData"
                                   , this->S.SystemColor.Red
                                   , ICON_FA_TRASH_CAN
-                                  , ms_TOOLBAR_ICON_SCALE ) )
+                                  , scale ) )
             {
                 ui::ask_ok_cancel(
                       "Clear Data"
@@ -498,55 +453,59 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
 
 //  "_FetchData"
 //
-inline void/*std::pair<float, float>*/ CCounterApp::_FetchData(void) noexcept
+inline void CCounterApp::_FetchData(void) noexcept
 {
     namespace               cc                  = ccounter;
-    //  std::string             raw;
-    //  bool                    got_packet          = false;
+    PerFrame &              PF                  = this->m_perframe;
     //
-    this->m_perframe.got_packet                 = false;
-    this->m_perframe.xmin                       = 0.0f;
-    this->m_perframe.xmax                       = m_history_length.value;
+    PF.got_packet                 = false;
+    PF.xmin                       = 0.0f;
+    PF.xmax                       = m_history_length.value;
     //  float                   xmin                = 0.0f,
     //                          xmax                = m_history_length.value;
                                     
           
     //      1.      POLL THE CHILD-PROCESS.  PUSH NEW DATA-POINTS...
     //
-    while ( this->m_python.try_receive( this->m_perframe.raw ) )
+    while ( this->m_python.try_receive( PF.raw ) )
     {
-        this->m_perframe.got_packet = true;
+        PF.got_packet = true;
+        ++this->m_num_packets;
+        
         //  if ( auto packet = cc::parse_packet(raw, m_use_mutex_count) )
-        if ( auto packet = cc::parse_packet(this->m_perframe.raw, m_use_mutex_count) )
+        if ( auto packet_ptr = cc::parse_packet(PF.raw, m_use_mutex_count) )
         {
-            const auto &    counts      = packet->counts;
-            for (int i = 0; i < static_cast<int>(ms_NUM); ++i)
+            //  const auto &    counts      = packet->counts;
+            const Packet &  packet  = *packet_ptr;
+            
+            for (size_t i = 0ULL; i < ms_NUM; ++i)
             {
-                const size_t        ch_idx          = ms_channels[i].idx;
-                const float         current         = static_cast<float>( counts[ch_idx] );
+                //  const size_t        ch_idx          = ms_channels[i].idx;
+                const ChIndex       ch_idx          = static_cast<ChIndex>( ms_channels[i].idx );
+                const float         current         = static_cast<float>( packet[ch_idx] );
                 const float         avg             = this->ComputeAverage(
                       m_buffers[i]
                     , m_avg_mode
-                    , m_avg_window_samp.value
-                    , m_avg_window_sec.value
-                    , this->m_perframe.spark_now    //    spark_now
+                    , m_avg_window_samp.Value()
+                    , m_avg_window_sec.Value()
+                    , PF.spark_now    //    spark_now
                 );
                     
                 
-                m_buffers[i]        .push_back({ this->m_perframe.now, current });               //  1.  PUSH-BACK MOST RECENT FPGA DATA PACKET.
+                m_buffers[i]        .push_back({ PF.now, current });               //  1.  PUSH-BACK MOST RECENT FPGA DATA PACKET.
                 m_max_counts[i]     = std::max(m_max_counts[i], current);       //  2.  COMPUTE CURRENT MAX VALUE FOR THIS COUNTER.
-                m_avg_counts[i]     .push_back({ this->m_perframe.now, avg });                   //  3.
+                m_avg_counts[i]     .push_back({ PF.now, avg });                   //  3.
             }
         }
     }
     //
     //  if (got_packet)     { this->m_last_packet_time = now; }
-    if (this->m_perframe.got_packet)        { this->m_last_packet_time = this->m_perframe.now; }
+    if (PF.got_packet)        { this->m_last_packet_time = PF.now; }
 
 
     //      streaming considered active if we’ve received data within timeout
     //  m_streaming_active  = (now - m_last_packet_time) < m_stream_timeout;
-    m_streaming_active  = (this->m_perframe.now - m_last_packet_time) < m_stream_timeout;
+    m_streaming_active  = (PF.now - m_last_packet_time) < m_stream_timeout;
 
 
 
@@ -556,38 +515,36 @@ inline void/*std::pair<float, float>*/ CCounterApp::_FetchData(void) noexcept
     if (!m_counter_running) {                                   //  Recording stopped – freeze completely.
         //  xmin = m_freeze_xmin;
         //  xmax = m_freeze_xmax;
-        this->m_perframe.xmin = m_freeze_xmin;
-        this->m_perframe.xmax = m_freeze_xmax;
+        PF.xmin = m_freeze_xmin;
+        PF.xmax = m_freeze_xmax;
     }
-    else if (m_smooth_scroll) {                                 //  Continuous crawl following real time.
-        //  xmin            = now - ms_CENTER * m_history_length.value;
-        //  xmax            = xmin + m_history_length.value;
-        //  m_freeze_xmin   = xmin;                                 //  Keep cache fresh in case we pause later.
-        //  m_freeze_xmax   = xmax;
-        //
-        this->m_perframe.xmin   = this->m_perframe.now - ms_CENTER * m_history_length.Value();
-        this->m_perframe.xmax   = this->m_perframe.xmin + m_history_length.Value();
-        m_freeze_xmin           = this->m_perframe.xmin;                                 //  Keep cache fresh in case we pause later.
-        m_freeze_xmax           = this->m_perframe.xmax;
+    else if (this->m_smooth_scroll)
+    {
+        if ( this->m_process_running  &&  this->m_streaming_active ) {
+            PF.xmin             = PF.now - this->ms_CENTER * this->m_history_length.Value();
+            PF.xmax             = PF.xmin + this->m_history_length.Value();
+            m_freeze_xmin       = PF.xmin;                 // keep cache fresh while crawling
+            m_freeze_xmax       = PF.xmax;
+        }
     }
     else { // Stepped mode
-        if (this->m_perframe.got_packet) {                                       //  Jump so the newest packet sits at right edge of window.
+        if (PF.got_packet) {                                       //  Jump so the newest packet sits at right edge of window.
             //  xmin            = m_last_packet_time - ( this->ms_CENTER * m_history_length.value );
             //  xmax            = xmin + m_history_length.value;
             //  m_freeze_xmin   = xmin;
             //  m_freeze_xmax   = xmax;                                  //  Jump so the newest packet sits at right edge of window.
             //
-            this->m_perframe.xmin   = m_last_packet_time - ( this->ms_CENTER * m_history_length.value );
-            this->m_perframe.xmax   = this->m_perframe.xmin + m_history_length.Value();
-            m_freeze_xmin           = this->m_perframe.xmin;
-            m_freeze_xmax           = this->m_perframe.xmax;
+            PF.xmin   = m_last_packet_time - ( this->ms_CENTER * m_history_length.value );
+            PF.xmax   = PF.xmin + m_history_length.Value();
+            m_freeze_xmin           = PF.xmin;
+            m_freeze_xmax           = PF.xmax;
         }
         else {                              //  Hold still between packets.
             //  xmin            = m_freeze_xmin;
             //  xmax            = m_freeze_xmax;
             //
-            this->m_perframe.xmin            = m_freeze_xmin;
-            this->m_perframe.xmax            = m_freeze_xmax;
+            PF.xmin            = m_freeze_xmin;
+            PF.xmax            = m_freeze_xmax;
         }
     }
 
@@ -598,15 +555,15 @@ inline void/*std::pair<float, float>*/ CCounterApp::_FetchData(void) noexcept
     //      m_freeze_xmin   = xmin;
     //      m_freeze_xmax   = xmax;
     //  }
-    if (this->m_perframe.xmax < this->m_perframe.xmin) {
-        this->m_perframe.xmin       = 0.0f;
-        this->m_perframe.xmax       = m_history_length.value;
-        m_freeze_xmin               = this->m_perframe.xmin;
-        m_freeze_xmax               = this->m_perframe.xmax;
+    if (PF.xmax < PF.xmin) {
+        PF.xmin       = 0.0f;
+        PF.xmax       = m_history_length.value;
+        m_freeze_xmin               = PF.xmin;
+        m_freeze_xmax               = PF.xmax;
     }
 
     return;
-    //return {this->m_perframe.xmin, this->m_perframe.xmax};
+    //return {PF.xmin, PF.xmax};
 }
 
 

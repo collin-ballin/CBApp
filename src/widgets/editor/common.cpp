@@ -35,14 +35,14 @@ void Editor::save(void)
     //  CASE 1 :    EDITOR HAS EXISTING FILE...
     if ( has_file )
     {
-        S.m_logger.debug( std::format("Editor | saving data to existing file, \"{}\"", ES.m_filepath.filename().string())  );
+        S.m_logger.debug( std::format("[[Editor]] saving data to existing file, \"{}\"", ES.m_filepath.filename().string())  );
         this->save_async(ES.m_filepath);
     }
     //
     //  CASE 2 :    NEED TO  "SAVE AS..."  THE CURRENT FILE...
     else
     {
-        S.m_logger.info( "Editor | requesting file dialog to create new file" );
+        S.m_logger.info( "[[Editor]] requesting file dialog to create new file" );
         this->m_editor_S.m_sdialog_open.store(true, std::memory_order_release);
     }
     
@@ -70,7 +70,7 @@ void Editor::save_as(void)
 
     
     
-    S.m_logger.info( "Editor | requesting file dialog to \"save as\" new file..." );
+    S.m_logger.info( "Editor: requesting file dialog to \"save as\" new file..." );
     this->m_editor_S.m_sdialog_open.store(true, std::memory_order_release);
     
     return;

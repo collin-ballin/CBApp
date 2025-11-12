@@ -690,7 +690,7 @@ inline void Editor::_settings_H4(SettingsData & args)
         this->S.labelf("Open File:",                    args.LABEL_W,    args.WIDGET_W);
         if ( ImGui::Button("Open", ms_SETTINGS_BUTTON_SIZE) )
         {
-            CB_LOG( LogLevel::Info, "Editor | requesting file dialog to load from disk" );
+            CB_LOG( LogLevel::Info, "[[Editor]] requesting file dialog to load from disk" );
             requested_close = true;
             args.ES.m_odialog_open.store( true, std::memory_order_release );
         }
@@ -990,13 +990,13 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
             {
                 //  CASE 2A :   SAVING SUCCESS.
                 case IOResult::Ok                   : {
-                    message     = std::format( "Saved data to file \"{}\"", path.filename().string() );
+                    message     = std::format( "[[Editor]] saved data to file \"{}\"", path.filename().string() );
                     break;
                 }
                 //
                 //  CASE 2B :   SAVING FAILURE.
                 default                             : {
-                    message = std::format( "Failed to save file \"{}\", (I/O Result: {})", path.filename().string(), ms_IORESULT_NAMES[ res ] );
+                    message = std::format( "[[Editor]] failed to save file \"{}\", (I/O Result: {})", path.filename().string(), ms_IORESULT_NAMES[ res ] );
                     break;
                 }
             }
@@ -1014,12 +1014,12 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
     
         //  CASE 2A :   SAVE SUCCESS.
         if ( ES.m_io_last == IOResult::Ok ) {
-            CB_LOG( LogLevel::Info, std::format("Editor | successfully saved data to \"{}\" [status: {}] ", path.filename().string(), status) );
+            CB_LOG( LogLevel::Info, std::format("[[Editor]] saved data to \"{}\" [status: {}] ", path.filename().string(), status) );
         }
         //
         //  CASE 2A :   SAVE FAILURE.
         else {
-            CB_LOG( LogLevel::Error, std::format("Editor | failed to save data to \"{}\" [status: {}] ", path.filename().string(), status) );
+            CB_LOG( LogLevel::Error, std::format("[[Editor]] failed to save data to \"{}\" [status: {}] ", path.filename().string(), status) );
         }
     }
     

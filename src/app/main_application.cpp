@@ -481,7 +481,7 @@ void App::ImPlot_Testing0(void)
     static float                    p3_vrange[2]    = {0.0,     1.0};
     static ImPlotRect               plot_bounds;
     
-    static ImPlotColormap           CustomCMap      = utl::CreateTransparentColormap(ImPlotColormap_Viridis, 0.4f, "MyCustomCMap");
+    static ImPlotColormap           CustomCMap      = cblib::utl::CreateTransparentColormap(ImPlotColormap_Viridis, 0.4f, "MyCustomCMap");
     static bool                     first_frame     = true;
     
     

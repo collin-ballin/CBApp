@@ -70,11 +70,11 @@ void ActionComposer::initialize(void)
     //  2.  LOAD DEFAULT TESTS FROM FILE...
     if ( !this->m_filepath.empty() && fs::exists(this->m_filepath) && fs::is_regular_file(this->m_filepath) )
     {
-        this->S.m_logger.debug( std::format("ActionComposer | loading from default file, \"{}\"", this->m_filepath.string()) );
+        this->S.m_logger.debug( std::format("[[ActionComposer]] loading from default file, \"{}\"", this->m_filepath.string()) );
         this->load_from_file(this->m_filepath);
     }
     else {
-        this->S.m_logger.debug( std::format("ActionComposer | unable to load default file, \"{}\"", this->m_filepath.string()) );
+        this->S.m_logger.debug( std::format("[[ActionComposer]] unable to load default file, \"{}\"", this->m_filepath.string()) );
     }
     
     return;
@@ -1426,20 +1426,20 @@ inline void ActionComposer::_cancel_key_capture(void)
 //  SERIALIZER ASSERTIONS...
 //
 //      1.      ImVec2.
-static_assert( cblib::has_from_json<ImVec2>::value,                 "ImVec2 \"from_json\" NOT visible."                 );
-static_assert( cblib::has_to_json<ImVec2>::value,                   "ImVec2 \"to_json\" NOT visible."                   );
+static_assert( cblib::traits::has_from_json<ImVec2>::value,                 "ImVec2 \"from_json\" NOT visible."                 );
+static_assert( cblib::traits::has_to_json<ImVec2>::value,                   "ImVec2 \"to_json\" NOT visible."                   );
 //
 //      2.      CursorMoveParams.
-static_assert( cblib::has_from_json<CursorMoveParams>::value,       "CursorMoveParams \"from_json\" NOT visible."       );
-static_assert( cblib::has_to_json<CursorMoveParams>::value,         "CursorMoveParams \"to_json\" NOT visible."         );
+static_assert( cblib::traits::has_from_json<CursorMoveParams>::value,       "CursorMoveParams \"from_json\" NOT visible."       );
+static_assert( cblib::traits::has_to_json<CursorMoveParams>::value,         "CursorMoveParams \"to_json\" NOT visible."         );
 //
 //      3.      Action.
-static_assert( cblib::has_from_json<Action>::value,                 "Action \"from_json\" NOT visible."                 );
-static_assert( cblib::has_to_json<Action>::value,                   "Action \"to_json\" NOT visible."                   );
+static_assert( cblib::traits::has_from_json<Action>::value,                 "Action \"from_json\" NOT visible."                 );
+static_assert( cblib::traits::has_to_json<Action>::value,                   "Action \"to_json\" NOT visible."                   );
 //
 //      4.      Composition_t.
-static_assert( cblib::has_from_json<Composition_t>::value,          "Composition_t \"from_json\" NOT visible."          );
-static_assert( cblib::has_to_json<Composition_t>::value,            "Composition_t \"to_json\" NOT visible."            );
+static_assert( cblib::traits::has_from_json<Composition_t>::value,          "Composition_t \"from_json\" NOT visible."          );
+static_assert( cblib::traits::has_to_json<Composition_t>::value,            "Composition_t \"to_json\" NOT visible."            );
                
                
                
@@ -1545,7 +1545,7 @@ bool ActionComposer::save_to_file(const std::filesystem::path & path) const
     
     //  CASE 0 :    FAILURE TO OPEN  "ifstream" OBJECT...
     if ( !f ) {
-        S.m_logger.error( std::format("ActionComposer | failed to save JSON file: failed to create std::ofstream object from provided path \"{}\".", path.string()) );
+        S.m_logger.error( std::format("[[ActionComposer]] failed to save JSON file: failed to create std::ofstream object from provided path \"{}\".", path.string()) );
         return false;
     }
     
@@ -1562,7 +1562,7 @@ bool ActionComposer::load_from_file(const std::filesystem::path & path)
     
     //  CASE 0 :    FAILURE TO OPEN  "ifstream" OBJECT...
     if ( !f ) {
-        S.m_logger.error( std::format("ActionComposer | failed to load JSON file: failed to create std::ifstream object from provided path \"{}\".", path.string()) );
+        S.m_logger.error( std::format("[[ActionComposer]] failed to load JSON file: failed to create std::ifstream object from provided path \"{}\".", path.string()) );
         return false;
     }
 
@@ -1571,7 +1571,7 @@ bool ActionComposer::load_from_file(const std::filesystem::path & path)
         j.at("compositions").get_to(m_compositions);
     }
     catch (const std::exception & e) {
-        S.m_logger.exception( std::format("ActionComposer | failed to load JSON file: caught std::exception while loading file.  TRACEBACK: \"{}\".", e.what()) );
+        S.m_logger.exception( std::format("[[ActionComposer]] failed to load JSON file: caught std::exception while loading file.  TRACEBACK: \"{}\".", e.what()) );
         return false;
     }
 

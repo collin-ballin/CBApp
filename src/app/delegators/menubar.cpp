@@ -408,8 +408,8 @@ inline void MenuBar::file_imgui_submenu(void)
         if (TRIGGER) {
             TIME       += ImGui::GetIO().DeltaTime;
             TRIGGER     = static_cast<bool>( !(COOLDOWN <= std::abs(TIME - TIME_CACHE)) );
-            ImGui::TextDisabled("Data was saved to \"%s\" at %.3f sec.", custom_ini_file, TIME_CACHE);
-            S.m_logger.info( std::format("ImGui \".ini\" data was written to file \"{}\" at {:.3f} sec.", custom_ini_file, TIME_CACHE) );
+            ImGui::TextDisabled("Data was saved to \"%s\" (at %.3f sec.)", custom_ini_file, TIME_CACHE);
+            S.m_logger.info( std::format("[[CBApp]] init file written to \"{}\" (at {:.3f} sec.)", custom_ini_file, TIME_CACHE) );
         }
         
         

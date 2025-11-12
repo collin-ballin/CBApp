@@ -85,6 +85,33 @@ namespace cb { namespace ccounter { //     BEGINNING NAMESPACE "cb::ccounter"...
 //      1A. TYPES |        ABSTRACTIONS FOR THE COINCIDENCE-COUNTER.
 // *************************************************************************** //
 
+
+//  "PythonCMD"
+//
+enum class PythonCMD : uint8_t {
+      None = 0
+    , IntegrationWindow
+    , CoincidenceWindow
+//
+    , COUNT   // = 16
+};
+
+
+//  "DEF_PYTHON_CMD_FMT_STRINGS"
+//
+static constexpr cblib::EnumArray< PythonCMD, const char * >
+DEF_PYTHON_CMD_FMT_STRINGS      = {
+{
+    /*  None                    */    "%s\n"
+    /*  IntegrationWindow       */  , "integration_window %.3f\n"
+    /*  CoincidenceWindow       */  , "Parsing Error"
+} };
+
+
+
+
+
+
 //  "PerFrame_t"
 //
 //      [[ TO-DO ]]:    REPLACE THIS!!!
@@ -98,6 +125,21 @@ struct PerFrame_t {
     float           spark_now       = -1.0f;
 //
     bool            got_packet      = false;
+//
+//
+//
+    //  "clear"
+    //
+    inline void clear(void) noexcept
+    {
+        this->raw             .clear();
+        this->xmin            = -1.0f;
+        this->xmax            = -1.0f;
+        this->now             = -1.0f;
+        this->spark_now       = -1.0f;
+        this->got_packet      = false;
+        return;
+    }
 };
 
 
@@ -105,15 +147,16 @@ struct PerFrame_t {
 
 
 
-//  "ChannelIdx"
+//  "ChannelID"
 //
-enum ChannelIdx : uint8_t {
-    UNUSED = 0,
-    D,      C,      CD,
-    B,      BD,     BC,     BCD,
-    A,      AD,     AC,     ACD,
-    AB,     ABD,    ABC,    ABCD,
-    CHANNEL_COUNT   // = 16
+enum class ChannelID : uint8_t {
+      UNUSED = 0
+    , D         , C         , CD
+    , B         , BD        , BC        , BCD
+    , A         , AD        , AC        , ACD
+    , AB        , ABD       , ABC       , ABCD
+//
+    , COUNT   // = 16
 };
 
 
@@ -122,26 +165,37 @@ enum ChannelIdx : uint8_t {
 //
 struct CoincidencePacket
 {
-    std::array<int, CHANNEL_COUNT>      counts          {   };
-    int                                 cycles          {   };
-
-    //  Convenience accessors
-    int d           (void) const    { return counts[D];  }
-    int c           (void) const    { return counts[C];  }
-    int cd          (void) const    { return counts[CD]; }
-    int b           (void) const    { return counts[B];  }
-    int bd          (void) const    { return counts[BD]; }
-    int bc          (void) const    { return counts[BC]; }
-    int bcd         (void) const    { return counts[BCD];}
-    int a           (void) const    { return counts[A];  }
-    int ad          (void) const    { return counts[AD]; }
-    int ac          (void) const    { return counts[AC]; }
-    int acd         (void) const    { return counts[ACD];}
-    int ab          (void) const    { return counts[AB]; }
-    int abd         (void) const    { return counts[ABD];}
-    int abc         (void) const    { return counts[ABC];}
-    int abcd        (void) const    { return counts[ABCD];}
+    using                                   Index               = ChannelID;
+    using                                   value_type          = int;
+//
+//
+//
+    cblib::EnumArray<Index, value_type>     counts              = {   };
+    int                                     cycles              {   };
+    //
+    //
+    //                                      CONVENIENCE ACCESSORS:
+    [[nodiscard]] value_type                    d                   (void) const noexcept           {   return this->counts[ Index::D       ];      }
+    [[nodiscard]] value_type                    c                   (void) const noexcept           {   return this->counts[ Index::C       ];      }
+    [[nodiscard]] value_type                    cd                  (void) const noexcept           {   return this->counts[ Index::CD      ];      }
+    [[nodiscard]] value_type                    b                   (void) const noexcept           {   return this->counts[ Index::B       ];      }
+    [[nodiscard]] value_type                    bd                  (void) const noexcept           {   return this->counts[ Index::BD      ];      }
+    [[nodiscard]] value_type                    bc                  (void) const noexcept           {   return this->counts[ Index::BC      ];      }
+    [[nodiscard]] value_type                    bcd                 (void) const noexcept           {   return this->counts[ Index::BCD     ];      }
+    [[nodiscard]] value_type                    a                   (void) const noexcept           {   return this->counts[ Index::A       ];      }
+    [[nodiscard]] value_type                    ad                  (void) const noexcept           {   return this->counts[ Index::AD      ];      }
+    [[nodiscard]] value_type                    ac                  (void) const noexcept           {   return this->counts[ Index::AC      ];      }
+    [[nodiscard]] value_type                    acd                 (void) const noexcept           {   return this->counts[ Index::ACD     ];      }
+    [[nodiscard]] value_type                    ab                  (void) const noexcept           {   return this->counts[ Index::AB      ];      }
+    [[nodiscard]] value_type                    abd                 (void) const noexcept           {   return this->counts[ Index::ABD     ];      }
+    [[nodiscard]] value_type                    abc                 (void) const noexcept           {   return this->counts[ Index::ABC     ];      }
+    [[nodiscard]] value_type                    abcd                (void) const noexcept           {   return this->counts[ Index::ABCD    ];      }
+    //
+    //                                      OVERLOADED ACCESSORS:
+    [[nodiscard]] inline value_type &           operator []         (const Index id) noexcept       { return counts[id]; }
+    [[nodiscard]] inline const value_type &     operator []         (const Index id) const noexcept { return counts[id]; }
 };
+
 
 
 //  "parse_packet"
@@ -150,28 +204,39 @@ struct CoincidencePacket
 inline std::optional<CoincidencePacket>
 parse_packet(std::string_view line)
 {
-    using               json        = nlohmann::json;
-    CoincidencePacket   pkt         {   };
+    using               json            = nlohmann::json;
+    using               Packet          = CoincidencePacket;
+    using               Index           = Packet::Index;
+    //
+    Packet              packet          {   };
 
     try
     {
-        json j = json::parse(line);
-        const auto& arr = j.at("counts");
-        if (arr.size() != CHANNEL_COUNT)         // sanity check
-            return std::nullopt;
+        json            j       = json::parse(line);
+        const auto &    arr     = j.at("counts");
+        const size_t    N       = arr.size();
+        size_t          i       = 0ULL;
+        Index           idx     = static_cast<Index>(0);
+        
+        
+        //      CASE 0 :    MORE COUNTER-VALUES RETURNED THAN WE EXPECTED  [ THIS SHOULD NEVER HAPPEN ]...
+        if ( N != static_cast<size_t>(Index::COUNT) )       { return std::nullopt; }
 
-        for (std::size_t i = 0; i < CHANNEL_COUNT; ++i)
-            pkt.counts[i] = arr[i].get<int>();
-
-        pkt.cycles = j.at("cycles").get<int>();
-
+        
+        //      1.      FETCH THE VALUE OF EACH COUNTER FROM THE DATA-DELIVERY...
+        for (i = 0ULL; i < N; idx = static_cast<Index>(++i) ) {
+            packet.counts[idx]      = arr[i].get<int>();
+        }
+        packet.cycles   = j.at("cycles").get<int>();
     }
+    //
+    //      ERROR :     Some type of malformed JSON / JSON-Keys, etc...
     catch (const json::exception & )
     {
-        return std::nullopt;                     // malformed JSON / keys
+        return std::nullopt;
     }
     
-    return pkt;
+    return packet;
 }
 
 
@@ -180,60 +245,95 @@ parse_packet(std::string_view line)
 inline std::optional<CoincidencePacket>
 parse_packet(std::string_view line, bool mutual_exclusion)   // NEW ARG (default = previous behaviour)
 {
-    using               json        = nlohmann::json;
-    CoincidencePacket   pkt         {   };
-
-    constexpr size_t    A_IDX       = ChannelIdx::A;
-    constexpr size_t    B_IDX       = ChannelIdx::B;
-    constexpr size_t    C_IDX       = ChannelIdx::C;
-    constexpr size_t    D_IDX       = ChannelIdx::D;
+    using               json            = nlohmann::json;
+    using               Packet          = CoincidencePacket;
+    using               Index           = Packet::Index;
+    //
+    Packet              packet          {   };
 
 
     try
     {
         json            j       = json::parse(line);
         const auto &    arr     = j.at("counts");
+        const size_t    N       = arr.size();
+        size_t          i       = 0ULL;
+        Index           idx     = static_cast<Index>(0);
         
-        if ( arr.size() != CHANNEL_COUNT )      { return std::nullopt; }
+        
+        //      CASE 0 :    MORE COUNTER-VALUES RETURNED THAN WE EXPECTED  [ THIS SHOULD NEVER HAPPEN ]...
+        if ( N != static_cast<size_t>(Index::COUNT) )       { return std::nullopt; }
 
-        for (size_t i = 0; i < CHANNEL_COUNT; ++i) {
-            pkt.counts[i] = arr[i].get<int>();
+        
+        //      1.      FETCH THE VALUE OF EACH COUNTER FROM THE DATA-DELIVERY...
+        for (i = 0ULL; i < N; idx = static_cast<Index>(++i) ) {
+            packet.counts[idx]      = arr[i].get<int>();
         }
+        packet.cycles   = j.at("cycles").get<int>();
 
-        pkt.cycles = j.at("cycles").get<int>();
 
-        // ------------------------------------------------------------------
-        //  Optional reconciliation of mutually exclusive counts
-        // ------------------------------------------------------------------
-        if (!mutual_exclusion)
+        //      2.      ADAPT GEORGES' FPGA VALUES FROM:  [ NON-MUTEX (Default) ] -- TO -- [ MUTEX ]...
+        if ( !mutual_exclusion )
         {
-            // The index value encodes which APD channels participated:
-            // bit3=A, bit2=B, bit1=C, bit0=D  (e.g. 0b1100 == AB)
-            for (size_t idx = 0; idx < CHANNEL_COUNT; ++idx)
+            //      The index value encodes which APD channels participated:
+            //          bit3=A,     bit2=B,     bit1=C,     bit0=D      (e.g. 0b1100 == AB)
+            //
+            for (i = 0ULL, idx = static_cast<Index>(i); i < N; idx = static_cast<Index>(++i) )
             {
-                const int       n       = pkt.counts[idx];
-                const uint8_t   mask    = static_cast<uint8_t>(idx);
+                const int       val     = packet.counts[idx];
+                const uint8_t   mask    = static_cast<uint8_t>(i);
                 
-                if (n == 0)     { continue; }
+                if (val == 0)           { continue; }
 
                 //  skip single channels or UNUSED (they already hold the count)
-                if ( mask == 0 || mask == 1 || mask == 2 || mask == 4 || mask == 8 )
-                    { continue; }
+                if ( mask == 0 || mask == 1 || mask == 2 || mask == 4 || mask == 8 )    { continue; }
 
-                if (mask & 0x8)     { pkt.counts[A_IDX] += n; }     //  A.
-                if (mask & 0x4)     { pkt.counts[B_IDX] += n; }     //  B.
-                if (mask & 0x2)     { pkt.counts[C_IDX] += n; }     //  C.
-                if (mask & 0x1)     { pkt.counts[D_IDX] += n; }     //  D.
+                if (mask & 0x8)         { packet.counts[Index::A] += val; }     //  A.
+                if (mask & 0x4)         { packet.counts[Index::B] += val; }     //  B.
+                if (mask & 0x2)         { packet.counts[Index::C] += val; }     //  C.
+                if (mask & 0x1)         { packet.counts[Index::D] += val; }     //  D.
             }
         }
     }
+    //
+    //      ERROR :     Some type of malformed JSON / JSON-Keys, etc...
     catch (const json::exception & )
     {
         return std::nullopt;
     }
     
-    return pkt;
+    return packet;
 }
+
+
+
+
+
+    
+// *************************************************************************** //
+//      1A. TYPES |        PRAGMATIC ABSTRACTIONS.
+// *************************************************************************** //
+
+//  "VisSpec"
+//      - Define the visibility of each COUNTER PLOT...
+//
+struct VisSpec {
+    bool    master;         const char * master_ID;
+    bool    single;         const char * single_ID;
+    bool    average;        const char * average_ID;
+};
+
+
+//  "ChannelSpec"
+//      POD Struct to define each COUNTER PLOT for the COINCIDENCE COUNTER...
+//
+struct ChannelSpec {
+    const size_t            idx;
+//
+    const char *            name;
+    mutable VisSpec         vis;
+};
+
 
 
 
@@ -244,6 +344,12 @@ parse_packet(std::string_view line, bool mutual_exclusion)   // NEW ARG (default
 //
 // *************************************************************************** //
 // *************************************************************************** //   END [[ 1.  "TYPES & ABSTRACT." ]].
+
+
+
+
+
+
 
 
 
@@ -280,7 +386,7 @@ struct CCounterStyle
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr float              ms_MY_CONSTEXPR_VALUE           = 240.0f;
+    static constexpr float              ms_TOOLBAR_ICON_SCALE           = 1.5f;
     
 //
 // *************************************************************************** //
@@ -304,8 +410,11 @@ struct CCounterStyle
     // *************************************************************************** //
     //      1. |    UI---DIMENSION VARIABLES.
     // *************************************************************************** //
+    //
+    //                                  MASTER PLOT:
     float                                   m_mst_plot_slider_height        = 20.0f;
     float                                   m_mst_plot_height               = 400.0f;
+    mutable ImVec2                          m_mst_avail                     = { -1.0f   , -1.0f };
     
     
     // *************************************************************************** //
@@ -324,12 +433,23 @@ struct CCounterStyle
     //  ImPlotLegendFlags                                       m_mst_legend_flags              = ImPlotLegendFlags_None; //ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
     
     
-    ImPlotFlags                             plot_flags                      = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;  //  ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
+    ImPlotFlags                             mst_plot_flags                  =  ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoTitle; // ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;  //  ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
     utl::AxisCFG                            mst_axes [2]                    = {
-        {"Time  [sec]"      ,   ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit | ImPlotAxisFlags_Opposite },
-        {"Counts  [Arb.]"   ,   ImPlotAxisFlags_None | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoInitialFit  }
+          { "Time  [sec]"       , ImPlotAxisFlags_None | ImPlotAxisFlags_Opposite | ImPlotAxisFlags_NoHighlight     }
+        , { "Counts  [Arb.]"    , ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit  | ImPlotAxisFlags_NoHighlight     }
     };
-    utl::LegendCFG                          legend                          = { ImPlotLocation_NorthWest, ImPlotLegendFlags_None };
+    utl::LegendCFG                          legend                          = { ImPlotLocation_NorthWest, ImPlotLegendFlags_Outside | ImPlotLegendFlags_Horizontal /* ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal; */ };
+    
+    
+    
+    // *************************************************************************** //
+    //
+    // *************************************************************************** //
+    //      1. |    INDIVIDUAL PLOT STUFF.
+    // *************************************************************************** //
+    ImPlotAxisFlags                         m_ind_pline_flags               = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
+    
+    
     
     
     

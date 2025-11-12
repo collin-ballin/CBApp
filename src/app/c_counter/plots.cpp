@@ -39,60 +39,42 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 //  "_PlotMaster"
 //
-void CCounterApp::_PlotMaster(void) noexcept
+void CCounterApp::_PlotMaster(void) const noexcept
 {
-    const Style &   CS   = this->m_style;
+    namespace                   cc          = ccounter;
+    const Style &               CS          = this->m_style;
+    const cc::PerFrame_t &      PF          = this->m_perframe;
+    ImPlotAxisFlags             xflags      = CS.mst_axes[0].flags;
     
-    //          5.1.    DISPLAY VERTICAL SLIDER BESIDE PLOT...
-    //  ImGui::VSliderFloat("##MasterPlotHeight", ImVec2(m_mst_plot_slider_height, m_mst_plot_height), &m_mst_plot_height, 750.0f, 150.0f, "");
-    //
-    //
-    //          5.2.    DISPLAY MASTER PLOT...
-    ImGui::SameLine();  //(0.0f, 0.0f);
-    ImGui::PushID( ms_PLOT_UUIDs[0] );    //  Adjust x‑axis flags: disable AutoFit when paused so ImPlot won't override our limits
+    CS.m_mst_avail                          = ImGui::GetContentRegionAvail();
     
-    //  ImPlotAxisFlags     xflags      = this->m_mst_xaxis_flags;
-    ImPlotAxisFlags     xflags      = CS.mst_axes[0].flags;
+    
     
     if ( !m_counter_running )       { xflags &= ~ImPlotAxisFlags_AutoFit; }
     
     
     
+    ImGui::PushID( ms_PLOT_UUIDs[0] );    //  Adjust x‑axis flags: disable AutoFit when paused so ImPlot won't override our limits
     
     //      BEGIN MASTER PLOT...
     //
-    //  if ( ImPlot::BeginPlot(ms_PLOT_UUIDs[0], ImVec2(-1, m_mst_plot_height), m_mst_PLOT_flags) )    //  m_mst_plot_flags
-    if ( !ImPlot::BeginPlot(ms_PLOT_UUIDs[0], ImVec2(-1, CS.m_mst_plot_height), m_mst_PLOT_flags) )        { return; }
+    if ( !ImPlot::BeginPlot( ms_PLOT_UUIDs[0], ImVec2(-1, CS.m_mst_avail.y), CS.mst_plot_flags ) )        { ImGui::PopID();  return; }
     
     
     
     {
-        //  ImPlot::SetupAxes           ( CS.mst_axes ms_mst_axis_labels[0]  , ms_mst_axis_labels[1]    , xflags                    , m_mst_yaxis_flags     );
-        //  ImPlot::SetupLegend         ( m_mst_legend_loc       , m_mst_legend_flags                                                           );
-        //  ImPlot::SetupAxisLimits     ( ImAxis_X1              , this->m_perframe.xmin    , this->m_perframe.xmax     , ImGuiCond_Always   );
-
-
-
-    
-        //      3.      SET THE INITIAL SIZE OF THE CANVAS...
-        ImPlot::SetupAxesLimits( ImAxis_X1  , this->m_perframe.xmin     , this->m_perframe.xmax     , ImGuiCond_Always );
-        
-    
-        //      4.      SET-UP THE MASTER-PLOT LEGEND...
-        ImPlot::SetupLegend         ( CS.legend.location       , CS.legend.flags );
-            
-            
-
-        //      6.      CONFIGURE THE "IMPLOT" APPEARANCE...
+        //      1.      CONFIGURE THE "IMPLOT" APPEARANCE...
         ImPlot::SetupAxes(  CS.mst_axes[0].uuid     , CS.mst_axes[1].uuid               //  5A.     Axis Names & Flags.
                           , xflags                  , CS.mst_axes[1].flags );
+                          
+        //      2.      SET-UP THE MASTER-PLOT LEGEND...
+        ImPlot::SetupLegend         ( CS.legend.location    , CS.legend.flags );
+                          
+        //      3.      SET THE INITIAL SIZE OF THE CANVAS...
+        ImPlot::SetupAxisLimits     (ImAxis_X1              , PF.xmin               , PF.xmax       , ImGuiCond_Always          );
+        
 
-
-
-
-
-
-
+    
         for (int k = 0; k < static_cast<int>(ms_NUM); ++k)
         {
             const auto &        buf         = m_buffers[k];
@@ -108,7 +90,6 @@ void CCounterApp::_PlotMaster(void) noexcept
 
             //      2.      PLOT AVERAGE COUNTER VALUES...
             ImPlot::PushStyleVar        (ImPlotStyleVar_PlotPadding, ImVec2(0,0));
-            //  ImPlot::SetNextLineStyle    ( ImVec4( m_avg_colors[k].x, m_avg_colors[k].y, m_avg_colors[k].z, m_AVG_OPACITY.value ),   m_AVG_LINEWIDTH.value);
             ImPlot::SetNextLineStyle    ( m_avg_colors[k], avg_lw);
             ImPlot::SetNextFillStyle    ( m_avg_colors[k], 0.0f );
             //
@@ -129,9 +110,9 @@ void CCounterApp::_PlotMaster(void) noexcept
             
             
             //      1.      PLOT MAIN COUNTER VALUES...
-            ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
-            ImPlot::SetNextLineStyle    (m_plot_colors[k]   , plot_lw);
-            ImPlot::SetNextFillStyle    (m_plot_colors[k]   , 0.0f);
+            ImPlot::PushStyleVar        (ImPlotStyleVar_PlotPadding     , ImVec2(0,0));
+            ImPlot::SetNextLineStyle    (m_plot_colors[k]               , plot_lw);
+            ImPlot::SetNextFillStyle    (m_plot_colors[k]               , 0.0f);
             //
                 if (!channel.vis.master)        { ImPlot::HideNextItem( true    , ImGuiCond_Always ); }
                 else                            { ImPlot::HideNextItem( false   , ImGuiCond_Always ); }
@@ -158,18 +139,18 @@ void CCounterApp::_PlotMaster(void) noexcept
     ImGui::PopID();
     
     
-
-
     return;
 }
 
 
 //  "_PlotSingles"
 //
-void CCounterApp::_PlotSingles(void/*const float spark_now*/) noexcept
+void CCounterApp::_PlotSingles(void) const noexcept
 {
-    namespace               cc                  = ccounter;
-
+    namespace           cc          = ccounter;
+    const PerFrame &    PF          = this->m_perframe;
+    const Style &       CS          = this->m_style;
+    
         
 
 
@@ -188,9 +169,9 @@ void CCounterApp::_PlotSingles(void/*const float spark_now*/) noexcept
 
         for (size_t row = 0; row < static_cast<size_t>(ms_NUM); ++row)
         {
-            auto &          buf         = m_buffers[row];
-            auto &          channel     = ms_channels[row];
-            const bool      is_empty    = buf.empty();
+            const auto &        buf             = m_buffers[row];
+            const auto &        channel         = ms_channels[row];
+            const bool          is_empty        = buf.empty();
             ImGui::TableNextRow();
 
 
@@ -235,11 +216,10 @@ void CCounterApp::_PlotSingles(void/*const float spark_now*/) noexcept
                           buf
                         , this->m_plot_colors[row]
                         , ImVec2(-1, cc::row_height_px)
-                        //  , spark_now
-                        , this->m_perframe.spark_now
+                        , PF.spark_now
                         , this->m_history_length.Value()
                         , this->ms_CENTER
-                        , this->m_plot_flags
+                        , CS.m_ind_pline_flags
                     );
                 }
                 ImGui::PopID();
@@ -305,8 +285,8 @@ inline void CCounterApp::plot_sparkline(
         
         
 
-    const float             xmin        = time - center * window;
-    const float             xmax        = xmin + window;
+    const float             xmin            = time - center * window;
+    const float             xmax            = xmin + window;
     
         
         

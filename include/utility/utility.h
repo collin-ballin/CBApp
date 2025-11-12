@@ -945,10 +945,10 @@ void                                ScrollingSparkline          (const float tim
 // *************************************************************************** //
 //              2.3.        UTILITY FUNCTIONS FOR IMPLOT STUFF...
 // *************************************************************************** //
-[[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (const size_t M);
-[[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (int M, const char * cmap);
-[[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (int M, ImPlotColormap map);
-[[nodiscard]] ImPlotColormap        CreateTransparentColormap   (ImPlotColormap , float , const char * );
+//  [[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (const size_t M);
+//  [[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (int M, const char * cmap);
+//  [[nodiscard]] std::vector<ImVec4>   GetColormapSamples          (int M, ImPlotColormap map);
+//  [[nodiscard]] ImPlotColormap        CreateTransparentColormap   (ImPlotColormap , float , const char * );
 
 
 

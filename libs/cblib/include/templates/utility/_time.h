@@ -14,8 +14,8 @@
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CBLIB_UTILITY_TIMESTAMP_H
-#define _CBLIB_UTILITY_TIMESTAMP_H 1
+#ifndef _CBLIB_UTILITY_TIME_H
+#define _CBLIB_UTILITY_TIME_H 1
 
 #include <iostream>
 #include <fstream>
@@ -44,13 +44,18 @@
 #endif	//  C++11.  //
 
 
-namespace cblib { namespace utl {   //     BEGINNING NAMESPACE "cblib" :: "math"...
+
+namespace cblib { namespace utl {   //     BEGINNING NAMESPACE "cblib" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
 
 
 
-//  1.  GENERAL STRING OPERATIONS...
+// *************************************************************************** //
+//
+//
+//
+//      1.      GENERAL STRING OPERATIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -77,6 +82,18 @@ inline std::string format_file_time(std::filesystem::file_time_type ftime)
 
 
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 1.  "GENERAL STRING OPERATIONS" ]].
+
+
+
+
+
+
+
 
 
 
@@ -85,8 +102,15 @@ inline std::string format_file_time(std::filesystem::file_time_type ftime)
 // *************************************************************************** //
 //
 //
-//  2.  GENERAL TIMESTAMP OPERATIONS...
+//
+//      2.      GENERAL TIMING OPERATIONS...
 // *************************************************************************** //
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//      2A. TIME |      TIMESTAMP OPERATIONS.
 // *************************************************************************** //
 
 //  "get_timestamp"
@@ -130,14 +154,13 @@ inline std::string format_file_time(std::filesystem::file_time_type ftime)
 
 //  "string_to_timestamp"
 //
-/**
- * Parse a timestamp string back into a system_clock time_point.
- *
- * @param ts_str   The timestamp string, e.g. "2025-06-07T17:30:15"
- * @param fmt      A strftime‐style format (default matches get_timestamp's "%Y-%m-%dT%H:%M:%S")
- * @return         std::chrono::system_clock::time_point corresponding to the local time parsed.
- * @throws         std::runtime_error if parsing or conversion fails.
- */
+///     @brief          Parse a timestamp string back into a system_clock time_point.
+///
+///     @param ts_str   The timestamp string, e.g. "2025-06-07T17:30:15"
+///     @param fmt      A strftime‐style format (default matches get_timestamp's "%Y-%m-%dT%H:%M:%S")
+///     @return         std::chrono::system_clock::time_point corresponding to the local time parsed.
+///     @throws         std::runtime_error if parsing or conversion fails.
+//
 [[nodiscard]] inline std::chrono::system_clock::time_point
 string_to_timestamp(const std::string & ts_str, const char * fmt = "%Y-%m-%dT%H:%M:%S")
 {
@@ -181,33 +204,43 @@ inline std::string format_elapsed_timestamp(std::chrono::system_clock::duration 
     //  microseconds        us  = std::chrono::duration_cast<microseconds>(dt)  ;
     oss << std::setfill('0');
 
-    if (d.count() > 0) {
-        // 2+ days: “Nd HH:MM:SS”
+
+    //      2+ days: “Nd HH:MM:SS”
+    if (d.count() > 0)
+    {
         oss << d.count() << "days "
             << std::setw(2) << h.count() << "hours : "
             << std::setw(2) << m.count() << "mins  : "
             << std::setw(2) << s.count() << "secs";
     }
-    else if (h.count() > 0) {
-        // 1+ hours: “HH:MM:SS”
+    //
+    //      1+ hours: “HH:MM:SS”
+    else if (h.count() > 0)
+    {
         oss << std::setw(2) << h.count() << "hours : "
             << std::setw(2) << m.count() << "mins  : "
             << std::setw(2) << s.count() << "secs";
     }
-    else if (m.count() > 0) {
-        // 1+ minutes: “MM:SS.mmm”
+    //
+    //      1+ minutes: “MM:SS.mmm”
+    else if (m.count() > 0)
+    {
         oss << std::setw(2) << m.count() << "mins  : "
             << std::setw(2) << s.count() << "s."
             << std::setw(3) << ms.count()   << "ms";
     }
-    else if (dt < std::chrono::seconds(1)) {
-        // < 1 second: use native chrono output (e.g. "123456µs")
+    //
+    //      < 1 second: use native chrono output (e.g. "123456µs")
+    else if (dt < std::chrono::seconds(1))
+    {
         std::ostringstream tmp;
         tmp << dt;
         oss << tmp.str();
     }
-    else {
-        // ≥ 1 second (but < 1 minute): “SS.mmm”
+    //
+    //      ≥ 1 second (but < 1 minute): “SS.mmm”
+    else
+    {
         auto secs   = std::chrono::duration_cast<std::chrono::seconds>(dt).count();
         auto ms_rem = std::chrono::duration_cast<std::chrono::milliseconds>(dt - std::chrono::seconds(secs)).count();
         oss << std::setw(2) << secs
@@ -219,6 +252,81 @@ inline std::string format_elapsed_timestamp(std::chrono::system_clock::duration 
 
     return oss.str();
 }
+
+
+
+
+
+
+// *************************************************************************** //
+//      2A. TIME |      COOLDOWN TIMER OPERATIONS.
+// *************************************************************************** //
+
+
+// *************************************************************************** //
+//
+//      "anon"      INTERNAL NAMESPACE.
+// *************************************************************************** //
+// *************************************************************************** //
+namespace anon { //     BEGINNING NAMESPACE "anon"...
+
+
+//      TYPENAME ALIASES...
+using                       Clock                           = std::chrono::steady_clock;
+using                       time_point                      = Clock::time_point;
+using                       duration                        = Clock::duration;
+//
+//      COMPILE-TIME CONSTANTS...
+static constexpr auto       cv_DEF_COOLDOWN_DURATION        = std::chrono::milliseconds(500);
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}// END NAMESPACE "anon".
+
+
+
+//  "cooldown_has_expired"
+//
+[[nodiscard]] inline bool cooldown_has_expired(  const anon::time_point &   last
+                                               , const anon::duration       cooldown = anon::cv_DEF_COOLDOWN_DURATION) noexcept
+{
+    return (anon::Clock::now() - last) >= cooldown;
+}
+
+
+//  "get_cooldown_timer"
+//
+[[nodiscard]] inline anon::time_point get_cooldown_timer(void) noexcept
+{
+    return anon::Clock::now();
+}
+
+
+//  "update_cooldown_timer"
+//
+inline void update_cooldown_timer(anon::time_point & last) noexcept
+{
+    last = anon::Clock::now();
+}
+
+
+
+
+
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2.  "TIME OPERATIONS" ]].
 
 
 
@@ -247,4 +355,4 @@ inline std::string format_elapsed_timestamp(std::chrono::system_clock::duration 
 
 // *************************************************************************** //
 // *************************************************************************** //
-#endif  //  _CBLIB_UTILITY_TIMESTAMP_H  //
+#endif  //  _CBLIB_UTILITY_TIME_H  //

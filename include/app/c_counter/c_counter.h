@@ -84,37 +84,46 @@ class CCounterApp
 public:
 
     // *************************************************************************** //
-    //      0. |    NESTED TYPENAME ALIASES.
-    // *************************************************************************** //
-    CBAPP_APPSTATE_ALIAS_API            //  *OR*    CBAPP_CBLIB_TYPES_API       //  FOR CBLIB...
-    friend class                            App;
-    //
-    static constexpr size_t                 ms_BUFFER_SIZE                  = 128ULL;       //  NUM. OF DATA-PACKETS FROM CCOUNTER.
-    //
-    //
-    using                                   buffer_type                     = cblib::RingBuffer<ImVec2, ms_BUFFER_SIZE>;     // utl::ScrollingBuffer;     // cblib::RingBuffer<int, 2000>
-    using                                   AvgMode                         = AvgMode;
-    //
-    using                                   PerFrame                        = ccounter::PerFrame_t;
-    using                                   Style                           = ccounter::CCounterStyle;
-    
-    
-    // *************************************************************************** //
-    //
-    //
-    // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr size_t                 ms_NUM                          = 15;           //  NUM. OF CHANNELS.
-    static constexpr size_t                 ms_MSG_BUFFER_SIZE              = 256;          //  BUFFER-SIZE FOR MESSAGE TO PYSTREAM.
+    static constexpr size_t                 ms_BUFFER_SIZE                  = 128ULL;           //  NUM. OF DATA-PACKETS FROM CCOUNTER.
+    static constexpr size_t                 ms_NUM                          = 15;               //  NUM. OF CHANNELS.
+    static constexpr size_t                 ms_CMD_MSG_SIZE                 = 512ULL;           //  BUFFER-SIZE FOR MESSAGE TO PYSTREAM.        //  formerly: "ms_MSG_BUFFER_SIZE"
+    //
+    static constexpr auto	                cv_DEF_COOLDOWN_DURATION	    = std::chrono::milliseconds(500);
     
     
     // *************************************************************************** //
     //
+    // *************************************************************************** //
+    //      0. |    NESTED TYPENAME ALIASES.
+    // *************************************************************************** //
+    CBAPP_APPSTATE_ALIAS_API
+    friend class                            App;
+    //
+    //
+    using                                   buffer_type                     = cblib::RingBuffer<ImVec2, ms_BUFFER_SIZE>;    //  System-Wide Aliases.
+    //  using                                   cblib::utl::anonClock						    = std::chrono::steady_clock;
+    //  using                               LabelFn                         = std::function<void(const char *)>     ;
+    //
+    //
+    using                                   PerFrame                        = ccounter::PerFrame_t;                         //  State POD structs.
+    using                                   Packet                          = ccounter::CoincidencePacket;
+    //
+    using                                   ChannelSpec                     = ccounter::ChannelSpec;
+    using                                   Style                           = ccounter::CCounterStyle;
+    //
+    using                                   PythonCMD                       = ccounter::PythonCMD;                          //  Enums.
+    using                                   AvgMode                         = AvgMode;
+    using                                   ChIndex                         = Packet::Index;
+    
+    
+    // *************************************************************************** //
     //
     // *************************************************************************** //
     //      0. |    REFERENCES TO GLOBAL ARRAYS.
     // *************************************************************************** //
+    static constexpr auto                   ms_CMD_STRINGS                  = ccounter::DEF_PYTHON_CMD_FMT_STRINGS;
     
 //
 //
@@ -146,11 +155,15 @@ protected:
     //      1. |    IMPORTANT DATA-MEMBERS.
     // *************************************************************************** //
     //
-    //                                  IMPORTANT DATA:
+    //                                  COUNTER DATA:
     std::array<buffer_type, ms_NUM>         m_buffers                       = {   };        //  RAW-DATA values for each counter.
     std::array<buffer_type, ms_NUM>         m_avg_counts                    = {   };        //  AVERAGE values for each counter.
     float                                   m_max_counts[ms_NUM]            = { 0.0f };     //  MAXIMUM values for each counter.
+    size_t                                  m_num_packets                   = 0ULL;
     //
+    //
+    //
+    //                                  WIDGET ROWS:
     std::vector<Tab_t>                      ms_PLOT_TABS                    = {   };
     std::vector<Tab_t>                      ms_CTRL_TABS                    = {   };
     std::vector<utl::WidgetRow>             ms_CTRL_ROWS                    = {   };        //  vector that contains each widget for the CONTROL---TAB.
@@ -158,7 +171,7 @@ protected:
     //
     //
     //
-    ChannelSpec                             ms_channels[ms_NUM]             = {
+    ChannelSpec                             ms_channels [ms_NUM]            = {
     //                          MASTER---PLOT.                  SINGLE---PLOT.                      AVERAGE---PLOT.
           { 8   , "A"       , { true    , "##MasterA"           , true      , "##SingleA"           , true      , "##AvgA"          }     }
         , { 4   , "B"       , { true    , "##MasterB"           , true      , "##SingleB"           , true      , "##AvgB"          }     }
@@ -190,10 +203,16 @@ protected:
     //
     //                                  PYSTREAM:
     utl::PyStream                           m_python                            = {   };    //  utl::PyStream(app::PYTHON_DUMMY_FPGA_FILEPATH);
-    char                                    m_filebuffer[ms_MSG_BUFFER_SIZE]    = {   };
+    uint32_t                                m_child_pid                         = 0U;
     //
+    //                                  PYTHON COMMUNICATION:
+    char                                    m_py_message [ms_CMD_MSG_SIZE]      = { '\0' };
+    char                                    m_filebuffer [ms_CMD_MSG_SIZE]      = { '\0' };
     //
-    std::filesystem::path                   m_filepath                          = {"../../scripts/python/fpga_stream_v3.py"};
+    //                                  PYTHON PATHS:
+    std::filesystem::path                   m_script_filepath                   = {"../../scripts/python/fpga_stream_v3.py"};
+    std::filesystem::path                   m_output_filepath                   = {   };
+    //
     //
     //
     //                                  COINCIDENCE-COUNTER VARIABLES:
@@ -309,14 +328,9 @@ protected:
     
     //                                                  VARIOUS FLAGS...
     ImPlotLineFlags                                         m_channel_flags                 = ImPlotLineFlags_None | ImPlotLineFlags_Shaded;
-    ImPlotAxisFlags                                         m_plot_flags                    = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
-    ImPlotFlags                                             m_mst_PLOT_flags                = ImPlotFlags_None | ImPlotFlags_NoTitle;
-    ImPlotAxisFlags                                         m_mst_plot_flags                = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoSideSwitch;
-    ImPlotAxisFlags                                         m_mst_xaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
-    ImPlotAxisFlags                                         m_mst_yaxis_flags               = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit;                           // enable grid, disable decorations.
-    
-    ImPlotLocation                                          m_mst_legend_loc                = ImPlotLocation_NorthWest;                                                 // legend position.
-    ImPlotLegendFlags                                       m_mst_legend_flags              = ImPlotLegendFlags_None; //ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal;
+    //  ImPlotAxisFlags                                         m_plot_flags                    = ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;
+    //ImPlotFlags                                             m_mst_PLOT_flags                = ImPlotFlags_None | ImPlotFlags_NoTitle;
+    //ImPlotAxisFlags                                         m_mst_plot_flags                = ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoSideSwitch;
 
 
     
@@ -360,6 +374,7 @@ protected:
     
     //                                              6.  PLOTTING STUFF...
     bool                                                m_colormap_cache_invalid        = true;
+    bool                                                m_colormap_shuffled             = false;
     //
     //  static constexpr std::array<const char *, 2>        ms_mst_axis_labels              = { "Time  [sec]",      "Counts  [Arb.]" };
     //
@@ -374,7 +389,7 @@ protected:
     //
     //                                              AVERAGE PLOTS.
     std::vector<ImVec4>                                 m_avg_colors                    = std::vector<ImVec4>(ms_NUM);
-    Param<float>                                        m_avg_opacity                   = { 0.60f,      { 0.0f      , 1.00f     }       };
+    Param<float>                                        m_avg_opacity                   = { 0.50f,      { 0.0f      , 1.00f     }       };
     Param<float>                                        m_avg_linewidth                 = { 14.0f,      { 4.0f      , 30.00f    }       };
     Param<float>                                        m_avg_color_shade               = { -0.45,      { -1.0f     , 1.00f     }       };
     //
@@ -456,6 +471,7 @@ protected:
     
     // *************************************************************************** //
     //
+    //
     // *************************************************************************** //
     //      2.B. |  MAIN USER-INTERFACE FUNCTIONS.  |   "c_counter.cpp" ...
     // *************************************************************************** //
@@ -464,6 +480,7 @@ protected:
     
     
     // *************************************************************************** //
+    //
     //
     // *************************************************************************** //
     //      2.B. |  CORE MECHANICS.                 |   "c_counter.cpp" ...
@@ -486,12 +503,13 @@ protected:
     
     // *************************************************************************** //
     //
+    //
     // *************************************************************************** //
     //      2.B. |  PLOTTING FUNCTIONS.             |   "plots.cpp" ...
     // *************************************************************************** //
     //                              MAIN PLOTTING FUNCTIONS:
-    void                                _PlotMaster                         (void) noexcept;
-    void                                _PlotSingles                        (void) noexcept;
+    void                                _PlotMaster                         (void) const noexcept;
+    void                                _PlotSingles                        (void) const noexcept;
     //
     //                              PLOTTING UTILITIES:
     template<typename RB = buffer_type>
@@ -505,6 +523,7 @@ protected:
     //      2.B. |  USER-INTERFACE FUNCTIONS.       |   "interface.cpp" ...
     // *************************************************************************** //
     //                              MAIN USER-INTERFACE:
+    void                                TAB_NewControls                     (void) noexcept;
     void                                TAB_Controls                        (void) noexcept;
     void                                TAB_Appearance                      (void) noexcept;
     //
@@ -565,31 +584,72 @@ protected:
     //
     //
     // *************************************************************************** //
+    //      2.C. |  PYSTREAM COMMUNICATION FUNCTIONS.
+    // *************************************************************************** //
+        
+    //  "_format_cmd_string"
+    inline void                             _format_cmd_string                  (const PythonCMD type, const char * message) noexcept
+    {
+        return;
+    }
+     
+     
+    //  "_send_message"
+    inline bool                             _send_message                       (void) noexcept
+    {
+        bool status = false;
+        
+        
+        if ( this->m_process_running )
+        {
+            status = this->m_python.send(this->m_py_message);
+        }
+        else {
+            //  this->S.m_logger.warning("[[CCounter]] failed to deliver message to PyStream -- process not running");
+        }
+        
+        
+        
+        return status;
+    }
+    
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
     //      2.C. |  CENTRALIZED STATE MANAGEMENT FUNCTIONS.
     // *************************************************************************** //
-    
+        
     //  "_start_process"
     inline void                             _start_process                      (const bool run_and_rec=false) noexcept
     {
         IM_ASSERT(!this->m_process_running);    //  [[ TO-DO ]]:    Make this so that it only asserts script is not running if run_and_rec is NOT also true (ALLOW recording in middle of execution).
         IM_ASSERT( !(this->m_process_recording && run_and_rec) );
         
+        
+        
         if ( !this->m_process_running )
         {
-            this->m_process_running     = m_python.start();
+            const bool      spawned     = this->_start_process_IMPL();
+            
+            if ( !spawned ) {
+                this->_display_error_popup();
+            }
             
             //      CASE 1 :    REQUEST TO RUN *AND* RECORD...
-            if (run_and_rec)
+            if ( run_and_rec  &&  spawned )
             {
                 const bool  recording       = this->_start_recording();
+                
                 
                 //      ERROR : PROCESS PLAYBACK WAS BLOCKED BY RECORDING-ISSUE...
                 if (!recording) {
                     this->m_process_running     = false;
                     this->m_process_recording   = false;
-                    ui::ask_ok_cancel(   "Recording Error"
-                                       , "An issue with the current record settings prevented Python from launching."
-                                       , [ ]{   });
+                    //  ui::ask_ok_cancel(   "Recording Error"
+                    //                     , "An issue with the current record settings prevented Python from launching."
+                    //                     , [ ]{   });
                 }
                 else {
                     this->m_process_recording   = true;
@@ -600,9 +660,9 @@ protected:
             //      CASE 2 :    FAILURE TO START PROCESS...
             if ( !m_process_running )
             {
-                ui::ask_ok_cancel(   "Python Error"
-                                   , "Failure to launch Python child process."
-                                   , [ ]{   });
+                //  ui::ask_ok_cancel(   "Python Error"
+                //                     , "Failure to launch Python child process."
+                //                     , [ ]{   });
             }
             //
             //      CASE 2 :    PROCESS SUCCESSFULLY STARTED...
@@ -649,12 +709,12 @@ protected:
         return true;
     }
     
+    
     //  "_stop_recording"
     inline void                             _stop_recording                     (void) noexcept {
         this->m_process_recording = false;
         return;
     }
-    
     
     
     //  "_clear_all"
@@ -668,6 +728,11 @@ protected:
         this->_clear_plot_data();
         this->_reset_max_values();
         this->_reset_average_values();
+        this->m_num_packets     = 0ULL;
+        
+        
+        //      2.      RESET AXES BOUNDS...
+        this->m_perframe.clear();
         
         return;
     }
@@ -677,17 +742,19 @@ protected:
     //  "_clear_plot_data"
     inline void                             _clear_plot_data                    (void) noexcept
     {
-        for (auto & b : m_buffers) {
-            b.clear(); //b.Erase();
-        }
+        for (auto & b : this->m_buffers)      { b.clear(); }   //b.Erase();
+        this->_reset_max_values();
+        
         return;
     }
     
+    
     //  "_reset_max_values"
     inline void                             _reset_max_values                   (void) noexcept {
-        std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.f);
+        std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.0f);
         return;
     }
+    
     
     //  "_reset_average_values"
     inline void                             _reset_average_values               (void) noexcept
@@ -698,30 +765,126 @@ protected:
         return;
     }
     
+    
     //  "_validate_colormap_cache"
     inline void                             _validate_colormap_cache            (void) noexcept
     {
+        const float     alpha           = this->m_avg_opacity.Value();
+        const float     shade           = this->m_avg_color_shade.Value();
+            
+        
         if (this->m_colormap_cache_invalid)
         {
-            const float alpha                   = this->m_avg_opacity.Value();
-            this->m_colormap_cache_invalid      = false;
-            this->m_plot_colors                 = cb::utl::GetColormapSamples( ms_NUM, m_cmap );
+            if ( !this->m_colormap_shuffled ) {
+                this->m_plot_colors         = cblib::utl::GetColormapSamples( ms_NUM, m_cmap );
+            }
+            else {
+                this->m_plot_colors         = cblib::utl::GetHDRAdjacentColormapSamples( this->ms_NUM, this->m_cmap );
+            }
             
             for (size_t i = 0; i < ms_NUM; ++i) {
-                const auto & color          = m_plot_colors[i];
-                this->m_avg_colors[i]       = cblib::utl::compute_tint( color, this->m_avg_color_shade.Value() );
+                this->m_avg_colors[i]       = cblib::utl::compute_tint( m_plot_colors[i], shade );
                 this->m_avg_colors[i].w     = alpha;
             }
         }
         
+        this->m_colormap_cache_invalid      = false;
+        return;
+    }
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.C. |  INTERNAL FUNCTIONS.
+    // *************************************************************************** //
+        
+    //  "_start_process_IMPL"
+    //
+    [[nodiscard]] inline bool               _start_process_IMPL                 (void) noexcept
+    {
+        namespace       cc          = ccounter;
+        
+        std::string &   header      = cc::s_last_error_title;
+        std::string &   body        = cc::s_last_error_message;
+        uint32_t        pid         = 0U;
+        bool            spawned     = false;
+        
+        
+        // OPTIONAL:    configure before start()
+        //
+        //      this->m_python.set_python_executable("/path/to/venv/bin/python");
+        //      this->m_python.set_working_directory("/path/to/project");
+        //      this->m_python.set_filepath("/path/to/script.py");
+        //      this->m_python.set_args({ "-u", "--flag", "value" });
+
+    
+    
+    
+        //      1.      ATTEMPT TO BEGIN PROCESS...
+        try {
+            pid         = this->m_python.start();
+            if (pid)    { spawned = true; }
+        }
+        //
+        //      2.      CATCH-BLOCKS...
+        catch (const std::invalid_argument &    e)      { body = std::format( "invalid_argument: {}\n"      , e.what()      );      }
+        catch (const std::logic_error &         e)      { body = std::format( "logic_error: {}\n"           , e.what()      );      }
+        catch (const std::system_error &        e) {
+            body = std::format(
+                  "system_error ({}): {}\n"
+                , (int)e.code().value()
+                , e.what()
+            );
+        }
+        catch (const std::runtime_error &       e)      { body = std::format( "runtime_error: {}\n"         , e.what()      );      }
+        catch (const std::exception &           e)      { body = std::format( "exception: {}\n"             , e.what()      );      }
+        catch (...)                                     { body = std::format( "unknown exception"                           );      }
+
+
+
+            
+        //          CASE A :    PROCESS SUCCESSFULLY STARTED.
+        if (spawned) {
+            this->m_child_pid           = pid;
+            this->m_process_running     = true;
+            this->S.m_logger.info( std::format(
+                  "[[CCounter]] spawned process pid={} (invocation: \"{}\")"
+                , pid
+                , this->m_python.get_invocation()
+            ) );
+        }
+        //
+        //          CASE B :    FAILURE TO BEGIN PROCESS.
+        else {
+            this->m_child_pid           = 0U;
+            this->m_process_running     = false;
+            this->S.m_logger.info( std::format("[[CCounter]] failed to spawn python process") );
+            header                      = "ERROR";
+        }
+
+        return spawned;
+    }
+        
+        
+    //  "_display_error_popup"
+    //
+    inline void                             _display_error_popup                (void) noexcept
+    {
+        namespace       cc          = ccounter;
+    
+    
+        ui::ask_ok_cancel(
+              cc::s_last_error_title.c_str()
+            , cc::s_last_error_message.c_str()
+            , [this]{ /* this->_clear_all(); */ }
+        );
+        
+        
         return;
     }
     
-    
-    
-        //
-        //  ...
-        //
     
     
     // *************************************************************************** //
@@ -734,6 +897,19 @@ protected:
     //  "label"
     //  inline void                         label                               (const char * text)
     //  { utl::LeftLabel(text, this->ms_LABEL_WIDTH, this->ms_WIDGET_WIDTH); ImGui::SameLine(); };
+
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      2.C. |  STATIC INLINE FUNCTIONS.
+    // *************************************************************************** //
+        
+    //
+    //  ...
+    //
     
     
     

@@ -77,6 +77,9 @@ namespace ccounter {
     static float                        delay_s                         = 1.0f;                 // command slider
     static char                         line_buf[ms_CMD_BUFFER_SIZE]    {   };                  // manual send box
 //
+    static std::string                  s_last_error_title              {   };                  // FOR ERRORS...
+    static std::string                  s_last_error_message            {   };                  // FOR ERRORS...
+//
 //
     static ImGuiInputTextFlags          write_file_flags            = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue;
 }

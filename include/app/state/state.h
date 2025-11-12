@@ -198,6 +198,7 @@ public:
     // *************************************************************************** //
     //                              GROUPS / SUB-CLASSES OF "APPSTATE":
     utl::Logger &                       m_logger;                                                   //  1.      LOGGER...
+    LogLevel                            m_LogLevel;
     ImWindows                           m_windows;                                                  //  2.      APPLICATION WINDOW STATE...
     std::vector<WinInfo *>              m_detview_windows               = {   };                    //  2.1     WINDOWS INSIDE DETAIL VIEW...
     ImFonts                             m_fonts;                                                    //  3.      APPLICATION FONTS...
@@ -246,6 +247,7 @@ public:
     bool                                m_dialog_queued                 = false;
     bool                                m_dialog_path                   = false;
     
+    
     // *************************************************************************** //
     //
     //
@@ -259,22 +261,32 @@ public:
     //
     //
     // *************************************************************************** //
-    //      MISC. INFORMATION.
+    //      GLFW AND SYSTEM INFORMATION.
     // *************************************************************************** //
-//
-#if defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__) || defined(__CBAPP_DEBUG__)
-    LogLevel                            m_LogLevel                  = LogLevel::Info;
-# else
-    LogLevel                            m_LogLevel                  = LogLevel::Warning;  //LogLevel::Warning;
-#endif  //  __CBLIB_RELEASE_WITH_DEBUG_INFO__ || __CBAPP_DEBUG__  //
-
-
+    //
+    //                              SYSTEM INFO:
+#ifdef _WIN32
+    const DWORD                         m_process_id        ;
+#else
+    const pid_t                         m_process_id        ;
+#endif  //  _WIN32  //
+    const std::thread::id               m_main_thread_id    ;
+    //
+    //
     //                              GLFW AND HOST WINDOW STUFF:
-    const char *                        m_glsl_version              = nullptr;
-    ImGuiConfigFlags                    m_io_flags                  = ImGuiConfigFlags_None | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
-    ImGuiViewport *                     m_main_viewport             = nullptr;
-    GLFWwindow *                        m_glfw_window               = nullptr;
-    int                                 m_glfw_interval             = 1;    //  Use 1 for VSYNC ENABLED.
+    const char *                        m_glsl_version                  = nullptr;
+    ImGuiConfigFlags                    m_io_flags                      = ImGuiConfigFlags_None | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+    ImGuiViewport *                     m_main_viewport                 = nullptr;
+    GLFWwindow *                        m_glfw_window                   = nullptr;
+    int                                 m_glfw_interval                 = 1;    //  Use 1 for VSYNC ENABLED.
+
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      UI / STYLE / APPEARANCE INFORMATION.
+    // *************************************************************************** //
     //
     //                              COLORS:
     ImVec4                              m_glfw_bg                   = cb::app::DEF_ROOT_WIN_BG;
@@ -307,6 +319,7 @@ public:
     float                               m_dpi_scale                 = 1.0f;
     float                               m_dpi_fontscale             = 1.0f;
     //
+    //
     //                              MAIN UI:
     int                                 m_window_w                  = 1280;
     int                                 m_window_h                  = 720;
@@ -315,11 +328,13 @@ public:
     std::atomic<bool>                   m_running                   = { true };
     bool                                m_rebuild_dockspace         = false;
     //
+    //
     //                              DIFFERENT WINDOWS:
     bool                                m_show_controlbar_window    = true;
     bool                                m_show_browser_window       = true;
     bool                                m_show_detview_window       = true;
     
+
 
     // *************************************************************************** //
     //
@@ -337,7 +352,6 @@ public:
     // *************************************************************************** //
     //      SPECIFICS.
     // *************************************************************************** //
-    
     //                              MAIN DOCKINGSPACE:
     const char *                        m_dock_name                 = "##RootDockspace";
     ImGuiID                             m_dockspace_id              = 0;
@@ -538,8 +552,18 @@ public:
     //
     //
     // *************************************************************************** //
-    //      SETTER FUNCTIONS.
+    //      GETTER FUNCTIONS.
     // *************************************************************************** //
+    
+    //  "GetProcessID"
+#ifdef _WIN32
+    [[nodiscard]] inline DWORD                      GetProcessID                (void) const noexcept   { return this->m_process_id; }
+#else
+    [[nodiscard]] inline pid_t                      GetProcessID                (void) const noexcept   { return this->m_process_id; }
+#endif  //  _WIN32  //
+    [[nodiscard]] inline auto                       GetMainThreadID             (void) const noexcept   { return std::hash<std::thread::id>{}(this->m_main_thread_id); }
+    
+    
     
     //  "GetCurrentApplet"
     [[nodiscard]] inline Applet                     GetCurrentApplet            (void) const noexcept   { return this->m_task_state.m_current_task; }
@@ -590,7 +614,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //      GETTER FUNCTIONS.
+    //      SETTER FUNCTIONS.
     // *************************************************************************** //
     
     //  "SetMenuState"

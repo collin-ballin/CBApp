@@ -17,10 +17,10 @@
 
 
 
-// 	BEGIN NAMESPACE     "cblib".
+// 	    BEGIN NAMESPACE     "cblib::traits".
 // *************************************************************************** //
 // *************************************************************************** //
-namespace cblib 	{
+namespace cblib { namespace traits {
 
 
 
@@ -93,7 +93,7 @@ struct has_to_json<
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "JSON" TYPE-TRAITS.
+// *************************************************************************** //   END [[ 1.  "JSON" TYPE-TRAITS" ]].
 
 
 
@@ -114,7 +114,7 @@ struct has_to_json<
 // *************************************************************************** //
 // *************************************************************************** //
 
-namespace traits {   //     BEGINNING "traits" ANONYMOUS NAMESPACE..
+namespace anon {   //     BEGINNING "anon" ANONYMOUS NAMESPACE..
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -142,25 +142,10 @@ concept     numeric_or_enum     = std::integral< numeric_base_t<T> >  ||  std::f
 //
 // *************************************************************************** //
 // *************************************************************************** //
-}//   END OF "traits" ANONYMOUS NAMESPACE.
+}//   END OF "anon" ANONYMOUS NAMESPACE.
 
 
 
-//  //  "maximum_value_of_type"
-//  //
-//  template<traits::numeric_or_enum T>
-//  constexpr auto maximum_value_of_type(void) noexcept {
-//      using U = traits::numeric_base_t<T>;
-//      return std::numeric_limits<U>::max();
-//  }
-//
-//  //  "minimum_value_of_type"
-//  //
-//  template<traits::numeric_or_enum T>
-//  constexpr auto minimum_value_of_type(void) noexcept {
-//      using U = traits::numeric_base_t<T>;
-//      return std::numeric_limits<U>::lowest();    //  correct for both integral & floating
-//  }
 
 
 
@@ -201,7 +186,7 @@ constexpr auto minimum_value_of_type(void)
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "MATH TYPE-TRAITS".
+// *************************************************************************** //   END [[ 2.  "MATH TYPE-TRAITS" ]].
 
 
 
@@ -222,6 +207,49 @@ constexpr auto minimum_value_of_type(void)
 // *************************************************************************** //
 // *************************************************************************** //
 
+
+
+// *************************************************************************** //
+//      3A. NEW |       GENERIC STUFF.
+// *************************************************************************** //
+
+//	"get_typename_as_string"
+//
+template<typename T>
+inline std::string get_typename_as_string(void)
+{
+	typedef typename std::remove_reference<T>::type	TR;
+	std::unique_ptr<char, void(*)(void *)> own
+		(
+#ifndef _MSC_VER		 
+			abi::__cxa_demangle(typeid(TR).name(), 
+								nullptr, nullptr, nullptr),
+#else 
+			nullptr, 
+#endif
+			std::free
+		);
+
+	std::string r = own != nullptr ? own.get() : typeid(TR).name();
+
+	if (std::is_const<TR>::value)
+		r += " const"; 
+	if (std::is_volatile<TR>::value)
+		r += " volatile"; 
+	if (std::is_lvalue_reference<TR>::value)
+		r += " &"; 
+	else if (std::is_rvalue_reference<TR>::value)
+		r += " &&"; 
+
+	return r;
+}
+
+
+
+// *************************************************************************** //
+//      3B. NEW |       CUSTOM CASTS.
+// *************************************************************************** //
+
 //  "implicit_cast"
 //
 template <class U>
@@ -231,6 +259,139 @@ constexpr U implicit_cast(typename std::type_identity<U>::type val)
 {
     return val;
 }
+
+
+//  "public_cast"
+//
+/// @fn             public_cast
+///
+/// @brief          a tool brought forth from the immortal plane; cast directly from the depths of hell
+/// @description    Example Usage:
+///                 @code{.cpp}
+///                     template struct val<class CxSecret, &C::x>;
+///                     int x = c.*public_cast<int C::*, CxSecret>::m; // 42
+///                 @endcode
+///
+/// @note           [Any additional notes]
+/// @see            A professional mental health practitioner.
+/// @deprecated     [never use this]
+//
+template <class M, class Secret>
+struct public_cast {
+    static_assert(false, "BAD!!! DON'T USE THIS!");
+    static inline M     m   {};
+};
+
+template <class Secret, auto M>
+struct val {
+    static const inline auto m
+        = public_cast<decltype(M), Secret>::m = M;      //  Chained Assignment; assigning "M" to "public_cast< static m >"...
+                                                        //      -- THEN, constructing val's "static m" from that
+};
+
+//  template struct val<class CxSecret, &C::x>;
+
+
+
+
+
+
+// *************************************************************************** //
+//      3C. NEW |       ENUMARRAY CONCEPTS.
+// *************************************************************************** //
+
+namespace anon {   //     BEGINNING ANONYMOUS NAMESPACE..
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "dependent_false_v"
+//      Fallback for dependent-false
+//
+template<class>
+inline constexpr bool               dependent_false_v                               = false;
+
+
+//  "enum_count_v"
+//
+template<class E>
+inline constexpr std::size_t        enum_count_v                                    = [](void) consteval
+{
+    static_assert(std::is_enum_v<E>, "E must be an enum type");
+    
+    if constexpr      ( requires { E::Count; } )        { return static_cast<std::size_t>(E::Count); }
+    else if constexpr ( requires { E::COUNT; } )        { return static_cast<std::size_t>(E::COUNT); }
+    else                                                { static_assert(dependent_false_v<E>, "template type parameter error: Enum-type \"E\" must define enumeration value \"E::Count\" or \"E::COUNT\""); }
+    return std::size_t{ 0 };
+} (   );
+
+
+//  "enum_index_t"
+//
+template <typename E>
+using                               enum_index_t                                    = std::underlying_type_t<E>;
+
+
+//  "to_index"
+template <typename E>
+constexpr std::size_t               to_index            (E e) noexcept              { return static_cast<std::size_t>(e); }
+
+//  "to_index"
+template <typename E>
+constexpr E                         from_index          (std::size_t i) noexcept    { return static_cast<E>(i); }
+
+
+
+// *************************************************************************** //
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //
+}//   END OF "anon" ANONYMOUS NAMESPACE.
+
+
+
+//  "_has_valid_count_sentinel"
+//      Ensure E has either E::Count or E::COUNT and that it matches enum_count_v<E>
+//
+template<typename E>
+consteval bool _has_valid_count_sentinel(void)
+{
+    if constexpr (requires { E::COUNT; }) {
+        return static_cast<std::size_t>(E::COUNT) == anon::enum_count_v<E>;
+    }
+    else if constexpr (requires { E::Count; }) {
+        return static_cast<std::size_t>(E::Count) == anon::enum_count_v<E>;
+    }
+    else {
+        return false;
+    }
+}
+
+
+//  "_enumarray_compatible"
+//      Core concept used by EnumArray to accept only zero-based, sized enums.
+//
+template<typename E>
+concept _enumarray_compatible =
+       std::is_enum_v<E>
+    && (anon::enum_count_v<E> > 0)
+    && cblib::traits::_has_valid_count_sentinel<E>()
+    && (static_cast<std::size_t>(E{}) == 0);
+
+
+//  "is_enumarray_compatible"
+//      OPTIONAL: type-trait form for use with SFINAE (non-concept type-traits).
+//
+template<typename E>
+struct is_enumarray_compatible : std::bool_constant<_enumarray_compatible<E>> { };
+
+
+//  "is_enumarray_compatible_v"
+//      MAIN PUBLIC API.
+//
+template<typename E>
+inline constexpr bool is_enumarray_compatible_v = is_enumarray_compatible<E>::value;
 
 
 
@@ -736,7 +897,7 @@ struct has_clear_function
 // *************************************************************************** //
 
 
-#ifdef DO_NOT_DEFINE_THIS
+#ifdef  DO_NOT_DEFINE_THIS
 
 template<class T>
 struct auditor {
@@ -863,15 +1024,24 @@ auditor(void)
 // *************************************************************************** //
 // *************************************************************************** //
 };
+//
+//
+# endif     //  DO_NOT_DEFINE_THIS  //
 
-#endif
+
+
+
+
+
+
+
 
 
 
 
 // *************************************************************************** //
 // *************************************************************************** //
-}// END NAMESPACE   "cblib".
+} }// END NAMESPACE   "cblib::traits".
 
 
 

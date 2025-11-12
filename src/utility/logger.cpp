@@ -150,20 +150,19 @@ void Logger::critical(const std::string & msg)                  { enqueue(msg.c_
 //  "set_level"
 void  Logger::set_level(const Level & level)                    { this->m_threshold = level; }
 
+//  "set_console_format"
+void Logger::set_console_format(ConsoleFormat fmt)              { m_console_fmt = fmt; }
+
+//  "set_path_depth"
+void Logger::set_path_depth(std::size_t d)                      { m_path_depth = d; }
+
+
 
 //  "get_level"
 Logger::Level Logger::get_level(void) const                     { return m_threshold; }
 
-
-//  "set_console_format"
-void Logger::set_console_format(ConsoleFormat fmt)              { m_console_fmt = fmt; }
-
-
 //  "get_console_format"
 Logger::ConsoleFormat Logger::get_console_format(void) const    { return m_console_fmt; }
-
-//  "set_path_depth"
-void Logger::set_path_depth(std::size_t d)                      { m_path_depth = d; }
 
 //  "get_path_depth"
 std::size_t Logger::get_path_depth(void) const                  { return m_path_depth; }
@@ -183,31 +182,37 @@ std::size_t Logger::get_path_depth(void) const                  { return m_path_
 
 //  "enqueue"
 //
-void Logger::enqueue(const char* msg, Level lvl)
+void Logger::enqueue(const char * msg, Level lvl)
 {
-    enqueue_event(LogEvent{
-        lvl, msg, next_count(lvl),
-        /*file*/ nullptr,
-        /*line*/ 0,
-        /*func*/ nullptr,
-        std::this_thread::get_id(),
-        iso_timestamp()
+    this->enqueue_event(LogEvent{
+          lvl
+        , msg
+        , this->next_count(lvl)
+        , /*file=*/ nullptr
+        , /*line=*/ 0
+        , /*func=*/ nullptr
+        , std::this_thread::get_id()
+        , iso_timestamp()
     });
+    
+    return;
 }
 
 
 //  "enqueue_event"
 //
-void Logger::enqueue_event(LogEvent&& ev)
+void Logger::enqueue_event(LogEvent && ev)
 {
-    if (static_cast<int>(ev.level) < static_cast<int>(m_threshold))
-        return;
+    if ( static_cast<int>(ev.level) < static_cast<int>(m_threshold) )       { return; }
 
-    std::unique_lock<std::mutex> lock(m_mtx);
+    std::unique_lock<std::mutex>    lock        (m_mtx);
+    
     m_cv.wait(lock, [this]{ return m_queue.size() < QUEUE_CAPACITY; });
     m_queue.push(std::move(ev));
     lock.unlock();
     m_cv.notify_one();
+    
+    return;
 }
 
 
@@ -216,26 +221,29 @@ void Logger::enqueue_event(LogEvent&& ev)
 void Logger::start_worker(void)
 {
     m_running   = true;
-    m_worker    = std::thread( [this]{
-        std::unique_lock<std::mutex>    lock(m_mtx);
-        
-        while ( m_running || !m_queue.empty() )     //  while #1.
+    m_worker    = std::thread( [this]
         {
-            m_cv.wait(lock, [this]{ return !m_queue.empty() || !m_running; });
-            while ( !m_queue.empty() )                  //  while #2.
-            {
-                LogEvent    ev = std::move(m_queue.front());
-                m_queue.pop();
-                lock.unlock();
-                write_event(ev);
-                lock.lock();
-                m_cv.notify_all();   // signal space to any waiting producers
-                
-            }//     END "while #1".
+            std::unique_lock<std::mutex>    lock    (m_mtx);
             
-        }// END "while #1".
-        
-    } );
+            while ( m_running || !m_queue.empty() )     //  while #1.
+            {
+                m_cv.wait(lock, [this]{ return !m_queue.empty() || !m_running; });
+                while ( !m_queue.empty() )                  //  while #2.
+                {
+                    LogEvent    ev = std::move(m_queue.front());
+                    m_queue.pop();
+                    lock.unlock();
+                    write_event(ev);
+                    lock.lock();
+                    m_cv.notify_all();   // signal space to any waiting producers
+                    
+                }//     END "while #1".
+            //
+            }// END "while empty queue".
+        //
+        //
+        }// END LAMBDA.
+    );
     
     return;
 }
@@ -243,13 +251,16 @@ void Logger::start_worker(void)
 
 //  "stop_worker"
 //
-void Logger::stop_worker(void) {
+void Logger::stop_worker(void)
+{
     {
         std::lock_guard<std::mutex> lg(m_mtx);
         m_running = false;
     }
     m_cv.notify_all();
-    if (m_worker.joinable()) m_worker.join();
+    if (m_worker.joinable())    { m_worker.join(); }
+    
+    return;
 }
 
 

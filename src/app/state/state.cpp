@@ -16,6 +16,13 @@
 #include <chrono>
 #include <format>
 
+#ifndef _WIN32
+    # include <unistd.h>      // getpid
+    # include <sys/types.h>   // pid_t
+#else
+    # include <windows.h>   // pid_t
+#endif  //  _WIN32  //
+
 
 
 namespace cb { namespace app { //     BEGINNING NAMESPACE "cb"...
@@ -32,10 +39,30 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb"...
 //
 AppState::AppState(void)
     : m_logger{Logger::instance()}
+# ifdef _WIN32
+    , m_process_id( GetCurrentProcessId() )
+# else
+    , m_process_id( getpid() )
+# endif     //  _WIN32  //
+    , m_main_thread_id( std::this_thread::get_id() )
 {
     size_t          i                   = size_t(0);
     
     
+    //      0.      PRE-INIT...
+    //
+    //              0.1.    OBTAIN SYSTEM INFO.
+
+
+    //              0.2.    SET DEFAULT LOGGER-LEVEL.
+# if defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__) || defined(__CBAPP_DEBUG__)
+    this->m_LogLevel    = LogLevel::Debug;
+# else
+    this->m_LogLevel    = LogLevel::Warning;
+# endif     //  __CBLIB_RELEASE_WITH_DEBUG_INFO__ || __CBAPP_DEBUG__  //
+    this->m_logger.set_level(this->m_LogLevel);
+  
+  
     
     //      1.      INITIALIZE WINDOW INFOS...
     for (i = 0; i < static_cast<size_t>(Window_t::Count); ++i) {
@@ -48,7 +75,7 @@ AppState::AppState(void)
     }
 
 
-    //      3.      INITIALIZE LABEL CALLBACKS...
+    //      3.      INITIALIZE LABEL CALLBACK FUNCTIONS...
     this->ms_LeftLabel          = [this](const char * t) {
         this->_LeftLabel(t);
     };
@@ -90,6 +117,8 @@ AppState::AppState(void)
         std::addressof( m_windows[ Window::GraphApp         ].uuid      ),
         std::addressof( m_windows[ Window::MimicApp         ].uuid      )
     };
+    
+    
     
     return;
 }
@@ -333,7 +362,7 @@ bool AppState::SaveWithValidation(const std::filesystem::path & path, Callback &
         filesize.first              = ( exists.first ) ? fs::file_size(path,        EC)     : -1;
         //
         if (EC) {
-            m_logger.critical( std::format( "{} | UNKNOWN ERROR: ERROR_CODE FAILURE INSIDE \"SaveWithValidation()\" FOR PATH \"{}\"", caller_tag, path.generic_string() ) );
+            m_logger.critical( std::format( "[[{}]] UNKNOWN ERROR: ERROR_CODE FAILURE INSIDE \"SaveWithValidation()\" FOR PATH \"{}\"", caller_tag, path.generic_string() ) );
         }
     }
 
@@ -347,14 +376,14 @@ bool AppState::SaveWithValidation(const std::filesystem::path & path, Callback &
         if ( auto parent = path.parent_path(); !parent.empty() && !fs::exists(parent, ec) )
         {
             if ( !fs::create_directories(parent, ec) || ec ) {
-                log                 = std::format( "{} | failed to create parent dirs. while attempting to save file \"{}\"; error_code: {}", caller_tag, parent.generic_string(), ec.message() );
+                log                 = std::format( "[[{}]] failed to create parent dirs. while attempting to save file \"{}\"; error_code: {}", caller_tag, parent.generic_string(), ec.message() );
                 success             = false;    break;
             }
         }
         //
         //          1.2.    INVOKE THE USER-SUPPLIED CALLBACK FUNCTION.
         if ( !callback(path) ) {
-            log                 = std::format( "{} | validation failure: {} \"{}\"", caller_tag, failure_msg, path.filename().string() );
+            log                 = std::format( "[[{}]] validation failure: {} \"{}\"", caller_tag, failure_msg, path.filename().string() );
             success             = false;    break;
         }
         exists.second       = fs::exists(path, ec);
@@ -365,13 +394,13 @@ bool AppState::SaveWithValidation(const std::filesystem::path & path, Callback &
         
         //          2.1.    [ EXISTS ]          POST-SAVE VALIDATION.
         if ( !exists.second ) {
-            log                 = std::format( "{} | validation failure: file not found after write: \"{}\"", caller_tag, path.generic_string() );
+            log                 = std::format( "[[{}]] validation failure: file not found after write: \"{}\"", caller_tag, path.generic_string() );
             success             = false;    break;
         }
         //
         //          2.2.    [ FILE SIZE ]       POST-SAVE VALIDATION.
         if ( filesize.second == 0 ) {
-            log                 = std::format( "{} | validation failure: file \"{}\" was written with a size of zero-bytes", caller_tag, path.generic_string() );
+            log                 = std::format( "[[{}]] validation failure: file \"{}\" was written with a size of zero-bytes", caller_tag, path.generic_string() );
             success             = false;    break;
         }
         //
@@ -380,7 +409,7 @@ bool AppState::SaveWithValidation(const std::filesystem::path & path, Callback &
             using   namespace   std::chrono_literals;
             
             if ( timestamp.second <= timestamp.first + 1s ) {
-                log                 = std::format( "{} | verification: timestamp of written file unchanged for \"{}\"", caller_tag, path.filename().string() );
+                log                 = std::format( "[[{}]] verification: timestamp of written file unchanged for \"{}\"", caller_tag, path.filename().string() );
                 success             = false;    break;
             }
         }
@@ -397,12 +426,12 @@ bool AppState::SaveWithValidation(const std::filesystem::path & path, Callback &
     {
         //  1.  CREATED THE FILE.
         if ( exists.first ) {
-            log = std::format( "{} | created file \"{}\" ({}) ", caller_tag, path.filename().string(), cblib::utl::fmt_file_size(filesize.second) );
+            log = std::format( "[[{}]] created file \"{}\" ({}) ", caller_tag, path.filename().string(), cblib::utl::fmt_file_size(filesize.second) );
         }
         //
         //  2.  OVERWROTE THE FILE.
         else {
-            log = std::format( "{} | overwrote file \"{}\" ({}) ", caller_tag, path.filename().string(), cblib::utl::fmt_file_size(filesize.second) );
+            log = std::format( "[[{}]] overwrote file \"{}\" ({}) ", caller_tag, path.filename().string(), cblib::utl::fmt_file_size(filesize.second) );
         }
     
     }
@@ -436,33 +465,50 @@ void AppState::log_startup_info(void) noexcept
 
     Timestamp_t         start_time              = cblib::utl::get_timestamp();
     auto                dt                      = cblib::utl::format_elapsed_timestamp(start_time - m_notes[0].first);
-    auto                startup_info_log        = std::format("PROGRAM BOOT INFO...\n"
-        "Spawn                      : {}\n"
-        "Initialized                : {}\n"
-        "Load Time                  : {}\n"
-        "Total Persistent Windows   : {}\n"
-        "Total Application Fonts    : {}",
-        m_notes[0].first,
-        start_time,
-        dt,
-        this->m_windows.m_data.size(),
-        this->m_fonts.m_data.size()
-    );
-    this->m_notes.push_back( std::make_pair(start_time, "Program started ({})") );
-    auto                startup_debug_log       = std::format("PROGRAM BOOT DEBUG-INFO...\n"
-        "Start Task                 : {}\n"
-        "Start App Color Style      : {}\n"
-        "Start Plot Color Style     : {}",
-        this->GetCurrentAppletName(),
-        current_app_color_style(),
-        current_plot_color_style()
+
+
+
+    //      1.      PROGRAM BOOT RECORD...
+    auto                startup_info_log        = std::format(
+          "[CBApp] PROGRAM BOOT RECORD...\n"
+          "process ID                   : {}\n"
+          "main thread ID               : {:018X}\n"
+          ""
+          "spawned                      : {}\n"
+          "initialized                  : {}\n"
+          "load time                    : {}\n"
+          "total persistent windows     : {}\n"
+          "total application fonts      : {}"
+        , this->GetProcessID()
+        , this->GetMainThreadID()
+        //
+        , m_notes[0].first
+        , start_time
+        , dt
+        , this->m_windows.m_data.size()
+        , this->m_fonts.m_data.size()
     );
     
-    this->m_logger.notify( "PROGRAM BOOTED SUCCESSFULLY" );
+    
+    //      2.      DEBUG BOOT RECORD...
+    this->m_notes.push_back( std::make_pair(start_time, "program started ({})") );
+    auto                startup_debug_log       = std::format(
+          "[[CBApp]] DEBUG BOOT RECORD...\n"
+          "initial task               : {}\n"
+          "appearance style           : {}\n"
+          "ImPlot color style         : {}"
+        , this->GetCurrentAppletName()
+        , current_app_color_style()
+        , current_plot_color_style()
+    );
+    
+    
+    
+    //      3.      OUTPUT DATA TO THE LOGGER...
+    this->m_logger.notify( "[CBApp] PROGRAM BOOTED SUCCESSFULLY" );
     CB_LOG( LogLevel::Info,     startup_info_log    );
     CB_LOG( LogLevel::Debug,    startup_debug_log   );
     
-
     return;
 }
 
@@ -473,13 +519,17 @@ void AppState::log_shutdown_info(void) noexcept
 {
     Timestamp_t         end_time        = cblib::utl::get_timestamp();
     auto                dt              = cblib::utl::format_elapsed_timestamp(end_time - m_notes[0].first);
-    auto                ending_log      = std::format("PROGRAM TERMINATION INFO...\n"
-        "Total Runtime Time     : {}\n",
-        "Exit Code              : [NOT IMPLEMENTED]\n",
-        dt
+    //
+    auto                ending_log      = std::format(
+          "[[CBApp]] PROGRAM TERMINATION RECORD...\n"
+          "total runtime          : {}\n"
+          "Exit Code              : [NOT IMPLEMENTED]\n"
+        , dt
     );
     
-    this->m_logger.notify( "PROGRAM TERMINATING" );
+    
+    //      1.      OUTPUT TO LOGGER...
+    this->m_logger.notify( "[[CBApp]] PROGRAM TERMINATING" );
     CB_LOG( LogLevel::Info, ending_log );
 
     return;

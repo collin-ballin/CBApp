@@ -857,13 +857,13 @@ inline void Editor::_MECH_drive_io(void)
                 if (result)
                 {
                     ES.m_filepath       = *path;
-                    CB_LOG( LogLevel::Info, "Editor | saved data to file \"{}\"", ES.m_filepath.filename().string() );
+                    CB_LOG( LogLevel::Info, "Editor: saved data to file \"{}\"", ES.m_filepath.filename().string() );
                 }
                 //
                 //  CASE 1.1B.      SAVE FAILURE...
                 else
                 {
-                    CB_LOG( LogLevel::Error, "Editor | failure to save data to file \"{}\"", (*path).filename().string() );
+                    CB_LOG( LogLevel::Error, "Editor: failure to save data to file \"{}\"", (*path).filename().string() );
                     //
                     //  ES.m_filepath       = fs::path{   };
                     //  this->RESET_ALL();
@@ -875,7 +875,7 @@ inline void Editor::_MECH_drive_io(void)
             //  CASE 1.2. :     USER HAS CANCELLED FILE DIALOG.
             else
             {
-                CB_LOG( LogLevel::Debug, "Editor | cancelled file dialog menu (\"save file\")" );
+                CB_LOG( LogLevel::Debug, "Editor: cancelled file dialog menu (\"save file\")" );
             }
             
         }
@@ -909,13 +909,13 @@ inline void Editor::_MECH_drive_io(void)
                 if (result)
                 {
                     ES.m_filepath       = *path;
-                    CB_LOG( LogLevel::Info, "Editor | loaded session from file \"{}\"", ES.m_filepath.filename().string() );
+                    CB_LOG( LogLevel::Info, "Editor: loaded session from file \"{}\"", ES.m_filepath.filename().string() );
                 }
                 //
                 //  CASE 2.1B.      LOAD FAILURE...
                 else
                 {
-                    CB_LOG( LogLevel::Error, "Editor | failure to load file \"{}\"", (*path).filename().string() );
+                    CB_LOG( LogLevel::Error, "Editor: failure to load file \"{}\"", (*path).filename().string() );
                     ES.m_filepath       = fs::path{   };
                     this->RESET_ALL();
                 }
@@ -925,7 +925,7 @@ inline void Editor::_MECH_drive_io(void)
             //  CASE 2.2. :     USER HAS CANCELLED FILE DIALOG.
             else
             {
-                CB_LOG( LogLevel::Debug, "Editor | cancelled file dialog menu (\"open file\")" );
+                CB_LOG( LogLevel::Debug, "Editor: cancelled file dialog menu (\"open file\")" );
             }
             
         }

@@ -27,6 +27,215 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 // *************************************************************************** //
 // *************************************************************************** //
 
+
+//  "TAB_NewControls"
+//
+void CCounterApp::TAB_NewControls(void) noexcept
+{
+    namespace                       cc                  = ccounter;                             //  NAMESPACES AND ALIASES.
+    namespace                       fs                  = std::filesystem;
+    //
+    static ImGuiSliderFlags         SLIDER_FLAGS        = ImGuiSliderFlags_AlwaysClamp;         //  STATICS.
+    static auto                     labelcb             = this->S.ms_LeftLabel;
+    //
+    //  constexpr float                 margin              = 0.75f;                                //  CONSTANTS.
+    //  constexpr float                 pad                 = 10.0f;
+    //
+    //
+    //
+    const ImVec2                    avail               = ImGui::GetContentRegionAvail();       //  LOCAL VARS.
+
+    
+    
+    
+    
+    //      1.      COINCIDENCE WINDOW...
+    //
+    {
+        labelcb("Coincidence Window");
+        
+        if ( ImGui::SliderScalar("##CoincidenceWindow",    ImGuiDataType_U64,      &m_coincidence_window.value,
+                                &m_coincidence_window.limits.min, &m_coincidence_window.limits.max,  "%llu ticks", SLIDER_FLAGS) )
+        {
+            if (m_process_running)
+            {
+                char cmd[ms_CMD_MSG_SIZE];
+                std::snprintf(cmd, ms_CMD_MSG_SIZE, "coincidence_window %llu\n", m_coincidence_window.value);
+                m_python.send(cmd);
+            }
+        }
+        
+        
+        
+        
+    
+    }// END.
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //  if (...)
+    //  {
+    //      callback("In-Handle:");
+    //      ImGui::PushItemWidth( ms_HALF_WIDTH );
+    //          v.ui_InHandle       (WS_xmax, WS_ymax, speedx, speedy);
+    //      ImGui::PopItemWidth();
+    //  }
+        
+        
+    
+    /*
+    ms_CTRL_ROWS            = {
+    //
+    //  1.  CONTROL PARAMETERS [TABLE]...
+
+    //
+        {"Coincidence Window",                  [this]
+            {// BEGIN.
+                ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
+                //if (ImGui::SliderInt("##CoincidenceWindow",       &m_coincidence_window,   8,    100,   "%03d clicks",    SLIDER_FLAGS) )
+                
+                if ( ImGui::SliderScalar("##CoincidenceWindow",    ImGuiDataType_U64,      &m_coincidence_window.value,
+                                        &m_coincidence_window.limits.min, &m_coincidence_window.limits.max,  "%llu ticks", SLIDER_FLAGS) )
+                {
+                    if (m_process_running)    {
+                        char cmd[ms_CMD_MSG_SIZE];
+                        std::snprintf(cmd, ms_CMD_MSG_SIZE, "coincidence_window %llu\n", m_coincidence_window.value);
+                        m_python.send(cmd);
+                    }
+                }
+            }// END.
+        },
+    //
+        {"Integration Window",                  [this]
+            {// BEGIN.
+                ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
+                if ( ImGui::SliderScalar("##IntegrationWindow",          ImGuiDataType_Double,       &m_integration_window.value,
+                                    &m_integration_window.limits.min,     &m_integration_window.limits.max,     "%.3f seconds", SLIDER_FLAGS) ) {
+                    if (m_process_running) {
+                        char cmd[ms_CMD_MSG_SIZE];
+                        std::snprintf(cmd, ms_CMD_MSG_SIZE, "integration_window %.3f\n", m_integration_window.value);
+                        m_python.send(cmd);
+                    }
+                }
+                ImGui::SameLine(0.0f, pad);
+                if (ImGui::Button("Apply", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
+                    char cmd[ms_CMD_MSG_SIZE];
+                    std::snprintf(cmd, ms_CMD_MSG_SIZE, "integration_window %.3f\n", cc::delay_s);
+                    m_python.send(cmd);
+                }
+                ImGui::Dummy( ImVec2(pad, 0.0f) );
+            }// END.
+        },
+    //
+        {"History Length",                      [this]
+            {// BEGIN.
+                ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
+                ImGui::SliderScalar("##HistoryLength",                  ImGuiDataType_Double,           &m_history_length.value,
+                                    &m_history_length.limits.min,       &m_history_length.limits.max,   "%.1f seconds", SLIDER_FLAGS);
+                ImGui::SameLine(0.0f, pad);
+                
+                if ( ImGui::Button("Clear Plot", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
+                    for (auto & b : m_buffers) {
+                        b.clear(); //b.Erase();
+                    }
+                    std::fill(std::begin(m_max_counts), std::end(m_max_counts), 0.f);
+                }
+                ImGui::Dummy( ImVec2(pad, 0.0f) );
+            }// END.
+        },
+    //
+        {"Average",                             [this]
+            {// BEGIN.
+            //
+                const char *        avg_items []        = { "Last N samples", "Last T seconds" };
+                int                 mode_idx            = (m_avg_mode == AvgMode::Samples ? 0 : 1);
+            //
+            //
+                ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
+                if (m_avg_mode == AvgMode::Samples)
+                {
+                    ImGui::SliderScalar("##AverageDuration_Samples",        ImGuiDataType_U64,                  &m_avg_window_samp.value,
+                                        &m_avg_window_samp.limits.min,      &m_avg_window_samp.limits.max,      "%llu samples", SLIDER_FLAGS);
+                }
+                else {
+                    ImGui::SliderScalar("##AverageDuration_Time",           ImGuiDataType_Double,               &m_avg_window_sec.value,
+                                        &m_avg_window_sec.limits.min,       &m_avg_window_sec.limits.max,      "%.2f seconds", SLIDER_FLAGS);
+                }
+                //
+                //
+                //
+                ImGui::SameLine(0.0f, pad);
+                ImGui::SetNextItemWidth( ImGui::GetContentRegionAvail().x - pad );
+                if ( ImGui::Combo("##AverageModeSelector",   &mode_idx,      avg_items,      IM_ARRAYSIZE(avg_items)) )
+                {
+                    m_avg_mode = (mode_idx == 0 ? AvgMode::Samples : AvgMode::Seconds);
+                }
+                ImGui::Dummy( ImVec2(pad, 0.0f) );
+                            
+   
+            }// END.
+        },
+    //
+    //
+        {"Misc.",                          [this]
+            {// BEGIN.
+            
+                ImGui::Checkbox("Use Mutex Counts", &m_use_mutex_count);
+                ImGui::SameLine();
+                
+                if ( ImGui::Button("Reset Averages") )      { this->_reset_average_values(); }
+                
+                ImGui::SameLine();
+                
+                if ( ImGui::Button("Reset Max") )           { this->_reset_max_values(); }
+                
+                ImGui::SameLine();
+                ImGui::Checkbox("Plot Crawling", &m_smooth_scroll);
+                
+                
+            }// END.
+        }
+    };
+*/
+
+
+
+    return;
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 1.  "MAIN CONTROLS" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.      OTHER TAB FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
 //  "TAB_Controls"
 //
 void CCounterApp::TAB_Controls(void) noexcept
@@ -47,29 +256,20 @@ void CCounterApp::TAB_Appearance(void) noexcept
 {
     static utl::TableCFG<2>     appearance_table_CFG     = {"CCounterAppearanceTable"};
     
-    
-    //      RE-ASSIGN COLORMAP COLORS IF USER HAS CHANGED COLOR-MAP SELECTION...
-    if ( this->m_colormap_cache_invalid ) {
-        this->_validate_colormap_cache();
-    }
-
 
     //      2.      APPEARANCE TABLE ENTRY...
     utl::MakeCtrlTable(this->ms_APPEARANCE_ROWS, appearance_table_CFG);
-    
-    
     
     return;
 }
 
 
 
-
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "1.  MAIN ORCHESTRATORS".
+// *************************************************************************** //   END [[ 2.  "OTHER TAB FUNCTIONS" ]].
 
 
 
@@ -86,7 +286,7 @@ void CCounterApp::TAB_Appearance(void) noexcept
 //
 //
 //
-//      2.      OTHER INTERFACE FUNCTIONS...
+//      3.      MISC. GUI FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -94,31 +294,94 @@ void CCounterApp::TAB_Appearance(void) noexcept
 //
 bool CCounterApp::_MENU_cmap_selection(const ImPlotColormap map) noexcept
 {
+    // Size controls
+    constexpr float           CMAP_PREVIEW_WIDTH_SCALE  = 1.00f;          // 1.0 = base width; >1 expand, <1 shrink
+    constexpr float           CMAP_PREVIEW_MIN_W        = 350.0f;         // baseline button width before scaling
+    constexpr float           CMAP_TABLE_HEIGHT         = 400.0f;         // finite height -> vertical scrollbar
+
+    // One-column, scrollable table; window width slaved to preview button width
+    constexpr ImGuiTableFlags FLAGS                     = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_ScrollY;
+
+    static ImVec2             s_cmap_preview_dims       = ImVec2(CMAP_PREVIEW_MIN_W, 45.0f);
+    bool                      close                     = false;
+    const int                 N                         = ImPlot::GetColormapCount();
+
+    ImGui::SeparatorText("Colormap Selection");
+
+    // Compute desired content/table width from preview button width
+    const float table_w = ImMax(CMAP_PREVIEW_MIN_W, s_cmap_preview_dims.x) * CMAP_PREVIEW_WIDTH_SCALE;
+
+    // On popup open, force the popup/window width to match the preview-controlled width
+    if (ImGui::IsWindowAppearing()) {
+        const ImGuiStyle& style = ImGui::GetStyle();
+        const float desired_window_w = table_w + style.WindowPadding.x * 2.0f;
+        ImGui::SetWindowSize(ImVec2(desired_window_w, 0.0f)); // height auto
+    }
+
+    // Scrollable table whose OUTER SIZE X sets the content width (slaved to preview width)
+    if (!ImGui::BeginTable("ColormapSelectionTable", 1, FLAGS, ImVec2(table_w, CMAP_TABLE_HEIGHT)))
+        return false;
+
+    ImGui::TableSetupColumn("##CMap", ImGuiTableColumnFlags_WidthStretch, 1.0f);
+
+    for (int i = 0; i < N && !close; ++i) {
+        const ImPlotColormap idx      = static_cast<ImPlotColormap>(i);
+        const bool           selected = (map == idx);
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+
+        ImGui::PushID(i);
+        // Button width = current column's available width (accounts for scrollbar & padding)
+        const float col_w = ImGui::GetContentRegionAvail().x;
+        const float w     = ImMax(CMAP_PREVIEW_MIN_W, col_w); // fill the single column
+        const ImVec2 sz   = ImVec2(w, s_cmap_preview_dims.y);
+
+        if (ImPlot::ColormapButton(ImPlot::GetColormapName(idx), sz, idx)) {
+            if (!selected) {
+                this->m_cmap                   = idx;
+                this->m_colormap_cache_invalid = true;
+            }
+            close = true;
+        }
+        ImGui::PopID();
+    }
+
+    ImGui::EndTable();
+    return !close; // keep open if nothing was chosen
+}
+//
+//
+//
+/*
+{
     // Layout controls
-    constexpr float                 CMAP_PREVIEW_WIDTH_SCALE    = 1.00f;    // 1.0 = fill remaining width
-    constexpr float                 CMAP_PREVIEW_MIN_W          = 120.0f;   // clamp preview width
-    constexpr float                 CMAP_POPUP_VIEW_H           = 260.0f;   // finite height for scrollable content
+    constexpr float                 CMAP_PREVIEW_WIDTH_SCALE    = 1.00f;                    // 1.0 = fill remaining width
+    constexpr float                 CMAP_POPUP_VIEW_H           = 260.0f;                   // finite height for scrollable content
     constexpr ImGuiWindowFlags      CHILD_FLAGS                 = ImGuiWindowFlags_AlwaysVerticalScrollbar;
 
     constexpr ImGuiTableFlags       FLAGS                       = ImGuiTableFlags_SizingFixedFit;
     constexpr ImGuiSelectableFlags  SELECTABLE_FLAGS            = ImGuiSelectableFlags_SpanAllColumns;
-
+    //
+    //
+    static ImVec2                   s_cmap_preview_dims         = ImVec2(120.0f, 30.0f);    // clamp preview width
     static float                    col_name_width              = -1.0f;   // cached
     static float                    row_height                  = 0.0f;    // cached after first preview draw
 
 
     //      Cache the widest name when the popup appears
-    if ( ImGui::IsWindowAppearing() )
-    {
-        col_name_width      = 0.0f;
-        const int count     = ImPlot::GetColormapCount();
-        for (int i = 0; i < count; ++i) {
-            const char *    nm      = ImPlot::GetColormapName(i);
-            col_name_width          = ImMax(col_name_width, ImGui::CalcTextSize(nm ? nm : "").x);
-        }
-        col_name_width     *= 1.60f;        //  padding similar to the tool menu
-        row_height          = 0.0f;         //  recalc on first draw
-    }
+    //  if ( ImGui::IsWindowAppearing() )
+    //  {
+    //      col_name_width      = 0.0f;
+    //      const int count     = ImPlot::GetColormapCount();
+    //      for (int i = 0; i < count; ++i) {
+    //          const char *    nm      = ImPlot::GetColormapName(i);
+    //          col_name_width          = ImMax(col_name_width, ImGui::CalcTextSize(nm ? nm : "").x);
+    //      }
+    //      col_name_width     *= 1.60f;        //  padding similar to the tool menu
+    //      row_height          = 0.0f;         //  recalc on first draw
+    //  }
+
 
     ImGui::SeparatorText("Colormap Selection");
 
@@ -138,6 +401,8 @@ bool CCounterApp::_MENU_cmap_selection(const ImPlotColormap map) noexcept
     bool            close       = false;
     const int       N           = ImPlot::GetColormapCount();
 
+
+
     for (int i = 0; i < N && !close; ++i)
     {
         const ImPlotColormap    idx         = static_cast<ImPlotColormap>(i);
@@ -145,23 +410,31 @@ bool CCounterApp::_MENU_cmap_selection(const ImPlotColormap map) noexcept
 
         ImGui::TableNextRow();
 
+
         //      Column 0 :      Name (selectable)
         ImGui::TableSetColumnIndex(0);
         if ( ImGui::Selectable(  ImPlot::GetColormapName(idx), selected, SELECTABLE_FLAGS
-                               , ImVec2(0.0f, (row_height > 0.0f)  ? row_height    : 0.0f)) )
+                               , ImVec2(0.0f, s_cmap_preview_dims.y)) )
         {
             close = true;
         }
+
 
         //      Column 1 :      Preview (gradient button)
         ImGui::TableSetColumnIndex(1);
         ImGui::PushID(i);
         const float     avail_w     = ImGui::GetContentRegionAvail().x;     //  within child -> respects scrollbar
-        const float     w           = ImMax(CMAP_PREVIEW_MIN_W, avail_w * CMAP_PREVIEW_WIDTH_SCALE);
-        if ( ImPlot::ColormapButton("##Preview", ImVec2(w, 0.0f), idx) ) {
+        const float     w           = ImMax(s_cmap_preview_dims.x, avail_w * CMAP_PREVIEW_WIDTH_SCALE);
+        
+        
+        //  if ( ImPlot::ColormapButton("##Preview", s_cmap_preview_dims, idx) ) {
+        //      close = true;
+        //  }
+        //
+        if ( ImPlot::ColormapButton(ImPlot::GetColormapName(idx), s_cmap_preview_dims, idx) ) {
             close = true;
         }
-        if (row_height <= 0.0f) {
+        if (row_height < 0.0f) {
             row_height = ImGui::GetItemRectSize().y;        // Use the rendered preview button height as the consistent row height
         }
         ImGui::PopID();
@@ -178,6 +451,7 @@ bool CCounterApp::_MENU_cmap_selection(const ImPlotColormap map) noexcept
 
     return !close; // keep open if nothing was chosen
 }
+*/
 
 
 
@@ -185,148 +459,7 @@ bool CCounterApp::_MENU_cmap_selection(const ImPlotColormap map) noexcept
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "2.  OTHER GUI FUNCTIONS".
-
-
-
-
-
-
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//      3.      TABBAR FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "dispatch_plot_function"
-//
-void CCounterApp::dispatch_plot_function([[maybe_unused]] const std::string & uuid)
-#ifdef DEF_REFACTOR_CC
-//
-{
-    return;
-}
-//
-# else
-//
-{
-    bool                match       = false;
-    const size_t        N           = ms_PLOT_TABS.size();
-    size_t              idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
-
-    //      1.      FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
-    for (size_t i = 0; i < N && !match; ++i)
-    {
-        match           = ( uuid == ms_PLOT_TABS[i].uuid );
-        if (match)      { idx = i; }
-    }
-    
-    if (!match) return;
-    
-    
-    //      DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
-    switch (idx)
-    {
-        //      0.  Model PARAMETERS...
-        case 0:         {
-            this->_Begin_IMPL();
-            break;
-        }
-        //
-        //
-        //
-        default: {
-            break;
-        }
-    }
-    
-    return;
-}
-//
-#endif  //  DEF_REFACTOR_CC  //
-
-
-
-
-//  "dispatch_ctrl_function"
-//
-void CCounterApp::dispatch_ctrl_function(const std::string & uuid)
-{
-    bool            match       = false;
-    const size_t    N           = ms_CTRL_TABS.size();
-    size_t          idx         = N + 1;       //   Default:    if (NO MATCH):  "N < idx"
-
-    //      1.      FIND THE INDEX AT WHICH THE TAB WITH NAME "uuid" IS FOUND...
-    for (size_t i = 0; i < N && !match; ++i)
-    {
-        match = ( uuid == ms_CTRL_TABS[i].uuid );
-        if (match)  { idx = i; }
-    }
-    if (!match) return;
-    
-    
-    
-    //      DISPATCH EACH RENDER FUNCTION FOR EACH WINDOW OF THE APPLICATION...
-    switch (idx)
-    {
-        //      0.      INDIVIDUAL COUNTERS...
-        case 0:         {
-            _PlotSingles();
-            break;
-        }
-        //
-        //      1.      CCounter CONTROLS...
-        case 1:         {
-            this->TAB_Controls();
-            break;
-        }
-        //
-        //      2.      CCounter APPEARANCE SETTINGS...
-        case 2:         {
-            this->TAB_Appearance();
-            break;
-        }
-        //
-        //
-        //      X.      DEFAULT SAFETY...
-        default: {
-            break;
-        }
-    }
-    
-    return;
-}
-
-
-//  "DefaultTabRenderFunc"
-//
-void CCounterApp::DefaultTabRenderFunc([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags) {
-    if (!p_open)    { return; }
-        
-    ImGui::Text("Window Tab \"%s\".  Here is some default text dispatched by \"DefaultPlotTabRenderFunc()\".", uuid);
-    return;
-}
-
-
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "3.  TABBAR FUNCTIONS".
-
-
-
-
-
-
+// *************************************************************************** //   END [[ 3.  "MISC. GUI FUNCTIONS" ]].
 
 
 

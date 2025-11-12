@@ -1,5 +1,21 @@
-#ifndef _CBLIB_HELPER_H
-#define _CBLIB_HELPER_H 1
+/***********************************************************************************
+*
+*       ********************************************************************
+*       ****          _ E N U M _ A R R A Y . H  ____  F I L E          ****
+*       ********************************************************************
+*
+*              AUTHOR:      Collin A. Bond.
+*               DATED:      November 10, 2025.
+*
+*       ********************************************************************
+*                FILE:      [./PyStream.h]
+*
+*
+*
+**************************************************************************************
+**************************************************************************************/
+#ifndef _CBLIB_CONTAINERS_ENUMARRAY_H
+#define _CBLIB_CONTAINERS_ENUMARRAY_H 1
 
 #include <iostream>
 #include <type_traits>
@@ -20,10 +36,9 @@ namespace cblib {   //     BEGINNING NAMESPACE "cblib"...
 
 
 
-#ifdef __NEVER_DEFINED_1234
-
 
 // *************************************************************************** //
+//
 //
 //
 //      1.      MISC. HELPERS/UTILITIES...
@@ -213,12 +228,6 @@ struct EnumArray
 
 
 
-/*template<typename E, typename T, std::size_t N = static_cast<std::size_t>(E::Count)>    //  We may need to change from (E::Count) to (E::COUNT)  //
-struct EnumArray {
-    std::array<T, N>        data;
-    T &                     operator []         (E e) noexcept              { return data[static_cast<std::size_t>(e)]; }
-    const T &               operator []         (E e) const noexcept        { return data[static_cast<std::size_t>(e)]; }
-};*/
 
 
 
@@ -226,71 +235,7 @@ struct EnumArray {
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "MISC. UTILITIES".
-
-
-#endif
-
-
-
-
-
-
-// *************************************************************************** //
-//
-//
-//
-//      2.      OTHER...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  cc_strlen_IMPL
-//
-constexpr std::size_t cc_strlen_IMPL(const char * s) noexcept {
-    std::size_t     i = 0;
-    while (s[i] != '\0') ++i;
-    return i;
-}
-
-
-//  "join_ptr"
-//      - NTTPs are pointers-to-pointer
-//
-template<const char * const * ... ParPtrs>
-struct join_ptr
-{
-    static constexpr std::size_t len = (cc_strlen_IMPL(*ParPtrs) + ... + 0);
-
-    static constexpr auto impl() {
-        std::array<char, len + 1> buf{};
-        std::size_t pos = 0;
-        (([&]{
-            const char* str = *ParPtrs;
-            for (std::size_t i = 0, n = cc_strlen_IMPL(str); i < n; ++i)
-                buf[pos++] = str[i];
-        }()), ...);
-        buf[len] = '\0';
-        return buf;
-    }
-
-    static constexpr auto arr   = impl();
-    static constexpr const char* c_str = arr.data();
-};
-
-
-//  "strcat_constexpr"
-//      Define "aliases" for convience...
-//
-template<const char * const * ... ParPtrs>
-inline constexpr const char * strcat_constexpr = join_ptr<ParPtrs...>::c_str;
-
-
-
-//
-//
-//
-// *************************************************************************** //
-// *************************************************************************** //   END "OTHER".
+// *************************************************************************** //   END [[ 1.  "MISC. UTILITIES" ]].
 
 
 
@@ -319,4 +264,4 @@ inline constexpr const char * strcat_constexpr = join_ptr<ParPtrs...>::c_str;
 
 // *************************************************************************** //
 // *************************************************************************** //
-#endif  //  _CBLIB_HELPER_H  //
+#endif  //  _CBLIB_CONTAINERS_ENUMARRAY_H  //

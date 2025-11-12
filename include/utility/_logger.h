@@ -368,11 +368,11 @@ protected:
     // *************************************************************************** //
     
     //  CONSTANTS...
-    static constexpr const char *           HEADER                      = "CBLOG";      // prefix
-    static constexpr std::size_t            COUNTER_WIDTH               = 3;            // zero‑pad width
-    static constexpr std::size_t            MAX_LEVEL_LEN               = 9;            // strlen("EXCEPTION")
-    static constexpr std::size_t            QUEUE_CAPACITY              = 1024;         // bounded queue
-    static constexpr std::size_t            MAX_COL_WIDTH               = 120;   // wrap column
+    static constexpr const char *           HEADER                      = "CBLOG";      //  prefix
+    static constexpr std::size_t            COUNTER_WIDTH               = 3;            //  zero‑pad width
+    static constexpr std::size_t            MAX_LEVEL_LEN               = 9;            //  strlen("EXCEPTION")
+    static constexpr std::size_t            QUEUE_CAPACITY              = 1024;         //  bounded queue
+    static constexpr std::size_t            MAX_COL_WIDTH               = 120;          //  wrap column
     static constexpr const char *           BODY_OPEN_DELIM             = "";
     static constexpr const char *           BODY_CLOSE_DELIM            = "";
     
@@ -384,8 +384,8 @@ protected:
     std::condition_variable                 m_cv;
     std::thread                             m_worker;
     std::atomic<bool>                       m_running                   {false};
-    std::atomic<bool>                       m_vt_enabled                {false};      // set once in ctor
-    std::atomic<std::size_t>                m_path_depth                {2};              // default “.../dir/file.cpp”
+    std::atomic<bool>                       m_vt_enabled                {false};        //  set once in ctor
+    std::atomic<std::size_t>                m_path_depth                { 2ULL };       //  default “.../dir/file.cpp”
 #if defined(__CBAPP_DEBUG__) || defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__)
     Level                                   m_threshold                 = Level::Debug;
     std::atomic<ConsoleFormat>              m_console_fmt               { CF_DEFAULT };
@@ -409,38 +409,38 @@ protected:
     //  2B.2            Inline Class Utility Functions.
     // *************************************************************************** //
     inline static constexpr
-    const char *            level_str(Level lvl) {
+    const char *                        level_str                       (Level lvl) {
         switch (lvl) {
-            case Level::None        :   return "NONE";
-            case Level::Debug       :   return "DEBUG";
-            case Level::Info        :   return "INFO";
-            case Level::Warning     :   return "WARNING";
-            case Level::Exception   :   return "EXCEPTION";
-            case Level::Error       :   return "ERROR";
-            case Level::Notify      :   return "NOTIFY";
-            case Level::Critical    :   return "CRITICAL";
-            default                 :   return "UNKNOWN";
+            case Level::None        : { return "NONE";      }
+            case Level::Debug       : { return "DEBUG";     }
+            case Level::Info        : { return "INFO";      }
+            case Level::Warning     : { return "WARNING";   }
+            case Level::Exception   : { return "EXCEPTION"; }
+            case Level::Error       : { return "ERROR";     }
+            case Level::Notify      : { return "NOTIFY";    }
+            case Level::Critical    : { return "CRITICAL";  }
+            default                 : { return "UNKNOWN";   }
         }
     }
-    inline std::size_t      next_count                      (Level lvl)                             { return ++m_counts[static_cast<int>(lvl)]; }
+    [[nodiscard]] inline std::size_t    next_count                      (Level lvl)     { return ++m_counts[static_cast<int>(lvl)]; }
                         
     
-    //  2B.3                Class Utility Functions.        [Logger.cpp]...
-    void                    enqueue                         (const char * , Level );
-    void                    enqueue_event                   (LogEvent && );
-    void                    start_worker                    (void);
-    void                    stop_worker                     (void);
+    //  2B.3                            Class Utility Functions.        [Logger.cpp]...
+    void                                enqueue                         (const char * , Level );
+    void                                enqueue_event                   (LogEvent && );
+    void                                start_worker                    (void);
+    void                                stop_worker                     (void);
     //
     //
-    void                    write_event                     (const LogEvent & ev);
+    void                                write_event                     (const LogEvent & ev);
     //
-    std::string             build_header                    (const LogEvent & );
-    void                    write_body                      (const std::string & , std::ostream & out, std::size_t ) const;
-    std::string             build_metadata                  (const LogEvent & , std::size_t );
-    static std::string      path_tail                       (std::string_view full, std::size_t depth);
+    std::string                         build_header                    (const LogEvent & );
+    void                                write_body                      (const std::string & , std::ostream & out, std::size_t ) const;
+    std::string                         build_metadata                  (const LogEvent & , std::size_t );
+    static std::string                  path_tail                       (std::string_view full, std::size_t depth);
     //
-    TermColor               level_to_color                  (Level lvl);
-    void                    enable_vt_win                   (void);
+    TermColor                           level_to_color                  (Level lvl);
+    void                                enable_vt_win                   (void);
     
     
 

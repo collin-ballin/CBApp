@@ -54,23 +54,53 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 //
 static inline std::wstring s_utf8_to_wide(const std::string & s)
 {
-    int             n       = -1;
-    std::wstring    w;
-    
-    if ( s.empty() )    { return {}; }
-    
-    n       = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
-    w       = ( (n)     ? n - 1     : 0, L'\0' );               //  exclude the null terminator
-    if ( n )            { MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, w.data(), n); }
-    
+    if ( s.empty() )        { return {}; }
+
+    const int n = ::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);   // includes NUL
+    if ( n <= 0 )           { return {}; }
+
+    std::wstring w;
+    w.resize(static_cast<size_t>(n));                                             // room for NUL
+
+    const int wrote = ::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, w.data(), n);
+    if ( wrote <= 0 )   { return {}; }
+
+    // drop trailing NUL (MultiByteToWideChar writes it when cchWideChar == -1)
+    if ( !w.empty() && w.back() == L'\0' ) { w.pop_back(); }
+
     return w;
 }
+
 
 //  "s_quote_if_needed"
 //
 static inline std::wstring s_quote_if_needed(const std::wstring & s)
 {
     return (s.find_first_of(L" \t\"") == std::wstring::npos) ? s : L"\"" + s + L"\"";
+}
+
+
+//  "_win32_last_error_string"
+//      Windows helper for readable errors.
+//
+static inline std::string _win32_last_error_string(void)
+{
+    const DWORD     e           = ::GetLastError();
+    LPSTR           buf         = nullptr;
+    std::string     message     = {  };
+    const DWORD     n           = ::FormatMessageA(
+          FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS
+        , nullptr
+        , e
+        , MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)
+        , (LPSTR)&buf
+        , 0
+        , nullptr
+    );
+    message                     = (n && buf)    ? std::string(buf, n)   : std::string("unknown Win32 error");
+    if (buf)    { ::LocalFree(buf); }
+    
+    return message;
 }
 
 
@@ -101,12 +131,12 @@ static inline std::wstring s_quote_if_needed(const std::wstring & s)
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  Default Constructor.
+//  Parametric Constructor 1.
 //
 PyStream::PyStream(const std::string & script_path, const std::vector<std::string> & args)
     : m_script_path( path_t(script_path) )
     , m_args(args)
-{ }
+{  }
 
 
 //  Destructor.
@@ -131,46 +161,171 @@ PyStream::~PyStream(void)
 
 //  "start"
 //
-bool PyStream::start(void)
+///     @brief              Start the child Python process and the reader thread; returns the child PID on success.
+///
+///     @description        Launches the configured Python interpreter (`m_python_exe`) with the configured script
+///                         (`m_script_path`) and arguments (`m_args`). On success, marks the stream as running,
+///                         spawns the background reader thread, and returns a snapshot of the child PID.
+///                         This function enforces preconditions and converts spawn failures into rich exceptions.
+///
+///     @return                         The operating-system process identifier (PID) of the newly launched child process.
+///     @retval     >0                  A valid child PID. (Zero is never returned.)
+///     @throw  std::logic_error        Thrown when the stream is already running, or when no script path has been set.
+///     @throw  std::invalid_argument   Thrown if the configured script path is empty, does not exist, or is not a regular file (via internal filesystem validation).
+///     @throw  std::runtime_error      Thrown if filesystem queries themselves fail unexpectedly (e.g., permission/IO errors during existence/type checks), with the underlying diagnostic message.
+///     @throw  std::runtime_error      **WINDOWS ONLY:** thrown when process creation fails; the message includes the textual form of the last Win32 error (from GetLastError / FormatMessage).
+///     @throw  std::system_error       **POSIX ONLY:** thrown when process creation fails; carries the failing errno and category.  Also thrown if the reader thread cannot be created (std::thread construction failure).
+///
+///     @attention      A returned PID is not a liveness guarantee; use the class’s probe utilities
+///                         (e.g., child_alive / child_probe) to check the current state after launch.
+///     @warning        This call is not reentrant; concurrent calls will result in exactly one launch
+///                         and the others throwing std::logic_error (“already running”).
+///     @remark         On success, resources are fully initialized (pipes + reader thread). On any failure,
+///                         the function performs best-effort rollback: the child (if created) is terminated,
+///                         pipe handles/fds are closed, and @c m_running is reset to @c false.
+//
 #ifdef PYSTREAM_REFACTOR
+[[nodiscard]] uint32_t PyStream::start(void)
 {
-    //      1.      Race-proof: only one caller can transition false -> true
-    bool expected = false;
+    bool    expected    = false;
     
-    if ( !m_running.compare_exchange_strong(expected, true) ) {
-        return false; // already running
-    }
+    
+    //      CASE 0 :    ATTEMPT TO RUN A PROCESS WITHOUT SPECIFYING IT'S FILEPATH
+    //                  *OR*  ATTEMPT TO "start()" WHILE ALREADY RUNNING...
+    if ( this->m_script_path.empty() )                                  { throw std::logic_error("PyStream::start: no script path set");    }
+    if ( this->m_running.load() )                                       { throw std::logic_error("PyStream::start: already running");       }
+
+    //      Re-validate that the script file still exists (in case the file was removed since set-time).
+    (void)PyStream::_validate_filepath(this->m_script_path, "PyStream::start", false);
+    
+    
+    if ( !this->m_running.compare_exchange_strong(expected, true) )     { throw std::logic_error("PyStream::start: already running"); }
 
 
-    //      2.      Spawn the child process; rollback flag on failure
-    if ( !launch_process() )
+    //      1.      SPAWN THE CHILD PROCESS...
+    if ( !this->launch_process() )
     {
-        m_running.store(false);
-        return false;
+        this->m_running.store(false);
+    # ifdef _WIN32
+        throw std::runtime_error(std::string("PyStream::start: launch_process() failed: ") + _win32_last_error_string());
+    # else
+        const int e = errno;
+        throw std::system_error(e, std::system_category(), "PyStream::start: launch_process() failed");
+    # endif  //  _WIN32  //
     }
 
 
-    //      3.      Start reader thread; on failure, stop() cleans up the spawned child
+
+    //      2A.     ATTEMPT TO BEGIN THE "READER" THREAD.  [ IF THIS FAILS, ROLL-BACK CLEANLY ]...
     try {
-        m_reader_thread = std::thread(&PyStream::reader_thread_func, this);
+        this->m_reader_thread = std::thread(&PyStream::reader_thread_func, this);
     }
-    catch (...) {
-        stop();           // safe: sets m_running=false, closes pipes, waits child, joins if needed
-        return false;
+    //
+    //      2B.     FAILURE TO SPAWN THE READER THREAD  [ EXCEPTION WAS THROWN ]...
+    //                  -- Terminate the child; close our ends (best-effort rollback).
+    catch (...)
+    {
+    # ifdef _WIN32
+        if (this->m_proc_info.hProcess)
+        {
+            ::TerminateProcess(this->m_proc_info.hProcess, 0);
+            ::WaitForSingleObject(this->m_proc_info.hProcess, PyStream::ms_PROCESS_TIMEOUT_MS);
+            ::CloseHandle(this->m_proc_info.hProcess);  this->m_proc_info.hProcess = nullptr;
+            ::CloseHandle(this->m_proc_info.hThread );  this->m_proc_info.hThread  = nullptr;
+        }
+        if (this->m_child_stdin_w )         { ::CloseHandle(this->m_child_stdin_w );  this->m_child_stdin_w  = nullptr; }
+        if (this->m_child_stdout_r)         { ::CloseHandle(this->m_child_stdout_r);  this->m_child_stdout_r = nullptr; }
+    # else
+        if (this->m_child_pid > 0)          { ::kill(this->m_child_pid, SIGTERM);  ::waitpid(this->m_child_pid, nullptr, 0);  this->m_child_pid = -1; }
+        if (this->m_child_stdin_fd  != -1)  { ::close(this->m_child_stdin_fd ); this->m_child_stdin_fd  = -1; }
+        if (this->m_child_stdout_fd != -1)  { ::close(this->m_child_stdout_fd); this->m_child_stdout_fd = -1; }
+    # endif  //  _WIN32  //
+    
+        this->m_running.store(false);
+        throw; // rethrow original thread exception
+    }
+
+    return this->get_pid();   // success → PID snapshot
+}
+//
+#else
+//
+bool PyStream::start(void)
+{
+    bool    expected    = false;
+    
+    
+    //      CASE 0 :    ATTEMPT TO RUN A PROCESS WITHOUT SPECIFYING IT'S FILEPATH
+    //                  *OR*  ATTEMPT TO "start()" WHILE ALREADY RUNNING...
+    if ( this->m_script_path.empty() )                          { throw std::logic_error("PyStream::start: no script path set");    }
+    if ( this->m_running.load() )                               { throw std::logic_error("PyStream::start: already running");       }
+
+
+
+    //      Re-validate that the script file still exists (in case the file was removed since set-time).
+    (void)PyStream::_validate_filepath(this->m_script_path, "PyStream::start.script", /*require_exec=*/false);
+
+
+    if ( !this->m_running.compare_exchange_strong(expected, true) )
+        { throw std::logic_error("PyStream::start: already running"); }
+
+
+    // Spawn child; translate “false” to a descriptive exception.
+    if ( !this->launch_process() )
+    {
+        this->m_running.store(false);
+    # ifdef _WIN32
+        throw std::runtime_error(std::string("PyStream::start: launch_process() failed: ") + _win32_last_error_string());
+    # else
+        const int e = errno;
+        throw std::system_error(e, std::system_category(), "PyStream::start: launch_process() failed");
+    # endif  //  _WIN32  //
+    }
+
+
+
+    //      2A.     ATTEMPT TO BEGIN THE "READER" THREAD.  [ IF THIS FAILS, ROLL-BACK CLEANLY ]...
+    try {
+        this->m_reader_thread = std::thread(&PyStream::reader_thread_func, this);
+    }
+    //
+    //      2B.     FAILURE TO SPAWN THE READER THREAD  [ EXCEPTION WAS THROWN ]...
+    //                  -- Terminate the child; close our ends (best-effort rollback).
+    catch (...)
+    {
+    # ifdef _WIN32
+        if (this->m_proc_info.hProcess)
+        {
+            ::TerminateProcess(this->m_proc_info.hProcess, 0);
+            ::WaitForSingleObject(this->m_proc_info.hProcess, PyStream::ms_PROCESS_TIMEOUT_MS);
+            ::CloseHandle(this->m_proc_info.hProcess);  this->m_proc_info.hProcess = nullptr;
+            ::CloseHandle(this->m_proc_info.hThread );  this->m_proc_info.hThread  = nullptr;
+        }
+        if (this->m_child_stdin_w )         { ::CloseHandle(this->m_child_stdin_w );  this->m_child_stdin_w  = nullptr; }
+        if (this->m_child_stdout_r)         { ::CloseHandle(this->m_child_stdout_r);  this->m_child_stdout_r = nullptr; }
+    # else
+        if (this->m_child_pid > 0)          { ::kill(this->m_child_pid, SIGTERM);  ::waitpid(this->m_child_pid, nullptr, 0);  this->m_child_pid = -1; }
+        if (this->m_child_stdin_fd  != -1)  { ::close(this->m_child_stdin_fd ); this->m_child_stdin_fd  = -1; }
+        if (this->m_child_stdout_fd != -1)  { ::close(this->m_child_stdout_fd); this->m_child_stdout_fd = -1; }
+    # endif  //  _WIN32  //
+    
+        this->m_running.store(false);
+        throw; // rethrow original thread exception
     }
 
     return true;
 }
-#else
-{
-    if ( m_running.load() )     { return false; }
-    if ( !launch_process() )    { return false; }
-    
-    m_running           .store(true);
-    m_reader_thread     = std::thread(&PyStream::reader_thread_func, this);
-    return true;
-}
+//
 #endif  //  PYSTREAM_REFACTOR  //
+
+
+
+//  "try_start"
+//
+[[nodiscard]] std::optional<uint32_t> PyStream::try_start(void) noexcept {
+    try             { return this->start();     }
+    catch (...)     { return std::nullopt;      }
+}
 
 
 
@@ -185,6 +340,7 @@ void PyStream::stop(void)
     //      1.      [ _WIN32 ] :    CANCEL THE BLOCKED "ReadFile" IN THE READER-THREAD (IF ANY)...
     if ( this->m_reader_thread.joinable() ) {
         ::CancelSynchronousIo( (HANDLE)this->m_reader_thread.native_handle() );     //  native_handle() is a HANDLE on Windows
+        this->m_reader_thread.join();                                              //  ** ensure reader is done before touching pipe handles **
     }
 
 
