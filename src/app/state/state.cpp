@@ -518,7 +518,7 @@ void AppState::log_startup_info(void) noexcept
 void AppState::log_shutdown_info(void) noexcept
 {
     Timestamp_t         end_time        = cblib::utl::get_timestamp();
-    auto                dt              = cblib::utl::format_elapsed_timestamp(end_time - m_notes[0].first);
+    auto                dt              = cblib::utl::format_elapsed_timestamp(end_time - m_notes[1].first);
     //
     auto                ending_log      = std::format(
           "[[CBApp]] PROGRAM TERMINATION RECORD...\n"

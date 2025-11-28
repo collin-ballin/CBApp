@@ -86,7 +86,7 @@ public:
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr size_t                 ms_BUFFER_SIZE                  = 128ULL;           //  NUM. OF DATA-PACKETS FROM CCOUNTER.
+    static constexpr size_t                 ms_BUFFER_SIZE                  = 512ULL;           //  NUM. OF DATA-PACKETS FROM CCOUNTER.
     static constexpr size_t                 ms_NUM                          = 15;               //  NUM. OF CHANNELS.
     static constexpr size_t                 ms_CMD_MSG_SIZE                 = 512ULL;           //  BUFFER-SIZE FOR MESSAGE TO PYSTREAM.        //  formerly: "ms_MSG_BUFFER_SIZE"
     //
@@ -102,8 +102,9 @@ public:
     friend class                            App;
     //
     //
-    using                                   buffer_type                     = cblib::RingBuffer<ImVec2, ms_BUFFER_SIZE>;    //  System-Wide Aliases.
-    //  using                                   cblib::utl::anonClock						    = std::chrono::steady_clock;
+    //  using                                   buffer_type                     = cblib::RingBuffer<ImVec2, ms_BUFFER_SIZE>;    //  System-Wide Aliases.
+    using                                   buffer_type                     = cblib::ndRingBuffer<ImVec2>;    //  System-Wide Aliases.
+    //  using                               cblib::utl::anonClock						    = std::chrono::steady_clock;
     //  using                               LabelFn                         = std::function<void(const char *)>     ;
     //
     //
@@ -156,9 +157,9 @@ protected:
     // *************************************************************************** //
     //
     //                                  COUNTER DATA:
-    std::array<buffer_type, ms_NUM>         m_buffers                       = {   };        //  RAW-DATA values for each counter.
-    std::array<buffer_type, ms_NUM>         m_avg_counts                    = {   };        //  AVERAGE values for each counter.
-    float                                   m_max_counts[ms_NUM]            = { 0.0f };     //  MAXIMUM values for each counter.
+    std::array<buffer_type, ms_NUM>         m_buffers                       = {      };     //  RAW-DATA values for each counter.
+    std::array<buffer_type, ms_NUM>         m_avg_counts                    = {      };     //  AVERAGE values for each counter.
+    std::array<float      , ms_NUM>         m_max_counts                    = { 0.0f };     //  MAXIMUM values for each counter.
     size_t                                  m_num_packets                   = 0ULL;
     //
     //
@@ -236,7 +237,8 @@ protected:
     //const char *       PYTHON_DUMMY_FPGA_FILEPATH          = "../../scripts/python/fpga_stream.py";
     //
     //
-    float                                   m_stream_timeout                = 0.25f;        //  seconds of silence → freeze
+    static constexpr float                  ms_TIMEOUT_DURATION             = 0.25f;        //  seconds of silence → freeze
+    float                                   m_stream_timeout                = 0.25f;        //  ...
     bool                                    m_streaming_active              = false;        //  derived each frame
     bool                                    m_streaming_prev                = false;        //  true on previous frame if data arrived
     bool                                    m_process_running               = false;
@@ -893,10 +895,32 @@ protected:
     // *************************************************************************** //
     //      2.C. |  MISC. UTILITY FUNCTIONS.
     // *************************************************************************** //
-    
-    //  "label"
-    //  inline void                         label                               (const char * text)
-    //  { utl::LeftLabel(text, this->ms_LABEL_WIDTH, this->ms_WIDGET_WIDTH); ImGui::SameLine(); };
+        
+        
+    //  "_allocate_buffers"
+    //
+    inline void                             _allocate_buffers                   (const size_t buffer_size=ms_BUFFER_SIZE) noexcept
+    {
+        //      1.      ALLOCATE HEAP-MEMORY FOR EACH BUFFER...
+        for (size_t i = 0ULL; i < CCounterApp::ms_NUM; ++i)
+        {
+            this->m_buffers[i]      .set_capacity(buffer_size);     //  1.  MAIN COUNTER DATA.
+            this->m_avg_counts[i]   .set_capacity(buffer_size);     //  2.  AVG-VALUE DATA.
+        }
+        
+        
+        {
+            const size_t    spb_bytes       = sizeof(buffer_type);       //  "spb" == "size-per-buffer"
+            const size_t    buff_bytes      = 2ULL * ( CCounterApp::ms_NUM * spb_bytes );
+            this->S.m_logger.info( std::format(
+                  "[[CCounter]] allocated {} buffers with {} elements each ({} bytes)"
+                , 2 * CCounterApp::ms_NUM
+                , buffer_size
+                , buff_bytes
+            ));
+        }
+        return;
+    }
 
 
 

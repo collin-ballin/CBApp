@@ -41,7 +41,7 @@
 #include "app/delegators/_controlbar.h"
 #include "app/delegators/_detail_view.h"
 //
-#include "app/delegators/_cb_debugger.h"
+#include "app/delegators/debug/cb_debugger.h"
 
 
 

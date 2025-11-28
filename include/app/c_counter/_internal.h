@@ -125,6 +125,7 @@ struct PerFrame_t {
     float           spark_now       = -1.0f;
 //
     bool            got_packet      = false;
+    bool            crawling        = false;
 //
 //
 //

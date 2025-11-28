@@ -26,10 +26,14 @@
 #ifndef _CBLIB_CONTAINERS_ENUMARRAY_H
 # include "templates/containers/utility/utility/_enum_array.h"
 #endif	//  _CBLIB_CONTAINERS_ENUMARRAY_H  //
-//
+
 #ifndef _CBLIB_CONTAINERS_RINGBUFFER_H
 # include "templates/containers/utility/utility/_ring_buffer.h"
 #endif	//  _CBLIB_CONTAINERS_RINGBUFFER_H  //
+
+#ifndef _CBLIB_CONTAINERS_NDRINGBUFFER_H
+# include "templates/containers/utility/utility/_ndring_buffer.h"
+#endif	//  _CBLIB_CONTAINERS_NDRINGBUFFER_H  //
 
 
 

@@ -31,6 +31,9 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void CCounterApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
+    static cblib::ndRingBuffer<float> test;
+    
+
     //      1.      INVOKE THE MAIN PER-FRAME GUI-UPDATE-LOOP FOR THE CCOUNTER APP...
     ImGui::Begin(uuid, p_open, flags);
         this->_Begin_IMPL();
@@ -219,11 +222,77 @@ inline void CCounterApp::_Begin_DetView_IMPL(void) noexcept
 //
 inline void CCounterApp::_MECH_per_frame_cache(void) noexcept
 {
+    PerFrame &  PF                  = this->m_perframe;
+
+
+
+    // 1) Stable time base (no manual accumulation)
+    PF.now                          = static_cast<float>(ImGui::GetTime());
+
+    //  m_stream_timeout = ms_TIMEOUT_DURATION + this->m_integration_window.Value();
+
+
+    // 2) Observe previous packet time, then fetch (may update m_last_packet_time)
+    const float prev_last            = this->m_last_packet_time;
+    this->_FetchData();
+    const bool got_packet            = (this->m_last_packet_time != prev_last);
+
+    // 3) Crawl hysteresis: keep crawling until a deadline past the expected next packet
+    //    NOTE: integration_window is the MINIMUM possible period; add slack + grace.
+    const float min_period           = this->m_integration_window.Value();   // seconds
+    const float k_slack              = 1.35f;                              // 1.2–1.5 typical
+    const float grace                = std::max(0.10f, 0.25f * min_period);// floor + fractional
+    static float s_crawl_until       = 0.0f;                               // TODO: make a member if preferred
+
+    if (this->m_process_running && this->m_counter_running && this->m_smooth_scroll) {
+        if (got_packet) {
+            // Extend the crawl window into the future
+            s_crawl_until          = this->m_last_packet_time + k_slack * min_period + grace;
+        }
+        // If we haven't seen a packet yet this run, leave s_crawl_until as-is;
+        // it will be set on the first arrival.
+    } else {
+        // Not in a state to crawl → stop immediately
+        s_crawl_until              = PF.now;
+    }
+
+    // 4) Final crawl gate (persist between packets until the deadline passes)
+    const bool crawling             = ( this->m_smooth_scroll
+                                     && this->m_counter_running
+                                     && this->m_process_running
+                                     && (PF.now <= s_crawl_until) );
+
+    // Expose for plot logic (axis limits / AutoFit gating)
+    PF.crawling                     = crawling;
+
+    // 5) Latch freeze reference exactly when crawl turns off
+    static bool s_was_crawling      = false;
+    if (!crawling && s_was_crawling) {
+        this->m_freeze_now          = PF.now;
+    }
+    s_was_crawling                  = crawling;
+
+    // 6) Spark timing
+    PF.spark_now                    = (!this->m_counter_running)          ? this->m_freeze_now
+                                    : ( this->m_smooth_scroll
+                                            ? (crawling ? PF.now : this->m_freeze_now)
+                                            :  this->m_last_packet_time );
+
+    // 7) “Streaming active” for UI: true while we’re within the crawl window
+    this->m_streaming_active        = (PF.now <= s_crawl_until);
+
+    // 8) Colormap cache
+    if (this->m_colormap_cache_invalid) {
+        this->_validate_colormap_cache();
+    }
+}
+
+/*{
     namespace           cc      = ccounter;
     PerFrame &          PF      = this->m_perframe;
     
     PF.now                      = static_cast<float>( ImGui::GetTime() );
-                                    
+            
     if ( m_process_running )     { PF.now += ImGui::GetIO().DeltaTime; }
     
     
@@ -244,7 +313,7 @@ inline void CCounterApp::_MECH_per_frame_cache(void) noexcept
     
     
     return;
-}
+}*/
 
 
 
@@ -319,6 +388,22 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
             }
         }
         //
+        //
+        //
+        //      1C.         START/STOP RECORDING DATA...
+        {
+            const bool  active   = m_counter_running;   //this->m_process_running;
+            //
+            ImGui::SameLine();
+            if ( utl::IconButton(   "##active"
+                                  , (active)       ? this->S.SystemColor.Green      : this->S.SystemColor.Red
+                                  , (active)       ? ICON_FA_CIRCLE                 : ICON_FA_CIRCLE
+                                  , scale ) )
+            {
+                //  ...
+            }
+        }
+        //
         this->S.PopFont();
         
         
@@ -372,7 +457,7 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
         //      X.1.    # OF PACKETS.
         ImGui::NextColumn();
         this->S.column_label("Packets Recieved:");
-        ImGui::Text("%06zu", this->m_num_packets);
+        ImGui::Text("%08zu", this->m_num_packets);
         
         
                 

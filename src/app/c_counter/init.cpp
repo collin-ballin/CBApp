@@ -85,8 +85,18 @@ void CCounterApp::init(void)
     }
     
     
+    //      0A.     ALLOCATE STORAGE IN EACH BUFFER...
+    this->_allocate_buffers(/*size=*/CCounterApp::ms_BUFFER_SIZE);
     
-    //      1.      ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
+    
+    //      0B.     Set the initial "freeze" limits so plot begins with sensible X-Limits.
+    this->m_perframe.xmin   = 0.0f;
+    this->m_freeze_xmin     = this->m_perframe.xmin;
+    this->m_perframe.xmax   = this->m_history_length.Value();
+    this->m_freeze_xmax     = this->m_perframe.xmax;
+    
+    
+    //      0C.     ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
     m_window_class[0].DockNodeFlagsOverrideSet                      = ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     m_window_class[1].DockNodeFlagsOverrideSet                      = ImGuiDockNodeFlags_HiddenTabBar;      //ImGuiDockNodeFlags_HiddenTabBar; //ImGuiDockNodeFlags_NoTabBar;
     
@@ -141,12 +151,8 @@ void CCounterApp::init(void)
     }
     
     
-    //      Set the initial "freeze" limits so plot begins with sensible X-Limits.
-    this->m_perframe.xmin   = 0.0f;
-    this->m_freeze_xmin     = this->m_perframe.xmin;
-    this->m_perframe.xmax   = this->m_history_length.Value();
-    this->m_freeze_xmax     = this->m_perframe.xmax;
     
+    //      5.      INITIALIZE ALL WIDGET-ROWS...
     this->init_ctrl_rows();
     
     
