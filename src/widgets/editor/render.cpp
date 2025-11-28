@@ -213,7 +213,6 @@ inline void Editor::_RENDER_highlights_channel([[maybe_unused]] std::span<const 
     const BrowserState &                    BS          = this->m_browser_S;
 
 
-
     //      1.      RENDER HIGHLIGHT FOR SELECTED OBJECT...
     for (size_t idx : m_sel.paths)
     {
