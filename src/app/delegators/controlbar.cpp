@@ -148,10 +148,10 @@ void ControlBar::BeginOLD( [[maybe_unused]] const char *            uuid,
     
     
     //  0.  SETUP NEW STYLE OPTIONS FOR CONTROL BAR WIDGETS...
-    ImGui::PushStyleVar(    ImGuiStyleVar_WindowPadding,    ms_WINDOW_PADDING       );
-    ImGui::PushStyleVar(    ImGuiStyleVar_FramePadding,     ms_FRAME_PADDING        );
-    ImGui::PushStyleVar(    ImGuiStyleVar_ItemSpacing,      ms_ITEM_PADDING         );
-    ImGui::PushStyleColor(  ImGuiCol_WindowBg,              S.m_controlbar_bg       );      // Push before ImGui::Begin()
+    ImGui::PushStyleVar     ( ImGuiStyleVar_WindowPadding   , ms_WINDOW_PADDING                             );
+    ImGui::PushStyleVar     ( ImGuiStyleVar_FramePadding    , ms_FRAME_PADDING                              );
+    ImGui::PushStyleVar     ( ImGuiStyleVar_ItemSpacing     , ms_ITEM_PADDING                               );
+    ImGui::PushStyleColor   ( ImGuiCol_WindowBg             , S.GetUIColor(app::UIColor::ControlBar_BG)     );      // Push before ImGui::Begin()
     
     constexpr ImGuiButtonFlags      BUTTON_FLAGS    = ImGuiButtonFlags_None;
     const float                     ROW_H           = ImGui::GetFrameHeightWithSpacing();   //  font_size + 2*FramePadding.y
@@ -269,10 +269,10 @@ void ControlBar::Begin( [[maybe_unused]] const char *           uuid,
     
     
     //  0.  SETUP NEW STYLE OPTIONS FOR CONTROL BAR WIDGETS...
-    ImGui::PushStyleVar(    ImGuiStyleVar_WindowPadding,    ms_WINDOW_PADDING       );
-    ImGui::PushStyleVar(    ImGuiStyleVar_FramePadding,     ms_FRAME_PADDING        );
-    ImGui::PushStyleVar(    ImGuiStyleVar_ItemSpacing,      ms_ITEM_PADDING         );
-    ImGui::PushStyleColor(  ImGuiCol_WindowBg,              S.m_controlbar_bg       );      // Push before ImGui::Begin()
+    ImGui::PushStyleVar     ( ImGuiStyleVar_WindowPadding   , ms_WINDOW_PADDING                             );
+    ImGui::PushStyleVar     ( ImGuiStyleVar_FramePadding    , ms_FRAME_PADDING                              );
+    ImGui::PushStyleVar     ( ImGuiStyleVar_ItemSpacing     , ms_ITEM_PADDING                               );
+    ImGui::PushStyleColor   ( ImGuiCol_WindowBg             , S.GetUIColor(app::UIColor::ControlBar_BG)     );      // Push before ImGui::Begin()
     
     const float                             ROW_H               = ImGui::GetFrameHeightWithSpacing();   //  font_size + 2*FramePadding.y
     

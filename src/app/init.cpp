@@ -495,10 +495,13 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
 
 
 
+
+
 // *************************************************************************** //
 //
 //
-//  1C.     TERTIARY INITIALIZATION FUNCTIONS...
+//
+//      1C.     TERTIARY INITIALIZATION FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -506,15 +509,25 @@ App::WinRenderFn App::dispatch_window_function(const Window & uuid)
 //
 void App::load(void)
 {
+    this->S.load();
+    
+    return;
+}
+//
+//
+/*{
 #ifndef __EMSCRIPTEN__
     [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
     
     
 #if defined(CBAPP_DISABLE_INI)
+//
     S.m_logger.info( std::format("[[CBApp]] use of .ini files is disabled for this build (#define CBAPP_DISABLE_INI)") );
     io.IniFilename                      = nullptr;
+//
 # else
+//
     io.IniFilename                      = cb::app::INI_FILEPATH;
     if ( utl::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH) ) {
         S.m_logger.debug( std::format("[[CBApp]] loaded init file, \"{}\"", cb::app::INI_FILEPATH) );
@@ -523,6 +536,7 @@ void App::load(void)
     {
         S.m_logger.warning( std::format("[[CBApp]] failed to load init file \"{}\" -- falling back to default .ini content", cb::app::INI_FILEPATH) );
     }
+//
 #endif  //  CBAPP_DISABLE_INI  //
     
     
@@ -532,7 +546,8 @@ void App::load(void)
     
 
 #ifdef CBAPP_LOAD_STYLE_FILE
-    //  1.  Load ImGui Style...
+//
+    //      1.      Load ImGui Style...
     if ( utl::LoadImGuiStyleFromDisk(style, cb::app::IMGUI_STYLE_FILEPATH) ) {
         S.m_logger.debug( std::format("[[CBApp]] ImGui style loaded from \"{}\"", cb::app::IMGUI_STYLE_FILEPATH) );
     }
@@ -541,23 +556,28 @@ void App::load(void)
         S.SetDarkMode();
     }
     //
-    //  2.  Load ImPlot Style...
-    if ( utl::LoadImPlotStyleFromDisk(ImPlot::GetStyle(), cb::app::IMPLOT_STYLE_FILEPATH) ) {
+    //      2.      Load ImPlot Style...
+    if ( utl::LoadImPlotStyleFromDisk(ImPlot::GetStyle(), cb::app::IMPLOT_STYLE_FILEPATH) )
+    {
         S.m_logger.debug( std::format("[[CBApp]] ImPlot style loaded from \"{}\"", cb::app::IMPLOT_STYLE_FILEPATH) );
     }
-    else {
+    else
+    {
         S.m_logger.warning( std::format("[[CBApp]] failed to load ImPlot style from \"{}\"", cb::app::IMPLOT_STYLE_FILEPATH) );
     }
+//
 # else
+//
     S.m_logger.info( std::format("[[CBApp]] use of external files to set application appearance style is disabled for this build (#ifndef CBAPP_LOAD_STYLE_FILE)") );
     S.SetDarkMode();
+//
 #endif  //  CBAPP_LOAD_STYLE_FILE  //
 
 
 
 #endif  //  __EMSCRIPTEN__  //
     return;
-}
+}*/
 
 
 //  "init_asserts"
@@ -570,20 +590,22 @@ bool App::init_asserts(void)
     const size_t                    N_WINDOWS           = static_cast<size_t>(Window::Count);
     
 
-    //  1.  ASSERT THAT  #define ImDrawIdx unsigned int  IS CORRECTLY USED IN ALL TRANSLATION UNITS...
+    //      1.      ASSERT THAT  #define ImDrawIdx unsigned int  IS CORRECTLY USED IN ALL TRANSLATION UNITS...
     IM_ASSERT( sizeof(ImDrawIdx) >= 4               && error::ASSERT_32BIT_IMDRAWIDX );
     
-    //  2.  ASSERT THAT  #define IMGUI_USE_WCHAR32  IS CORRECTLY USED IN ALL TRANSLATION UNITS...
+    //      2.      ASSERT THAT  #define IMGUI_USE_WCHAR32  IS CORRECTLY USED IN ALL TRANSLATION UNITS...
     IM_ASSERT( sizeof(ImWchar) == 4                 && error::ASSERT_32BIT_WCHAR );
     
     
     
-    //  3.  ASSERT THAT ALL FONTS ARE VALID...
-    for (int i = 0; i < static_cast<int>(Font::Count); ++i)
+    //      3.      ASSERT THAT ALL FONTS ARE VALID...
+    for (int i = 0; i < static_cast<int>(Font::Count); ++i) {
         IM_ASSERT( m_fonts[static_cast<Font>(i)] );
+    }
 
-    //  4.  ASSERT THAT ALL WINDOW CALLBACK FUNCTIONS ARE VALID...
-    for (std::size_t i = S.ms_WINDOWS_BEGIN; i < N_WINDOWS; ++i) {
+    //      4.      ASSERT THAT ALL WINDOW CALLBACK FUNCTIONS ARE VALID...
+    for (std::size_t i = S.ms_WINDOWS_BEGIN; i < N_WINDOWS; ++i)
+    {
         const app::WinInfo & winfo      = S.m_windows[ static_cast<Window>(i) ];
         IM_ASSERT( winfo.render_fn       && error::ASSERT_INVALID_WINDOW_RENDER_FUNCTIONS );
     }
@@ -601,7 +623,8 @@ bool App::init_asserts(void)
 // *************************************************************************** //
 //
 //
-//  3.      CLEAN-UP  | DEFAULT DESTRUCTOR, "destroy()", ETC...
+//
+//      3.      CLEAN-UP  | DEFAULT DESTRUCTOR, "destroy()", ETC...
 // *************************************************************************** //
 // *************************************************************************** //
 

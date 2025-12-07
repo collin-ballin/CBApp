@@ -79,7 +79,7 @@
 //#define         __CBAPP_DEBUG__                             1                 //  Enable delay before starting int main (bug-fix for X-Code IDE issue).
 //  #define         __CBAPP_BUILD_CCOUNTER_APP__                    1               //  BUILD FOR COINCIDENCE COUNTER...
 //  #define         __CBAPP_BUILD_FDTD_APP__                        1               //  BUILD FOR FDTD APP...
-#define         __CBAPP_BUILD_EDITOR_APP__                  1                   //  BUILD FOR EDITOR / "ILLUSTRATOR" APP...
+//  #define         __CBAPP_BUILD_EDITOR_APP__                  1                   //  BUILD FOR EDITOR / "ILLUSTRATOR" APP...
 
 
 //  ENFORCE THAT THERE ARE NOT MULTIPLE BUILDS ARE #DEFINED...
@@ -118,7 +118,11 @@
 #define     CBAPP_USE_FONTSCALE_DPI                         1           //  Use "S.m_dpi_fontscale" SEPERATE FROM "S.m_dpi_scale".
 
 //#define     CBAPP_DISABLE_INI                               1           //  Prevent use of ".ini" file to save/recall data.
-#define     CBAPP_LOAD_STYLE_FILE                           1           //  Prevent use of ".json" file to save/recall "ImGui" style data.
+//  #define     CBAPP_LOAD_STYLE_FILE                           1           //  Prevent use of ".json" file to save/recall "ImGui" style data.
+//
+#define     CBAPP_ENABLE_IMGUI_STYLE_FILE                   1           //  Allow the use of external ".json" files to save/recall "ImGui" style data.      formerly: "CBAPP_LOAD_STYLE_FILE"
+#define     CBAPP_ENABLE_IMPLOT_STYLE_FILE                  1           //  Allow ".json" files to save/recall "ImPlot" style data.
+
 
 #if !( defined(_WIN32) || defined(MINGW) )
     # define     CBAPP_DISABLE_TERMINAL_COLORS              1           //  DISABLE ANSI Colors for LOGGER OUTPUT.

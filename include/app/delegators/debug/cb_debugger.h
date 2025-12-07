@@ -222,6 +222,18 @@ protected:
     //
     //
     // *************************************************************************** //
+    //      "Generic" TESTING FUNCTIONS.        |   "generic.cpp" ...
+    // *************************************************************************** //
+    void                                TestGeneric                         (void) noexcept;
+    //
+    inline void                             _generic_1                          (const ImGuiID )          noexcept;
+    inline void                             draw_docked_window_debug            (ImGuiID )          const noexcept;
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
     //      "Orchid" TESTING FUNCTIONS.         |   "unit_testing.cpp" ...
     // *************************************************************************** //
     void                                TestOrchid                          (void) noexcept;

@@ -449,7 +449,8 @@ protected:
             
             
         //      2.      FIRST-FRAME INITIALIZATIONS...
-        if (first_frame) [[unlikely]] {
+        if (first_frame) [[unlikely]]
+        {
             this->InitDockspace();
         }// END OF "first_frame"...
 
@@ -464,14 +465,16 @@ protected:
     {
     
         //      0.1.    END OF FIRST-FRAME INITIALIZATIONS (SET THE INITIAL WINDOW FOCUS)...
-        if (first_frame) [[unlikely]] {
+        if (first_frame) [[unlikely]]
+        {
             first_frame = false;
             ImGui::SetWindowFocus( S.GetCurrentAppletName() );
         }
 
 
         //      1.2.    RE-DRAW THE DOCKING SPACE...
-        if (S.m_rebuild_dockspace) [[unlikely]] {
+        if (S.m_rebuild_dockspace) [[unlikely]]
+        {
             this->RebuildDockLayout();
             S.m_rebuild_dockspace = false;
         }

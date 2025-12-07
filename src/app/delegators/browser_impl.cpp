@@ -2432,20 +2432,23 @@ struct BrowserData
 //
 //
 //
-//  ...
+//      ...
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "DisplayBrowserInterface"
+//  "DisplayBrowDisplayBrowserTabserInterface"
 //
-void Browser::DisplayBrowserInterface(void)
+void Browser::DisplayBrowserTab(void) noexcept
 {
     //  display_table_demo();
     static bool                         first_frame = true;
     static BrowserData                  browser_data;
     static ExampleAppPropertyEditor     browser;
     
-    if (first_frame) {
+    
+    
+    if (first_frame)
+    {
         first_frame = false;
         if (browser_data.data == NULL)
             browser_data.data = ExampleTree_CreateDemoTree();
@@ -2453,23 +2456,21 @@ void Browser::DisplayBrowserInterface(void)
         
 
     //ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,  ms_CHILD_BORDER2);
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,        S.m_browser_child_rounding);
     //
     //
     //
-        ImGui::PushStyleColor(ImGuiCol_ChildBg,             S.m_browser_left_bg);
+        ImGui::PushStyleColor( ImGuiCol_ChildBg     , this->S.GetUIColor(app::UIColor::Browser_LeftBG) );
             browser.draw_collections_column(browser_data.data);         //  LEFT SIDE :     Categories / Groups / Collections...
         ImGui::PopStyleColor();
         //
         ImGui::SameLine();
         //
-        ImGui::PushStyleColor(ImGuiCol_ChildBg,             S.m_browser_right_bg);
+        ImGui::PushStyleColor( ImGuiCol_ChildBg     , this->S.GetUIColor(app::UIColor::Browser_RightBG) );
             browser.draw_assets_column(browser_data.data);              //  RIGHT SIDE :    Selected Item / Asset...
         ImGui::PopStyleColor();
     //
     //
     //
-    ImGui::PopStyleVar();   //  ImGuiStyleVar_ChildRounding
     
     
     return;

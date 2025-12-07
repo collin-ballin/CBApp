@@ -21,21 +21,20 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
-//  1.      INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
+//      1.      INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
 // *************************************************************************** //
 // *************************************************************************** //
 
 //  Default Constructor.
 //
 Browser::Browser(app::AppState & src)
-    : S(src)                        { }
+    : S(src)                        {   }
 
 
 //  "initialize"
 //
 void Browser::initialize(void) {
-    if (this->m_initialized)
-        return;
+    if (this->m_initialized)        { return; }
         
     this->init();
     return;
@@ -59,7 +58,23 @@ Browser::~Browser(void)             { this->destroy(); }
 
 //  "destroy"       | protected
 //
-void Browser::destroy(void)         { }
+void Browser::destroy(void)         {   }
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 1.  "INIT." ]].
+
+
+
+
+
+
+
+
 
 
 
@@ -67,7 +82,8 @@ void Browser::destroy(void)         { }
 // *************************************************************************** //
 //
 //
-//  1B.     PUBLIC MEMBER FUNCTIONS...
+//
+//      2.A.    MAIN PUBLIC API...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -77,41 +93,53 @@ void Browser::Begin([[maybe_unused]] const char *       uuid,
                     [[maybe_unused]] bool *             p_open,
                     [[maybe_unused]] ImGuiWindowFlags   flags)
 {
-    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
-    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &       style           = ImGui::GetStyle();
+    
+    
+    
+    //  this->SettingsWindow();
+    
+    
+    
     this->S.PushFont(Font::Small);
     
     
     
     //      1.      PUSH THE STYLE ITEMS FOR THIS WINDOW...
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, S.m_browser_bg);   // Push before ImGui::Begin()
+    ImGui::PushStyleColor   ( ImGuiCol_WindowBg                 , this->S.GetUIColor(app::UIColor::Browser_BG)          );      //  COLORS
+    ImGui::PushStyleColor   ( ImGuiCol_ChildBg                  , this->S.GetUIColor(app::UIColor::Browser_ChildBG)     );
+    //
+    //
+    ImGui::PushStyleVar     ( ImGuiStyleVar_ChildRounding       , this->S.m_browser_child_rounding                      );      //  DIMENSIONS
+    ImGui::PushStyleVar     ( ImGuiStyleVar_ChildBorderSize     , this->S.m_browser_child_bs                            );
+    //
+    ImGui::PushStyleVar     ( ImGuiStyleVar_ItemSpacing         , this->S.m_browser_item_spacing                        );
+    ImGui::PushStyleVar     ( ImGuiStyleVar_WindowPadding       , this->S.m_browser_window_padding                      );
+    //
+    //
     ImGui::SetNextWindowClass( &this->m_window_class );
     //
     //
     //      2.      BEGIN "BROWSER" WINDOW...
     ImGui::Begin(uuid, p_open, flags);
-        ImGui::PopStyleColor();
     //
-    //
-    //
-    //  //          2.1.    DETERMINE WINDOW COLLAPSE.
-        if (this->S.m_show_browser_window)
-        {
-            if (this->S.m_show_system_preferences) {
-                this->Display_Preferences_Menu();
-            }
-            else {
-                this->DisplayBrowserInterface();
-            }
-        }
-        else
-        {
-            //  ...
-        }
-    //
-    //
+        ImGui::PopStyleColor();     //  ImGuiCol_WindowBg
+        ImGui::PopStyleVar();       //  ImGuiStyleVar_WindowPadding
+        //
+        //
+        //
+        this->_Begin_IMPL();
+        //
+        //
+        //
+        ImGui::PopStyleColor    (1);        //  ImGuiCol_ChildBg
+        ImGui::PopStyleVar      (3);        //  ImGuiStyleVar_ItemSpacing       , ImGuiStyleVar_ChildBorderSize         , ImGuiStyleVar_ChildRounding
     //
     ImGui::End();   //  END WINDOW...
+    
+    
+    
     
     
     
@@ -120,71 +148,267 @@ void Browser::Begin([[maybe_unused]] const char *       uuid,
 }
 
 
-
-
-
-
-// *************************************************************************** //
+//  "_Begin_IMPL"
 //
-//
-//
-//  3B.     PROTECTED MEMBER FUNCTIONS (FOR SYSTEM PREFERENCES)...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "Display_Preferences_Menu"
-//
-void Browser::Display_Preferences_Menu(void)
+void Browser::_Begin_IMPL(void)
 {
-    [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO();
     [[maybe_unused]] ImGuiStyle &       style           = ImGui::GetStyle();
     
     
-    //ImGui::Dummy( TABBAR_SPACE );  //  Make space for the CLOSE-SIDEBAR button...
-    ImGui::SeparatorText("System Preferences");
-
-    //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Appearance Mode")) {
-        this->disp_appearance_mode();
-        ImGui::TreePop();
-    }
     
-    if (ImGui::TreeNode("Font Selection")) {
-        this->disp_font_selector();
-        ImGui::TreePop();
-    }
+    if (!this->S.m_show_browser_window)     { return; }
     
-    if (ImGui::TreeNode("Color Palette")) {
-        this->disp_color_palette();
-        ImGui::TreePop();
-    }
+    
+    
 
-
-
-
-    //  const ImVec2            BUTTON_SIZE     = ImVec2(0, 40);
-    //  static bool             home            = true;
-    //  if ( ImGui::Button( (home)
-    //                  ? "Detail View##ControlBar" : "Home ##ControlBar", ImVec2(120, BUTTON_SIZE.y )) )
-    //  {
-    //      home = !home;
+        
+        
+    //          2.1.    PER-FRAME CACHE...
+    this->_perframe_cache();
+    
+    
+    
+    
+    
+    
+    //          2.1.    DISPLAY PRIMARY SIDE-BAR CONTENT...
     //
-    //      if (home) {
-    //          S.DockAtHome( S.m_windows[Window::CustomRendering].get_uuid() );
-    //      }
-    //      else {
-    //          S.DockAtDetView( S.m_windows[Window::CustomRendering].get_uuid() );
-    //      }
-    //  }
+    //                  2.1A.       SYSTEM-PREFERENCES TAB.
+    if ( this->S.m_show_system_preferences )
+    {
+        this->DisplaySystemPreferencesTab();
+    }
+    //                  2.1B.       BROWSER TAB.
+    else
+    {
+        this->DisplayBrowserTab();
+    }
     
     
     
-    this->disp_performance_metrics();
+    
+    
+    
+    //          2.2.    DISPLAY THE `INFO` TAB...
+    //
+    this->DisplayInfoTab();
+        
+        
+        
     
     return;
 }
 
 
+
+//  "SettingsWindow"
+//
+void Browser::SettingsWindow(void)
+{
+    static bool         open                    = true;
+    constexpr float     cv_CHILD_ROUNDING_MIN   = 0.0f;
+    constexpr float     cv_CHILD_ROUNDING_MAX   = 30.0f;
+
+    constexpr float     cv_BORDER_SIZE_MIN      = 0.0f;
+    constexpr float     cv_BORDER_SIZE_MAX      = 10.0f;
+
+    constexpr float     cv_ITEM_SPACING_MIN     = 0.0f;
+    constexpr float     cv_ITEM_SPACING_MAX     = 35.0f;
+    
+    
+    
+    ImGui::SetNextWindowSize(ImVec2(600, 350), ImGuiCond_Once);
+    ImGui::Begin("Browser Values", &open, ImGuiWindowFlags_None);
+    //
+    //
+        ImGui::TextUnformatted("1. Browser Window:");
+        ImGui::SliderFloat2("Window Padding", (float*)&S.m_browser_window_padding,
+                            cv_ITEM_SPACING_MIN, cv_ITEM_SPACING_MAX, "%.1f");
+        ImGui::SliderFloat2("Window Item-Spacing", (float*)&S.m_browser_item_spacing,
+                            cv_ITEM_SPACING_MIN, cv_ITEM_SPACING_MAX, "%.1f");
+        //
+        ImGui::SliderFloat("Child Rounding", &S.m_browser_child_rounding,
+                           cv_CHILD_ROUNDING_MIN, cv_CHILD_ROUNDING_MAX, "%.1f");
+        ImGui::SliderFloat("Border Size", &S.m_browser_child_bs,
+                           cv_BORDER_SIZE_MIN, cv_BORDER_SIZE_MAX, "%.1f");
+        //
+        //
+        //
+        ImGui::NewLine();
+        ImGui::TextUnformatted("2. Child Window:");
+        ImGui::SliderFloat2("Info Window Padding", (float*)&S.m_info_window_padding,
+                            cv_ITEM_SPACING_MIN, cv_ITEM_SPACING_MAX, "%.1f");
+        ImGui::SliderFloat2("Info Item-Spacing", (float*)&S.m_info_item_spacing,
+                            cv_ITEM_SPACING_MIN, cv_ITEM_SPACING_MAX, "%.1f");
+        //
+        ImGui::SliderFloat("Info Rounding", &S.m_info_child_rounding,
+                           cv_CHILD_ROUNDING_MIN, cv_CHILD_ROUNDING_MAX, "%.1f");
+        ImGui::SliderFloat("Info Border Size", &S.m_info_child_bs,
+                           cv_BORDER_SIZE_MIN, cv_BORDER_SIZE_MAX, "%.1f");
+        //
+        //
+        //
+        ImGui::NewLine();
+        ImGui::TextUnformatted("3. Common Values:");
+    //
+    //
+    ImGui::End();
+    return;
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2A.  "MAIN PUBLIC API" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.B.    PRIMARY ORCHESTRATOR FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "DisplaySystemPreferencesTab"
+//
+void Browser::DisplaySystemPreferencesTab(void) noexcept
+{
+    [[maybe_unused]] ImGuiIO &          io              = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &       style           = ImGui::GetStyle();
+    
+    
+    
+    ImGui::SeparatorText("System Preferences");
+
+
+
+    //      SECTION:    TEXT
+    if ( ImGui::TreeNode("Appearance Mode") )
+    {
+        this->disp_appearance_mode();
+        ImGui::TreePop();
+    }
+    //
+    //      SECTION:    TEXT
+    if ( ImGui::TreeNode("Font Selection") )
+    {
+        this->disp_font_selector();
+        ImGui::TreePop();
+    }
+    //
+    //      SECTION:    TEXT
+    if ( ImGui::TreeNode("Color Palette") )
+    {
+        this->disp_color_palette();
+        ImGui::TreePop();
+    }
+    
+    
+    
+    //  this->disp_performance_metrics();
+    
+    return;
+}
+
+//  "DisplayInfoTab"
+//
+void Browser::DisplayInfoTab(void) noexcept
+{
+
+
+    ImGui::PushStyleVar     ( ImGuiStyleVar_ChildRounding       , this->S.m_info_child_rounding                 );
+    ImGui::PushStyleVar     ( ImGuiStyleVar_ChildBorderSize     , this->S.m_info_child_bs                       );
+    //
+    ImGui::PushStyleVar     ( ImGuiStyleVar_ItemSpacing         , this->S.m_info_item_spacing                   );
+    ImGui::PushStyleVar     ( ImGuiStyleVar_WindowPadding       , this->S.m_info_window_padding                 );
+    
+    
+    //      CASE 0 :    DISPLAY THE CHILD WINDOW...
+    if ( ImGui::BeginChild("ChildRegion", ImVec2(0, 200), true, ImGuiWindowFlags_None) )
+    {
+        ImGui::Text("Inside the child window.");
+        ImGui::Button("Button A");
+        ImGui::Button("Button B");
+    }
+        
+        
+        
+    ImGui::EndChild();
+    ImGui::PopStyleVar(4);       //  ImGuiStyleVar_ChildRounding        , ImGuiStyleVar_ChildBorderSize     , ImGuiStyleVar_ItemSpacing       , ImGuiStyleVar_WindowPadding
+
+    return;
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2B.  "PRIMARY ORCHESTRATORS" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.C.      "BROWSER" TAB STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2C.  "`BROWSER` TAB" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.D.      "SYSTEM PREFERENCES" TAB STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "disp_appearance_mode"
 //
@@ -202,7 +426,7 @@ void Browser::disp_appearance_mode(void)
 
 
 
-    //  1.  COMBO-BOX FOR APP COLOR STYLE.
+    //      1.      COMBO-BOX FOR APP COLOR STYLE.
     if (ImGui::Combo( "##Browser_SetAppColorStyle",
                       &app_idx,
                       S.ms_APP_COLOR_STYLE_NAMES.data(),                        //  Names table
@@ -212,7 +436,7 @@ void Browser::disp_appearance_mode(void)
     }
 
 
-    //  2.  COMBO-BOX FOR PLOT COLOR STYLE.
+    //      2.      COMBO-BOX FOR PLOT COLOR STYLE.
     if (ImGui::Combo( "##Browser_SetPlotColorStyle",
                       &plot_idx,
                       S.ms_PLOT_COLOR_STYLE_NAMES.data(),                       //  Names table
@@ -247,41 +471,6 @@ void Browser::disp_appearance_mode(void)
 }
 
 
-
-/*
-void Demo_Config() {
-    ImGui::ShowFontSelector("Font");
-    ImGui::ShowStyleSelector("ImGui Style");
-    ImPlot::ShowStyleSelector("ImPlot Style");
-    ImPlot::ShowColormapSelector("ImPlot Colormap");
-    ImPlot::ShowInputMapSelector("Input Map");
-    ImGui::Separator();
-    ImGui::Checkbox("Use Local Time", &ImPlot::GetStyle().UseLocalTime);
-    ImGui::Checkbox("Use ISO 8601", &ImPlot::GetStyle().UseISO8601);
-    ImGui::Checkbox("Use 24 Hour Clock", &ImPlot::GetStyle().Use24HourClock);
-    ImGui::Separator();
-    if (ImPlot::BeginPlot("Preview")) {
-        static double now = (double)time(nullptr);
-        ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Time);
-        ImPlot::SetupAxisLimits(ImAxis_X1, now, now + 24*3600);
-        for (int i = 0; i < 10; ++i) {
-            double x[2] = {now, now + 24*3600};
-            double y[2] = {0,i/9.0};
-            ImGui::PushID(i);
-            ImPlot::PlotLine("##Line",x,y,2);
-            ImGui::PopID();
-        }
-        ImPlot::EndPlot();
-    }
-}
-*/
-
-
-
-
-
-
-
 //  "disp_font_selector"
 //
 void Browser::disp_font_selector(void)
@@ -291,55 +480,159 @@ void Browser::disp_font_selector(void)
 }
 
 
+//  "disp_ui_scale"
+//
+void Browser::disp_ui_scale(void)
+{
 
+
+
+    if ( ImGui::BeginTabItem("Fonts") )
+    {
+        ImGuiIO &       io      = ImGui::GetIO();
+        ImFontAtlas *   atlas   = io.Fonts;
+        
+        utl::HelpMarker("Read FAQ and docs/FONTS.md for details on font loading.");
+        ImGui::ShowFontAtlas(atlas);
+
+        // Post-baking font scaling. Note that this is NOT the nice way of scaling fonts, read below.
+        // (we enforce hard clamping manually as by default DragFloat/SliderFloat allows CTRL+Click text to get out of bounds).
+        const float     MIN_SCALE       = 0.3f;
+        const float     MAX_SCALE       = 2.0f;
+        static float    window_scale    = 1.0f;
+        
+        utl::HelpMarker(
+            "Those are old settings provided for convenience.\n"
+            "However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, "
+            "rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.\n"
+            "Using those settings here will give you poor quality results."
+        );
+        
+        
+        ImGui::PushItemWidth(ImGui::GetFontSize() * 8);
+        
+        
+        if ( ImGui::DragFloat("window scale", &window_scale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", ImGuiSliderFlags_AlwaysClamp) ) {  //  Scale only this window
+            ImGui::SetWindowFontScale(window_scale);
+        }
+        
+        ImGui::DragFloat("global scale", &io.FontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", ImGuiSliderFlags_AlwaysClamp); // Scale everything
+        ImGui::PopItemWidth();
+        ImGui::EndTabItem();
+    }
+    
+    return;
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2D.  "`SYSTEM PREFERENCES` TAB" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.E.      "INFO"-CONSOLE TAB STUFF...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2E.  "`INFO` TAB" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.F.      STAND-ALONE TOOLS...
+// *************************************************************************** //
+// *************************************************************************** //
 
 //  "disp_color_palette"
 //
 void Browser::disp_color_palette(void)
 {
     ImGuiIO &                       io              = ImGui::GetIO(); (void)io;
-    ImGuiStyle &                    style           = ImGui::GetStyle();
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
     static ImVec4                   color           = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
     static ImGuiColorEditFlags      base_flags      = ImGuiColorEditFlags_None;
 
 
-    //  1.  COLOR EDITORS...
+
+    //      1.      COLOR EDITORS...
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Colors"))
+    if ( ImGui::TreeNode("Colors") )
     {
-        static ImVec4 &     def_win_bg            = style.Colors[ImGuiCol_WindowBg];
-        
-        ImGui::ColorEdit4("GLFW Window Bg##2f",         (float*)&S.m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Dockspace Bg##2f",           (float*)&S.m_glfw_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Sidebar Menu Bg##2f",        (float*)&S.m_browser_bg,    ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Main Window Bg##2f",         (float*)&S.m_main_bg,       ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        ImGui::ColorEdit4("Default Window Bg##2f",      (float*)&def_win_bg,        ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float);
-        
+        this->S.m_settings._display_color_palette();
         ImGui::TreePop();
     }
     
     
     
-    //  2.  COLOR PALLETE...
+    //      2.      COLOR PALLETE...
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Color Tool"))
+    if ( ImGui::TreeNode("Color Tool") )
     {
-        ImGui::ColorEdit3("MyColor##1", (float*)&color, base_flags);
-        ImGui::ColorEdit4("MyColor##2", (float*)&color, ImGuiColorEditFlags_DisplayHSV | base_flags);
+        constexpr const size_t      NUM_PALETTE     = 32ULL;
+    
+    
+    
+        ImGui::ColorEdit3("MyColor##1"  , (float*)&color    , base_flags);
+        ImGui::ColorEdit4("MyColor##2"  , (float*)&color    , ImGuiColorEditFlags_DisplayHSV | base_flags);
 
-        ImGui::ColorEdit4("MyColor##2f", (float*)&color, ImGuiColorEditFlags_Float | base_flags);
-        ImGui::ColorEdit4("MyColor##3", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | base_flags);
+        ImGui::ColorEdit4("MyColor##2f" , (float*)&color    , ImGuiColorEditFlags_Float | base_flags);
+        ImGui::ColorEdit4("MyColor##3"  , (float*)&color    , ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | base_flags);
         
 
         // Generate a default palette. The palette will persist and can be edited.
-        static bool saved_palette_init = true;
-        static ImVec4 saved_palette[32] = {};
-        if (saved_palette_init)
+        static bool         saved_palette_init              = true;
+        static  ImVec4      saved_palette[NUM_PALETTE]      = {   };
+        
+        if ( saved_palette_init )
         {
-            for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+            for (size_t n = 0; n < NUM_PALETTE; ++n)
             {
-                ImGui::ColorConvertHSVtoRGB(n / 31.0f, 0.8f, 0.8f,
-                    saved_palette[n].x, saved_palette[n].y, saved_palette[n].z);
+                ImGui::ColorConvertHSVtoRGB(
+                      n / 31.0f
+                    , 0.8f
+                    , 0.8f
+                    , saved_palette[n].x
+                    , saved_palette[n].y
+                    , saved_palette[n].z
+                );
+                //
                 saved_palette[n].w = 1.0f; // Alpha
             }
             saved_palette_init = false;
@@ -351,42 +644,6 @@ void Browser::disp_color_palette(void)
 
     return;
 }
-
-
-//  "disp_ui_scale"
-//
-void Browser::disp_ui_scale(void) {
-
-    if (ImGui::BeginTabItem("Fonts"))
-    {
-        ImGuiIO& io = ImGui::GetIO();
-        ImFontAtlas* atlas = io.Fonts;
-        utl::HelpMarker("Read FAQ and docs/FONTS.md for details on font loading.");
-        ImGui::ShowFontAtlas(atlas);
-
-        // Post-baking font scaling. Note that this is NOT the nice way of scaling fonts, read below.
-        // (we enforce hard clamping manually as by default DragFloat/SliderFloat allows CTRL+Click text to get out of bounds).
-        const float MIN_SCALE = 0.3f;
-        const float MAX_SCALE = 2.0f;
-        utl::HelpMarker(
-            "Those are old settings provided for convenience.\n"
-            "However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, "
-            "rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.\n"
-            "Using those settings here will give you poor quality results.");
-        static float window_scale = 1.0f;
-        ImGui::PushItemWidth(ImGui::GetFontSize() * 8);
-        if (ImGui::DragFloat("window scale", &window_scale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", ImGuiSliderFlags_AlwaysClamp)) // Scale only this window
-            ImGui::SetWindowFontScale(window_scale);
-        ImGui::DragFloat("global scale", &io.FontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", ImGuiSliderFlags_AlwaysClamp); // Scale everything
-        ImGui::PopItemWidth();
-
-        ImGui::EndTabItem();
-    }
-    
-    return;
-}
-
-
 
 
 //  "disp_performance_metrics"
@@ -571,6 +828,52 @@ void Browser::disp_performance_metrics(void) {
     
     return;
 }
+
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2F.  "STAND-ALONE TOOLS" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.X.      MISC. / UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_perframe_cache"
+//
+inline void Browser::_perframe_cache(void) noexcept
+{
+    this->m_avail = ImGui::GetContentRegionAvail();
+
+    return;
+}
+
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2X.  "MISC. / UTILITY" ]].
 
 
 

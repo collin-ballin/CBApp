@@ -463,19 +463,6 @@ struct TaskState_t
     // *************************************************************************** //
     //      2.B. |  UTILITY FUNCTIONS.
     // *************************************************************************** //
-    
-    //  "_OLD_current_task_name"
-    inline const char *                 _OLD_current_task_name              (void) {
-        //  if ( this->m_current_task == Applet::Undefined )
-        //  {
-        //      if ( this->m_nav_window_name.empty() )
-        //      { this->m_nav_window_name   = std::string( (this->m_nav_window) ? this->m_nav_window->Name : "NULL"); }
-        //
-        //      return this->m_nav_window_name.c_str();
-        //  }
-
-        return this->m_applets[ static_cast<size_t>(this->m_current_task) ]->c_str();
-    }
 
     //  "get_dock_node_vis_text"
     inline const char *                 get_dock_node_vis_text              (const ImGuiDockNode * node)
@@ -509,10 +496,7 @@ struct TaskState_t
         //
         //
         ImGuiWindow *               vis_win                 = this->get_nav_window();
-        const char *                vis                     = (vis_win) ? vis_win->Name     : nullptr;
-        //
-        // const char *                vis                     = this->get_dock_node_vis_text( this->m_main_node );
-        //
+        const char *                vis                     = (vis_win)     ? vis_win->Name     : nullptr;
         const char *                name                    = this->GetCurrentAppletName();
         bool                        match                   = false;
         bool                        need_to_update          = false;
@@ -543,7 +527,7 @@ struct TaskState_t
                         this->m_und_task_name.clear();
                     }
                 }
-                
+                //
                 //  CASE 3 :    NO MATCH---A NON-NAMED WINDOW IS OPEN...
                 if ( !match ) {
                     this->m_nav_window_name       = std::string(cblib::utl::fmt_imgui_string( vis_win->Name, ms_TASK_NAME_LIMIT ));

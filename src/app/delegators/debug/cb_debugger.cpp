@@ -96,7 +96,7 @@ void CBDebugger::destroy(void)              {   }
 // *************************************************************************** //
 
 //  "Begin"
-//
+/*
 void CBDebugger::Begin([[maybe_unused]] const char *        uuid,
                        [[maybe_unused]] bool *              p_open,
                        [[maybe_unused]] ImGuiWindowFlags    flags)
@@ -122,6 +122,41 @@ void CBDebugger::Begin([[maybe_unused]] const char *        uuid,
     
     return;
 }
+*/
+
+
+
+//  "Begin"
+//
+void CBDebugger::Begin([[maybe_unused]] const char *        uuid,
+                       [[maybe_unused]] bool *              p_open,
+                       [[maybe_unused]] ImGuiWindowFlags    flags)
+{
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+
+    
+    //      2.      CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
+    ImGui::SetNextWindowClass( &this->m_window_class );
+    ImGui::Begin(uuid, p_open, flags);
+    //
+    //
+        this->Begin_IMPL();
+    //
+    //
+    ImGui::End();
+    
+
+    
+    return;
+}
+
+
+
+
+
+
+
 
 
 
@@ -146,7 +181,7 @@ void CBDebugger::Begin([[maybe_unused]] const char *        uuid,
 //
 //
 //
-//      X.      "MAIN UI FUNCTIONS"...
+//      2.      "MAIN UI FUNCTIONS"...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -154,11 +189,17 @@ void CBDebugger::Begin([[maybe_unused]] const char *        uuid,
 //
 inline void CBDebugger::Begin_IMPL(void)
 {
-
-
+    ImGui::SeparatorText("CBDebugger..."); ImGui::NewLine();
+    
+    
+    
+    this->TestGeneric();
+    
+    
+    
     //  this->TestOrchid();
-
-    this->TestndRingBuffer();
+    //
+    //  this->TestndRingBuffer();
 
     return;
 }
@@ -170,7 +211,7 @@ inline void CBDebugger::Begin_IMPL(void)
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END [[ X.  "MAIN UI FUNCTIONS" ]].
+// *************************************************************************** //   END [[ 2.  "MAIN UI FUNCTIONS" ]].
 
 
 

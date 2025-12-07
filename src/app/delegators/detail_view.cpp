@@ -56,7 +56,7 @@ enum class TabHostMode {
 //  Default Constructor.
 //
 DetailView::DetailView(app::AppState & src)
-    : S(src)                        { }
+    : S(src)                        {   }
 
 
 //  "initialize"
@@ -91,7 +91,7 @@ DetailView::~DetailView(void)               { this->destroy(); }
 
 //  "destroy"       | protected
 //
-void DetailView::destroy(void)              { }
+void DetailView::destroy(void)              {   }
 
 
 
@@ -153,7 +153,7 @@ void DetailView::Begin([[maybe_unused]] const char *        uuid,
     
     
     //      2.      CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
-    ImGui::PushStyleColor( ImGuiCol_WindowBg, S.m_detview_bg );
+    ImGui::PushStyleColor( ImGuiCol_WindowBg    , S.GetUIColor(app::UIColor::DetView_BG) );
     this->m_window_class.DockNodeFlagsOverrideSet   = S.m_detview_window_flags;
     ImGui::SetNextWindowClass( &this->m_window_class );
     //
@@ -212,8 +212,8 @@ void DetailView::Begin([[maybe_unused]] const char *        uuid,
 
 //  "set_visibility_IMPL"
 //
-inline void DetailView::set_visibility_IMPL(const bool p_open) {
-
+inline void DetailView::set_visibility_IMPL(const bool p_open)
+{
     //  CASE 1 :    CLOSE THE WINDOW...
     if (!p_open) {
         this->close_all();
@@ -254,6 +254,8 @@ inline void DetailView::open_all(void)
     S.m_detview_dockspace_flags     = (S.m_detview_windows.size() < 1)
         ? (S.m_detview_dockspace_flags | ImGuiDockNodeFlags_HiddenTabBar)  // set the bit
         : (S.m_detview_dockspace_flags & ~ImGuiDockNodeFlags_HiddenTabBar);  // clear the bit
+        
+        
         
     for (auto & win : S.m_detview_windows)
     {

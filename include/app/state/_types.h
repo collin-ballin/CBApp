@@ -29,8 +29,7 @@
 #include "utility/utility.h"
 #include "widgets/widgets.h"
 #include "app/state/_config.h"
-#include "app/state/_constants.h"
-//  #include "app/_init.h"
+#include "app/state/_settings.h"
 
 
 
@@ -84,17 +83,17 @@ namespace cb { namespace app { //     BEGINNING NAMESPACE "cb" :: "app"...
 //  "AppColorStyle_t"
 //
 enum class AppColorStyle_t : uint8_t {
-    Default = 0,
-    LightMode,
-    DarkMode,
+      Default = 0
+    , LightMode
+    , DarkMode
 //
-    Laser_410NM,
+    , Laser_410NM
 //
-    ImGuiLight,
-    ImGuiDark,
-    ImGuiClassic,
+    , ImGuiLight
+    , ImGuiDark
+    , ImGuiClassic
 //
-    COUNT
+    , COUNT
 };
 //
 //  "APPLICATION_COLOR_STYLE_NAMES"
@@ -112,11 +111,11 @@ APPLICATION_COLOR_STYLE_NAMES           = {{
 //  "PlotColorStyle_t"
 //
 enum class PlotColorStyle_t : uint8_t {
-    Default = 0,
-    LightMode,
-    DarkMode,
+      Default = 0
+    , LightMode
+    , DarkMode
 //
-    COUNT
+    , COUNT
 };
 //
 //  "APPLICATION_PLOT_COLOR_STYLE_NAMES"
@@ -142,8 +141,9 @@ APPLICATION_PLOT_COLOR_STYLE_NAMES      = {{
 
 //
 //
-// ******************************************************************* //
-// *************************************************************************** //   END "App Utility".
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 1.  "APP UTILITY" ]].
 
 
 
@@ -160,9 +160,48 @@ APPLICATION_PLOT_COLOR_STYLE_NAMES      = {{
 //
 //
 //
-//      2.      MORE WINDOW DEFINITIONS...
+//      2.      APPLICATION SETTINGS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//      XA. SECTION_NAME. |     SUB_SECTION_NAME.
+// *************************************************************************** //
+
+    //
+    //  ...
+    //
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2.  "APP SETTINGS" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      3.      MORE WINDOW DEFINITIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
 
 // *************************************************************************** //
 //      2A.  MORE WINDOW DEFINITIONS...
@@ -184,16 +223,16 @@ enum class Window_t : int {
 //  "DockLoc"
 //
 enum class DockLoc : uint8_t {
-    None = 0,
-    Home,
-    DetView,
+      None = 0
+    , Home
+    , DetView
 //
-    COUNT
+    , COUNT
 };
 //
 //  "APPLICATION_DOCK_LOCATION_NAMES"
 static inline const cblib::EnumArray< DockLoc, const char * >
-    APPLICATION_DOCK_LOCATION_NAMES     = { "None", "Home", "Detail View" };
+    APPLICATION_DOCK_LOCATION_NAMES     = {{ "None", "Home", "Detail View" }};
 
 
 
@@ -291,9 +330,9 @@ public:
 // *************************************************************************** //
 protected:
 
-    Config                      m_cfg                           = {  };
+    Config                      m_cfg                           = {   };
     //
-    ImGuiStyle                  m_base_style                    {  };
+    ImGuiStyle                  m_base_style                    {   };
 	float                       m_user_scale                    = 1.0f;
 	float                       m_last_monitor_scale            = 1.0f;
 	float                       m_design_scale                  = 0.0f;
@@ -559,40 +598,40 @@ private:
 
 
 // *************************************************************************** //
-//      2B.  TASK IDENTIFIERS...
+//      3B.  TASK IDENTIFIERS...
 // *************************************************************************** //
 
 //  "Applet_t"
 //
 enum class Applet_t : uint8_t {
-    HomeApp = 0,
-    CCounterApp,
-    EditorApp,
-    GraphApp,
-    MimicApp,
+      HomeApp = 0
+    , CCounterApp
+    , EditorApp
+    , GraphApp
+    , MimicApp
 //
-    COUNT
+    , COUNT
 };
 
 
 
 // *************************************************************************** //
-//      2C.  SIGNAL IDENTIFIERS...
+//      3C.  SIGNAL IDENTIFIERS...
 // *************************************************************************** //
 
 //  "SignalBits"
 //      One bit per “operation” we may queue.
 //
 enum CBSignalFlags_ {
-    CBSignalFlags_None          = 0,
+      CBSignalFlags_None            = 0
 //
-    CBSignalFlags_Shutdown      = 1u << 0,      // SIGINT / SIGTERM / CTRL_C_EVENT.
-    CBSignalFlags_ReloadCfg     = 1u << 1,      // SIGHUP.
-    CBSignalFlags_NewFailure    = 1u << 2,      // [OPERATOR NEW] / MALLOC FAILURE.
+    , CBSignalFlags_Shutdown        = 1u << 0       //  SIGINT / SIGTERM / CTRL_C_EVENT.
+    , CBSignalFlags_ReloadCfg       = 1u << 1       //  SIGHUP.
+    , CBSignalFlags_NewFailure      = 1u << 2       //  [OPERATOR NEW] / MALLOC FAILURE.
 //
-    CBSignalFlags_Custom1       = 1u << 3,      // SIGUSR1 demo.
+    , CBSignalFlags_Custom1         = 1u << 3       //  SIGUSR1 demo.
 //
-    CBSignalFlags_COUNT
+    , CBSignalFlags_COUNT
 };
 
 //  Bitwise helpers.
@@ -603,11 +642,13 @@ enum CBSignalFlags_ {
 //      constexpr uint32_t to_uint(SignalBits v) noexcept
 //      { return static_cast<uint32_t>(v); }
 
-//
-//
-// ******************************************************************* //
-// *************************************************************************** //   END "MORE WINDOW DEFINITIONS".
 
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 3.  "WINDOW DEFINITIONS" ]].
 
 
 
@@ -623,7 +664,7 @@ enum CBSignalFlags_ {
 //
 //
 //
-//      3.      "MenuState" AUXILIARY TYPES...
+//      4.      "MenuState" AUXILIARY TYPES...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -689,8 +730,9 @@ struct MenuCallbacks
 
 //
 //
-// ******************************************************************* //
-// *************************************************************************** //   END "MenuState Types".
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 4.  "MENU-STATE" ]].
 
 
 
@@ -707,7 +749,7 @@ struct MenuCallbacks
 //
 //
 //
-//      4.      COLOR STYLES AND TYPES...
+//      5.      COLOR STYLES AND TYPES...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -757,7 +799,7 @@ struct AppleSystemColors_t {
 
 
 // *************************************************************************** //
-//      4.  COLORMAP TYPES...
+//      5.  COLORMAP TYPES...
 // *************************************************************************** //
 
 /*
@@ -863,8 +905,9 @@ enum Colormap_t : int {
 
 //
 //
-// ******************************************************************* //
-// *************************************************************************** //   END "Color Types".
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 5.  "COLORMAP-STUFF" ]].
 
 
 

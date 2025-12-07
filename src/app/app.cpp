@@ -46,7 +46,7 @@ void App::run(void)
     while ( !glfwWindowShouldClose(this->S.m_glfw_window) && S.m_running.load(std::memory_order_relaxed) )
 #endif  //  __EMSCRIPTEN__  //
     {
-        //      1.1     SET A POLL AND HANDLE EVENTS (inputs, window resize, etc.)...
+        //      1.1.    SET A POLL AND HANDLE EVENTS (inputs, window resize, etc.)...
         //                  You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
         //                      - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
         //                      - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
@@ -69,7 +69,6 @@ void App::run(void)
         // *************************************************************************** //
         
         
-        
         //      3.      INVOKE THE PRIMARY GUI-LOOP FOR  **MY OWN**  APPLICATION.     [ Draw each application window, etc. ]...
         this->run_IMPL();
 
@@ -80,19 +79,22 @@ void App::run(void)
         //
         //      4.      RENDERING...
         ImGui::Render();
-        glfwGetFramebufferSize(this->S.m_glfw_window,  &this->S.m_window_w,  &this->S.m_window_h); // int display_w, display_h;     // glfwGetFramebufferSize(this->S.m_glfw_window, &display_w, &display_h);
-        glViewport(0, 0, this->S.m_window_w, this->S.m_window_w);
-        glClearColor(this->S.m_glfw_bg.x * this->S.m_glfw_bg.w, this->S.m_glfw_bg.y * this->S.m_glfw_bg.w, this->S.m_glfw_bg.z * this->S.m_glfw_bg.w, this->S.m_glfw_bg.w);
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        
+        const ImVec4 &          glfw_bg     = this->S.GetUIColor( app::UIColor::Viewport_BG );
+        glfwGetFramebufferSize              ( this->S.m_glfw_window     , &this->S.m_window_w       , &this->S.m_window_h                               );
+        glViewport                          ( 0                         , 0                         , this->S.m_window_w        , this->S.m_window_w    );
+        glClearColor                        ( glfw_bg.x * glfw_bg.w     , glfw_bg.y * glfw_bg.w     , glfw_bg.z * glfw_bg.w     , glfw_bg.w             );
+        glClear                             ( GL_COLOR_BUFFER_BIT                                                                                       );
+        ImGui_ImplOpenGL3_RenderDrawData    ( ImGui::GetDrawData()                                                                                      );
 
 
-        //  5.  UPDATE & RENDER ADDITIONAL PLATFORM WINDOWS...
-        //          ( Platform functions may change the current OpenGL context.  So, we SAVE/RESTORE it to make our code easier to copy-and-paste
-        //            elsewhere.  For this specific demo app, we could also call  "glfwMakeContextCurrent(window)"  directly ).
+        //      5.      UPDATE & RENDER ADDITIONAL PLATFORM WINDOWS...
+        //                  ( Platform functions may change the current OpenGL context.  So, we SAVE/RESTORE it to make our code easier to copy-and-paste
+        //                    elsewhere.  For this specific demo app, we could also call  "glfwMakeContextCurrent(window)"  directly ).
+        //
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
-            GLFWwindow * backup  = glfwGetCurrentContext();
+            GLFWwindow *    backup      = glfwGetCurrentContext();
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(backup);
@@ -241,106 +243,27 @@ void App::run_IMPL(void)
 //
 void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
-    [[maybe_unused]] ImGuiIO &          io                  = ImGui::GetIO(); (void)io;
-    [[maybe_unused]] static bool        first_frame         = true;
+    [[maybe_unused]] ImGuiIO &          io                  = ImGui::GetIO();
     
     
     
-    //  1.  CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, this->S.m_main_bg);
+    //      1.      CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
+    //
+    ImGui::PushStyleColor( ImGuiCol_WindowBg, this->S.GetUIColor(app::UIColor::Home_BG) );
     ImGui::Begin(uuid, p_open, flags);
-        ImGui::PopStyleColor();
-    
-
-
+    //
+        ImGui::PopStyleColor();     //  ImGuiCol_WindowBg
+    //
+    //
+    //
         ImGui::Text("Here is the main window of the application!");
         ImGui::Text("Not too much going on here right now due to the tabular design of the project.  Rather, most "
                     "of the user's time will be spent on the designated tab for the application they intend to work with.");
-        ImGui::Separator();     ImGui::NewLine();
-    
-    
-        //this->Test_Browser();
-        
-        ImGui::NewLine();
-        
-        
-//#define CBAPP_TEST_KEYHOLD
-#ifdef CBAPP_TEST_KEYHOLD
-        {
-            static ui::KeyHoldManager khm;      // lives for the whole program
-
-            // 1) Queue synthetic key events for this frame
-            khm.Begin();                    // <-- must run before NewFrame()
-
-            // 2) Build a tiny UI to drive it
-
-            auto key_toggle_button = [&](ImGuiKey key, const char* label_held, const char* label_released)
-            {
-                const bool is_held = khm.IsActive(key);                 // convenience accessor
-                const char* label  = is_held ? label_released : label_held;
-                if (ImGui::Button(label))
-                {
-                    if (is_held)   khm.Pop(key);                        // schedule release
-                    else           khm.Push(key);                       // start hold
-                }
-                ImGui::SameLine();
-                ImGui::TextUnformatted(is_held ? "Held" : "Released");
-            };
-
-            key_toggle_button(ImGuiKey_O, "Hold O", "Release O");
-            key_toggle_button(ImGuiKey_S, "Hold S", "Release S");
-
-        }
-#endif //  CBAPP_TEST_KEYHOLD  //
-        
-        
-        
-        
-        //  4.  TESTING COLUMNS...
-        //  {
-        //      this->Test_Editor();
-        //  }
-    
-        //  5.  TESTING TAB BAR...
-        //  {
-        //      this->TestTabBar();
-        //  }
-    
-    
-    
-#if defined(CBAPP_ENABLE_OPTIONAL_WINDOWS) && !defined(__CBAPP_BUILD_CCOUNTER_APP__) && !defined(__CBAPP_BUILD_FDTD_APP__)
-//
-//
-    //  5.  EXAMPLE APPS...
-    {
-        constexpr const char * window_uuid  = "Example: Documents";
-        
-        ShowExampleAppDocuments(window_uuid, nullptr, ImGuiWindowFlags_MenuBar);
-        
-        if (first_frame) {
-            first_frame = false;
-            ImGui::DockBuilderDockWindow(window_uuid,     S.m_main_dock_id);
-        }
-    }
-
-
-    //  2.  TESTING PLOTTING / GRAPHING 0...
-    {
-        static bool             first       = true;
-        static const char *     plot_uuid   = "Graphing V0";
-        ImGui::Begin(plot_uuid, nullptr, app::_CBAPP_CORE_WINDOW_FLAGS);
-            this->ImPlot_Testing0();
-        ImGui::End();
-        if (first) {
-            first = false;
-            ImGui::DockBuilderDockWindow( plot_uuid, S.m_main_dock_id );
-        }
-    }
-//
-//
-#endif  //  CBAPP_ENABLE_OPTIONAL_WINDOWS  AND  !__CBAPP_BUILD_CCOUNTER_APP__   AND  !__CBAPP_BUILD_FDTD_APP__  //
-    
-    
+        //
+        ImGui::Separator();
+    //
+    //
+    //
     ImGui::End();
     return;
 }
@@ -350,25 +273,34 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
 //
 void App::ShowDockspace([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
-    ImGui::SetNextWindowPos         (S.m_main_viewport->WorkPos);                         //  Set up invisible host window covering the entire viewport
-    ImGui::SetNextWindowSize        (S.m_main_viewport->WorkSize);
-    ImGui::SetNextWindowViewport    (S.m_main_viewport->ID);
+    ImGui::SetNextWindowPos         ( S.m_main_viewport->WorkPos    );                  //  Set up invisible host window covering the entire viewport
+    ImGui::SetNextWindowSize        ( S.m_main_viewport->WorkSize   );
+    ImGui::SetNextWindowViewport    ( S.m_main_viewport->ID         );
+    ImGuiWindowFlags                host_flags      =
+          ImGuiWindowFlags_NoDocking
+        | ImGuiWindowFlags_NoTitleBar
+        | ImGuiWindowFlags_NoCollapse
+        | ImGuiWindowFlags_NoMove
+        | ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoBringToFrontOnFocus
+        | ImGuiWindowFlags_NoNavFocus;
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,       0.0f);      //  Make host window invisible with no padding, rounding, borders, etc.
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize,     0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,        ImVec2(0.0f, 0.0f));
 
 
-    //  Host window flags (invisible, non-interactive)
-    //  ImGuiWindowFlags host_window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;   //ImGui::Begin( "##DockHostWindow", nullptr, host_window_flags); // app::_CBAPP_HOST_WINDOW_FLAGS     app::APPLICATION_WINDOW_INFOS[0].flags
-    
-    
-    //ImGui::Begin( "##DockHostWindow", nullptr, this->S.m_windows[Window::Host].flags);
+    ImGui::PushStyleVar( ImGuiStyleVar_WindowRounding       , 0.0f                  );      //  Make host window invisible with no padding, rounding, borders, etc.
+    ImGui::PushStyleVar( ImGuiStyleVar_WindowBorderSize     , 0.0f                  );
+    ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding        , ImVec2(0.0f, 0.0f)    );
+
+
+
     ImGui::Begin(uuid, nullptr, flags);
-        ImGui::PopStyleVar(3);  //  DockSpace() creates docking area within this host window
-        ImGui::DockSpace(this->S.m_dockspace_id);
+    //
+    //
+        ImGui::PopStyleVar(3);                      //  ImGuiStyleVar_WindowPadding     , ImGuiStyleVar_WindowBorderSize    , ImGuiStyleVar_WindowRounding 
+        ImGui::DockSpace(this->S.m_dockspace_id);   //  DockSpace() creates docking area within this host window
+    //
+    //
     ImGui::End();
-    
     
     return;
 }
@@ -393,7 +325,7 @@ void App::InitDockspace(void)
     // ------------------------------------------------------------------
     // 0.  Locals & aliases
     // ------------------------------------------------------------------
-    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO();   (void)io;
+    [[maybe_unused]] ImGuiIO &      io                  = ImGui::GetIO();
     [[maybe_unused]] ImGuiStyle &   style               = ImGui::GetStyle();
     static size_t                   idx                 = 0;
     const float                     toolbar_px          = 1.6f * ImGui::GetTextLineHeightWithSpacing();    // + style.FramePadding.y * 2.0f + style.ItemSpacing.y;
@@ -401,9 +333,9 @@ void App::InitDockspace(void)
     
 
     //  1.      CLEAR EXISTING DOCK LAYOUT...
-    ImGui::DockBuilderRemoveNode    (this->S.m_dockspace_id);
-    ImGui::DockBuilderAddNode       (this->S.m_dockspace_id,        ImGuiDockNodeFlags_DockSpace);
-    ImGui::DockBuilderSetNodeSize   (this->S.m_dockspace_id,        S.m_main_viewport->WorkSize);
+    ImGui::DockBuilderRemoveNode    ( this->S.m_dockspace_id                                        );
+    ImGui::DockBuilderAddNode       ( this->S.m_dockspace_id        , ImGuiDockNodeFlags_DockSpace  );
+    ImGui::DockBuilderSetNodeSize   ( this->S.m_dockspace_id        , S.m_main_viewport->WorkSize   );
 
 
     // ------------------------------------------------------------------
@@ -411,61 +343,79 @@ void App::InitDockspace(void)
     //      ┌──────────── toolbar ────────────┐
     //      └──────────── dock_main_id ───────┘
     // ------------------------------------------------------------------
-    ImGuiID work_bottom_id = 0;
+    ImGuiID     work_bottom_id      = 0;
     ImGui::DockBuilderSplitNode(
-        S.m_dockspace_id,
-        ImGuiDir_Up,
-        S.m_controlbar_ratio,
-        &S.m_controlbar_dock_id,
-        &work_bottom_id);
+          S.m_dockspace_id
+        , ImGuiDir_Up
+        , S.m_controlbar_ratio
+        , &S.m_controlbar_dock_id
+        , &work_bottom_id
+    );
         
     
     //------------------------------------------------------------------
     // 3.  Split work_bottom → Browser (Left) + right_area
     //------------------------------------------------------------------
-    ImGuiID right_area_id = 0;
+    ImGuiID     right_area_id       = 0;
     ImGui::DockBuilderSplitNode(
-        work_bottom_id,
-        ImGuiDir_Left,
-        S.m_browser_ratio,
-        &S.m_browser_dock_id,
-        &right_area_id);
+          work_bottom_id
+        , ImGuiDir_Left
+        , S.m_browser_ratio
+        , &S.m_browser_dock_id
+        , &right_area_id
+    );
+
 
     //------------------------------------------------------------------
     // 4.  Split right_area → DetailView (Down) + Main (remainder)
     //------------------------------------------------------------------
     ImGui::DockBuilderSplitNode(
-        right_area_id,
-        ImGuiDir_Down,
-        S.m_detview_ratio,
-        &S.m_detview_dock_id,   // bottom panel
-        &S.m_main_dock_id);     // top panel
+          right_area_id
+        , ImGuiDir_Down
+        , S.m_detview_ratio
+        , &S.m_detview_dock_id      // bottom panel
+        , &S.m_main_dock_id         // top panel
+    );
+
 
     //------------------------------------------------------------------
     // 5.  Fetch nodes & apply flags
     //------------------------------------------------------------------
-    S.m_controlbar_node                 = ImGui::DockBuilderGetNode(S.m_controlbar_dock_id);
-    S.m_browser_node                    = ImGui::DockBuilderGetNode(S.m_browser_dock_id);
-    S.m_detview_node                    = ImGui::DockBuilderGetNode(S.m_detview_dock_id);
-    S.m_main_node                       = ImGui::DockBuilderGetNode(S.m_main_dock_id);
+    S.m_controlbar_node                 = ImGui::DockBuilderGetNode( S.m_controlbar_dock_id     );
+    S.m_browser_node                    = ImGui::DockBuilderGetNode( S.m_browser_dock_id        );
+    S.m_detview_node                    = ImGui::DockBuilderGetNode( S.m_detview_dock_id        );
+    S.m_main_node                       = ImGui::DockBuilderGetNode( S.m_main_dock_id           );
 
-    S.m_controlbar_node ->LocalFlags   |= S.m_controlbar_node_flags;
-    S.m_browser_node    ->LocalFlags   |= S.m_browser_node_flags;
+    S.m_controlbar_node ->LocalFlags   |= S.m_controlbar_node_flags | ImGuiDockNodeFlags_NoUndocking;
+    S.m_browser_node    ->LocalFlags   |= S.m_browser_node_flags    | ImGuiDockNodeFlags_NoUndocking;
     S.m_main_node       ->LocalFlags   |= S.m_main_node_flags;
-    S.m_detview_node    ->LocalFlags   |= S.m_detview_node_flags;
+    S.m_detview_node    ->LocalFlags   |= S.m_detview_node_flags    | ImGuiDockNodeFlags_NoUndocking;
+    //
+    //
+    //
+    //  S.m_detview_node    ->LocalFlags   |= S.m_detview_node_flags | ImGuiDockNodeFlags_NoUndocking;
+    //
+    //
+    //  S.m_controlbar_node ->LocalFlags   |= S.m_controlbar_node_flags;
+    //  S.m_browser_node    ->LocalFlags   |= S.m_browser_node_flags;
+    //  S.m_main_node       ->LocalFlags   |= S.m_main_node_flags;
+    //  S.m_detview_node    ->LocalFlags   |= S.m_detview_node_flags;
+
+
 
     //------------------------------------------------------------------
     // 6.  Dock core windows into their default locations
     //------------------------------------------------------------------
-    ImGui::DockBuilderDockWindow(S.m_windows[Window::ControlBar ].uuid.c_str(), S.m_controlbar_dock_id);
-    ImGui::DockBuilderDockWindow(S.m_windows[Window::Browser    ].uuid.c_str(), S.m_browser_dock_id);
-    ImGui::DockBuilderDockWindow(S.m_windows[Window::DetailView ].uuid.c_str(), S.m_detview_dock_id);
+    ImGui::DockBuilderDockWindow    ( S.m_windows[Window::ControlBar ].uuid.c_str(), S.m_controlbar_dock_id     );
+    ImGui::DockBuilderDockWindow    ( S.m_windows[Window::Browser    ].uuid.c_str(), S.m_browser_dock_id        );
+    ImGui::DockBuilderDockWindow    ( S.m_windows[Window::DetailView ].uuid.c_str(), S.m_detview_dock_id        );
     for (idx = S.ms_RHS_WINDOWS_BEGIN; idx < S.ms_WINDOWS_END; ++idx)
     {
-        app::WinInfo &w = S.m_windows[static_cast<Window>(idx)];
+        app::WinInfo &      w       = S.m_windows[static_cast<Window>(idx)];
         if (w.open)
             ImGui::DockBuilderDockWindow(w.uuid.c_str(), S.m_main_dock_id);
     }
+
 
     //------------------------------------------------------------------
     // 7.  Finalise layout

@@ -199,16 +199,28 @@ public:
     //                              GROUPS / SUB-CLASSES OF "APPSTATE":
     utl::Logger &                       m_logger;                                                   //  1.      LOGGER...
     LogLevel                            m_LogLevel;
-    ImWindows                           m_windows;                                                  //  2.      APPLICATION WINDOW STATE...
-    std::vector<WinInfo *>              m_detview_windows               = {   };                    //  2.1     WINDOWS INSIDE DETAIL VIEW...
+    //
+    //
+    //                              WINDOW MANAGEMENT:
+    ImWindows                           m_windows;                                                  //  2.      ARRAY OF *ALL* APPLICATION WINDOWS...
+    //
+    std::vector<WinInfo *>              m_home_windows                  = {   };                    //  2.1.        Home WINDOWS.
+    std::vector<WinInfo *>              m_detview_windows               = {   };                    //  2.2.        DetView WINDOWS.
+    //
+    //
+    //                              FONT / APPLICATION UI-SCALE:
     ImFonts                             m_fonts;                                                    //  3.      APPLICATION FONTS...
     UIScaler                            m_ui_scaler;                                                //  4.      GUI-SCALER OBJECT...
+    //
     //
     //                              OTHER / SMALLER:
     std::vector< std::pair<Timestamp_t, std::string> >
                                         m_notes                         = {   };
     Timestamp_t                         m_timestamp_spawn;
     Timestamp_t                         m_timestamp_start;
+    //
+    CBAppSettings &                     m_settings                      = CBAppSettings::instance();
+    
     
     // *************************************************************************** //
     //
@@ -225,6 +237,7 @@ public:
     AppColorStyle_t                     m_current_app_color_style       = AppColorStyle_t::Laser_410NM;
 #endif  //  __CBAPP_BUILD_CCOUNTER_APP__  //
     PlotColorStyle_t                    m_current_plot_color_style      = PlotColorStyle_t::Default;
+    
     
     // *************************************************************************** //
     //
@@ -289,20 +302,35 @@ public:
     // *************************************************************************** //
     //
     //                              COLORS:
-    ImVec4                              m_glfw_bg                   = cb::app::DEF_ROOT_WIN_BG;
-    ImVec4                              m_dock_bg                   = cb::app::DEF_INVISIBLE_COLOR;
-    ImVec4                              m_main_bg                   = cb::app::DEF_MAIN_WIN_BG;
+    //ImVec4                              m_glfw_bg                   = cb::app::DEF_ROOT_WIN_BG;
+    //ImVec4                              m_dock_bg                   = cb::app::DEF_INVISIBLE_COLOR;
+    //ImVec4                              m_main_bg                   = cb::app::DEF_MAIN_WIN_BG;
     //
-    ImVec4                              m_controlbar_bg             = cb::app::DEF_CONTROLBAR_WIN_BG;
+    //ImVec4                              m_controlbar_bg             = cb::app::DEF_CONTROLBAR_WIN_BG;
     //
-    //                              BROWSER COLORS:
-    ImVec4                              m_browser_bg                = cb::app::DEF_BROWSER_WIN_BG;
-    ImVec4                              m_browser_left_bg           = ImVec4(0.142f,    0.142f,     0.142f,     1.000f);//  #242424     (5% shade of browser bg)
-    ImVec4                              m_browser_right_bg          = ImVec4(0.242f,    0.242f,     0.242f,     1.000f);//  ##3E3E3E    (5% tint of browser bg)
-    float                               m_browser_child_rounding    = 8.0f;
+    //
+    //                              BROWSER DIMENSIONS:
+    ImVec2                              m_browser_item_spacing          = ImVec2(  7.0f     ,  7.0f );
+    ImVec2                              m_browser_window_padding        = ImVec2( 10.0f     , 10.0f );
+    //
+    float                               m_browser_child_rounding        = 6.5f;
+    float                               m_browser_child_bs              = 2.0f;
+    //
+    //
+    //                              INFO DIMENSIONS:
+    ImVec2                              m_info_item_spacing             = ImVec2(  2.0f     ,  2.0f );
+    ImVec2                              m_info_window_padding           = ImVec2( 5.0f     , 5.0f );
+    //
+    float                               m_info_child_rounding           = 6.5f;
+    float                               m_info_child_bs                 = 2.0f;
+    //
+    //
+    //
+    //
+    //float                               m_browser_child_rounding    = 8.0f;
     //
     //                              DETAILVIEW COLORS:
-    ImVec4                              m_detview_bg                = cb::app::DEF_DETVIEW_WIN_BG;
+    //ImVec4                              m_detview_bg                = cb::app::DEF_DETVIEW_WIN_BG;
     
     
 
@@ -376,7 +404,7 @@ public:
     //
     //                              DETAIL VIEW:
     ImGuiID                             m_detview_dock_id           = 0;
-    ImGuiDockNodeFlags                  m_detview_node_flags        = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNodeFlags                  m_detview_node_flags        = ImGuiDockNodeFlags_NoDockingOverOther | ImGuiDockNodeFlags_NoCloseButton;      //  ImGuiDockNodeFlags_NoSplit        //  ImGuiDockNodeFlags_NoUndocking
     ImGuiDockNode *                     m_detview_node              = nullptr;
     //
     float                               m_detview_ratio             = 0.45f;
@@ -385,7 +413,8 @@ public:
     static constexpr const char *       m_detview_dockspace_uuid    = "##DetailViewDockspace";
     ImGuiID                             m_detview_dockspace_id      = 0;
     ImGuiDockNodeFlags                  m_detview_dockspace_flags   = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoCloseButton;// | ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_NoSplit
-    ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_HiddenTabBar; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
+    //  ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_HiddenTabBar; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_HiddenTabBar | ImGuiDockNodeFlags_NoDockingSplitOther; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
     //
     //                              ADD MORE SHARED STATE DATA MEMBERS HERE:
     //                                  SubCategory.
@@ -431,6 +460,26 @@ public:
 protected:
                                         AppState                    (void);                 //  Default Constructor.
                                         ~AppState                   (void);                 //  Default Destructor.
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      LOADING FUNCTIONS.              |   "state.cpp" ...
+    // *************************************************************************** //
+public:
+    //                              INITIALIZATION ORCHESTRATOR FUNCTIONS:
+    void                                load                        (void);
+    //
+    //
+protected:
+    //                              PRIVATE INITIALIZATION FUNCTIONS:
+    inline void                             _load                       (void);
+    void                                    _load_ini                   (void);
+    void                                    _load_imgui_style           (void);
+    void                                    _load_implot_style          (void);
     
     
     
@@ -552,7 +601,7 @@ public:
     //
     //
     // *************************************************************************** //
-    //      GETTER FUNCTIONS.
+    //      MAIN GETTER FUNCTIONS.
     // *************************************************************************** //
     
     //  "GetProcessID"
@@ -604,9 +653,21 @@ public:
     [[nodiscard]] inline MenuState_t &              GetMenuState                (void) noexcept         { return this->m_task_state.m_current_menu_state.get(); }
     [[nodiscard]] inline const MenuState_t &        GetMenuState                (void) const noexcept   { return this->m_task_state.m_current_menu_state.get(); }
     
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      SECONDARY GETTER FUNCTIONS.
+    // *************************************************************************** //
+    
     //  "GetUIScaler"
     [[nodiscard]] inline UIScaler &                 GetUIScaler                 (void) noexcept         { return this->m_ui_scaler; }
     [[nodiscard]] inline const UIScaler &           GetUIScaler                 (void) const noexcept   { return this->m_ui_scaler; }
+    
+    //  "GetUIColor"
+    [[nodiscard]] inline const ImVec4 &             GetUIColor                  (const UIColor col) const noexcept      { return CBAppSettings::ms_UI_COLORS[col]; }
     
     
 
@@ -729,6 +790,17 @@ public:
             (value)     ? this->SystemColor.Green           : this->SystemColor.Red ,
             "%s",
             (value)     ? true_text                         : false_text
+        );
+        return;
+    }
+    
+    //  "TFColoredText"
+    inline void                         TFColoredText               (const bool value, const char * text) const noexcept
+    {
+        ImGui::TextColored(
+              (value)   ? this->SystemColor.Green       : this->SystemColor.Red
+            , "%s"
+            , text
         );
         return;
     }

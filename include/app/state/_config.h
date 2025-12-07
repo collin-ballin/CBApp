@@ -142,7 +142,7 @@ inline constexpr const char *                   _IMPLOT_DEMO_UUID           = "I
 inline constexpr ImGuiWindowFlags       _CBAPP_HOST_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
 inline constexpr ImGuiWindowFlags       _CBAPP_DOCKSPACE_WINDOW_FLAGS       = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
 inline constexpr ImGuiWindowFlags       _CBAPP_CONTROLBAR_WINDOW_FLAGS      = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
-inline constexpr ImGuiWindowFlags       _CBAPP_BROWSER_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus;
+inline constexpr ImGuiWindowFlags       _CBAPP_BROWSER_WINDOW_FLAGS         = ImGuiWindowFlags_None | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar/* | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNavInputs*/ | ImGuiWindowFlags_NoNavFocus;
 inline constexpr ImGuiWindowFlags       _CBAPP_DETVIEW_WINDOW_FLAGS         = _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse;
 
 inline constexpr ImGuiWindowFlags       _CBAPP_HOME_WINDOW_FLAGS            = ImGuiWindowFlags_None | _CBAPP_NO_MOVE_RESIZE_FLAGS | _CBAPP_NO_SAVE_WINDOW_SIZE | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
@@ -182,8 +182,8 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEBUGGER_WINDOW_FLAGS        = Im
     #define _CBAPP_DEBUG_WINDOWS(X)                                                                                                                         \
 /*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                              DOCKSPACE.                  */      \
 /*|========================================================================================================================================|        */      \
-    X(CBDebugger          , "CBDebugger"                  , false                 , _CBAPP_DEBUGGER_WINDOW_FLAGS        /**/                        )       \
-    X(ImGuiMetrics        , "Dear ImGui Metrics/Debugger" , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
+    X(CBDebugger          , "CBDebugger"                  , true                  , _CBAPP_DEBUGGER_WINDOW_FLAGS        /**/                        )       \
+    X(ImGuiMetrics        , "Dear ImGui Metrics/Debugger" , true                  , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
     X(ImPlotMetrics       , "ImPlot Metrics"              , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
     X(ImGuiIDStackTool    , "ImGui ID Stack Tool"         , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       \
     X(ImGuiItemPickerTool , "ImGui Item Picker Tool"      , false                 , _CBAPP_DEFAULT_WINDOW_FLAGS         /**/                        )       // END
@@ -205,7 +205,7 @@ inline constexpr ImGuiWindowFlags       _CBAPP_DEBUGGER_WINDOW_FLAGS        = Im
     #define _CBAPP_OPTIONAL_WINDOWS(X)                                                                                                                      \
 /*| NAME.                   TITLE.                          DEFAULT OPEN.           FLAGS.                              DOCKSPACE.                  */      \
 /*|========================================================================================================================================|        */      \
-    X(CBDemo              , "CBDemo",                     , true                  , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       // END
+    X(CBDemo              , "CBDemo",                     , false                 , _CBAPP_CORE_WINDOW_FLAGS            /**/                        )       // END
 //
 //
 //

@@ -1,7 +1,7 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****                S T A T E . h  ____  F I L E                ****
+*       ****              S T A T E . C P P  ____  F I L E              ****
 *       ********************************************************************
 *              AUTHOR:      Collin A. Bond.
 *               DATED:      May 10, 2025.
@@ -71,7 +71,7 @@ AppState::AppState(void)
     
     //      2.      INITIALIZE APPLICATION FONTS...
     for (i = 0; i < static_cast<size_t>(Font::Count); ++i) {
-        m_fonts.m_data[i]   = nullptr;  // load later in your init()
+        m_fonts.m_data[i]   = nullptr;  // load later in init()
     }
 
 
@@ -128,10 +128,13 @@ AppState::AppState(void)
 //
 AppState::~AppState(void) = default;
 
+
+
+//
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END "INIT" FUNCTIONS...
+// *************************************************************************** //   END [[ 1.  "INIT. FUNCTIONS" ]].
 
 
 
@@ -148,7 +151,181 @@ AppState::~AppState(void) = default;
 //
 //
 //
-//      1.2.    MAIN OPERATION FUNCTIONS...
+//      2.    LOADING / APP-SETUP FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "load"
+//
+void AppState::load(void)
+{
+#ifndef __EMSCRIPTEN__
+    this->_load();
+#endif  //  __EMSCRIPTEN__  //
+
+    return;
+}
+
+
+//  "_load"
+//
+inline void AppState::_load(void)
+{
+    //      1.      LOAD ".ini" FILE...
+    this->_load_ini();
+    
+    
+    
+    
+    
+    //      2.      LOAD IMGUI---STYLE...
+    this->_load_imgui_style();
+    
+    
+    
+    //      3.      LOAD IMPLOT---STYLE...
+    this->_load_imgui_style();
+    
+    
+    
+    return;
+
+}
+
+
+
+// *************************************************************************** //
+//      2A. LOADING. |      PRIVATE LOADING FUNCTIONS.
+// *************************************************************************** //
+
+//  "_load_ini"
+//
+void AppState::_load_ini(void)
+{
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+    
+    
+
+#if !defined(CBAPP_DISABLE_INI)
+//
+    //      1.      INSTALL CUSTOM ".ini" CALLBACK FUNCTIONS  **BEFORE**  LOADING OUR ".ini" FILE...
+    CBAppSettings::RegisterIniHandler();
+
+
+    //      2.      ATTEMPT TO LOAD FROM THE ".ini" FILE...
+    io.IniFilename                      = cb::app::INI_FILEPATH;
+    if ( utl::LoadIniSettingsFromDisk(cb::app::INI_FILEPATH) )
+    {
+        this->m_logger.debug( std::format("[[CBApp]] loaded init-file content from \"{}\"", cb::app::INI_FILEPATH) );
+    }
+    else
+    {
+        this->m_logger.warning( std::format("[[CBApp]] failed to load init-file content from \"{}\" -- falling back to default .ini behavior", cb::app::INI_FILEPATH) );
+    }
+//
+# else
+//
+    io.IniFilename                      = nullptr;
+    S.m_logger.info( std::format("[[CBApp]] use of \".ini\"-files is disabled for this build (`#ifndef CBAPP_DISABLE_INI`)") );
+//
+#endif  //  CBAPP_DISABLE_INI  //
+
+
+    io.ConfigFlags                     |= this->m_io_flags;       //  2.2 Configure I/O Settings.
+    //io.ConfigViewportsNoAutoMerge     = true;
+    //io.ConfigViewportsNoTaskBarIcon   = true;
+
+
+    return;
+}
+
+
+//  "_load_imgui_style"
+//
+void AppState::_load_imgui_style(void)
+{
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+    
+    
+    //      1.      Load ImGui Style...
+#ifdef CBAPP_ENABLE_IMGUI_STYLE_FILE
+//
+    if ( utl::LoadImGuiStyleFromDisk(style, cb::app::IMGUI_STYLE_FILEPATH) ) {
+        this->m_logger.debug( std::format("[[CBApp]] ImGui style loaded from \"{}\"", cb::app::IMGUI_STYLE_FILEPATH) );
+    }
+    else {
+        this->m_logger.warning( std::format("[[CBApp]] failed to load ImGui style from \"{}\" -- falling back to default (S.SetDarkMode)", cb::app::IMGUI_STYLE_FILEPATH) );
+        this->SetDarkMode();
+    }
+//
+# else
+//
+    S.m_logger.info( std::format("[[CBApp]] ImGui style from external \".json\" files is disabled for this build (`#ifndef CBAPP_ENABLE_IMGUI_STYLE_FILE`)") );
+    S.SetDarkMode();
+//
+#endif  //  CBAPP_ENABLE_IMGUI_STYLE_FILE  //
+    
+    
+    return;
+}
+
+
+//  "_load_implot_style"
+//
+void AppState::_load_implot_style(void)
+{
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+    
+    
+    //      2.      Load ImPlot Style...
+#ifdef CBAPP_ENABLE_IMPLOT_STYLE_FILE
+//
+    if ( utl::LoadImPlotStyleFromDisk(ImPlot::GetStyle(), cb::app::IMPLOT_STYLE_FILEPATH) )
+    {
+        this->m_logger.debug( std::format("[[CBApp]] ImPlot style loaded from \"{}\"", cb::app::IMPLOT_STYLE_FILEPATH) );
+    }
+    else
+    {
+        this->m_logger.warning( std::format("[[CBApp]] failed to load ImPlot style from \"{}\"", cb::app::IMPLOT_STYLE_FILEPATH) );
+    }
+//
+# else
+//
+    S.m_logger.info( std::format("[[CBApp]] ImPlot style from external \".json\" files is disabled for this build (`#ifndef CBAPP_ENABLE_IMPLOT_STYLE_FILE`)") );
+//
+#endif  //  CBAPP_ENABLE_IMPLOT_STYLE_FILE  //
+    
+    
+    return;
+}
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2.  "LOADING FUNCTIONS" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      3.    MAIN OPERATION FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -219,7 +396,8 @@ void AppState::RebuildFonts(float scale)
     }
     //
     //      1B.     FAILURE IN [1A]     : FALLBACK TO USE DEFAULT FONTS...
-    if (!good_fonts) {
+    if (!good_fonts)
+    {
         this->m_logger.warning( std::format("Failure to load custom fonts.  Reverting to default DEAR IMGUI Fonts") );
         for (int i = 0; i < static_cast<int>(Font::Count); ++i) {                                   //  TODO: REFACTOR.
             const auto &    info                    = cb::app::APPLICATION_FONT_STYLES[i];          //          Adapt this impl to use RESOURCE IDs so
@@ -239,6 +417,20 @@ void AppState::RebuildFonts(float scale)
     
     return;
 }
+
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 3.  "MAIN OPERATION FUNCTIONS" ]].
+
+
+
+
+
 
 
 
