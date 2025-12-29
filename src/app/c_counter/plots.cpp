@@ -41,6 +41,88 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 //
 void CCounterApp::_PlotMaster(void) const noexcept
 {
+	namespace					cc						= ccounter;
+	Style const &				CS						= this->m_style;		// assumes CS.m_mst_avail is mutable
+	cc::PerFrame_t const &		PF						= this->m_perframe;
+
+	// Compute x-axis flags: disable AutoFit whenever we are NOT crawling
+	ImPlotAxisFlags				xflags					= CS.mst_axes[0].flags;
+	if (!PF.crawling)			xflags				   &= ~ImPlotAxisFlags_AutoFit;
+
+	// Layout info
+	CS.m_mst_avail										= ImGui::GetContentRegionAvail();
+
+	ImGui::PushID(ms_PLOT_UUIDs[0]);
+
+	// Begin master plot
+	if ( !ImPlot::BeginPlot(ms_PLOT_UUIDs[0], ImVec2(-1, CS.m_mst_avail.y), CS.mst_plot_flags) ) {
+		ImGui::PopID();
+		return;
+	}
+
+	{
+		// 1) Axes/legend
+		ImPlot::SetupAxes( CS.mst_axes[0].uuid, CS.mst_axes[1].uuid, xflags, CS.mst_axes[1].flags );
+		ImPlot::SetupLegend( CS.legend.location, CS.legend.flags );
+
+		// 2) X limits are driven by per-frame cache (latched window or crawl window)
+		ImPlot::SetupAxisLimits(ImAxis_X1, PF.xmin, PF.xmax, ImGuiCond_Always);
+
+		// 3) Series
+		for (int k = 0; k < static_cast<int>(ms_NUM); ++k)
+		{
+			auto const &		buf			= m_buffers[k];
+			auto const &		avg			= m_avg_counts[k];
+			auto &				channel		= ms_channels[k];
+			const float			avg_lw		= this->m_avg_linewidth.Value();
+			const float			plot_lw		= this->m_plot_linewidth.Value();
+
+			if ( buf.empty() )      { continue; }
+
+
+			// A) AVERAGE series
+			ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
+			ImPlot::SetNextLineStyle(m_avg_colors[k], avg_lw);
+			ImPlot::SetNextFillStyle(m_avg_colors[k], 0.0f);
+			ImPlot::HideNextItem(!channel.vis.average, ImGuiCond_Always);
+			ImPlot::PlotLine(
+				  ""									// hidden label
+				, &avg.raw()[0].x
+				, &avg.raw()[0].y
+				, static_cast<int>(avg.size())
+				, ImPlotLineFlags_Shaded
+				, static_cast<int>(avg.offset())
+				, static_cast<int>(sizeof(ImVec2))
+			);
+			ImPlot::PopStyleVar();
+
+			// B) MAIN series
+			ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
+			ImPlot::SetNextLineStyle(m_plot_colors[k], plot_lw);
+			ImPlot::SetNextFillStyle(m_plot_colors[k], 0.0f);
+			ImPlot::HideNextItem(!channel.vis.master, ImGuiCond_Always);
+			ImPlot::PlotLine(
+				  ms_channels[k].name
+				, &buf.raw()[0].x
+				, &buf.raw()[0].y
+				, static_cast<int>(buf.size())
+				, ImPlotLineFlags_Shaded
+				, static_cast<int>(buf.offset())
+				, static_cast<int>(sizeof(ImVec2))
+			);
+			ImPlot::PopStyleVar();
+		}
+	}
+
+	ImPlot::EndPlot();
+	ImGui::PopID();
+ 
+    return;
+}
+
+
+/*
+{
     namespace                   cc          = ccounter;
     const Style &               CS          = this->m_style;
     const cc::PerFrame_t &      PF          = this->m_perframe;
@@ -140,11 +222,94 @@ void CCounterApp::_PlotMaster(void) const noexcept
     
     
     return;
-}
+}*/
 
 
 //  "_PlotSingles"
 //
+void CCounterApp::_PlotSingles(void) const noexcept
+{
+	namespace			cc			= ccounter;
+	const PerFrame &	PF			= this->m_perframe;
+	const Style &		CS			= this->m_style;
+
+	if ( ImGui::BeginTable(ms_PLOT_UUIDs[1], 6, ms_i_plot_table_flags) )
+	{
+		ImGui::TableSetupColumn("Visibility     ", ms_i_plot_column_flags, 2 * ms_I_PLOT_COL_WIDTH);
+		ImGui::TableSetupColumn("APD Counter",    ms_i_plot_column_flags,     ms_I_PLOT_COL_WIDTH);
+		ImGui::TableSetupColumn("Max",            ms_i_plot_column_flags,     ms_I_PLOT_COL_WIDTH);
+		ImGui::TableSetupColumn("Avg.",           ms_i_plot_column_flags,     ms_I_PLOT_COL_WIDTH);
+		ImGui::TableSetupColumn("Current",        ms_i_plot_column_flags,     ms_I_PLOT_COL_WIDTH);
+		ImGui::TableSetupColumn("Plot",           ms_i_plot_plot_flags,        ms_I_PLOT_PLOT_WIDTH);
+		ImGui::TableHeadersRow();
+
+		for (size_t row = 0; row < static_cast<size_t>(ms_NUM); ++row)
+		{
+			const auto &	buf			= m_buffers[row];
+			auto &			channel		= ms_channels[row];
+			const bool		is_empty	= buf.empty();
+
+			ImGui::TableNextRow();
+
+			// 1) Visibility toggles
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Checkbox(channel.vis.master_ID,  &channel.vis.master);
+			ImGui::SameLine();
+			ImGui::Checkbox(channel.vis.average_ID, &channel.vis.average);
+			ImGui::SameLine();
+			ImGui::Checkbox(channel.vis.single_ID,  &channel.vis.single);
+
+			// 2) Channel label
+			ImGui::TableSetColumnIndex(1);
+			ImGui::TextUnformatted(ms_channels[row].name);
+
+			// 3) Max
+			ImGui::TableSetColumnIndex(2);
+			ImGui::Text("%.0f", m_max_counts[row]);
+
+			// 4) Avg
+			ImGui::TableSetColumnIndex(3);
+			ImGui::Text("%.2f", is_empty ? 0.0f : m_avg_counts[row].top().y);
+
+			// 5) Current
+			ImGui::TableSetColumnIndex(4);
+			const float curr = is_empty ? 0.0f : buf.back().y;
+			ImGui::Text("%.0f", curr);
+
+
+            //      6.      COLUMN 6.       ANIMATED PLOT...
+            ImGui::TableSetColumnIndex(5);
+            if ( channel.vis.single )
+            {
+                ImGui::PushID( static_cast<int>(row) );
+                if ( !is_empty  &&  channel.vis.single )
+                {
+                    this->plot_sparkline(
+                          buf
+                        , this->m_plot_colors[row]
+                        , ImVec2(-1, cc::row_height_px)
+                        , PF.spark_now
+                        , this->m_history_length.Value()
+                        , this->ms_CENTER
+                        , CS.m_ind_pline_flags
+                    );
+                }
+                ImGui::PopID();
+            }
+        //
+        //
+        }// END "FOR-LOOP".
+    
+    
+    ImGui::EndTable();
+    //
+    //
+    }// END "table".
+
+
+    return;
+}
+/*
 void CCounterApp::_PlotSingles(void) const noexcept
 {
     namespace           cc          = ccounter;
@@ -237,6 +402,7 @@ void CCounterApp::_PlotSingles(void) const noexcept
 
     return;
 }
+*/
 
 
 
@@ -265,8 +431,6 @@ void CCounterApp::_PlotSingles(void) const noexcept
 //      3.      PLOTTING UTILITIES...
 // *************************************************************************** //
 // *************************************************************************** //
-
-
 
 //  "plot_sparkline"
 //

@@ -270,21 +270,19 @@ void App::ShowMainWindow([[maybe_unused]] const char * uuid, [[maybe_unused]] bo
 
 
 //  "ShowDockspace"
+//      **NOTE:**   This is the `render_fn` that is assigned to `S.m_windows[ Window::Dockspace ];`
 //
 void App::ShowDockspace([[maybe_unused]] const char * uuid, [[maybe_unused]] bool * p_open, [[maybe_unused]] ImGuiWindowFlags flags)
 {
+    ImGuiWindowFlags                host_flags      = ImGuiWindowFlags_NoDocking    | ImGuiWindowFlags_NoTitleBar   | ImGuiWindowFlags_NoCollapse |
+                                                      ImGuiWindowFlags_NoMove       | ImGuiWindowFlags_NoResize     | ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                                      ImGuiWindowFlags_NoNavFocus;
+    ImGuiDockNodeFlags              dock_flags      = ImGuiDockNodeFlags_NoDockingSplit; /*   | ImGuiDockNodeFlags_AutoHideTabBar;*/
+    //
+    //
     ImGui::SetNextWindowPos         ( S.m_main_viewport->WorkPos    );                  //  Set up invisible host window covering the entire viewport
     ImGui::SetNextWindowSize        ( S.m_main_viewport->WorkSize   );
     ImGui::SetNextWindowViewport    ( S.m_main_viewport->ID         );
-    ImGuiWindowFlags                host_flags      =
-          ImGuiWindowFlags_NoDocking
-        | ImGuiWindowFlags_NoTitleBar
-        | ImGuiWindowFlags_NoCollapse
-        | ImGuiWindowFlags_NoMove
-        | ImGuiWindowFlags_NoResize
-        | ImGuiWindowFlags_NoBringToFrontOnFocus
-        | ImGuiWindowFlags_NoNavFocus;
-
 
 
     ImGui::PushStyleVar( ImGuiStyleVar_WindowRounding       , 0.0f                  );      //  Make host window invisible with no padding, rounding, borders, etc.
@@ -293,14 +291,25 @@ void App::ShowDockspace([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 
 
 
-    ImGui::Begin(uuid, nullptr, flags);
+    ImGui::Begin(uuid, nullptr, host_flags | flags);
     //
     //
-        ImGui::PopStyleVar(3);                      //  ImGuiStyleVar_WindowPadding     , ImGuiStyleVar_WindowBorderSize    , ImGuiStyleVar_WindowRounding 
-        ImGui::DockSpace(this->S.m_dockspace_id);   //  DockSpace() creates docking area within this host window
+        ImGui::PopStyleVar(3);                      //  ImGuiStyleVar_WindowPadding     , ImGuiStyleVar_WindowBorderSize    , ImGuiStyleVar_WindowRounding
+        ImGui::DockSpace(this->S.m_dockspace_id, ImVec2(0,0), dock_flags);
     //
     //
     ImGui::End();
+    
+    
+
+    //  OLD VERSION     //  BEFORE DEC. 6, 2025
+    //
+    /*ImGui::Begin(uuid, nullptr, flags);
+    //
+        ImGui::PopStyleVar(3);                      //  ImGuiStyleVar_WindowPadding     , ImGuiStyleVar_WindowBorderSize    , ImGuiStyleVar_WindowRounding
+        ImGui::DockSpace(this->S.m_dockspace_id);   //  DockSpace() creates docking area within this host window
+    //
+    ImGui::End();*/
     
     return;
 }
@@ -321,6 +330,116 @@ void App::ShowDockspace([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 //  "InitDockspace"
 //
 void App::InitDockspace(void)
+{
+    // ------------------------------------------------------------------
+    // 0) Locals & policy
+    // ------------------------------------------------------------------
+    [[maybe_unused]] ImGuiIO&     io                  = ImGui::GetIO();            (void)io;
+    [[maybe_unused]] ImGuiStyle&  style               = ImGui::GetStyle();         (void)style;
+
+#if IMGUI_VERSION_NUM >= 19000
+    const ImGuiDockNodeFlags      k_no_split          = ImGuiDockNodeFlags_NoDockingSplit;
+#else
+    const ImGuiDockNodeFlags      k_no_split          = ImGuiDockNodeFlags_NoSplit;
+#endif
+
+    const bool                    show_browser        = S.m_windows[Window::Browser    ].open;
+    const bool                    show_detview        = S.m_windows[Window::DetailView ].open;
+
+    const float                   toolbar_px          = 1.6f * ImGui::GetTextLineHeightWithSpacing();
+    S.m_controlbar_ratio                              = toolbar_px / S.m_main_viewport->WorkSize.y;
+
+    // ------------------------------------------------------------------
+    // 1) Reset root dockspace (root is created as NoSplit)
+    // ------------------------------------------------------------------
+    ImGui::DockBuilderRemoveNode  (S.m_dockspace_id);
+    ImGui::DockBuilderAddNode     (S.m_dockspace_id, ImGuiDockNodeFlags_DockSpace | k_no_split);
+    ImGui::DockBuilderSetNodeSize (S.m_dockspace_id, S.m_main_viewport->WorkSize);
+
+    // ------------------------------------------------------------------
+    // 2) Build the tree (conditionally add Browser/Detail View)
+    //      Root
+    //       ├─ Up  → controlbar
+    //       └─ rem → [Left browser?] → [Down detview? + main : main]
+    // ------------------------------------------------------------------
+    ImGuiID                       work_id             = S.m_dockspace_id;
+    S.m_controlbar_dock_id                            = 0;
+    S.m_browser_dock_id                               = 0;
+    S.m_detview_dock_id                               = 0;
+    S.m_main_dock_id                                  = 0;
+
+    // 2a) Top control bar
+    ImGui::DockBuilderSplitNode(
+        work_id, ImGuiDir_Up, S.m_controlbar_ratio,
+        &S.m_controlbar_dock_id, &work_id);
+
+    // 2b) Optional left browser lane
+    if (show_browser)
+    {
+        ImGui::DockBuilderSplitNode(
+            work_id, ImGuiDir_Left, S.m_browser_ratio,
+            &S.m_browser_dock_id, &work_id);
+    }
+
+    // 2c) Optional bottom detail view band
+    if (show_detview)
+    {
+        ImGui::DockBuilderSplitNode(
+            work_id, ImGuiDir_Down, S.m_detview_ratio,
+            &S.m_detview_dock_id, &S.m_main_dock_id);
+    }
+    else
+    {
+        S.m_main_dock_id = work_id; // remainder becomes Main
+    }
+
+    // ------------------------------------------------------------------
+    // 3) Fetch nodes & apply node-local flags
+    //     - Lock all leaves against splitting
+    //     - Main keeps AutoHideTabBar (tabs allowed)
+    // ------------------------------------------------------------------
+    S.m_controlbar_node    = ImGui::DockBuilderGetNode(S.m_controlbar_dock_id);
+    S.m_browser_node       = (show_browser) ? ImGui::DockBuilderGetNode(S.m_browser_dock_id)   : nullptr;
+    S.m_detview_node       = (show_detview) ? ImGui::DockBuilderGetNode(S.m_detview_dock_id)   : nullptr;
+    S.m_main_node          = ImGui::DockBuilderGetNode(S.m_main_dock_id);
+
+    auto set_flags = [](ImGuiDockNode* n, ImGuiDockNodeFlags f){ if (n) n->LocalFlags |= f; };
+
+    // Preserve any of your precomputed flags
+    if (S.m_controlbar_node)  S.m_controlbar_node->LocalFlags |= S.m_controlbar_node_flags;
+    if (S.m_browser_node)     S.m_browser_node   ->LocalFlags |= S.m_browser_node_flags;
+    if (S.m_detview_node)     S.m_detview_node   ->LocalFlags |= S.m_detview_node_flags;
+    if (S.m_main_node)        S.m_main_node      ->LocalFlags |= S.m_main_node_flags;
+
+    // Lock splitting everywhere (root already created as NoSplit)
+    set_flags(S.m_controlbar_node, k_no_split | ImGuiDockNodeFlags_NoResize | ImGuiDockNodeFlags_AutoHideTabBar);
+    set_flags(S.m_browser_node,    k_no_split | ImGuiDockNodeFlags_NoResize);
+    set_flags(S.m_detview_node,    k_no_split | ImGuiDockNodeFlags_NoResize);
+    set_flags(S.m_main_node,       k_no_split | ImGuiDockNodeFlags_AutoHideTabBar);
+
+    // ------------------------------------------------------------------
+    // 4) Dock core windows into existing nodes
+    // ------------------------------------------------------------------
+    ImGui::DockBuilderDockWindow(S.m_windows[Window::ControlBar ].uuid.c_str(), S.m_controlbar_dock_id);
+    if (show_browser)
+        ImGui::DockBuilderDockWindow(S.m_windows[Window::Browser].uuid.c_str(),    S.m_browser_dock_id);
+    if (show_detview)
+        ImGui::DockBuilderDockWindow(S.m_windows[Window::DetailView].uuid.c_str(), S.m_detview_dock_id);
+
+    // Dock all RHS windows into Main
+    for (size_t idx = S.ms_RHS_WINDOWS_BEGIN; idx < S.ms_WINDOWS_END; ++idx)
+    {
+        app::WinInfo& w = S.m_windows[ static_cast<Window>(idx) ];
+        if (w.open)
+            ImGui::DockBuilderDockWindow(w.uuid.c_str(), S.m_main_dock_id);
+    }
+
+    // ------------------------------------------------------------------
+    // 5) Finalize
+    // ------------------------------------------------------------------
+    ImGui::DockBuilderFinish(S.m_dockspace_id);
+}
+/*
 {
     // ------------------------------------------------------------------
     // 0.  Locals & aliases
@@ -423,6 +542,10 @@ void App::InitDockspace(void)
     ImGui::DockBuilderFinish(S.m_dockspace_id);
     return;
 }
+*/
+
+
+
 
 
 

@@ -77,7 +77,7 @@ inline void DetailView::init(void) {
     //  INITIALIZE THE DOCK NODE THAT IS HOSTED BY THE DETAIL-VIEW WINDOW...
     S.m_detview_dockspace_id                        = ImHashStr(S.m_detview_dockspace_uuid);
     
-    this->m_window_class.DockNodeFlagsOverrideSet   = S.m_detview_window_flags;
+    this->m_window_class.DockNodeFlagsOverrideSet   = S.m_detview_window_flags;     //  ImGuiDockNodeFlags_NoDockingSplit | ImGuiDockNodeFlags_NoResize | ImGuiDockNodeFlags_AutoHideTabBar
     this->m_is_open                                 = !S.m_show_detview_window;
     
     return;
@@ -137,9 +137,10 @@ void DetailView::toggle(void) {
 
 //  "Begin"
 //
-void DetailView::Begin([[maybe_unused]] const char *        uuid,
-                       [[maybe_unused]] bool *              p_open,
-                       [[maybe_unused]] ImGuiWindowFlags    flags)
+void DetailView::Begin(  [[maybe_unused]] const char *          uuid
+                       , [[maybe_unused]] bool *                p_open
+                       , [[maybe_unused]] ImGuiWindowFlags      flags )
+
 {
     [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
     [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
@@ -189,6 +190,129 @@ void DetailView::Begin([[maybe_unused]] const char *        uuid,
     
     return;
 }
+/*
+{
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO();
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+    //
+    constexpr ImGuiWindowFlags      host_flags      = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+    constexpr ImGuiDockNodeFlags    inner_flags     = ImGuiDockNodeFlags_NoDockingSplit | ImGuiDockNodeFlags_AutoHideTabBar;
+    static bool                     inner_init      = true;
+    bool                            update          = (this->m_is_open != S.m_show_detview_window);     //  Detect visibility change (your existing policy)
+    
+    
+
+    //      1.      IF NO UPDATE ON VISIBILITY STATUS, EXIT-EARLY (SKIP)...
+    if ( !update  &&  !S.m_show_detview_window )    { return; }
+
+
+
+    //      2.      Ensure the OUTER leaf can't be split/resized (window-class override applies to the node)
+        //  this->m_window_class                           = ImGuiWindowClass{   };                     //  Ensure the OUTER leaf can't be split/resized (window-class override applies to the node)
+        //  this->m_window_class.DockNodeFlagsOverrideSet |= (ImGuiDockNodeFlags_NoDockingSplit | ImGuiDockNodeFlags_NoResize | ImGuiDockNodeFlags_AutoHideTabBar);
+    //
+    //
+    ImGui::SetNextWindowDockID  ( S.m_detview_dock_id       , ImGuiCond_Always      );          //  Pin the host into the outer Detail View leaf and make it immovable/undockable
+    ImGui::SetNextWindowClass   ( &this->m_window_class                             );
+
+
+    //      3.      CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
+    ImGui::PushStyleColor( ImGuiCol_WindowBg    , S.GetUIColor(app::UIColor::DetView_BG) );
+    ImGui::Begin(uuid, p_open, host_flags | flags);
+    //
+        ImGui::PopStyleColor();     //  ImGuiCol_WindowBg
+    //
+    //
+        //          3.1.    Inner dockspace: central-only (NoSplit), and wipe any saved splits once...
+        if (inner_init)
+        {
+            inner_init = false;
+            ImGui::DockBuilderRemoveNode    ( S.m_detview_dockspace_id );                                     // clear restored layout
+            ImGui::DockBuilderAddNode       ( S.m_detview_dockspace_id, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_NoDockingSplit );
+            ImGui::DockBuilderFinish        ( S.m_detview_dockspace_id );
+        }
+        //  Enforce central-only policy every frame
+        ImGui::DockSpace(S.m_detview_dockspace_id, ImVec2(0,0), inner_flags);
+
+        //          3.2.    Visibility bookkeeping (unchanged) ---
+        if (update) {
+            set_visibility_IMPL( S.m_show_detview_window );
+        }
+    //
+    //
+    ImGui::End();
+    
+    
+    
+    //      4.      RE-FOCUS LAST FOCUSED WINDOW AFTER CLOSE-AND_REOPEN...
+    if ( this->m_queue_refocus )
+    {
+        this->m_queue_refocus   = false;
+        
+        if (this->m_top_win) {
+            ImGui::SetWindowFocus( this->m_top_win->Name );
+        }
+    }
+    
+    
+    
+    return;
+}*/
+//
+//
+/*
+{
+    [[maybe_unused]] ImGuiIO &      io              = ImGui::GetIO(); (void)io;
+    [[maybe_unused]] ImGuiStyle &   style           = ImGui::GetStyle();
+    bool                            update          = (this->m_is_open != S.m_show_detview_window);
+    
+    
+    
+    //      1.      IF NO UPDATE ON VISIBILITY STATUS, EXIT...
+    if ( !update  &&  !S.m_show_detview_window )    { return; }
+
+    
+    
+    //      2.      CREATE THE WINDOW AND BEGIN APPENDING WIDGETS INTO IT...
+    ImGui::PushStyleColor( ImGuiCol_WindowBg    , S.GetUIColor(app::UIColor::DetView_BG) );
+    this->m_window_class.DockNodeFlagsOverrideSet   = S.m_detview_window_flags;
+    ImGui::SetNextWindowClass( &this->m_window_class );
+    //
+    ImGui::Begin(uuid, p_open, flags);
+    //
+    //
+        ImGui::PopStyleColor();
+        ImGui::DockSpace(S.m_detview_dockspace_id, ImVec2(0,0), S.m_detview_dockspace_flags);
+        
+        if (update)
+        {
+        
+            set_visibility_IMPL(S.m_show_detview_window);
+        
+        }
+    //
+    //
+    ImGui::End();
+    
+    
+    
+    //      3.      RE-FOCUS LAST FOCUSED WINDOW AFTER CLOSE-AND_REOPEN...
+    if ( this->m_queue_refocus )
+    {
+        this->m_queue_refocus   = false;
+        
+        if (this->m_top_win) {
+            ImGui::SetWindowFocus( this->m_top_win->Name );
+        }
+    }
+    
+    
+    
+    return;
+}
+*/
+
+
 
 //
 //

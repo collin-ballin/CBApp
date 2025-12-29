@@ -99,12 +99,12 @@ enum class PythonCMD : uint8_t {
 
 //  "DEF_PYTHON_CMD_FMT_STRINGS"
 //
-static constexpr cblib::EnumArray< PythonCMD, const char * >
+static constexpr cblib::EnumArray< PythonCMD, std::string_view >
 DEF_PYTHON_CMD_FMT_STRINGS      = {
 {
     /*  None                    */    "%s\n"
     /*  IntegrationWindow       */  , "integration_window %.3f\n"
-    /*  CoincidenceWindow       */  , "Parsing Error"
+    /*  CoincidenceWindow       */  , "coincidence_window {}\n"
 } };
 
 
@@ -436,8 +436,8 @@ struct CCounterStyle
     
     ImPlotFlags                             mst_plot_flags                  =  ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoTitle; // ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoDecorations;  //  ImPlotFlags_Equal | ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoLegend | ImPlotFlags_NoTitle;
     utl::AxisCFG                            mst_axes [2]                    = {
-          { "Time  [sec]"       , ImPlotAxisFlags_None | ImPlotAxisFlags_Opposite | ImPlotAxisFlags_NoHighlight     }
-        , { "Counts  [Arb.]"    , ImPlotAxisFlags_None | ImPlotAxisFlags_AutoFit  | ImPlotAxisFlags_NoHighlight     }
+          { "Time  [sec]"       , ImPlotAxisFlags_None | ImPlotAxisFlags_NoHighlight                                                            }   //  ImPlotAxisFlags_Opposite
+        , { "Counts  [Arb.]"    , ImPlotAxisFlags_None | ImPlotAxisFlags_Opposite | ImPlotAxisFlags_AutoFit  | ImPlotAxisFlags_NoHighlight      }
     };
     utl::LegendCFG                          legend                          = { ImPlotLocation_NorthWest, ImPlotLegendFlags_Outside | ImPlotLegendFlags_Horizontal /* ImPlotLegendFlags_Outside; // | ImPlotLegendFlags_Horizontal; */ };
     

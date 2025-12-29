@@ -86,7 +86,7 @@ public:
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr size_t                 ms_BUFFER_SIZE                  = 512ULL;           //  NUM. OF DATA-PACKETS FROM CCOUNTER.
+    static constexpr size_t                 ms_BUFFER_SIZE                  = 32ULL;           //  NUM. OF DATA-PACKETS FROM CCOUNTER.
     static constexpr size_t                 ms_NUM                          = 15;               //  NUM. OF CHANNELS.
     static constexpr size_t                 ms_CMD_MSG_SIZE                 = 512ULL;           //  BUFFER-SIZE FOR MESSAGE TO PYSTREAM.        //  formerly: "ms_MSG_BUFFER_SIZE"
     //
@@ -218,7 +218,7 @@ protected:
     //
     //                                  COINCIDENCE-COUNTER VARIABLES:
     Param<ImU64>                            m_coincidence_window            = { 10,     {1          , 100   }   };
-    Param<double>                           m_integration_window            = { 1.00f,  {0.001f     , 2.50f }   };
+    Param<double>                           m_integration_window            = { 1.00f,  {0.01f      , 2.50f }   };
 
 
     // *************************************************************************** //
@@ -594,6 +594,52 @@ protected:
     {
         return;
     }
+        
+        
+    //  "_send_cmd"
+    //
+    inline bool                             _send_cmd                           (const PythonCMD type) noexcept
+    {
+        std::string     command     = {   };
+        bool            received    = false;
+    
+        //  CASE 0 :    PROCESS IS NOT RUNNING...
+        if ( !this->m_process_running )         { return received; }
+        
+        
+        
+        //      1.      DISPATCH EACH FORMAT-STRING COMMAND...
+        switch (type)
+        {
+            case PythonCMD::IntegrationWindow : {
+                command     = std::vformat(
+                      CCounterApp::ms_CMD_STRINGS[type]
+                    , std::make_format_args( this->m_coincidence_window.Value() )
+                );
+                break;
+            }
+            case PythonCMD::CoincidenceWindow : {
+                command     = std::vformat(
+                      CCounterApp::ms_CMD_STRINGS[type]
+                    , std::make_format_args( this->m_coincidence_window.Value() )
+                );
+                break;
+            }
+            //
+            //
+            //
+            default : {
+                break;
+            }
+        }
+        //
+        //      2.      TRANSMIT MESSAGE TO THE PROCESS...
+        received = this->m_python.send(command);
+        
+        
+        
+        return received;
+    }
      
      
     //  "_send_message"
@@ -637,6 +683,7 @@ protected:
             
             if ( !spawned ) {
                 this->_display_error_popup();
+                return;
             }
             
             //      CASE 1 :    REQUEST TO RUN *AND* RECORD...
@@ -670,7 +717,7 @@ protected:
             //      CASE 2 :    PROCESS SUCCESSFULLY STARTED...
             else
             {
-                m_max_counts[0]     = 0.0f;     // reset stats
+                //  m_max_counts[0]     = 0.0f;     // reset stats
             }
         }
         
@@ -746,7 +793,6 @@ protected:
     {
         for (auto & b : this->m_buffers)      { b.clear(); }   //b.Erase();
         this->_reset_max_values();
-        
         return;
     }
     
@@ -825,9 +871,29 @@ protected:
     
     
         //      1.      ATTEMPT TO BEGIN PROCESS...
-        try {
+        try
+        {
             pid         = this->m_python.start();
-            if (pid)    { spawned = true; }
+            
+            if (pid)
+            {
+                spawned                             = true;
+                //
+                std::string     integration_str     = std::format( "integration_window {:.3f}\n"    , m_integration_window.Value()  );
+                std::string     coincidence_str     = std::format( "coincidence_window %llu\n"      , m_coincidence_window.Value()  );
+                
+                m_python.send(integration_str);
+                m_python.send(coincidence_str);
+                
+                
+                //  Integration Window
+                //      std::snprintf(cmd, ms_CMD_MSG_SIZE, "integration_window %.3f\n", m_integration_window.value);
+                //      m_python.send(cmd);
+                //
+                //  Coincidence Window
+                //      std::snprintf(cmd, ms_CMD_MSG_SIZE, "coincidence_window %llu\n", m_coincidence_window.value);
+                //      m_python.send(cmd);
+            }
         }
         //
         //      2.      CATCH-BLOCKS...
@@ -876,14 +942,11 @@ protected:
     {
         namespace       cc          = ccounter;
     
-    
         ui::ask_ok_cancel(
               cc::s_last_error_title.c_str()
-            , cc::s_last_error_message.c_str()
-            , [this]{ /* this->_clear_all(); */ }
+            , std::string( "\n\t" + cc::s_last_error_message ).c_str()
+            , []{ } // [this]{ /* this->_clear_all(); */ }
         );
-        
-        
         return;
     }
     
@@ -895,7 +958,6 @@ protected:
     // *************************************************************************** //
     //      2.C. |  MISC. UTILITY FUNCTIONS.
     // *************************************************************************** //
-        
         
     //  "_allocate_buffers"
     //

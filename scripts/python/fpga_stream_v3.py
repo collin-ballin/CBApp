@@ -2,16 +2,18 @@
 """
 "fpga_stream.py"
     @brief Streams coincidence‑counter data to stdout (JSON lines). 
-    VERSION 2.0 --- May 24, 2025.
+    VERSION 2.0.    --- May 24, 2025.
+    VERSION 3.0.    --- ???.
+    VERSION 3.1.    --- December 27, 2025. 
 
     
 MODES OF OPERATION:
 -----
-    1) Real hardware    (default)
-    2) Mock             (--mock or hardware unavailable)
+    1.  Real hardware       (default)
+    2.  Mock                (--mock or hardware unavailable)
 
 
-COMMANDS VIA STDIN:
+INTER-PROCESS COMMUNICATION (IPC) COMMANDS VIA STDIN:
 ------------------
     duration    <sec>           #   seconds per acquisition   (alias: time)
     window      <clks>          #   coincidence‑window register
@@ -20,14 +22,14 @@ COMMANDS VIA STDIN:
 """
 import sys, time, json, threading, queue, signal, datetime, argparse, random
 from typing import List, Tuple
-#
-#   from _FPGA_SAMPLE_DATA import SAMPLE_DATA0 as SAMPLE_PACKETS
-#   from _FPGA_SAMPLE_DATA import SAMPLE_DATA2 as SAMPLE_PACKETS
+
+
 
 ################################################################################
 #
 #
-#    1.  GLOBAL CONSTANTS...
+#
+#    1.     GLOBAL CONSTANTS...
 ################################################################################
 ################################################################################
 USE_CALIBRATION_DATA    = False     # W/O not to use "real" FPGA data or "calibration" data to test AVG, etc.
@@ -60,7 +62,8 @@ except ImportError:
 ################################################################################
 #
 #
-#    2.  HELPER FUNCTIONS (SAME AS IN THE ORIGINAL SCRIPT)...
+#
+#    2.     HELPER FUNCTIONS (SAME AS IN THE ORIGINAL SCRIPT)...
 ################################################################################
 ################################################################################
 
@@ -153,7 +156,10 @@ def stdin_reader():
     return
 
 
-#       3.      GRACEFUL SIGNALS...
+
+################################################################################
+#
+#           3.1.    GRACEFUL SIGNALS...
 ################################################################################
 ################################################################################
 threading.Thread(target=stdin_reader, daemon=True).start()
@@ -162,11 +168,11 @@ signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
 
 
-#       4.      MOCK‑PACKET GENERATOR...
+################################################################################
+#
+#           3.2.    MOCK‑PACKET GENERATOR...
 ################################################################################
 ################################################################################
-
-
 
 #   "mock_packets"
 #
@@ -192,13 +198,16 @@ def mock_packets():
 #
 #
 #
-#   5.      MAIN LOOP...
+#       4.      MAIN LOOP...
 ################################################################################
 ################################################################################
 
 #   "main"
 #
 def main():
+
+
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--mock", action="store_true",
                         help="Force mock‑data mode even if hardware present")
@@ -212,6 +221,8 @@ def main():
         except Exception as e:
             sys.stderr.write(f"Hardware open failed: {e}.  Falling back to mock.\n")
             mock_mode = True
+
+
 
     # --- runtime‑tunable parameters -----------------------------------------
     integration_window  = 1.0      # seconds per acquisition
@@ -272,14 +283,14 @@ def main():
                     "counts": counts,
                 }
                 print(json.dumps(record), flush=True)
-
+                
+    return;
 
 
 
 ################################################################################
 #
-#
-#    APPLICATION ENTRY POINT...
+#           5.1.    APPLICATION ENTRY POINT.
 ################################################################################
 ################################################################################
 
@@ -288,6 +299,18 @@ if __name__ == "__main__":
 
 
 
+
+
+
+
+
+
+
+
+
 ################################################################################
+#
+#
+#
 ################################################################################
-#  END.
+################################################################################    #  END ALL.

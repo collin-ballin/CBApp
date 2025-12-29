@@ -414,12 +414,13 @@ public:
     ImGuiID                             m_detview_dockspace_id      = 0;
     ImGuiDockNodeFlags                  m_detview_dockspace_flags   = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoCloseButton;// | ImGuiDockNodeFlags_HiddenTabBar;      //  ImGuiDockNodeFlags_NoSplit
     //  ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_HiddenTabBar; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
-    ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_HiddenTabBar | ImGuiDockNodeFlags_NoDockingSplitOther; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
+    //  ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_HiddenTabBar | ImGuiDockNodeFlags_NoDockingSplitOther; // ImGuiDockNodeFlags_NoTabBar;      //  ImGuiDockNodeFlags_NoSplit
+    ImGuiDockNodeFlags                  m_detview_window_flags      = ImGuiDockNodeFlags_NoDockingSplit | ImGuiDockNodeFlags_NoResize | ImGuiDockNodeFlags_AutoHideTabBar;
     //
     //                              ADD MORE SHARED STATE DATA MEMBERS HERE:
     //                                  SubCategory.
     //
-    
+   
 //
 //
 //

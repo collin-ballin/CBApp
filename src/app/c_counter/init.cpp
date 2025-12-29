@@ -509,7 +509,8 @@ void CCounterApp::init_ctrl_rows(void)
             {// BEGIN.
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
                 if ( ImGui::SliderScalar("##IntegrationWindow",          ImGuiDataType_Double,       &m_integration_window.value,
-                                    &m_integration_window.limits.min,     &m_integration_window.limits.max,     "%.3f seconds", SLIDER_FLAGS) ) {
+                                    &m_integration_window.limits.min,     &m_integration_window.limits.max,     "%.3f seconds", SLIDER_FLAGS) )
+                {
                     if (m_process_running) {
                         char cmd[ms_CMD_MSG_SIZE];
                         std::snprintf(cmd, ms_CMD_MSG_SIZE, "integration_window %.3f\n", m_integration_window.value);
@@ -517,10 +518,11 @@ void CCounterApp::init_ctrl_rows(void)
                     }
                 }
                 ImGui::SameLine(0.0f, pad);
-                if (ImGui::Button("Apply", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) ) {
-                    char cmd[ms_CMD_MSG_SIZE];
-                    std::snprintf(cmd, ms_CMD_MSG_SIZE, "integration_window %.3f\n", cc::delay_s);
-                    m_python.send(cmd);
+                if (ImGui::Button("Apply", ImVec2(ImGui::GetContentRegionAvail().x - pad, 0)) )
+                {
+                    //  char cmd[ms_CMD_MSG_SIZE];
+                    //  std::snprintf(cmd, ms_CMD_MSG_SIZE, "integration_window %.3f\n", cc::delay_s);
+                    //  m_python.send(cmd);
                 }
                 ImGui::Dummy( ImVec2(pad, 0.0f) );
             }// END.

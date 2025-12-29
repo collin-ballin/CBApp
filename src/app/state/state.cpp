@@ -294,7 +294,7 @@ void AppState::_load_implot_style(void)
 //
 # else
 //
-    S.m_logger.info( std::format("[[CBApp]] ImPlot style from external \".json\" files is disabled for this build (`#ifndef CBAPP_ENABLE_IMPLOT_STYLE_FILE`)") );
+    m_logger.info( std::format("[[CBApp]] ImPlot style from external \".json\" files is disabled for this build (`#ifndef CBAPP_ENABLE_IMPLOT_STYLE_FILE`)") );
 //
 #endif  //  CBAPP_ENABLE_IMPLOT_STYLE_FILE  //
     
