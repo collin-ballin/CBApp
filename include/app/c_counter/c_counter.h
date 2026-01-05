@@ -86,9 +86,14 @@ public:
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr size_t                 ms_BUFFER_SIZE                  = 32ULL;           //  NUM. OF DATA-PACKETS FROM CCOUNTER.
-    static constexpr size_t                 ms_NUM                          = 15;               //  NUM. OF CHANNELS.
-    static constexpr size_t                 ms_CMD_MSG_SIZE                 = 512ULL;           //  BUFFER-SIZE FOR MESSAGE TO PYSTREAM.        //  formerly: "ms_MSG_BUFFER_SIZE"
+#ifdef __CBAPP_DEBUG__
+    static constexpr size_t                 ms_BUFFER_SIZE                  = 1024ULL;                          //  NUM. OF DATA-PACKETS FROM CCOUNTER.
+#else
+    static constexpr size_t                 ms_BUFFER_SIZE                  = 1024ULL;
+#endif  //  __CBAPP_DEBUG__  //
+//
+    static constexpr size_t                 ms_NUM                          = ccounter::DEF_CHANNEL_COUNT;      //  NUM. OF CHANNELS.
+    static constexpr size_t                 ms_CMD_MSG_SIZE                 = 512ULL;                           //  BUFFER-SIZE FOR MESSAGE TO PYSTREAM.        //  formerly: "ms_MSG_BUFFER_SIZE"
     //
     static constexpr auto	                cv_DEF_COOLDOWN_DURATION	    = std::chrono::milliseconds(500);
     
@@ -102,21 +107,22 @@ public:
     friend class                            App;
     //
     //
-    //  using                                   buffer_type                     = cblib::RingBuffer<ImVec2, ms_BUFFER_SIZE>;    //  System-Wide Aliases.
     using                                   buffer_type                     = cblib::ndRingBuffer<ImVec2>;    //  System-Wide Aliases.
     //  using                               cblib::utl::anonClock						    = std::chrono::steady_clock;
     //  using                               LabelFn                         = std::function<void(const char *)>     ;
     //
     //
-    using                                   PerFrame                        = ccounter::PerFrame_t;                         //  State POD structs.
-    using                                   Packet                          = ccounter::CoincidencePacket;
+    using                                   Count_t                         = size_t;
+    using                                   Frequency_t                     = size_t;
+    using                                   Packet_t                        = ccounter::CoincidencePacket_t<Count_t, Frequency_t>;
+    using                                   PerFrame_t                      = ccounter::PerFrame_t<float, Count_t>;                 //  State POD structs.
     //
     using                                   ChannelSpec                     = ccounter::ChannelSpec;
     using                                   Style                           = ccounter::CCounterStyle;
     //
     using                                   PythonCMD                       = ccounter::PythonCMD;                          //  Enums.
     using                                   AvgMode                         = AvgMode;
-    using                                   ChIndex                         = Packet::Index;
+    using                                   ChIndex                         = Packet_t::Index;
     
     
     // *************************************************************************** //
@@ -125,6 +131,7 @@ public:
     //      0. |    REFERENCES TO GLOBAL ARRAYS.
     // *************************************************************************** //
     static constexpr auto                   ms_CMD_STRINGS                  = ccounter::DEF_PYTHON_CMD_FMT_STRINGS;
+    inline static auto                      ms_channels                     = ccounter::DEF_CHANNEL_INFOS;
     
 //
 //
@@ -146,7 +153,7 @@ protected:
     // *************************************************************************** //
     AppState &                              CBAPP_STATE_NAME;
     Style                                   m_style                         = {   };
-    PerFrame                                m_perframe                      = {   };
+    PerFrame_t                              m_perframe                      = {   };
 
 
     // *************************************************************************** //
@@ -169,30 +176,6 @@ protected:
     std::vector<Tab_t>                      ms_CTRL_TABS                    = {   };
     std::vector<utl::WidgetRow>             ms_CTRL_ROWS                    = {   };        //  vector that contains each widget for the CONTROL---TAB.
     std::vector<utl::WidgetRow>             ms_APPEARANCE_ROWS              = {   };        //  ...for the APPEARANCE---TAB.
-    //
-    //
-    //
-    ChannelSpec                             ms_channels [ms_NUM]            = {
-    //                          MASTER---PLOT.                  SINGLE---PLOT.                      AVERAGE---PLOT.
-          { 8   , "A"       , { true    , "##MasterA"           , true      , "##SingleA"           , true      , "##AvgA"          }     }
-        , { 4   , "B"       , { true    , "##MasterB"           , true      , "##SingleB"           , true      , "##AvgB"          }     }
-        , { 2   , "C"       , { true    , "##MasterC"           , true      , "##SingleC"           , false     , "##AvgC"          }     }
-        , { 1   , "D"       , { true    , "##MasterD"           , true      , "##SingleD"           , false     , "##AvgD"          }     }
-    //
-        , {12   , "AB"      , { true    , "##MasterAB"          , true      , "##SingleAB"          , true      , "##AvgAB"         }     }
-        , {10   , "AC"      , { true    , "##MasterAC"          , true      , "##SingleAC"          , true      , "##AvgAC"         }     }
-        , { 9   , "AD"      , { true    , "##MasterAD"          , true      , "##SingleAD"          , false     , "##AvgAD"         }     }
-        , { 6   , "BC"      , { true    , "##MasterBC"          , true      , "##SingleBC"          , false     , "##AvgBC"         }     }
-        , { 5   , "BD"      , { true    , "##MasterBD"          , true      , "##SingleBD"          , false     , "##AvgBD"         }     }
-        , { 3   , "CD"      , { true    , "##MasterCD"          , true      , "##SingleCD"          , false     , "##AvgCD"         }     }
-    //
-        , {14   , "ABC"     , { false   , "##MasterABC"         , false     , "##SingleABC"         , false     , "##AvgABC"        }     }
-        , {13   , "ABD"     , { false   , "##MasterABD"         , false     , "##SingleABD"         , false     , "##AvgABD"        }     }
-        , {11   , "ACD"     , { false   , "##MasterACD"         , false     , "##SingleACD"         , false     , "##AvgACD"        }     }
-        , { 7   , "BCD"     , { false   , "##MasterBCD"         , false     , "##SingleBCD"         , false     , "##AvgBCD"        }     }
-    //
-        , {15   , "ABCD"    , { false   , "##MasterABCD"        , false     , "##SingleABCD"        , false     , "##AvgABCD"       }     }
-    };
 
 
     // *************************************************************************** //
@@ -441,6 +424,7 @@ public:
     void                                Begin                               ([[maybe_unused]] const char *,     [[maybe_unused]] bool *,    [[maybe_unused]] ImGuiWindowFlags);
     //
     void                                save                                (void);
+    void                                open                                (void);
     void                                undo                                (void);
     void                                redo                                (void);
     //
@@ -589,13 +573,6 @@ protected:
     //      2.C. |  PYSTREAM COMMUNICATION FUNCTIONS.
     // *************************************************************************** //
         
-    //  "_format_cmd_string"
-    inline void                             _format_cmd_string                  (const PythonCMD type, const char * message) noexcept
-    {
-        return;
-    }
-        
-        
     //  "_send_cmd"
     //
     inline bool                             _send_cmd                           (const PythonCMD type) noexcept
@@ -674,7 +651,6 @@ protected:
     {
         IM_ASSERT(!this->m_process_running);    //  [[ TO-DO ]]:    Make this so that it only asserts script is not running if run_and_rec is NOT also true (ALLOW recording in middle of execution).
         IM_ASSERT( !(this->m_process_recording && run_and_rec) );
-        
         
         
         if ( !this->m_process_running )
@@ -1050,4 +1026,3 @@ protected:
 // *************************************************************************** //
 //
 //  END.
-

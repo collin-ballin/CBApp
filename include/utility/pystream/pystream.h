@@ -118,7 +118,7 @@ enum class ProcessState : uint8_t
 //
 //  "DEF_PROCESS_STATE_NAMES"
 static constexpr cblib::EnumArray< ProcessState, const char * >
-    DEF_PROCESS_STATE_NAMES     = { { "None"    , "Running"     , "Zombie"      "Exited"    , "Unknown" } };
+    DEF_PROCESS_STATE_NAMES     = { { "None"    , "Running"     , "Zombie"      , "Exited"    , "Unknown" } };
 
 
 
@@ -241,8 +241,6 @@ struct ProcessInfo
 // 		Class-Interface for the "PyStream" Abstraction.
 // *************************************************************************** //
 // *************************************************************************** //
-
-#define     PYSTREAM_REFACTOR   1
 
 class PyStream
 {
@@ -398,15 +396,10 @@ public:
     //      2.A. |  MAIN API.                       |   "interface.cpp" ...
     // *************************************************************************** //
     //                              OPERATION FUNCTIONS:
-#ifdef PYSTREAM_REFACTOR
     [[nodiscard]] uint32_t                      start                               (void);                             //  Launch process & reader thread.
-#else
-    bool                                        start                               (void);
-#endif  //  PYSTREAM_REFACTOR  //
     [[nodiscard]] std::optional<uint32_t>       try_start                           (void) noexcept;                    //  Non-Throwing version of "start". 
     //
     void                                        stop                                (void);                             //  Terminate child & join thread.
-    void                                        shutdown                            (void);                             //  [[ NOT IMPLEMENTED ]]
     //
     bool                                        send                                (const std::string & msg);          //  write msg + \n
     bool                                        try_receive                         (std::string & out);                //  pop next complete line
@@ -471,16 +464,18 @@ public:
         //      1.      [ _WIN32 ] :    STILL_ACTIVE == running...
         if ( this->m_proc_info.hProcess == nullptr )  { return false; }
 
-        DWORD       code        = 0;
-        const BOOL  ok          = ::GetExitCodeProcess( this->m_proc_info.hProcess, &code );
-        if ( ok == FALSE )                              { return false; }
-        if ( code == STILL_ACTIVE )                     { return true;  }
-        else                                            { return false; }
+        const DWORD     wait_rc     = ::WaitForSingleObject( this->m_proc_info.hProcess, 0 );
+        if ( wait_rc == WAIT_TIMEOUT )                 { return true;  }
+        if ( wait_rc == WAIT_OBJECT_0 )                { return false; }
+        return false;
+    //
     #else
+    //
         //      1.      [ POSIX ] :     NON-DESTRUCTIVE: "kill(pid, 0)"...
         if ( this->m_child_pid <= 0 )                   { return false; }
 
-        const int   rc          = ::kill( this->m_child_pid, 0 );
+        int         rc          = -1;
+        do { rc = ::kill( this->m_child_pid, 0 ); } while ( rc == -1 && errno == EINTR );
         if ( rc == 0 )                                  { return true;  }   // present (Running or Zombie)
         switch ( errno )
         {
@@ -490,8 +485,11 @@ public:
         }
     #endif
     }
+
+
     
     
+
     //  "get_process_info"
     //
     # ifdef _WIN32
@@ -506,15 +504,21 @@ public:
         //      1.      [ _WIN32 ] :    QUERY EXIT CODE; NO ZOMBIE STATE...
         if ( this->m_proc_info.hProcess == nullptr )    { out.state = State::None;  return out; }
 
-        const BOOL      ok          = ::GetExitCodeProcess( this->m_proc_info.hProcess, &code );
-        
-        if ( ok == FALSE )                  { out.state = State::None;      return out; }
-        if ( code == STILL_ACTIVE )         { out.state = State::Running;   return out; }
+        const DWORD     wait_rc     = ::WaitForSingleObject( this->m_proc_info.hProcess, 0 );
 
-        out.state           = State::Exited;                //  terminated (handle signaled)
-        out.exit_code       = static_cast<int>(code);
-        out.reaped          = false;                        //  Windows: no reap concept
+        if ( wait_rc == WAIT_TIMEOUT )                  { out.state = State::Running;   return out; }
+        if ( wait_rc == WAIT_OBJECT_0 )
+        {
+            const BOOL      ok          = ::GetExitCodeProcess( this->m_proc_info.hProcess, &code );
 
+            out.state           = State::Exited;                //  terminated (handle signaled)
+            out.exit_code       = ( ok == FALSE ) ? -1 : static_cast<int>(code);
+            out.reaped          = false;                        //  Windows: no reap concept
+
+            return out;
+        }
+
+        out.state = State::Unknown;
         return out;
     }
     //
@@ -525,15 +529,13 @@ public:
     [[nodiscard]] inline ProcessInfo                get_process_info                    (const bool allow_reap=false) const noexcept {
         using           State       = ProcessState;
         ProcessInfo     out         = {   };
-        int             rc_kill     = ::kill( this->m_child_pid, 0 );
-        int             status      = 0;
-        pid_t           r           = -1;
+        int             rc_kill     = 0;
     
     
         //      1.      CHECK IF ANY PROCESS IS PRESENT...
         if ( this->m_child_pid <= 0 )       { out.state = State::None; return out; }
 
-        rc_kill     = ::kill( this->m_child_pid, 0 );
+        do { rc_kill = ::kill( this->m_child_pid, 0 ); } while ( rc_kill == -1 && errno == EINTR );
         if ( rc_kill == -1 )
         {
             switch ( errno ) {
@@ -548,9 +550,51 @@ public:
         //
         //              2A.     NON-OBSERVATORY CHECK  [ Caller chooses NOT to disambiguate ].
         if ( !allow_reap )              { out.state = State::Unknown;  return out; }
+        
+        out.state = State::Unknown;
+        return out;
+    }
+    //
+    //
+    #endif  //  _WIN32  //
+
+
+    
+    
+    //  "reap_process_info"
+    //      **  POSIX ONLY!  **
+    //
+    # ifndef _WIN32
+    //
+    //
+    [[nodiscard]] inline ProcessInfo                reap_process_info                   (void) noexcept {
+        using               State           = ProcessState;
+        ProcessInfo         out             = {   };
+        int                 rc_kill         = 0;
+        int                 status          = 0;
+        pid_t               r               = -1;
+    
+    
+        //      1.      CHECK IF ANY PROCESS IS PRESENT...
+        if ( this->m_child_pid <= 0 )       { out.state = State::None; return out; }
+
+        do { rc_kill = ::kill( this->m_child_pid, 0 ); } while ( rc_kill == -1 && errno == EINTR );
+        if ( rc_kill == -1 )
+        {
+            switch ( errno ) {
+                case EPERM :    { /* present but no permission */ break;                                }
+                case ESRCH :    { out.state = State::None;  this->m_child_pid = -1;     return out;     }
+                default    :    { out.state = State::None;  this->m_child_pid = -1;     return out;     }
+            }
+        }
+
+
+        //      2.      PROCESS *IS* PRESENT (either RUNNING or ZOMBIE)...
         //
         //              2B.     COLLAPSE WAVE-FUNC. [ Disambiguate with waitpid(WNOHANG) ].
-        r       = ::waitpid( this->m_child_pid, &status, WNOHANG );
+        do {
+            r       = ::waitpid( this->m_child_pid, &status, WNOHANG );
+        } while ( (r == -1)  &&  (errno == EINTR) );
 
 
         //      3.      COLLECT DISAMBIGUATED PROCESS INFO...
@@ -563,43 +607,57 @@ public:
         {
             out.reaped  = true;
             if ( WIFEXITED(status) ) {
-                out.state       = State::Exited;
-                out.exit_code   = WEXITSTATUS(status);
-                out.term_sig    = 0;
+                out.state           = State::Exited;
+                out.exit_code       = WEXITSTATUS(status);
+                out.term_sig        = 0;
+                this->m_child_pid   = -1;
                 return out;
             }
             if ( WIFSIGNALED(status) ) {
-                out.state       = State::Exited;
-                out.exit_code   = -1;
-                out.term_sig    = WTERMSIG(status);
+                out.state           = State::Exited;
+                out.exit_code       = -1;
+                out.term_sig        = WTERMSIG(status);
+                this->m_child_pid   = -1;
                 return out;
             }
             //
             //      should not reach here; treat as exited with unknown details
-            out.state       = State::Exited;
-            out.exit_code   = -1;
-            out.term_sig    = 0;
+            out.state               = State::Exited;
+            out.exit_code           = -1;
+            out.term_sig            = 0;
+            this->m_child_pid       = -1;
             return out;
         }
         //
         //              3C.     NOT OUR CHILD / ALREADY REAPED BY SOMEBODY ELSE / ERROR.
-        if ( r == -1 )  { out.state = State::None;  return out; }
+        if ( r == -1 )  {
+            if ( errno == ECHILD )      { this->m_child_pid = -1; }
+            
+            out.state = State::None;
+            return out;
+        }
     
         return out;
     }
     //
     //
-    #endif  //  _WIN32  //
+    #endif  //  #ifndef _WIN32  //
+
+
+
+
 
 
     //  "get_pid"
+    //
     [[nodiscard]] inline uint32_t                   get_pid                         (void) const noexcept {
       # ifdef _WIN32
-        return this->m_proc_info.dwProcessId    ? this->m_proc_info.dwProcessId     : 0U;
+        return (this->m_proc_info.hProcess && this->m_proc_info.dwProcessId)    ? this->m_proc_info.dwProcessId     : 0U;
       # else
         return (this->m_child_pid > 0)  ? static_cast<uint32_t>(this->m_child_pid)  : 0U;
       # endif  //  _WIN32  //
     }
+
     
     
     //  "get_invocation"
@@ -685,12 +743,26 @@ public:
 
     //  "set_queue_capacity"
     inline void                                     set_queue_capacity              (const size_t cap) {
-        if ( (cap < PyStream::ms_MIN_QUEUE_CAPACITY)  ||  (cap > PyStream::ms_MAX_QUEUE_CAPACITY) ) {
-            throw std::out_of_range(  std::format("queue_capacity: value must be inside range [{}, {}]"
-                                    , PyStream::ms_MIN_QUEUE_CAPACITY, PyStream::ms_MAX_QUEUE_CAPACITY) );
+        this->_enforce_not_running("set_queue_capacity");
+        if ( (cap < PyStream::ms_MIN_QUEUE_CAPACITY)  ||  (cap > PyStream::ms_MAX_QUEUE_CAPACITY) )
+        {
+            throw std::out_of_range(std::format(
+                  "queue_capacity: value must be inside range [{}, {}]"
+                , PyStream::ms_MIN_QUEUE_CAPACITY, PyStream::ms_MAX_QUEUE_CAPACITY)
+            );
         }
         this->m_queue_capacity = cap;
+
+        //  Enforce capacity immediately (caller may shrink capacity while queue is non-empty).
+        {
+            std::lock_guard<std::mutex>     lock    (this->m_queue_mutex);
+            while ( this->m_recv_queue.size() > this->m_queue_capacity ) {
+                this->m_recv_queue.pop_front();
+                ++this->m_dropped_lines;
+            }
+        }
     }
+
 
 
     // *************************************************************************** //
@@ -701,7 +773,16 @@ public:
     // *************************************************************************** //
     
     //  "get_filepath"
-    [[nodiscard]] inline std::string                get_filepath                    (void) const noexcept   { return this->m_script_path.string(); }
+    [[nodiscard]] inline std::string                get_filepath                    (void) const noexcept
+    {
+        try {
+            return process::path_to_utf8(this->m_script_path, true);
+        }
+        catch (...) {
+            return { };
+        }
+    }
+    
     
     //  "get_args"
     [[nodiscard]] inline std::vector<std::string>   get_args                        (void) const noexcept   { return this->m_args; }    //  RETURN A DEEP-COPY.  CALLER OWNS IT.
@@ -750,7 +831,7 @@ protected:
     inline void                                     enqueue_line_                   (std::string && s)
     {
         std::lock_guard<std::mutex>     lock    (this->m_queue_mutex);
-        if ( this->m_recv_queue.size() >= this->m_queue_capacity ) {
+        while ( this->m_recv_queue.size() >= this->m_queue_capacity ) {
             this->m_recv_queue.pop_front(); ++this->m_dropped_lines;    // drop-old policy
         }
         this->m_recv_queue.emplace_back(std::move(s));
@@ -863,22 +944,23 @@ protected:
         namespace           fs      = std::filesystem;
         std::error_code     ec      {   };
         
-        if ( dir.empty() )          {    throw std::invalid_argument(std::string(where) + ": empty path"); }
-        
-        
+        if ( dir.empty() )  { throw std::invalid_argument(std::string(where) + ": empty path"); }
+
         if ( !fs::exists(dir, ec) )
         {
-            if (ec)     { throw std::runtime_error( std::string(where) + ": exists() failed: " + ec.message() ); }
+            if (ec)     { throw std::runtime_error(std::string(where) + ": exists() failed: " + ec.message()); }
             throw std::invalid_argument(std::string(where) + ": file does not exist");
         }
-        if ( !fs::is_regular_file(dir, ec) )
+        if ( !fs::is_directory(dir, ec) )
         {
-            if (ec)     { throw std::runtime_error( std::string(where) + ": is_directory() failed: " + ec.message() ); }
+            if (ec)     { throw std::runtime_error(std::string(where) + ": is_directory() failed: " + ec.message()); }
             throw std::invalid_argument(std::string(where) + ": not a directory");
         }
         const path_t canon = std::filesystem::weakly_canonical(dir, ec);
-        return ( !ec && !canon.empty() )    ? canon     : dir;
+        return (!ec && !canon.empty())  ? canon     : dir;
     }
+
+
     
     
 

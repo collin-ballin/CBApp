@@ -43,7 +43,7 @@ void CCounterApp::_PlotMaster(void) const noexcept
 {
 	namespace					cc						= ccounter;
 	Style const &				CS						= this->m_style;		// assumes CS.m_mst_avail is mutable
-	cc::PerFrame_t const &		PF						= this->m_perframe;
+	auto const &		        PF						= this->m_perframe;
 
 	// Compute x-axis flags: disable AutoFit whenever we are NOT crawling
 	ImPlotAxisFlags				xflags					= CS.mst_axes[0].flags;
@@ -54,21 +54,22 @@ void CCounterApp::_PlotMaster(void) const noexcept
 
 	ImGui::PushID(ms_PLOT_UUIDs[0]);
 
-	// Begin master plot
+
+	//      1.      BEGIN THE MASTER PLOT...
 	if ( !ImPlot::BeginPlot(ms_PLOT_UUIDs[0], ImVec2(-1, CS.m_mst_avail.y), CS.mst_plot_flags) ) {
 		ImGui::PopID();
 		return;
 	}
 
 	{
-		// 1) Axes/legend
+		//  1)      Axes/legend
 		ImPlot::SetupAxes( CS.mst_axes[0].uuid, CS.mst_axes[1].uuid, xflags, CS.mst_axes[1].flags );
 		ImPlot::SetupLegend( CS.legend.location, CS.legend.flags );
 
-		// 2) X limits are driven by per-frame cache (latched window or crawl window)
+		//  2)      X limits are driven by per-frame cache (latched window or crawl window)
 		ImPlot::SetupAxisLimits(ImAxis_X1, PF.xmin, PF.xmax, ImGuiCond_Always);
 
-		// 3) Series
+		//  3)      PLOTTING EACH SERIES...
 		for (int k = 0; k < static_cast<int>(ms_NUM); ++k)
 		{
 			auto const &		buf			= m_buffers[k];
@@ -229,9 +230,9 @@ void CCounterApp::_PlotMaster(void) const noexcept
 //
 void CCounterApp::_PlotSingles(void) const noexcept
 {
-	namespace			cc			= ccounter;
-	const PerFrame &	PF			= this->m_perframe;
-	const Style &		CS			= this->m_style;
+	namespace			    cc			= ccounter;
+	const PerFrame_t &	    PF			= this->m_perframe;
+	const Style &		    CS			= this->m_style;
 
 	if ( ImGui::BeginTable(ms_PLOT_UUIDs[1], 6, ms_i_plot_table_flags) )
 	{

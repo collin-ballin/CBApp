@@ -245,7 +245,7 @@ int Editor::_hit_point([[maybe_unused]] const Interaction & it) const
 std::optional<Editor::Hit> Editor::_hit_any(const Interaction & it) const
 {
     // ─── utilities ───────────────────────────────────────────────────────
-    using                   HitType                 = Hit::Type;
+    //  using                   HitType                 = Hit::Type;
     constexpr float         PAD                     = 4.0f;
     const float             HALF                    = m_style.HANDLE_BOX_SIZE * 0.5f + PAD;
     const ImVec2            ms                      = ImGui::GetIO().MousePos;          // mouse in pixels

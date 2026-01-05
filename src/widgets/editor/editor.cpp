@@ -959,8 +959,8 @@ inline void Editor::_MECH_drive_io(void)
 //
 inline void Editor::_handle_default(const Interaction & it)
 {
-    [[maybe_unused]] ImGuiIO &      io          = ImGui::GetIO();
-    const DragState                 state       = this->m_boxdrag.GetDragState();
+    [[maybe_unused]] ImGuiIO &          io          = ImGui::GetIO();
+    [[maybe_unused]] const DragState    state       = this->m_boxdrag.GetDragState();
 
 
     /*

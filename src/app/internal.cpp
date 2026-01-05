@@ -237,8 +237,8 @@ void App::SaveHandler(void)
 void App::OpenHandler(void)
 {
     switch ( S.GetCurrentApplet() ) {
-        case Applet::CCounterApp            : { /* ... */                               break; }
-        case Applet::EditorApp              : { this->m_editor_app.open();              break; }
+        case Applet::CCounterApp            : { this->m_counter_app     .open();        break; }
+        case Applet::EditorApp              : { this->m_editor_app      .open();        break; }
         case Applet::GraphApp               : { /* ... */                               break; }
         case Applet::MimicApp               : { /* ... */                               break; }
         default                             : { /* this->OpenHandler_Default(); */      break; }

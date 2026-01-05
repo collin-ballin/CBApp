@@ -117,10 +117,17 @@ DEF_PYTHON_CMD_FMT_STRINGS      = {
 //      [[ TO-DO ]]:    REPLACE THIS!!!
 //                      This is just a POD struct to carry the per-frame data we need throughout the CCounter class.
 //
+template <typename float_type, typename int_t>
 struct PerFrame_t {
+//
+//
+//
     std::string     raw             {   };
-    float           xmin            = -1.0f;
-    float           xmax            = -1.0f;
+    float_type      xmin            = float_type(-1.0);
+    float_type      xmax            = float_type(-1.0);
+    int_t           ymin            = int_t(0);
+    int_t           ymax            = int_t(0);
+    //
     float           now             = -1.0f;
     float           spark_now       = -1.0f;
 //
@@ -134,8 +141,11 @@ struct PerFrame_t {
     inline void clear(void) noexcept
     {
         this->raw             .clear();
-        this->xmin            = -1.0f;
-        this->xmax            = -1.0f;
+        this->xmin            = float_type(-1.0);
+        this->xmax            = float_type(-1.0);
+        this->ymin            = int_t(0);
+        this->ymax            = int_t(0);
+        //
         this->now             = -1.0f;
         this->spark_now       = -1.0f;
         this->got_packet      = false;
@@ -161,21 +171,25 @@ enum class ChannelID : uint8_t {
 };
 
 
-//  "CoincidencePacket"
+//  "CoincidencePacket_t"
 //      Holds a single FPGA “packet”
 //
-struct CoincidencePacket
+template <typename T, typename U>
+struct CoincidencePacket_t
 {
     using                                   Index               = ChannelID;
-    using                                   value_type          = int;
+    using                                   value_type          = T;
+    using                                   frequency_type      = U;
 //
 //
 //
     cblib::EnumArray<Index, value_type>     counts              = {   };
-    int                                     cycles              {   };
+    frequency_type                          frequency           = frequency_type(0);
     //
     //
     //                                      CONVENIENCE ACCESSORS:
+    [[nodiscard]] frequency_type                get_frequency       (void) const noexcept           {   return this->frequency;                     }
+    //
     [[nodiscard]] value_type                    d                   (void) const noexcept           {   return this->counts[ Index::D       ];      }
     [[nodiscard]] value_type                    c                   (void) const noexcept           {   return this->counts[ Index::C       ];      }
     [[nodiscard]] value_type                    cd                  (void) const noexcept           {   return this->counts[ Index::CD      ];      }
@@ -202,14 +216,16 @@ struct CoincidencePacket
 //  "parse_packet"
 //      Parse one JSON‑line; returns nullopt on format errors
 //
-inline std::optional<CoincidencePacket>
+template <typename Packet>
+inline std::optional<Packet>
 parse_packet(std::string_view line)
 {
-    using               json            = nlohmann::json;
-    using               Packet          = CoincidencePacket;
-    using               Index           = Packet::Index;
+    using               json                = nlohmann::json;
+    using               value_type          = Packet::value_type;
+    using               frequency_type      = Packet::frequency_type;
+    using               Index               = Packet::Index;
     //
-    Packet              packet          {   };
+    Packet              packet              {   };
 
     try
     {
@@ -226,9 +242,9 @@ parse_packet(std::string_view line)
         
         //      1.      FETCH THE VALUE OF EACH COUNTER FROM THE DATA-DELIVERY...
         for (i = 0ULL; i < N; idx = static_cast<Index>(++i) ) {
-            packet.counts[idx]      = arr[i].get<int>();
+            packet.counts[idx]      = arr[i].get<value_type>();
         }
-        packet.cycles   = j.at("cycles").get<int>();
+        packet.frequency    = j.at("cycles").get<frequency_type>();     //  [TO-DO]]:   REPLACE THE KEY-WORD "cycles"!!!
     }
     //
     //      ERROR :     Some type of malformed JSON / JSON-Keys, etc...
@@ -243,14 +259,16 @@ parse_packet(std::string_view line)
 
 //  "parse_packet"
 //
-inline std::optional<CoincidencePacket>
+template <typename Packet>
+inline std::optional< Packet >
 parse_packet(std::string_view line, bool mutual_exclusion)   // NEW ARG (default = previous behaviour)
 {
-    using               json            = nlohmann::json;
-    using               Packet          = CoincidencePacket;
-    using               Index           = Packet::Index;
+    using               json                = nlohmann::json;
+    using               value_type          = Packet::value_type;
+    using               frequency_type      = Packet::frequency_type;
+    using               Index               = Packet::Index;
     //
-    Packet              packet          {   };
+    Packet              packet              {   };
 
 
     try
@@ -268,9 +286,9 @@ parse_packet(std::string_view line, bool mutual_exclusion)   // NEW ARG (default
         
         //      1.      FETCH THE VALUE OF EACH COUNTER FROM THE DATA-DELIVERY...
         for (i = 0ULL; i < N; idx = static_cast<Index>(++i) ) {
-            packet.counts[idx]      = arr[i].get<int>();
+            packet.counts[idx]      = arr[i].get<value_type>();
         }
-        packet.cycles   = j.at("cycles").get<int>();
+        packet.frequency    = j.at("cycles").get<frequency_type>();     //  [TO-DO]]:   REPLACE THE KEY-WORD "cycles"!!!
 
 
         //      2.      ADAPT GEORGES' FPGA VALUES FROM:  [ NON-MUTEX (Default) ] -- TO -- [ MUTEX ]...
@@ -537,6 +555,61 @@ struct CCounterStyle
 //
 // *************************************************************************** //
 // *************************************************************************** //   END [[ 2.  "OTHER" ]].
+
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      3.      INTERNAL ARRAYS / CONSTANTS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+//  "DEF_CHANNEL_INFOS"
+//
+static constexpr size_t         DEF_CHANNEL_COUNT                           = 15ULL;
+static constexpr ChannelSpec    DEF_CHANNEL_INFOS [ DEF_CHANNEL_COUNT ]     = {
+//                          MASTER---PLOT.                  SINGLE---PLOT.                      AVERAGE---PLOT.
+      { 8   , "A"       , { true    , "##MasterA"           , true      , "##SingleA"           , true      , "##AvgA"          }     }
+    , { 4   , "B"       , { true    , "##MasterB"           , true      , "##SingleB"           , true      , "##AvgB"          }     }
+    , { 2   , "C"       , { false   , "##MasterC"           , true      , "##SingleC"           , false     , "##AvgC"          }     }
+    , { 1   , "D"       , { false   , "##MasterD"           , true      , "##SingleD"           , false     , "##AvgD"          }     }
+//
+    , {12   , "AB"      , { false   , "##MasterAB"          , false     , "##SingleAB"          , false     , "##AvgAB"         }     }
+    , {10   , "AC"      , { false   , "##MasterAC"          , false     , "##SingleAC"          , false     , "##AvgAC"         }     }
+    , { 9   , "AD"      , { false   , "##MasterAD"          , false     , "##SingleAD"          , false     , "##AvgAD"         }     }
+    , { 6   , "BC"      , { false   , "##MasterBC"          , false     , "##SingleBC"          , false     , "##AvgBC"         }     }
+    , { 5   , "BD"      , { false   , "##MasterBD"          , false     , "##SingleBD"          , false     , "##AvgBD"         }     }
+    , { 3   , "CD"      , { false   , "##MasterCD"          , false     , "##SingleCD"          , false     , "##AvgCD"         }     }
+//
+    , {14   , "ABC"     , { false   , "##MasterABC"         , false     , "##SingleABC"         , false     , "##AvgABC"        }     }
+    , {13   , "ABD"     , { false   , "##MasterABD"         , false     , "##SingleABD"         , false     , "##AvgABD"        }     }
+    , {11   , "ACD"     , { false   , "##MasterACD"         , false     , "##SingleACD"         , false     , "##AvgACD"        }     }
+    , { 7   , "BCD"     , { false   , "##MasterBCD"         , false     , "##SingleBCD"         , false     , "##AvgBCD"        }     }
+//
+    , {15   , "ABCD"    , { false   , "##MasterABCD"        , false     , "##SingleABCD"        , false     , "##AvgABCD"       }     }
+};
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 3.  "INTERNAL ARRAYS" ]].
+
 
 
 

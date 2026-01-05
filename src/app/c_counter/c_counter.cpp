@@ -67,6 +67,15 @@ void CCounterApp::save(void) {
 }
 
 
+//  "open"
+//
+void CCounterApp::open(void) {
+    CB_LOG( LogLevel::Info, "CCounter--open" );
+    //  m_editor.open();
+    return;
+}
+
+
 //  "undo"
 //
 void CCounterApp::undo(void) {
@@ -216,50 +225,59 @@ inline void CCounterApp::_Begin_DetView_IMPL(void) noexcept
 // *************************************************************************** //
 // *************************************************************************** //
 
-
-
 //  "_MECH_per_frame_cache"
 //
 inline void CCounterApp::_MECH_per_frame_cache(void) noexcept
 {
-	PerFrame &	PF						= this->m_perframe;
+	PerFrame_t &    PF			    = this->m_perframe;
 
-    // 1) Wall clock & dt
-    const float  wall_now      = static_cast<float>(ImGui::GetTime());
-    const float  dt_frame      = ImGui::GetIO().DeltaTime;
+    // 1)       Wall clock & dt
+    const float     wall_now        = static_cast<float>( ImGui::GetTime() );
+    const float     dt_frame        = ImGui::GetIO().DeltaTime;
 
-    // 2) Let _FetchData() pull packets and set PF.got_packet
-    //    NOTE: _FetchData() must not be called again elsewhere this frame.
+
+
+    // 2)       Let _FetchData() pull packets and set PF.got_packet
+    //
+    //      NOTE: _FetchData() must not be called again elsewhere this frame.
     this->_FetchData();                    // sets PF.got_packet, updates m_last_packet_time, PF.xmin/xmax seed
 
-    // 3) Run state & user intent
-    const bool   running       = (m_process_running && m_counter_running);
+
+    // 3)       Run state & user intent
+    const bool   running       = (m_process_running  &&  m_counter_running);
     const bool   smooth        = (m_smooth_scroll != 0);
     const float  dt_packet     = m_integration_window.Value();
 
-    // 4) Last sample time from the anchor channel (0)
-    const float  last_x        = m_buffers[0].empty() ? 0.0f : m_buffers[0].back().x;
 
-    // 5) Between-packet crawl (local static; reset on PF.got_packet)
-    //    IMPORTANT: Do NOT try to infer arrivals from size() once the ring is full.
+    // 4)       Last sample time from the anchor channel (0)
+    const float  last_x        = m_buffers[0].empty()   ? 0.0f  : m_buffers[0].back().x;
+
+
+    // 5)       Between-packet crawl (local static; reset on PF.got_packet)
+    //
+    //              IMPORTANT: Do NOT try to infer arrivals from size() once the ring is full.
     static float s_crawl_off   = 0.0f;
-    if (PF.got_packet)               s_crawl_off = 0.0f;
-    else if (running && smooth)      s_crawl_off = std::min(s_crawl_off + dt_frame, dt_packet);
+    if (PF.got_packet)               { s_crawl_off = 0.0f;                                          }
+    else if (running && smooth)      { s_crawl_off = std::min(s_crawl_off + dt_frame, dt_packet);   }
     // paused or stepped → hold s_crawl_off as-is
 
-    // 6) Final crawl gate (no dependency on m_stream_timeout)
+
+    // 6)       Final crawl gate (no dependency on m_stream_timeout)
     const bool   crawling      = (running && smooth);
     PF.crawling                = crawling;
 
-    // 7) Compute the window from the right edge; clamp between-packet advance
-    const float  right_edge    = crawling ? (last_x + s_crawl_off) : last_x;
 
-    float        xmin          = right_edge - ms_CENTER * m_history_length.Value();
-    float        xmax          = xmin       +                m_history_length.Value();
+    // 7)       Compute the window from the right edge; clamp between-packet advance
+    const float     history_len     = this->m_history_length.Value();
+    const float     right_edge      = crawling   ? (last_x + s_crawl_off)    : last_x;
+    float           xmin            = right_edge - ms_CENTER * history_len;
+    float           xmax            = xmin       +             history_len;
 
-    // 8) Latch/hold policy
+
+    // 8)       Latch/hold policy
     if (!m_counter_running) {
-        xmin = m_freeze_xmin;  xmax = m_freeze_xmax;
+        xmin    = m_freeze_xmin;
+        xmax    = m_freeze_xmax;
     }
     else if (crawling) {
         m_freeze_xmin = xmin;  m_freeze_xmax = xmax;         // keep cache fresh while crawling
@@ -273,20 +291,28 @@ inline void CCounterApp::_MECH_per_frame_cache(void) noexcept
         xmin = m_freeze_xmin;  xmax = m_freeze_xmax;
     }
 
-    // 9) Publish per-frame window
-    if (xmax <= xmin) { xmin = 0.0f; xmax = m_history_length.Value(); }
-    PF.xmin = xmin; PF.xmax = xmax;
 
-    // 10) Spark timing consistent with the same semantics
-    PF.spark_now = (!m_counter_running) ? m_freeze_now
-                 : ( smooth ? (crawling ? right_edge : m_freeze_now)
-                            :  last_x );
+    // 9)       Publish per-frame window
+    if (xmax <= xmin)   { xmin = 0.0f; xmax = history_len; }
+    PF.xmin = xmin;
+    PF.xmax = xmax;
+
+
+    // 10)      Spark timing consistent with the same semantics
+    PF.spark_now = (!m_counter_running)     ? m_freeze_now
+                                            : ( smooth
+                                                ? (crawling
+                                                    ? right_edge    : m_freeze_now)
+                                                :  last_x );
+
 
     // (Optional) Your UI LED can still use the timeout:
     m_streaming_active = (wall_now - m_last_packet_time) < m_stream_timeout;
 
-    // 11) Revalidate colormap cache if needed
-    if (m_colormap_cache_invalid) _validate_colormap_cache();
+    // 11)      Revalidate colormap cache if needed
+    if (m_colormap_cache_invalid)   { _validate_colormap_cache(); }
+    
+    return;
 }
 
 /*
@@ -561,12 +587,14 @@ inline void CCounterApp::_MECH_draw_controls(void) noexcept      //  formerly: "
 //
 inline void CCounterApp::_FetchData(void) noexcept
 {
-    namespace           cc              = ccounter;
-    PerFrame &          PF              = this->m_perframe;
-
+    namespace           cc                  = ccounter;
+    PerFrame_t &        PF                  = this->m_perframe;
+    const float         history_len         = this->m_history_length.Value();
+    //
     PF.got_packet                           = false;
     PF.xmin                                 = 0.0f;
-    PF.xmax                                 = m_history_length.Value();
+    PF.xmax                                 = history_len;
+
 
     // ------------------------------------------------------------------
     // 1) Poll Python; for each packet:
@@ -578,27 +606,27 @@ inline void CCounterApp::_FetchData(void) noexcept
     const bool          smooth              = (m_smooth_scroll != 0);
     const float         dt_packet           = m_integration_window.Value();
 
+
     while ( this->m_python.try_receive(PF.raw) )
     {
         PF.got_packet = true;
         ++this->m_num_packets;
 
-        if (auto packet_ptr = cc::parse_packet(PF.raw, m_use_mutex_count))
+        if (auto packet_ptr = cc::parse_packet<Packet_t>(PF.raw, m_use_mutex_count))
         {
-            const Packet &  packet          = *packet_ptr;
+            const Packet_t &    packet      = *packet_ptr;
 
-            // Use channel 0 as the timeline anchor (all channels share the same x)
+            //  Use channel 0 as the timeline anchor (all channels share the same x)
             auto &          buf0            = m_buffers[0];
             const float     xprev_grid      = buf0.empty()
-                                            ? 0.0f
-                                            : std::round(buf0.back().x / dt_packet) * dt_packet;
+                                                ? 0.0f
+                                                : std::round(buf0.back().x / dt_packet) * dt_packet;
             const float     xnext           = xprev_grid + dt_packet;   // fixed grid: eliminates long-run drift
 
             for (size_t i = 0; i < ms_NUM; ++i)
             {
                 const ChIndex   ch_idx      = static_cast<ChIndex>( ms_channels[i].idx );
                 const float     current     = static_cast<float>( packet[ch_idx] );
-
                 const float     avg         = this->ComputeAverage(
                                                   m_buffers[i]
                                                 , m_avg_mode
@@ -620,42 +648,51 @@ inline void CCounterApp::_FetchData(void) noexcept
     }
     m_streaming_active = (wall_now - m_last_packet_time) < m_stream_timeout;
 
+
     // ------------------------------------------------------------------
     // 2) Master plot window (latched). Smooth crawl is:
     //    right_edge = last_x + clamp(elapsed_since_last_packet, 0, Δt)
     //    This prevents the center from ever outrunning the playhead by > Δt.
     // ------------------------------------------------------------------
-
-    const float         last_x              = m_buffers[0].empty() ? 0.0f : m_buffers[0].back().x;
+    const float         last_x              = m_buffers[0].empty()  ? 0.0f  : m_buffers[0].back().x;
     const float         elapsed_wall        = std::max(0.0f, wall_now - m_last_packet_time);
     const float         offset_between      = running && smooth && !m_buffers[0].empty()
-                                            ? std::min(elapsed_wall, dt_packet)
-                                            : 0.0f;
+                                                ? std::min(elapsed_wall, dt_packet)
+                                                : 0.0f;
     const float         right_edge          = last_x + offset_between;
 
+
+
+    //      CASE 1 :    APPLICATION IS PAUSED...
     if (!m_counter_running) {
-        // Fully paused → hold
         PF.xmin = m_freeze_xmin;
         PF.xmax = m_freeze_xmax;
     }
-    else if (smooth) {
+    //
+    //      CASE 2 :    MODE: SMOOTH UPDATE ("Plot Crawling")...
+    else if (smooth)
+    {
+        //      2A.         Smooth crawl (decoupled from process timeout; clamped to ≤ Δt).
         if (running) {
             // Smooth crawl (decoupled from process timeout; clamped to ≤ Δt)
-            PF.xmin       = right_edge - this->ms_CENTER * this->m_history_length.Value();
-            PF.xmax       = PF.xmin + this->m_history_length.Value();
+            PF.xmin       = right_edge - this->ms_CENTER * history_len;
+            PF.xmax       = PF.xmin + history_len;
             m_freeze_xmin = PF.xmin;      // latch while crawling
             m_freeze_xmax = PF.xmax;
         }
+        //      2B.         Smooth requested but not running     ---> hold
         else {
-            // Smooth requested but not running → hold
             PF.xmin = m_freeze_xmin;
             PF.xmax = m_freeze_xmax;
         }
     }
-    else { // Stepped mode
+    //
+    //      CASE 3 :    MODE: STEPPED PLOT UPDATE MODE (Non-"Plot Crawling)...
+    else
+    {
         if (PF.got_packet) {
-            PF.xmin       = last_x - this->ms_CENTER * this->m_history_length.Value();
-            PF.xmax       = PF.xmin + this->m_history_length.Value();
+            PF.xmin       = last_x - this->ms_CENTER * history_len;
+            PF.xmax       = PF.xmin + history_len;
             m_freeze_xmin = PF.xmin;
             m_freeze_xmax = PF.xmax;
         }
@@ -665,13 +702,16 @@ inline void CCounterApp::_FetchData(void) noexcept
         }
     }
 
-    // Safety init on first frames
+
+    //  Safety init on first frames
     if (PF.xmax < PF.xmin) {
-        PF.xmin       = 0.0f;
-        PF.xmax       = m_history_length.Value();
-        m_freeze_xmin = PF.xmin;
-        m_freeze_xmax = PF.xmax;
+        PF.xmin         = 0.0f;
+        PF.xmax         = m_history_length.Value();
+        m_freeze_xmin   = PF.xmin;
+        m_freeze_xmax   = PF.xmax;
     }
+    
+    return;
 }
 
 /*
