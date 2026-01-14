@@ -299,7 +299,7 @@ parse_packet(std::string_view line, bool mutual_exclusion)   // NEW ARG (default
             //
             for (i = 0ULL, idx = static_cast<Index>(i); i < N; idx = static_cast<Index>(++i) )
             {
-                const int       val     = packet.counts[idx];
+                const size_t    val     = packet.counts[idx];
                 const uint8_t   mask    = static_cast<uint8_t>(i);
                 
                 if (val == 0)           { continue; }

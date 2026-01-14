@@ -237,6 +237,10 @@ PyStream::~PyStream(void)
 ///                         the function performs best-effort rollback: the child (if created) is terminated,
 ///                         pipe handles/fds are closed, and @c m_running is reset to @c false.
 //
+#ifndef _PYSTREAM_FORCE_UNBUFFERED_PYTHON
+// *************************************************************************** //
+//
+//
 [[nodiscard]] uint32_t PyStream::start(void)
 {
     bool    expected    = false;
@@ -248,14 +252,7 @@ PyStream::~PyStream(void)
     if ( this->m_running.load() )                                       { throw std::logic_error("PyStream::start: already running");       }
 
     //      Re-validate that the script file still exists (in case the file was removed since set-time).
-    {
-        path_t   script_path_to_validate  = this->m_script_path;
-        if ( script_path_to_validate.is_relative()  &&  !this->m_cwd.empty() )
-        {
-            script_path_to_validate = this->m_cwd / script_path_to_validate;
-        }
-        (void)PyStream::_validate_filepath(script_path_to_validate, "PyStream::start", false);
-    }
+    (void)PyStream::_validate_filepath(this->m_script_path, "PyStream::start", false);
     
     
 #ifdef _WIN32
@@ -296,6 +293,33 @@ PyStream::~PyStream(void)
     # endif  //  _WIN32  //
     }
 
+#ifdef _WIN32
+    //      1B.     [ _WIN32 ] :    DEFINITIVE CHECK: DID THE CHILD EXIT IMMEDIATELY?
+    //                  This catches "spawn succeeded but python/script immediately failed" cases.
+    if ( this->m_proc_info.hProcess )
+    {
+        DWORD   code    = 0;
+        if ( ::GetExitCodeProcess(this->m_proc_info.hProcess, &code) == TRUE )
+        {
+            if ( code != STILL_ACTIVE )
+            {
+                this->m_last_exit_code.store((int)code);
+                this->m_running.store(false);
+                
+                //  Ensure resources are cleaned up before throwing.
+                this->stop();
+
+                throw std::runtime_error(
+                    std::string("PyStream::start: child exited immediately (exit_code=")
+                    + std::to_string((int)code)
+                    + std::string(") | invocation: ")
+                    + this->get_invocation()
+                );
+            }
+        }
+    }
+#endif  //  _WIN32  //
+
 
 
     //      2A.     ATTEMPT TO BEGIN THE "READER" THREAD.  [ IF THIS FAILS, ROLL-BACK CLEANLY ]...
@@ -315,7 +339,6 @@ PyStream::~PyStream(void)
             ::CloseHandle(this->m_proc_info.hProcess);  this->m_proc_info.hProcess = nullptr;
             ::CloseHandle(this->m_proc_info.hThread );  this->m_proc_info.hThread  = nullptr;
         }
-        this->m_proc_info = { nullptr, nullptr, 0U, 0U };
         if (this->m_child_stdin_w )         { ::CloseHandle(this->m_child_stdin_w );  this->m_child_stdin_w  = nullptr; }
         if (this->m_child_stdout_r)         { ::CloseHandle(this->m_child_stdout_r);  this->m_child_stdout_r = nullptr; }
     # else
@@ -330,6 +353,130 @@ PyStream::~PyStream(void)
 
     return this->get_pid();   // success → PID snapshot
 }
+//
+//
+// *************************************************************************** //
+# else      //  ( #ifndef _PYSTREAM_FORCE_UNBUFFERED_PYTHON )
+// *************************************************************************** //
+//
+//
+[[nodiscard]] uint32_t PyStream::start(void)
+{
+    bool    expected    = false;
+    
+    
+    //      CASE 0 :    ATTEMPT TO RUN A PROCESS WITHOUT SPECIFYING IT'S FILEPATH
+    //                  *OR*  ATTEMPT TO "start()" WHILE ALREADY RUNNING...
+    if ( this->m_script_path.empty() )                                  { throw std::logic_error("PyStream::start: no script path set");    }
+    if ( this->m_running.load() )                                       { throw std::logic_error("PyStream::start: already running");       }
+
+    //      Re-validate that the script file still exists (in case the file was removed since set-time).
+    (void)PyStream::_validate_filepath(this->m_script_path, "PyStream::start", false);
+    
+    
+#ifdef _WIN32
+    if ( this->m_reader_thread.joinable() || this->m_proc_info.hProcess || this->m_proc_info.hThread || this->m_child_stdin_w || this->m_child_stdout_r )
+#else
+    if ( this->m_reader_thread.joinable() || (this->m_child_pid > 0) || (this->m_child_stdin_fd != -1) || (this->m_child_stdout_fd != -1) )
+#endif
+    {
+        this->stop();
+    }
+    
+    
+    this->m_last_exit_code.store(INT_MIN);
+#ifndef _WIN32
+    this->m_last_term_sig.store(0);
+#endif
+    
+    
+    {
+        std::lock_guard<std::mutex>     lock    (this->m_queue_mutex);
+        this->m_recv_queue.clear();
+    }
+    this->m_dropped_lines.store(0);
+    
+    
+    if ( !this->m_running.compare_exchange_strong(expected, true) )     { throw std::logic_error("PyStream::start: already running"); }
+
+
+    //      1.      SPAWN THE CHILD PROCESS...
+    if ( !this->launch_process() )
+    {
+        this->m_running.store(false);
+    # ifdef _WIN32
+        throw std::runtime_error(std::string("PyStream::start: launch_process() failed: ") + _win32_last_error_string());
+    # else
+        const int e = errno;
+        throw std::system_error(e, std::system_category(), "PyStream::start: launch_process() failed");
+    # endif  //  _WIN32  //
+    }
+
+#ifdef _WIN32
+    //      1B.     [ _WIN32 ] :    DEFINITIVE CHECK: DID THE CHILD EXIT IMMEDIATELY?
+    //                  This catches "spawn succeeded but python/script immediately failed" cases.
+    if ( this->m_proc_info.hProcess )
+    {
+        DWORD   code    = 0;
+        if ( ::GetExitCodeProcess(this->m_proc_info.hProcess, &code) == TRUE )
+        {
+            if ( code != STILL_ACTIVE )
+            {
+                this->m_last_exit_code.store((int)code);
+                this->m_running.store(false);
+                
+                //  Ensure resources are cleaned up before throwing.
+                this->stop();
+
+                throw std::runtime_error(
+                    std::string("PyStream::start: child exited immediately (exit_code=")
+                    + std::to_string((int)code)
+                    + std::string(") | invocation: ")
+                    + this->get_invocation()
+                );
+            }
+        }
+    }
+#endif  //  _WIN32  //
+
+
+
+    //      2A.     ATTEMPT TO BEGIN THE "READER" THREAD.  [ IF THIS FAILS, ROLL-BACK CLEANLY ]...
+    try {
+        this->m_reader_thread = std::thread(&PyStream::reader_thread_func, this);
+    }
+    //
+    //      2B.     FAILURE TO SPAWN THE READER THREAD  [ EXCEPTION WAS THROWN ]...
+    //                  -- Terminate the child; close our ends (best-effort rollback).
+    catch (...)
+    {
+    # ifdef _WIN32
+        if (this->m_proc_info.hProcess)
+        {
+            ::TerminateProcess(this->m_proc_info.hProcess, 0);
+            ::WaitForSingleObject(this->m_proc_info.hProcess, PyStream::ms_PROCESS_TIMEOUT_MS);
+            ::CloseHandle(this->m_proc_info.hProcess);  this->m_proc_info.hProcess = nullptr;
+            ::CloseHandle(this->m_proc_info.hThread );  this->m_proc_info.hThread  = nullptr;
+        }
+        if (this->m_child_stdin_w )         { ::CloseHandle(this->m_child_stdin_w );  this->m_child_stdin_w  = nullptr; }
+        if (this->m_child_stdout_r)         { ::CloseHandle(this->m_child_stdout_r);  this->m_child_stdout_r = nullptr; }
+    # else
+        if (this->m_child_pid > 0)          { ::kill(this->m_child_pid, SIGTERM);  ::waitpid(this->m_child_pid, nullptr, 0);  this->m_child_pid = -1; }
+        if (this->m_child_stdin_fd  != -1)  { ::close(this->m_child_stdin_fd ); this->m_child_stdin_fd  = -1; }
+        if (this->m_child_stdout_fd != -1)  { ::close(this->m_child_stdout_fd); this->m_child_stdout_fd = -1; }
+    # endif  //  _WIN32  //
+    
+        this->m_running.store(false);
+        throw; // rethrow original thread exception
+    }
+
+    return this->get_pid();   // success → PID snapshot
+}
+//
+//
+// *************************************************************************** //
+#endif  //  _PYSTREAM_FORCE_UNBUFFERED_PYTHON   //
+
 
 
 
@@ -705,6 +852,10 @@ void PyStream::reader_thread_func(void)
 
 //  "launch_process"
 //
+#ifndef _PYSTREAM_FORCE_UNBUFFERED_PYTHON
+// *************************************************************************** //
+//
+//
 bool PyStream::launch_process(void)
 {
 #ifdef _WIN32
@@ -865,6 +1016,188 @@ bool PyStream::launch_process(void)
 //
 # endif  //  _WIN32  //
 }
+//
+//
+// *************************************************************************** //
+# else      //  ( #ifndef _PYSTREAM_FORCE_UNBUFFERED_PYTHON )
+// *************************************************************************** //
+//
+//
+//
+bool PyStream::launch_process(void)
+{
+#ifdef _WIN32
+    //      1.      WINDOWS : CREATE PIPES...
+    SECURITY_ATTRIBUTES     sa              { sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
+    HANDLE                  stdin_r         = nullptr;
+    HANDLE                  stdout_w        = nullptr;
+
+    //      Defensive: reset proc_info before CreateProcessW writes into it.
+    this->m_proc_info = { nullptr, nullptr, 0U, 0U };
+
+    if ( !::CreatePipe(&stdin_r, &this->m_child_stdin_w, &sa, 0) )              { this->m_child_stdin_w = nullptr; return false; }
+    if ( !::CreatePipe(&this->m_child_stdout_r, &stdout_w, &sa, 0) )            { ::CloseHandle(stdin_r); ::CloseHandle(this->m_child_stdin_w); this->m_child_stdin_w = nullptr; this->m_child_stdout_r = nullptr; return false; }
+
+    ::SetHandleInformation(this->m_child_stdin_w , HANDLE_FLAG_INHERIT, 0);
+    ::SetHandleInformation(this->m_child_stdout_r, HANDLE_FLAG_INHERIT, 0);
+
+    //      2.      BUILD COMMAND LINE (WIDE)...
+    //
+    //              NOTE:
+    //              * We run Python with "-u" to force unbuffered stdio when redirected to pipes.
+    //                This is critical for "concurrent" streaming behavior on Windows.
+    std::wstringstream      ss;
+    ss  << s_quote_if_needed(this->m_python_exe.wstring())
+        << L" -u "
+        << s_quote_if_needed(this->m_script_path.wstring());
+    for (const auto & a : this->m_args) { ss << L" " << s_quote_if_needed(s_utf8_to_wide(a)); }
+    std::wstring            cmd     = ss.str();
+    std::wstring            cwd     = this->m_cwd.wstring();
+
+    //      3.      STARTUP INFO...
+    STARTUPINFOW            si      {   };
+    si.cb                           = sizeof(si);
+    si.dwFlags                      = STARTF_USESTDHANDLES;
+    si.hStdInput                    = stdin_r;
+    si.hStdOutput                   = stdout_w;
+    si.hStdError                    = stdout_w;
+
+    //      4.      CREATE PROCESS...
+    const bool              is_bare_name    = (this->m_python_exe.parent_path().empty() && !this->m_python_exe.has_root_path());
+    const wchar_t *         app_name        = is_bare_name ? nullptr : this->m_python_exe.c_str();
+
+    BOOL                    ok              =
+        ::CreateProcessW( app_name, cmd.data(), nullptr, nullptr, TRUE, 0, nullptr, cwd.empty() ? nullptr : cwd.c_str(), &si, &this->m_proc_info );
+
+    ::CloseHandle(stdin_r);
+    ::CloseHandle(stdout_w);
+
+    if ( ok != TRUE )
+    {
+        if ( this->m_child_stdin_w )        { ::CloseHandle(this->m_child_stdin_w );  this->m_child_stdin_w  = nullptr; }
+        if ( this->m_child_stdout_r )       { ::CloseHandle(this->m_child_stdout_r);  this->m_child_stdout_r = nullptr; }
+        this->m_proc_info = { nullptr, nullptr, 0U, 0U };
+    }
+
+    return ok == TRUE;
+
+#else   //  POSIX  //
+
+    int         in_pipe      [2]        = { -1, -1 };       //  parent writes   -> child reads
+    int         out_pipe     [2]        = { -1, -1 };       //  child writes    -> parent reads
+    int         exec_pipe    [2]        = { -1, -1 };       //  child signals   -> parent detects exec/chdir failure
+
+
+    //      1.      CREATE PIPES  (USE <CLOEXEC>, IF AVAILABLE)...
+# if defined(__linux__)  &&  defined(O_CLOEXEC)
+//
+    if ( ::pipe2(in_pipe , O_CLOEXEC) == -1 )           { return false; }
+    if ( ::pipe2(out_pipe, O_CLOEXEC) == -1 )           { ::close(in_pipe[0]); ::close(in_pipe[1]); return false; }
+    if ( ::pipe2(exec_pipe, O_CLOEXEC) == -1 )          { ::close(in_pipe[0]); ::close(in_pipe[1]); ::close(out_pipe[0]); ::close(out_pipe[1]); return false; }
+//
+# else
+//
+    if ( ::pipe(in_pipe)  == -1 )                        { return false; }
+    if ( ::pipe(out_pipe) == -1 )                        { ::close(in_pipe[0]); ::close(in_pipe[1]); return false; }
+    if ( ::pipe(exec_pipe) == -1 )                       { ::close(in_pipe[0]); ::close(in_pipe[1]); ::close(out_pipe[0]); ::close(out_pipe[1]); return false; }
+    auto set_cloexec = [](int fd) {
+        int flags = ::fcntl(fd, F_GETFD);
+        if (flags != -1) { ::fcntl(fd, F_SETFD, flags | FD_CLOEXEC); }
+    };
+    set_cloexec(in_pipe [0]);   set_cloexec(in_pipe [1]);
+    set_cloexec(out_pipe[0]);   set_cloexec(out_pipe[1]);
+    set_cloexec(exec_pipe[0]);  set_cloexec(exec_pipe[1]);
+//
+# endif  //  defined(__linux__)  &&  defined(0_CLOEXEC)  //
+
+
+    //      2.      FORK...
+    this->m_child_pid   = ::fork();
+    if ( this->m_child_pid == -1 )
+    {
+        ::close(in_pipe[0]);    ::close(in_pipe[1]);
+        ::close(out_pipe[0]);   ::close(out_pipe[1]);
+        ::close(exec_pipe[0]);  ::close(exec_pipe[1]);
+        return false;
+    }
+
+    //      3.      CHILD...
+    if ( m_child_pid == 0 )
+    {
+        std::vector<char*>      argv;
+        argv    .reserve    ( 3 + this->m_args.size() + 1);
+        argv    .push_back( const_cast<char*>( this->m_python_exe.c_str() ) );
+        argv    .push_back( const_cast<char*>("-u") );
+        argv    .push_back( const_cast<char*>( m_script_path.c_str()) );
+        
+        
+        //          3A.     REDIRECT STDIO.
+        if ( ::dup2(in_pipe [0], STDIN_FILENO ) == -1 )     { char c = 1; ::write(exec_pipe[1], &c, 1); _exit(1); }
+        if ( ::dup2(out_pipe[1], STDOUT_FILENO) == -1 )     { char c = 1; ::write(exec_pipe[1], &c, 1); _exit(1); }
+        if ( ::dup2(out_pipe[1], STDERR_FILENO) == -1 )     { char c = 1; ::write(exec_pipe[1], &c, 1); _exit(1); }
+
+
+        //          3B.     CLOSE INHERITED FDs.
+        ::close(in_pipe [0]);  ::close(in_pipe [1]);
+        ::close(out_pipe[0]);  ::close(out_pipe[1]);
+        ::close(exec_pipe[0]);
+
+
+        //          3C.     ???.
+        if ( !this->m_cwd.empty() ) { if ( ::chdir(this->m_cwd.c_str()) != 0 ) { char c = 1; ::write(exec_pipe[1], &c, 1); _exit(1); } }
+        for (auto & a : m_args)     { argv.push_back(const_cast<char*>( a.c_str() )); }
+        argv.push_back(nullptr);
+
+        ::execvp( this->m_python_exe.c_str(), argv.data() );
+        { char c = 1; ::write(exec_pipe[1], &c, 1); _exit(1); }    // exec failed
+    }
+
+    //      4.      PARENT; CLOSE UNUSED ENDS, ADOPT OUR ENDS...
+    ::close(in_pipe [0]);
+    ::close(out_pipe[1]);
+    ::close(exec_pipe[1]);
+
+    //      4A.     WAIT FOR CHILD TO EITHER EXEC (EOF) OR REPORT FAILURE (byte)...
+    {
+        char        c       = 0;
+        ssize_t     r       = 0;
+
+        do {
+            r = ::read(exec_pipe[0], &c, 1);
+        } while (r == -1 && errno == EINTR);
+
+        ::close(exec_pipe[0]);
+
+        if ( r > 0 )
+        {
+            int status = 0;
+            ::waitpid(this->m_child_pid, &status, 0);
+            this->m_child_pid = -1;
+
+            ::close(in_pipe [1]);
+            ::close(out_pipe[0]);
+
+            return false;
+        }
+    }
+
+    this->m_child_stdin_fd      = in_pipe [1];
+    this->m_child_stdout_fd     = out_pipe[0];
+
+# ifdef F_SETNOSIGPIPE
+    ::fcntl(this->m_child_stdin_fd, F_SETNOSIGPIPE, 1);
+# endif  //  F_SETNOSIGPIPE  //
+
+    return true;
+//
+//
+# endif  //  _WIN32  //
+}
+//
+//
+// *************************************************************************** //
+#endif  //  _PYSTREAM_FORCE_UNBUFFERED_PYTHON  //
+
 
 
 

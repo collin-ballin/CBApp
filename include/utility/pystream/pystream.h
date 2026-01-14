@@ -242,6 +242,23 @@ struct ProcessInfo
 // *************************************************************************** //
 // *************************************************************************** //
 
+/// @def        _PYSTREAM_FORCE_UNBUFFERED_PYTHON
+/// @brief      Force the `PyStream` class to ALWAYS use unbuffered Python execution.
+///
+/// @note       This macro was created after a mis-diagnosis of an issue with the `_WIN32` build of the `PyStream` class.
+///             This misdiagnosis caused us to modify the implementations of the `start()` and the `launch_process()` functions.
+///
+/// @todo       Eventually we want to deprecate this.  It does not truly need to be a compile-time feature.
+///             We should either:
+///                 (1) move it to a run-time feature.
+///                 (2) commit to one of the two branches.
+///
+//  #define     _PYSTREAM_FORCE_UNBUFFERED_PYTHON       1
+
+
+
+//  "PyStream"
+//
 class PyStream
 {
 //      0.          CONSTANTS AND ALIASES...
