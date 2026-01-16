@@ -31,7 +31,8 @@
 //  #include "utility/utility.h"
 //  #include "utility/pystream/pystream.h"
 //
-#include "app/c_counter/_utility.h"
+#include "app/c_counter/_types.h"
+#include "app/c_counter/_python_ipc.h"
 
 
 //      0.2         STANDARD LIBRARY HEADERS...
@@ -75,42 +76,67 @@ namespace cb { namespace ccounter { //     BEGINNING NAMESPACE "cb::ccounter"...
 //
 //
 //
-//      1.      TYPES AND ABSTRACTIONS...
+//      0.      STATIC, INTERNAL, NAMESPACE-GLOBAL DATA-MEMBERS...
 // *************************************************************************** //
 // *************************************************************************** //
 
-
-
-// *************************************************************************** //
-//      1A. TYPES |        ABSTRACTIONS FOR THE COINCIDENCE-COUNTER.
-// *************************************************************************** //
-
-
-//  "PythonCMD"
+//  { //     BEGINNING NAMESPACE "cb::ccounter"...
 //
-enum class PythonCMD : uint8_t {
-      None = 0
-    , IntegrationWindow
-    , CoincidenceWindow
 //
-    , COUNT   // = 16
-};
-
-
-//  "DEF_PYTHON_CMD_FMT_STRINGS"
+// *************************************************************************** //
+    inline static constexpr size_t      ms_CMD_BUFFER_SIZE              = 512;
+    //
+    static bool                         enter                           = false;
+    static float                        row_height_px                   = 60.0f;
 //
-static constexpr cblib::EnumArray< PythonCMD, std::string_view >
-DEF_PYTHON_CMD_FMT_STRINGS      = {
-{
-    /*  None                    */    "%s\n"
-    /*  IntegrationWindow       */  , "integration_window %.3f\n"
-    /*  CoincidenceWindow       */  , "coincidence_window {}\n"
-} };
+//
+    static float                        delay_s                         = 1.0f;                 // command slider
+    static char                         line_buf[ms_CMD_BUFFER_SIZE]    {   };                  // manual send box
+//
+    static std::string                  s_last_error_title              {   };                  // FOR ERRORS...
+    static std::string                  s_last_error_message            {   };                  // FOR ERRORS...
+//
+//
+    static ImGuiInputTextFlags          write_file_flags            = ImGuiInputTextFlags_None | ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue;
+
+// *************************************************************************** //
+//
+//
+//  } //     BEGINNING NAMESPACE "cb::ccounter"...
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 0.  "STATIC NAMESPACE-GLOBALS." ]].
 
 
 
 
 
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      2.      COINCIDENCE COUNTER ABSTRACTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+    
+// *************************************************************************** //
+//      2A. TYPES |        LARGER ABSTRACTIONS.
+// *************************************************************************** //
 
 //  "PerFrame_t"
 //
@@ -122,17 +148,20 @@ struct PerFrame_t {
 //
 //
 //
-    std::string     raw             {   };
-    float_type      xmin            = float_type(-1.0);
-    float_type      xmax            = float_type(-1.0);
-    int_t           ymin            = int_t(0);
-    int_t           ymax            = int_t(0);
+    std::string     raw                 {   };
+    float_type      xmin                = float_type(0.00);     //  float_type(-1.0);
+    float_type      xmax                = float_type(10.0);     //  float_type(-1.0);
+    int_t           ymin                = int_t(0);
+    int_t           ymax                = int_t(10);
     //
-    float           now             = -1.0f;
-    float           spark_now       = -1.0f;
+    ChannelID       current_min         = ChannelID::None;
+    ChannelID       current_max         = ChannelID::None;
+    //
+    float           now                 = 0.0f;                 //  -1.0f;
+    float           spark_now           = 0.0f;                 //  -1.0f;
 //
-    bool            got_packet      = false;
-    bool            crawling        = false;
+    bool            got_packet          = false;
+    bool            crawling            = false;
 //
 //
 //
@@ -141,33 +170,16 @@ struct PerFrame_t {
     inline void clear(void) noexcept
     {
         this->raw             .clear();
-        this->xmin            = float_type(-1.0);
-        this->xmax            = float_type(-1.0);
+        this->xmin            = float_type(0.00);     //  float_type(-1.0);
+        this->xmax            = float_type(10.0);     //  float_type(-1.0);
         this->ymin            = int_t(0);
-        this->ymax            = int_t(0);
+        this->ymax            = int_t(10);
         //
-        this->now             = -1.0f;
-        this->spark_now       = -1.0f;
+        this->now             = 0.00f;                  //  -1.0f;
+        this->spark_now       = 0.00f;                  //  -1.0f;
         this->got_packet      = false;
         return;
     }
-};
-
-
-
-
-
-
-//  "ChannelID"
-//
-enum class ChannelID : uint8_t {
-      UNUSED = 0
-    , D         , C         , CD
-    , B         , BD        , BC        , BCD
-    , A         , AD        , AC        , ACD
-    , AB        , ABD       , ABC       , ABCD
-//
-    , COUNT   // = 16
 };
 
 
@@ -213,156 +225,11 @@ struct CoincidencePacket_t
 
 
 
-//  "parse_packet"
-//      Parse one JSON‑line; returns nullopt on format errors
-//
-template <typename Packet>
-inline std::optional<Packet>
-parse_packet(std::string_view line)
-{
-    using               json                = nlohmann::json;
-    using               value_type          = Packet::value_type;
-    using               frequency_type      = Packet::frequency_type;
-    using               Index               = Packet::Index;
-    //
-    Packet              packet              {   };
-
-    try
-    {
-        json            j       = json::parse(line);
-        const auto &    arr     = j.at("counts");
-        const size_t    N       = arr.size();
-        size_t          i       = 0ULL;
-        Index           idx     = static_cast<Index>(0);
-        
-        
-        //      CASE 0 :    MORE COUNTER-VALUES RETURNED THAN WE EXPECTED  [ THIS SHOULD NEVER HAPPEN ]...
-        if ( N != static_cast<size_t>(Index::COUNT) )       { return std::nullopt; }
-
-        
-        //      1.      FETCH THE VALUE OF EACH COUNTER FROM THE DATA-DELIVERY...
-        for (i = 0ULL; i < N; idx = static_cast<Index>(++i) ) {
-            packet.counts[idx]      = arr[i].get<value_type>();
-        }
-        packet.frequency    = j.at("cycles").get<frequency_type>();     //  [TO-DO]]:   REPLACE THE KEY-WORD "cycles"!!!
-    }
-    //
-    //      ERROR :     Some type of malformed JSON / JSON-Keys, etc...
-    catch (const json::exception & )
-    {
-        return std::nullopt;
-    }
-    
-    return packet;
-}
-
-
-//  "parse_packet"
-//
-template <typename Packet>
-inline std::optional< Packet >
-parse_packet(std::string_view line, bool mutual_exclusion)   // NEW ARG (default = previous behaviour)
-{
-    using               json                = nlohmann::json;
-    using               value_type          = Packet::value_type;
-    using               frequency_type      = Packet::frequency_type;
-    using               Index               = Packet::Index;
-    //
-    Packet              packet              {   };
-
-
-    try
-    {
-        json            j       = json::parse(line);
-        const auto &    arr     = j.at("counts");
-        const size_t    N       = arr.size();
-        size_t          i       = 0ULL;
-        Index           idx     = static_cast<Index>(0);
-        
-        
-        //      CASE 0 :    MORE COUNTER-VALUES RETURNED THAN WE EXPECTED  [ THIS SHOULD NEVER HAPPEN ]...
-        if ( N != static_cast<size_t>(Index::COUNT) )       { return std::nullopt; }
-
-        
-        //      1.      FETCH THE VALUE OF EACH COUNTER FROM THE DATA-DELIVERY...
-        for (i = 0ULL; i < N; idx = static_cast<Index>(++i) ) {
-            packet.counts[idx]      = arr[i].get<value_type>();
-        }
-        packet.frequency    = j.at("cycles").get<frequency_type>();     //  [TO-DO]]:   REPLACE THE KEY-WORD "cycles"!!!
-
-
-        //      2.      ADAPT GEORGES' FPGA VALUES FROM:  [ NON-MUTEX (Default) ] -- TO -- [ MUTEX ]...
-        if ( !mutual_exclusion )
-        {
-            //      The index value encodes which APD channels participated:
-            //          bit3=A,     bit2=B,     bit1=C,     bit0=D      (e.g. 0b1100 == AB)
-            //
-            for (i = 0ULL, idx = static_cast<Index>(i); i < N; idx = static_cast<Index>(++i) )
-            {
-                const size_t    val     = packet.counts[idx];
-                const uint8_t   mask    = static_cast<uint8_t>(i);
-                
-                if (val == 0)           { continue; }
-
-                //  skip single channels or UNUSED (they already hold the count)
-                if ( mask == 0 || mask == 1 || mask == 2 || mask == 4 || mask == 8 )    { continue; }
-
-                if (mask & 0x8)         { packet.counts[Index::A] += val; }     //  A.
-                if (mask & 0x4)         { packet.counts[Index::B] += val; }     //  B.
-                if (mask & 0x2)         { packet.counts[Index::C] += val; }     //  C.
-                if (mask & 0x1)         { packet.counts[Index::D] += val; }     //  D.
-            }
-        }
-    }
-    //
-    //      ERROR :     Some type of malformed JSON / JSON-Keys, etc...
-    catch (const json::exception & )
-    {
-        return std::nullopt;
-    }
-    
-    return packet;
-}
-
-
-
-
-
-    
-// *************************************************************************** //
-//      1A. TYPES |        PRAGMATIC ABSTRACTIONS.
-// *************************************************************************** //
-
-//  "VisSpec"
-//      - Define the visibility of each COUNTER PLOT...
-//
-struct VisSpec {
-    bool    master;         const char * master_ID;
-    bool    single;         const char * single_ID;
-    bool    average;        const char * average_ID;
-};
-
-
-//  "ChannelSpec"
-//      POD Struct to define each COUNTER PLOT for the COINCIDENCE COUNTER...
-//
-struct ChannelSpec {
-    const size_t            idx;
-//
-    const char *            name;
-    mutable VisSpec         vis;
-};
-
-
-
-
-
-
 //
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END [[ 1.  "TYPES & ABSTRACT." ]].
+// *************************************************************************** //   END [[ 2.  "CCOUNTER ABSTRACTIONS." ]].
 
 
 
@@ -379,7 +246,7 @@ struct ChannelSpec {
 //
 //
 //
-//      2.      OTHER...
+//      3.      OTHER...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -387,7 +254,7 @@ struct ChannelSpec {
 
 
 // *************************************************************************** //
-//      2A. OTHER |         CCOUNTER---STYLE.
+//      3A. OTHER |         CCOUNTER---STYLE.
 // *************************************************************************** //
 
 //  "CCounterStyle"
@@ -554,7 +421,7 @@ struct CCounterStyle
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END [[ 2.  "OTHER" ]].
+// *************************************************************************** //   END [[ 3.  "OTHER" ]].
 
 
 
@@ -571,11 +438,9 @@ struct CCounterStyle
 //
 //
 //
-//      3.      INTERNAL ARRAYS / CONSTANTS...
+//      4.      INTERNAL ARRAYS / CONSTANTS...
 // *************************************************************************** //
 // *************************************************************************** //
-
-
 
 //  "DEF_CHANNEL_INFOS"
 //
@@ -608,7 +473,7 @@ static constexpr ChannelSpec    DEF_CHANNEL_INFOS [ DEF_CHANNEL_COUNT ]     = {
 //
 //
 // *************************************************************************** //
-// *************************************************************************** //   END [[ 3.  "INTERNAL ARRAYS" ]].
+// *************************************************************************** //   END [[ 4.  "INTERNAL ARRAYS" ]].
 
 
 

@@ -47,6 +47,115 @@ void CCounterApp::_PlotMaster(void) const noexcept
 
 	// Compute x-axis flags: disable AutoFit whenever we are NOT crawling
 	ImPlotAxisFlags				xflags					= CS.mst_axes[0].flags;
+	ImPlotAxisFlags				yflags					= CS.mst_axes[1].flags;
+ 
+ 
+	if (!PF.crawling)			                        { xflags &= ~ImPlotAxisFlags_AutoFit; }
+
+
+	// Layout info
+	CS.m_mst_avail										= ImGui::GetContentRegionAvail();
+
+	ImGui::PushID(ms_PLOT_UUIDs[0]);
+
+
+	//      1.      BEGIN THE MASTER PLOT...
+	if ( !ImPlot::BeginPlot(ms_PLOT_UUIDs[0], ImVec2(-1, CS.m_mst_avail.y), CS.mst_plot_flags) ) {
+		ImGui::PopID();
+		return;
+	}
+	{
+		//  1)      Axes/legend
+		ImPlot::SetupAxes   ( CS.mst_axes[0].uuid   , CS.mst_axes[1].uuid   , xflags    , yflags    );
+		ImPlot::SetupLegend ( CS.legend.location    , CS.legend.flags                               );
+
+
+		//  2)      X limits are driven by per-frame cache (latched window or crawl window)
+        {
+            constexpr double    cv_EPSILON      = 1e-1;     //  Threshold for `ymin`;   if `ymin < eps`, set ymin = 0.
+            const double        y_min           = (this->m_use_relative_range)
+                                                    ? ( (1.0f - this->ms_MARGIN) * static_cast<double>(PF.ymin) )
+                                                    : 0.0f;
+            const double        y_max           = this->ms_MARGIN * static_cast<double>(PF.ymax);
+        
+        
+            ImPlot::SetupAxisLimits(
+                  ImAxis_X1
+                , PF.xmin
+                , PF.xmax
+                , ImGuiCond_Always
+            );
+            ImPlot::SetupAxisLimits(
+                  ImAxis_Y1
+                , (y_min < cv_EPSILON)      ? y_min     : 0.0f
+                , y_max
+                , ImGuiCond_Always
+            );
+        }
+
+
+
+		//  3)      PLOTTING EACH SERIES...
+		for (int k = 0; k < static_cast<int>(ms_NUM); ++k)
+		{
+			auto const &		buf			= m_buffers[k];
+			auto const &		avg			= m_avg_counts[k];
+			auto &				channel		= ms_channels[k];
+			const float			avg_lw		= this->m_avg_linewidth.Value();
+			const float			plot_lw		= this->m_plot_linewidth.Value();
+
+			if ( buf.empty() )      { continue; }
+
+
+			// A) AVERAGE series
+			ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
+			ImPlot::SetNextLineStyle(m_avg_colors[k], avg_lw);
+			ImPlot::SetNextFillStyle(m_avg_colors[k], 0.0f);
+			ImPlot::HideNextItem(!channel.vis.average, ImGuiCond_Always);
+			ImPlot::PlotLine(
+				  ""									// hidden label
+				, &avg.raw()[0].x
+				, &avg.raw()[0].y
+				, static_cast<int>(avg.size())
+				, ImPlotLineFlags_Shaded
+				, static_cast<int>(avg.offset())
+				, static_cast<int>(sizeof(ImVec2))
+			);
+			ImPlot::PopStyleVar();
+
+			// B) MAIN series
+			ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0,0));
+			ImPlot::SetNextLineStyle(m_plot_colors[k], plot_lw);
+			ImPlot::SetNextFillStyle(m_plot_colors[k], 0.0f);
+			ImPlot::HideNextItem(!channel.vis.master, ImGuiCond_Always);
+			ImPlot::PlotLine(
+				  ms_channels[k].name
+				, &buf.raw()[0].x
+				, &buf.raw()[0].y
+				, static_cast<int>(buf.size())
+				, ImPlotLineFlags_Shaded
+				, static_cast<int>(buf.offset())
+				, static_cast<int>(sizeof(ImVec2))
+			);
+			ImPlot::PopStyleVar();
+		}
+	}
+
+	ImPlot::EndPlot();
+	ImGui::PopID();
+ 
+    return;
+}
+
+/*
+void CCounterApp::_PlotMaster(void) const noexcept
+{
+	namespace					cc						= ccounter;
+	Style const &				CS						= this->m_style;		// assumes CS.m_mst_avail is mutable
+	auto const &		        PF						= this->m_perframe;
+
+	// Compute x-axis flags: disable AutoFit whenever we are NOT crawling
+	ImPlotAxisFlags				xflags					= CS.mst_axes[0].flags;
 	if (!PF.crawling)			xflags				   &= ~ImPlotAxisFlags_AutoFit;
 
 	// Layout info
@@ -120,6 +229,7 @@ void CCounterApp::_PlotMaster(void) const noexcept
  
     return;
 }
+*/
 
 
 /*

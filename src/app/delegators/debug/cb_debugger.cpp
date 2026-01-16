@@ -189,11 +189,68 @@ void CBDebugger::Begin([[maybe_unused]] const char *        uuid,
 //
 inline void CBDebugger::Begin_IMPL(void)
 {
-    ImGui::SeparatorText("CBDebugger..."); ImGui::NewLine();
+    constexpr float     cv_combo_width      = 0.40f;
+    constexpr float     cv_label_sep        = 50.0f;
+    //
+    static ImVec2       Avail               = ImVec2(-1.0f, -1.0f);
+    static int          menu_idx            = static_cast<int>( this->m_menu_selection );
+
+
+
+    //      1.      MENU - TYPE SELECTOR...
+    //
+    Avail       = ImGui::GetContentRegionAvail();
+    
+    ImGui::TextUnformatted  ( "Menu Type:"                  );
+    ImGui::SameLine         ( 0.0f,     cv_label_sep        );
+    ImGui::SetNextItemWidth ( cv_combo_width * Avail.x      );
+    //
+    if ( ImGui::Combo("##CBDebuggerr_MenuTypeSelection"     , &menu_idx     , ms_MENU_TYPE_NAMES.data()     , static_cast<int>( MenuType::COUNT )) )
+    {
+        this->m_menu_selection  = static_cast<MenuType>( menu_idx );
+    }
+    //
+    ImGui::Separator();
+    ImGui::NewLine();
     
     
     
-    this->TestGeneric();
+    //      2.      DISPATCHING EACH FUNCTION...
+    //
+    switch ( this->m_menu_selection )
+    {
+        //
+        //          2A.     "CB DEMO" Menu:
+        case MenuType::CBDemo :
+        {
+            this->_MENU_CBDemo();
+            break;
+        }
+        //
+        //          2B.     "Unit Testing" Menu:
+        case MenuType::UnitTesting :
+        {
+            this->_MENU_UnitTesting();
+            break;
+        }
+        //
+        //          2C.     "Generic" Menu:
+        case MenuType::Generic :
+        {
+            this->_MENU_Generic();
+            break;
+        }
+        //
+        //
+        //          2X.     DEFAULT...
+        case MenuType::None :
+        default :
+        {
+            break;
+        }
+    }
+    
+    
     
     
     

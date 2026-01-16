@@ -1,45 +1,27 @@
 #!/usr/bin/env python3
 """
-"fpga_stream.py"
+fpga_stream.py  –  Streams coincidence-counter data to stdout (JSON lines). 
+    VERSION 2.0 --- May 24, 2025.
+
+Modes:
+-----
+1) Real hardware  (default)
+2) Mock           (--mock or hardware unavailable)
+
+Commands via stdin:
 ------------------
-    @brief Streams coincidence‑counter data to stdout (JSON lines). 
-    VERSION 2.0.    --- May 24, 2025.
-    VERSION 3.0.    --- August 29, 2025.
-    VERSION 3.1.    --- December 27, 2025. 
-
-
-MODES OF OPERATION:
-------------------
-    1.  Real hardware       (default)
-    2.  Mock                (--mock or hardware unavailable)
-
-
-INTER-PROCESS COMMUNICATION (IPC) COMMANDS VIA STDIN:
-------------------
-    duration    <sec>           #   seconds per acquisition   (alias: time)
-    window      <clks>          #   coincidence‑window register
-    quit                        #   clean exit
-
+    integration_window <sec>
+    coincidence_window <ticks>
+    quit
 """
-import sys, time, json, threading, queue, signal, datetime, argparse, random
-from typing import List, Tuple, Annotated, Optional # Dict, Any
-from pathlib import Path
-#
-#   import sys, os, subprocess, re, textwrap, inspect, argparse, tempfile, traceback, math
-#   from enum import Enum, auto, IntEnum
-#   from dataclasses import dataclass, field
-#   from typing import List, Optional, Dict, Any
-#   from pathlib import Path
-#
+import sys
+import time
+import threading
+import queue
+import signal
+import argparse
+from typing import Optional, List
 
-
-
-#       CASE 0 :    ENFORCE PYTHON INTERPRETER VERSION...
-if sys.version_info < (3, 10):
-    raise RuntimeError("This script requires Python 3.10+ (uses `match` statements).")
-
-
-#       CASE 1 :    LOCATE THE ACCOMPANYING IMPLEMENTATION FILE FOR THIS SCRIPT (`_fpga_stream.py`)...
 try:
     import _fpga_stream as cc
 except ImportError:
@@ -47,8 +29,9 @@ except ImportError:
     raise SystemExit(1)
 
 
-
-
+#       CASE 0 :    ENFORCE PYTHON INTERPRETER VERSION...
+if sys.version_info < (3, 9):
+    raise RuntimeError("This script requires Python 3.9+.")
 
 
 ################################################################################
@@ -63,31 +46,15 @@ except ImportError:
 ################################################################################
 #           1.1.    SCRIPT BEHAVIOR TOGGLES.
 ################################################################################
-_ABORT_ON_IMPORT_ERROR      = False     #   if TRUE: the script will ABORT if unable to
-_HARDWARE_AVAILABLE         : Annotated[
-      bool
-    ,  "Boolean to track w/o not `import fpga` was successful."
-] = False;
-
-
-_OPERATION_MODE             : Annotated[
-      "cc.OperationMode"
-    , "Enum type to specify what `mode` the script is operating in (hardware-only, simulated-data, etc)."
-] = cc.OperationMode.Default
-
-
-_STARTUP_SYNC_GRACE_SEC     : Annotated[
-      float
-    , "Startup grace period to drain initial IPC commands before first acquisition/emission."
-] = 0.25
-
+_ABORT_ON_IMPORT_ERROR      = False
+_HARDWARE_AVAILABLE         = False
+_STARTUP_SYNC_GRACE_SEC     = 0.050
 
 
 ################################################################################
 #           1.2.    IMPLEMENT SCRIPT BEHAVIORS.
 ################################################################################
 
-#  Import NI‑FPGA only if available
 try:
     from nifpga import Session
     _HARDWARE_AVAILABLE = True
@@ -95,22 +62,14 @@ except ImportError:
     _HARDWARE_AVAILABLE = False
 
 
-
 ################################################################################
 #           1.3.    DEFAULT SCRIPT PARAMETERS.
 ################################################################################
 
-#       1.3A.   SCRIPT RESOURCES:
 BITFILE                                 = r"C:\Users\Admin\Desktop\FPGA\spadccumk2_FPGATarget_DSPTesting_zbVGNUvhPcI.lvbitx"
 RESOURCE                                = r"rio://172.22.11.2/RIO0"
-#
-#
-#       1.3B.   CONSTANT VALUES:
-_MEASUREMENT_COMPLETION_DELAY   : Annotated[
-      float
-    ,  "Delay that is passed to `time.sleep(...)` inside the `finish_measure()` function."
-] = 0.1;
 
+_MEASUREMENT_COMPLETION_DELAY           = 0.1
 
 
 ################################################################################
@@ -118,11 +77,7 @@ _MEASUREMENT_COMPLETION_DELAY   : Annotated[
 ################################################################################
 cc.init(
       _MEASUREMENT_COMPLETION_DELAY   = _MEASUREMENT_COMPLETION_DELAY
-    #
-    #   ...add more injected globals here without changing init()’s signature...
-    #
 )
-
 
 
 #
@@ -144,17 +99,12 @@ cc.init(
 ################################################################################
 ################################################################################
 
+_COMMAND_QUEUE      : "queue.Queue[cc.Command]"     = queue.Queue()
 
 
-################################################################################
-#           3.2.    SET-UP INTER-PROCESS COMMUNICATION (IPC) HANDLERS.
-################################################################################
-_COMMAND_QUEUE      : "queue.Queue[cc.Command]"                         = queue.Queue()     #   COMMAND THREAD: Reads stdin, pushes updates -> queue
-
-
-threading.Thread    ( target=cc.stdin_reader    , args=(_COMMAND_QUEUE,) , daemon=True      ).start()
-signal.signal       ( signal.SIGINT             , signal.SIG_DFL        )
-signal.signal       ( signal.SIGTERM            , signal.SIG_DFL        )
+threading.Thread    ( target=cc.stdin_reader, args=(_COMMAND_QUEUE,), daemon=True ).start()
+signal.signal       ( signal.SIGINT,  signal.SIG_DFL )
+signal.signal       ( signal.SIGTERM, signal.SIG_DFL )
 
 
 
@@ -190,50 +140,19 @@ def setup_script(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser: argparse.ArgumentParser = argparse.ArgumentParser()
     args  : argparse.Namespace      = None
 
-
-    def _type_for_value_type(vt: "cc.ValueType"):
-        match vt:
-            case cc.ValueType.FLOAT:
-                return float
-            case cc.ValueType.INT:
-                return lambda s: int(s, 0)
-            case cc.ValueType.STR:
-                return str
-            case cc.ValueType.PATH:
-                return str            # Path wiring later (when BITFILE/RESOURCE become tunables)
-            case _:
-                return str
-
-
     #   1.      SET-UP EACH COMMAND-LINE ARGUMENT...
     parser.add_argument(
           "--mock"
         , action     = "store_true"
-        , help       = "Force simulated-data mode even if hardware present"
+        , help       = "Force mock-data mode even if hardware present"
     )
 
-    #   2.      AUTO-GENERATE "SEED" ARGS FROM THE IPC COMMAND REGISTRY.
-    for spec in cc.COMMAND_REGISTRY:
-        if (spec.kind is not cc.CommandKind.PARAM):
-            continue
-        if not spec.seedable:
-            continue
-        if (spec.cli_flag is None) or (spec.state_field is None):
-            continue
+    cc.add_seed_arguments(parser)
 
-        parser.add_argument(
-              spec.cli_flag
-            , dest       = spec.state_field
-            , type       = _type_for_value_type(spec.value_type)
-            , default    = None
-            , help       = f"{spec.help} (seed at startup)"
-        )
-
+    #   2.      ...
     args = parser.parse_args(argv)
 
     return args
-
-
 
 
 
@@ -241,14 +160,14 @@ def setup_script(argv: Optional[List[str]] = None) -> argparse.Namespace:
 #           4.2.    MAIN MANAGER FUNCTIONS FOR EACH OPERATION-MODE.
 ################################################################################
 
-#   "_main_simulation"      # STATE_IN_MAIN_vA
-#       MAIN manager function for the C-Counter when working in *SIMULATION* MODE (NO HARDWARE).
+#   "_main_simulation"
 #
-def _main_simulation(state: "cc.RuntimeState") -> int:
+def _main_simulation(state: cc.RuntimeState) -> int:
 
     #           0.1.    VARIABLE DEFINITIONS.
     exit_code               : int               = 0
-    pkt_iter                                    = cc.mock_packets(cc.SAMPLE_DATA2)
+    #   pkt_iter                                    = cc.mock_packets(cc.SAMPLE_DATA2)
+    pkt_iter                                    = cc.mock_packets(cc.SAMPLE_DATA0)
 
     while True:
         cc.drain_and_apply_commands(_COMMAND_QUEUE, state)
@@ -263,15 +182,14 @@ def _main_simulation(state: "cc.RuntimeState") -> int:
 
 
 
-#   "_main_hardware"        # STATE_IN_MAIN_vA
-#       MAIN manager function for the C-Counter when working with the *REAL* HARDWARE (ONLY REAL DATA).
+#   "_main_hardware"
 #
-def _main_hardware(state: "cc.RuntimeState") -> int:
+def _main_hardware(state: cc.RuntimeState, bitfile: str, resource: str) -> int:
 
     #           0.1.    VARIABLE DEFINITIONS.
-    exit_code               : int               = 0
+    exit_code               : int           = 0
 
-    with Session(bitfile=BITFILE, resource=RESOURCE) as session:
+    with Session(bitfile=bitfile, resource=resource) as session:
         session.reset()
         session.run()
 
@@ -330,52 +248,8 @@ def main(args: argparse.Namespace) -> int:
 
 
         #           0.4.    INITIALIZE RUNTIME STATE (SINGLE SOURCE FOR DEFAULTS IN THIS PROCESS RUN).
-        state                : cc.RuntimeState              = cc.RuntimeState(
-              integration_window      = 1.0      # seconds per acquisition
-            , coincidence_window      = 50_000   # clock cycles
-        )
-
-
-        #           0.5.    APPLY CLI "SEED" VALUES (IF PROVIDED) — REGISTRY-DRIVEN.
-        for spec in cc.COMMAND_REGISTRY:
-            if (spec.kind is not cc.CommandKind.PARAM):
-                continue
-            if not spec.seedable:
-                continue
-            if spec.state_field is None:
-                continue
-
-            if not hasattr(args, spec.state_field):
-                continue
-
-            v = getattr(args, spec.state_field)
-            if v is None:
-                continue
-
-            # validate/clamp (mirror stdin parsing policy)
-            if spec.value_type in (cc.ValueType.FLOAT, cc.ValueType.INT):
-                v_f     : float             = float(v)
-                min_v   : Optional[float]    = spec.min_value
-                max_v   : Optional[float]    = spec.max_value
-
-                if spec.validation is cc.ValidationPolicy.REJECT:
-                    if (min_v is not None) and (v_f < min_v):
-                        raise ValueError(f"seed value out of range for {spec.id.value}: {v_f} < {min_v}")
-                    if (max_v is not None) and (v_f > max_v):
-                        raise ValueError(f"seed value out of range for {spec.id.value}: {v_f} > {max_v}")
-
-                elif spec.validation is cc.ValidationPolicy.CLAMP:
-                    if (min_v is not None) and (v_f < min_v):
-                        v_f = min_v
-                    if (max_v is not None) and (v_f > max_v):
-                        v_f = max_v
-
-                v = int(v_f) if (spec.value_type is cc.ValueType.INT) else float(v_f)
-
-            if not hasattr(state, spec.state_field):
-                raise RuntimeError(f"RuntimeState missing field {spec.state_field!r} for command {spec.id.value!r}")
-
-            setattr(state, spec.state_field, v)
+        state                : cc.RuntimeState              = cc.make_default_runtime_state()
+        cc.apply_seed_args(args, state)
 
 
         #           0.6.    STARTUP SYNC GRACE: DRAIN ANY IMMEDIATE IPC UPDATES BEFORE FIRST EMISSION.
@@ -409,21 +283,20 @@ def main(args: argparse.Namespace) -> int:
 
 
         #   1.      DISPATCH MAIN FUNCTION...
-        match operation_mode:
-            case cc.OperationMode.Simulated:
-                sys.stderr.write("`fpga_stream` operating in `simulated` mode.\n")
-                sys.stderr.flush()
-                exit_code = _main_simulation(state)
+        if operation_mode is cc.OperationMode.Simulated:
+            sys.stderr.write("`fpga_stream` operating in `simulated` mode.\n")
+            sys.stderr.flush()
+            exit_code = _main_simulation(state)
 
-            case cc.OperationMode.Hardware:
-                sys.stderr.write("`fpga_stream` operating in `hardware` mode.\n")
-                sys.stderr.flush()
-                exit_code = _main_hardware(state)
+        elif operation_mode is cc.OperationMode.Hardware:
+            sys.stderr.write("`fpga_stream` operating in `hardware` mode.\n")
+            sys.stderr.flush()
+            exit_code = _main_hardware(state, bitfile, resource)
 
-            case _:
-                sys.stderr.write(f"Unknown OperationMode: {operation_mode}\n")
-                sys.stderr.flush()
-                exit_code = 1
+        else:
+            sys.stderr.write(f"Unknown OperationMode: {operation_mode}\n")
+            sys.stderr.flush()
+            exit_code = 1
 
 
     except KeyError as e:
@@ -442,20 +315,17 @@ def main(args: argparse.Namespace) -> int:
 
 
 
-
-
 ################################################################################
 #           5.1.    APPLICATION ENTRY POINT.
 ################################################################################
 
-#   HOOK FOR THE MAIN INVOCATION...
 if __name__ == "__main__":
     args            : Optional[argparse.Namespace]      = None
     exit_code       : int                               = 0
 
     args            = setup_script()
     exit_code       = main(args)
-    
+
     raise SystemExit(exit_code)
 
 
@@ -465,21 +335,3 @@ if __name__ == "__main__":
 #
 ################################################################################
 ################################################################################    #   END [[ 5.  "MAIN" ]].
-
-
-
-
-
-
-
-
-
-
-
-
-################################################################################
-##
-##
-##
-################################################################################
-################################################################################    #  END [[ ALL ]].

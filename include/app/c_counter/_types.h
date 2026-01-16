@@ -54,24 +54,124 @@
 
 
 
-namespace cb { //     BEGINNING NAMESPACE "cb"...
+namespace cb { namespace ccounter { //     BEGINNING NAMESPACE "cb::ccounter"...
 // *************************************************************************** //
 // *************************************************************************** //
 
 
-//      1.      ENUM TYPES...
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      1.      COINCIDENCE-COUNTER PRAGMATIC TYPE ABSTRACTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
+
+    
+// *************************************************************************** //
+//      1A. TYPES |        ENUM TYPES.
+// *************************************************************************** //
+
+//  "ChannelID"
+//
+enum class ChannelID : uint8_t {
+      None = 0
+    , D         , C         , CD
+    , B         , BD        , BC        , BCD
+    , A         , AD        , AC        , ACD
+    , AB        , ABD       , ABC       , ABCD
+//
+    , COUNT   // = 16
+};
+
 
 //  "AvgMode"
 //      Averaging mode selector.
 //
-enum class AvgMode {
-    Samples = 0     , Seconds   , COUNT
+enum class AvgMode : uint8_t {
+      Samples = 0
+    , Seconds
+    , All
+    , COUNT
+};
+//
+//  "DEF_AVG_MODE_NAMES"
+static constexpr cblib::EnumArray< AvgMode, const char * >
+DEF_AVG_MODE_NAMES          = { {
+    /*  Samples     */        "Samples"
+    /*  Seconds     */      , "Seconds"
+    /*  All         */      , "All"
+} };
+//
+//  "DEF_AVG_MODE_FMT_STRINGS"
+static constexpr cblib::EnumArray< AvgMode, const char * >
+DEF_AVG_MODE_FMT_STRINGS    = { {
+    /*  Samples     */        "%llu samples"
+    /*  Seconds     */      , "%.2f seconds"
+    /*  All         */      , "N/A"
+} };
+
+
+
+
+
+    
+// *************************************************************************** //
+//      1A. TYPES |        PRAGMATIC ABSTRACTIONS.
+// *************************************************************************** //
+
+//  "VisSpec"
+//      - Define the visibility of each COUNTER PLOT...
+//
+struct VisSpec {
+    bool    master;         const char * master_ID;
+    bool    single;         const char * single_ID;
+    bool    average;        const char * average_ID;
+};
+
+
+//  "ChannelSpec"
+//      POD Struct to define each COUNTER PLOT for the COINCIDENCE COUNTER...
+//
+struct ChannelSpec {
+    const size_t            idx;
+//
+    const char *            name;
+    mutable VisSpec         vis;
 };
 
 
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 1.  "PRAGMATIC TYPES." ]].
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -81,7 +181,7 @@ enum class AvgMode {
 //
 // *************************************************************************** //
 // *************************************************************************** //
-}//   END OF "cb" NAMESPACE.
+} }//   END OF "cb::ccounter" NAMESPACE.
 
 
 

@@ -64,36 +64,26 @@ void CCounterApp::init(void)
     
     
     //      CASE 0 :    ASSIGN VALUES FOR THE PYTHON SCRIPT.
-    if ( !this->m_script_filepath.empty() )
-    {
-        try {
-            this->m_python.set_filepath( this->m_script_filepath );
-            CB_LOG(
-                  LogLevel::Debug
-                , "[[CCounter]] using python script at filepath, \"{}\""
-                , this->m_script_filepath.relative_path().string()
-            );
-        }
-        //
-        catch (...) {
-            CB_LOG(
-                  LogLevel::Warning
-                , "[[CCounter]] no python script exists at default filepath, \"{}\""
-                , this->m_script_filepath.relative_path().string()
-            );
-        }
-    }
+    this->_setup_pystream();
     
     
     //      0A.     ALLOCATE STORAGE IN EACH BUFFER...
     this->_allocate_buffers(/*size=*/CCounterApp::ms_BUFFER_SIZE);
     
     
-    //      0B.     Set the initial "freeze" limits so plot begins with sensible X-Limits.
-    this->m_perframe.xmin   = 0.0f;
-    this->m_freeze_xmin     = this->m_perframe.xmin;
-    this->m_perframe.xmax   = this->m_history_length.Value();
-    this->m_freeze_xmax     = this->m_perframe.xmax;
+    
+    //      0B.     INITIALIZE PLOTTING VARIABLES...
+    {
+        //              0B.1.   If `m_use_relative_range` is OFF:   disable "auto-scale" for Y-Limits.      Else, enable "auto-scale".
+        //  if ( this->m_use_relative_range )   { this->m_style.mst_axes[1].flags   &= ~ImPlotAxisFlags_AutoFit; }
+        //  else								{ this->m_style.mst_axes[1].flags   |=  ImPlotAxisFlags_AutoFit; }
+        
+        //              0B.2.   Set the initial "freeze" limits so plot begins with sensible X-Limits.
+        this->m_perframe.xmin   = 0.0f;
+        this->m_freeze_xmin     = this->m_perframe.xmin;
+        this->m_perframe.xmax   = this->m_history_length.Value();
+        this->m_freeze_xmax     = this->m_perframe.xmax;
+    }
     
     
     //      0C.     ASSIGN THE CHILD-WINDOW CLASS PROPERTIES...
@@ -548,28 +538,59 @@ void CCounterApp::init_ctrl_rows(void)
         {"Average",                             [this]
             {// BEGIN.
             //
-                const char *        avg_items []        = { "Last N samples", "Last T seconds" };
-                int                 mode_idx            = (m_avg_mode == AvgMode::Samples ? 0 : 1);
+                int                 mode_idx            = static_cast<int>(this->m_avg_mode);
             //
             //
                 ImGui::SetNextItemWidth( margin * ImGui::GetColumnWidth() );
-                if (m_avg_mode == AvgMode::Samples)
+                
+                switch (this->m_avg_mode)
                 {
-                    ImGui::SliderScalar("##AverageDuration_Samples",        ImGuiDataType_U64,                  &m_avg_window_samp.value,
-                                        &m_avg_window_samp.limits.min,      &m_avg_window_samp.limits.max,      "%llu samples", SLIDER_FLAGS);
-                }
-                else {
-                    ImGui::SliderScalar("##AverageDuration_Time",           ImGuiDataType_Double,               &m_avg_window_sec.value,
-                                        &m_avg_window_sec.limits.min,       &m_avg_window_sec.limits.max,      "%.2f seconds", SLIDER_FLAGS);
+                    case AvgMode::Samples :
+                    {
+                        ImGui::SliderScalar(
+                              "##AverageDuration_Samples"
+                            , ImGuiDataType_U64
+                            , &m_avg_window_samp.value
+                            , &m_avg_window_samp.limits.min
+                            , &m_avg_window_samp.limits.max
+                            , ms_AVG_MODE_FMT_STRINGS[ AvgMode::Samples ]
+                            , SLIDER_FLAGS
+                        );
+                        break;
+                    }
+                    case AvgMode::Seconds :
+                    {
+                        ImGui::SliderScalar(
+                              "##AverageDuration_Time"
+                            , ImGuiDataType_Double
+                            , &m_avg_window_sec.value
+                            , &m_avg_window_sec.limits.min
+                            , &m_avg_window_sec.limits.max
+                            , ms_AVG_MODE_FMT_STRINGS[ AvgMode::Seconds ]
+                            , SLIDER_FLAGS
+                        );
+                        break;
+                    }
+                    case AvgMode::All :
+                    {
+                        break;
+                    }
+                    //
+                    //
+                    //      DEFAULT...
+                    default : {
+                        IM_ASSERT(false);
+                        break;
+                    }
                 }
                 //
                 //
                 //
                 ImGui::SameLine(0.0f, pad);
                 ImGui::SetNextItemWidth( ImGui::GetContentRegionAvail().x - pad );
-                if ( ImGui::Combo("##AverageModeSelector",   &mode_idx,      avg_items,      IM_ARRAYSIZE(avg_items)) )
+                if ( ImGui::Combo("##CCounter_AvgModeSelection" , &mode_idx   , ms_AVG_MODE_NAMES.data()  , static_cast<int>( AvgMode::COUNT )) )
                 {
-                    m_avg_mode = (mode_idx == 0 ? AvgMode::Samples : AvgMode::Seconds);
+                    m_avg_mode = static_cast<AvgMode>( mode_idx );  //   (mode_idx == 0 ? AvgMode::Samples : AvgMode::Seconds);
                 }
                 ImGui::Dummy( ImVec2(pad, 0.0f) );
                             
@@ -648,7 +669,7 @@ void CCounterApp::init_ctrl_rows(void)
     //
         {"Colormap",                            [this]
             {
-                const bool      shuffled    = this->m_colormap_shuffled;
+                const bool      shuffled    = this->m_use_shuffled_colormap;
                 
                 //      SHUFFLE...
                 this->S.PushFont(Font::Main);
@@ -658,7 +679,7 @@ void CCounterApp::init_ctrl_rows(void)
                                           , (shuffled) ? ICON_FA_ARROW_UP_RIGHT_DOTS    : ICON_FA_ARROW_UP_RIGHT_DOTS  //    ICON_FA_ARROW_UP_WIDE_SHORT,
                                           , this->m_style.ms_TOOLBAR_ICON_SCALE ) )
                     {
-                        this->m_colormap_shuffled           = !this->m_colormap_shuffled;
+                        this->m_use_shuffled_colormap       = !this->m_use_shuffled_colormap;
                         this->m_colormap_cache_invalid      = true;
                     }
                 }

@@ -376,15 +376,15 @@ namespace anon { //     BEGINNING NAMESPACE "anon"...
 // *************************************************************************** //
 //      3B. GENERIC.    |     ORCHESTRATOR FUNCTIONS.
 // *************************************************************************** //
-static inline void          draw_docked_window_cache_stats          (ImGuiID );
-static inline void          draw_docked_window_verbose_debug        (ImGuiID );
-static inline void          draw_docked_window_list                 (ImGuiID );
+[[maybe_unused]]    static inline void          draw_docked_window_cache_stats          (ImGuiID );
+[[maybe_unused]]    static inline void          draw_docked_window_verbose_debug        (ImGuiID );
+[[maybe_unused]]    static inline void          draw_docked_window_list                 (ImGuiID );
 
 
 
-//  "TestGeneric"
+//  "_MENU_Generic"
 //
-void CBDebugger::TestGeneric(void) noexcept
+void CBDebugger::_MENU_Generic(void) noexcept
 {
     static bool     show_main_dockspace     = false;
     static bool     show_main_windows       = false;
@@ -392,12 +392,13 @@ void CBDebugger::TestGeneric(void) noexcept
     static bool     show_browser_windows    = false;
     
     
+    
     //      2.      INTERACTION WIDGETS...
-    //
     ImGui::Checkbox("Show Dockspace Windows"    , &show_main_dockspace      );
     ImGui::Checkbox("Show Main Windows"         , &show_main_windows        );
     ImGui::Checkbox("Show DetView Windows"      , &show_detview_windows     );
     ImGui::Checkbox("Show Browser Windows"      , &show_browser_windows     );
+    
     
     
     
@@ -478,7 +479,6 @@ static inline void draw_docked_window_cache_stats(ImGuiID dockspace_id)
 
 //  "draw_docked_window_debug"
 //
-
 inline void CBDebugger::draw_docked_window_debug(ImGuiID dockspace_id) const noexcept
 {
 	static std::vector<anon::DockedWindowInfo>	s_infos;

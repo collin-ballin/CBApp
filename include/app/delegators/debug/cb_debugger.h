@@ -30,6 +30,7 @@
 #include "widgets/widgets.h"
 //  #include "app/_init.h"
 #include "app/state/state.h"
+#include "app/delegators/debug/_internal.h"
 
 
 
@@ -84,6 +85,9 @@ public:
     // *************************************************************************** //
     CBAPP_APPSTATE_ALIAS_API
     friend class                        App;
+    //
+    using                               MenuType                            = debug::MenuType;
+    
     
     // *************************************************************************** //
     //
@@ -98,7 +102,9 @@ public:
     // *************************************************************************** //
     //      REFERENCES TO GLOBAL ARRAYS.
     // *************************************************************************** //
-    //  static constexpr auto &             ms_STATE_NAMES                  = DEF_MYCLASS_STATE_NAMES;
+    static constexpr auto &             ms_MENU_TYPE_NAMES                  = debug::DEF_MENU_TYPE_NAMES;
+    
+    
     
 //
 //
@@ -119,6 +125,7 @@ protected:
     //      STATE VARIABLES.
     // *************************************************************************** //
     AppState &                          CBAPP_STATE_NAME;
+    MenuType                            m_menu_selection                = MenuType::CBDemo;
 
     // *************************************************************************** //
     //
@@ -211,7 +218,6 @@ protected:
     
     // *************************************************************************** //
     //
-    //
     // *************************************************************************** //
     //      MAIN UI FUNCTIONS.                  |   "cb_debugger.cpp" ...
     // *************************************************************************** //
@@ -220,11 +226,32 @@ protected:
     
     // *************************************************************************** //
     //
+    // *************************************************************************** //
+    //      MAIN MENU FUNCTIONS.                |   ...
+    // *************************************************************************** //
+    void                                _MENU_CBDemo                            (void) noexcept;        //  "cb_demo.cpp".
+    void                                _MENU_UnitTesting                       (void) noexcept;        //  "unit_testing.cpp".
+    void                                _MENU_Generic                           (void) noexcept;        //  "generic.cpp".
+    
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      "CB_DEMO" TESTING FUNCTIONS.        |   "cb_demo.cpp" ...
+    // *************************************************************************** //
+    inline void                         _CBDemo_show_one                        (void) noexcept;        //  "cb_demo.cpp".
+    inline void                         _CBDemo_show_two                        (void) noexcept;        //  "cb_demo.cpp".
+    
+    // *************************************************************************** //
+    //
     //
     // *************************************************************************** //
     //      "Generic" TESTING FUNCTIONS.        |   "generic.cpp" ...
     // *************************************************************************** //
-    void                                TestGeneric                         (void) noexcept;
+    //  void                                MENU_Generic                        (void) noexcept;
     //
     inline void                             _generic_1                          (const ImGuiID )          noexcept;
     inline void                             draw_docked_window_debug            (ImGuiID )          const noexcept;
@@ -236,7 +263,7 @@ protected:
     // *************************************************************************** //
     //      "Orchid" TESTING FUNCTIONS.         |   "unit_testing.cpp" ...
     // *************************************************************************** //
-    void                                TestOrchid                          (void) noexcept;
+    inline void                             TestOrchid                          (void) noexcept;
     
     
     // *************************************************************************** //
@@ -245,7 +272,16 @@ protected:
     // *************************************************************************** //
     //      "ndRingBuffer" TESTING FUNCTIONS.   |   "unit_testing.cpp" ...
     // *************************************************************************** //
-    void                                TestndRingBuffer                    (void) noexcept;
+    inline void                             TestndRingBuffer                    (void) noexcept;
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      "Generic" TESTING FUNCTIONS.        |   "unit_testing.cpp" ...
+    // *************************************************************************** //
+    //  void                                    _MENU_Generic                       (void) noexcept;
     
     
     
@@ -344,7 +380,7 @@ protected:
 
 
 
-#endif      //  _CBAPP_SIDEBAR_H  //
+#endif      //  _CBAPP_APP_DEBUGGER_H  //
 // *************************************************************************** //
 // *************************************************************************** //
 //

@@ -1,23 +1,28 @@
 #!/usr/bin/env python3
 """
-fpga_stream.py  –  Streams coincidence‑counter data to stdout (JSON lines). 
-    VERSION 2.0 --- May 24, 2025.
+_fpga_stream.py
+---------------
+Secondary/auxiliary module for `fpga_stream.py` (imported as `cc`).
 
-Modes:
------
-1) Real hardware  (default)
-2) Mock           (--mock or hardware unavailable)
-
-Commands via stdin:
-------------------
-    duration <sec>      # seconds per acquisition   (alias: time)
-    window   <clks>     # coincidence‑window register
-    quit                # clean exit
+Holds:
+- IPC schema (JSON keys, message types, version).
+- Command taxonomy + central command registry.
+- stdin parsing + command application (queue drain).
+- Data record emit helpers.
+- Hardware helpers (start/finish/measure).
+- Simulation data helpers.
 """
-import sys, time, json, threading, queue, signal, datetime, argparse, random
-from typing import Any, Optional, Set, List, Tuple, Dict
+from __future__ import annotations
+
+import sys
+import time
+import json
+import queue
+import random
+import datetime
 from enum import Enum, auto, IntEnum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import Any, Optional, Set, List, Tuple, Dict, Union
 
 
 ################################################################################
@@ -27,7 +32,6 @@ from dataclasses import dataclass, field
 #    0.     CLASSES AND DATA-TYPE DEFINITIONS...
 ################################################################################
 ################################################################################
-
 
 
 ################################################################################
@@ -44,14 +48,12 @@ class OperationMode(IntEnum):
     COUNT       = auto()
 
 
-
 ################################################################################
 #           0.2.    INTER-PROCESS COMMUNICATION (IPC) STUFF.
 ################################################################################
 
-CommandValue                            = float | int | None
+CommandValue                            = Union[float, int, str, None]
 cv_MIN_INTEGRATION_WINDOW   : float     = 0.05
-
 
 
 ################################################################################
@@ -60,10 +62,31 @@ cv_MIN_INTEGRATION_WINDOW   : float     = 0.05
 
 #   "CommandKind"
 #
-class CommandKind(str, Enum):
-    """Taxonomy for IPC commands: action (procedure) vs param (state update)."""
-    ACTION      = "action"
-    PARAM       = "param"
+class CommandKind(IntEnum):
+    """Command taxonomy: PARAM mutates RuntimeState; ACTION triggers a procedure."""
+    Action      = 0
+    Param       = auto()
+    COUNT       = auto()
+
+
+#   "ValueType"
+#
+class ValueType(IntEnum):
+    """Value type carried by a PARAM command."""
+    NoneType    = 0
+    Int         = auto()
+    Float       = auto()
+    Str         = auto()
+    COUNT       = auto()
+
+
+#   "ValidationPolicy"
+#
+class ValidationPolicy(IntEnum):
+    """How to handle out-of-range values for PARAM commands."""
+    Reject      = 0
+    Clamp       = auto()
+    COUNT       = auto()
 
 
 #   "CommandID"
@@ -75,19 +98,86 @@ class CommandID(str, Enum):
     QUIT                    = "quit"
 
 
+#   "CommandSpec"
+#
+@dataclass(frozen=True)
+class CommandSpec:
+    """Central specification record for one IPC command."""
+    id                      : CommandID
+    kind                    : CommandKind
+    value_type              : ValueType
+
+    # CLI seeding behavior (PARAM only):
+    seedable                : bool
+    cli_name                : Optional[str]     # option string without leading '--' (None => default to id.value)
+    state_field             : Optional[str]     # RuntimeState field name (PARAM only)
+
+    # Validation (PARAM only; value_type in {Int, Float})
+    validation              : ValidationPolicy
+    min_value               : Optional[float]
+    max_value               : Optional[float]
+
+    # Default (PARAM only; used to initialize RuntimeState for a new process run)
+    default_value           : Optional[CommandValue]
+
+
+#   "COMMAND_REGISTRY"
+#
+COMMAND_REGISTRY: Tuple[CommandSpec, ...] = (
+    CommandSpec(
+          id              = CommandID.INTEGRATION_WINDOW
+        , kind            = CommandKind.Param
+        , value_type      = ValueType.Float
+        , seedable        = True
+        , cli_name        = None
+        , state_field     = "integration_window"
+        , validation      = ValidationPolicy.Clamp
+        , min_value       = cv_MIN_INTEGRATION_WINDOW
+        , max_value       = None
+        , default_value   = 1.0
+    ),
+    CommandSpec(
+          id              = CommandID.COINCIDENCE_WINDOW
+        , kind            = CommandKind.Param
+        , value_type      = ValueType.Int
+        , seedable        = True
+        , cli_name        = None
+        , state_field     = "coincidence_window"
+        , validation      = ValidationPolicy.Clamp
+        , min_value       = 1.0
+        , max_value       = None
+        , default_value   = 50_000
+    ),
+    CommandSpec(
+          id              = CommandID.QUIT
+        , kind            = CommandKind.Action
+        , value_type      = ValueType.NoneType
+        , seedable        = False
+        , cli_name        = None
+        , state_field     = None
+        , validation      = ValidationPolicy.Reject
+        , min_value       = None
+        , max_value       = None
+        , default_value   = None
+    ),
+)
+
+_COMMAND_BY_KEY: Dict[str, CommandSpec]      = { spec.id.value: spec for spec in COMMAND_REGISTRY }
+_COMMAND_BY_ID : Dict[CommandID, CommandSpec]= { spec.id: spec for spec in COMMAND_REGISTRY }
+
+
 #   "Command"
 #
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Command:
     """Typed command parsed from stdin and delivered via the command queue."""
-    kind                    : CommandKind
     id                      : CommandID
     value                   : CommandValue
 
 
 #   "RuntimeState"
 #
-@dataclass(slots=True)
+@dataclass
 class RuntimeState:
     """POD-style runtime tunables updated by IPC commands."""
     integration_window      : float
@@ -97,154 +187,22 @@ class RuntimeState:
 
 
 ################################################################################
-#           0.3X.   IPC COMMAND REGISTRY (SINGLE SOURCE OF TRUTH)...
+#           0.4.    INTER-PROCESS COMMUNICATION:  TRANSMISSION TYPES.
 ################################################################################
 
-class ValueType(str, Enum):
-    """Value type carried by PARAM commands (used for parsing + validation + CLI seeding)."""
-    NONE        = "none"
-    INT         = "int"
-    FLOAT       = "float"
-    STR         = "str"
-    PATH        = "path"
-
-
-class ValidationPolicy(str, Enum):
-    """How to handle invalid/out-of-range values for PARAM commands."""
-    REJECT      = "reject"
-    CLAMP       = "clamp"
-
-
-@dataclass(frozen=True, slots=True)
-class CommandSpec:
-    """
-    Canonical specification for a command supported by the IPC system.
-
-    Notes:
-    - ACTION commands typically have value_type NONE and are not seedable via CLI.
-    - PARAM commands map to a RuntimeState field and are usually seedable via CLI.
-    """
-    kind                    : CommandKind
-    id                      : CommandID
-
-    # Wire protocol tokens (stdin)
-    wire                    : str
-    aliases                 : Tuple[str, ...]
-
-    # Value semantics (PARAM only)
-    value_type              : ValueType
-    validation              : ValidationPolicy
-    min_value               : Optional[float]
-    max_value               : Optional[float]
-
-    # State mapping (PARAM only)
-    state_field             : Optional[str]
-
-    # CLI seeding (PARAM only, typically)
-    cli_flag                : Optional[str]
-    seedable                : bool
-
-    # Documentation
-    help                    : str
-
-
-#   NOTE:
-#   - This registry is not yet wired into parsing/apply in this stage.
-#   - Next step: drive _parse_command_line(...) and drain_and_apply_commands(...) from this table.
-COMMAND_REGISTRY           : Tuple[CommandSpec, ...] = (
-    CommandSpec(
-          kind          = CommandKind.PARAM
-        , id            = CommandID.INTEGRATION_WINDOW
-        , wire          = CommandID.INTEGRATION_WINDOW.value
-        , aliases       = ( "duration", "time" )
-        , value_type    = ValueType.FLOAT
-        , validation    = ValidationPolicy.CLAMP
-        , min_value     = cv_MIN_INTEGRATION_WINDOW
-        , max_value     = None
-        , state_field   = "integration_window"
-        , cli_flag      = "--integration-window"
-        , seedable      = True
-        , help          = "Seconds per acquisition (integration window)."
-    )
-  , CommandSpec(
-          kind          = CommandKind.PARAM
-        , id            = CommandID.COINCIDENCE_WINDOW
-        , wire          = CommandID.COINCIDENCE_WINDOW.value
-        , aliases       = ( "window", )
-        , value_type    = ValueType.INT
-        , validation    = ValidationPolicy.REJECT
-        , min_value     = 0.0
-        , max_value     = None
-        , state_field   = "coincidence_window"
-        , cli_flag      = "--coincidence-window"
-        , seedable      = True
-        , help          = "Coincidence window (ticks)."
-    )
-  , CommandSpec(
-          kind          = CommandKind.ACTION
-        , id            = CommandID.QUIT
-        , wire          = CommandID.QUIT.value
-        , aliases       = ( "exit", )
-        , value_type    = ValueType.NONE
-        , validation    = ValidationPolicy.REJECT
-        , min_value     = None
-        , max_value     = None
-        , state_field   = None
-        , cli_flag      = None
-        , seedable      = False
-        , help          = "Request clean exit."
-    )
-)
-
-
-#   DERIVED LOOKUP TABLES (LOUD FAILURES IF REGISTRY IS INCONSISTENT)
-_COMMAND_SPEC_BY_ID        : Dict[CommandID, CommandSpec] = { spec.id: spec for spec in COMMAND_REGISTRY }
-
-_COMMAND_SPEC_BY_WIRE      : Dict[str, CommandSpec]       = {}
-for _spec in COMMAND_REGISTRY:
-    _tokens = (_spec.wire, *_spec.aliases)
-    for _tok in _tokens:
-        if _tok in _COMMAND_SPEC_BY_WIRE:
-            raise RuntimeError(f"duplicate wire token in COMMAND_REGISTRY: {_tok!r}")
-        _COMMAND_SPEC_BY_WIRE[_tok] = _spec
-
-
-def get_command_spec_for_wire(token: str) -> Optional[CommandSpec]:
-    spec : Optional[CommandSpec] = _COMMAND_SPEC_BY_WIRE.get(token)
-    return spec
-
-
-
-################################################################################
-#           0.4.    INTER-PROCESS COMMUNICATION:  RECEPTION TYPES.
-################################################################################
-
-
-"""
-IPC_SCHEMA_KEYS_vA
-
-    - Recommended approach: use a `str`-backed Enum to define the IPC JSON “wire keys”.
-    - This gives you a single authoritative vocabulary, prevents typos, and scales cleanly
-    - as you add more message types / fields later.
-
-    - Intended home     : `_fpga_stream.py` (imported as `cc` by `fpga_stream.py`).
-"""
-IPC_SCHEMA_VERSION          : Tuple[int,int,int]    = (0, 1, 0)
-
+IPC_SCHEMA_VERSION          : Tuple[int, int, int]    = (0, 1, 0)
 
 
 #   "JsonKey"
 #
 class JsonKey(str, Enum):
     """Canonical JSON key vocabulary for IPC records (wire format)."""
-    # Common / envelope fields (reserved for future expansion)
     TYPE                = "type"
     VERSION             = "v"
-
-    # Data-packet fields
     TIME                = "t"
     CYCLES              = "cycles"
     COUNTS              = "counts"
+    MESSAGE             = "message"
 
 
 #   "MessageType"
@@ -288,14 +246,18 @@ _INITIALIZED            : bool                          = False
 #   Protect critical names from being overwritten by init(...)
 _PROTECTED_NAMES        : Set[str]                      = {
       "init"
+    , "require"
+    , "make_default_runtime_state"
+    , "apply_seed_args"
+    , "add_seed_arguments"
     , "_INITIALIZED"
     , "_PROTECTED_NAMES"
 }
 
 #   PACKETS OF SAMPLE FPGA DATA...
-SAMPLE_DATA0            : List[Tuple[List[int], int]]   = None
-SAMPLE_DATA1            : List[Tuple[List[int], int]]   = None
-SAMPLE_DATA2            : List[Tuple[List[int], int]]   = None
+SAMPLE_DATA0            : Optional[List[Tuple[List[int], int]]]   = None
+SAMPLE_DATA1            : Optional[List[Tuple[List[int], int]]]   = None
+SAMPLE_DATA2            : Optional[List[Tuple[List[int], int]]]   = None
 
 
 
@@ -308,9 +270,7 @@ SAMPLE_DATA2            : List[Tuple[List[int], int]]   = None
 def init(*, allow_overwrite: bool = False, **kwargs: Any) -> None:
     global _INITIALIZED, SAMPLE_DATA0, SAMPLE_DATA1, SAMPLE_DATA2
 
-
-    _load_data()    #  POPULATE THE "SAMPLE_DATA*" DICTIONARIES...
-    
+    _load_data()    #  POPULATE THE "SAMPLE_DATA*" ARRAYS...
 
     if _INITIALIZED and (not allow_overwrite):
         raise RuntimeError("_fpga_stream.init() called more than once")
@@ -321,7 +281,6 @@ def init(*, allow_overwrite: bool = False, **kwargs: Any) -> None:
             raise ValueError(f"invalid init name: {name!r}")
 
         # enforce your global naming convention (optional but recommended)
-        # e.g. require leading underscore for “global-ish” values
         if not name.startswith("_"):
             raise ValueError(f"init name must start with '_': {name}")
 
@@ -334,7 +293,7 @@ def init(*, allow_overwrite: bool = False, **kwargs: Any) -> None:
         globals()[name] = value
 
     _INITIALIZED = True
-    
+
     return
 
 
@@ -342,11 +301,109 @@ def init(*, allow_overwrite: bool = False, **kwargs: Any) -> None:
 #
 def require(name: str) -> Any:
     """Defensive accessor: forces a clear error if a required injected global is missing."""
-    
+
     if name not in globals():
         raise RuntimeError(f"required global not initialized: {name}")
-        
+
     return globals()[name]
+
+
+#   "make_default_runtime_state"
+#
+def make_default_runtime_state() -> RuntimeState:
+    integration_window  : float = 1.0
+    coincidence_window  : int   = 50_000
+
+    for spec in COMMAND_REGISTRY:
+        if (spec.kind is not CommandKind.Param) or (spec.state_field is None):
+            continue
+
+        if spec.state_field == "integration_window":
+            if spec.default_value is not None:
+                integration_window = float(spec.default_value)
+
+        elif spec.state_field == "coincidence_window":
+            if spec.default_value is not None:
+                coincidence_window = int(float(spec.default_value))
+
+    return RuntimeState(
+          integration_window      = integration_window
+        , coincidence_window      = coincidence_window
+    )
+
+
+#   "add_seed_arguments"
+#
+def add_seed_arguments(parser: Any) -> None:
+    """Register CLI seed args for seedable PARAM commands (registry-driven)."""
+
+    for spec in COMMAND_REGISTRY:
+        if (spec.kind is not CommandKind.Param) or (not spec.seedable):
+            continue
+        if spec.state_field is None:
+            continue
+
+        opt                 : str   = spec.cli_name if (spec.cli_name is not None) else spec.id.value
+        arg                 : str   = f"--{opt}"
+        help_text           : str   = f"Seed {spec.id.value} (overrides process defaults at startup)"
+
+        if spec.value_type is ValueType.Float:
+            parser.add_argument(arg, dest=spec.state_field, type=float, default=None, help=help_text)
+        elif spec.value_type is ValueType.Int:
+            parser.add_argument(arg, dest=spec.state_field, type=int, default=None, help=help_text)
+        elif spec.value_type is ValueType.Str:
+            parser.add_argument(arg, dest=spec.state_field, type=str, default=None, help=help_text)
+        else:
+            # NoneType should never be seedable
+            continue
+
+    return
+
+
+#   "apply_seed_args"
+#
+def apply_seed_args(args: Any, state: RuntimeState) -> None:
+    """Apply CLI seed values (if provided) into RuntimeState (registry-driven)."""
+
+    for spec in COMMAND_REGISTRY:
+        if (spec.kind is not CommandKind.Param) or (not spec.seedable):
+            continue
+        if spec.state_field is None:
+            continue
+
+        if not hasattr(args, spec.state_field):
+            continue
+
+        v = getattr(args, spec.state_field)
+        if v is None:
+            continue
+
+        # validate/clamp
+        if spec.value_type in (ValueType.Float, ValueType.Int):
+            v_f     : float             = float(v)
+            min_v   : Optional[float]    = spec.min_value
+            max_v   : Optional[float]    = spec.max_value
+
+            if spec.validation is ValidationPolicy.Reject:
+                if (min_v is not None) and (v_f < min_v):
+                    raise ValueError(f"seed value out of range for {spec.id.value}: {v_f} < {min_v}")
+                if (max_v is not None) and (v_f > max_v):
+                    raise ValueError(f"seed value out of range for {spec.id.value}: {v_f} > {max_v}")
+
+            elif spec.validation is ValidationPolicy.Clamp:
+                if (min_v is not None) and (v_f < min_v):
+                    v_f = min_v
+                if (max_v is not None) and (v_f > max_v):
+                    v_f = max_v
+
+            v = int(v_f) if (spec.value_type is ValueType.Int) else float(v_f)
+
+        if not hasattr(state, spec.state_field):
+            raise RuntimeError(f"RuntimeState missing field {spec.state_field!r} for command {spec.id.value!r}")
+
+        setattr(state, spec.state_field, v)
+
+    return
 
 
 
@@ -371,46 +428,45 @@ def require(name: str) -> Any:
 
 #  "measure_raw"
 #
-def measure_raw(session):
-    counts  = [int(x) for x in session.registers["Counts"].read()]
-    cycles  = int(session.registers["CYCLES"].read())
-    
+def measure_raw(session: Any) -> Tuple[List[int], int]:
+    counts  : List[int]  = [int(x) for x in session.registers["Counts"].read()]
+    cycles  : int        = int(session.registers["CYCLES"].read())
+
     return counts, cycles
 
 
 #  "start_measure"
 #
-def start_measure(session, coincidence_ticks=1):
-    counts:List     = None
-    cycles:int      = 0
-    enable          = session.registers["ENABLE"]
-    clear           = session.registers["CLEAR"]
-    winreg          = session.registers["Conicidence Window"]
+def start_measure(session: Any, coincidence_ticks: int = 1) -> None:
+    counts  : List[int]  = []
+    cycles  : int        = 0
+    enable              = session.registers["ENABLE"]
+    clear               = session.registers["CLEAR"]
+    winreg              = session.registers["Conicidence Window"]
 
-    enable          .write(False)
-    clear           .write(True)
-    winreg          .write(coincidence_ticks)
+    enable.write(False)
+    clear.write(True)
+    winreg.write(int(coincidence_ticks))
 
-    counts, cycles  = measure_raw(session)
+    counts, cycles = measure_raw(session)
     if cycles or any(counts):
         raise RuntimeError("Clear/Stop failed")
 
     clear.write(False)
     enable.write(True)
-    
-    return;
+
+    return
 
 
 #  "finish_measure"
 #
-def finish_measure(session):
-    finish_duration:float   = globals().get( '_MEASUREMENT_COMPLETION_DELAY'   , 0.1 )
-
+def finish_measure(session: Any) -> Tuple[List[int], int]:
+    finish_duration  : float = float(globals().get("_MEASUREMENT_COMPLETION_DELAY", 0.1))
     enable                  = session.registers["ENABLE"]
-    
+
     enable.write(False)
     time.sleep(finish_duration)
-    
+
     return measure_raw(session)
 
 
@@ -436,42 +492,50 @@ def finish_measure(session):
 
 
 ################################################################################
-#           3.1.    INTER-PROCESS COMMUNICATION:  "TRANSMISSION" TYPES.
+#           3.1.    IPC OUTPUT (stdout JSON lines).
 ################################################################################
 
 #   "_utc_timestamp_z_seconds"
 #
 def _utc_timestamp_z_seconds() -> str:
-    ts_utc              : datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
-    ts_iso              : str               = ts_utc.isoformat(timespec="seconds")
+    ts_utc  : datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
+    ts_iso  : str               = ts_utc.isoformat(timespec="seconds")
 
-    # `isoformat()` yields "...+00:00" for UTC; normalize to the `"Z"` suffix.
     if ts_iso.endswith("+00:00"):
         ts_iso = ts_iso[:-6] + "Z"
 
     return ts_iso
 
 
+#   "_make_record"
+#
+def _make_record(msg_type: MessageType, payload: Dict[str, Any]) -> Dict[str, Any]:
+    ts      : str               = _utc_timestamp_z_seconds()
+    record  : Dict[str, Any]    = {
+          JsonKey.TYPE.value        : msg_type.value
+        , JsonKey.VERSION.value     : IPC_SCHEMA_VERSION
+        , JsonKey.TIME.value        : ts
+    }
+    record.update(payload)
+
+    return record
+
+
 #   "_make_data_record"
 #
 def _make_data_record(counts: List[int], cycles: int) -> Dict[str, Any]:
-    ts                  : str               = _utc_timestamp_z_seconds()
-    record              : Dict[str, Any]    = {
-          JsonKey.TYPE.value        : MessageType.DATA.value
-        , JsonKey.VERSION.value     : IPC_SCHEMA_VERSION
-        , JsonKey.TIME.value        : ts
-        , JsonKey.CYCLES.value      : cycles
+    payload : Dict[str, Any] = {
+          JsonKey.CYCLES.value      : int(cycles)
         , JsonKey.COUNTS.value      : counts
     }
-
-    return record
+    return _make_record(MessageType.DATA, payload)
 
 
 #   "emit_data_record"
 #
 def emit_data_record(counts: List[int], cycles: int) -> None:
-    record              : Dict[str, Any]    = _make_data_record(counts, cycles)
-    payload             : str               = json.dumps(record)
+    record      : Dict[str, Any]    = _make_data_record(counts, cycles)
+    payload     : str               = json.dumps(record)
 
     sys.stdout.write(payload + "\n")
     sys.stdout.flush()
@@ -481,154 +545,111 @@ def emit_data_record(counts: List[int], cycles: int) -> None:
 
 
 ################################################################################
-#           3.2.    INTER-PROCESS COMMUNICATION:  "RECEPTION" TYPES.
+#           3.2.    IPC INPUT (stdin -> queue).
 ################################################################################
 
 #   "_parse_command_line"
 #
 def _parse_command_line(line: str) -> Optional[Command]:
-    toks                    : list[str]             = line.strip().split()
-    token                   : str                   = ""
-    spec                    : Optional[CommandSpec] = None
-    raw                     : Optional[str]         = None
+    toks        : List[str]             = line.strip().split()
+    cmd_text    : Optional[str]         = None
+    spec        : Optional[CommandSpec] = None
+    cmd_val     : CommandValue          = None
 
     if not toks:
         return None
 
-    token = toks[0].lower()
-    spec  = get_command_spec_for_wire(token)
+    cmd_text = toks[0].lower()
+    spec     = _COMMAND_BY_KEY.get(cmd_text, None)
     if spec is None:
         return None
 
+    if spec.kind is CommandKind.Action:
+        if spec.id is CommandID.QUIT:
+            return Command(id=CommandID.QUIT, value=None)
+        return None
 
-    #   ACTION COMMANDS: no payload (by design, at this stage).
-    if spec.kind is CommandKind.ACTION:
-        if len(toks) != 1:
+    # PARAM
+    if len(toks) != 2:
+        return None
+
+    raw = toks[1]
+
+    try:
+        if spec.value_type is ValueType.Float:
+            cmd_val = float(raw)
+        elif spec.value_type is ValueType.Int:
+            cmd_val = int(raw, 0)
+        elif spec.value_type is ValueType.Str:
+            cmd_val = str(raw)
+        else:
             return None
-        return Command(kind=spec.kind, id=spec.id, value=None)
+    except ValueError:
+        return None
 
+    # validate/clamp (numeric only)
+    if spec.value_type in (ValueType.Float, ValueType.Int):
+        v_f     : float             = float(cmd_val)
+        min_v   : Optional[float]    = spec.min_value
+        max_v   : Optional[float]    = spec.max_value
 
-    #   PARAM COMMANDS: single scalar payload at this stage.
-    if spec.kind is CommandKind.PARAM:
-        if len(toks) != 2:
-            return None
+        if spec.validation is ValidationPolicy.Reject:
+            if (min_v is not None) and (v_f < min_v):
+                return None
+            if (max_v is not None) and (v_f > max_v):
+                return None
 
-        raw = toks[1]
+        elif spec.validation is ValidationPolicy.Clamp:
+            if (min_v is not None) and (v_f < min_v):
+                v_f = min_v
+            if (max_v is not None) and (v_f > max_v):
+                v_f = max_v
 
-        #   1) COERCE STRING -> TYPED VALUE
-        try:
-            match spec.value_type:
-                case ValueType.FLOAT:
-                    value = float(raw)
-                case ValueType.INT:
-                    value = int(raw, 0)     # accepts decimal or 0x... form
-                case ValueType.STR:
-                    value = str(raw)
-                case ValueType.PATH:
-                    value = str(raw)        # keep as str for now (Path wiring later)
-                case ValueType.NONE:
-                    value = None
-                case _:
-                    return None
-        except ValueError:
-            return None
+        cmd_val = int(v_f) if (spec.value_type is ValueType.Int) else float(v_f)
 
-        #   2) VALIDATE / CLAMP (numeric types only)
-        if spec.value_type in (ValueType.FLOAT, ValueType.INT):
-            v_f                     : float     = float(value)
-            min_v                   : Optional[float] = spec.min_value
-            max_v                   : Optional[float] = spec.max_value
-
-            if spec.validation is ValidationPolicy.REJECT:
-                if (min_v is not None) and (v_f < min_v):
-                    return None
-                if (max_v is not None) and (v_f > max_v):
-                    return None
-
-            elif spec.validation is ValidationPolicy.CLAMP:
-                if (min_v is not None) and (v_f < min_v):
-                    v_f = min_v
-                if (max_v is not None) and (v_f > max_v):
-                    v_f = max_v
-
-            # restore original numeric type
-            if spec.value_type is ValueType.INT:
-                value = int(v_f)
-            else:
-                value = float(v_f)
-
-        return Command(kind=spec.kind, id=spec.id, value=value)
-
-
-    return None
-
+    return Command(id=spec.id, value=cmd_val)
 
 
 
 ################################################################################
-#           3.4.    IPC UTILITY FUNCTIONS.
+#           3.3.    IPC UTILITY FUNCTIONS.
 ################################################################################
 
 #   "drain_and_apply_commands"
 #
 def drain_and_apply_commands(command_queue: "queue.Queue[Command]", state: RuntimeState) -> None:
-    cmd                         : Optional[Command]             = None
-    last_param_updates          : Dict[CommandID, CommandValue] = {}
-    quit_seen                   : bool                          = False
+    cmd     : Optional[Command]     = None
+    spec    : Optional[CommandSpec] = None
 
-    #   1) DRAIN QUEUE (COALESCE PARAM UPDATES: LATEST WINS)
     while True:
         try:
             cmd = command_queue.get_nowait()
         except queue.Empty:
             break
 
-        if cmd.kind is CommandKind.PARAM:
-            last_param_updates[cmd.id] = cmd.value
-            continue
-
-        if cmd.kind is CommandKind.ACTION:
-            if cmd.id is CommandID.QUIT:
-                quit_seen = True
-            continue
-
-        continue
-
-    #   2) APPLY PARAM UPDATES (REGISTRY-DRIVEN)
-    for cmd_id, value in last_param_updates.items():
-        spec : Optional[CommandSpec] = _COMMAND_SPEC_BY_ID.get(cmd_id)
+        spec = _COMMAND_BY_ID.get(cmd.id, None)
         if spec is None:
-            raise RuntimeError(f"no CommandSpec for CommandID: {cmd_id!r}")
+            continue
 
-        if spec.kind is not CommandKind.PARAM:
-            raise RuntimeError(f"CommandSpec kind mismatch for {cmd_id!r}: {spec.kind!r}")
+        if spec.kind is CommandKind.Action:
+            if cmd.id is CommandID.QUIT:
+                state.quit_requested = True
+            continue
 
-        field_name : Optional[str] = spec.state_field
-        if field_name is None:
-            raise RuntimeError(f"PARAM command missing state_field mapping: {cmd_id!r}")
+        # PARAM
+        if spec.state_field is None:
+            continue
+        if not hasattr(state, spec.state_field):
+            continue
 
-        if not hasattr(state, field_name):
-            raise RuntimeError(f"RuntimeState missing field {field_name!r} for command {cmd_id!r}")
-
-        # parse guarantees value is already typed/validated; still coerce defensively
-        match spec.value_type:
-            case ValueType.FLOAT:
-                setattr(state, field_name, float(value))
-            case ValueType.INT:
-                setattr(state, field_name, int(value))
-            case ValueType.STR:
-                setattr(state, field_name, str(value))
-            case ValueType.PATH:
-                setattr(state, field_name, str(value))  # Path wiring later
-            case _:
-                raise RuntimeError(f"unsupported ValueType for PARAM command {cmd_id!r}: {spec.value_type!r}")
-
-    #   3) APPLY ACTIONS
-    if quit_seen:
-        state.quit_requested = True
+        if spec.value_type is ValueType.Float:
+            setattr(state, spec.state_field, float(cmd.value))
+        elif spec.value_type is ValueType.Int:
+            setattr(state, spec.state_field, int(cmd.value))
+        elif spec.value_type is ValueType.Str:
+            setattr(state, spec.state_field, str(cmd.value))
 
     return
-
 
 
 
@@ -641,8 +662,8 @@ def drain_and_apply_commands(command_queue: "queue.Queue[Command]", state: Runti
 def stdin_reader(command_queue: "queue.Queue[Command]") -> None:
     """Accept text commands from the C++ host (one per line)."""
 
-    line                    : str                   = ""
-    cmd                     : Optional[Command]     = None
+    line    : str               = ""
+    cmd     : Optional[Command] = None
 
     for line in sys.stdin:
         cmd = _parse_command_line(line)
@@ -670,10 +691,6 @@ def stdin_reader(command_queue: "queue.Queue[Command]") -> None:
 
 
 
-
-
-
-
 ################################################################################
 #
 #
@@ -681,57 +698,34 @@ def stdin_reader(command_queue: "queue.Queue[Command]") -> None:
 #    X.     DATA SIMULATION AND GENERATION...
 ################################################################################
 ################################################################################
-"""
-[   UNUSED,     D,          C,          CD,
-    B,          BD,         BC,         BCD,
-    A,          AD,         AC,         ACD,
-    AB,         ABD,        ABC,        ABCD    ]
-    
-    Coincidence window: 10
-"""
-
-################################################################################
-#           X.1.    DATA SIMULATION / GENERATION FUNCTIONS.
-################################################################################
 
 #   "mock_packets"
 #
-def mock_packets(data:List[Tuple[List[int], int]]):
-    i           : int       = 0
-    length      : int       = len(data)
-
+def mock_packets(data: List[Tuple[List[int], int]]):
+    i       : int   = 0
+    length  : int   = len(data)
 
     while True:
-        counts, cycles      = data[i]
-        jittered            = [
-            int(random.poisson(mu) if (mu > 20)     else mu)
-                if hasattr(random, "poisson")   else mu
+        counts, cycles  = data[i]
+        jittered        = [
+            int(random.poisson(mu) if (mu > 20) else mu)
+                if hasattr(random, "poisson") else int(mu)
             for mu in counts
         ]
         yield jittered, cycles
         i = (i + 1) % length
 
-
     return
 
 
-
-################################################################################
-#           X.2.    READ-ONLY DATA EXCERPTS.
-################################################################################
-
 #   "_load_data"
 #
-def _load_data():
+def _load_data() -> None:
     global SAMPLE_DATA0, SAMPLE_DATA1, SAMPLE_DATA2
 
-
-    #   "SAMPLE_DATA1"
-    #       - CALIBRATION DATA (For testing AVERAGE-VALUE Computations, etc)...
-    #
+    SAMPLE_DATA1    = [
     #   UNUSED.     D.      C.      CD.     B.      BD.     BC.     BCD.    A.      AD.     AC.     ACD.    AB.     ABD.    ABC.    ABCD.       FPGA CYCLES.    #
     ##############################################################################################################################################################
-    SAMPLE_DATA1 = [
         ([0,        0,      5,      0,      0,      0,      0,      0,      1,      0,      0,      0,      0,      0,      0,      0],         0),
         ([0,        0,      5,      0,      0,      0,      0,      0,      2,      0,      0,      0,      0,      0,      0,      0],         0),
         ([0,        0,      5,      0,      0,      0,      0,      0,      3,      0,      0,      0,      0,      0,      0,      0],         0),
@@ -743,12 +737,7 @@ def _load_data():
         ([0,        0,      5,      0,      0,      0,      0,      0,      9,      0,      0,      0,      0,      0,      0,      0],         0)
     ]
 
-
-
-    #   "SAMPLE_DATA2"
-    #       - SAMPLE FPGA DATA (For running is Dummy Mode)...
-    #
-    SAMPLE_DATA2 = [
+    SAMPLE_DATA2    = [
         ([0, 418, 567, 0, 46168, 1, 1, 1, 76437, 1, 0, 0, 223, 0, 6, 78], 280571200),
         ([0, 438, 554, 0, 46727, 1, 2, 0, 76220, 0, 3, 0, 228, 1, 6, 62], 280366940),
         ([0, 383, 592, 0, 46708, 1, 1, 2, 76678, 1, 2, 0, 222, 0, 3, 73], 280473760),
@@ -820,10 +809,6 @@ def _load_data():
         ([0, 402, 542, 0, 47453, 1, 2, 0, 80813, 3, 1, 0, 258, 0, 4, 60], 280400820)
     ]
 
-
-    #   "SAMPLE_DATA0"
-    #       - SAMPLE FPGA DATA (For running is Dummy Mode)...
-    #
     SAMPLE_DATA0 = [
         ([0, 418, 567, 0, 46168, 1, 1, 1, 76437, 1, 0, 0, 223, 0, 6, 78], 280571200),
         ([0, 438, 554, 0, 46727, 1, 2, 0, 76220, 0, 3, 0, 228, 1, 6, 62], 280366940),
@@ -876,8 +861,8 @@ def _load_data():
         ([0, 399, 593, 0, 47679, 2, 1, 2, 80355, 2, 2, 1, 251, 2, 2, 82], 280547330),
         ([0, 402, 542, 0, 47453, 1, 2, 0, 80813, 3, 1, 0, 258, 0, 4, 60], 280400820)
     ]
-    
-    return;
+
+    return
 
 
 
@@ -886,20 +871,3 @@ def _load_data():
 #
 ################################################################################
 ################################################################################    #   END [[ X.  "DATA SIMULATION" ]].
-
-
-
-
-
-
-
-
-
-
-
-################################################################################
-##
-##
-##
-################################################################################
-################################################################################    #  END [[ ALL ]].

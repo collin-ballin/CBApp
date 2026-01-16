@@ -112,17 +112,27 @@ public:
     //  using                               LabelFn                         = std::function<void(const char *)>     ;
     //
     //
-    using                                   Count_t                         = size_t;
+    //                              C-COUNTER DATA PACKET ABSTRACTIONS:
+    using                                   Counter_t                       = size_t;
     using                                   Frequency_t                     = size_t;
-    using                                   Packet_t                        = ccounter::CoincidencePacket_t<Count_t, Frequency_t>;
-    using                                   PerFrame_t                      = ccounter::PerFrame_t<float, Count_t>;                 //  State POD structs.
+    using                                   Packet_t                        = ccounter::CoincidencePacket_t<Counter_t, Frequency_t>;
+    using                                   PerFrame_t                      = ccounter::PerFrame_t<float, Counter_t>;                 //  State POD structs.
     //
     using                                   ChannelSpec                     = ccounter::ChannelSpec;
+    //
+    //
+    //                              C-COUNTER APP ABSTRACTIONS:
+//                                      Enum Types.
+    using                                   AvgMode                         = ccounter::AvgMode;
+    using                                   ChIndex                         = Packet_t::Index;
+//                                      Larger Types.
     using                                   Style                           = ccounter::CCounterStyle;
     //
-    using                                   PythonCMD                       = ccounter::PythonCMD;                          //  Enums.
-    using                                   AvgMode                         = AvgMode;
-    using                                   ChIndex                         = Packet_t::Index;
+    //
+    //                              PYTHON IPC ABSTRACTIONS:
+    using                                   PacketType                      = ipc::PythonPacketType;                                //  Enums.
+    using                                   PythonCMD                       = ipc::PythonCMD;
+    using                                   IPCState                        = ipc::PythonIPC_t;
     
     
     // *************************************************************************** //
@@ -130,8 +140,13 @@ public:
     // *************************************************************************** //
     //      0. |    REFERENCES TO GLOBAL ARRAYS.
     // *************************************************************************** //
-    static constexpr auto                   ms_CMD_STRINGS                  = ccounter::DEF_PYTHON_CMD_FMT_STRINGS;
+    static constexpr auto                   ms_PACKET_TYPE_NAMES            = ipc::DEF_PYTHON_PACKET_TYPE_NAMES;
+    static constexpr auto                   ms_CMD_STRINGS                  = ipc::DEF_PYTHON_CMD_FMT_STRINGS;
+    //
     inline static auto                      ms_channels                     = ccounter::DEF_CHANNEL_INFOS;
+    //
+    inline static auto                      ms_AVG_MODE_NAMES               = ccounter::DEF_AVG_MODE_NAMES;
+    inline static auto                      ms_AVG_MODE_FMT_STRINGS         = ccounter::DEF_AVG_MODE_FMT_STRINGS;
     
 //
 //
@@ -186,6 +201,7 @@ protected:
     // *************************************************************************** //
     //
     //                                  PYSTREAM:
+    IPCState		                        m_ipc_state                         = {   };
     utl::PyStream                           m_python                            = {   };    //  utl::PyStream(app::PYTHON_DUMMY_FPGA_FILEPATH);
     uint32_t                                m_child_pid                         = 0U;
     //
@@ -194,15 +210,43 @@ protected:
     char                                    m_filebuffer [ms_CMD_MSG_SIZE]      = { '\0' };
     //
     //                                  PYTHON PATHS:
+    std::filesystem::path                   m_python_interpreter_path           = {    };//    {"~/.venvs/CBenv/"};
     std::filesystem::path                   m_script_filepath                   = {"../../scripts/python/fpga_stream_v3.py"};
     std::filesystem::path                   m_output_filepath                   = {   };
     //
     //
     //
     //                                  COINCIDENCE-COUNTER VARIABLES:
-    Param<ImU64>                            m_coincidence_window            = { 10,     {1          , 100   }   };
-    Param<double>                           m_integration_window            = { 1.00f,  {0.01f      , 2.50f }   };
+    Param<ImU64>                            m_coincidence_window                = { 10,     {1          , 100   }   };
+    Param<double>                           m_integration_window                = { 1.00f,  {0.01f      , 2.50f }   };
 
+
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      1. |    GLOBAL APPLICATION-WIDE BEHAVIOR TOGGLES.
+    // *************************************************************************** //
+    //                                  BEHAVIOR-TOGGLES:
+    //
+    //                                      Data Aquisition.
+    bool                                    m_use_mutex_count               = false;
+    bool                                    m_recording_armed               = false;
+    //
+    //
+    //                                      Plot Appearance.
+    bool                                    m_use_relative_range            = true;         //  if (true):  Y-Range = [Y-MIN, Y-MAX].       if (false):     Y-Range [0, Y-MAX].
+    bool                                    m_use_shuffled_colormap         = true;         //  (true):     Use optimized plot-colors.      (false):        Use naïve shuffled plot colors.
+    //
+    bool                                    m_smooth_scroll                 = false;        //  (true): Gradual, Smooth plot updates; continuous time.      (false): stop-motion, abrupt plot updates; discrete time.
+    bool                                        m_xaxis_paused                  = true;     //  start paused until first sample
+    //                                                                                          ^ [[TO-DO]]: DON'T TOUCH.  NEED TO REMOVE THIS.
+    //
+    //
+    //                                  OTHER APP SETTINGS:
+    AvgMode                                 m_avg_mode                      = AvgMode::Samples;
+    ImPlotColormap                          m_cmap                          = ImPlotColormap_Cool;
+    //
 
     // *************************************************************************** //
     //
@@ -220,6 +264,7 @@ protected:
     //const char *       PYTHON_DUMMY_FPGA_FILEPATH          = "../../scripts/python/fpga_stream.py";
     //
     //
+    //
     static constexpr float                  ms_TIMEOUT_DURATION             = 0.25f;        //  seconds of silence → freeze
     float                                   m_stream_timeout                = 0.25f;        //  ...
     bool                                    m_streaming_active              = false;        //  derived each frame
@@ -231,20 +276,17 @@ protected:
     //
     //
     //                                  PLOT-APPEARANCE STUFF:
-    float                                   ms_CENTER                       = 0.95f;
+    double                                  ms_CENTER                       = 0.95f;            //  Rel. Position of the "Playhead" for most-recent data.
+    double                                  ms_MARGIN                       = 1.10f;            //  Multiple of Y-Max value to add additional height to y-axis limits.
     Param<double>                           m_history_length                = { 30.0f,  {5.0f,   90.0}  };
     float                                   m_last_packet_time              = 0.0f;                             //  time of last data arrival
     float                                   m_freeze_xmin                   = 0.0f;                             //  cached limits when paused
     float                                   m_freeze_xmax                   = 0.0f;
     float                                   m_freeze_now                    = 0.0f;                             //  reference time for sparklines when paused
     //
-    bool                                    m_smooth_scroll                 = false;                            //  checkbox toggled in UI
-    bool                                    m_xaxis_paused                  = true;                             //  start paused until first sample
     //
     //
     //                                  COMPUTATION STUFF:
-    bool                                    m_use_mutex_count               = false;
-    AvgMode                                 m_avg_mode                      = AvgMode::Samples;                 //  Current mode (UI‑controlled)
     Param<ImU64>                            m_avg_window_samp               = { 10,     {1, 100}        };      //  N samples (for AvgMode::Samples)
     Param<double>                           m_avg_window_sec                = { 30.0f,  {5.0f,   90.0}  };      //  Window length in seconds (for AvgMode::Seconds)
     //
@@ -261,8 +303,10 @@ protected:
     // *************************************************************************** //
     //      1. |    TRANSIENT STATE DATA.
     // *************************************************************************** //
-    bool                                    m_initialized                   = false;
+    bool                                    m_initialized                   = false;    //  If the `Applet` has been initialized.
     bool                                    m_toggle_mst_plots              = false;
+    //
+    bool                                    m_colormap_cache_invalid        = true;     //  If the user made a change and the plot colors need to be updated.
     
     
     // *************************************************************************** //
@@ -358,25 +402,22 @@ protected:
     
     
     //                                              6.  PLOTTING STUFF...
-    bool                                                m_colormap_cache_invalid        = true;
-    bool                                                m_colormap_shuffled             = false;
     //
     //  static constexpr std::array<const char *, 2>        ms_mst_axis_labels              = { "Time  [sec]",      "Counts  [Arb.]" };
     //
     //
     //
     //                                              7.  PLOT APPEARANCE STUFF...
-    ImPlotColormap                                      m_cmap                          = ImPlotColormap_Cool;
     //
     //                                              MASTER PLOTS.
     std::vector<ImVec4>                                 m_plot_colors                   = std::vector<ImVec4>(ms_NUM);
-    Param<float>                                        m_plot_linewidth                = { 0.60f,      { 2.6f      , 4.00f     }       };
+    Param<float>                                        m_plot_linewidth                = { 0.80f,      { 0.40f      , 4.00f     }       };
     //
     //                                              AVERAGE PLOTS.
     std::vector<ImVec4>                                 m_avg_colors                    = std::vector<ImVec4>(ms_NUM);
-    Param<float>                                        m_avg_opacity                   = { 0.50f,      { 0.0f      , 1.00f     }       };
+    Param<float>                                        m_avg_opacity                   = { 0.50f,      { 0.00f     , 1.00f     }       };
     Param<float>                                        m_avg_linewidth                 = { 14.0f,      { 4.0f      , 30.00f    }       };
-    Param<float>                                        m_avg_color_shade               = { -0.45,      { -1.0f     , 1.00f     }       };
+    Param<float>                                        m_avg_color_shade               = { -0.45,      { -1.00f    , 1.00f     }       };
     //
     //
     //                                              INDIVIDUAL PLOTS.
@@ -750,6 +791,7 @@ protected:
             this->_stop_process(false);
         }
         
+        this->m_ipc_state.ClearAll();
         this->_clear_plot_data();
         this->_reset_max_values();
         this->_reset_average_values();
@@ -799,7 +841,7 @@ protected:
         
         if (this->m_colormap_cache_invalid)
         {
-            if ( !this->m_colormap_shuffled ) {
+            if ( !this->m_use_shuffled_colormap ) {
                 this->m_plot_colors         = cblib::utl::GetColormapSamples( ms_NUM, m_cmap );
             }
             else {
@@ -823,6 +865,83 @@ protected:
     // *************************************************************************** //
     //      2.C. |  INTERNAL FUNCTIONS.
     // *************************************************************************** //
+
+    //  "_setup_pystream"
+    //
+    inline void                             _setup_pystream                     (void)
+    {
+        namespace           fs                              = std::filesystem;
+
+    #ifdef _WIN32
+        static constexpr const char *   cv_DEF_PY_EXE_REL   = ".venvs/CBenv/Scripts/python.exe";
+        const char *                    home_cstr           = std::getenv("USERPROFILE");
+    #else
+        static constexpr const char *   cv_DEF_PY_EXE_REL   = ".venvs/CBenv/bin/python";
+        const char *                    home_cstr           = std::getenv("HOME");
+    #endif
+
+        const fs::path                  home_path           = (home_cstr != nullptr) ? fs::path(home_cstr) : fs::path{};
+        const fs::path                  def_py_exe          = (!home_path.empty()) ? (home_path / cv_DEF_PY_EXE_REL) : fs::path{};
+
+
+        //  1.  PYTHON INTERPRETER...
+        if (this->m_python_interpreter_path.empty() && !def_py_exe.empty())
+        {
+            this->m_python_interpreter_path                  = def_py_exe;
+        }
+
+        if ( !this->m_python_interpreter_path.empty() )
+        {
+            try {
+                this->m_python.set_python_executable( this->m_python_interpreter_path );
+                CB_LOG(
+                      LogLevel::Debug
+                    , "[[CCounter]] using python interpreter at filepath, \"{}\""
+                    , this->m_python_interpreter_path.string()
+                );
+            }
+            catch (...) {
+                CB_LOG(
+                      LogLevel::Warning
+                    , "[[CCounter]] no python interpreter exists at default filepath, \"{}\""
+                    , this->m_python_interpreter_path.string()
+                );
+                this->m_python_interpreter_path.clear();
+            }
+        }
+        else
+        {
+            CB_LOG(
+                  LogLevel::Warning
+                , "[[CCounter]] unable to resolve a home directory; using default python interpreter"
+            );
+        }
+
+
+        //  2.  PYTHON SCRIPT...
+        if ( !this->m_script_filepath.empty() )
+        {
+            try {
+                this->m_python.set_filepath( this->m_script_filepath );
+                CB_LOG(
+                      LogLevel::Debug
+                    , "[[CCounter]] using python script at filepath, \"{}\""
+                    , this->m_script_filepath.relative_path().string()
+                );
+            }
+            catch (...) {
+                CB_LOG(
+                      LogLevel::Warning
+                    , "[[CCounter]] no python script exists at default filepath, \"{}\""
+                    , this->m_script_filepath.relative_path().string()
+                );
+            }
+        }
+
+        return;
+    }
+
+        
         
     //  "_start_process_IMPL"
     //

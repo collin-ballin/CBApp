@@ -27,6 +27,73 @@ namespace cb { //     BEGINNING NAMESPACE "cb"...
 
 
 
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      0.      OVERALL STUFF FOR "UNIT TESTING" MENU...
+// *************************************************************************** //
+// *************************************************************************** //
+
+//  "_MENU_UnitTesting"
+//
+void CBDebugger::_MENU_UnitTesting(void) noexcept
+{
+    static bool     show_orchid_testing             = false;
+    static bool     show_ndringbuffer_testing       = false;
+
+
+
+    //      1.      PRESENT MENU SELECTION...
+    ImGui::Checkbox     ( "Show `Orchid` Testing:"          , &show_orchid_testing          );
+    ImGui::Checkbox     ( "Show `ndRingBuffer` Testing:"    , &show_ndringbuffer_testing    );
+    //
+    ImGui::NewLine();
+    ImGui::NewLine();
+
+
+
+    //      2.      DISPATCH MENU FUNCTIONS...
+    if ( show_orchid_testing )
+    {
+        this->TestOrchid();
+    }
+    
+    
+    if ( show_ndringbuffer_testing )
+    {
+        this->TestndRingBuffer();
+    }
+    
+    
+    return;
+}
+
+    
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 0.  "UNIT TESTS" ]].
+
+
+
+
+
+
+
+
+
+
+
+
 // *************************************************************************** //
 //
 //
@@ -110,7 +177,7 @@ private:
 
 //  "TestOrchid"
 //
-void CBDebugger::TestOrchid(void) noexcept
+inline void CBDebugger::TestOrchid(void) noexcept
 {
     static int                      value               = 0;
     static bool                     flag                = false;
@@ -739,7 +806,7 @@ inline void draw_ndringbuffer_basic_tests()
 
 //  "TestndRingBuffer"
 //
-void CBDebugger::TestndRingBuffer(void) noexcept
+inline void CBDebugger::TestndRingBuffer(void) noexcept
 {
     using           namespace       tests;
     static bool     gate            = false;

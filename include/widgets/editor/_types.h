@@ -196,13 +196,13 @@ DEF_ACTION_STATE_NAMES  = { {
 
 //  "IOResult"
 //
-enum class IOResult {
-    Ok = 0,
-    IoError,
-    ParseError,
-    VersionMismatch,
+enum class IOResult :uint8_t {
+      Ok    = 0
+    , IoError
+    , ParseError
+    , VersionMismatch
 //
-    COUNT
+    , COUNT
 };
 //
 //  "DEF_IORESULT_NAMES"
