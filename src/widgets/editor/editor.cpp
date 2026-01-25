@@ -1172,11 +1172,13 @@ inline void Editor::_handle_pen(const Interaction& it)
             int pi = _hit_point(it);
             if ( pi >= 0 )
             {
-                _pen_begin_handle_drag(m_points[pi].v,
-                                        /*out_handle=*/true,
-                                        /*force_select=*/true);
-                if (Vertex* v = find_vertex_mut(m_vertices, m_drag_vid))
+                _pen_begin_handle_drag(           m_points[pi].v
+                    /*  out_handle      */      , true
+                    /*  force_select    */      , true
+                );
+                if ( Vertex * v = find_vertex_mut(m_vertices, m_drag_vid) ) {
                     v->m_bezier.out_handle = ImVec2(0,0);
+                }
             }
         }
         _draw_pen_cursor(io.MousePos, m_style.PEN_COL_NORMAL);   // yellow bullseye

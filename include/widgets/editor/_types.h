@@ -1937,9 +1937,9 @@ inline void to_json(nlohmann::json & j, const Selection_t<CFG_> & s)
     
     
     j = {
-        { "vertices",  std::vector<vertex_id>   ( s.vertices.begin()    , s.vertices.end() )  },
-        { "points",    std::vector<point_id>    ( s.points  .begin()    , s.points  .end() )  },
-        { "paths",     std::vector<path_id>     ( s.paths   .begin()    , s.paths   .end() )  }
+        { "vertices"    , std::vector<vertex_id>   ( s.vertices.begin()    , s.vertices.end() )  },
+        { "points"      , std::vector<point_id>    ( s.points  .begin()    , s.points  .end() )  },
+        { "paths"       , std::vector<path_id>     ( s.paths   .begin()    , s.paths   .end() )  }
     };
           
     return;

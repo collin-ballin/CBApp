@@ -168,12 +168,14 @@ inline void Editor::_update_bbox_move(const Interaction & it)
     const bool          allow_inputs        = !it.BlockInput();
     //
     const bool          lmb                 = io.MouseDown[ ImGuiMouseButton_Left ];
-    const bool          lmb_click           = ImGui::IsMouseClicked  (ImGuiMouseButton_Left);
-    const bool          lmb_release         = ImGui::IsMouseReleased (ImGuiMouseButton_Left);
+    const bool          lmb_click           = ImGui::IsMouseClicked     (ImGuiMouseButton_Left);
+    const bool          lmb_release         = ImGui::IsMouseReleased    (ImGuiMouseButton_Left);
 
     const float         drag_px             = _drag_threshold_px();
     const bool          drag_past           = ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left, drag_px);
 
+
+    
 
 
     //      1.      PRESS...
@@ -183,11 +185,19 @@ inline void Editor::_update_bbox_move(const Interaction & it)
         press_hit_exists        = m_pending_hit.has_value();
         press_hit_in_sel        = ( press_hit_exists  &&  _hit_is_in_current_selection( *this->m_pending_hit ) );
 
+
+
         const bool modifiers    = ( io.KeyCtrl  ||  io.KeyShift );
         const bool inside_bbox  = ( !m_sel.empty()  &&  _press_inside_selection(press_ws) );
         const bool outside_sel  = ( !press_hit_in_sel  &&  !inside_bbox );
 
-        m_pending_clear         = ( (!modifiers)  &&  outside_sel );       // only tentatively true here
+
+
+        m_pending_clear         = ( (!modifiers)  &&  outside_sel );    //( !modifiers  &&  !lmb_held  &&  outside_sel );       // only tentatively true here
+        //
+        //  [[ OLD ]]:  m_pending_clear         = ( (!modifiers)  &&  outside_sel );       // only tentatively true here
+        
+        
         // IMPORTANT: do NOT start drag yet; we wait for drag_past
     }
     

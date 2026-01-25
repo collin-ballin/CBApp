@@ -1108,6 +1108,65 @@ protected:
     //
     //
     // *************************************************************************** //
+    //      ACCESSOR FUNCTIONS  [[ NEW ]]...
+    // *************************************************************************** //
+    
+    //  "find_vertex"
+    static inline Vertex *              find_vertex                             (std::vector<Vertex> & verts, VertexID id) noexcept
+        { for (auto & v : verts) {  if (v.id == id) {return &v;}  } return nullptr; }
+    //
+    static inline const Vertex *        find_vertex                             (const std::vector<Vertex> & verts, VertexID id) noexcept
+        { for (auto & v : verts) if (v.id == id) return &v; return nullptr; }
+    
+    
+    //  "parent_path_of_vertex"
+    //
+    [[nodiscard]] inline const Path *   parent_path_of_vertex               (VertexID vid) const noexcept {
+        for (const Path & p : this->m_paths) {
+            for (VertexID v : p.verts) {
+                if (v == vid)   { return &p; }
+            }
+        }
+        return nullptr;                     // not found
+    }
+    
+    //  "parent_path_of_vertex_mut"
+    //      Mutable variant – returns nullptr if not found
+    [[nodiscard]] inline Path *         parent_path_of_vertex_mut           (VertexID vid) {
+        for (Path & p : m_paths) {
+            for (VertexID v : p.verts) {
+                if (v == vid)   { return &p; }
+            }
+        }
+        return nullptr;
+    }
+    
+    
+    //  "_find_path_by_id"
+    [[nodiscard]] inline Path *         _find_path_by_id                        (const PathID pid) noexcept {
+        for (auto & p : this->m_paths) {
+            if (p.id == pid) { return &p; }
+        }
+        return nullptr;
+    }
+    //
+    [[nodiscard]] inline const Path *   _find_path_by_id                        (const PathID pid) const noexcept {
+        for (auto const & p : this->m_paths) {
+            if (p.id == pid) { return &p; }
+        }
+        return nullptr;
+    }
+    
+    
+
+    // *************************************************************************** //
+    
+    
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
     //      QUERY FUNCTIONS...
     // *************************************************************************** //
     
@@ -1199,15 +1258,6 @@ protected:
     //  "want_snap"
     inline bool                         want_snap                               (void) const noexcept
         { return m_grid.snap_on || ImGui::GetIO().KeyShift; }
-    
-    
-    
-    //  "find_vertex"
-    static inline Vertex *              find_vertex                             (std::vector<Vertex> & verts, VertexID id) noexcept
-        { for (auto & v : verts) {  if (v.id == id) {return &v;}  } return nullptr; }
-    //
-    static inline const Vertex *        find_vertex                             (const std::vector<Vertex> & verts, VertexID id) noexcept
-        { for (auto & v : verts) if (v.id == id) return &v; return nullptr; }
     
     
     
@@ -1450,28 +1500,6 @@ protected:
         ZID     z   = Z_FLOOR_USER;
         for (Path * p : items)      { p->z_index = z++; }
         return;
-    }
-    
-    //  "parent_path_of_vertex"
-    //
-    [[nodiscard]] inline const Path *   parent_path_of_vertex               (VertexID vid) const noexcept {
-        for (const Path & p : this->m_paths) {
-            for (VertexID v : p.verts) {
-                if (v == vid)   { return &p; }
-            }
-        }
-        return nullptr;                     // not found
-    }
-    
-    //  "parent_path_of_vertex_mut"
-    //      Mutable variant – returns nullptr if not found
-    [[nodiscard]] inline Path *         parent_path_of_vertex_mut           (VertexID vid) {
-        for (Path & p : m_paths) {
-            for (VertexID v : p.verts) {
-                if (v == vid)   { return &p; }
-            }
-        }
-        return nullptr;
     }
     
     //  "_erase_vertex_record_only"

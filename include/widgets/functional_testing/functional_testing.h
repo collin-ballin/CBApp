@@ -232,7 +232,7 @@ struct ActionExecutor
     //
     //
     //
-    void                                abort                               (void);
+    void                                kill                                (void);
     bool                                busy                                (void) const;
     void                                update                              (void);
     inline void                         reset                               (void)
@@ -773,15 +773,16 @@ protected:
         m_comp_sel                  = -1;
         m_play_index                = -1;
         m_m_capture_dest            = nullptr;
-        m_executor.abort();
+        m_executor.kill();
         return;
     }
     
-    //  "abort_test"
-    inline void                         abort_test                      (void)           {
+    //  "kill_test"
+    //
+    inline void                         kill_test                       (void)           {
         //m_sel               = -1;        // no action selected
         this->exit_test();
-        m_executor          .abort();
+        m_executor          .kill();
         m_key_capture       .reset();
         return;
     }

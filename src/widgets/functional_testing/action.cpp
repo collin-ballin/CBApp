@@ -295,9 +295,9 @@ void ActionExecutor::start_button_action(GLFWwindow * window, ImGuiKey key, bool
 }
 
 
-//  "abort"
+//  "kill"
 //
-void ActionExecutor::abort(void)
+void ActionExecutor::kill(void)
 {
     /* release a button that may still be held during a drag */
     if (m_state != State::None && m_is_drag)
@@ -403,7 +403,7 @@ void ActionComposer::_drive_execution(void)
     /* === 0. global abort shortcut ===================================== */
     if ( m_state == State::Run && ImGui::IsKeyPressed(ImGuiKey_Escape) )
     {
-        abort_test();
+        kill_test();
         //m_executor.abort();
         //reset_all();                    // idle, flags cleared
         return;                         // skip further processing this frame

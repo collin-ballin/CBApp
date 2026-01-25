@@ -863,6 +863,7 @@ bool PyStream::launch_process(void)
     SECURITY_ATTRIBUTES     sa              { sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
     HANDLE                  stdin_r         = nullptr;
     HANDLE                  stdout_w        = nullptr;
+    std::wstringstream      ss;
 
     if ( !::CreatePipe(&stdin_r, &this->m_child_stdin_w, &sa, 0) )              { this->m_child_stdin_w = nullptr; return false; }
     if ( !::CreatePipe(&this->m_child_stdout_r, &stdout_w, &sa, 0) )            { ::CloseHandle(stdin_r); ::CloseHandle(this->m_child_stdin_w); this->m_child_stdin_w = nullptr; this->m_child_stdout_r = nullptr; return false; }
@@ -870,26 +871,38 @@ bool PyStream::launch_process(void)
     ::SetHandleInformation(this->m_child_stdin_w , HANDLE_FLAG_INHERIT, 0);
     ::SetHandleInformation(this->m_child_stdout_r, HANDLE_FLAG_INHERIT, 0);
 
+
     //      2.      BUILD COMMAND LINE (WIDE)...
-    std::wstringstream      ss;
     ss  << s_quote_if_needed(this->m_python_exe.wstring()) << L" " << s_quote_if_needed(this->m_script_path.wstring());
-    for (const auto & a : this->m_args) { ss << L" " << s_quote_if_needed(s_utf8_to_wide(a)); }
-    std::wstring            cmd     = ss.str();
-    std::wstring            cwd     = this->m_cwd.wstring();
+    for (const auto & a : this->m_args) {
+        ss << L" " << s_quote_if_needed(s_utf8_to_wide(a));
+    }
+    std::wstring            cmd             = ss.str();
+    std::wstring            cwd             = this->m_cwd.wstring();
+
 
     //      3.      STARTUP INFO...
-    STARTUPINFOW            si      {   };
-    si.cb                           = sizeof(si);
-    si.dwFlags                      = STARTF_USESTDHANDLES;
-    si.hStdInput                    = stdin_r;
-    si.hStdOutput                   = stdout_w;
-    si.hStdError                    = stdout_w;
+    STARTUPINFOW            si              {   };
+    si.cb                                   = sizeof(si);
+    si.dwFlags                              = STARTF_USESTDHANDLES;
+    si.hStdInput                            = stdin_r;
+    si.hStdOutput                           = stdout_w;
+    si.hStdError                            = stdout_w;
 
-    const bool              is_bare_name    = (this->m_python_exe.parent_path().empty() && !this->m_python_exe.has_root_path());
-    const wchar_t *         app_name        = is_bare_name ? nullptr : this->m_python_exe.c_str();
-
-    BOOL                        ok  =
-        ::CreateProcessW( app_name, cmd.data(), nullptr, nullptr, TRUE, 0, nullptr, cwd.empty() ? nullptr : cwd.c_str(), &si, &this->m_proc_info );
+    const bool              is_bare_name    = ( this->m_python_exe.parent_path().empty()  &&  !this->m_python_exe.has_root_path() );
+    const wchar_t *         app_name        = is_bare_name  ? nullptr   : this->m_python_exe.c_str();
+    BOOL                    ok              = ::CreateProcessW(
+          app_name
+        , cmd.data()
+        , nullptr
+        , nullptr
+        , TRUE
+        , 0
+        , nullptr
+        , cwd.empty()   ? nullptr   : cwd.c_str()
+        , &si
+        , &this->m_proc_info
+     );
 
     ::CloseHandle(stdin_r);
     ::CloseHandle(stdout_w);
@@ -921,9 +934,9 @@ bool PyStream::launch_process(void)
 //
 # else
 //
-    if ( ::pipe(in_pipe)  == -1 )                        { return false; }
-    if ( ::pipe(out_pipe) == -1 )                        { ::close(in_pipe[0]); ::close(in_pipe[1]); return false; }
-    if ( ::pipe(exec_pipe) == -1 )                       { ::close(in_pipe[0]); ::close(in_pipe[1]); ::close(out_pipe[0]); ::close(out_pipe[1]); return false; }
+    if ( ::pipe(in_pipe)  == -1 )                       { return false; }
+    if ( ::pipe(out_pipe) == -1 )                       { ::close(in_pipe[0]); ::close(in_pipe[1]); return false; }
+    if ( ::pipe(exec_pipe) == -1 )                      { ::close(in_pipe[0]); ::close(in_pipe[1]); ::close(out_pipe[0]); ::close(out_pipe[1]); return false; }
     auto set_cloexec = [](int fd) {
         int flags = ::fcntl(fd, F_GETFD);
         if (flags != -1) { ::fcntl(fd, F_SETFD, flags | FD_CLOEXEC); }

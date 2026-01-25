@@ -214,15 +214,18 @@ inline void Editor::_RENDER_highlights_channel([[maybe_unused]] std::span<const 
 
 
     //      1.      RENDER HIGHLIGHT FOR SELECTED OBJECT...
-    for (size_t idx : m_sel.paths)
+    for (PathID pid : m_sel.paths)
     {
-        const Path &        path            = this->m_paths[idx];
-        const bool          should_render   = ( path.IsVisible() );
+        //  const Path &        path            = this->m_paths[idx];
+        const Path *        path            = this->_find_path_by_id(pid);
+        
+        
+        const bool          should_render   = ( (path != nullptr) && (path->IsVisible()) );
         
         if ( should_render )
         {
-            hl_style.stroke_width = path.style.stroke_width + hl_width;
-            path.render_highlight(hl_style, ctx);
+            hl_style.stroke_width   = path->style.stroke_width + hl_width;
+            path->render_highlight(hl_style, ctx);
         }
     }
 
