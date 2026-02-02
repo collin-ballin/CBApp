@@ -836,7 +836,7 @@ void Editor::_draw_selection_resident(void)
     
     
     //      1.      HEADER CONTENT...
-    ImGui::TextColored( this->S.SystemColor.Blue, ICON_FA_OBJECT_GROUP );
+    ImGui::TextColored( this->S.SystemColor.Blue, SF_SQUARE_ON_SQUARE_SQUARESHAPE_CONTROLHANDLES );
     ImGui::SameLine(0.0f, 12.0f);
     
     

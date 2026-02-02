@@ -157,29 +157,29 @@ void Browser::_Begin_IMPL(void)
     
     
     
-    if (!this->S.m_show_browser_window)     { return; }
+    //      CASE 0 :        EARLY-EXIT IF `Browser` IS CLOSED...
+    if ( !this->S.m_show_browser_window )       { return; }
     
     
     
-
-        
-        
-    //          2.1.    PER-FRAME CACHE...
+    //          1.1.    PER-FRAME CACHE...
     this->_perframe_cache();
     
     
     
+    //          2.1.    DRAW TOP-LEVEL CONTROLS...
+    this->_DrawControls();
     
     
     
-    //          2.1.    DISPLAY PRIMARY SIDE-BAR CONTENT...
+    //          3.1.    DISPLAY PRIMARY SIDE-BAR CONTENT...
     //
-    //                  2.1A.       SYSTEM-PREFERENCES TAB.
+    //                  3.1A.       SYSTEM-PREFERENCES TAB.
     if ( this->S.m_show_system_preferences )
     {
         this->DisplaySystemPreferencesTab();
     }
-    //                  2.1B.       BROWSER TAB.
+    //                  3.1B.       BROWSER TAB.
     else
     {
         this->DisplayBrowserTab();
@@ -190,7 +190,7 @@ void Browser::_Begin_IMPL(void)
     
     
     
-    //          2.2.    DISPLAY THE `INFO` TAB...
+    //          3.2.    DISPLAY THE `INFO` TAB...
     //
     this->DisplayInfoTab();
         
@@ -199,6 +199,93 @@ void Browser::_Begin_IMPL(void)
     
     return;
 }
+
+
+//  "_DrawControls"
+//
+void Browser::_DrawControls(void) noexcept
+{
+    using                                   IconAnchor                  = utl::icon_widgets::Anchor;
+    //
+    //
+    //
+    static constexpr ImGuiHoveredFlags      HOVER_FLAGS                 = ImGuiHoveredFlags_DelayNormal;
+    ImGuiStyle &                            style                       = ImGui::GetStyle();
+    //
+    this->ms_SPACING                                                    = ImVec2( 0.0f,                     style.ItemSpacing.y + style.FramePadding.y      );
+    this->WIDGET_SIZE                                                   = ImVec2( -1,                       ImGui::GetFrameHeight()                         );
+    this->BUTTON_SIZE                                                   = ImVec2( this->WIDGET_SIZE.y,      this->WIDGET_SIZE.y                             );
+    
+
+
+    S.PushFont(Font::Small);
+
+    //  0.      DRAW COLUMNS-WIDGET...
+    ImGui::Columns(this->ms_NC, this->ms_UUID, ms_COLUMN_FLAGS);
+    //
+    //
+    //
+        this->S.PushFont( Font::Main );
+        {
+        //
+        //
+        //
+        //  //      1.        SWITCH BETWEEN BROWSER AND SYSTEM PREFERENCES...
+            ImGui::SameLine(0, ms_SMALL_ITEM_PAD);
+            ImGui::BeginDisabled( !this->S.m_show_browser_window );
+                if ( utl::IconButton(   "##ControlBar_BrowserToggle"
+                                      , this->S.SystemColor.White
+                                      , (this->S.m_show_system_preferences)
+                                            ? ICON_FA_FOLDER_TREE
+                                            : ICON_FA_GEARS
+                                      , ms_CONTROLBAR_ICON_SCALE
+                                      , IconAnchor::Center
+                                      , BUTTON_SIZE )
+                )
+                {
+                    this->S.m_show_system_preferences       = !this->S.m_show_system_preferences;
+                }
+            ImGui::EndDisabled();
+            //
+            if ( ImGui::IsItemHovered(HOVER_FLAGS) ) {
+                ImGui::BeginTooltip();
+                    ImGui::TextUnformatted("Toggle between \"Browser\" and \"System Preferences\" inside the Browser panel");
+                ImGui::EndTooltip();
+            }
+            //
+            //
+            //
+        //
+        //
+        //
+        }
+        this->S.PopFont();
+        //  ImGui::SameLine(0, ms_BIG_ITEM_PAD);
+
+
+
+        //      ?.      EMPTY SPACES FOR LATER...
+        for (int i = ImGui::GetColumnIndex(); i < ms_NC - ms_NE; ++i) {
+            ImGui::Dummy( ImVec2(0,0) );    ImGui::NextColumn();
+        }
+
+
+
+        //      X.      PERFORMANCE...
+ 
+        
+    //
+    //
+    //
+    ImGui::Columns(1);      //  END COLUMNS...
+    
+    
+    
+    //      ImGui::Dummy( SPACING );
+    S.PopFont();
+    return;
+}
+
 
 
 

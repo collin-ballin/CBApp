@@ -355,7 +355,9 @@ void ControlBar::draw_all(void)
             if ( utl::IconButton( "##ControlBar_ToggleBrowser"
                                   , (this->S.m_show_browser_window)
                                         ? this->S.SystemColor.Blue              : this->S.SystemColor.Gray
-                                  , ICON_FA_LIST
+                                  , (this->S.m_show_browser_window)
+                                        ? SF_SIDEBAR_LEADING
+                                        : SF_INSET_FILLED_LEFTTHIRD_RECTANGLE
                                   , ms_CONTROLBAR_ICON_SCALE
                                   , IconAnchor::Center
                                   , BUTTON_SIZE )
@@ -378,7 +380,8 @@ void ControlBar::draw_all(void)
                 if ( utl::IconButton(   "##ControlBar_BrowserToggle"
                                       , this->S.SystemColor.White
                                       , (this->S.m_show_system_preferences)
-                                            ? ICON_FA_FOLDER_TREE               : ICON_FA_GEARS
+                                            ? ICON_FA_FOLDER_TREE
+                                            : ICON_FA_GEARS
                                       , ms_CONTROLBAR_ICON_SCALE
                                       , IconAnchor::Center
                                       , BUTTON_SIZE )
@@ -402,8 +405,8 @@ void ControlBar::draw_all(void)
                                   , (this->S.m_show_detview_window)
                                         ? this->S.SystemColor.Blue              : this->S.SystemColor.Gray
                                   , (this->S.m_show_detview_window)
-                                        ? ICON_FA_BOOK_OPEN                     : ICON_FA_BOOK
-                                        //  ? ICON_FA_MAGNIFYING_GLASS_MINUS        : ICON_FA_MAGNIFYING_GLASS_PLUS
+                                      ? SF_INSET_FILLED_BOTTOMTHIRD_RECTANGLE
+                                      : SF_INSET_FILLED_BOTTOMTHIRD_RECTANGLE
                                   , ms_CONTROLBAR_ICON_SCALE
                                   , IconAnchor::Center
                                   , BUTTON_SIZE )

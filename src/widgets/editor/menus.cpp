@@ -395,7 +395,8 @@ inline void Editor::_selection_context_single_advanced([[maybe_unused]] const In
 inline void Editor::_selection_context_multi([[maybe_unused]] const Interaction & it)
 {
     using                   cblib::utl::strcat_literals_cx;
-    static constexpr auto   s_group_label       = strcat_literals_cx( ICON_FA_OBJECT_GROUP,                 "  ", "Create Group"    );
+    static constexpr auto   s_group_label       = strcat_literals_cx( SF_SQUARE_ON_SQUARE_SQUARESHAPE_CONTROLHANDLES    , "  "  , "Create Group"    );
+
 
     ImGui::BeginDisabled(true);
     //

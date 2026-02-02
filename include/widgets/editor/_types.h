@@ -137,14 +137,14 @@ DEF_EDITOR_STATE_HOTKEY_NAMES  = { {
 //  "DEF_EDITOR_STATE_ICONS"
 static constexpr cblib::EnumArray< Mode, const char * >
 DEF_EDITOR_STATE_ICONS  = { {
-    /*  Default         */        ICON_FA_ARROW_POINTER             //  ICON_FA_ARROW_POINTER
-    /*  Hand            */      , SF_HAND_RAISED                    //  ICON_FA_HAND
-    /*  Pen             */      , SF_PAINTBRUSH_POINTED_FILL        //  SF_PAINTBRUSH_POINTED_FILL
-    /*  Scissor         */      , ICON_FA_SCISSORS                  //  ICON_FA_SCISSORS
-    /*  Shape           */      , ICON_FA_SHAPES                    //  ICON_FA_SHAPES
-    /*  AddAnchor       */      , ICON_FA_PLUS                      //  ICON_FA_PLUS
-    /*  RemoveAnchor    */      , ICON_FA_MINUS                     //  ICON_FA_MINUS
-    /*  EditAnchor      */      , ICON_FA_BEZIER_CURVE              //  ICON_FA_BEZIER_CURVE
+    /*  Default         */        SF_CURSORARROW                            //  ICON_FA_ARROW_POINTER
+    /*  Hand            */      , SF_HAND_RAISED_FILL                       //  ICON_FA_HAND
+    /*  Pen             */      , SF_PENCIL_AND_SCRIBBLE                    //  ICON_FA_PEN_FANCY
+    /*  Scissor         */      , SF_SCISSORS                               //  ICON_FA_SCISSORS
+    /*  Shape           */      , SF_XMARK_TRIANGLE_CIRCLE_SQUARE_FILL      //  ICON_FA_SHAPES
+    /*  AddAnchor       */      , SF_PLUS_SQUARE_FILL                       //  ICON_FA_PLUS
+    /*  RemoveAnchor    */      , SF_MINUS_SQUARE_FILL                      //  ICON_FA_MINUS
+    /*  EditAnchor      */      , SF_BEZIERCURVE                            //  ICON_FA_BEZIER_CURVE
 } };
 
 

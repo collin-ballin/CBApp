@@ -88,17 +88,31 @@ public:
     CBAPP_APPSTATE_ALIAS_API            //  *OR*    CBAPP_CBLIB_TYPES_API       //  FOR CBLIB...
     friend class                        App;
     
+    
     // *************************************************************************** //
     //
     //
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    //  static constexpr float              ms_MY_CONSTEXPR_VALUE           = 240.0f;
     //
-    //                              UI BROWSER DIMENSIONS:
-    //  static constexpr float              ms_LABEL_WIDTH                  = 150.0f;
-    //  static constexpr float              ms_WIDGET_WIDTH                 = 300.0f;
+    //                                      CONFIGURATION:
+    static constexpr const char *               ms_UUID                             = "##Browser_ControlsColumns";
+    static constexpr int                        ms_NC                               = 10;    //  # Entries in Column.
+    static constexpr int                        ms_NE                               = 4;    //  # Entries at END of Columns.
+    //
+    //
+    //                                      DIMENSIONS:
+    static constexpr float                      ms_CONTROLBAR_ICON_SCALE            = 1.50f;
+    static constexpr float                      ms_SMALL_ITEM_PAD                   = 4.0f;
+    static constexpr float                      ms_MED_ITEM_PAD                     = 8.0f;
+    static constexpr float                      ms_BIG_ITEM_PAD                     = 16.0f;
+    //
+    //
+    //                                      WIDGETS:
+    static constexpr ImGuiButtonFlags           ms_BUTTON_FLAGS                     = ImGuiButtonFlags_None;
+    static constexpr ImGuiOldColumnFlags        ms_COLUMN_FLAGS                     = ImGuiOldColumnFlags_None;
+    
     
     // *************************************************************************** //
     //
@@ -142,6 +156,16 @@ protected:
     // *************************************************************************** //
     bool                                m_initialized                   = false;
     bool                                m_first_frame                   = false;
+    
+    // *************************************************************************** //
+    //
+    //
+    // *************************************************************************** //
+    //      GENERIC DATA.
+    // *************************************************************************** //
+    ImVec2                              ms_SPACING                          = {  };     //  ImVec2( 0.0f,             style.ItemSpacing.y + style.FramePadding.y      );
+    ImVec2                              WIDGET_SIZE                         = {  };     //  ImVec2( -1,               ImGui::GetFrameHeight()                         );
+    ImVec2                              BUTTON_SIZE                         = {  };     //  ImVec2( WIDGET_SIZE.y,    WIDGET_SIZE.y                                   );
     
     
     // *************************************************************************** //
@@ -235,6 +259,8 @@ protected:
     //      2.B. |  PRIMARY ORCHESTRATOR FUNCTIONS. |   ...
     // *************************************************************************** //
     void                                _Begin_IMPL                         (void);
+    void                                _DrawControls                       (void) noexcept;
+    //
     void                                SettingsWindow                      (void);
     //
     void                                DisplaySystemPreferencesTab         (void) noexcept;

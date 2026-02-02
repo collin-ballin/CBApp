@@ -264,19 +264,26 @@ void Editor::_MECH_draw_controls(void)
         //
         //
             //      2.1.        "SURFACE".
-            const bool      dirty_surfaces      = utl::IconButton( "##SelectionState_Surface"
-                                                                   , (ss_surfaces)      ? s_ENABLED_COLOR       : s_DISABLED_COLOR
-                                                                   , ICON_FA_BURST              //  ICON_FA_CUBE
-                                                                   , Style.ms_TOOLBAR_ICON_SCALE );
+            const bool      dirty_surfaces      = utl::IconButton(
+                "##SelectionState_Surface"
+               , (ss_surfaces)      ? s_ENABLED_COLOR       : s_DISABLED_COLOR
+               , (ss_surfaces)      ? SF_INSET_FILLED_SQUARE_DASHED
+                                    : SF_SQUARE_DASHED
+               , Style.ms_TOOLBAR_ICON_SCALE
+            );
             this->m_tooltip.UpdateTooltip( TooltipKey::SSelectionSurface );
             //
             //
             //      2.2.        "EDGE".
             ImGui::SameLine(0.0f, 0.0f);
-            const bool      dirty_edges         = utl::IconButton( "##SelectionState_Edges"
-                                                                   , (ss_edges)         ? s_ENABLED_COLOR       : s_DISABLED_COLOR
-                                                                   , ICON_FA_DRAW_POLYGON       // ICON_FA_ROUTE       ICON_FA_DRAW_POLYGON
-                                                                   , Style.ms_TOOLBAR_ICON_SCALE );
+            const bool      dirty_edges         = utl::IconButton(
+                "##SelectionState_Edges"
+               , (ss_edges)         ? s_ENABLED_COLOR       : s_DISABLED_COLOR
+               , SF_SKEW
+            // , (ss_edges)         ? SF_POINT_TOPLEFT_DOWN_TO_POINT_BOTTOMRIGHT_CURVEPATH_FILL
+            //                      : SF_POINT_TOPLEFT_DOWN_TO_POINT_BOTTOMRIGHT_CURVEPATH
+               , Style.ms_TOOLBAR_ICON_SCALE
+            );
             this->m_tooltip.UpdateTooltip( TooltipKey::SelectionEdge );
             //
             //
@@ -284,8 +291,7 @@ void Editor::_MECH_draw_controls(void)
             ImGui::SameLine(0.0f, 0.0f);
             const bool      dirty_vertices      = utl::IconButton( "##SelectionState_Vertices"
                                                                    , (ss_vertices)      ? s_ENABLED_COLOR       : s_DISABLED_COLOR
-                                                                   , ICON_FA_LOCATION_CROSSHAIRS
-                                                                   //, ICON_FA_CIRCLE       ICON_FA_ARROWS_TO_CIRCLE    ICON_FA_PIN
+                                                                   , (ss_vertices)      ? SF_DOT_SCOPE          : SF_SCOPE              //  SF_DOT_CIRCLE_AND_HAND_POINT_UP_LEFT_FILL  dot.circle.and.hand.point.up.left.fill
                                                                    , Style.ms_TOOLBAR_ICON_SCALE );
             this->m_tooltip.UpdateTooltip( TooltipKey::SelectionVertex );
             //
@@ -334,7 +340,8 @@ void Editor::_MECH_draw_controls(void)
             ImGui::SameLine(0.0f, 0.0f);
             if ( utl::IconButton(   "##Editor_Controls_PixelPerfect"
                                   , (this->m_grid.pixel_perfect)  ? s_ENABLED_COLOR         : s_DISABLED_COLOR
-                                  , (this->m_grid.pixel_perfect)  ? ICON_FA_Z               : ICON_FA_R     //  ICON_FA_CIRCLE_DOT     ICON_FA_SQUARE_FULL     ICON_FA_GRIP
+                                  , (this->m_grid.pixel_perfect)  ? SF_Z_SQUARE_FILL        : SF_R_SQUARE
+                            //    , (this->m_grid.pixel_perfect)  ? ICON_FA_Z               : ICON_FA_R     //  ICON_FA_CIRCLE_DOT     ICON_FA_SQUARE_FULL     ICON_FA_GRIP
                                   , Style.ms_TOOLBAR_ICON_SCALE ) )
             {
                 this->m_grid.pixel_perfect      = !this->m_grid.pixel_perfect;
@@ -346,8 +353,9 @@ void Editor::_MECH_draw_controls(void)
             //      3.3.        "SHOW GRID".
             ImGui::SameLine(0.0f, 0.0f);
             if ( utl::IconButton(   "##Editor_Controls_ShowGrid"
-                                  , (this->m_grid.visible)  ? s_ENABLED_COLOR               : s_DISABLED_COLOR
-                                  , (this->m_grid.visible)  ? ICON_FA_TABLE_CELLS           : ICON_FA_BORDER_TOP_LEFT
+                                  , (this->m_grid.visible)  ? s_ENABLED_COLOR                       : s_DISABLED_COLOR
+                                  , (this->m_grid.visible)  ? SF_SQUARESHAPE_SPLIT_2X2              : SF_SQUARESHAPE_SPLIT_2X2_DOTTED
+                            //    , (this->m_grid.visible)  ? ICON_FA_TABLE_CELLS                   : ICON_FA_BORDER_TOP_LEFT
                                   , Style.ms_TOOLBAR_ICON_SCALE ) )
             {
                 this->m_grid.visible            = !this->m_grid.visible;
@@ -378,7 +386,7 @@ void Editor::_MECH_draw_controls(void)
                 if ( utl::IconButton(   "##Editor_Controls_GridDensityDown"
                                       , (can_decrease)
                                             ? this->S.SystemColor.White     : s_DISABLED_COLOR
-                                      , ICON_FA_ANGLE_DOWN    //  ICON_FA_GEARS   ICON_FA_GEAR    ICON_FA_SLIDERS
+                                      , SF_CHEVRON_DOWN     //  ICON_FA_ANGLE_DOWN
                                       , Style.ms_TOOLBAR_ICON_SCALE
                                       , IconAnchor::TextBaseline ) )
                 {
@@ -395,7 +403,7 @@ void Editor::_MECH_draw_controls(void)
                 if ( utl::IconButton(   "##Editor_Controls_GridDensityUp"
                                       , (can_increase)
                                             ? this->S.SystemColor.White     : s_DISABLED_COLOR
-                                      , ICON_FA_ANGLE_UP    //  ICON_FA_GEARS   ICON_FA_GEAR    ICON_FA_SLIDERS
+                                      , SF_CHEVRON_UP       //  ICON_FA_ANGLE_UP
                                       , Style.ms_TOOLBAR_ICON_SCALE
                                       , IconAnchor::TextBaseline ) )
                 {
@@ -441,7 +449,7 @@ void Editor::_MECH_draw_controls(void)
         {
             if ( utl::IconButton(   "##Editor_Controls_ClearAllData"
                                   , this->S.SystemColor.Red
-                                  , ICON_FA_TRASH_CAN
+                                  , SF_TRASH        //  ICON_FA_TRASH_CAN
                                   , Style.ms_TOOLBAR_ICON_SCALE ) )
             {
                 ui::ask_ok_cancel( "Clear Data",
@@ -463,7 +471,7 @@ void Editor::_MECH_draw_controls(void)
         {
             if ( utl::IconButton(   "##Editor_Controls_OpenSettings"
                                   , this->S.SystemColor.White
-                                  , ICON_FA_SLIDERS    //  ICON_FA_GEARS   ICON_FA_GEAR    ICON_FA_SLIDERS
+                                  , SF_SLIDER_HORIZONTAL_3          //  ICON_FA_SLIDERS     ICON_FA_GEARS   ICON_FA_GEAR    ICON_FA_SLIDERS
                                   , Style.ms_TOOLBAR_ICON_SCALE ) )
             {
                 ui::open_preferences_popup( GetMenuID(PopupHandle::Settings), [this](popup::Context & ctx) { _draw_editor_settings(ctx); } );
