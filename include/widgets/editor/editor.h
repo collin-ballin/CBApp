@@ -60,6 +60,7 @@
 //  0.3     "DEAR IMGUI" HEADERS...
 #include "json.hpp"
 #include "IconsFontAwesome6.h"
+#include "IconsSFSymbols7.h"
 //
 #include "imgui.h"
 #include "imgui_stdlib.h"

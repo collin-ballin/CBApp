@@ -14,12 +14,7 @@ Commands via stdin:
     coincidence_window <ticks>
     quit
 """
-import sys
-import time
-import threading
-import queue
-import signal
-import argparse
+import sys, time, threading, queue, signal, argparse
 from typing import Optional, List
 
 try:
@@ -54,7 +49,6 @@ _STARTUP_SYNC_GRACE_SEC     = 0.050
 ################################################################################
 #           1.2.    IMPLEMENT SCRIPT BEHAVIORS.
 ################################################################################
-
 try:
     from nifpga import Session
     _HARDWARE_AVAILABLE = True
@@ -65,7 +59,6 @@ except ImportError:
 ################################################################################
 #           1.3.    DEFAULT SCRIPT PARAMETERS.
 ################################################################################
-
 BITFILE                                 = r"C:\Users\Admin\Desktop\FPGA\spadccumk2_FPGATarget_DSPTesting_zbVGNUvhPcI.lvbitx"
 RESOURCE                                = r"rio://172.22.11.2/RIO0"
 
@@ -78,6 +71,7 @@ _MEASUREMENT_COMPLETION_DELAY           = 0.1
 cc.init(
       _MEASUREMENT_COMPLETION_DELAY   = _MEASUREMENT_COMPLETION_DELAY
 )
+
 
 
 #
@@ -98,7 +92,6 @@ cc.init(
 #    3.     INTER-PROCESS COMMUNICATION (IPC) AND CONCURRENCY STUFF...
 ################################################################################
 ################################################################################
-
 _COMMAND_QUEUE      : "queue.Queue[cc.Command]"     = queue.Queue()
 
 

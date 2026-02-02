@@ -137,14 +137,14 @@ DEF_EDITOR_STATE_HOTKEY_NAMES  = { {
 //  "DEF_EDITOR_STATE_ICONS"
 static constexpr cblib::EnumArray< Mode, const char * >
 DEF_EDITOR_STATE_ICONS  = { {
-      ICON_FA_ARROW_POINTER
-    , ICON_FA_HAND
-    , ICON_FA_PEN_FANCY
-    , ICON_FA_SCISSORS
-    , ICON_FA_SHAPES
-    , ICON_FA_PLUS
-    , ICON_FA_MINUS
-    , ICON_FA_BEZIER_CURVE  //    ICON_FA_PEN_NIB
+    /*  Default         */        ICON_FA_ARROW_POINTER             //  ICON_FA_ARROW_POINTER
+    /*  Hand            */      , SF_HAND_RAISED                    //  ICON_FA_HAND
+    /*  Pen             */      , SF_PAINTBRUSH_POINTED_FILL        //  SF_PAINTBRUSH_POINTED_FILL
+    /*  Scissor         */      , ICON_FA_SCISSORS                  //  ICON_FA_SCISSORS
+    /*  Shape           */      , ICON_FA_SHAPES                    //  ICON_FA_SHAPES
+    /*  AddAnchor       */      , ICON_FA_PLUS                      //  ICON_FA_PLUS
+    /*  RemoveAnchor    */      , ICON_FA_MINUS                     //  ICON_FA_MINUS
+    /*  EditAnchor      */      , ICON_FA_BEZIER_CURVE              //  ICON_FA_BEZIER_CURVE
 } };
 
 

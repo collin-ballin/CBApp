@@ -63,6 +63,7 @@
 #include "implot.h"
 #include "implot_internal.h"
 #include "IconsFontAwesome6.h"
+#include "IconsSFSymbols7.h"
 
 
 

@@ -375,6 +375,25 @@ void AppState::RebuildFonts(float scale)
                 m_fonts[which]      = utl::AddFontWithFA( io,
                                                           info.path.c_str(),        scale * info.size,
                                                           app::DEF_ICON_FONT_PATH,  app::DEF_ICON_SIZE_SCALAR );
+                
+                //  Merge SF Symbols into the same font (after FA)
+                if (m_fonts[which] != nullptr)
+                {
+                    static constexpr ImWchar    sf_ranges[]     = { ICON_MIN_SF, ICON_MAX_SF, 0 };
+                    ImFontConfig                cfg;
+                    cfg.MergeMode                               = true;
+                    cfg.PixelSnapH                              = true;
+                    const float                 fontsize        = scale * info.size;  // Base font size
+                    const float                 iconsize        = fontsize * app::DEF_ICON_SIZE_SCALAR;  // Same scalar as FA
+                    cfg.GlyphMinAdvanceX                        = iconsize;  // Compact spacing
+                    
+                    ImFont *                    sf_font         = io.Fonts->AddFontFromFileTTF(app::DEF_SF_ICONS_FONT_PATH, iconsize, &cfg, sf_ranges);
+                    if (sf_font == nullptr)
+                    {
+                        this->m_logger.warning( std::format("Failed to load SF Symbols font from {}", app::DEF_SF_ICONS_FONT_PATH) );
+                        // Continue anyway; don't set good_fonts=false to avoid triggering full fallback
+                    }
+                }
                 break;
             }
             //
@@ -383,7 +402,6 @@ void AppState::RebuildFonts(float scale)
                 m_fonts[which]      = io.Fonts->AddFontFromFileTTF(info.path.c_str(), scale * info.size);
                 break;
             }
-        
         }
     //
     //

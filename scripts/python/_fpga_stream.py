@@ -13,16 +13,11 @@ Holds:
 - Simulation data helpers.
 """
 from __future__ import annotations
-
-import sys
-import time
-import json
-import queue
-import random
-import datetime
-from enum import Enum, auto, IntEnum
 from dataclasses import dataclass
+from enum import Enum, auto, IntEnum
 from typing import Any, Optional, Set, List, Tuple, Dict, Union
+import sys, time, json, queue, random, datetime
+
 
 
 ################################################################################
@@ -51,7 +46,6 @@ class OperationMode(IntEnum):
 ################################################################################
 #           0.2.    INTER-PROCESS COMMUNICATION (IPC) STUFF.
 ################################################################################
-
 CommandValue                            = Union[float, int, str, None]
 cv_MIN_INTEGRATION_WINDOW   : float     = 0.05
 
@@ -189,7 +183,6 @@ class RuntimeState:
 ################################################################################
 #           0.4.    INTER-PROCESS COMMUNICATION:  TRANSMISSION TYPES.
 ################################################################################
-
 IPC_SCHEMA_VERSION          : Tuple[int, int, int]    = (0, 1, 0)
 
 
@@ -438,11 +431,11 @@ def measure_raw(session: Any) -> Tuple[List[int], int]:
 #  "start_measure"
 #
 def start_measure(session: Any, coincidence_ticks: int = 1) -> None:
-    counts  : List[int]  = []
-    cycles  : int        = 0
-    enable              = session.registers["ENABLE"]
-    clear               = session.registers["CLEAR"]
-    winreg              = session.registers["Conicidence Window"]
+    counts  : List[int]     = []
+    cycles  : int           = 0
+    enable                  = session.registers["ENABLE"]
+    clear                   = session.registers["CLEAR"]
+    winreg                  = session.registers["Conicidence Window"]
 
     enable.write(False)
     clear.write(True)
@@ -461,8 +454,8 @@ def start_measure(session: Any, coincidence_ticks: int = 1) -> None:
 #  "finish_measure"
 #
 def finish_measure(session: Any) -> Tuple[List[int], int]:
-    finish_duration  : float = float(globals().get("_MEASUREMENT_COMPLETION_DELAY", 0.1))
-    enable                  = session.registers["ENABLE"]
+    finish_duration  : float    = float(globals().get("_MEASUREMENT_COMPLETION_DELAY", 0.1))
+    enable                      = session.registers["ENABLE"]
 
     enable.write(False)
     time.sleep(finish_duration)

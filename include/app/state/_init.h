@@ -199,8 +199,15 @@ inline constexpr const char * get_font_path(void) {
 
 inline constexpr const char *       DEF_FONT_PATH                       = get_font_path();
 //
-inline constexpr const char *       DEF_ICON_FONT_PATH                  = "../../assets/fonts/icons/fa-solid-900.ttf";      //      "/fa-solid-900.ttf";  "/fa-regular-400.ttf"
-inline constexpr const double       DEF_ICON_SIZE_SCALAR                = static_cast<double>( 4.0f / 5.0f );               //      static_cast<double>( 2.0f / 3.0f );         static_cast<double>( 4.0f / 5.0f ); 
+inline constexpr const char *       DEF_ICON_FONT_PATH                  = "../../assets/fonts/icons/fa-solid-900.ttf";          //      "/fa-solid-900.ttf";  "/fa-regular-400.ttf"
+#ifdef __APPLE__
+    inline constexpr const char *       DEF_SF_ICONS_FONT_PATH              = "/Library/Fonts/SF-Pro.ttf";                      //      Native SF-Pro with symbols
+# else
+    inline constexpr const char *       DEF_SF_ICONS_FONT_PATH              = "../../assets/fonts/icons/SF-Pro.ttf";            //      Bundled for Windows (download/extract SF-Pro.ttf to this dir)
+#endif      //  __APPLE__  //
+
+
+inline constexpr const double       DEF_ICON_SIZE_SCALAR                = static_cast<double>( 4.0f / 5.0f );                   //      static_cast<double>( 2.0f / 3.0f );         static_cast<double>( 4.0f / 5.0f );
     
 
 
