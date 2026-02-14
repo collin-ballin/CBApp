@@ -374,32 +374,7 @@ void ControlBar::draw_all(void)
             //
             //
             //
-            //      2.        SWITCH BETWEEN BROWSER AND SYSTEM PREFERENCES...
-            ImGui::SameLine(0, ms_SMALL_ITEM_PAD);
-            ImGui::BeginDisabled( !this->S.m_show_browser_window );
-                if ( utl::IconButton(   "##ControlBar_BrowserToggle"
-                                      , this->S.SystemColor.White
-                                      , (this->S.m_show_system_preferences)
-                                            ? ICON_FA_FOLDER_TREE
-                                            : ICON_FA_GEARS
-                                      , ms_CONTROLBAR_ICON_SCALE
-                                      , IconAnchor::Center
-                                      , BUTTON_SIZE )
-                )
-                {
-                    this->S.m_show_system_preferences       = !this->S.m_show_system_preferences;
-                }
-            ImGui::EndDisabled();
-            //
-            if ( ImGui::IsItemHovered(HOVER_FLAGS) ) {
-                ImGui::BeginTooltip();
-                    ImGui::TextUnformatted("Toggle between \"Browser\" and \"System Preferences\" inside the Browser panel");
-                ImGui::EndTooltip();
-            }
-            //
-            //
-            //
-            //      3.        OPEN/CLOSE DETAIL VIEW...
+            //      2.        OPEN/CLOSE DETAIL VIEW...
             ImGui::SameLine(0, 2.0f * ms_BIG_ITEM_PAD);
             if ( utl::IconButton( "##ControlBar_ToggleDetailView"
                                   , (this->S.m_show_detview_window)

@@ -14,8 +14,8 @@
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CBLIB_MATH_BEZIER_H
-#define _CBLIB_MATH_BEZIER_H 1
+#ifndef         _CBLIB_MATH_BEZIER_H
+#define         _CBLIB_MATH_BEZIER_H        1
 
 #include <iostream>
 #include <type_traits>

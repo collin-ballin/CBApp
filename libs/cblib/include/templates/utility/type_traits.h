@@ -13,7 +13,9 @@
 # include <initializer_list>
 #endif	// C++11.
 
-#include "json.hpp"
+#ifndef _CBLIB_NO_DEPENDENCIES
+# include "json.hpp"
+#endif  //  _CBLIB_NO_DEPENDENCIES  //
 
 
 
@@ -31,6 +33,8 @@ namespace cblib { namespace traits {
 //	    1.      NLOHMAN'S JSON TYPE-TRAITS...
 // *************************************************************************** //
 // *************************************************************************** //
+#ifndef _CBLIB_NO_DEPENDENCIES
+
 
 //  "has_from_json"
 //
@@ -94,7 +98,7 @@ struct has_to_json<
 //
 // *************************************************************************** //
 // *************************************************************************** //   END [[ 1.  "JSON" TYPE-TRAITS" ]].
-
+#endif  //  _CBLIB_NO_DEPENDENCIES  //
 
 
 
@@ -278,7 +282,7 @@ constexpr U implicit_cast(typename std::type_identity<U>::type val)
 //
 template <class M, class Secret>
 struct public_cast {
-    static_assert(false, "BAD!!! DON'T USE THIS!");
+    static_assert(false, "In the name of the Emperor, I cast you down.");
     static inline M     m   {};
 };
 

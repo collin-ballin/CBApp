@@ -140,9 +140,6 @@ void Browser::Begin([[maybe_unused]] const char *       uuid,
     
     
     
-    
-    
-    
     this->S.PopFont();
     return;
 }

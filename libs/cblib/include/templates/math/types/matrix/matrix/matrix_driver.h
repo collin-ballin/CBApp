@@ -1,33 +1,22 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****                 J S O N . H  ____  F I L E                 ****
+*       ****        M A T R I X / M A T R I X . H  ____  F I L E        ****
 *       ********************************************************************
 *
-*              AUTHOR:      Collin A. Bond.
-*               DATED:      August 24, 2025.
+*              AUTHOR:      Collin A. Bond
+*               DATED:      February 11, 2025.
 *
 *       ********************************************************************
 *                FILE:      [./PyStream.h]
 *
-*
+*	Description:
+*       [...]
 *
 **************************************************************************************
 **************************************************************************************/
-#ifndef _CBLIB_IMGUI_EXTENSIONS_JSON_H
-#define	_CBLIB_IMGUI_EXTENSIONS_JSON_H	1
-
-
-
-//      1.      Library Header Files.
-// *************************************************************************** //
-#ifndef _CBLIB_IMGUI_JSON_TYPES_H
-# include "templates/imgui_extensions/json/_types.h"
-#endif	// _CBLIB_IMGUI_JSON_TYPES_H  //
-
-#ifndef _CBLIB_IMGUI_JSON_SERIALIZERS_H
-# include "templates/imgui_extensions/json/_serializers.h"
-#endif	// _CBLIB_IMGUI_JSON_SERIALIZERS_H  //
+#ifndef _CBLIB_MATH_TYPES_MATRIX_DRIVER_H
+#define	_CBLIB_MATH_TYPES_MATRIX_DRIVER_H	    1
 
 
 
@@ -36,4 +25,6 @@
 
 // *************************************************************************** //
 // *************************************************************************** //
-#endif 	//  _CBLIB_IMGUI_EXTENSIONS_JSON_H  //
+#endif 	//  _CBLIB_MATH_TYPES_MATRIX_DRIVER_H  //
+
+
