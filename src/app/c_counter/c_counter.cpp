@@ -852,12 +852,14 @@ inline void CCounterApp::_FetchData(void) noexcept
     {
         this->m_last_packet_time = wall_now;
     
+        #ifdef __CBAPP_DEBUG__
         CB_LOG(
               LogLevel::Warning
             , "[[CCounter]] (Y-Min, Y-Max):\t({}, {})"
             , PF.ymin
             , PF.ymax
         );
+        #endif  //  __CBAPP_DEBUG__  //
     }
     m_streaming_active = (wall_now - m_last_packet_time) < m_stream_timeout;
 

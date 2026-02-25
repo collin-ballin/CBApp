@@ -71,12 +71,10 @@ namespace impl { //     BEGINNING NAMESPACE "impl"...
 //      "impl" |    TYPE-TRAITS / META-PROGRAMMING.
 // *************************************************************************** //
     template <class X>
-    struct                          is_complex                          : std::false_type       {   };
+    struct                          is_complex                          : std::false_type           {   };
 
     template <class U>
-    struct                          is_complex<std::complex<U>>         : std::true_type        {   };
-
-
+    struct                          is_complex<std::complex<U>>         : std::true_type            {   };
 
     template <class X>
     struct                          is_std_complex                      : std::false_type           {   };
@@ -87,17 +85,30 @@ namespace impl { //     BEGINNING NAMESPACE "impl"...
     template <class T_>
     using                           real_scalar_t                       = std::conditional_t<impl::is_complex<T_>::value, typename T_::value_type, T_>;
 
+    template <class T_>
+    [[nodiscard]]
+    static real_scalar_t<T_>        abs_scalar                          (const T_ & x) noexcept
+    {
+        using std::abs;     // ADL for complex
+        return static_cast<real_scalar_t<T_>>(abs(x));
+    }
+
+//
+// *************************************************************************** //   END [ 1.0.  "TYPE-TRAITS" ].
+
 
 
 // *************************************************************************** //
 //      "impl" |    CONCEPTS.
 // *************************************************************************** //
     template <typename X>
-    concept     matrix_element                  = std::is_arithmetic_v<X> || is_complex<X>::value;
+    concept                         matrix_element                      = std::is_arithmetic_v<X> || is_complex<X>::value;
 
-    // Add to impl namespace (after existing contents)
     template <typename X>
-    concept     numerical_matrix                = matrix_element<X> && std::is_floating_point_v<real_scalar_t<X>>;
+    concept                         numerical_matrix                    = matrix_element<X> && std::is_floating_point_v<real_scalar_t<X>>;
+
+//
+// *************************************************************************** //   END [ 1.0.  "CONCEPTS" ].
 
 
 
@@ -105,51 +116,47 @@ namespace impl { //     BEGINNING NAMESPACE "impl"...
 //      "impl" |    TYPES.
 // *************************************************************************** //
 
-//  "TextureData"
-//      POD STRUCT FOR GPU/ImGui INTEROP (exact briefing spec)
-//
-template<typename T>
-struct TextureData
-{
-    using                           size_type                       = T;
+    //  "TextureData"
+    //      POD STRUCT FOR GPU/ImGui INTEROP (exact briefing spec)
     //
-    const void *                    data_ptr                        = nullptr;
-    size_type                       width                           = 0;
-    size_type                       height                          = 0;
-    size_type                       stride_bytes                    = 0;
-};
+    template<typename T>
+    struct TextureData
+    {
+        using                       size_type                       = T;
+        //
+        const void *                data_ptr                        = nullptr;
+        size_type                   width                           = size_type{0};
+        size_type                   height                          = size_type{0};
+        size_type                   stride_bytes                    = size_type{0};
+    };
 
 
-//  "QRResult"
-//      QRResult (nested POD struct for decomposition return)
-//
-template<class M>
-struct QRResult
-{
-    using                           matrix_type                     = M;
+    //  "QRResult"
+    //      QRResult (nested POD struct for decomposition return)
     //
-    matrix_type                       Q
+    template<class M>
+    struct QRResult
+    {
+        using                       matrix_type                     = M;
+        //
+        matrix_type                 Q
                                     , R;
-};
+    };
 
 
-//  "EigenResult"
-//      EigenResult (nested POD struct for eigen decomposition)
-//
-template<class M>
-struct EigenResult
-{
-    using                           matrix_type                     = M;
+    //  "EigenResult"
+    //      EigenResult (nested POD struct for eigen decomposition)
     //
-    matrix_type                       eigenvalues
+    template<class M>
+    struct EigenResult
+    {
+        using                       matrix_type                     = M;
+        //
+        matrix_type                 eigenvalues
                                     , eigenvectors;
-};
-
-
-
+    };
 
 //
-// *************************************************************************** //
 // *************************************************************************** //   END [ 1.0.  "TYPES" ].
 
 
@@ -203,8 +210,8 @@ public:
     //      0. |    NESTED TYPENAME ALIASES.
     // *************************************************************************** //
     //                      0A.     BASIC NESTED-ALIASES:
-    using                               value_type                      = T;
-    using                               allocator_type                  = Allocator;
+    using                               value_type                      = T                                                 ;
+    using                               allocator_type                  = Allocator                                         ;
     using                               container_type                  = std::vector<value_type, allocator_type>           ;
     using                               size_type                       = typename container_type::size_type                ;
     using                               difference_type                 = typename container_type::difference_type          ;
@@ -217,16 +224,20 @@ public:
     using                               reverse_iterator                = typename container_type::reverse_iterator         ;
     using                               const_reverse_iterator          = typename container_type::const_reverse_iterator   ;
     //
+    using                               Alloc                           = Allocator                                         ;
     //
-    //                      0B.     ALIASES FOR NESTED ABSTRACTIONS:
-    using                               Alloc                           = Allocator;
-    using                               TextureData                     = impl::TextureData     <size_type>     ;
-    using                               QRResult                        = impl::QRResult        <Matrix>        ;
-    using                               EigenResult                     = impl::EigenResult     <Matrix>        ;
     //
-    //  template <class T>
-    //  using                               Matrix                          = std::vector<T>;
-    //  using                               const_reverse_iterator          = typename container_type::const_reverse_iterator;
+    //                      0B.     ALIASES FOR META-FUNCTIONS:
+    template <class X>
+    using                               is_std_complex                  = impl::is_std_complex<X>                           ;
+    template <class U>
+    using                               real_scalar_t                   = impl::real_scalar_t<U>                            ;
+    //
+    //
+    //                      0C.     ALIASES FOR NESTED ABSTRACTIONS:
+    using                               TextureData                     = impl::TextureData     <size_type>                 ;
+    using                               QRResult                        = impl::QRResult        <Matrix>                    ;
+    using                               EigenResult                     = impl::EigenResult     <Matrix>                    ;
 
 
     // *************************************************************************** //
@@ -237,27 +248,10 @@ public:
     // *************************************************************************** //
     
     /*
-    //      POD STRUCT FOR GPU/ImGui INTEROP (exact briefing spec)
-    struct TextureData
-    {
-        const void *                    data_ptr                        = nullptr;
-        size_type                       width                           = 0;
-        size_type                       height                          = 0;
-        size_type                       stride_bytes                    = 0;
-    };
-
-    //      QRResult (nested POD struct for decomposition return)
-    struct QRResult
-    {
-        Matrix                           Q, R;
-    };
-
-    //      EigenResult (nested POD struct for eigen decomposition)
-    struct EigenResult
-    {
-        Matrix                           eigenvalues, eigenvectors;
-    };
-    */
+     *      //
+     *      //      ...
+     *      //
+     */
     
     
     // *************************************************************************** //
@@ -267,8 +261,6 @@ public:
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
     static constexpr size_type          cv_MAX_SIZE                      = static_cast<size_type>(-1);
-
-
 
     
     // *************************************************************************** //
@@ -282,25 +274,13 @@ private:
     static_assert   (   std::is_object_v<value_type>                                                                    );
     static_assert   (   !std::is_reference_v<value_type>                                                                );
     static_assert   (   std::is_same_v< typename std::allocator_traits<allocator_type>::value_type   , value_type >     );
+    
+    /*
+     *      //
+     *      //      ...
+     *      //
+     */
 
-
-    //      DETERMINANT / INVERSE SCALAR HELPERS...
-    template <class X>
-    struct                          is_std_complex                      : std::false_type           {   };
-
-    template <class U>
-    struct                          is_std_complex<std::complex<U>>     : std::true_type            {   };
-
-    template <class T_>
-    using                           real_scalar_t                       = std::conditional_t<impl::is_complex<T_>::value, typename T_::value_type, T_>;
-
-    template <class T_>
-    [[nodiscard]]
-    static real_scalar_t<T_>        abs_scalar                          (const T_ & x) noexcept
-    {
-        using std::abs;     // ADL for complex
-        return static_cast<real_scalar_t<T_>>(abs(x));
-    }
 
 //
 //
@@ -393,26 +373,22 @@ public:
     // *************************************************************************** //
     //      2.A. |  STATIC FACTORIES.               |   ...
     // *************************************************************************** //
-    [[nodiscard]]
-    static Matrix                        zeros                           (const size_type rows, const size_type cols)
+    [[nodiscard]] static Matrix         zeros                           (const size_type rows, const size_type cols)
     {
         return Matrix(rows, cols, value_type{});
     }
 
-    [[nodiscard]]
-    static Matrix                        ones                            (const size_type rows, const size_type cols)
+    [[nodiscard]] static Matrix         ones                            (const size_type rows, const size_type cols)
     {
         return Matrix(rows, cols, value_type{1});
     }
 
-    [[nodiscard]]
-    static Matrix                        constant                        (const size_type rows, const size_type cols, const value_type & v)
+    [[nodiscard]] static Matrix         constant                        (const size_type rows, const size_type cols, const value_type & v)
     {
         return Matrix(rows, cols, v);
     }
 
-    [[nodiscard]]
-    static Matrix                        identity                        (const size_type n)
+    [[nodiscard]] static Matrix         identity                        (const size_type n)
     {
         Matrix out(n, n, value_type{});
 
@@ -520,84 +496,81 @@ public:
     // *************************************************************************** //
     //      2.A. |  CAPACITY / MODIFIERS.           |   ...
     // *************************************************************************** //
-    void                                reserve                         (const size_type element_capacity)                  { this->m_data.reserve(element_capacity);   }
-    [[nodiscard]] size_type             capacity                        (void) const noexcept                               { return this->m_data.capacity();           }
-
-    void                                clear                           (void) noexcept
-    {
-        this->m_rows = 0;
-        this->m_cols = 0;
+    
+    
+    //              Query Functions.
+    // *************************************************************************** //
+    [[nodiscard]] size_type             capacity                        (void) const noexcept           { return this->m_data.capacity();           }
+    
+    
+    //              Centralized State-Management Functions.
+    // *************************************************************************** //
+    //  "reset"
+    void                                reset                           (void)                          {  std::fill(this->m_data.begin(), this->m_data.end(), value_type{});  }
+    void                                clear                           (void) noexcept {
+        this->m_rows = size_type{0};
+        this->m_cols = size_type{0};
         this->m_data.clear();
+        return;
     }
-
-    void                                reset                           (void)                                                // zero-fill existing elements (additive identity)
-    {
-        std::fill(this->m_data.begin(), this->m_data.end(), value_type{});
+    
+    
+    //              Helper Functions (populate, assign, fill, etc..).
+    // *************************************************************************** //
+    void                                swap                            (Matrix & other) noexcept(std::is_nothrow_swappable_v<container_type>) {
+        using std::swap;
+        swap(this->m_rows, other.m_rows);
+        swap(this->m_cols, other.m_cols);
+        swap(this->m_data, other.m_data);
     }
+    void                                fill                            (const value_type & v)                          {  std::fill(this->m_data.begin(), this->m_data.end(), v);  }
+    
+    
+    
+    
+    //              Memory Functions.
+    // *************************************************************************** //
+    void                                reserve                         (const size_type element_capacity)              { this->m_data.reserve(element_capacity);   }
 
-    void                                fill                            (const value_type & v)
-    {
-        std::fill(this->m_data.begin(), this->m_data.end(), v);
-    }
-
-    void                                resize                          (const size_type rows, const size_type cols)
-    {
-        const size_type new_size = _checked_mul(rows, cols);
-
+    void                                resize                          (const size_type rows, const size_type cols) {
+        const size_type     new_size    = _checked_mul(rows, cols);
         this->m_data.resize(new_size, value_type{});
-        this->m_rows = rows;
-        this->m_cols = cols;
+        this->m_rows                    = rows;
+        this->m_cols                    = cols;
+        return;
     }
-
-    //      9b.       RESET (resize + zero-init) per briefing
-    void                                reset                           (const size_type rows, const size_type cols)
-    {
-        this->resize(rows, cols);
-        this->reset();                                              // zero-fill
+    
+    void                                reshape_inplace                 (const size_type rows, const size_type cols) {
+        const size_type     new_size    = _checked_mul(rows, cols);
+        if ( new_size != this->m_data.size() )                  { _throw_dim_mismatch("Matrix: reshape size mismatch"); }
+        this->m_rows                    = rows;
+        this->m_cols                    = cols;
+        return;
     }
-
-    void                                reshape_inplace                 (const size_type rows, const size_type cols)
-    {
-        const size_type new_size = _checked_mul(rows, cols);
-        if (new_size != this->m_data.size())        { _throw_dim_mismatch("Matrix: reshape size mismatch"); }
-        this->m_rows = rows;
-        this->m_cols = cols;
-    }
-
+    
     void                                assign                          (std::initializer_list<std::initializer_list<value_type>> rows_init)
     {
-        const size_type rows                = rows_init.size();
-        size_type cols                      = 0;
-
+        const size_type rows = rows_init.size();
+        size_type cols = size_type{0};
         for (const auto & row : rows_init)
         {
-            if (cols == 0)                  { cols = row.size(); }
-            else if (row.size() != cols)    { _throw_dim_mismatch("Matrix: ragged initializer_list"); }
+            if (cols == size_type{0}) { cols = row.size(); }
+            else if (row.size() != cols) { _throw_dim_mismatch("Matrix: ragged initializer_list"); }
         }
-
         this->m_rows = rows;
         this->m_cols = cols;
         this->m_data.assign(_checked_mul(rows, cols), value_type{});
-
-        size_type r = 0;
+        size_type r = size_type{0};
         for (const auto & row : rows_init)
         {
-            size_type c = 0;
-            for (const auto & v : row)
-            {
+            size_type c = size_type{0};
+            for (const auto & v : row) {
                 this->m_data[_index(r, c, this->m_cols)] = v;
                 ++c;
             }
             ++r;
         }
-    }
-
-    void                                swap                            (Matrix & other) noexcept(std::is_nothrow_swappable_v<container_type>)
-    {
-        using std::swap;
-        swap(this->m_rows, other.m_rows);
-        swap(this->m_cols, other.m_cols);
-        swap(this->m_data, other.m_data);
+        return;
     }
     
 
@@ -790,163 +763,167 @@ public:
     //      2.A. |  ADVANCED OPS (DETERMINANT / INVERSE / ETC.). |   ...
     // *************************************************************************** //
     
-    // Update determinant()
-    [[nodiscard]] value_type            determinant                     (void) const
-        requires impl::numerical_matrix<T>
+    //  "determinant"
+    //
+    [[nodiscard]] value_type	        determinant                     (void) const
     {
-        //      1.        TYPE ALIASES + EARLY VALIDATION...
-        using RealScalar = real_scalar_t<T>;
+        //      0.      TYPE ALIASES, COMPILE-TIME VALUES, ETC...
+        using		            RealScalar			= real_scalar_t<value_type>;
+        //
+        constexpr RealScalar	cv_EPS				= std::numeric_limits<RealScalar>::epsilon();
+        constexpr RealScalar	cv_INF				= std::numeric_limits<RealScalar>::infinity();
+        constexpr int		    cv_MAX_EXP			= std::numeric_limits<RealScalar>::max_exponent;
+        constexpr int		    cv_MIN_EXP			= std::numeric_limits<RealScalar>::min_exponent;
+        constexpr int		    cv_DIGITS			= std::numeric_limits<RealScalar>::digits;
+        //
+        static_assert(
+            std::is_floating_point_v<RealScalar>
+            , "Matrix::determinant(): T must be floating-point or std::complex<floating>"
+        );
 
-        static_assert(std::is_floating_point_v<RealScalar>,
-            "Matrix::determinant(): T must be floating-point or std::complex<floating>");
 
-        //      2.        SHAPE GUARDS...
-        if (this->rows() != this->cols())
+        //      1.      VARIABLE ASSIGNMENTS...
+        const size_type	        n_rows				= this->rows();
+        const size_type	        n_cols				= this->cols();
+        //
+        RealScalar	            amax				= RealScalar(0);	            // global max |a_ij|
+        container_type	        lu                  (this->get_allocator());
+
+
+
+        //      2.      RUN-TIME ENFORCEMENTS...
+        if (n_rows != n_cols)	{ throw std::invalid_argument("Matrix::determinant(): matrix must be square"); }
+        if (n_rows == 0)	    { return value_type(1); }   //  Convention:     det([]) = 1 (empty product, consistent with identity).
+
+
+
+        //      3.      COPY INTO CONTIGUOUS SCRATCH BUFFER (row-major LU)...
+        lu.resize(_checked_mul(n_rows, n_rows));
+
+
+        for (size_type r = 0; r < n_rows; ++r)
         {
-            throw std::invalid_argument("Matrix::determinant(): matrix must be square");
-        }
+            const size_type	base			= _index(r, 0, n_rows);
 
-        const size_type n = this->rows();
-
-        // Convention: det([]) = 1 (empty product, consistent with identity).
-        if (n == 0)
-        {
-            return T(1);
-        }
-
-        //      3.        COPY INTO CONTIGUOUS SCRATCH BUFFER (row-major LU)...
-        container_type lu(this->get_allocator());
-        lu.resize(_checked_mul(n, n));
-
-        RealScalar amax = RealScalar(0);    // global max |a_ij|
-
-        for (size_type r = 0; r < n; ++r)
-        {
-            const size_type base = _index(r, 0, n);
-            for (size_type c = 0; c < n; ++c)
+            for (size_type c = 0; c < n_rows; ++c)
             {
-                const T v = (*this)(r, c);
-                lu[base + c] = v;
+                const value_type	v		    = (*this)(r, c);
+                lu[base + c]			        = v;
 
-                const RealScalar av = abs_scalar(v);
-                if (av > amax)                  { amax = av; }
+                const RealScalar	av		    = abs_scalar(v);
+                if (av > amax)	    { amax = av; }
             }
         }
 
         // All-zero matrix → det = 0
-        if (amax == RealScalar(0))
-        {
-            return T(0);
-        }
+        if (amax == RealScalar(0))	{ return value_type(0); }
 
-        //      4.        SCALE-AWARE PIVOT THRESHOLD...
-        const RealScalar eps = std::numeric_limits<RealScalar>::epsilon();
-        const RealScalar piv_tol = eps * amax * static_cast<RealScalar>(n);
 
-        bool odd_row_swaps = false;
+        //      4.      SCALE-AWARE PIVOT THRESHOLD...
+        const RealScalar	piv_tol				= cv_EPS * amax * static_cast<RealScalar>(n_rows);
 
-        //      5.        IN-PLACE LU WITH PARTIAL PIVOTING (Doolittle-style, packed)...
-        for (size_type k = 0; k < n; ++k)
+        bool		        odd_row_swaps	    = false;
+        bool		        is_singular			= false;
+
+
+        //      5.      IN-PLACE LU WITH PARTIAL PIVOTING (Doolittle-style, packed)...
+        for (size_type k = 0; k < n_rows; ++k)
         {
             // Find max-abs pivot in column k (rows k..n-1)
-            size_type p = k;
-            RealScalar p_abs = abs_scalar(lu[_index(k, k, n)]);
+            size_type	p			= k;
+            RealScalar	p_abs			= abs_scalar(lu[_index(k, k, n_rows)]);
 
-            for (size_type i = k + 1; i < n; ++i)
+            for (size_type i = k + 1; i < n_rows; ++i)
             {
-                const RealScalar cand = abs_scalar(lu[_index(i, k, n)]);
+                const RealScalar	cand	= abs_scalar(lu[_index(i, k, n_rows)]);
                 if (cand > p_abs)
                 {
-                    p_abs = cand;
-                    p = i;
+                    p_abs	= cand;
+                    p	= i;
                 }
             }
 
             // Near-singular detection
             if (p_abs <= piv_tol)
             {
-                return T(0);
+                is_singular	= true;
+                break;
             }
 
             // Row swap if needed
             if (p != k)
             {
-                T * row_k = lu.data() + _index(k, 0, n);
-                T * row_p = lu.data() + _index(p, 0, n);
-                std::swap_ranges(row_k, row_k + n, row_p);
-                odd_row_swaps = !odd_row_swaps;
+                value_type*	row_k		= lu.data() + _index(k, 0, n_rows);
+                value_type*	row_p		= lu.data() + _index(p, 0, n_rows);
+
+                std::swap_ranges(row_k, row_k + n_rows, row_p);
+                odd_row_swaps	= !odd_row_swaps;
             }
 
-            const T pivot = lu[_index(k, k, n)];
+            const value_type	pivot		= lu[_index(k, k, n_rows)];
 
             // Eliminate below pivot
-            for (size_type i = k + 1; i < n; ++i)
+            for (size_type i = k + 1; i < n_rows; ++i)
             {
-                T &         aik     = lu[_index(i, k, n)];
-                const T     factor  = aik / pivot;
-                aik                 = factor;   // store L factor
+                const size_type	row_i		= _index(i, 0, n_rows);
+                const size_type	row_k		= _index(k, 0, n_rows);
 
-                const size_type row_i = _index(i, 0, n);
-                const size_type row_k = _index(k, 0, n);
+                value_type&		aik		= lu[_index(i, k, n_rows)];
+                const value_type	factor		= aik / pivot;
 
-                for (size_type j = k + 1; j < n; ++j)
+                aik				= factor;	// store L factor
+
+                for (size_type j = k + 1; j < n_rows; ++j)
                 {
-                    lu[row_i + j] -= factor * lu[row_k + j];
+                    lu[row_i + j]	-= factor * lu[row_k + j];
                 }
             }
         }
 
-        //      6.        ACCUMULATE DET FROM U DIAGONAL (mantissa/exponent guards)...
-        RealScalar      mant        = RealScalar(1);
-        int             exp2        = 0;
-        T               phase       = T(1);
+        if (is_singular)	{ return value_type(0); }
 
-        for (size_type i = 0; i < n; ++i)
+
+        //      6.      ACCUMULATE DET FROM U DIAGONAL (mantissa/exponent guards)...
+        RealScalar	mant				= RealScalar(1);
+        int		exp2				= 0;
+        value_type	phase				= value_type(1);
+
+        for (size_type i = 0; i < n_rows; ++i)
         {
-            const T d = lu[_index(i, i, n)];
-            const RealScalar mag = abs_scalar(d);
+            const value_type	d		= lu[_index(i, i, n_rows)];
+            const RealScalar	mag		= abs_scalar(d);
 
             if (mag == RealScalar(0))
             {
-                return T(0);
+                is_singular	= true;
+                break;
             }
 
-            int e = 0;
-            RealScalar m = std::frexp(mag, &e);
-            mant *= m;
-            exp2 += e;
+            int		    e			= 0;
+            RealScalar	m			= std::frexp(mag, &e);
 
-            phase *= (d / mag);
+            mant	*= m;
+            exp2	+= e;
+            phase	*= (d / mag);
 
             // Renormalize mantissa
-            int e_mant = 0;
-            mant = std::frexp(mant, &e_mant);
-            exp2 += e_mant;
+            int	e_mant			= 0;
+            mant				= std::frexp(mant, &e_mant);
+            exp2				+= e_mant;
         }
 
-        if (odd_row_swaps)
-        {
-            phase = -phase;
-        }
+        if (is_singular)	{ return value_type(0); }
+        if (odd_row_swaps)	{ phase = -phase; }
 
         // Exponent guards (overflow → inf, severe underflow → 0)
-        const int max_exp = std::numeric_limits<RealScalar>::max_exponent;
-        const int min_exp = std::numeric_limits<RealScalar>::min_exponent;
+        if (exp2 > cv_MAX_EXP - 1)			{ return phase * cv_INF; }
+        if (exp2 < cv_MIN_EXP - cv_DIGITS)	{ return value_type(0); }
 
-        if (exp2 > max_exp - 1)
-        {
-            const RealScalar inf = std::numeric_limits<RealScalar>::infinity();
-            return phase * inf;
-        }
-
-        if (exp2 < min_exp - std::numeric_limits<RealScalar>::digits)
-        {
-            return T(0);
-        }
-
-        const RealScalar det_mag = std::ldexp(mant, exp2);
+        const RealScalar	det_mag				= std::ldexp(mant, exp2);
         return phase * det_mag;
     }
+
+
     
 
     //  "det"

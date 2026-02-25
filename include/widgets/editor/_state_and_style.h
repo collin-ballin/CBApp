@@ -1270,6 +1270,8 @@ struct BrowserStyle
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
     static constexpr float              ms_MY_CONSTEXPR_VALUE           = 240.0f;
+    static constexpr float              ms_ICON_SCALE_DEFAULT           = 0.80f;
+    static constexpr float              ms_ICON_SCALE_COLUMNS           = 1.00f;
     
 //
 // *************************************************************************** //

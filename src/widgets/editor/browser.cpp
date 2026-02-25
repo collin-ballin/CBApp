@@ -648,7 +648,7 @@ void Editor::_draw_obj_selector_table(void)
             utl::IconButton(   "##Editor_ObjSelector_FilterMenu"
                              , this->S.SystemColor.Blue
                              , ICON_FA_FILTER
-                             , 1.0f
+                             , BrowserStyle::ms_ICON_SCALE_DEFAULT
                              , IconAnchor::Center    // TextBaseline    South   Center
                              , Padding::Tight );
             //
@@ -713,10 +713,12 @@ void Editor::_draw_obj_selector_table(void)
                     {
                         if (   utl::IconButton(   "##Editor_Browser_ObjVisibilityButton"
                              , (path.visible)
-                                    ? this->S.SystemColor.White     : this->S.SystemColor.Gray
+                                    ? this->S.SystemColor.White
+                                    : this->S.SystemColor.Gray
                              , (path.visible)
-                                    ? ICON_FA_EYE                   : ICON_FA_EYE_SLASH
-                             , 1.0f
+                                    ? SF_EYE_FILL
+                                    : SF_EYE_SLASH
+                             , BrowserStyle::ms_ICON_SCALE_COLUMNS
                              , { CELL_SZ, CELL_SZ } ))
                         {  path.visible = !path.visible; _prune_selection_mutability();  }
                     }
@@ -727,10 +729,12 @@ void Editor::_draw_obj_selector_table(void)
                     {
                         if (   utl::IconButton(   "##Editor_Browser_ObjLockButton"
                              , (path.locked)
-                                    ? this->S.SystemColor.White     : this->S.SystemColor.Gray
+                                    ? this->S.SystemColor.White
+                                    : this->S.SystemColor.Gray
                              , (path.locked)
-                                    ? ICON_FA_LOCK                   : ICON_FA_LOCK_OPEN
-                             , 1.0f
+                                    ? SF_LOCK_FILL
+                                    : SF_LOCK_OPEN_FILL
+                             , BrowserStyle::ms_ICON_SCALE_COLUMNS
                              , { CELL_SZ, CELL_SZ } ))
                         {  path.locked = !path.locked; _prune_selection_mutability();  }
                     }

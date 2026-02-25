@@ -207,7 +207,7 @@ inline constexpr const char *       DEF_ICON_FONT_PATH                  = "../..
 #endif      //  __APPLE__  //
 
 
-inline constexpr const double       DEF_ICON_SIZE_SCALAR                = static_cast<double>( 1.0f );                          //      static_cast<double>( 4.0f / 5.0f );
+inline constexpr const double       DEF_ICON_SIZE_SCALAR                = static_cast<double>( 1.00f );                         //      static_cast<double>( 4.0f / 5.0f );
     
 
 
