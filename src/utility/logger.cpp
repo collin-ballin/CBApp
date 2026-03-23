@@ -22,7 +22,7 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 // *************************************************************************** //
 
-static void append_indent(std::ostream& os, std::size_t n) { os << std::string(n, ' '); }
+static void append_indent(std::ostream& os, size_t n) { os << std::string(n, ' '); }
 
 static std::string tid_hex(std::thread::id tid)
 {
@@ -90,82 +90,53 @@ Logger::~Logger(void) {
 
 //  "log"
 //
-void Logger::log(const char * msg,          Level lvl)          { enqueue(msg, lvl); }
-void Logger::log(const std::string & msg,   Level lvl)          { enqueue(msg.c_str(), lvl); }
+void Logger::log(const char * msg,          LogType lvl)          { enqueue(msg, lvl); }
+void Logger::log(const std::string & msg,   LogType lvl)          { enqueue(msg.c_str(), lvl); }
 
 
 //  "debug"
 //
-void Logger::debug(const char * msg)                            { enqueue(msg,          Level::Debug);      }
-void Logger::debug(const std::string & msg)                     { enqueue(msg.c_str(),  Level::Debug);      }
+void Logger::debug(const char * msg)                            { enqueue(msg,          LogType::Debug);      }
+void Logger::debug(const std::string & msg)                     { enqueue(msg.c_str(),  LogType::Debug);      }
 
 
 //  "info"
 //
-void Logger::info(const char * msg)                             { enqueue(msg,          Level::Info);       }
-void Logger::info(const std::string & msg)                      { enqueue(msg.c_str(),  Level::Info);       }
+void Logger::info(const char * msg)                             { enqueue(msg,          LogType::Info);       }
+void Logger::info(const std::string & msg)                      { enqueue(msg.c_str(),  LogType::Info);       }
 
 
 //  "warning"
 //
-void Logger::warning(const char * msg)                          { enqueue(msg,          Level::Warning);    }
-void Logger::warning(const std::string & msg)                   { enqueue(msg.c_str(),  Level::Warning);    }
+void Logger::warning(const char * msg)                          { enqueue(msg,          LogType::Warning);    }
+void Logger::warning(const std::string & msg)                   { enqueue(msg.c_str(),  LogType::Warning);    }
 
 
 //  "exception"
 //
-void Logger::exception(const char * msg)                        { enqueue(msg,          Level::Exception);  }
-void Logger::exception(const std::string & msg)                 { enqueue(msg.c_str(),  Level::Exception);  }
+void Logger::exception(const char * msg)                        { enqueue(msg,          LogType::Exception);  }
+void Logger::exception(const std::string & msg)                 { enqueue(msg.c_str(),  LogType::Exception);  }
 
 
 //  "error"
 //
-void Logger::error(const char * msg)                            { enqueue(msg,          Level::Error);      }
-void Logger::error(const std::string & msg)                     { enqueue(msg.c_str(),  Level::Error);      }
+void Logger::error(const char * msg)                            { enqueue(msg,          LogType::Error);      }
+void Logger::error(const std::string & msg)                     { enqueue(msg.c_str(),  LogType::Error);      }
 
 
 //  "notify"
 //
-void Logger::notify(const char * msg)                           { enqueue(msg,          Level::Notify);   }
-void Logger::notify(const std::string & msg)                    { enqueue(msg.c_str(),  Level::Notify);   }
+void Logger::notify(const char * msg)                           { enqueue(msg,          LogType::Notify);   }
+void Logger::notify(const std::string & msg)                    { enqueue(msg.c_str(),  LogType::Notify);   }
 
 
 //  "critical"
 //
-void Logger::critical(const char * msg)                         { enqueue(msg,          Level::Critical);   }
-void Logger::critical(const std::string & msg)                  { enqueue(msg.c_str(),  Level::Critical);   }
+void Logger::critical(const char * msg)                         { enqueue(msg,          LogType::Critical);   }
+void Logger::critical(const std::string & msg)                  { enqueue(msg.c_str(),  LogType::Critical);   }
 
 
 
-
-
-
-// *************************************************************************** //
-//
-//
-//  2B.     PUBLIC UTILITY FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
-//  "set_level"
-void  Logger::set_level(const Level & level)                    { this->m_threshold = level; }
-
-//  "set_console_format"
-void Logger::set_console_format(ConsoleFormat fmt)              { m_console_fmt = fmt; }
-
-//  "set_path_depth"
-void Logger::set_path_depth(std::size_t d)                      { m_path_depth = d; }
-
-
-
-//  "get_level"
-Logger::Level Logger::get_level(void) const                     { return m_threshold; }
-
-//  "get_console_format"
-Logger::ConsoleFormat Logger::get_console_format(void) const    { return m_console_fmt; }
-
-//  "get_path_depth"
-std::size_t Logger::get_path_depth(void) const                  { return m_path_depth; }
 
 
 
@@ -182,7 +153,7 @@ std::size_t Logger::get_path_depth(void) const                  { return m_path_
 
 //  "enqueue"
 //
-void Logger::enqueue(const char * msg, Level lvl)
+void Logger::enqueue(const char * msg, LogType lvl)
 {
     this->enqueue_event(LogEvent{
           lvl
@@ -192,7 +163,7 @@ void Logger::enqueue(const char * msg, Level lvl)
         , /*line=*/ 0
         , /*func=*/ nullptr
         , std::this_thread::get_id()
-        , iso_timestamp()
+        , Logger::s_iso_timestamp()
     });
     
     return;
@@ -203,11 +174,12 @@ void Logger::enqueue(const char * msg, Level lvl)
 //
 void Logger::enqueue_event(LogEvent && ev)
 {
-    if ( static_cast<int>(ev.level) < static_cast<int>(m_threshold) )       { return; }
+    
+    if ( static_cast<int>(ev.level) < static_cast<int>(m_threshold.load(std::memory_order_relaxed)) )       { return; }
 
     std::unique_lock<std::mutex>    lock        (m_mtx);
     
-    m_cv.wait(lock, [this]{ return m_queue.size() < QUEUE_CAPACITY; });
+    m_cv.wait(lock, [this]{ return m_queue.size() < cv_QUEUE_CAPACITY; });
     m_queue.push(std::move(ev));
     lock.unlock();
     m_cv.notify_one();
@@ -220,14 +192,14 @@ void Logger::enqueue_event(LogEvent && ev)
 //
 void Logger::start_worker(void)
 {
-    m_running   = true;
+    m_running.store(true, std::memory_order_relaxed);
     m_worker    = std::thread( [this]
         {
             std::unique_lock<std::mutex>    lock    (m_mtx);
             
-            while ( m_running || !m_queue.empty() )     //  while #1.
+            while ( m_running.load(std::memory_order_relaxed) || !m_queue.empty() )     //  while #1.
             {
-                m_cv.wait(lock, [this]{ return !m_queue.empty() || !m_running; });
+                m_cv.wait(lock, [this]{ return !m_queue.empty() || !m_running.load(std::memory_order_relaxed); });
                 while ( !m_queue.empty() )                  //  while #2.
                 {
                     LogEvent    ev = std::move(m_queue.front());
@@ -255,7 +227,7 @@ void Logger::stop_worker(void)
 {
     {
         std::lock_guard<std::mutex> lg(m_mtx);
-        m_running = false;
+        m_running.store(false, std::memory_order_relaxed);
     }
     m_cv.notify_all();
     if (m_worker.joinable())    { m_worker.join(); }
@@ -268,109 +240,128 @@ void Logger::stop_worker(void)
 // FORMATTED OUTPUT WITH HANGING-INDENT + WORD WRAP
 // ---------------------------------------------------------------------------
 
-
-// ---------------------------------------------------------------------------
-// Member helper: build textual header "[CBLOG LEVEL ###] : "
-// ---------------------------------------------------------------------------
-std::string Logger::build_header(const LogEvent& ev)
+//  "build_header"
+//      Member helper: build textual header "[CBLOG LEVEL ###] : "
+//
+[[nodiscard]] std::string Logger::build_header(const LogEvent & ev)
 {
-    std::ostringstream ss;
-    ss << '[' << HEADER << ' '
-       << std::left  << std::setw(MAX_LEVEL_LEN) << level_str(ev.level) << ' '
-       << std::right << std::setfill('0') << std::setw(COUNTER_WIDTH) << ev.count
+    std::ostringstream      ss;
+    
+    ss << '[' << cv_HEADER     << ' '
+       << std::left         << std::setw(cv_MAX_LEVEL_LEN) << Logger::ms_LOGLEVEL_NAME[ev.level]   << ' '
+       << std::right        << std::setfill('0')        << std::setw(cv_COUNTER_WIDTH)             << ev.count
        << std::setfill(' ') << "]    : ";
+       
     return ss.str();
 }
 
-// ---------------------------------------------------------------------------
-// Member helper: hanging‑indent, word‑wrapped body (writes directly to `out`)
-// ---------------------------------------------------------------------------
-void Logger::write_body(const std::string& msg, std::ostream& out, std::size_t indent_len) const
+
+//  "write_body"
+//      Member helper: hanging‑indent, word‑wrapped body (writes directly to `out`)
+//
+void Logger::write_body(const std::string& msg, std::ostream& out, size_t indent_len) const
 {
-    out << BODY_OPEN_DELIM;
-    std::size_t col = indent_len + std::char_traits<char>::length(BODY_OPEN_DELIM);
+    out << cv_BODY_OPEN_DELIM;
+    size_t col = indent_len + std::char_traits<char>::length(cv_BODY_OPEN_DELIM);
 
     std::ostringstream line;
     auto flush_line = [&]{ out << line.str(); line.str({}); line.clear(); };
     auto newline    = [&]{ flush_line(); out << '\n'; append_indent(out, indent_len); col = indent_len; };
 
-    for (std::size_t i = 0; i < msg.size();) {
+    for (size_t i = 0; i < msg.size();) {
         if (msg[i] == '\n') { newline(); ++i; continue; }
-        std::size_t word_end = msg.find_first_of(" \n", i);
+        size_t word_end = msg.find_first_of(" \n", i);
         if (word_end == std::string::npos) word_end = msg.size();
         std::string_view word(&msg[i], word_end - i);
 
-        if (col > indent_len && col + word.size() + 1 > MAX_COL_WIDTH) newline();
+        if (col > indent_len && col + word.size() + 1 > cv_MAX_COL_WIDTH) newline();
         if (col > indent_len) { line << ' '; ++col; }
         line << word; col += word.size();
         i = word_end;
         if (i < msg.size() && msg[i] == ' ') ++i; // skip single space
     }
     flush_line();
-    out << BODY_CLOSE_DELIM;
+    out << cv_BODY_CLOSE_DELIM;
+    return;
 }
 
-// ---------------------------------------------------------------------------
-// Member helper: metadata line (file, line, func, thread, timestamp)
-// ---------------------------------------------------------------------------
-std::string Logger::build_metadata(const LogEvent & ev, std::size_t indent_len)
+
+
+//  "build_metadata"
+//      Member helper: metadata line (file, line, func, thread, timestamp)
+//
+std::string Logger::build_metadata(const LogEvent & ev, size_t indent_len)
 {
-    bool                    first   = true;
-    ConsoleFormat           fmt     = m_console_fmt.load(std::memory_order_relaxed);
+    bool                    first       = true;
+    LoggerFieldFlags        fmt         = m_fields.load(std::memory_order_relaxed);
+    size_t                  path_depth  = m_path_depth.load(std::memory_order_relaxed);
     std::ostringstream      ss;
+    
+    
     append_indent(ss, indent_len);
     
     ss << '(';
-    if (fmt & CF_THREAD_ID) {                                       //  1.  Thread ID.
+    if (fmt & LoggerFieldFlags_ThreadID) {                                       //  1.  Thread ID.
         if (!first) ss << ' ';
         ss << "thread: 0x" << tid_hex(ev.thread_id) << ".";
         first = false;
     }
     
-    if ((fmt & CF_FUNCTION) && ev.func) {                           //  2.  Function-Name.
+    if ((fmt & LoggerFieldFlags_Function) && ev.func) {                           //  2.  Function-Name.
         if (!first) ss << ' ';
         ss << "func: " << ev.func << ".";
         first = false;
     }
     
-    if ((fmt & CF_FILE) && ev.file) {                               //  3.  Filename.
+    if ((fmt & LoggerFieldFlags_File) && ev.file) {                               //  3.  Filename.
         if (!first) ss << ' ';
-        ss << "file: " << path_tail(ev.file, m_path_depth) << ".";
+        ss << "file: " << path_tail(ev.file, path_depth) << ".";
         first = false;
     }
     
-    if ((fmt & CF_LINE) && ev.file) {                               //  4.  Line Number.
+    if ((fmt & LoggerFieldFlags_Line) && (ev.line > 0)) {                         //  4.  Line Number.
         if (!first) ss << ' ';
         ss << "line: " << ev.line << ".";
+        first = false;
     }
     
-    if (fmt & CF_TIMESTAMP) {                                       //  5.  Time-Stamp.
+    if (fmt & LoggerFieldFlags_Timestamp) {                                       //  5.  Time-Stamp.
         if (!first) ss << ' ';
         ss << ev.ts_iso8601;
         first = false;
     }
     
+    if (first)    { return ""; }
+    
     ss << ')';
     return ss.str();
 }
 
-// ---------------------------------------------------------------------------
-// Public sink: write_event – orchestrates helpers
-// ---------------------------------------------------------------------------
+
+
+//  "write_event"
+//      Public sink: write_event – orchestrates helpers
+//
 void Logger::write_event(const LogEvent & ev)
 {
-    const bool          color       = m_vt_enabled.load(std::memory_order_relaxed);
-    const char *        prefix      = color ? ansi_code(level_to_color(ev.level)) : "";
-    const char *        suffix      = color ? ansi_code(TermColor::Reset)         : "";
-    const std::string   header      = this->build_header(ev);
-    const std::size_t   indent_len  = header.size();
-
-    std::ostringstream out;
+    const bool              color           = m_vt_enabled.load(std::memory_order_relaxed);
+    const char *            prefix          = color     ? Logger::ms_LOGLEVEL_TO_ASCII_COLOR[ ev.level ]        : "";
+    const char *            suffix          = color     ? Logger::ms_LOGLEVEL_TO_ASCII_COLOR[ LogType::None ]  : "";
+    const std::string       header          = this->build_header(ev);
+    const size_t            indent_len      = header.size();
+    const std::string       metadata        = this->build_metadata(ev, indent_len);
+    std::ostringstream      out;
+    
+    
     out << header;
     this->write_body(ev.text, out, indent_len);
-    out << '\n' << this->build_metadata(ev, indent_len);
-
+    
+    if (!metadata.empty()) {
+        out << '\n' << metadata;
+    }
+    
     std::cout << prefix << out.str() << suffix << std::endl;
+    return;
 }
 
 
@@ -381,7 +372,7 @@ void Logger::write_event(const LogEvent & ev)
 // *************************************************************************** //
 //
 //
-    void Logger::enqueue(const char *, Level )      { }
+    void Logger::enqueue([[maybe_unused]] const char * , [[maybe_unused]] const LogType )      { return; }
 //
 //
 //
@@ -396,26 +387,30 @@ void Logger::write_event(const LogEvent & ev)
 #if CBAPP_LOG_ENABLED
 // *************************************************************************** //
 //
+//
+//
 # ifdef _WIN32
-void Logger::enable_vt_win()
+void Logger::enable_vt_win(void)
 {
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (!h || h == INVALID_HANDLE_VALUE) { m_vt_enabled = false; return; }
+    HANDLE      h       = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD       mode    = 0;
+    
+    if ( !h || h == INVALID_HANDLE_VALUE )      { this->m_vt_enabled.store(false, std::memory_order_relaxed);  return; }
+    if ( !GetConsoleMode(h, &mode) )            { this->m_vt_enabled.store(false, std::memory_order_relaxed);  return; }
 
-    DWORD mode = 0;
-    if (!GetConsoleMode(h, &mode)) { m_vt_enabled = false; return; }
-
-    if (SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
-        m_vt_enabled = true;
-    else
-        m_vt_enabled = false;       // older console; no VT
+    if ( SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING) )     { this->m_vt_enabled.store(true, std::memory_order_relaxed);   }
+    else                                                                    { this->m_vt_enabled.store(false, std::memory_order_relaxed);  }       // older console; no VT
+    
+    return;
 }
 # else
-    void Logger::enable_vt_win(void)    { }
-#endif  //  _WIN32
+    void Logger::enable_vt_win(void)    { return; }
+#endif  //  _WIN32  //
+//
+//
 //
 // *************************************************************************** //
-#endif
+#endif  //  CBAPP_LOG_ENABLED  //
 
 
 
@@ -428,29 +423,27 @@ void Logger::enable_vt_win()
 // *************************************************************************** //
 // *************************************************************************** //
 
-//  "level_to_color"
-//
-Logger::TermColor Logger::level_to_color(Level lvl)
-{
-    switch (lvl) {
-        case Level::Debug:     return TermColor::Grey;
-        case Level::Info:      return TermColor::Green;
-        case Level::Warning:   return TermColor::Yellow;
-        case Level::Error:     return TermColor::Red;
-        case Level::Exception: return TermColor::Cyan;
-        case Level::Critical:  return TermColor::Magenta;
-        default:               return TermColor::Reset;
-    }
-}
-
 //  "path_tail"
 //
-std::string Logger::path_tail(std::string_view s, std::size_t depth) {
+[[nodiscard]] std::string Logger::path_tail(std::string_view s, size_t depth)
+{
     // works for '/' and '\\'
-    for (std::size_t i = 0; i < depth && !s.empty(); ++i) {
-        auto pos = s.find_last_of("/\\");
-        if (pos == std::string_view::npos) break;
-        s.remove_prefix(pos + 1);
+    if ((depth == 0ULL) || s.empty())    { return std::string{s}; }
+
+    size_t      pos         = s.size();
+    size_t      sep_count   = 0ULL;
+
+    while (pos > 0ULL)
+    {
+        pos = s.find_last_of("/\\", pos - 1ULL);
+        if (pos == std::string_view::npos)      { break; }
+
+        ++sep_count;
+        if (sep_count == depth)
+        {
+            s.remove_prefix(pos + 1ULL);
+            break;
+        }
     }
     return std::string{s};
 }

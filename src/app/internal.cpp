@@ -48,7 +48,7 @@ void App::QuerySignalStates(void)
         {
             //  1.  SIGINT / SIGTERM / CTRL_C_EVENT.
             case CBSignalFlags_Shutdown :       {
-                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_Shutdown>.");
+                CB_LOG(LogType::Info, "Program recieved <CBSignalFlags_Shutdown>.");
                 
                 S.m_running.store(false, std::memory_order_relaxed);
                 break;
@@ -56,21 +56,21 @@ void App::QuerySignalStates(void)
 
             //  2.  SIGHUP.
             case CBSignalFlags_ReloadCfg :      {
-                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_ReloadCfg>.");
+                CB_LOG(LogType::Info, "Program recieved <CBSignalFlags_ReloadCfg>.");
                 //  reload_config();
                 break;
             }
 
             //  3.  [OPERATOR NEW] / MALLOC FAILURE.
             case CBSignalFlags_NewFailure :      {
-                CB_LOG(LogLevel::Critical, "Program recieved <CBSignalFlags_NewFailure>.");
+                CB_LOG(LogType::Critical, "Program recieved <CBSignalFlags_NewFailure>.");
                 S.m_running.store(false, std::memory_order_relaxed);
                 break;
             }
 
             //  3.  CUSTOM SIGNAL #1 [NOT IMPLEMENTED].
             case CBSignalFlags_Custom1 :        {
-                CB_LOG(LogLevel::Info, "Program recieved <CBSignalFlags_Custom1> (How did you do this? This isn't even implemented yet?)");
+                CB_LOG(LogType::Info, "Program recieved <CBSignalFlags_Custom1> (How did you do this? This isn't even implemented yet?)");
                 break;
             }
 
@@ -109,7 +109,7 @@ inline void App::DialogHandler(void)
             if ( this->S.m_file_dialog.Begin() ) {        // returns true when finished
             
                 if ( auto path = this->S.m_file_dialog.result() ) {
-                    //CB_LOG(LogLevel::Info, "DialogHandler recieved filepath: {}", path.value());
+                    //CB_LOG(LogType::Info, "DialogHandler recieved filepath: {}", path.value());
                 }
             }
         }
@@ -282,7 +282,7 @@ void App::SaveHandler_Default(void)
         };
     }
     
-    CB_LOG( LogLevel::Info, "Applet::HomeApp--save" );
+    CB_LOG( LogType::Info, "Applet::HomeApp--save" );
     
     return;
 }

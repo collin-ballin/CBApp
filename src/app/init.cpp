@@ -219,7 +219,7 @@ void App::init_appstate_pre(void)
     //
     
     
-    CB_LOG(LogLevel::Debug, "[[CBApp]] system DPI-scale, DPI-fontscale: ({}, {})",        S.m_dpi_scale, S.m_dpi_fontscale );
+    CB_LOG(LogType::Debug, "[[CBApp]] system DPI-scale, DPI-fontscale: ({}, {})",        S.m_dpi_scale, S.m_dpi_fontscale );
 
 
     //  1.  LOAD MISC. APPLICATION SETTINGS...

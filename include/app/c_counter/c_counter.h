@@ -895,14 +895,14 @@ protected:
             try {
                 this->m_python.set_python_executable( this->m_python_interpreter_path );
                 CB_LOG(
-                      LogLevel::Debug
+                      LogType::Debug
                     , "[[CCounter]] using python interpreter at filepath, \"{}\""
                     , this->m_python_interpreter_path.string()
                 );
             }
             catch (...) {
                 CB_LOG(
-                      LogLevel::Warning
+                      LogType::Warning
                     , "[[CCounter]] no python interpreter exists at default filepath, \"{}\""
                     , this->m_python_interpreter_path.string()
                 );
@@ -912,7 +912,7 @@ protected:
         else
         {
             CB_LOG(
-                  LogLevel::Warning
+                  LogType::Warning
                 , "[[CCounter]] unable to resolve a home directory; using default python interpreter"
             );
         }
@@ -924,14 +924,14 @@ protected:
             try {
                 this->m_python.set_filepath( this->m_script_filepath );
                 CB_LOG(
-                      LogLevel::Debug
+                      LogType::Debug
                     , "[[CCounter]] using python script at filepath, \"{}\""
                     , this->m_script_filepath.relative_path().string()
                 );
             }
             catch (...) {
                 CB_LOG(
-                      LogLevel::Warning
+                      LogType::Warning
                     , "[[CCounter]] no python script exists at default filepath, \"{}\""
                     , this->m_script_filepath.relative_path().string()
                 );

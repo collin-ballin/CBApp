@@ -1,15 +1,16 @@
 /***********************************************************************************
 *
 *       ********************************************************************
-*       ****            _ P Y S T R E A M . H  ____  F I L E            ****
+*       ****             P Y S T R E A M . H  ____  F I L E             ****
 *       ********************************************************************
 *
 *              AUTHOR:      Collin A. Bond.
 *               DATED:      May 09, 2025.
 *
 *       ********************************************************************
-*                FILE:      [./PyStream.h]
-*
+*                file:      pystream.h
+*        last_updated:      2026-03-18
+*             version:      1.6.1.
 *
 *
 **************************************************************************************
@@ -279,13 +280,13 @@ public:
     // *************************************************************************** //
     //      0. |    STATIC CONSTEXPR CONSTANTS.
     // *************************************************************************** //
-    static constexpr size_t                 ms_READ_BUFFER_SIZE             = 4096ULL;
+    static constexpr size_t                 ms_READ_BUFFER_SIZE             = 4'096ULL;
   # ifdef _WIN32
-    static constexpr DWORD                  ms_PROCESS_TIMEOUT_MS           = 5000UL;       //  TIMING CONSTANTS (5 seconds)
+    static constexpr DWORD                  ms_PROCESS_TIMEOUT_MS           = 5'000UL;       //  TIMING CONSTANTS (5 seconds)
   # endif  //  _WIN32  //
     //
     //
-    static constexpr size_t                 ms_DEF_QUEUE_CAPACITY           = 1024ULL;
+    static constexpr size_t                 ms_DEF_QUEUE_CAPACITY           = 1'024ULL;
     static constexpr size_t                 ms_MIN_QUEUE_CAPACITY           = 128ULL;
     static constexpr size_t                 ms_MAX_QUEUE_CAPACITY           = 16'384ULL;    //  2^14
     
@@ -314,7 +315,6 @@ protected:
     // *************************************************************************** //
     //      1. |    PARAMETER VARIABLES  [ PROVIDE AS CSTOR ARGS ].
     // *************************************************************************** //
-    //  std::string                         m_script_path                   ;
     path_t                                  m_script_path                   ;                           // = {"../../scripts/python/fpga_stream.py"};
     //
     std::vector<std::string>                m_args                          ;
@@ -347,6 +347,7 @@ protected:
 #ifdef _WIN32
     HANDLE                                  m_child_stdin_w                 = nullptr;
     HANDLE                                  m_child_stdout_r                = nullptr;
+    HANDLE                                  m_child_stderr_r                = nullptr;
     PROCESS_INFORMATION                     m_proc_info {
           nullptr           //  hProcess
         , nullptr           //  hThread
@@ -356,6 +357,7 @@ protected:
 # else
     int                                     m_child_stdin_fd                = -1;
     int                                     m_child_stdout_fd               = -1;
+    int                                     m_child_stderr_fd               = -1;
     pid_t                                   m_child_pid                     = -1;
 #endif  //  _WIN32  //
     
@@ -365,8 +367,14 @@ protected:
     // *************************************************************************** //
     //      1. |    TRANSIENT, INTERNAL STATE DATA  [ PURELY INTERNAL ].
     // *************************************************************************** //
+    std::deque<std::string>                 m_err_queue                     ;
+    std::mutex                              m_err_queue_mutex               ;
+
     std::atomic_bool                        m_running                       { false };
     std::atomic<size_t>                     m_dropped_lines                 { 0 };          //  drop-old counter
+    std::atomic<size_t>                     m_dropped_err_lines             { 0 };
+    std::atomic<bool>                       m_had_queue_overflow            { false };      //  set true if either queue ever dropped lines
+
     //
     //                                  TELEMETRY ACCESSORS:
     std::atomic<int>                        m_last_exit_code                { INT_MIN };    //  POSIX: WEXITSTATUS or -1;       Windows: GetExitCodeProcess
@@ -374,8 +382,8 @@ protected:
     std::atomic<int>                        m_last_term_sig                 { 0 };          //  POSIX only; 0 if none
 #endif  //  _WIN32  //
 
-    
-    
+
+
 //
 //
 //
@@ -420,7 +428,7 @@ public:
     //
     bool                                        send                                (const std::string & msg);          //  write msg + \n
     bool                                        try_receive                         (std::string & out);                //  pop next complete line
-    
+    bool                                        try_receive_err                     (std::string & out);
     
 //
 //
@@ -661,10 +669,6 @@ public:
     #endif  //  #ifndef _WIN32  //
 
 
-
-
-
-
     //  "get_pid"
     //
     [[nodiscard]] inline uint32_t                   get_pid                         (void) const noexcept {
@@ -676,8 +680,8 @@ public:
     }
 
     
-    
     //  "get_invocation"
+    //
     [[nodiscard]] inline std::string                get_invocation                  (void) const
     {
         using   namespace   process;
@@ -693,7 +697,6 @@ public:
             cmd += " ";
             cmd += quote_if_needed(a);                                  //  args already UTF-8
         }
-
         return cmd;
     }
 
@@ -702,7 +705,7 @@ public:
     // *************************************************************************** //
     //
     // *************************************************************************** //
-    //      2.C. |  SETTER/GETTER FUNCTIONS.
+    //      2.C. |  SETTER FUNCTIONS.
     // *************************************************************************** //
     
     //  "set_filepath"
@@ -778,6 +781,14 @@ public:
                 ++this->m_dropped_lines;
             }
         }
+        {
+            std::lock_guard<std::mutex>     lock    (this->m_err_queue_mutex);
+            while ( this->m_err_queue.size() > this->m_queue_capacity ) {
+                this->m_err_queue.pop_front();
+                ++this->m_dropped_err_lines;
+            }
+        }
+        return;
     }
 
 
@@ -812,18 +823,27 @@ public:
 
 
     //  "get_queue_capacity"
-    [[nodiscard]] inline size_t                     get_queue_capacity              (void) const noexcept   { return this->m_queue_capacity;            }
-    [[nodiscard]] inline size_t                     get_dropped_lines               (void) const noexcept   { return this->m_dropped_lines.load();      }
+    [[nodiscard]] inline size_t                     get_queue_capacity              (void) const noexcept   { return this->m_queue_capacity;                }
+    [[nodiscard]] inline size_t                     get_dropped_lines               (void) const noexcept   { return this->m_dropped_lines.load();          }
+    [[nodiscard]] inline size_t                     get_dropped_err_lines           (void) const noexcept   { return this->m_dropped_err_lines.load();      }
 
-    //  "get_last_exit_code"        TELEMETRY ACCESSORS...
+    //  "had_queue_overflow"
+    [[nodiscard]] inline bool                       had_queue_overflow              (void) const noexcept   { return this->m_had_queue_overflow.load();     }
+
+
+
+    //  TELEMETRY ACCESSORS...
+    //
+    //  "get_last_exit_code"
     [[nodiscard]] inline int                        get_last_exit_code              (void) const noexcept   { return this->m_last_exit_code.load();     }
   # ifdef _WIN32
     [[nodiscard]] inline int                        get_last_termination_signal     (void) const noexcept   { return -1;                                }   //  DISABLED ON NON-POSIX.
   # else
     [[nodiscard]] inline int                        get_last_termination_signal     (void) const noexcept   { return this->m_last_term_sig.load();      }
   # endif  //  _WIN32  //
-  
-  
+
+
+
 //
 //
 //
@@ -850,8 +870,21 @@ protected:
         std::lock_guard<std::mutex>     lock    (this->m_queue_mutex);
         while ( this->m_recv_queue.size() >= this->m_queue_capacity ) {
             this->m_recv_queue.pop_front(); ++this->m_dropped_lines;    // drop-old policy
+            this->m_had_queue_overflow.store(true);
         }
         this->m_recv_queue.emplace_back(std::move(s));
+        return;
+    }
+
+    //  "enqueue_err_line_"
+    inline void                                     enqueue_err_line_               (std::string && s)
+    {
+        std::lock_guard<std::mutex>     lock    (this->m_err_queue_mutex);
+        while ( this->m_err_queue.size() >= this->m_queue_capacity ) {
+            this->m_err_queue.pop_front(); ++this->m_dropped_err_lines;    // drop-old policy
+            this->m_had_queue_overflow.store(true);
+        }
+        this->m_err_queue.emplace_back(std::move(s));
         return;
     }
 
@@ -1012,22 +1045,20 @@ protected:
 
 
 // *************************************************************************** //
+//
+//
+//
 // *************************************************************************** //
-} }//   END OF "cb" :: "utl" NAMESPACE.
+// *************************************************************************** //
+} }//   END OF "cb::utl" NAMESPACE.
 
 
 
 
 
 
-
-
-
-
-
-
-#endif      //  _CBAPP_SIDEBAR_H  //
+#endif      //  _CBAPP_UTILITY_PYSTREAM_H  //
 // *************************************************************************** //
 // *************************************************************************** //
 //
-//  END.
+//  EOF.

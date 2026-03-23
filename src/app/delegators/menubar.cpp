@@ -438,7 +438,7 @@ inline void MenuBar::file_imgui_submenu(void)
         //      4.1X-2      Overwrite/Save default ".ini" file.
         if (ImGui::MenuItem("Save Current Settings As Default",       nullptr)) {
             ImGui::SaveIniSettingsToDisk(cb::app::INI_FILEPATH);
-            CB_LOG(LogLevel::Info, "Default ImGui \".ini\" settings overwritten (\"{}\")", cb::app::INI_FILEPATH);
+            CB_LOG(LogType::Info, "Default ImGui \".ini\" settings overwritten (\"{}\")", cb::app::INI_FILEPATH);
         }
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort | ImGuiHoveredFlags_NoSharedDelay))
             ImGui::SetTooltip("Overwrite the default settings with the current ones (stored at \"%s\").", app::INI_FILEPATH);
@@ -460,18 +460,18 @@ inline void MenuBar::file_imgui_submenu(void)
             //
                 //  1.  Save ImPlot Settings...
                 if ( utl::SaveImGuiStyleToDisk(      ImGui::GetStyle(),      cb::app::IMGUI_STYLE_FILEPATH) ) {
-                    CB_LOG(LogLevel::Info, "Default ImGui style settings overwritten (\"{}\")", cb::app::IMGUI_STYLE_FILEPATH);
+                    CB_LOG(LogType::Info, "Default ImGui style settings overwritten (\"{}\")", cb::app::IMGUI_STYLE_FILEPATH);
                 }
                 else {
-                    CB_LOG(LogLevel::Warning, "Failed to overwrite default ImGui style settings at (\"{}\")", cb::app::IMGUI_STYLE_FILEPATH);
+                    CB_LOG(LogType::Warning, "Failed to overwrite default ImGui style settings at (\"{}\")", cb::app::IMGUI_STYLE_FILEPATH);
                 }
                 
                 //  2.  Save ImPlot Settings...
                 if ( utl::SaveImPlotStyleToDisk(      ImPlot::GetStyle(),      cb::app::IMPLOT_STYLE_FILEPATH) ) {
-                    CB_LOG(LogLevel::Info, "Default ImPlot style settings overwritten (\"{}\")", cb::app::IMPLOT_STYLE_FILEPATH);
+                    CB_LOG(LogType::Info, "Default ImPlot style settings overwritten (\"{}\")", cb::app::IMPLOT_STYLE_FILEPATH);
                 }
                 else {
-                    CB_LOG(LogLevel::Warning, "Failed to overwrite default ImPlot style settings at (\"{}\")", cb::app::IMPLOT_STYLE_FILEPATH);
+                    CB_LOG(LogType::Warning, "Failed to overwrite default ImPlot style settings at (\"{}\")", cb::app::IMPLOT_STYLE_FILEPATH);
                 }
                 
                 //  utl::SaveImPlotStyleToDisk(     ImPlot::GetStyle(),     cb::app::IMPLOT_STYLE_FILEPATH);

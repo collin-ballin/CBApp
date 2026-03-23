@@ -63,7 +63,7 @@ void GraphApp::destroy(void)
 //  "save"
 //
 void GraphApp::save(void) {
-    CB_LOG( LogLevel::Info, "GraphApp--save" );
+    CB_LOG( LogType::Info, "GraphApp--save" );
     return;
 }
 

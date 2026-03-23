@@ -56,9 +56,9 @@ AppState::AppState(void)
 
     //              0.2.    SET DEFAULT LOGGER-LEVEL.
 # if defined(__CBLIB_RELEASE_WITH_DEBUG_INFO__) || defined(__CBAPP_DEBUG__)
-    this->m_LogLevel    = LogLevel::Debug;
+    this->m_LogLevel    = LogType::Debug;
 # else
-    this->m_LogLevel    = LogLevel::Warning;
+    this->m_LogLevel    = LogType::Warning;
 # endif     //  __CBLIB_RELEASE_WITH_DEBUG_INFO__ || __CBAPP_DEBUG__  //
     this->m_logger.set_level(this->m_LogLevel);
   
@@ -721,8 +721,8 @@ void AppState::log_startup_info(void) noexcept
     
     //      3.      OUTPUT DATA TO THE LOGGER...
     this->m_logger.notify( "[CBApp] PROGRAM BOOTED SUCCESSFULLY" );
-    CB_LOG( LogLevel::Info,     startup_info_log    );
-    CB_LOG( LogLevel::Debug,    startup_debug_log   );
+    CB_LOG( LogType::Info,     startup_info_log    );
+    CB_LOG( LogType::Debug,    startup_debug_log   );
     
     return;
 }
@@ -745,7 +745,7 @@ void AppState::log_shutdown_info(void) noexcept
     
     //      1.      OUTPUT TO LOGGER...
     this->m_logger.notify( "[[CBApp]] PROGRAM TERMINATING" );
-    CB_LOG( LogLevel::Info, ending_log );
+    CB_LOG( LogType::Info, ending_log );
 
     return;
 }

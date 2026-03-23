@@ -62,7 +62,7 @@ void CCounterApp::Begin([[maybe_unused]] const char * uuid, [[maybe_unused]] boo
 //  "save"
 //
 void CCounterApp::save(void) {
-    CB_LOG( LogLevel::Info, "CCounter--save" );
+    CB_LOG( LogType::Info, "CCounter--save" );
     return;
 }
 
@@ -70,7 +70,7 @@ void CCounterApp::save(void) {
 //  "open"
 //
 void CCounterApp::open(void) {
-    CB_LOG( LogLevel::Info, "CCounter--open" );
+    CB_LOG( LogType::Info, "CCounter--open" );
     //  m_editor.open();
     return;
 }
@@ -709,7 +709,7 @@ inline void CCounterApp::_FetchData(void) noexcept
     //    - stamp all channels at the same x_next
     // ------------------------------------------------------------------
     const float                 wall_now            = static_cast<float>(ImGui::GetTime());
-    const bool                  running             = (m_process_running && m_counter_running);
+    const bool                  running             = (m_process_running  &&  m_counter_running);
     const bool                  smooth              = (m_smooth_scroll != 0);
     const float                 dt_packet           = m_integration_window.Value();
 
@@ -724,14 +724,15 @@ inline void CCounterApp::_FetchData(void) noexcept
     // DEBUG: dump raw stdout lines received from Python to terminal.
     // Enable by flipping `dump_enabled` to true. Throttled by `dump_limit`.
     // ------------------------------------------------------------------
-    static bool                 dump_enabled        = true;
-    static uint32_t             dump_count          = 0U;
-    static constexpr uint32_t   dump_limit          = 256U;
+    //  static bool                 dump_enabled        = false;
+    //  static uint32_t             dump_count          = 0U;
+    //  static constexpr uint32_t   dump_limit          = 256U;
 
     while ( this->m_python.try_receive(PF.raw) )
     {
         ++this->m_num_packets;
 
+        /*
         if ( dump_enabled && (dump_count < dump_limit) )
         {
             ++dump_count;
@@ -741,11 +742,10 @@ inline void CCounterApp::_FetchData(void) noexcept
 
             if ( PF.raw.empty() || (PF.raw.back() != '\n') )    { std::fputc('\n', stderr); }
             std::fflush(stderr);
-        }
+        }*/
 
         py_type = ipc::PythonPacketType::Unknown;
         py_msg.clear();
-
 
         if ( auto packet_ptr = ipc::parse_python_message<Packet_t>(PF.raw, m_use_mutex_count, py_type, py_msg) )
         {
@@ -789,8 +789,8 @@ inline void CCounterApp::_FetchData(void) noexcept
 
                 if ( ms_channels[i].vis.master )
                 {
-                    const Counter_t     y_curr     = static_cast<Counter_t>( packet[ch_idx] );
-                    const cc::ChannelID  ch_id      = static_cast<cc::ChannelID>( ms_channels[i].idx );
+                    const Counter_t         y_curr      = static_cast<Counter_t>( packet[ch_idx] );
+                    const cc::ChannelID     ch_id       = static_cast<cc::ChannelID>( ms_channels[i].idx );
 
                     if (!have_master_vis)
                     {
@@ -822,7 +822,6 @@ inline void CCounterApp::_FetchData(void) noexcept
                 PF.current_min          = cc::ChannelID::None;
                 PF.current_max          = cc::ChannelID::None;
             }
-
             continue;
         }
 
@@ -852,14 +851,21 @@ inline void CCounterApp::_FetchData(void) noexcept
     {
         this->m_last_packet_time = wall_now;
     
-        #ifdef __CBAPP_DEBUG__
+    #ifdef __CBAPP_DEBUG__
         CB_LOG(
-              LogLevel::Warning
-            , "[[CCounter]] (Y-Min, Y-Max):\t({}, {})"
-            , PF.ymin
-            , PF.ymax
+              LogType::Debug
+            , "[[CCounter]] type: {}"
+            , CCounterApp::ms_PACKET_TYPE_NAMES[py_type]
         );
-        #endif  //  __CBAPP_DEBUG__  //
+        //
+        //  CB_LOG(
+        //        LogType::Debug
+        //      , "[[CCounter]] (Y-Min, Y-Max):\t({}, {})"
+        //      , PF.ymin
+        //      , PF.ymax
+        //  );
+        //
+    #endif  //  __CBAPP_DEBUG__  //
     }
     m_streaming_active = (wall_now - m_last_packet_time) < m_stream_timeout;
 

@@ -38,9 +38,9 @@
 # include "templates/utility/_time.h"
 #endif	//  _CBLIB_UTILITY_TIME_H  //
 
-#ifndef _CBLIB_HELPER_H
+#ifndef _CBLIB_UTIlITY_HELPER_H
 # include "templates/utility/_helper.h"
-#endif	//  _CBLIB_HELPER_H  //
+#endif	//  _CBLIB_UTIlITY_HELPER_H  //
 
 
 

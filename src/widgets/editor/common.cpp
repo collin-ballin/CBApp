@@ -101,7 +101,7 @@ void Editor::open(void)
 //  "undo"
 //
 void Editor::undo(void) {
-    //  CB_LOG( LogLevel::Info, "Editor--undo" );
+    //  CB_LOG( LogType::Info, "Editor--undo" );
     return;
 }
 
@@ -109,7 +109,7 @@ void Editor::undo(void) {
 //  "redo"
 //
 void Editor::redo(void) {
-    //  CB_LOG( LogLevel::Info, "Editor--redo" );
+    //  CB_LOG( LogType::Info, "Editor--redo" );
     return;
 }
 

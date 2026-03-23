@@ -82,7 +82,7 @@ void Editor::_draw_properties_panel_single(Path & path, const size_t pidx, const
         //  Log a warning message if truncation takes place.
         if (retcode < 0) [[unlikely]]
         {
-            CB_LOG( LogLevel::Warning, std::format(
+            CB_LOG( LogType::Warning, std::format(
                 "snprintf truncated Path title.\nPath ID: {}.  title: \"{}\".  buffer-size: {}.  return value: \"{}\".",
                  pidx, title, BUFFER_SIZE, retcode )
             );
@@ -479,7 +479,7 @@ void Editor::_draw_vertex_inspector_column(Path & path, [[maybe_unused]] const L
             auto message = std::format( "[[Editor]] snprintf truncated Vertex title.\n"
                                         "vertex-ID: {}.  title: \"{}\".  buffer-size: {}.  return value: \"{}\".",
                                         vid, title, TITLE_SIZE, retcode );
-            CB_LOG( LogLevel::Warning, message );
+            CB_LOG( LogType::Warning, message );
         }
     }
     

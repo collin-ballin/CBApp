@@ -198,7 +198,7 @@ public:
     // *************************************************************************** //
     //                              GROUPS / SUB-CLASSES OF "APPSTATE":
     utl::Logger &                       m_logger;                                                   //  1.      LOGGER...
-    LogLevel                            m_LogLevel;
+    LogType                            m_LogLevel;
     //
     //
     //                              WINDOW MANAGEMENT:

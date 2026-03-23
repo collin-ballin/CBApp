@@ -690,7 +690,7 @@ inline void Editor::_settings_H4(SettingsData & args)
         this->S.labelf("Open File:",                    args.LABEL_W,    args.WIDGET_W);
         if ( ImGui::Button("Open", ms_SETTINGS_BUTTON_SIZE) )
         {
-            CB_LOG( LogLevel::Info, "[[Editor]] requesting file dialog to load from disk" );
+            CB_LOG( LogType::Info, "[[Editor]] requesting file dialog to load from disk" );
             requested_close = true;
             args.ES.m_odialog_open.store( true, std::memory_order_release );
         }
@@ -1014,12 +1014,12 @@ void Editor::save_worker(EditorSnapshot snap, std::filesystem::path path)
     
         //  CASE 2A :   SAVE SUCCESS.
         if ( ES.m_io_last == IOResult::Ok ) {
-            CB_LOG( LogLevel::Info, std::format("[[Editor]] saved data to \"{}\" [status: {}] ", path.filename().string(), status) );
+            CB_LOG( LogType::Info, std::format("[[Editor]] saved data to \"{}\" [status: {}] ", path.filename().string(), status) );
         }
         //
         //  CASE 2A :   SAVE FAILURE.
         else {
-            CB_LOG( LogLevel::Error, std::format("[[Editor]] failed to save data to \"{}\" [status: {}] ", path.filename().string(), status) );
+            CB_LOG( LogType::Error, std::format("[[Editor]] failed to save data to \"{}\" [status: {}] ", path.filename().string(), status) );
         }
     }
     
