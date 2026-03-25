@@ -8,8 +8,14 @@
 *
 **************************************************************************************
 **************************************************************************************/
+#include <filesystem>
+
+
 #include "utility/_logger.h"
 #include CBAPP_USER_CONFIG
+
+
+
 
 
 
@@ -18,7 +24,12 @@ namespace cb { namespace utl { //     BEGINNING NAMESPACE "cb" :: "utl"...
 // *************************************************************************** //
 
 
-//  0.      STATIC HELPER FUNCTIONS...
+
+// *************************************************************************** //
+//
+//
+//
+//      0.      STATIC HELPER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
 
@@ -33,14 +44,29 @@ static std::string tid_hex(std::thread::id tid)
 
 
 
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 0.  "STATIC HELPERS" ]].
+
+
+
 
 
 
 // *************************************************************************** //
 //
 //
-//  1A.     INITIALIZATION  | DEFAULT CONSTRUCTOR, DESTRUCTOR, ETC...
+//
+//      1.      PUBLIC MEMBER FUNCTIONS...
 // *************************************************************************** //
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//      1A. PUBLIC. |       INITIALIZATION  | CONSTRUCTORS, ETC.
 // *************************************************************************** //
     
 //  Default Constructor.            | PRIVATE BECAUSE SINGLETON...
@@ -64,10 +90,13 @@ Logger::Logger(void) {
 //
 #endif  //  _WIN32  //
     
-
 #if CBAPP_LOG_ENABLED
+    if (this->m_sink_states[LogSinkType::File].enabled) {
+        this->file_sink_open();
+        if (!this->m_file_stream.is_open())    { this->m_sink_states[LogSinkType::File].enabled = false; }
+    }
     start_worker();
-#endif
+#endif  //  CBAPP_LOG_ENABLED  //
 }
 
 
@@ -76,22 +105,48 @@ Logger::Logger(void) {
 Logger::~Logger(void) {
 #if CBAPP_LOG_ENABLED
         stop_worker();
-#endif
+        file_sink_close();
+#endif  //  CBAPP_LOG_ENABLED  //
 }
 
 
+//
+//
+// *************************************************************************** //   END [[ 1A.  "INITIALIZATION" ]].
+
+
 
 // *************************************************************************** //
-//
-//
-//  2A.     PUBLIC MEMBER FUNCTIONS...
-// *************************************************************************** //
+//      1B. PUBLIC. |       PRIMARY PUBLIC API.
 // *************************************************************************** //
 
 //  "log"
 //
 void Logger::log(const char * msg,          LogType lvl)          { enqueue(msg, lvl); }
 void Logger::log(const std::string & msg,   LogType lvl)          { enqueue(msg.c_str(), lvl); }
+
+
+//  "log_sync"
+//
+void Logger::log_sync(const char * msg,          LogType lvl)
+{
+#if CBAPP_LOG_ENABLED
+    this->dispatch_event_sync(LogEvent{
+          lvl
+        , msg
+        , this->next_count(lvl)
+        , /*file=*/ nullptr
+        , /*line=*/ 0
+        , /*func=*/ nullptr
+        , std::this_thread::get_id()
+        , Logger::s_iso_timestamp()
+    });
+#else
+    (void)msg; (void)lvl;
+#endif
+    return;
+}
+void Logger::log_sync(const std::string & msg,   LogType lvl)     { log_sync(msg.c_str(), lvl); }
 
 
 //  "debug"
@@ -116,12 +171,16 @@ void Logger::warning(const std::string & msg)                   { enqueue(msg.c_
 //
 void Logger::exception(const char * msg)                        { enqueue(msg,          LogType::Exception);  }
 void Logger::exception(const std::string & msg)                 { enqueue(msg.c_str(),  LogType::Exception);  }
+void Logger::exception_sync(const char * msg)                   { log_sync(msg,         LogType::Exception);  }
+void Logger::exception_sync(const std::string & msg)            { log_sync(msg,         LogType::Exception);  }
 
 
 //  "error"
 //
 void Logger::error(const char * msg)                            { enqueue(msg,          LogType::Error);      }
 void Logger::error(const std::string & msg)                     { enqueue(msg.c_str(),  LogType::Error);      }
+void Logger::error_sync(const char * msg)                       { log_sync(msg,         LogType::Error);      }
+void Logger::error_sync(const std::string & msg)                { log_sync(msg,         LogType::Error);      }
 
 
 //  "notify"
@@ -134,6 +193,32 @@ void Logger::notify(const std::string & msg)                    { enqueue(msg.c_
 //
 void Logger::critical(const char * msg)                         { enqueue(msg,          LogType::Critical);   }
 void Logger::critical(const std::string & msg)                  { enqueue(msg.c_str(),  LogType::Critical);   }
+void Logger::critical_sync(const char * msg)                    { log_sync(msg,         LogType::Critical);   }
+void Logger::critical_sync(const std::string & msg)             { log_sync(msg,         LogType::Critical);   }
+
+
+//
+//
+// *************************************************************************** //   END [[ 1B.  "PRIMARY PUBLIC API" ]].
+
+
+
+// *************************************************************************** //
+//      1C. PUBLIC. |       SECONDARY PUBLIC API.
+// *************************************************************************** //
+
+
+//
+//
+// *************************************************************************** //   END [[ 1C.  "SECONDARY PUBLIC API" ]].
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 1.  "PUBLIC MEMBERS" ]].
 
 
 
@@ -143,13 +228,18 @@ void Logger::critical(const std::string & msg)                  { enqueue(msg.c_
 // *************************************************************************** //
 //
 //
-//  3.      PROTECTED MEMBER FUNCTIONS...
+//
+//      2.      PROTECTED MEMBER FUNCTIONS...
 // *************************************************************************** //
 // *************************************************************************** //
-
 
 #if CBAPP_LOG_ENABLED
 // *************************************************************************** //
+// *************************************************************************** //
+// *************************************************************************** //
+//
+//
+//
 
 //  "enqueue"
 //
@@ -174,18 +264,192 @@ void Logger::enqueue(const char * msg, LogType lvl)
 //
 void Logger::enqueue_event(LogEvent && ev)
 {
-    
-    if ( static_cast<int>(ev.level) < static_cast<int>(m_threshold.load(std::memory_order_relaxed)) )       { return; }
-
     std::unique_lock<std::mutex>    lock        (m_mtx);
+    
+    if (m_queue.size() >= cv_QUEUE_CAPACITY)    { this->accounting_note_queue_wait(); }
     
     m_cv.wait(lock, [this]{ return m_queue.size() < cv_QUEUE_CAPACITY; });
     m_queue.push(std::move(ev));
+    this->accounting_note_queue_size(m_queue.size());
     lock.unlock();
     m_cv.notify_one();
     
     return;
 }
+
+
+//  "accounting_note_queue_wait"
+//
+void Logger::accounting_note_queue_wait(void)
+{
+    std::lock_guard<std::mutex>     lg          (this->m_accounting_mtx);
+    
+    ++this->m_accounting[LogAccountingCounter::QueueProducerWaitCount];
+    return;
+}
+
+
+//  "accounting_note_queue_size"
+//
+void Logger::accounting_note_queue_size(const size_t queue_size)
+{
+    std::lock_guard<std::mutex>     lg          (this->m_accounting_mtx);
+    
+    if (queue_size > this->m_accounting[LogAccountingCounter::QueueHighWaterMark]) {
+        this->m_accounting[LogAccountingCounter::QueueHighWaterMark] = queue_size;
+    }
+    return;
+}
+
+
+//  "accounting_note_sync_dispatch"
+//
+void Logger::accounting_note_sync_dispatch(void)
+{
+    std::lock_guard<std::mutex>     lg          (this->m_accounting_mtx);
+    
+    ++this->m_accounting[LogAccountingCounter::SyncEventDispatchCount];
+    return;
+}
+
+
+//  "accounting_note_file_failure"
+//
+void Logger::accounting_note_file_failure(void)
+{
+    std::lock_guard<std::mutex>     lg          (this->m_accounting_mtx);
+    
+    ++this->m_accounting[LogAccountingCounter::FileSinkWriteFailureCount];
+    return;
+}
+
+
+//  "accounting_note_message_loss"
+//
+void Logger::accounting_note_message_loss(const LogType level, const counter_type count)
+{
+    std::lock_guard<std::mutex>     lg          (this->m_accounting_mtx);
+    
+    this->m_loss_counts[level] += count;
+    this->m_accounting[LogAccountingCounter::TotalLostMessageCount] += count;
+    return;
+}
+
+
+
+
+
+
+//  "dispatch_event"
+//
+void Logger::dispatch_event(const LogEvent & ev)
+{
+    std::lock_guard<std::mutex>     lg          (this->m_sink_io_mtx);
+    
+    this->dispatch_sink_event(LogSinkType::Terminal, ev);
+    this->dispatch_sink_event(LogSinkType::File, ev);
+    
+    return;
+}
+
+
+//  "dispatch_event_sync"
+//
+void Logger::dispatch_event_sync(const LogEvent & ev)
+{
+    this->accounting_note_sync_dispatch();
+    
+    std::lock_guard<std::mutex>     lg          (this->m_sink_io_mtx);
+    
+    this->dispatch_sink_event_sync(LogSinkType::Terminal, ev);
+    this->dispatch_sink_event_sync(LogSinkType::File, ev);
+    
+    return;
+}
+
+
+
+
+
+
+//  "dispatch_sink_event"
+//
+void Logger::dispatch_sink_event(const LogSinkType sink, const LogEvent & ev)
+{
+    switch (sink) {
+        case LogSinkType::None : {
+            break;
+        }
+        case LogSinkType::Terminal : {
+            const LogSinkState      sink_state  = this->get_sink_state(sink);
+            
+            if (!sink_state.enabled)                                                                        { break; }
+            if (static_cast<int>(ev.level) < static_cast<int>(sink_state.threshold))                        { break; }
+            
+            this->terminal_sink_write_event(ev);
+            break;
+        }
+        case LogSinkType::File : {
+            const LogSinkState      sink_state  = this->get_sink_state(sink);
+            
+            if (!sink_state.enabled)                                                                        { break; }
+            if (static_cast<int>(ev.level) < static_cast<int>(sink_state.threshold))                        { break; }
+            
+            this->file_sink_write_event(ev);
+            break;
+        }
+        case LogSinkType::COUNT : {
+            break;
+        }
+        default : {
+            break;
+        }
+    }
+    
+    return;
+}
+
+
+//  "dispatch_sink_event_sync"
+//
+void Logger::dispatch_sink_event_sync(const LogSinkType sink, const LogEvent & ev)
+{
+    switch (sink) {
+        case LogSinkType::None : {
+            break;
+        }
+        case LogSinkType::Terminal : {
+            const LogSinkState      sink_state  = this->get_sink_state(sink);
+            
+            if (!sink_state.enabled)                                                                        { break; }
+            if (!sink_state.sync_severe_enabled)                                                            { break; }
+            if (static_cast<int>(ev.level) < static_cast<int>(sink_state.threshold))                        { break; }
+            
+            this->terminal_sink_write_event(ev);
+            break;
+        }
+        case LogSinkType::File : {
+            const LogSinkState      sink_state  = this->get_sink_state(sink);
+            
+            if (!sink_state.enabled)                                                                        { break; }
+            if (!sink_state.sync_severe_enabled)                                                            { break; }
+            if (static_cast<int>(ev.level) < static_cast<int>(sink_state.threshold))                        { break; }
+            
+            this->file_sink_write_event(ev);
+            break;
+        }
+        case LogSinkType::COUNT : {
+            break;
+        }
+        default : {
+            break;
+        }
+    }
+    
+    return;
+}
+
+
 
 
 //  "start_worker"
@@ -205,7 +469,7 @@ void Logger::start_worker(void)
                     LogEvent    ev = std::move(m_queue.front());
                     m_queue.pop();
                     lock.unlock();
-                    write_event(ev);
+                    dispatch_event(ev);
                     lock.lock();
                     m_cv.notify_all();   // signal space to any waiting producers
                     
@@ -236,14 +500,36 @@ void Logger::stop_worker(void)
 }
 
 
-// ---------------------------------------------------------------------------
-// FORMATTED OUTPUT WITH HANGING-INDENT + WORD WRAP
-// ---------------------------------------------------------------------------
 
-//  "build_header"
-//      Member helper: build textual header "[CBLOG LEVEL ###] : "
 //
-[[nodiscard]] std::string Logger::build_header(const LogEvent & ev)
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 2.  "PROTECTED FUNCTIONS" ]].
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//      3.      SINK FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
+// *************************************************************************** //
+//      3A. PROTECTED. |    TERMINAL SINK FUNCTIONS.
+// *************************************************************************** //
+
+//  "terminal_sink_build_header"
+//      Member helper: build terminal-sink header "[CBLOG LEVEL ###] : "
+//
+[[nodiscard]] std::string Logger::terminal_sink_build_header(const LogEvent & ev)
 {
     std::ostringstream      ss;
     
@@ -256,10 +542,10 @@ void Logger::stop_worker(void)
 }
 
 
-//  "write_body"
-//      Member helper: hanging‑indent, word‑wrapped body (writes directly to `out`)
+//  "terminal_sink_write_body"
+//      Member helper: terminal-sink hanging-indent, word-wrapped body
 //
-void Logger::write_body(const std::string& msg, std::ostream& out, size_t indent_len) const
+void Logger::terminal_sink_write_body(const std::string & msg, std::ostream & out, size_t indent_len) const
 {
     out << cv_BODY_OPEN_DELIM;
     size_t col = indent_len + std::char_traits<char>::length(cv_BODY_OPEN_DELIM);
@@ -286,15 +572,15 @@ void Logger::write_body(const std::string& msg, std::ostream& out, size_t indent
 }
 
 
-
-//  "build_metadata"
-//      Member helper: metadata line (file, line, func, thread, timestamp)
+//  "terminal_sink_build_metadata"
+//      Member helper: terminal-sink metadata line
 //
-std::string Logger::build_metadata(const LogEvent & ev, size_t indent_len)
+std::string Logger::terminal_sink_build_metadata(const LogEvent & ev, size_t indent_len)
 {
+    const LogSinkState      sink_state  = this->get_sink_state(LogSinkType::Terminal);
     bool                    first       = true;
-    LoggerFieldFlags        fmt         = m_fields.load(std::memory_order_relaxed);
-    size_t                  path_depth  = m_path_depth.load(std::memory_order_relaxed);
+    LoggerFieldFlags        fmt         = sink_state.field_flags;
+    size_t                  path_depth  = sink_state.path_depth;
     std::ostringstream      ss;
     
     
@@ -338,23 +624,22 @@ std::string Logger::build_metadata(const LogEvent & ev, size_t indent_len)
 }
 
 
-
-//  "write_event"
-//      Public sink: write_event – orchestrates helpers
+//  "terminal_sink_write_event"
+//      Terminal sink orchestrator: render and emit one event to `std::cout`
 //
-void Logger::write_event(const LogEvent & ev)
+void Logger::terminal_sink_write_event(const LogEvent & ev)
 {
     const bool              color           = m_vt_enabled.load(std::memory_order_relaxed);
     const char *            prefix          = color     ? Logger::ms_LOGLEVEL_TO_ASCII_COLOR[ ev.level ]        : "";
     const char *            suffix          = color     ? Logger::ms_LOGLEVEL_TO_ASCII_COLOR[ LogType::None ]  : "";
-    const std::string       header          = this->build_header(ev);
+    const std::string       header          = this->terminal_sink_build_header(ev);
     const size_t            indent_len      = header.size();
-    const std::string       metadata        = this->build_metadata(ev, indent_len);
+    const std::string       metadata        = this->terminal_sink_build_metadata(ev, indent_len);
     std::ostringstream      out;
     
     
     out << header;
-    this->write_body(ev.text, out, indent_len);
+    this->terminal_sink_write_body(ev.text, out, indent_len);
     
     if (!metadata.empty()) {
         out << '\n' << metadata;
@@ -363,6 +648,279 @@ void Logger::write_event(const LogEvent & ev)
     std::cout << prefix << out.str() << suffix << std::endl;
     return;
 }
+
+
+//
+//
+// *************************************************************************** //   END [[ 3A.  "TERMINAL SINK" ]].
+
+
+
+// *************************************************************************** //
+//      3B. PROTECTED. |    FILE SINK FUNCTIONS.
+// *************************************************************************** //
+
+//  "file_sink_open"
+//
+void Logger::file_sink_open(void)
+{
+    std::ios_base::openmode     open_mode   = std::ios::out;
+    
+    switch (this->m_file_open_mode) {
+        case LogFileOpenMode::None : {
+            open_mode |= std::ios::app;
+            break;
+        }
+        case LogFileOpenMode::Append : {
+            open_mode |= std::ios::app;
+            break;
+        }
+        case LogFileOpenMode::Truncate : {
+            open_mode |= std::ios::trunc;
+            break;
+        }
+        case LogFileOpenMode::COUNT : {
+            open_mode |= std::ios::app;
+            break;
+        }
+        default : {
+            open_mode |= std::ios::app;
+            break;
+        }
+    }
+    
+    if (this->m_file_stream.is_open())    { this->m_file_stream.close(); }
+    this->m_file_stream.clear();
+    this->m_file_stream.open(this->m_file_path, open_mode);
+    return;
+}
+
+
+//  "file_sink_close"
+//
+void Logger::file_sink_close(void)
+{
+    if (this->m_file_stream.is_open())    { this->m_file_stream.close(); }
+    this->m_file_stream.clear();
+    return;
+}
+
+
+//  "file_sink_recover"
+//
+void Logger::file_sink_recover(void)
+{
+    this->file_sink_close();
+    this->file_sink_open();
+    
+    if (!this->m_file_stream.is_open() || !this->m_file_stream.good()) {
+        std::lock_guard<std::mutex>     lg          (this->m_sink_cfg_mtx);
+        
+        this->m_sink_states[LogSinkType::File].enabled = false;
+    }
+    return;
+}
+
+
+//  "file_sink_rotate_if_needed"
+//
+void Logger::file_sink_rotate_if_needed(const size_t pending_bytes)
+{
+    namespace                   fs              = std::filesystem;
+    std::error_code             ec              ;
+    uintmax_t                   current_size    = 0ULL;
+    
+    if (Logger::cv_DEF_FILE_SINK_MAX_BYTES == 0ULL)    { return; }
+
+    if (fs::exists(this->m_file_path, ec)) {
+        current_size = fs::file_size(this->m_file_path, ec);
+        if (ec) {
+            this->accounting_note_file_failure();
+            ec.clear();
+            current_size = 0ULL;
+        }
+    }
+    else {
+        ec.clear();
+    }
+    
+    if ((current_size + pending_bytes) <= Logger::cv_DEF_FILE_SINK_MAX_BYTES)    { return; }
+    
+    this->file_sink_close();
+    this->file_sink_rotate_files();
+    this->file_sink_open();
+    
+    if (!this->m_file_stream.is_open() || !this->m_file_stream.good()) {
+        this->accounting_note_file_failure();
+        this->file_sink_recover();
+    }
+    return;
+}
+
+
+//  "file_sink_rotate_files"
+//
+void Logger::file_sink_rotate_files(void)
+{
+    namespace                   fs                  = std::filesystem;
+    const size_t                max_backup_count    = Logger::cv_DEF_FILE_SINK_BACKUP_COUNT;
+    std::error_code             ec                  ;
+    
+    if (max_backup_count == 0ULL) {
+        if (fs::exists(this->m_file_path, ec)) {
+            fs::remove(this->m_file_path, ec);
+            if (ec)    { this->accounting_note_file_failure(); }
+        }
+        return;
+    }
+    
+    {
+        const std::string       oldest_path         = this->file_sink_backup_path(max_backup_count);
+        
+        if (fs::exists(oldest_path, ec)) {
+            fs::remove(oldest_path, ec);
+            if (ec)    { this->accounting_note_file_failure(); }
+            ec.clear();
+        }
+    }
+    
+    for (size_t idx = max_backup_count; idx > 0ULL; --idx)
+    {
+        const std::string       source_path         = (idx == 1ULL) ? this->m_file_path : this->file_sink_backup_path(idx - 1ULL);
+        const std::string       target_path         = this->file_sink_backup_path(idx);
+        
+        if (!fs::exists(source_path, ec)) {
+            ec.clear();
+            continue;
+        }
+        
+        if (fs::exists(target_path, ec)) {
+            fs::remove(target_path, ec);
+            if (ec)    { this->accounting_note_file_failure(); }
+            ec.clear();
+        }
+        
+        fs::rename(source_path, target_path, ec);
+        if (ec) {
+            this->accounting_note_file_failure();
+            ec.clear();
+        }
+    }
+    return;
+}
+
+
+//  "file_sink_backup_path"
+//
+[[nodiscard]] std::string Logger::file_sink_backup_path(const size_t index) const
+{
+    return this->m_file_path + "." + std::to_string(index);
+}
+
+
+//  "file_sink_build_record"
+//      Member helper: build one stable persisted file-sink record
+//
+std::string Logger::file_sink_build_record(const LogEvent & ev)
+{
+    const LogSinkState      sink_state  = this->get_sink_state(LogSinkType::File);
+    bool                    first       = true;
+    LoggerFieldFlags        fmt         = sink_state.field_flags;
+    size_t                  path_depth  = sink_state.path_depth;
+    std::ostringstream      ss;
+    
+    
+    ss << '[' << cv_HEADER     << ' '
+       << std::left         << std::setw(cv_MAX_LEVEL_LEN) << Logger::ms_LOGLEVEL_NAME[ev.level]   << ' '
+       << std::right        << std::setfill('0')        << std::setw(cv_COUNTER_WIDTH)             << ev.count
+       << std::setfill(' ') << "] : "
+       << ev.text;
+    
+    if (fmt & LoggerFieldFlags_ThreadID) {                                       //  1.  Thread ID.
+        if (first)              { ss << '\n' << '('; }
+        else                    { ss << ' ';         }
+        ss << "thread: 0x" << tid_hex(ev.thread_id) << ".";
+        first = false;
+    }
+    
+    if ((fmt & LoggerFieldFlags_Function) && ev.func) {                           //  2.  Function-Name.
+        if (first)              { ss << '\n' << '('; }
+        else                    { ss << ' ';         }
+        ss << "func: " << ev.func << ".";
+        first = false;
+    }
+    
+    if ((fmt & LoggerFieldFlags_File) && ev.file) {                               //  3.  Filename.
+        if (first)              { ss << '\n' << '('; }
+        else                    { ss << ' ';         }
+        ss << "file: " << path_tail(ev.file, path_depth) << ".";
+        first = false;
+    }
+    
+    if ((fmt & LoggerFieldFlags_Line) && (ev.line > 0)) {                         //  4.  Line Number.
+        if (first)              { ss << '\n' << '('; }
+        else                    { ss << ' ';         }
+        ss << "line: " << ev.line << ".";
+        first = false;
+    }
+    
+    if (fmt & LoggerFieldFlags_Timestamp) {                                       //  5.  Time-Stamp.
+        if (first)              { ss << '\n' << '('; }
+        else                    { ss << ' ';         }
+        ss << ev.ts_iso8601;
+        first = false;
+    }
+    
+    if (!first)    { ss << ')'; }
+    
+    ss << '\n';
+    return ss.str();
+}
+
+
+//  "file_sink_write_event"
+//      File sink orchestrator: persist one event and flush it immediately
+//
+void Logger::file_sink_write_event(const LogEvent & ev)
+{
+    const std::string       record      = this->file_sink_build_record(ev);
+    
+    if (!this->m_file_stream.is_open()) {
+        this->accounting_note_file_failure();
+        this->file_sink_recover();
+        if (!this->m_file_stream.is_open())    { return; }
+    }
+    
+    this->file_sink_rotate_if_needed(record.size());
+    if (!this->m_file_stream.is_open())        { return; }
+    
+    this->m_file_stream << record;
+    this->m_file_stream.flush();
+    
+    if (!this->m_file_stream.good()) {
+        this->accounting_note_file_failure();
+        this->file_sink_recover();
+        if (!this->m_file_stream.is_open())    { return; }
+        
+        this->file_sink_rotate_if_needed(record.size());
+        if (!this->m_file_stream.is_open())    { return; }
+        
+        this->m_file_stream << record;
+        this->m_file_stream.flush();
+        if (!this->m_file_stream.good()) {
+            this->accounting_note_file_failure();
+            this->file_sink_recover();
+        }
+    }
+    return;
+}
+
+
+
+//
+//
+// *************************************************************************** //   END [[ 3B.  "FILE SINK" ]].
+
 
 
 //
@@ -376,12 +934,42 @@ void Logger::write_event(const LogEvent & ev)
 //
 //
 //
+//
+//
+//
 // *************************************************************************** //
-#endif
-    
-    
-    
-    
+// *************************************************************************** //
+// *************************************************************************** //
+#endif  //  CBAPP_LOG_ENABLED   //
+
+
+
+//
+//
+//
+// *************************************************************************** //
+// *************************************************************************** //   END [[ 3.  "SINK FUNCTIONS" ]].
+
+
+
+
+
+
+
+
+
+
+
+// *************************************************************************** //
+//
+//
+//
+//          4.      UTILITY FUNCTIONS...
+// *************************************************************************** //
+// *************************************************************************** //
+
+
+
 //  "enable_vt_win"
 //
 #if CBAPP_LOG_ENABLED
@@ -414,15 +1002,6 @@ void Logger::enable_vt_win(void)
 
 
 
-
-
-// *************************************************************************** //
-//
-//
-//      UTILITY FUNCTIONS...
-// *************************************************************************** //
-// *************************************************************************** //
-
 //  "path_tail"
 //
 [[nodiscard]] std::string Logger::path_tail(std::string_view s, size_t depth)
@@ -447,6 +1026,9 @@ void Logger::enable_vt_win(void)
     }
     return std::string{s};
 }
+
+
+
 
 
 

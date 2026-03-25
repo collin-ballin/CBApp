@@ -29,6 +29,7 @@
 #include <chrono>
 #include <ctime>
 #include <format>
+#include <fstream>
 #include <type_traits>
 #include <utility>
 
@@ -126,6 +127,40 @@ enum class LogType : uint8_t {
 };
 
 
+//  "LogSinkType"
+//
+enum class LogSinkType : uint8_t {
+      None              = 0U
+    , Terminal
+    , File
+    , COUNT
+};
+
+
+//  "LogFileOpenMode"
+//
+enum class LogFileOpenMode : uint8_t {
+      None              = 0U
+    , Append
+    , Truncate
+    , COUNT
+};
+
+
+//  "LogAccountingCounter"
+//
+enum class LogAccountingCounter : uint8_t {
+      None                  = 0U
+    , QueueProducerWaitCount
+    , QueueHighWaterMark
+    , SyncEventDispatchCount
+    , FileSinkWriteFailureCount
+    , TotalLostMessageCount
+    , LossSummaryEmissionCount
+    , COUNT
+};
+
+
 //  "TermColor"
 //
 enum class TermColor : uint8_t {
@@ -175,6 +210,39 @@ DEF_LOGLEVEL_NAMES              = { {
 } };
 
 
+//  "DEF_LOGSINK_NAMES"
+//
+static constexpr cblib::EnumArray< LogSinkType, const char * >
+DEF_LOGSINK_NAMES              = { {
+      /*  None        */        "NONE"
+    , /*  Terminal    */        "TERMINAL"
+    , /*  File        */        "FILE"
+} };
+
+
+//  "DEF_LOGFILE_OPENMODE_NAMES"
+//
+static constexpr cblib::EnumArray< LogFileOpenMode, const char * >
+DEF_LOGFILE_OPENMODE_NAMES     = { {
+      /*  None        */        "NONE"
+    , /*  Append      */        "APPEND"
+    , /*  Truncate    */        "TRUNCATE"
+} };
+
+
+//  "DEF_LOGACCOUNTING_COUNTER_NAMES"
+//
+static constexpr cblib::EnumArray< LogAccountingCounter, const char * >
+DEF_LOGACCOUNTING_COUNTER_NAMES = { {
+      /*  None                    */    "NONE"
+    , /*  QueueProducerWaitCount  */    "QUEUE_PRODUCER_WAIT_COUNT"
+    , /*  QueueHighWaterMark      */    "QUEUE_HIGH_WATER_MARK"
+    , /*  SyncEventDispatchCount  */    "SYNC_EVENT_DISPATCH_COUNT"
+    , /*  FileSinkWriteFailure... */    "FILE_SINK_WRITE_FAILURE_COUNT"
+    , /*  TotalLostMessageCount   */    "TOTAL_LOST_MESSAGE_COUNT"
+    , /*  LossSummaryEmission...  */    "LOSS_SUMMARY_EMISSION_COUNT"
+} };
+
 
 //  "DEF_LOGLEVEL_TO_ASCII_COLOR"
 //
@@ -218,9 +286,17 @@ static constexpr size_t             cv_COUNTER_WIDTH                = 5ULL      
 static constexpr size_t             cv_MAX_LEVEL_LEN                = 9ULL                          ;   //  strlen("EXCEPTION")
 static constexpr size_t             cv_QUEUE_CAPACITY               = 1'024ULL                      ;   //  bounded queue
 static constexpr size_t             cv_MAX_COL_WIDTH                = 120ULL                        ;   //  wrap column
+static constexpr size_t             cv_DEFAULT_PATH_DEPTH           = 2ULL                          ;
 static constexpr const char *       cv_BODY_OPEN_DELIM              = ""                            ;
 static constexpr const char *       cv_BODY_CLOSE_DELIM             = ""                            ;
-static constexpr const char *       cv_TIMESTAMP_FMT_STRING         = "%Y-%m-%dT%H:%M:%S";
+static constexpr const char *       cv_TIMESTAMP_FMT_STRING         = "%Y-%m-%dT%H:%M:%S"           ;
+//
+static constexpr bool               cv_DEF_FILE_SINK_ENABLED        = true                          ;
+static constexpr const char *       cv_DEF_FILE_SINK_PATH           = "cblog.log"                   ;
+static constexpr LogFileOpenMode    cv_DEF_FILE_SINK_OPEN_MODE      = LogFileOpenMode::Append       ;
+static constexpr size_t             cv_DEF_FILE_SINK_MAX_BYTES      = 1'048'576ULL                  ;   //  1 MiB
+static constexpr size_t             cv_DEF_FILE_SINK_BACKUP_COUNT   = 3ULL                          ;
+//
 //
 //
 static constexpr LogType            cv_LOGGER_THRESHOLD             = LogType::Info                 ;
@@ -266,6 +342,56 @@ struct LogEvent {
     const char *            func                            ;       //  source function name, if available
     std::thread::id         thread_id                       ;       //  producer thread identity token
     std::string             ts_iso8601                      ;       //  current-stage rendered timestamp representation
+};
+
+
+//  "LogSinkState"
+//
+/// @brief
+/// Current-stage per-sink policy/state packet.
+///
+/// This struct now owns the sink-local policy that was previously stored as
+/// logger-global output configuration.  During the current transition stage,
+/// the public logger setters still act as compatibility shims and update the
+/// policies of the active sinks together.
+///
+/// This packet intentionally remains small and policy-focused:
+/// - whether the sink is enabled,
+/// - whether the sink participates in severe-path synchronous dispatch,
+/// - the sink-local severity threshold,
+/// - the sink-local metadata field selection,
+/// - the sink-local source-path tail depth.
+struct LogSinkState {
+    bool                    enabled                         ;
+    bool                    sync_severe_enabled             ;
+    LogType                 threshold                       ;
+    LoggerFieldFlags        field_flags                     ;
+    size_t                  path_depth                      ;
+};
+
+
+//  "LogAccountingSnapshot"
+//
+/// @brief
+/// Snapshot of logger accounting / observability state.
+///
+/// This packet is intended to expose the logger's current internal accounting
+/// information without leaking the mutable storage used internally by the
+/// logger.  At the current stage, this includes queue-pressure observations,
+/// synchronous severe-path usage, file-sink write-failure counts, and
+/// future-ready loss-accounting state.
+///
+/// `lost_by_level` is intentionally present even though the current queue
+/// policy remains blocking rather than lossy.  It exists now so later hybrid
+/// overload work can accumulate explicit loss accounting without redesigning
+/// the observability surface again.
+//
+template <typename counter_type = size_t>
+struct LogAccountingSnapshot {
+    cblib::EnumArray< LogAccountingCounter, counter_type >
+                            counter_values                  = { { counter_type(0) } };
+    cblib::EnumArray< LogType, counter_type >
+                            lost_by_level                   = { { counter_type(0) } };
 };
 
 
@@ -384,9 +510,14 @@ public:
     //
     using                                LogType                            = anon::LogType                                 ;
     using                                LoggerFieldFlags                   = anon::LoggerFieldFlags                        ;
+    using                                LogSinkType                        = anon::LogSinkType                             ;
+    using                                LogFileOpenMode                    = anon::LogFileOpenMode                         ;
+    using                                LogAccountingCounter               = anon::LogAccountingCounter                    ;
     using                                enum                               anon::LoggerFieldFlags                          ;   //  cpp-20 feature.
     //
+    using                                LogSinkState                       = anon::LogSinkState                            ;
     using                                LogEvent                           = anon::LogEvent< counter_type >                ;
+    using                                LogAccountingSnapshot              = anon::LogAccountingSnapshot< counter_type >   ;
 
 //
 //
@@ -411,9 +542,15 @@ protected:
     static constexpr size_t                 cv_MAX_LEVEL_LEN                    = anon::cv_MAX_LEVEL_LEN            ;   //  strlen("EXCEPTION")
     static constexpr size_t                 cv_QUEUE_CAPACITY                   = anon::cv_QUEUE_CAPACITY           ;   //  bounded queue
     static constexpr size_t                 cv_MAX_COL_WIDTH                    = anon::cv_MAX_COL_WIDTH            ;   //  wrap column
+    static constexpr size_t                 cv_DEFAULT_PATH_DEPTH               = anon::cv_DEFAULT_PATH_DEPTH       ;
     static constexpr const char *           cv_BODY_OPEN_DELIM                  = anon::cv_BODY_OPEN_DELIM          ;
     static constexpr const char *           cv_BODY_CLOSE_DELIM                 = anon::cv_BODY_CLOSE_DELIM         ;
     static constexpr const char *           cv_TIMESTAMP_FMT_STRING             = anon::cv_TIMESTAMP_FMT_STRING     ;
+    static constexpr bool                   cv_DEF_FILE_SINK_ENABLED            = anon::cv_DEF_FILE_SINK_ENABLED    ;
+    static constexpr const char *           cv_DEF_FILE_SINK_PATH               = anon::cv_DEF_FILE_SINK_PATH       ;
+    static constexpr LogFileOpenMode        cv_DEF_FILE_SINK_OPEN_MODE          = anon::cv_DEF_FILE_SINK_OPEN_MODE  ;
+    static constexpr size_t                 cv_DEF_FILE_SINK_MAX_BYTES          = anon::cv_DEF_FILE_SINK_MAX_BYTES  ;
+    static constexpr size_t                 cv_DEF_FILE_SINK_BACKUP_COUNT       = anon::cv_DEF_FILE_SINK_BACKUP_COUNT;
     //
     static constexpr LoggerFieldFlags       cv_DEFAULT_FIELDS                   = LoggerFieldFlags_All              ;  //  ...
     static constexpr LogType                cv_DEFAULT_LOGGER_THRESHOLD         = anon::cv_LOGGER_THRESHOLD         ;
@@ -425,9 +562,11 @@ protected:
     // *************************************************************************** //
     //      1. |    REFERENCES TO GLOBAL ARRAYS.
     // *************************************************************************** //
-    static constexpr auto &                 ms_LOGLEVEL_VALUE                   = anon::DEF_LOGLEVELS                   ;
-    static constexpr auto &                 ms_LOGLEVEL_NAME                    = anon::DEF_LOGLEVEL_NAMES              ;
-    static constexpr auto &                 ms_LOGLEVEL_TO_ASCII_COLOR          = anon::DEF_LOGLEVEL_TO_ASCII_COLOR     ;
+    static constexpr auto &                 ms_LOGLEVEL_VALUE                   = anon::DEF_LOGLEVELS                        ;
+    static constexpr auto &                 ms_LOGLEVEL_NAME                    = anon::DEF_LOGLEVEL_NAMES                   ;
+    static constexpr auto &                 ms_LOGLEVEL_TO_ASCII_COLOR          = anon::DEF_LOGLEVEL_TO_ASCII_COLOR          ;
+    static constexpr auto &                 ms_LOGSINK_NAME                     = anon::DEF_LOGSINK_NAMES                    ;
+    static constexpr auto &                 ms_LOGACCOUNTING_COUNTER_NAME       = anon::DEF_LOGACCOUNTING_COUNTER_NAMES      ;
     
     // *************************************************************************** //
     //
@@ -444,10 +583,30 @@ protected:
     std::atomic<bool>                           m_vt_enabled                    { false };       //  set once in ctor
     //
     //
-    //                  LOGGER FORMATTING:
-    std::atomic<LogType>                        m_threshold                     { Logger::cv_DEFAULT_LOGGER_THRESHOLD };
-    std::atomic<LoggerFieldFlags>               m_fields                        { Logger::cv_DEFAULT_FIELDS };
-    std::atomic<size_t>                         m_path_depth                    { 2ULL };        //  default “.../dir/file.cpp”
+    //                  LOGGER SINK STATE:
+    mutable std::mutex                          m_sink_cfg_mtx                  ;
+    std::mutex                                  m_sink_io_mtx                   ;
+    cblib::EnumArray< LogSinkType, LogSinkState >
+                                                m_sink_states                   = { {
+                                                      /*  None        */        LogSinkState{ false
+                                                                                            , false
+                                                                                            , Logger::cv_DEFAULT_LOGGER_THRESHOLD
+                                                                                            , Logger::cv_DEFAULT_FIELDS
+                                                                                            , Logger::cv_DEFAULT_PATH_DEPTH }
+                                                    , /*  Terminal    */        LogSinkState{ true
+                                                                                            , true
+                                                                                            , Logger::cv_DEFAULT_LOGGER_THRESHOLD
+                                                                                            , Logger::cv_DEFAULT_FIELDS
+                                                                                            , Logger::cv_DEFAULT_PATH_DEPTH }
+                                                    , /*  File        */        LogSinkState{ Logger::cv_DEF_FILE_SINK_ENABLED
+                                                                                            , true
+                                                                                            , Logger::cv_DEFAULT_LOGGER_THRESHOLD
+                                                                                            , Logger::cv_DEFAULT_FIELDS
+                                                                                            , Logger::cv_DEFAULT_PATH_DEPTH }
+                                                } };
+    std::string                                 m_file_path                     { Logger::cv_DEF_FILE_SINK_PATH              };
+    LogFileOpenMode                             m_file_open_mode                { Logger::cv_DEF_FILE_SINK_OPEN_MODE         };
+    std::ofstream                               m_file_stream                   ;
     //
     //
     //                  CONCURRENCY STUFF:
@@ -460,8 +619,13 @@ protected:
     //
     //                  IMPORTANT DATA:
     cblib::EnumArray< LogType, counter_type >   m_counts                        = { { counter_type(0) } };
-    //  std::array< counter_type, static_cast<size_t>(LogType::COUNT) >
-    //                                          m_counts                        = { };
+    //
+    //
+    //                  ACCOUNTING / OBSERVABILITY:
+    mutable std::mutex                          m_accounting_mtx                ;
+    cblib::EnumArray< LogAccountingCounter, counter_type >
+                                                m_accounting                    = { { counter_type(0) } };
+    cblib::EnumArray< LogType, counter_type >   m_loss_counts                   = { { counter_type(0) } };
 
 
 
@@ -542,6 +706,63 @@ public:
     }
     
     
+    //  "log_ex_sync"
+    //
+    template<class... Args>
+    inline void                                 log_ex_sync                     (std::format_string<Args...>    fmt
+                                                                                , const LogType                 type
+                                                                                , const char *                  file
+                                                                                , int                           line
+                                                                                , const char *                  func
+                                                                                , std::thread::id               tid
+                                                                                , Args &&...                    args)
+    {
+        
+    #if CBAPP_LOG_ENABLED
+        std::string msg = std::format(fmt, std::forward<Args>(args)...);
+        dispatch_event_sync(LogEvent{
+              type
+            , std::move(msg)
+            , this->next_count(type)
+            , file
+            , line
+            , func
+            , tid
+            , Logger::s_iso_timestamp()
+        });
+    #else
+        (void)fmt; (void)type; (void)file; (void)line; (void)func; (void)tid; (void)sizeof...(args);
+    #endif  //  CBAPP_LOG_ENABLED  //
+        return;
+    }
+    
+    //  "log_ex_sync"
+    //
+    inline void                                 log_ex_sync                     (std::string_view               msg
+                                                                                , const LogType                 type
+                                                                                , const char *                  file
+                                                                                , int                           line
+                                                                                , const char *                  func
+                                                                                , std::thread::id               tid)
+    {
+    #if CBAPP_LOG_ENABLED
+        dispatch_event_sync(LogEvent{
+              type
+            , std::string(msg)
+            , this->next_count(type)
+            , file
+            , line
+            , func
+            , tid
+            , Logger::s_iso_timestamp()
+        });
+    #else
+        (void)msg; (void)type; (void)file; (void)line; (void)func; (void)tid;
+    #endif  //  CBAPP_LOG_ENABLED  //
+        return;
+    }
+    
+    
     // *************************************************************************** //
     //
     //
@@ -581,6 +802,38 @@ public:
     }
     
     
+    //  "logf_sync"
+    //
+    template<class... Args>
+    inline void                                 logf_sync                       (const LogType                  type
+                                                                                , std::format_string<Args...>   fmt
+                                                                                , Args && ...                   args)
+    {
+    #if CBAPP_LOG_ENABLED
+        std::string msg = std::format(fmt, std::forward<Args>(args)...);
+        log_sync(msg, type);
+    #else
+        (void)type; (void)fmt; (void)sizeof...(args);
+    #endif  //  CBAPP_LOG_ENABLED  //
+        return;
+    }
+    
+    //  "logf_sync"
+    //
+    template<typename... Args>
+    inline void                                 logf_sync                       (const std::string &            fmt_str
+                                                                                , Args && ...                   args)
+    {
+    #if CBAPP_LOG_ENABLED
+        std::string msg = std::vformat(fmt_str, std::make_format_args(args...));
+        log_sync(msg, LogType::Info);
+    #else
+        (void)fmt_str; (void)sizeof...(args);
+    #endif  //  CBAPP_LOG_ENABLED  //
+        return;
+    }
+    
+    
     // *************************************************************************** //
     //
     //
@@ -589,6 +842,8 @@ public:
     // *************************************************************************** //
     void                                        log                             (const char * , LogType );
     void                                        log                             (const std::string & , LogType );
+    void                                        log_sync                        (const char * , LogType );
+    void                                        log_sync                        (const std::string & , LogType );
     
     template<class... Args>
     inline void                                 debugf                          (std::format_string<Args...> f, Args&&... a)    { logf(LogType::Debug, f, std::forward<Args>(a)...);       }
@@ -609,11 +864,15 @@ public:
     inline void                                 exceptionf                      (std::format_string<Args...> f, Args&&... a)    { logf(LogType::Exception, f, std::forward<Args>(a)...);   }
     void                                        exception                       (const char * );
     void                                        exception                       (const std::string & );
+    void                                        exception_sync                  (const char * );
+    void                                        exception_sync                  (const std::string & );
     
     template<class... Args>
     inline void                                 errorf                          (std::format_string<Args...> f, Args&&... a)    { logf(LogType::Error, f, std::forward<Args>(a)...);       }
     void                                        error                           (const char * );
     void                                        error                           (const std::string & );
+    void                                        error_sync                      (const char * );
+    void                                        error_sync                      (const std::string & );
     
     template<class... Args>
     inline void                                 notifyf                         (std::format_string<Args...> f, Args&&... a)    { logf(LogType::Notify, f, std::forward<Args>(a)...);      }
@@ -624,6 +883,8 @@ public:
     inline void                                 criticalf                       (std::format_string<Args...> f, Args&&... a)    { logf(LogType::Critical, f, std::forward<Args>(a)...);    }
     void                                        critical                        (const char * );
     void                                        critical                        (const std::string & );
+    void                                        critical_sync                   (const char * );
+    void                                        critical_sync                   (const std::string & );
     
     
     // *************************************************************************** //
@@ -632,15 +893,69 @@ public:
     // *************************************************************************** //
     //      2.A. |  PUBLIC SETTER/GETTER FUNCTIONS...
     // *************************************************************************** //
-    void                                        set_level                       (const LogType & level) noexcept            { this->m_threshold.store(level, std::memory_order_relaxed);   }
-    void                                        set_field_flags                 (const LoggerFieldFlags flags) noexcept     { this->m_fields.store(flags, std::memory_order_relaxed);      }
-    void                                        set_path_depth                  (const size_t depth) noexcept               { this->m_path_depth.store(depth, std::memory_order_relaxed);  }
+    void                                        set_level                       (const LogType & level) noexcept
+    {
+        std::lock_guard<std::mutex>             lg                              (this->m_sink_cfg_mtx);
+        
+        this->m_sink_states[LogSinkType::Terminal].threshold = level;
+        this->m_sink_states[LogSinkType::File].threshold     = level;
+        return;
+    }
+    void                                        set_field_flags                 (const LoggerFieldFlags flags) noexcept
+    {
+        std::lock_guard<std::mutex>             lg                              (this->m_sink_cfg_mtx);
+        
+        this->m_sink_states[LogSinkType::Terminal].field_flags = flags;
+        this->m_sink_states[LogSinkType::File].field_flags     = flags;
+        return;
+    }
+    void                                        set_path_depth                  (const size_t depth) noexcept
+    {
+        std::lock_guard<std::mutex>             lg                              (this->m_sink_cfg_mtx);
+        
+        this->m_sink_states[LogSinkType::Terminal].path_depth = depth;
+        this->m_sink_states[LogSinkType::File].path_depth     = depth;
+        return;
+    }
     
-    [[nodiscard]] LogType                       get_level                       (void) const noexcept                       { return this->m_threshold.load(std::memory_order_relaxed);    }
-    [[nodiscard]] LoggerFieldFlags              get_field_flags                 (void) const noexcept                       { return this->m_fields.load(std::memory_order_relaxed);       }
-    [[nodiscard]] size_t                        get_path_depth                  (void) const noexcept                       { return this->m_path_depth.load(std::memory_order_relaxed);   }
+    [[nodiscard]] LogType                       get_level                       (void) const noexcept
+    {
+        std::lock_guard<std::mutex>             lg                              (this->m_sink_cfg_mtx);
+        
+        return this->m_sink_states[LogSinkType::Terminal].threshold;
+    }
+    [[nodiscard]] LoggerFieldFlags              get_field_flags                 (void) const noexcept
+    {
+        std::lock_guard<std::mutex>             lg                              (this->m_sink_cfg_mtx);
+        
+        return this->m_sink_states[LogSinkType::Terminal].field_flags;
+    }
+    [[nodiscard]] size_t                        get_path_depth                  (void) const noexcept
+    {
+        std::lock_guard<std::mutex>             lg                              (this->m_sink_cfg_mtx);
+        
+        return this->m_sink_states[LogSinkType::Terminal].path_depth;
+    }
     
+    //  "get_sink_state"
+    [[nodiscard]] LogSinkState                  get_sink_state(const LogSinkType sink) const
+    {
+        std::lock_guard<std::mutex>     lg          (this->m_sink_cfg_mtx);
+        
+        return this->m_sink_states[sink];
+    }
     
+    //  "get_accounting_snapshot"
+    [[nodiscard]] LogAccountingSnapshot         get_accounting_snapshot         (void) const
+    {
+        std::lock_guard<std::mutex>     lg          (this->m_accounting_mtx);
+        LogAccountingSnapshot           snapshot    {};
+        
+        snapshot.counter_values = this->m_accounting;
+        snapshot.lost_by_level  = this->m_loss_counts;
+        return snapshot;
+    }
+
     // *************************************************************************** //
     //
     //
@@ -682,19 +997,37 @@ protected:
     // *************************************************************************** //
     void                                        enqueue                         ([[maybe_unused]] const char * , [[maybe_unused]] const LogType );
     void                                        enqueue_event                   (LogEvent && );
+    void                                        accounting_note_queue_wait      (void);
+    void                                        accounting_note_queue_size      (const size_t);
+    void                                        accounting_note_sync_dispatch   (void);
+    void                                        accounting_note_file_failure    (void);
+    void                                        accounting_note_message_loss    (const LogType , const counter_type count=counter_type(1));
+    void                                        dispatch_event                  (const LogEvent & );
+    void                                        dispatch_event_sync             (const LogEvent & );
+    void                                        dispatch_sink_event             (const LogSinkType , const LogEvent & );
+    void                                        dispatch_sink_event_sync        (const LogSinkType , const LogEvent & );
     void                                        start_worker                    (void);
     void                                        stop_worker                     (void);
     //
     //
-    void                                        write_event                     (const LogEvent & );
+    void                                        terminal_sink_write_event       (const LogEvent & );
+    void                                        file_sink_open                  (void);
+    void                                        file_sink_close                 (void);
+    void                                        file_sink_recover               (void);
+    void                                        file_sink_rotate_if_needed      (const size_t );
+    void                                        file_sink_rotate_files          (void);
+    void                                        file_sink_write_event           (const LogEvent & );
+    [[nodiscard]] std::string                   file_sink_backup_path           (const size_t ) const;
+    [[nodiscard]] std::string                   file_sink_build_record          (const LogEvent & );
     //
-    [[nodiscard]] std::string                   build_header                    (const LogEvent & );
-    void                                        write_body                      (const std::string & , std::ostream & , size_t ) const;
-    [[nodiscard]] std::string                   build_metadata                  (const LogEvent & , size_t );
+    [[nodiscard]] std::string                   terminal_sink_build_header      (const LogEvent & );
+    void                                        terminal_sink_write_body        (const std::string & , std::ostream & , size_t ) const;
+    [[nodiscard]] std::string                   terminal_sink_build_metadata    (const LogEvent & , size_t );
     [[nodiscard]] static std::string            path_tail                       (std::string_view , size_t );
     //
     void                                        enable_vt_win                   (void);
-
+    
+    
 //
 //
 // *************************************************************************** //
